@@ -8,7 +8,7 @@ package com.google.u2f.key.messages;
 
 import java.util.Arrays;
 
-public class AuthenticateResponse extends U2FResponse {
+public class AuthenticateResponse {
   private final byte userPresence;
   private final int counter;
   private final byte[] signature;

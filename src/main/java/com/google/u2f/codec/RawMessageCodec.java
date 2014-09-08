@@ -25,8 +25,8 @@ import com.google.u2f.key.messages.RegisterResponse;
  * Raw message formats, as per FIDO U2F: Raw Message Formats - Draft 4
  */
 public class RawMessageCodec {
-  public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
-  public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
+  public static final byte REGISTRATION_RESERVED_BYTE_VALUE = 0x05;
+  public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = 0x00;
 
   public static byte[] encodeRegisterRequest(RegisterRequest registerRequest) {
     byte[] appIdSha256 = registerRequest.getApplicationSha256();

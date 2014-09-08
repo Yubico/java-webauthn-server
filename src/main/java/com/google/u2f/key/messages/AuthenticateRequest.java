@@ -8,7 +8,7 @@ package com.google.u2f.key.messages;
 
 import java.util.Arrays;
 
-public class AuthenticateRequest extends U2FRequest {
+public class AuthenticateRequest {
   public static final byte CHECK_ONLY = 0x07;
   public static final byte USER_PRESENCE_SIGN = 0x03;
 

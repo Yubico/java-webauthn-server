@@ -8,7 +8,7 @@ package com.google.u2f.key.messages;
 
 import java.util.Arrays;
 
-public class RegisterRequest extends U2FRequest {
+public class RegisterRequest {
   private final byte[] challengeSha256;
   private final byte[] applicationSha256;
 

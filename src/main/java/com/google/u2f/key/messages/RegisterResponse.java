@@ -9,7 +9,7 @@ package com.google.u2f.key.messages;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-public class RegisterResponse extends U2FResponse {
+public class RegisterResponse {
   private final byte[] userPublicKey;
   private final byte[] keyHandle;
   private final X509Certificate attestationCertificate;
