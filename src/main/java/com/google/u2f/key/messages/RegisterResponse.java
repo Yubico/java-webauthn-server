@@ -79,8 +79,6 @@ public class RegisterResponse {
       return false;
     if (!Arrays.equals(signature, other.signature))
       return false;
-    if (!Arrays.equals(userPublicKey, other.userPublicKey))
-      return false;
-    return true;
+    return Arrays.equals(userPublicKey, other.userPublicKey);
   }
 }

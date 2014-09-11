@@ -36,7 +36,6 @@ public abstract class HtmlServlet implements Container {
     } catch (Exception e) {
       e.printStackTrace();
       resp.setStatus(Status.INTERNAL_SERVER_ERROR);
-      return;
     }
   }
 

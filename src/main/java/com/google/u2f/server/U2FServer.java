@@ -31,5 +31,5 @@ public interface U2FServer {
   // token management //
   public List<SecurityKeyData> getAllSecurityKeys(String accountName);
 
-  public void removeSecurityKey(String accountName, byte[] publicKey) throws U2FException;  
+  public void removeSecurityKey(String accountName, byte[] publicKey) throws U2FException;
 }

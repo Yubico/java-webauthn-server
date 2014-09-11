@@ -63,12 +63,10 @@ public class U2fHttpServer {
     SessionIdGenerator sessionIdGenerator = new SessionIdGenerator() {
       @Override
       public String generateSessionId(String accountName) {
-        return new StringBuilder()
-          .append("sessionId_") 
-          .append(sessionIdCounter++)
-          .append("_")
-          .append(accountName)
-          .toString();
+        return "sessionId_"
+          + (sessionIdCounter++)
+          + "_"
+          + accountName;
       }
     };
 
@@ -121,10 +119,8 @@ public class U2fHttpServer {
       }
     } catch (IOException e) {
       Log.severe("Error with HTTP server: " + e);
-      return;
     } catch (InterruptedException e) {
       Log.info("Interrupted");
-      return;
     }
   }
 }

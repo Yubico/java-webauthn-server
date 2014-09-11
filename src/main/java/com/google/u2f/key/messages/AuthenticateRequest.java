@@ -83,8 +83,6 @@ public class AuthenticateRequest {
       return false;
     if (control != other.control)
       return false;
-    if (!Arrays.equals(keyHandle, other.keyHandle))
-      return false;
-    return true;
+    return Arrays.equals(keyHandle, other.keyHandle);
   }
 }

@@ -56,8 +56,6 @@ public class RegisterRequest {
     RegisterRequest other = (RegisterRequest) obj;
     if (!Arrays.equals(applicationSha256, other.applicationSha256))
       return false;
-    if (!Arrays.equals(challengeSha256, other.challengeSha256))
-      return false;
-    return true;
+    return Arrays.equals(challengeSha256, other.challengeSha256);
   }
 }

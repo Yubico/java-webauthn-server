@@ -55,7 +55,6 @@ public class StaticHandler implements Container {
     } catch (IOException e) {
       e.printStackTrace();
       resp.setStatus(Status.INTERNAL_SERVER_ERROR);
-      return;
     }
   }
 }

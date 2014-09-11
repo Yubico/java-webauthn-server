@@ -83,18 +83,13 @@ public class SecurityKeyData {
   
   @Override
   public String toString() {
-    return new StringBuilder()
-      .append("public_key: ")
-      .append(Base64.encodeBase64URLSafeString(publicKey))
-      .append("\n")
-      .append("key_handle: ")
-      .append(Base64.encodeBase64URLSafeString(keyHandle))
-      .append("\n")
-      .append("counter: ")
-      .append(counter)
-      .append("\n")
-      .append("attestation certificate:\n")
-      .append(attestationCert.toString())
-      .toString();
+    return "public_key: "
+        + Base64.encodeBase64URLSafeString(publicKey) + "\n"
+        + "key_handle: "
+        + Base64.encodeBase64URLSafeString(keyHandle) + "\n"
+        + "counter: "
+        + counter + "\n"
+        + "attestation certificate:\n"
+        + attestationCert;
   }
 }

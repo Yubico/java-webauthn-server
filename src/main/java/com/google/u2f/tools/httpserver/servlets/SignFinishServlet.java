@@ -26,7 +26,7 @@ public class SignFinishServlet extends HtmlServlet {
   @Override
   public void generateBody(Request req, Response resp, PrintStream body) {
     SignResponse signResponse = new SignResponse(
-        req.getParameter("browserData"),
+        req.getParameter("clientData"),
         req.getParameter("signData"),
         req.getParameter("challenge"),
         req.getParameter("sessionId"),

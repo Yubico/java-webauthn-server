@@ -34,7 +34,7 @@ public class EnrollDataServlet extends JavascriptServlet {
     RegistrationRequest registrationRequest = u2fServer.getRegistrationRequest(userName, "http://localhost:8080");
 
     JsonObject enrollServerData = new JsonObject();
-    enrollServerData.addProperty("app_id", registrationRequest.getAppId());
+    enrollServerData.addProperty("appId", registrationRequest.getAppId());
     enrollServerData.addProperty("challenge", registrationRequest.getChallenge());
     enrollServerData.addProperty("version", registrationRequest.getVersion());
     enrollServerData.addProperty("sessionId", registrationRequest.getSessionId());

@@ -67,8 +67,6 @@ public class AuthenticateResponse {
       return false;
     if (!Arrays.equals(signature, other.signature))
       return false;
-    if (userPresence != other.userPresence)
-      return false;
-    return true;
+    return userPresence == other.userPresence;
   }
 }

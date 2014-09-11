@@ -6,20 +6,16 @@
 
 package com.google.u2f;
 
-import static com.google.u2f.TestUtils.computeSha256;
-import static com.google.u2f.TestUtils.parseCertificate;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.apache.commons.codec.binary.Base64;
 
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.Set;
-
-import org.apache.commons.codec.binary.Base64;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class TestVectors {
   //Test vectors from FIDO U2F: Raw Message Formats - Draft 4

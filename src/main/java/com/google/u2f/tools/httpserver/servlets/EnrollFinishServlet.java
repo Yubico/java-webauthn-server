@@ -6,16 +6,14 @@
 
 package com.google.u2f.tools.httpserver.servlets;
 
-import java.io.PrintStream;
-
-import com.google.common.base.Preconditions;
-import org.simpleframework.http.Request;
-import org.simpleframework.http.Response;
-
 import com.google.u2f.U2FException;
 import com.google.u2f.server.U2FServer;
 import com.google.u2f.server.data.SecurityKeyData;
 import com.google.u2f.server.messages.RegistrationResponse;
+import org.simpleframework.http.Request;
+import org.simpleframework.http.Response;
+
+import java.io.PrintStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,7 +29,7 @@ public class EnrollFinishServlet extends HtmlServlet {
   public void generateBody(Request req, Response resp, PrintStream body) {
 
     String enrollData = checkNotNull(req.getParameter("registrationData"));
-    String browserData = checkNotNull(req.getParameter("bd"));
+    String browserData = checkNotNull(req.getParameter("clientData"));
     String sessionId = checkNotNull(req.getParameter("sessionId"));
     RegistrationResponse registrationResponse = new RegistrationResponse(enrollData, browserData, sessionId);
 
