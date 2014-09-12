@@ -6,7 +6,7 @@
 
 package com.google.u2f.tools.httpserver.servlets;
 
-import com.google.u2f.U2FException;
+import com.google.u2f.U2fException;
 import com.google.u2f.server.U2FServer;
 import com.google.u2f.server.data.SecurityKeyData;
 import com.google.u2f.server.messages.RegistrationResponse;
@@ -38,7 +38,7 @@ public class EnrollFinishServlet extends HtmlServlet {
           registrationResponse,
           System.currentTimeMillis());
       body.println("Success!!!\n\nnew token:\n" + tokenData.toString());
-    } catch (U2FException e) {
+    } catch (U2fException e) {
       body.println("Failure: " + e.toString());
     }
   }

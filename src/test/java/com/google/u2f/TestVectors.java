@@ -24,9 +24,9 @@ public class TestVectors {
   protected static final Set<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
   protected static final String SESSION_ID = "session_id";
   protected static final String APP_ID_ENROLL = "http://example.com";
-  protected static final byte[] APP_ID_ENROLL_SHA256 = TestUtils.computeSha256(APP_ID_ENROLL);
+  protected static final byte[] APP_ID_ENROLL_SHA256 = TestUtils.computeHash(APP_ID_ENROLL);
   protected static final String APP_ID_SIGN = "https://gstatic.com/securitykey/a/example.com";
-  protected static final byte[] APP_ID_SIGN_SHA256 = TestUtils.computeSha256(APP_ID_SIGN);
+  protected static final byte[] APP_ID_SIGN_SHA256 = TestUtils.computeHash(APP_ID_SIGN);
   protected static final String ORIGIN = "http://example.com";
   protected static final String SERVER_CHALLENGE_ENROLL_BASE64 =
       "vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo";
@@ -70,7 +70,7 @@ public class TestVectors {
           ORIGIN);
   protected static final String BROWSER_DATA_ENROLL_BASE64 = Base64
       .encodeBase64URLSafeString(BROWSER_DATA_ENROLL.getBytes());
-  protected static final byte[] BROWSER_DATA_ENROLL_SHA256 = TestUtils.computeSha256(BROWSER_DATA_ENROLL
+  protected static final byte[] BROWSER_DATA_ENROLL_SHA256 = TestUtils.computeHash(BROWSER_DATA_ENROLL
           .getBytes());
   protected static final String BROWSER_DATA_SIGN = String.format(
       "{"

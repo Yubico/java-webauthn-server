@@ -11,7 +11,7 @@ import java.io.PrintStream;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
-import com.google.u2f.U2FException;
+import com.google.u2f.U2fException;
 import com.google.u2f.server.U2FServer;
 import com.google.u2f.server.messages.SignResponse;
 
@@ -34,7 +34,7 @@ public class SignFinishServlet extends HtmlServlet {
     try {
       u2fServer.processSignResponse(signResponse);
       body.println("Success!!!");
-    } catch (U2FException e) {
+    } catch (U2fException e) {
       body.println("Failure: " + e.toString());
     }
   }

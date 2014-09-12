@@ -8,7 +8,7 @@ package com.google.u2f.server;
 
 import java.util.List;
 
-import com.google.u2f.U2FException;
+import com.google.u2f.U2fException;
 import com.google.u2f.server.data.SecurityKeyData;
 import com.google.u2f.server.messages.RegistrationRequest;
 import com.google.u2f.server.messages.RegistrationResponse;
@@ -18,18 +18,18 @@ import com.google.u2f.server.messages.SignResponse;
 public interface U2FServer {
 
   // registration //
-  public RegistrationRequest getRegistrationRequest(String accountName, String appId) throws U2FException;
+  RegistrationRequest getRegistrationRequest(String accountName, String appId) throws U2fException;
 
-  public SecurityKeyData processRegistrationResponse(RegistrationResponse registrationResponse, 
-      long currentTimeInMillis) throws U2FException;
+  SecurityKeyData processRegistrationResponse(RegistrationResponse registrationResponse, long currentTimeInMillis)
+          throws U2fException;
 
   // authentication //
-  public List<SignRequest> getSignRequest(String accountName, String appId) throws U2FException;
+  List<SignRequest> getSignRequest(String accountName, String appId) throws U2fException;
 
-  public SecurityKeyData processSignResponse(SignResponse signResponse) throws U2FException;
+  SecurityKeyData processSignResponse(SignResponse signResponse) throws U2fException;
   
   // token management //
-  public List<SecurityKeyData> getAllSecurityKeys(String accountName);
+  List<SecurityKeyData> getAllSecurityKeys(String accountName);
 
-  public void removeSecurityKey(String accountName, byte[] publicKey) throws U2FException;
+  void removeSecurityKey(String accountName, byte[] publicKey) throws U2fException;
 }

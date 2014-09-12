@@ -88,7 +88,7 @@ public class TestUtils {
     }
   }
 
-  public static byte[] computeSha256(byte[] bytes) {
+  public static byte[] computeHash(byte[] bytes) {
     try {
       return MessageDigest.getInstance("SHA-256").digest(bytes);
     } catch (NoSuchAlgorithmException e) {
@@ -96,7 +96,7 @@ public class TestUtils {
     }
   }
 
-  public static byte[] computeSha256(String data) {
-    return computeSha256(data.getBytes());
+  public static byte[] computeHash(String data) {
+    return computeHash(data.getBytes());
   }
 }

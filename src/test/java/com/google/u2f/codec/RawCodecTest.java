@@ -22,8 +22,8 @@ public class RawCodecTest extends TestVectors {
 
   @Test
   public void testEncodeRegisterRequest() throws Exception {
-    RegisterRequest registerRequest = new RegisterRequest(APP_ID_ENROLL_SHA256,
-        BROWSER_DATA_ENROLL_SHA256);
+    RegisterRequest registerRequest = new RegisterRequest(BROWSER_DATA_ENROLL_SHA256, APP_ID_ENROLL_SHA256
+    );
 
     byte[] encodedBytes = RawMessageCodec.encodeRegisterRequest(registerRequest);
 
@@ -34,7 +34,7 @@ public class RawCodecTest extends TestVectors {
   public void testDecodeRegisterRequest() throws Exception {
     RegisterRequest registerRequest = RawMessageCodec.decodeRegisterRequest(REGISTRATION_REQUEST_DATA);
 
-    assertEquals(new RegisterRequest(APP_ID_ENROLL_SHA256, BROWSER_DATA_ENROLL_SHA256),
+    assertEquals(new RegisterRequest(BROWSER_DATA_ENROLL_SHA256, APP_ID_ENROLL_SHA256),
         registerRequest);
   }
 

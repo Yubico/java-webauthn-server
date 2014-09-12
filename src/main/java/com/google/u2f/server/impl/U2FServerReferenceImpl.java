@@ -8,7 +8,6 @@ package com.google.u2f.server.impl;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
@@ -16,15 +15,13 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.u2f.U2FConsts;
-import com.google.u2f.U2FException;
+import com.google.u2f.U2fException;
 import com.google.u2f.codec.RawMessageCodec;
 import com.google.u2f.key.UserPresenceVerifier;
 import com.google.u2f.key.messages.AuthenticateResponse;
@@ -42,273 +39,207 @@ import com.google.u2f.server.messages.SignRequest;
 import com.google.u2f.server.messages.SignResponse;
 
 public class U2FServerReferenceImpl implements U2FServer {
-  
+
+  private static final String U2F_VERSION = "U2F_V2";
   private static final String TYPE_PARAM = "typ";
   private static final String CHALLENGE_PARAM = "challenge";
   private static final String ORIGIN_PARAM = "origin";
 
-  // TODO: use these for channel id checks in verifyBrowserData
+  // TODO: use these for channel id checks in checkClientData
   @SuppressWarnings("unused")
   private static final String CHANNEL_ID_PARAM = "cid_pubkey";
   @SuppressWarnings("unused")
   private static final String UNUSED_CHANNEL_ID = "";
   
   private static final Logger Log = Logger.getLogger(U2FServerReferenceImpl.class.getName());
+  public static final int INITIAL_COUNTER_VALUE = 0;
 
   private final ChallengeGenerator challengeGenerator;
   private final DataStore dataStore;
-  private final Crypto cryto;
+  private final Crypto crypto;
   private final Set<String> allowedOrigins;
 
   public U2FServerReferenceImpl(ChallengeGenerator challengeGenerator,
-      DataStore dataStore, Crypto cryto, Set<String> origins) {
+      DataStore dataStore, Crypto crypto, Set<String> origins) {
     this.challengeGenerator = challengeGenerator;
     this.dataStore = dataStore;
-    this.cryto = cryto;
+    this.crypto = crypto;
     this.allowedOrigins = canonicalizeOrigins(origins);
   }
 
   @Override
   public RegistrationRequest getRegistrationRequest(String accountName, String appId) {
-    Log.info(">> getRegistrationRequest " + accountName);
 
     byte[] challenge = challengeGenerator.generateChallenge(accountName);
-    EnrollSessionData sessionData = new EnrollSessionData(accountName, appId, challenge);
-
-    String sessionId = dataStore.storeSessionData(sessionData);
-
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
+    String sessionId = dataStore.storeSessionData(
+            new EnrollSessionData(accountName, appId, challenge)
+    );
 
-    Log.info("-- Output --");
-    Log.info("  sessionId: " + sessionId);
-    Log.info("  challenge: " + Hex.encodeHexString(challenge));
-
-    Log.info("<< getRegistrationRequest " + accountName);
-
-    return new RegistrationRequest(U2FConsts.U2F_V2, challengeBase64, appId, sessionId);
+    return new RegistrationRequest(U2F_VERSION, challengeBase64, appId, sessionId);
   }
 
   @Override
   public SecurityKeyData processRegistrationResponse(RegistrationResponse registrationResponse,
-      long currentTimeInMillis) throws U2FException {
-    Log.info(">> processRegistrationResponse");
+          long currentTimeInMillis) throws U2fException {
 
-    String sessionId = registrationResponse.getSessionId();
-    String browserDataBase64 = registrationResponse.getBd();
-    String rawRegistrationDataBase64 = registrationResponse.getRegistrationData();
-
-    EnrollSessionData sessionData = dataStore.getEnrollSessionData(sessionId);
-
+    EnrollSessionData sessionData = dataStore.getEnrollSessionData(registrationResponse.getSessionId());
     if (sessionData == null) {
-      throw new U2FException("Unknown session_id");
+      throw new U2fException("Unknown sessionId");
     }
 
-    String appId = sessionData.getAppId();
-    String browserData = new String(Base64.decodeBase64(browserDataBase64));
-    byte[] rawRegistrationData = Base64.decodeBase64(rawRegistrationDataBase64);
+    RegisterResponse registerResponse = RawMessageCodec
+            .decodeRegisterResponse(registrationResponse.getRegistrationData());
+    X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
+    checkIsTrusted(attestationCertificate);
 
-    Log.info("-- Input --");
-    Log.info("  sessionId: " + sessionId);
-    Log.info("  challenge: " + Hex.encodeHexString(sessionData.getChallenge()));
-    Log.info("  accountName: " + sessionData.getAccountName());
-    Log.info("  browserData: " + browserData);
-    Log.info("  rawRegistrationData: " + Hex.encodeHexString(rawRegistrationData));
-
-    RegisterResponse registerResponse = RawMessageCodec.decodeRegisterResponse(rawRegistrationData);
+    byte[] clientData = checkClientData(registrationResponse.getBd(), "navigator.id.finishEnrollment", sessionData);
     byte[] userPublicKey = registerResponse.getUserPublicKey();
     byte[] keyHandle = registerResponse.getKeyHandle();
-    X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
-    byte[] signature = registerResponse.getSignature();
-
-    Log.info("-- Parsed rawRegistrationResponse --");
-    Log.info("  userPublicKey: " + Hex.encodeHexString(userPublicKey));
-    Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
-    Log.info("  attestationCertificate: " + attestationCertificate.toString());
-    try {
-      Log.info("  attestationCertificate bytes: "
-          + Hex.encodeHexString(attestationCertificate.getEncoded()));
-    } catch (CertificateEncodingException e) {
-      throw new U2FException("Cannot encode certificate", e);
-    }
-    Log.info("  signature: " + Hex.encodeHexString(signature));
-
-    byte[] appIdSha256 = cryto.computeSha256(appId.getBytes());
-    byte[] browserDataSha256 = cryto.computeSha256(browserData.getBytes());
-    byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(appIdSha256, browserDataSha256,
-        keyHandle, userPublicKey);
-
-    Set<X509Certificate> trustedCertificates = dataStore.getTrustedCertificates();
-    if (!trustedCertificates.contains(attestationCertificate)) {
-      Log.warning("attestion cert is not trusted");    
-    }
-
-    verifyBrowserData(new JsonParser().parse(browserData), "navigator.id.finishEnrollment", sessionData);
-    
-    Log.info("Verifying signature of bytes " + Hex.encodeHexString(signedBytes));
-    if (!cryto.verifySignature(attestationCertificate, signedBytes, signature)) {
-      throw new U2FException("Signature is invalid");
-    }
+    byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(
+            crypto.hash(sessionData.getAppId()),
+            crypto.hash(clientData),
+            keyHandle,
+            userPublicKey
+    );
+    crypto.checkSignature(attestationCertificate, signedBytes, registerResponse.getSignature());
 
     // The first time we create the SecurityKeyData, we set the counter value to 0.
     // We don't actually know what the counter value of the real device is - but it will
     // be something bigger (or equal) to 0, so subsequent signatures will check out ok.
-    SecurityKeyData securityKeyData = new SecurityKeyData(currentTimeInMillis,
-        keyHandle, userPublicKey, attestationCertificate, /* initial counter value */ 0);
+    SecurityKeyData securityKeyData = new SecurityKeyData(
+            currentTimeInMillis,
+            keyHandle,
+            userPublicKey,
+            attestationCertificate,
+            INITIAL_COUNTER_VALUE
+    );
     dataStore.addSecurityKeyData(sessionData.getAccountName(), securityKeyData);
-
-    Log.info("<< processRegistrationResponse");
     return securityKeyData;
   }
 
+  private void checkIsTrusted(X509Certificate attestationCertificate) {
+    Set<X509Certificate> trustedCertificates = dataStore.getTrustedCertificates();
+    if (!trustedCertificates.contains(attestationCertificate)) {
+      Log.warning("Attestation cert is not trusted"); // TODO: Should this be more than a warning?
+    }
+  }
+
   @Override
-  public List<SignRequest> getSignRequest(String accountName, String appId) throws U2FException {
-    Log.info(">> getSignRequest " + accountName);
+  public List<SignRequest> getSignRequest(String accountName, String appId) throws U2fException {
 
     List<SecurityKeyData> securityKeyDataList = dataStore.getSecurityKeyData(accountName);
-
     ImmutableList.Builder<SignRequest> result = ImmutableList.builder();
     
     for (SecurityKeyData securityKeyData : securityKeyDataList) {
       byte[] challenge = challengeGenerator.generateChallenge(accountName);
 
-      SignSessionData sessionData = new SignSessionData(accountName, appId, 
-          challenge, securityKeyData.getPublicKey());
-      String sessionId = dataStore.storeSessionData(sessionData);
+      String sessionId = dataStore.storeSessionData(
+              new SignSessionData(accountName, appId, challenge, securityKeyData.getPublicKey())
+      );
 
-      byte[] keyHandle = securityKeyData.getKeyHandle();
-
-      Log.info("-- Output --");
-      Log.info("  sessionId: " + sessionId);
-      Log.info("  challenge: " + Hex.encodeHexString(challenge));
-      Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
-
-      String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
-      String keyHandleBase64 = Base64.encodeBase64URLSafeString(keyHandle);
-
-      Log.info("<< getSignRequest " + accountName);
-      result.add(new SignRequest(U2FConsts.U2F_V2, challengeBase64, appId, keyHandleBase64, sessionId));
+      SignRequest signRequest = new SignRequest(
+              U2F_VERSION,
+              Base64.encodeBase64URLSafeString(challenge),
+              appId,
+              Base64.encodeBase64URLSafeString(securityKeyData.getKeyHandle()),
+              sessionId
+      );
+      result.add(signRequest);
     }
     return result.build();
   }
 
   @Override
-  public SecurityKeyData processSignResponse(SignResponse signResponse) throws U2FException {
-    Log.info(">> processSignResponse");
+  public SecurityKeyData processSignResponse(SignResponse signResponse) throws U2fException {
 
-    String sessionId = signResponse.getSessionId();
-    String browserDataBase64 = signResponse.getBd();
-    String rawSignDataBase64 = signResponse.getSign();
-
-    SignSessionData sessionData = dataStore.getSignSessionData(sessionId);
-
+    SignSessionData sessionData = dataStore.getSignSessionData(signResponse.getSessionId());
     if (sessionData == null) {
-      throw new U2FException("Unknown session_id");
+      throw new U2fException("Unknown sessionId");
     }
     
-    String appId = sessionData.getAppId();
-    SecurityKeyData securityKeyData = null;
-    
-    for (SecurityKeyData temp : dataStore.getSecurityKeyData(sessionData.getAccountName())) {
-      if (Arrays.equals(sessionData.getPublicKey(), temp.getPublicKey())) {
-        securityKeyData = temp;
-        break;
-      }
-    }
+    byte[] clientData = checkClientData(signResponse.getBd(), "navigator.id.getAssertion", sessionData);
 
-    if (securityKeyData == null) {
-      throw new U2FException("No security keys registered for this user");
-    }
-
-    String browserData = new String(Base64.decodeBase64(browserDataBase64));
-    byte[] rawSignData = Base64.decodeBase64(rawSignDataBase64);
-
-    Log.info("-- Input --");
-    Log.info("  sessionId: " + sessionId);
-    Log.info("  publicKey: " + Hex.encodeHexString(securityKeyData.getPublicKey()));
-    Log.info("  challenge: " + Hex.encodeHexString(sessionData.getChallenge()));
-    Log.info("  accountName: " + sessionData.getAccountName());
-    Log.info("  browserData: " + browserData);
-    Log.info("  rawSignData: " + Hex.encodeHexString(rawSignData));
-
-    verifyBrowserData(new JsonParser().parse(browserData), "navigator.id.getAssertion", sessionData);
-    
-    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(rawSignData);
+    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(signResponse.getSign());
     byte userPresence = authenticateResponse.getUserPresence();
-    int counter = authenticateResponse.getCounter();
-    byte[] signature = authenticateResponse.getSignature();
-
-    Log.info("-- Parsed rawSignData --");
-    Log.info("  userPresence: " + Integer.toHexString(userPresence & 0xFF));
-    Log.info("  counter: " + counter);
-    Log.info("  signature: " + Hex.encodeHexString(signature));
-
     if (userPresence != UserPresenceVerifier.USER_PRESENT_FLAG) {
-      throw new U2FException("User presence invalid during authentication");
+      throw new U2fException("User presence invalid during authentication");
     }
 
+    int counter = authenticateResponse.getCounter();
+    SecurityKeyData securityKeyData = loadSecurityKeyData(sessionData);
     if (counter <= securityKeyData.getCounter()) {
-      throw new U2FException("Counter value smaller than expected!");      
+      throw new U2fException("Counter value smaller than expected!");
     }
     
-    byte[] appIdSha256 = cryto.computeSha256(appId.getBytes());
-    byte[] browserDataSha256 = cryto.computeSha256(browserData.getBytes());
-    byte[] signedBytes = RawMessageCodec.encodeAuthenticateSignedBytes(appIdSha256, userPresence,
-        counter, browserDataSha256);
-
-    Log.info("Verifying signature of bytes " + Hex.encodeHexString(signedBytes));
-    if (!cryto.verifySignature(cryto.decodePublicKey(securityKeyData.getPublicKey()), signedBytes,
-        signature)) {
-      throw new U2FException("Signature is invalid");
-    }
+    byte[] signedBytes = RawMessageCodec.encodeAuthenticateSignedBytes(
+            crypto.hash(sessionData.getAppId()),
+            userPresence,
+            counter,
+            crypto.hash(clientData)
+    );
+    crypto.checkSignature(
+            crypto.decodePublicKey(securityKeyData.getPublicKey()),
+            signedBytes,
+            authenticateResponse.getSignature()
+    );
 
     dataStore.updateSecurityKeyCounter(sessionData.getAccountName(), securityKeyData.getPublicKey(), counter);
-    
-    Log.info("<< processSignResponse");
     return securityKeyData;
   }
 
-  private void verifyBrowserData(JsonElement browserDataAsElement, 
-      String messageType, EnrollSessionData sessionData) throws U2FException {
-    
-    if (!browserDataAsElement.isJsonObject()) {
-      throw new U2FException("browserdata has wrong format");
+  private SecurityKeyData loadSecurityKeyData(SignSessionData sessionData) throws U2fException {
+    for (SecurityKeyData temp : dataStore.getSecurityKeyData(sessionData.getAccountName())) {
+      if (Arrays.equals(sessionData.getPublicKey(), temp.getPublicKey())) {
+        return temp;
+      }
+    }
+    throw new U2fException("No security keys registered for this user");
+  }
+
+  private byte[] checkClientData(String clientDataBase64, String messageType, EnrollSessionData sessionData)
+          throws U2fException {
+
+    byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);
+    JsonElement clientDataAsElement = new JsonParser().parse(new String(clientDataBytes));
+    if (!clientDataAsElement.isJsonObject()) {
+      throw new U2fException("clientData has wrong format");
     }
     
-    JsonObject browserData = browserDataAsElement.getAsJsonObject();
+    JsonObject clientData = clientDataAsElement.getAsJsonObject();
     
-    // check that the right "typ" parameter is present in the browserdata JSON
-    if (!browserData.has(TYPE_PARAM)) {
-      throw new U2FException("bad browserdata: missing 'typ' param");
+    // check that the right "typ" parameter is present in the clientData JSON
+    if (!clientData.has(TYPE_PARAM)) {
+      throw new U2fException("Bad clientData: missing 'typ' param");
     }
 
-    String type = browserData.get(TYPE_PARAM).getAsString();
+    String type = clientData.get(TYPE_PARAM).getAsString();
     if (!messageType.equals(type)) {
-      throw new U2FException("bad browserdata: bad type " + type);
+      throw new U2fException("Bad clientData: bad type " + type);
     }
 
-    // check that the right challenge is in the browserdata
-    if (!browserData.has(CHALLENGE_PARAM)) {
-      throw new U2FException("bad browserdata: missing 'challenge' param");
+    // check that the right challenge is in the clientData
+    if (!clientData.has(CHALLENGE_PARAM)) {
+      throw new U2fException("Bad clientData: missing 'challenge' param");
     }
 
-    if (browserData.has(ORIGIN_PARAM)) {
-      verifyOrigin(browserData.get(ORIGIN_PARAM).getAsString());
+    if (clientData.has(ORIGIN_PARAM)) {
+      verifyOrigin(clientData.get(ORIGIN_PARAM).getAsString());
     }
 
-    byte[] challengeFromBrowserData = 
-        Base64.decodeBase64(browserData.get(CHALLENGE_PARAM).getAsString());
-
-
-    if (!Arrays.equals(challengeFromBrowserData, sessionData.getChallenge())) {
-      throw new U2FException("wrong challenge signed in browserdata");
+    byte[] challengeFromClientData = Base64.decodeBase64(clientData.get(CHALLENGE_PARAM).getAsString());
+    if (!Arrays.equals(challengeFromClientData, sessionData.getChallenge())) {
+      throw new U2fException("Wrong challenge signed in clientData");
     }
 
     // TODO: Deal with ChannelID
+
+    return clientDataBytes;
   }
   
-  private void verifyOrigin(String origin) throws U2FException {
+  private void verifyOrigin(String origin) throws U2fException {
     if (!allowedOrigins.contains(canonicalizeOrigin(origin))) {
-      throw new U2FException(origin +
+      throw new U2fException(origin +
           " is not a recognized home origin for this backend");
     }
   }
@@ -320,7 +251,7 @@ public class U2FServerReferenceImpl implements U2FServer {
 
   @Override
   public void removeSecurityKey(String accountName, byte[] publicKey)
-      throws U2FException {
+      throws U2fException {
     dataStore.removeSecurityKey(accountName, publicKey);
   }
   
@@ -333,12 +264,11 @@ public class U2FServerReferenceImpl implements U2FServer {
   }
 
   static String canonicalizeOrigin(String url) {
-    URI uri;
     try {
-      uri = new URI(url);
+      URI uri = new URI(url);
+      return uri.getScheme() + "://" + uri.getAuthority();
     } catch (URISyntaxException e) {
-      throw new RuntimeException("specified bad origin", e);
+      throw new AssertionError("specified bad origin", e);
     }
-    return uri.getScheme() + "://" + uri.getAuthority();
   }
 }

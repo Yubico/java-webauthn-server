@@ -18,6 +18,7 @@ import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.List;
 
+import com.google.u2f.U2fException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +28,6 @@ import org.mockito.Mock;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.u2f.TestVectors;
-import com.google.u2f.U2FException;
 import com.google.u2f.server.ChallengeGenerator;
 import com.google.u2f.server.Crypto;
 import com.google.u2f.server.DataStore;
@@ -77,7 +77,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   }
   
   @Test
-  public void testGetRegistrationRequest() throws U2FException {
+  public void testGetRegistrationRequest() throws U2fException {
     u2fServer = new U2FServerReferenceImpl(mockChallengeGenerator,
         mockDataStore, cryto, TRUSTED_DOMAINS);
 
@@ -88,7 +88,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   }
 
   @Test
-  public void testProcessRegistrationResponse() throws U2FException {
+  public void testProcessRegistrationResponse() throws U2fException {
 	when(mockDataStore.getEnrollSessionData(SESSION_ID)).thenReturn(
         new EnrollSessionData(ACCOUNT_NAME, APP_ID_ENROLL, SERVER_CHALLENGE_ENROLL));
     u2fServer = new U2FServerReferenceImpl(mockChallengeGenerator,
@@ -104,7 +104,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   }
 
   @Test
-  public void testProcessRegistrationResponse2() throws U2FException {
+  public void testProcessRegistrationResponse2() throws U2fException {
 	when(mockDataStore.getEnrollSessionData(SESSION_ID)).thenReturn(
 	     new EnrollSessionData(ACCOUNT_NAME, APP_ID_ENROLL, SERVER_CHALLENGE_ENROLL));
     HashSet<X509Certificate> trustedCertificates = new HashSet<X509Certificate>();
@@ -124,7 +124,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   }
 
   @Test
-  public void testGetSignRequest() throws U2FException {
+  public void testGetSignRequest() throws U2fException {
     u2fServer = new U2FServerReferenceImpl(mockChallengeGenerator,
         mockDataStore, cryto, TRUSTED_DOMAINS);
     when(mockChallengeGenerator.generateChallenge(ACCOUNT_NAME)).thenReturn(SERVER_CHALLENGE_SIGN);
@@ -136,7 +136,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   }
 
   @Test
-  public void testProcessSignResponse() throws U2FException {
+  public void testProcessSignResponse() throws U2fException {
 	when(mockDataStore.getSignSessionData(SESSION_ID)).thenReturn(
 	    new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX));
     u2fServer = new U2FServerReferenceImpl(mockChallengeGenerator,
@@ -148,7 +148,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   }
 
   @Test
-  public void testProcessSignResponse_badOrigin() throws U2FException {
+  public void testProcessSignResponse_badOrigin() throws U2fException {
     when(mockDataStore.getSignSessionData(SESSION_ID)).thenReturn(
         new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX));
     u2fServer = new U2FServerReferenceImpl(mockChallengeGenerator,
@@ -159,7 +159,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
     try {
       u2fServer.processSignResponse(signResponse);
       fail("expected exception, but didn't get it");
-    } catch(U2FException e) {
+    } catch(U2fException e) {
       assertTrue(e.getMessage().contains("is not a recognized home origin"));
     }
   }
@@ -167,7 +167,7 @@ public class U2FServerReferenceImplTest extends TestVectors {
   // @Test
   // TODO: put test back in once we have signature sample on a correct browserdata json
   // (currently, this test uses an enrollment browserdata during a signature)
-  public void testProcessSignResponse2() throws U2FException {
+  public void testProcessSignResponse2() throws U2fException {
 	when(mockDataStore.getSignSessionData(SESSION_ID)).thenReturn(
 	    new SignSessionData(ACCOUNT_NAME, APP_ID_2, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_2));
     when(mockDataStore.getSecurityKeyData(ACCOUNT_NAME)).thenReturn(

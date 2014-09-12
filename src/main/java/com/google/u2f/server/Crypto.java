@@ -9,16 +9,18 @@ package com.google.u2f.server;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
-import com.google.u2f.U2FException;
+import com.google.u2f.U2fException;
 
 public interface Crypto {
-  boolean verifySignature(X509Certificate attestationCertificate, byte[] signedBytes,
-      byte[] signature) throws U2FException;
+  void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes,
+                      byte[] signature) throws U2fException;
 
-  boolean verifySignature(PublicKey publicKey, byte[] signedBytes,
-      byte[] signature) throws U2FException;
+  void checkSignature(PublicKey publicKey, byte[] signedBytes,
+                      byte[] signature) throws U2fException;
 
-  PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2FException;
+  PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fException;
 
-  byte[] computeSha256(byte[] bytes) throws U2FException;
+  byte[] hash(byte[] bytes) throws U2fException;
+
+  byte[] hash(String str) throws U2fException;
 }

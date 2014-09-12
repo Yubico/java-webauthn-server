@@ -6,16 +6,14 @@
 
 package com.google.u2f.codec;
 
-import com.google.u2f.U2FException;
+import com.google.u2f.U2fException;
 import com.google.u2f.key.messages.AuthenticateRequest;
 import com.google.u2f.key.messages.AuthenticateResponse;
 import com.google.u2f.key.messages.RegisterRequest;
 import com.google.u2f.key.messages.RegisterResponse;
+import org.apache.commons.codec.binary.Base64;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -29,164 +27,143 @@ public class RawMessageCodec {
   public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
   public static byte[] encodeRegisterRequest(RegisterRequest registerRequest) {
-    byte[] appIdSha256 = registerRequest.getApplicationSha256();
-    byte[] challengeSha256 = registerRequest.getChallengeSha256();
 
     return ByteSink.create()
-            .put(challengeSha256)
-            .put(appIdSha256)
+            .put(registerRequest.getChallengeHash())
+            .put(registerRequest.getApplicationHash())
             .toByteArray();
   }
 
-  public static RegisterRequest decodeRegisterRequest(byte[] data) throws U2FException {
-    try {
-      ByteInputStream bytes = new ByteInputStream(data);
-      byte[] challengeSha256 = bytes.read(32);
-      byte[] appIdSha256 = bytes.read(32);
+  public static RegisterRequest decodeRegisterRequest(byte[] data) throws U2fException {
+    ByteInputStream bytes = new ByteInputStream(data);
+    RegisterRequest registerRequest = new RegisterRequest(bytes.read(32), bytes.read(32));
 
-      if (!bytes.isExhausted()) {
-        throw new U2FException("Message ends with unexpected data");
-      }
+    bytes.checkIsExhausted();
 
-      return new RegisterRequest(appIdSha256, challengeSha256);
-    } catch (IOException e) {
-      throw new U2FException("Error when parsing raw RegistrationResponse", e);
-    }
+    return registerRequest;
   }
 
   public static byte[] encodeRegisterResponse(RegisterResponse registerResponse)
-      throws U2FException {
-    byte[] userPublicKey = registerResponse.getUserPublicKey();
+      throws U2fException {
     byte[] keyHandle = registerResponse.getKeyHandle();
-    X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
-    byte[] signature = registerResponse.getSignature();
-
-    byte[] attestationCertificateBytes;
-    try {
-      attestationCertificateBytes = attestationCertificate.getEncoded();
-    } catch (CertificateEncodingException e) {
-      throw new U2FException("Error when encoding attestation certificate.", e);
-    }
-
     if (keyHandle.length > 255) {
-      throw new U2FException("keyHandle length cannot be longer than 255 bytes!");
+      throw new U2fException("keyHandle length cannot be longer than 255 bytes!");
     }
 
-    return ByteSink.create()
-            .put(REGISTRATION_RESERVED_BYTE_VALUE)
-            .put(userPublicKey)
-            .put((byte) keyHandle.length)
-            .put(keyHandle)
-            .put(attestationCertificateBytes)
-            .put(signature)
-            .toByteArray();
-  }
-
-  public static RegisterResponse decodeRegisterResponse(byte[] data) throws U2FException {
     try {
-      ByteInputStream bytes = new ByteInputStream(data);
-      byte reservedByte = bytes.readSigned();
-      byte[] userPublicKey = bytes.read(65);
-      byte[] keyHandle = bytes.read(bytes.readUnsigned());
-      X509Certificate attestationCertificate = (X509Certificate) CertificateFactory.getInstance(
-          "X.509").generateCertificate(bytes);
-      byte[] signature = bytes.readAll();
-
-      if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
-        throw new U2FException(String.format(
-            "Incorrect value of reserved byte. Expected: %d. Was: %d",
-            REGISTRATION_RESERVED_BYTE_VALUE, reservedByte));
-      }
-
-      return new RegisterResponse(userPublicKey, keyHandle, attestationCertificate, signature);
-    } catch (IOException e) {
-      throw new U2FException("Error when parsing raw RegistrationResponse", e);
-    } catch (CertificateException e) {
-      throw new U2FException("Error when parsing attestation certificate", e);
+      return ByteSink.create()
+              .put(REGISTRATION_RESERVED_BYTE_VALUE)
+              .put(registerResponse.getUserPublicKey())
+              .put((byte) keyHandle.length)
+              .put(keyHandle)
+              .put(registerResponse.getAttestationCertificate().getEncoded())
+              .put(registerResponse.getSignature())
+              .toByteArray();
+    } catch (CertificateEncodingException e) {
+      throw new U2fException("Error when encoding attestation certificate.", e);
     }
   }
 
+  public static RegisterResponse decodeRegisterResponse(String rawDataBase64) throws U2fException {
+    return decodeRegisterResponse(Base64.decodeBase64(rawDataBase64));
+  }
+
+  public static RegisterResponse decodeRegisterResponse(byte[] data) throws U2fException {
+    ByteInputStream bytes = new ByteInputStream(data);
+    byte reservedByte = bytes.readSigned();
+    if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
+      throw new U2fException(String.format(
+          "Incorrect value of reserved byte. Expected: %d. Was: %d",
+          REGISTRATION_RESERVED_BYTE_VALUE, reservedByte));
+    }
+    try {
+      return new RegisterResponse(
+              bytes.read(65),
+              bytes.read(bytes.readUnsigned()),
+              (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(bytes),
+              bytes.readAll()
+      );
+    } catch (CertificateException e) {
+      throw new U2fException("Error when parsing attestation certificate", e);
+    }
+  }
 
   public static byte[] encodeAuthenticateRequest(AuthenticateRequest authenticateRequest)
-      throws U2FException {
-    byte controlByte = authenticateRequest.getControl();
-    byte[] appIdSha256 = authenticateRequest.getApplicationSha256();
-    byte[] challengeSha256 = authenticateRequest.getChallengeSha256();
-    byte[] keyHandle = authenticateRequest.getKeyHandle();
+      throws U2fException {
 
+    byte[] keyHandle = authenticateRequest.getKeyHandle();
     if (keyHandle.length > 255) {
-      throw new U2FException("keyHandle length cannot be longer than 255 bytes!");
+      throw new U2fException("keyHandle cannot be longer than 255 bytes!");
     }
 
     return ByteSink.create()
-            .put(controlByte)
-            .put(challengeSha256)
-            .put(appIdSha256)
+            .put(authenticateRequest.getControl())
+            .put(authenticateRequest.getChallengeHash())
+            .put(authenticateRequest.getApplicationHash())
             .put((byte) keyHandle.length)
             .put(keyHandle)
             .toByteArray();
   }
 
-  public static AuthenticateRequest decodeAuthenticateRequest(byte[] data) throws U2FException {
+  // TODO: Why is this only being used by tests?
+  public static AuthenticateRequest decodeAuthenticateRequest(byte[] data) throws U2fException {
     try {
       ByteInputStream bytes = new ByteInputStream(data);
-      byte controlByte = bytes.readByte();
-      byte[] challengeSha256 = bytes.read(32);
-      byte[] appIdSha256 = bytes.read(32);
-      byte[] keyHandle = bytes.read(bytes.readUnsignedByte());
-
-      return new AuthenticateRequest(controlByte, challengeSha256, appIdSha256, keyHandle);
+      return new AuthenticateRequest(
+              bytes.readByte(),
+              bytes.read(32),
+              bytes.read(32),
+              bytes.read(bytes.readUnsignedByte())
+      );
     } catch (IOException e) {
-      throw new U2FException("Error when parsing raw RegistrationResponse", e);
+      throw new U2fException("Error when parsing raw RegistrationResponse", e);
     }
   }
 
+  // TODO: Why is this only being used by tests?
   public static byte[] encodeAuthenticateResponse(AuthenticateResponse authenticateResponse)
-      throws U2FException {
-    byte userPresence = authenticateResponse.getUserPresence();
-    int counter = authenticateResponse.getCounter();
-    byte[] signature = authenticateResponse.getSignature();
+      throws U2fException {
 
     return ByteSink.create()
-            .put(userPresence)
-            .putInt(counter)
-            .put(signature)
+            .put(authenticateResponse.getUserPresence())
+            .putInt(authenticateResponse.getCounter())
+            .put(authenticateResponse.getSignature())
             .toByteArray();
   }
 
-  public static AuthenticateResponse decodeAuthenticateResponse(byte[] data) throws U2FException {
-    try {
-      ByteInputStream bytes = new ByteInputStream(data);
-      byte userPresence = bytes.readSigned();
-      int counter = bytes.readInt();
-      byte[] signature = bytes.readAll();
-
-      return new AuthenticateResponse(userPresence, counter, signature);
-    } catch (IOException e) {
-      throw new U2FException("Error when parsing rawSignData", e);
-    }
+  public static AuthenticateResponse decodeAuthenticateResponse(String rawSignDataBase64) throws U2fException {
+    return decodeAuthenticateResponse(Base64.decodeBase64(rawSignDataBase64));
   }
 
-  public static byte[] encodeRegistrationSignedBytes(byte[] applicationSha256,
-      byte[] challengeSha256, byte[] keyHandle, byte[] userPublicKey) {
+  public static AuthenticateResponse decodeAuthenticateResponse(byte[] data) throws U2fException {
+    ByteInputStream bytes = new ByteInputStream(data);
+    return new AuthenticateResponse(
+            bytes.readSigned(),
+            bytes.readInteger(),
+            bytes.readAll()
+    );
+  }
+
+  public static byte[] encodeRegistrationSignedBytes(byte[] applicationHash, byte[] challengeHash,
+                                                     byte[] keyHandle, byte[] userPublicKey) {
 
     return ByteSink.create()
             .put(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE)
-            .put(applicationSha256)
-            .put(challengeSha256)
+            .put(applicationHash)
+            .put(challengeHash)
             .put(keyHandle)
             .put(userPublicKey)
             .toByteArray();
   }
 
-  public static byte[] encodeAuthenticateSignedBytes(byte[] applicationSha256, byte userPresence,
-      int counter, byte[] challengeSha256) {
+  public static byte[] encodeAuthenticateSignedBytes(byte[] applicationHash, byte userPresence,
+                                                     int counter, byte[] challengeHash) {
 
     return ByteSink.create()
-            .put(applicationSha256)
+            .put(applicationHash)
             .put(userPresence)
             .putInt(counter)
-            .put(challengeSha256)
+            .put(challengeHash)
             .toByteArray();
   }
 }

@@ -13,15 +13,15 @@ public class AuthenticateRequest {
   public static final byte USER_PRESENCE_SIGN = 0x03;
 
   private final byte control;
-  private final byte[] challengeSha256;
-  private final byte[] applicationSha256;
+  private final byte[] challengeHash;
+  private final byte[] applicationHash;
   private final byte[] keyHandle;
 
-  public AuthenticateRequest(byte control, byte[] challengeSha256, byte[] applicationSha256,
+  public AuthenticateRequest(byte control, byte[] challengeHash, byte[] applicationHash,
       byte[] keyHandle) {
     this.control = control;
-    this.challengeSha256 = challengeSha256;
-    this.applicationSha256 = applicationSha256;
+    this.challengeHash = challengeHash;
+    this.applicationHash = applicationHash;
     this.keyHandle = keyHandle;
   }
 
@@ -40,16 +40,16 @@ public class AuthenticateRequest {
    * (hence the name of the parameter). See below for a detailed explanation of
    * Client Data.
    */
-  public byte[] getChallengeSha256() {
-    return challengeSha256;
+  public byte[] getChallengeHash() {
+    return challengeHash;
   }
 
   /**
    * The application parameter is the SHA-256 hash of the application identity
    * of the application requesting the registration
    */
-  public byte[] getApplicationSha256() {
-    return applicationSha256;
+  public byte[] getApplicationHash() {
+    return applicationHash;
   }
 
   /** The key handle obtained during registration. */
@@ -61,8 +61,8 @@ public class AuthenticateRequest {
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + Arrays.hashCode(applicationSha256);
-    result = prime * result + Arrays.hashCode(challengeSha256);
+    result = prime * result + Arrays.hashCode(applicationHash);
+    result = prime * result + Arrays.hashCode(challengeHash);
     result = prime * result + control;
     result = prime * result + Arrays.hashCode(keyHandle);
     return result;
@@ -77,9 +77,9 @@ public class AuthenticateRequest {
     if (getClass() != obj.getClass())
       return false;
     AuthenticateRequest other = (AuthenticateRequest) obj;
-    if (!Arrays.equals(applicationSha256, other.applicationSha256))
+    if (!Arrays.equals(applicationHash, other.applicationHash))
       return false;
-    if (!Arrays.equals(challengeSha256, other.challengeSha256))
+    if (!Arrays.equals(challengeHash, other.challengeHash))
       return false;
     if (control != other.control)
       return false;
