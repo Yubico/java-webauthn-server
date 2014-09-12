@@ -5,15 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.yubico</groupId>
-    <artifactId>java-u2flib-server</artifactId>
+    <artifactId>u2fserver-parent</artifactId>
+    <packaging>pom</packaging>
     <version>0.1.0-SNAPSHOT</version>
+    <modules>
+        <module>u2fserver-core</module>
+    </modules>
 
     <dependencies>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.51</version>
-        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -35,11 +34,6 @@
             <artifactId>mockito-all</artifactId>
             <version>1.9.5</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.9</version>
         </dependency>
         <dependency>
             <groupId>org.simpleframework</groupId>
