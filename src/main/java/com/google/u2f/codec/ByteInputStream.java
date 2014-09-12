@@ -1,11 +1,12 @@
 package com.google.u2f.codec;
 
-import com.google.u2f.U2fException;
-
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+/**
+ * Provides an easy way to read a byte array in chunks.
+ */
 //  ByteArrayInputStream cannot throw IOExceptions, so this class is converting checked exceptions to unchecked.
 public class ByteInputStream extends DataInputStream {
 
@@ -52,16 +53,6 @@ public class ByteInputStream extends DataInputStream {
   int readUnsigned() {
     try {
       return readUnsignedByte();
-    } catch (IOException e) {
-      throw new AssertionError();
-    }
-  }
-
-  void checkIsExhausted() throws U2fException {
-    try {
-      if(available() != 0) {
-        throw new U2fException("Message ends with unexpected data");
-      }
     } catch (IOException e) {
       throw new AssertionError();
     }

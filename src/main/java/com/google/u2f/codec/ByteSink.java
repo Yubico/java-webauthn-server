@@ -4,14 +4,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+/**
+ * Provides an easy way to construct a byte array.
+ */
 public class ByteSink {
 
   ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  DataOutputStream w = new DataOutputStream(baos);
+  DataOutputStream dataOutputStream = new DataOutputStream(baos);
 
   ByteSink putInt(int i) {
     try {
-      w.writeInt(i);
+      dataOutputStream.writeInt(i);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -20,7 +23,7 @@ public class ByteSink {
 
   ByteSink put(byte b) {
     try {
-      w.write(b);
+      dataOutputStream.write(b);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -29,7 +32,7 @@ public class ByteSink {
 
   ByteSink put(byte[] b) {
     try {
-      w.write(b);
+      dataOutputStream.write(b);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -38,7 +41,7 @@ public class ByteSink {
 
   byte[] toByteArray() {
     try {
-      w.flush();
+      dataOutputStream.flush();
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
@@ -48,5 +51,4 @@ public class ByteSink {
   static ByteSink create() {
     return new ByteSink();
   }
-
 }

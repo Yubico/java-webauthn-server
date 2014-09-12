@@ -8,6 +8,9 @@ package com.google.u2f.key.messages;
 
 import java.util.Arrays;
 
+/**
+ * The authenticate response produced by the token/key.
+ */
 public class AuthenticateResponse {
   private final byte userPresence;
   private final int counter;

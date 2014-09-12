@@ -9,6 +9,9 @@ package com.google.u2f.key.messages;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+/**
+ * The register response produced by the token/key.
+ */
 public class RegisterResponse {
   private final byte[] userPublicKey;
   private final byte[] keyHandle;
@@ -17,7 +20,6 @@ public class RegisterResponse {
 
   public RegisterResponse(byte[] userPublicKey, byte[] keyHandle,
       X509Certificate attestationCertificate, byte[] signature) {
-    super();
     this.userPublicKey = userPublicKey;
     this.keyHandle = keyHandle;
     this.attestationCertificate = attestationCertificate;
