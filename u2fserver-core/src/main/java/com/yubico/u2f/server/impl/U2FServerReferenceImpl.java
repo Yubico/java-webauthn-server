@@ -62,6 +62,13 @@ public class U2FServerReferenceImpl implements U2FServer {
   private final Crypto crypto;
   private final Set<String> allowedOrigins;
 
+  public U2FServerReferenceImpl(DataStore dataStore, Set<String> origins) {
+    this.challengeGenerator = new ChallengeGeneratorImpl();
+    this.dataStore = dataStore;
+    this.crypto = new BouncyCastleCrypto();
+    this.allowedOrigins = canonicalizeOrigins(origins);
+  }
+
   public U2FServerReferenceImpl(ChallengeGenerator challengeGenerator,
       DataStore dataStore, Crypto crypto, Set<String> origins) {
     this.challengeGenerator = challengeGenerator;

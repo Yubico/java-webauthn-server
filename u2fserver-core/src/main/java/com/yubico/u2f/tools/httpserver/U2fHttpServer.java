@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 
 import com.yubico.u2f.server.impl.BouncyCastleCrypto;
 import com.yubico.u2f.server.impl.MemoryDataStore;
+import com.yubico.u2f.server.impl.SessionIdGeneratorImpl;
 import com.yubico.u2f.server.impl.U2FServerReferenceImpl;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -45,33 +46,12 @@ public class U2fHttpServer {
 
   private final Object lock = new Object();
   private final U2FServer u2fServer;
-  private final SecureRandom random = new SecureRandom();
 
-  private long sessionIdCounter = 0;
-  
   public static void main(String[] args) throws InterruptedException {
     new U2fHttpServer();
   }
 
   public U2fHttpServer() {
-    ChallengeGenerator challengeGenerator = new ChallengeGenerator() {
-      @Override
-      public byte[] generateChallenge(String accountName) {
-        byte[] randomBytes = new byte[32];
-        random.nextBytes(randomBytes);
-        return randomBytes;
-      }
-    };
-
-    SessionIdGenerator sessionIdGenerator = new SessionIdGenerator() {
-      @Override
-      public String generateSessionId(String accountName) {
-        return "sessionId_"
-          + (sessionIdCounter++)
-          + "_"
-          + accountName;
-      }
-    };
 
     X509Certificate trustedCertificate;
     try {
@@ -93,12 +73,13 @@ public class U2fHttpServer {
     } catch (DecoderException e) {
       throw new RuntimeException(e);
     }
-    DataStore dataStore = new MemoryDataStore(sessionIdGenerator);
+    DataStore dataStore = new MemoryDataStore(new SessionIdGeneratorImpl());
     dataStore.addTrustedCertificate(trustedCertificate);
 
     // this implementation will only accept signatures from http://localhost:8080
-    u2fServer = new U2FServerReferenceImpl(challengeGenerator, dataStore,
-        new BouncyCastleCrypto(), ImmutableSet.of("http://localhost:8080", "https://www.example.com"));
+    u2fServer = new U2FServerReferenceImpl(dataStore,
+            ImmutableSet.of("http://localhost:8080", "https://www.example.com"));
+
     Container dispatchContainer = new RequestDispatcher()
         .registerContainer("/", new StaticHandler("text/html","html/index.html"))
         .registerContainer("/enroll", new StaticHandler("text/html","html/enroll.html"))

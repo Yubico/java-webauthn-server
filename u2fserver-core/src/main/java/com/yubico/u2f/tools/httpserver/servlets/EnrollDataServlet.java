@@ -11,6 +11,7 @@ package com.yubico.u2f.tools.httpserver.servlets;
 
 import java.io.PrintStream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.u2f.server.U2FServer;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import org.simpleframework.http.Request;
@@ -36,12 +37,9 @@ public class EnrollDataServlet extends JavascriptServlet {
     }
     RegistrationRequest registrationRequest = u2fServer.getRegistrationRequest(userName, "http://localhost:8080");
 
-    JsonObject enrollServerData = new JsonObject();
-    enrollServerData.addProperty("appId", registrationRequest.getAppId());
-    enrollServerData.addProperty("challenge", registrationRequest.getChallenge());
-    enrollServerData.addProperty("version", registrationRequest.getVersion());
-    enrollServerData.addProperty("sessionId", registrationRequest.getSessionId());
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.writeValueAsString(registrationRequest);
 
-    body.println("var enrollData = " + enrollServerData.toString() + ";");
+    body.println(mapper.writeValueAsString(registrationRequest));
   }
 }

@@ -9,14 +9,19 @@
 
 package com.yubico.u2f.server.messages;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
+
 public class RegistrationRequest {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
    */
+  @JsonProperty
   private final String version;
 
   /** The websafe-base64-encoded challenge. */
+  @JsonProperty
   private final String challenge;
 
   /**
@@ -25,6 +30,7 @@ public class RegistrationRequest {
    * application id. The browser enforces that the calling origin belongs to the
    * application identified by the application id.
    */
+  @JsonProperty
   private final String appId;
 
   /**
@@ -34,6 +40,7 @@ public class RegistrationRequest {
    * will include the sessionId. This allows the RP to fire off multiple signing
    * requests, and associate the responses with the correct request
    */
+  @JsonProperty
   private final String sessionId;
 
   public RegistrationRequest(String version, String challenge, String appId, String sessionId) {
@@ -43,31 +50,9 @@ public class RegistrationRequest {
     this.sessionId = sessionId;
   }
 
-  public String getVersion() {
-    return version;
-  }
-
-  public String getChallenge() {
-    return challenge;
-  }
-
-  public String getAppId() {
-    return appId;
-  }
-
-  public String getSessionId() {
-    return sessionId;
-  }
-
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((appId == null) ? 0 : appId.hashCode());
-    result = prime * result + ((challenge == null) ? 0 : challenge.hashCode());
-    result = prime * result + ((sessionId == null) ? 0 : sessionId.hashCode());
-    result = prime * result + ((version == null) ? 0 : version.hashCode());
-    return result;
+    return Objects.hashCode(version, challenge, appId, sessionId);
   }
 
   @Override
