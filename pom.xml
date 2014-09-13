@@ -8,6 +8,7 @@
     <artifactId>u2fserver-parent</artifactId>
     <packaging>pom</packaging>
     <version>0.1.0-SNAPSHOT</version>
+    <name>U2F parent</name>
     <modules>
         <module>u2fserver-core</module>
         <module>u2fserver-dropwizard</module>
@@ -53,5 +54,18 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

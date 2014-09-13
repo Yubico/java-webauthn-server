@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>u2fserver-core</artifactId>
+    <name>U2F core</name>
 
     <dependencies>
         <dependency>

@@ -9,11 +9,9 @@
 
 package com.yubico.u2f.dropwizard;
 
-import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.U2fException;
+import com.yubico.u2f.server.DataStore;
 import com.yubico.u2f.server.U2FServer;
-import com.yubico.u2f.server.impl.MemoryDataStore;
-import com.yubico.u2f.server.impl.SessionIdGeneratorImpl;
 import com.yubico.u2f.server.impl.U2FServerReferenceImpl;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import com.yubico.u2f.server.messages.SignRequest;
@@ -24,6 +22,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
+import java.util.Set;
 
 @Path("/u2f")
 @Produces(MediaType.APPLICATION_JSON)
@@ -31,10 +30,8 @@ public class U2fResource {
 
   private final U2FServer u2fServer;
 
-  public U2fResource() {
-    this.u2fServer = new U2FServerReferenceImpl(
-            new MemoryDataStore(new SessionIdGeneratorImpl()), ImmutableSet.of("http://localhost:8080")
-    );
+  public U2fResource(DataStore dataStore, Set<String> allowedOrigins) {
+    this.u2fServer = new U2FServerReferenceImpl(dataStore, allowedOrigins);
   }
 
   @POST
