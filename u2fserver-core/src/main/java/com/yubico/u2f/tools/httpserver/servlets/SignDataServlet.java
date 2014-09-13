@@ -12,6 +12,7 @@ package com.yubico.u2f.tools.httpserver.servlets;
 import java.io.PrintStream;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.u2f.server.U2FServer;
 import com.yubico.u2f.server.messages.SignRequest;
 import org.simpleframework.http.Request;
@@ -38,18 +39,9 @@ public class SignDataServlet extends JavascriptServlet {
     }
 
     List<SignRequest> signRequests = u2fServer.getSignRequest(userName, "http://localhost:8080");
-    JsonArray result = new JsonArray();
-    
-    for (SignRequest signRequest : signRequests) {
-      JsonObject signServerData = new JsonObject();
-      signServerData.addProperty("appId", signRequest.getAppId());
-      signServerData.addProperty("challenge", signRequest.getChallenge());
-      signServerData.addProperty("version", signRequest.getVersion());
-      signServerData.addProperty("sessionId", signRequest.getSessionId());
-      signServerData.addProperty("keyHandle", signRequest.getKeyHandle());
-      result.add(signServerData);
-    }
 
-    body.println("var signData = " + result.toString() + ";");
+    ObjectMapper mapper = new ObjectMapper();
+
+    body.println("var signData = " + mapper.writeValueAsString(signRequests) + ";");
   }
 }
