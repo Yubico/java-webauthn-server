@@ -8,16 +8,24 @@
 package com.yubico.u2f.dropwizard;
 
 import com.yubico.u2f.server.DataStore;
+import com.yubico.u2f.server.impl.DataStoreProxy;
 import io.dropwizard.Bundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
+import java.util.Map;
 import java.util.Set;
 
 public class U2fBundle implements Bundle {
 
   private final DataStore dataStore;
   private final Set<String> allowedOrigins;
+
+  public U2fBundle(Map<String, byte[]> dataStore, Set<String> allowedOrigins) {
+
+    this.dataStore = new DataStoreProxy(dataStore);
+    this.allowedOrigins = allowedOrigins;
+  }
 
   public U2fBundle(DataStore dataStore, Set<String> allowedOrigins) {
 

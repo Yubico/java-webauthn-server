@@ -9,10 +9,12 @@
 
 package com.yubico.u2f.server;
 
+import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.yubico.u2f.server.data.EnrollSessionData;
 import com.yubico.u2f.server.data.SecurityKeyData;
 import com.yubico.u2f.server.data.SignSessionData;
@@ -20,25 +22,25 @@ import com.yubico.u2f.server.data.SignSessionData;
 public interface DataStore {
   
   // attestation certs and trust
-  public void addTrustedCertificate(X509Certificate certificate);
+  void addTrustedCertificate(X509Certificate certificate);
 
-  public Set<X509Certificate> getTrustedCertificates();
+  Set<X509Certificate> getTrustedCertificates();
 
-  
+
   // session handling
-  public /* sessionId */ String storeSessionData(EnrollSessionData sessionData);
+  /* sessionId */ String storeSessionData(EnrollSessionData sessionData);
 
-  public SignSessionData getSignSessionData(String sessionId);
+  SignSessionData getSignSessionData(String sessionId);
   
-  public EnrollSessionData getEnrollSessionData(String sessionId);
+  EnrollSessionData getEnrollSessionData(String sessionId);
 
   
   // security key management
-  public void addSecurityKeyData(String accountName, SecurityKeyData securityKeyData);
+  void addSecurityKeyData(String accountName, SecurityKeyData securityKeyData);
 
-  public List<SecurityKeyData> getSecurityKeyData(String accountName);
+  List<SecurityKeyData> getSecurityKeyData(String accountName);
   
-  public void removeSecurityKey(String accountName, byte[] publicKey);
+  void removeSecurityKey(String accountName, byte[] publicKey);
   
-  public void updateSecurityKeyCounter(String accountName, byte[] publicKey, int newCounterValue);
+  void updateSecurityKeyCounter(String accountName, byte[] publicKey, int newCounterValue);
 }

@@ -10,6 +10,7 @@
 package com.yubico.u2f.server.data;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class EnrollSessionData implements Serializable {
   private static final long serialVersionUID = 1750990095756334568L;
@@ -34,5 +35,16 @@ public class EnrollSessionData implements Serializable {
   
   public String getAppId() {
 	return appId; 
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof EnrollSessionData) {
+      EnrollSessionData that = (EnrollSessionData) obj;
+      return this.accountName.equals(that.accountName)
+              && this.appId.equals(that.appId)
+              && Arrays.equals(this.challenge, that.challenge);
+    }
+    return false;
   }
 }

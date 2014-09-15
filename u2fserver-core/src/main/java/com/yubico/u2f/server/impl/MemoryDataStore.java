@@ -37,7 +37,7 @@ public class MemoryDataStore implements DataStore {
   
   @Override
   public String storeSessionData(EnrollSessionData sessionData) {
-	String sessionId = sessionIdGenerator.generateSessionId(sessionData.getAccountName());
+	  String sessionId = sessionIdGenerator.generateSessionId(sessionData.getAccountName());
     sessionDataBase.put(sessionId, sessionData);
     return sessionId;
   }

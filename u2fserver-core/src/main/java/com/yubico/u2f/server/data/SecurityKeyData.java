@@ -9,6 +9,7 @@
 
 package com.yubico.u2f.server.data;
 
+import java.io.Serializable;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
@@ -16,7 +17,9 @@ import org.apache.commons.codec.binary.Base64;
 
 import com.google.common.base.Objects;
 
-public class SecurityKeyData {
+public class SecurityKeyData implements Serializable {
+  private static final long serialVersionUID = -142942195464329902L;
+
   private final long enrollmentTime;
   private final byte[] keyHandle;
   private final byte[] publicKey;

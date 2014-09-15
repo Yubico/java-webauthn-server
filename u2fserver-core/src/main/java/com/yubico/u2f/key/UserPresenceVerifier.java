@@ -10,5 +10,5 @@
 package com.yubico.u2f.key;
 
 public interface UserPresenceVerifier {
-	public static final byte USER_PRESENT_FLAG = 0x01;
+	static final byte USER_PRESENT_FLAG = 0x01;
 }
