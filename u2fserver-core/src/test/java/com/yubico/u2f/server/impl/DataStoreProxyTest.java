@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class DataStoreProxyTest {
@@ -60,9 +61,7 @@ public class DataStoreProxyTest {
   public void shouldStoreSessionData() throws Exception {
     EnrollSessionData sessionData = new EnrollSessionData(ACCOUNT_NAME, "bar", new byte[]{0x0, 0x1, 0x5F});
     String sessionId = dataStoreProxy.storeSessionData(sessionData);
-    assertTrue(
-            isEqualButNotSameInstance(sessionData, dataStoreProxy.getEnrollSessionData(sessionId))
-    );
+    assertEquals(sessionData, dataStoreProxy.getEnrollSessionData(sessionId));
   }
 
   @Test

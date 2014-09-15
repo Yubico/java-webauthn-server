@@ -8,10 +8,8 @@
 package com.yubico.u2f.server.impl;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.yubico.u2f.server.DataStore;
-import com.yubico.u2f.server.SessionIdGenerator;
 import com.yubico.u2f.server.SimpleDataStore;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.EnrollSessionData;
@@ -24,7 +22,6 @@ import java.util.*;
 public class DataStoreProxy implements DataStore {
 
   public static final String TRUSTED_CERTIFICATES = "TRUSTED_CERTIFICATES";
-  public static final String SESSION_DATA_PREFIX = "SDT";
   public static final String SECURITY_KEY_DATA_PREFIX = "SKD";
 
   private final SimpleDataStore simpleDataStore;
@@ -53,7 +50,7 @@ public class DataStoreProxy implements DataStore {
 
   public String storeSessionData(EnrollSessionData sessionData) throws IOException {
     String sessionId = new String(sessionData.getChallenge());
-    simpleDataStore.put(SESSION_DATA_PREFIX + sessionId, serialize(sessionData));
+    sessions.put(sessionId, sessionData);
     return sessionId;
   }
 
@@ -62,7 +59,7 @@ public class DataStoreProxy implements DataStore {
   }
 
   public EnrollSessionData getEnrollSessionData(String sessionId) throws IOException {
-    return (EnrollSessionData) deserialize(simpleDataStore.get(SESSION_DATA_PREFIX + sessionId));
+    return sessions.get(sessionId);
   }
 
   public void addDevice(String accountName, Device device) throws IOException {
