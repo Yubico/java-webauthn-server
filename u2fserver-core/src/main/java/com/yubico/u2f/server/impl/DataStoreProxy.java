@@ -8,18 +8,18 @@
 package com.yubico.u2f.server.impl;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.yubico.u2f.server.DataStore;
 import com.yubico.u2f.server.SessionIdGenerator;
+import com.yubico.u2f.server.SimpleDataStore;
+import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.EnrollSessionData;
-import com.yubico.u2f.server.data.SecurityKeyData;
 import com.yubico.u2f.server.data.SignSessionData;
 
 import java.io.*;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class DataStoreProxy implements DataStore {
 
@@ -27,31 +27,33 @@ public class DataStoreProxy implements DataStore {
   public static final String SESSION_DATA_PREFIX = "SDT";
   public static final String SECURITY_KEY_DATA_PREFIX = "SKD";
 
-  private final Map<String, byte[]> keyValueStorage;
-  private final SessionIdGenerator sessionIdGenerator;
+  private final SimpleDataStore simpleDataStore;
+  private final Map<String, EnrollSessionData> sessions = Collections.synchronizedMap(
+          new HashMap<String, EnrollSessionData>()
+  );
 
-  public DataStoreProxy(Map<String, byte[]> keyValueStorage) {
-    this.keyValueStorage = keyValueStorage;
-    this.sessionIdGenerator = new SessionIdGeneratorImpl();
+  public DataStoreProxy(SimpleDataStore simpleDataStore) {
+    this.simpleDataStore = simpleDataStore;
   }
 
   public void addTrustedCertificate(X509Certificate certificate) throws IOException {
     Set<X509Certificate> certs = getTrustedCertificates();
     certs.add(certificate);
-    keyValueStorage.put(TRUSTED_CERTIFICATES, serialize(certs));
+    simpleDataStore.put(TRUSTED_CERTIFICATES, serialize(certs));
   }
 
+  @SuppressWarnings("unchecked")
   public Set<X509Certificate> getTrustedCertificates() throws IOException {
-    if(!keyValueStorage.containsKey(TRUSTED_CERTIFICATES)) {
+    if(!simpleDataStore.containsKey(TRUSTED_CERTIFICATES)) {
       return Sets.newHashSet();
     }
-    byte[] trustedCertificates = keyValueStorage.get(TRUSTED_CERTIFICATES);
+    byte[] trustedCertificates = simpleDataStore.get(TRUSTED_CERTIFICATES);
     return (Set<X509Certificate>) deserialize(trustedCertificates);
   }
 
   public String storeSessionData(EnrollSessionData sessionData) throws IOException {
-    String sessionId = sessionIdGenerator.generateSessionId(sessionData.getAccountName());
-    keyValueStorage.put(SESSION_DATA_PREFIX + sessionId, serialize(sessionData));
+    String sessionId = new String(sessionData.getChallenge());
+    simpleDataStore.put(SESSION_DATA_PREFIX + sessionId, serialize(sessionData));
     return sessionId;
   }
 
@@ -60,30 +62,31 @@ public class DataStoreProxy implements DataStore {
   }
 
   public EnrollSessionData getEnrollSessionData(String sessionId) throws IOException {
-    return (EnrollSessionData) deserialize(keyValueStorage.get(SESSION_DATA_PREFIX + sessionId));
+    return (EnrollSessionData) deserialize(simpleDataStore.get(SESSION_DATA_PREFIX + sessionId));
   }
 
-  public void addSecurityKeyData(String accountName, SecurityKeyData securityKeyData) throws IOException {
-    List<SecurityKeyData> tokens = getSecurityKeyData(accountName);
-    tokens.add(securityKeyData);
+  public void addDevice(String accountName, Device device) throws IOException {
+    List<Device> tokens = getDevice(accountName);
+    tokens.add(device);
     updateSecurityKeyData(accountName, tokens);
   }
 
-  private void updateSecurityKeyData(String accountName, List<SecurityKeyData> tokens) throws IOException {
-    keyValueStorage.put(SECURITY_KEY_DATA_PREFIX + accountName, serialize(tokens));
+  private void updateSecurityKeyData(String accountName, List<Device> tokens) throws IOException {
+    simpleDataStore.put(SECURITY_KEY_DATA_PREFIX + accountName, serialize(tokens));
   }
 
-  public List<SecurityKeyData> getSecurityKeyData(String accountName) throws IOException {
-    if(!keyValueStorage.containsKey(SECURITY_KEY_DATA_PREFIX + accountName)) {
+  @SuppressWarnings("unchecked")
+  public List<Device> getDevice(String accountName) throws IOException {
+    if(!simpleDataStore.containsKey(SECURITY_KEY_DATA_PREFIX + accountName)) {
       return Lists.newArrayList();
     }
-    byte[] securityKeyBlob = keyValueStorage.get(SECURITY_KEY_DATA_PREFIX + accountName);
-    return (List<SecurityKeyData>) deserialize(securityKeyBlob);
+    byte[] securityKeyBlob = simpleDataStore.get(SECURITY_KEY_DATA_PREFIX + accountName);
+    return (List<Device>) deserialize(securityKeyBlob);
   }
 
-  public void removeSecurityKey(String accountName, byte[] publicKey) throws IOException {
-    List<SecurityKeyData> tokens = getSecurityKeyData(accountName);
-    for (SecurityKeyData token : tokens) {
+  public void removeDevice(String accountName, byte[] publicKey) throws IOException {
+    List<Device> tokens = getDevice(accountName);
+    for (Device token : tokens) {
       if (Arrays.equals(token.getPublicKey(), publicKey)) {
         tokens.remove(token);
         updateSecurityKeyData(accountName, tokens);
@@ -92,9 +95,9 @@ public class DataStoreProxy implements DataStore {
     }
   }
 
-  public void updateSecurityKeyCounter(String accountName, byte[] publicKey, int newCounterValue) throws IOException {
-    List<SecurityKeyData> tokens = getSecurityKeyData(accountName);
-    for (SecurityKeyData token : tokens) {
+  public void updateDeviceCounter(String accountName, byte[] publicKey, int newCounterValue) throws IOException {
+    List<Device> tokens = getDevice(accountName);
+    for (Device token : tokens) {
       if (Arrays.equals(token.getPublicKey(), publicKey)) {
         token.setCounter(newCounterValue);
         updateSecurityKeyData(accountName, tokens);

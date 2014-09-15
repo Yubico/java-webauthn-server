@@ -12,16 +12,14 @@ package com.yubico.u2f.tools.httpserver;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.logging.Logger;
 
-import com.yubico.u2f.server.impl.BouncyCastleCrypto;
 import com.yubico.u2f.server.impl.MemoryDataStore;
 import com.yubico.u2f.server.impl.SessionIdGeneratorImpl;
-import com.yubico.u2f.server.impl.U2FServerReferenceImpl;
+import com.yubico.u2f.server.impl.U2fServerImpl;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.simpleframework.http.core.Container;
@@ -30,10 +28,8 @@ import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
 import com.google.common.collect.ImmutableSet;
-import com.yubico.u2f.server.ChallengeGenerator;
 import com.yubico.u2f.server.DataStore;
-import com.yubico.u2f.server.SessionIdGenerator;
-import com.yubico.u2f.server.U2FServer;
+import com.yubico.u2f.server.U2fServer;
 import com.yubico.u2f.tools.httpserver.servlets.EnrollDataServlet;
 import com.yubico.u2f.tools.httpserver.servlets.EnrollFinishServlet;
 import com.yubico.u2f.tools.httpserver.servlets.RequestDispatcher;
@@ -45,13 +41,13 @@ public class U2fHttpServer {
   private final static Logger Log = Logger.getLogger(U2fHttpServer.class.getSimpleName());
 
   private final Object lock = new Object();
-  private final U2FServer u2fServer;
+  private final U2fServer u2fServer;
 
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args) throws InterruptedException, IOException {
     new U2fHttpServer();
   }
 
-  public U2fHttpServer() {
+  public U2fHttpServer() throws IOException {
 
     X509Certificate trustedCertificate;
     try {
@@ -77,7 +73,7 @@ public class U2fHttpServer {
     dataStore.addTrustedCertificate(trustedCertificate);
 
     // this implementation will only accept signatures from http://localhost:8080
-    u2fServer = new U2FServerReferenceImpl(dataStore,
+    u2fServer = new U2fServerImpl(dataStore,
             ImmutableSet.of("http://localhost:8080", "https://www.example.com"));
 
     Container dispatchContainer = new RequestDispatcher()

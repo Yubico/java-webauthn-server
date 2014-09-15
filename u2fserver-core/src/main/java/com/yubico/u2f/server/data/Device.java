@@ -17,7 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 
 import com.google.common.base.Objects;
 
-public class SecurityKeyData implements Serializable {
+public class Device implements Serializable {
   private static final long serialVersionUID = -142942195464329902L;
 
   private final long enrollmentTime;
@@ -26,12 +26,12 @@ public class SecurityKeyData implements Serializable {
   private final X509Certificate attestationCert;
   private int counter;
 
-  public SecurityKeyData(
-		  long enrollmentTime, 
-		  byte[] keyHandle, 
-		  byte[] publicKey, 
-		  X509Certificate attestationCert,
-		  int counter) {
+  public Device(
+          long enrollmentTime,
+          byte[] keyHandle,
+          byte[] publicKey,
+          X509Certificate attestationCert,
+          int counter) {
     this.enrollmentTime = enrollmentTime;
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
@@ -77,10 +77,10 @@ public class SecurityKeyData implements Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof SecurityKeyData)) {
+    if (!(obj instanceof Device)) {
       return false;
     }
-    SecurityKeyData that = (SecurityKeyData) obj;
+    Device that = (Device) obj;
     return Arrays.equals(this.keyHandle, that.keyHandle) 
         && (this.enrollmentTime == that.enrollmentTime)
         && Arrays.equals(this.publicKey, that.publicKey)

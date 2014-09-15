@@ -13,20 +13,17 @@ import java.io.PrintStream;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yubico.u2f.server.U2FServer;
+import com.yubico.u2f.server.U2fServer;
 import com.yubico.u2f.server.messages.SignRequest;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 import org.simpleframework.http.Status;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
 public class SignDataServlet extends JavascriptServlet {
 
-  private final U2FServer u2fServer;
+  private final U2fServer u2fServer;
 
-  public SignDataServlet(U2FServer u2fServer) {
+  public SignDataServlet(U2fServer u2fServer) {
     this.u2fServer = u2fServer;
   }
 

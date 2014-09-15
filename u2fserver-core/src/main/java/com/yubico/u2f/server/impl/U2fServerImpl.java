@@ -9,6 +9,7 @@
 
 package com.yubico.u2f.server.impl;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.X509Certificate;
@@ -21,8 +22,8 @@ import com.yubico.u2f.U2fException;
 import com.yubico.u2f.codec.RawMessageCodec;
 import com.yubico.u2f.key.UserPresenceVerifier;
 import com.yubico.u2f.server.Crypto;
-import com.yubico.u2f.server.U2FServer;
-import com.yubico.u2f.server.data.SecurityKeyData;
+import com.yubico.u2f.server.U2fServer;
+import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.SignSessionData;
 import org.apache.commons.codec.binary.Base64;
 
@@ -41,7 +42,7 @@ import com.yubico.u2f.server.messages.RegistrationResponse;
 import com.yubico.u2f.server.messages.SignRequest;
 import com.yubico.u2f.server.messages.SignResponse;
 
-public class U2FServerReferenceImpl implements U2FServer {
+public class U2fServerImpl implements U2fServer {
 
   private static final String U2F_VERSION = "U2F_V2";
   private static final String TYPE_PARAM = "typ";
@@ -54,7 +55,7 @@ public class U2FServerReferenceImpl implements U2FServer {
   @SuppressWarnings("unused")
   private static final String UNUSED_CHANNEL_ID = "";
   
-  private static final Logger Log = Logger.getLogger(U2FServerReferenceImpl.class.getName());
+  private static final Logger Log = Logger.getLogger(U2fServerImpl.class.getName());
   public static final int INITIAL_COUNTER_VALUE = 0;
 
   private final ChallengeGenerator challengeGenerator;
@@ -62,15 +63,15 @@ public class U2FServerReferenceImpl implements U2FServer {
   private final Crypto crypto;
   private final Set<String> allowedOrigins;
 
-  public U2FServerReferenceImpl(DataStore dataStore, Set<String> origins) {
+  public U2fServerImpl(DataStore dataStore, Set<String> origins) {
     this.challengeGenerator = new ChallengeGeneratorImpl();
     this.dataStore = dataStore;
     this.crypto = new BouncyCastleCrypto();
     this.allowedOrigins = canonicalizeOrigins(origins);
   }
 
-  public U2FServerReferenceImpl(ChallengeGenerator challengeGenerator,
-      DataStore dataStore, Crypto crypto, Set<String> origins) {
+  public U2fServerImpl(ChallengeGenerator challengeGenerator,
+                       DataStore dataStore, Crypto crypto, Set<String> origins) {
     this.challengeGenerator = challengeGenerator;
     this.dataStore = dataStore;
     this.crypto = crypto;
@@ -78,7 +79,7 @@ public class U2FServerReferenceImpl implements U2FServer {
   }
 
   @Override
-  public RegistrationRequest getRegistrationRequest(String accountName, String appId) {
+  public RegistrationRequest getRegistrationRequest(String accountName, String appId) throws IOException {
 
     byte[] challenge = challengeGenerator.generateChallenge(accountName);
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
@@ -90,10 +91,10 @@ public class U2FServerReferenceImpl implements U2FServer {
   }
 
   @Override
-  public SecurityKeyData processRegistrationResponse(RegistrationResponse registrationResponse,
-          long currentTimeInMillis) throws U2fException {
+  public Device processRegistrationResponse(RegistrationResponse registrationResponse,
+          long currentTimeInMillis) throws U2fException, IOException {
 
-    EnrollSessionData sessionData = dataStore.getEnrollSessionData(registrationResponse.getSessionId());
+    EnrollSessionData sessionData = dataStore.getEnrollSessionData(registrationResponse.getClientData());
     if (sessionData == null) {
       throw new U2fException("Unknown sessionId");
     }
@@ -103,7 +104,7 @@ public class U2FServerReferenceImpl implements U2FServer {
     X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
     checkIsTrusted(attestationCertificate);
 
-    byte[] clientData = checkClientData(registrationResponse.getBd(), "navigator.id.finishEnrollment", sessionData);
+    byte[] clientData = checkClientData(registrationResponse.getClientData(), "navigator.id.finishEnrollment", sessionData);
     byte[] userPublicKey = registerResponse.getUserPublicKey();
     byte[] keyHandle = registerResponse.getKeyHandle();
     byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(
@@ -117,18 +118,18 @@ public class U2FServerReferenceImpl implements U2FServer {
     // The first time we create the SecurityKeyData, we set the counter value to 0.
     // We don't actually know what the counter value of the real device is - but it will
     // be something bigger (or equal) to 0, so subsequent signatures will check out ok.
-    SecurityKeyData securityKeyData = new SecurityKeyData(
+    Device device = new Device(
             currentTimeInMillis,
             keyHandle,
             userPublicKey,
             attestationCertificate,
             INITIAL_COUNTER_VALUE
     );
-    dataStore.addSecurityKeyData(sessionData.getAccountName(), securityKeyData);
-    return securityKeyData;
+    dataStore.addDevice(sessionData.getAccountName(), device);
+    return device;
   }
 
-  private void checkIsTrusted(X509Certificate attestationCertificate) {
+  private void checkIsTrusted(X509Certificate attestationCertificate) throws IOException {
     Set<X509Certificate> trustedCertificates = dataStore.getTrustedCertificates();
     if (!trustedCertificates.contains(attestationCertificate)) {
       Log.warning("Attestation cert is not trusted"); // TODO: Should this be more than a warning?
@@ -136,23 +137,23 @@ public class U2FServerReferenceImpl implements U2FServer {
   }
 
   @Override
-  public List<SignRequest> getSignRequest(String accountName, String appId) throws U2fException {
+  public List<SignRequest> getSignRequest(String accountName, String appId) throws U2fException, IOException {
 
-    List<SecurityKeyData> securityKeyDataList = dataStore.getSecurityKeyData(accountName);
+    List<Device> deviceList = dataStore.getDevice(accountName);
     ImmutableList.Builder<SignRequest> result = ImmutableList.builder();
     
-    for (SecurityKeyData securityKeyData : securityKeyDataList) {
+    for (Device device : deviceList) {
       byte[] challenge = challengeGenerator.generateChallenge(accountName);
 
       String sessionId = dataStore.storeSessionData(
-              new SignSessionData(accountName, appId, challenge, securityKeyData.getPublicKey())
+              new SignSessionData(accountName, appId, challenge, device.getPublicKey())
       );
 
       SignRequest signRequest = new SignRequest(
               U2F_VERSION,
               Base64.encodeBase64URLSafeString(challenge),
               appId,
-              Base64.encodeBase64URLSafeString(securityKeyData.getKeyHandle()),
+              Base64.encodeBase64URLSafeString(device.getKeyHandle()),
               sessionId
       );
       result.add(signRequest);
@@ -161,9 +162,9 @@ public class U2FServerReferenceImpl implements U2FServer {
   }
 
   @Override
-  public SecurityKeyData processSignResponse(SignResponse signResponse) throws U2fException {
+  public Device processSignResponse(SignResponse signResponse) throws U2fException, IOException {
 
-    SignSessionData sessionData = dataStore.getSignSessionData(signResponse.getSessionId());
+    SignSessionData sessionData = dataStore.getSignSessionData(signResponse.getChallenge());
     if (sessionData == null) {
       throw new U2fException("Unknown sessionId");
     }
@@ -177,8 +178,8 @@ public class U2FServerReferenceImpl implements U2FServer {
     }
 
     int counter = authenticateResponse.getCounter();
-    SecurityKeyData securityKeyData = loadSecurityKeyData(sessionData);
-    if (counter <= securityKeyData.getCounter()) {
+    Device device = loadSecurityKeyData(sessionData);
+    if (counter <= device.getCounter()) {
       throw new U2fException("Counter value smaller than expected!");
     }
     
@@ -189,19 +190,19 @@ public class U2FServerReferenceImpl implements U2FServer {
             crypto.hash(clientData)
     );
     crypto.checkSignature(
-            crypto.decodePublicKey(securityKeyData.getPublicKey()),
+            crypto.decodePublicKey(device.getPublicKey()),
             signedBytes,
             authenticateResponse.getSignature()
     );
 
-    dataStore.updateSecurityKeyCounter(sessionData.getAccountName(), securityKeyData.getPublicKey(), counter);
-    return securityKeyData;
+    dataStore.updateDeviceCounter(sessionData.getAccountName(), device.getPublicKey(), counter);
+    return device;
   }
 
-  private SecurityKeyData loadSecurityKeyData(SignSessionData sessionData) throws U2fException {
-    for (SecurityKeyData temp : dataStore.getSecurityKeyData(sessionData.getAccountName())) {
-      if (Arrays.equals(sessionData.getPublicKey(), temp.getPublicKey())) {
-        return temp;
+  private Device loadSecurityKeyData(SignSessionData sessionData) throws U2fException, IOException {
+    for (Device device : dataStore.getDevice(sessionData.getAccountName())) {
+      if (Arrays.equals(sessionData.getPublicKey(), device.getPublicKey())) {
+        return device;
       }
     }
     throw new U2fException("No security keys registered for this user");
@@ -255,14 +256,14 @@ public class U2FServerReferenceImpl implements U2FServer {
   }
 
   @Override
-  public List<SecurityKeyData> getAllSecurityKeys(String accountName) {
-    return dataStore.getSecurityKeyData(accountName);
+  public List<Device> getAllDevices(String accountName) throws IOException {
+    return dataStore.getDevice(accountName);
   }
 
   @Override
-  public void removeSecurityKey(String accountName, byte[] publicKey)
-      throws U2fException {
-    dataStore.removeSecurityKey(accountName, publicKey);
+  public void removeDevice(String accountName, byte[] publicKey)
+          throws U2fException, IOException {
+    dataStore.removeDevice(accountName, publicKey);
   }
   
   private static Set<String> canonicalizeOrigins(Set<String> origins) {

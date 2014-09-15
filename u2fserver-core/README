@@ -1,0 +1,29 @@
+A validation client for use with the Yubico validation API (version 2).
+By default, it uses the Yubico YubiCloud validation platform, but can
+be configured for another validation server. To use YubiCloud you need a
+client ID and an API key that can be fetched from https://upgrade.yubico.com/getapikey.
+
+== Usage
+
+Add this to your pom.xml:
+
+[source,xml]
+ <dependency>
+   <groupId>com.yubico</groupId>
+   <artifactId>u2fserver-core</artifactId>
+   <version>0.1.0-SNAPSHOT</version>
+ </dependency>
+
+[source,java]
+----
+U2fServer u2fServer = new U2fServerImpl(mySimpleDataStore);
+
+u2fServer.getRegistrationRequest(username, "http://localhost:8080");
+u2fServer.processRegistrationResponse(
+            new RegistrationResponse(registrationData, clientData, sessionId),
+            System.currentTimeMillis()
+
+u2fServer.getSignRequest(username, "http://localhost:8080");
+
+u2fServer.processSignResponse(new SignResponse(clientData, signData, challenge, sessionId, appId));
+----

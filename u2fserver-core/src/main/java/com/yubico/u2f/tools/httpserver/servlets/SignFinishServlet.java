@@ -8,10 +8,11 @@
 
 package com.yubico.u2f.tools.httpserver.servlets;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.U2FServer;
+import com.yubico.u2f.server.U2fServer;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
@@ -19,9 +20,9 @@ import com.yubico.u2f.server.messages.SignResponse;
 
 public class SignFinishServlet extends HtmlServlet {
 
-  private final U2FServer u2fServer;
+  private final U2fServer u2fServer;
 
-  public SignFinishServlet(U2FServer u2fServer) {
+  public SignFinishServlet(U2fServer u2fServer) {
     this.u2fServer = u2fServer;
   }
 
@@ -31,13 +32,14 @@ public class SignFinishServlet extends HtmlServlet {
         req.getParameter("clientData"),
         req.getParameter("signData"),
         req.getParameter("challenge"),
-        req.getParameter("sessionId"),
         req.getParameter("appId"));
     try {
       u2fServer.processSignResponse(signResponse);
       body.println("Success!!!");
     } catch (U2fException e) {
       body.println("Failure: " + e.toString());
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 }

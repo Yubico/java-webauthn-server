@@ -15,8 +15,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.yubico.u2f.server.DataStore;
 import com.yubico.u2f.server.SessionIdGenerator;
+import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.EnrollSessionData;
-import com.yubico.u2f.server.data.SecurityKeyData;
 import com.yubico.u2f.server.data.SignSessionData;
 
 import java.security.cert.X509Certificate;
@@ -28,7 +28,7 @@ import java.util.Set;
 public class MemoryDataStore implements DataStore {
   private final Set<X509Certificate> trustedCertificateDataBase = Sets.newHashSet();
   private final HashMap<String, EnrollSessionData> sessionDataBase = Maps.newHashMap();
-  private final HashMap<String, List<SecurityKeyData>> securityKeyDataBase = Maps.newHashMap();
+  private final HashMap<String, List<Device>> securityKeyDataBase = Maps.newHashMap();
   private final SessionIdGenerator sessionIdGenerator;
   
   public MemoryDataStore(SessionIdGenerator sessionIdGenerator) {
@@ -53,17 +53,17 @@ public class MemoryDataStore implements DataStore {
   }
 
   @Override
-  public void addSecurityKeyData(String accountName, SecurityKeyData securityKeyData) {
-    List<SecurityKeyData> tokens = getSecurityKeyData(accountName);
-    tokens.add(securityKeyData);
+  public void addDevice(String accountName, Device device) {
+    List<Device> tokens = getDevice(accountName);
+    tokens.add(device);
     securityKeyDataBase.put(accountName, tokens);
   }
 
   @Override
-  public List<SecurityKeyData> getSecurityKeyData(String accountName) {
+  public List<Device> getDevice(String accountName) {
     return MoreObjects.firstNonNull(
             securityKeyDataBase.get(accountName),
-            Lists.<SecurityKeyData>newArrayList());
+            Lists.<Device>newArrayList());
   }
 
   @Override
@@ -77,9 +77,9 @@ public class MemoryDataStore implements DataStore {
   }
 
   @Override
-  public void removeSecurityKey(String accountName, byte[] publicKey) {
-    List<SecurityKeyData> tokens = getSecurityKeyData(accountName);
-    for (SecurityKeyData token : tokens) {
+  public void removeDevice(String accountName, byte[] publicKey) {
+    List<Device> tokens = getDevice(accountName);
+    for (Device token : tokens) {
       if (Arrays.equals(token.getPublicKey(), publicKey)) {
         tokens.remove(token);
         break;
@@ -88,10 +88,10 @@ public class MemoryDataStore implements DataStore {
   }
 
   @Override
-  public void updateSecurityKeyCounter(String accountName, byte[] publicKey,
-      int newCounterValue) {
-    List<SecurityKeyData> tokens = getSecurityKeyData(accountName);
-    for (SecurityKeyData token : tokens) {
+  public void updateDeviceCounter(String accountName, byte[] publicKey,
+                                  int newCounterValue) {
+    List<Device> tokens = getDevice(accountName);
+    for (Device token : tokens) {
       if (Arrays.equals(token.getPublicKey(), publicKey)) {
         token.setCounter(newCounterValue);
         break;

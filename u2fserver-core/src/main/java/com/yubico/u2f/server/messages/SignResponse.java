@@ -20,17 +20,13 @@ public class SignResponse {
   /** challenge originally passed */
   private final String challenge;
 
-  /** session id originally passed */
-  private final String sessionId;
-
   /** application id originally passed */
   private final String appId;
 
-  public SignResponse(String bd, String sign, String challenge, String sessionId, String appId) {
+  public SignResponse(String bd, String sign, String challenge, String appId) {
     this.bd = bd;
     this.sign = sign;
     this.challenge = challenge;
-    this.sessionId = sessionId;
     this.appId = appId;
   }
 
@@ -46,10 +42,6 @@ public class SignResponse {
     return challenge;
   }
 
-  public String getSessionId() {
-    return sessionId;
-  }
-
   public String getAppId() {
     return appId;
   }
@@ -61,7 +53,6 @@ public class SignResponse {
     result = prime * result + ((appId == null) ? 0 : appId.hashCode());
     result = prime * result + ((bd == null) ? 0 : bd.hashCode());
     result = prime * result + ((challenge == null) ? 0 : challenge.hashCode());
-    result = prime * result + ((sessionId == null) ? 0 : sessionId.hashCode());
     result = prime * result + ((sign == null) ? 0 : sign.hashCode());
     return result;
   }
@@ -89,11 +80,6 @@ public class SignResponse {
       if (other.challenge != null)
         return false;
     } else if (!challenge.equals(other.challenge))
-      return false;
-    if (sessionId == null) {
-      if (other.sessionId != null)
-        return false;
-    } else if (!sessionId.equals(other.sessionId))
       return false;
     if (sign == null) {
       if (other.sign != null)

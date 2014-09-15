@@ -10,21 +10,22 @@
 package com.yubico.u2f.tools.httpserver.servlets;
 
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.U2FServer;
-import com.yubico.u2f.server.data.SecurityKeyData;
+import com.yubico.u2f.server.U2fServer;
+import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.messages.RegistrationResponse;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EnrollFinishServlet extends HtmlServlet {
 
-  private final U2FServer u2fServer;
+  private final U2fServer u2fServer;
 
-  public EnrollFinishServlet(U2FServer u2fServer) {
+  public EnrollFinishServlet(U2fServer u2fServer) {
     this.u2fServer = u2fServer;
   }
 
@@ -34,14 +35,16 @@ public class EnrollFinishServlet extends HtmlServlet {
     String enrollData = checkNotNull(req.getParameter("registrationData"));
     String browserData = checkNotNull(req.getParameter("clientData"));
     String sessionId = checkNotNull(req.getParameter("sessionId"));
-    RegistrationResponse registrationResponse = new RegistrationResponse(enrollData, browserData, sessionId);
+    RegistrationResponse registrationResponse = new RegistrationResponse(enrollData, browserData);
 
     try {
-      SecurityKeyData tokenData =
+      Device tokenData =
               u2fServer.processRegistrationResponse(registrationResponse, System.currentTimeMillis());
       body.println("Success!!!\n\nnew token:\n" + tokenData.toString());
     } catch (U2fException e) {
       body.println("Failure: " + e.toString());
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 }

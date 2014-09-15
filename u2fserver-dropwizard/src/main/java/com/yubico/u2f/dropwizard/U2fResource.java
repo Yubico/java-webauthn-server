@@ -9,8 +9,8 @@ package com.yubico.u2f.dropwizard;
 
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.DataStore;
-import com.yubico.u2f.server.U2FServer;
-import com.yubico.u2f.server.impl.U2FServerReferenceImpl;
+import com.yubico.u2f.server.U2fServer;
+import com.yubico.u2f.server.impl.U2fServerImpl;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import com.yubico.u2f.server.messages.RegistrationResponse;
 import com.yubico.u2f.server.messages.SignRequest;
@@ -21,6 +21,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -28,42 +29,41 @@ import java.util.Set;
 @Produces(MediaType.APPLICATION_JSON)
 public class U2fResource {
 
-  private final U2FServer u2fServer;
+  private final U2fServer u2fServer;
 
   public U2fResource(DataStore dataStore, Set<String> allowedOrigins) {
-    this.u2fServer = new U2FServerReferenceImpl(dataStore, allowedOrigins);
+    this.u2fServer = new U2fServerImpl(dataStore, allowedOrigins);
   }
 
   @POST
   @Path("enroll")
-  public RegistrationRequest enroll(@QueryParam("username") String username) throws U2fException {
-    return u2fServer.getRegistrationRequest(username, "http://localhost:8080");
+  public RegistrationRequest enroll(@QueryParam("username") String username, @QueryParam("appId") String appId) throws U2fException, IOException {
+    return u2fServer.getRegistrationRequest(username, appId);
   }
 
   @POST
   @Path("bind")
   public String bind(@QueryParam("registrationData") String registrationData,
-                     @QueryParam("clientData") String clientData,
-                     @QueryParam("sessionId") String sessionId) throws U2fException {
+                     @QueryParam("clientData") String clientData) throws U2fException, IOException {
     return u2fServer.processRegistrationResponse(
-            new RegistrationResponse(registrationData, clientData, sessionId),
+            new RegistrationResponse(registrationData, clientData),
             System.currentTimeMillis()
     ).toString();
   }
 
   @POST
   @Path("sign")
-  public List<SignRequest> sign(@QueryParam("username") String username, @QueryParam("username") String data)
-          throws U2fException {
+  public List<SignRequest> sign(@QueryParam("username") String username)
+          throws U2fException, IOException {
     return u2fServer.getSignRequest(username, "http://localhost:8080");
   }
 
   @POST
   @Path("verify")
   public String verify(@QueryParam("clientData") String clientData, @QueryParam("signData") String signData,
-                       @QueryParam("challenge") String challenge,   @QueryParam("sessionId") String sessionId,
-                       @QueryParam("appId") String appId) throws U2fException {
-    u2fServer.processSignResponse(new SignResponse(clientData, signData, challenge, sessionId, appId));
+                       @QueryParam("konstigt -- bort?") String challenge,
+                       @QueryParam("appId") String appId) throws U2fException, IOException {
+    u2fServer.processSignResponse(new SignResponse(clientData, signData, challenge, appId));
     return "Success";
   }
 }

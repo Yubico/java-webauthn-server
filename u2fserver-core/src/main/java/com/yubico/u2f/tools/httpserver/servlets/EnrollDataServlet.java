@@ -12,19 +12,17 @@ package com.yubico.u2f.tools.httpserver.servlets;
 import java.io.PrintStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yubico.u2f.server.U2FServer;
+import com.yubico.u2f.server.U2fServer;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 import org.simpleframework.http.Status;
 
-import com.google.gson.JsonObject;
-
 public class EnrollDataServlet extends JavascriptServlet {
 
-  private final U2FServer u2fServer;
+  private final U2fServer u2fServer;
 
-  public EnrollDataServlet(U2FServer u2fServer) {
+  public EnrollDataServlet(U2fServer u2fServer) {
     this.u2fServer = u2fServer;
   }
 

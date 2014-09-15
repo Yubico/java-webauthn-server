@@ -14,33 +14,32 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.yubico.u2f.server.data.EnrollSessionData;
-import com.yubico.u2f.server.data.SecurityKeyData;
+import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.SignSessionData;
 
 public interface DataStore {
   
   // attestation certs and trust
-  void addTrustedCertificate(X509Certificate certificate);
+  void addTrustedCertificate(X509Certificate certificate) throws IOException;
 
-  Set<X509Certificate> getTrustedCertificates();
+  Set<X509Certificate> getTrustedCertificates() throws IOException;
 
 
   // session handling
-  /* sessionId */ String storeSessionData(EnrollSessionData sessionData);
+  String storeSessionData(EnrollSessionData sessionData) throws IOException;
 
-  SignSessionData getSignSessionData(String sessionId);
+  SignSessionData getSignSessionData(String sessionId) throws IOException;
   
-  EnrollSessionData getEnrollSessionData(String sessionId);
+  EnrollSessionData getEnrollSessionData(String sessionId) throws IOException;
 
   
-  // security key management
-  void addSecurityKeyData(String accountName, SecurityKeyData securityKeyData);
+  // device management
+  void addDevice(String accountName, Device device) throws IOException;
 
-  List<SecurityKeyData> getSecurityKeyData(String accountName);
+  List<Device> getDevice(String accountName) throws IOException;
   
-  void removeSecurityKey(String accountName, byte[] publicKey);
+  void removeDevice(String accountName, byte[] publicKey) throws IOException;
   
-  void updateSecurityKeyCounter(String accountName, byte[] publicKey, int newCounterValue);
+  void updateDeviceCounter(String accountName, byte[] publicKey, int newCounterValue) throws IOException;
 }
