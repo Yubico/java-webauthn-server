@@ -25,9 +25,6 @@ public class DataStoreProxy implements DataStore {
   public static final String SECURITY_KEY_DATA_PREFIX = "SKD";
 
   private final SimpleDataStore simpleDataStore;
-  private final Map<String, EnrollSessionData> sessions = Collections.synchronizedMap(
-          new HashMap<String, EnrollSessionData>()
-  );
 
   public DataStoreProxy(SimpleDataStore simpleDataStore) {
     this.simpleDataStore = simpleDataStore;
@@ -46,20 +43,6 @@ public class DataStoreProxy implements DataStore {
     }
     byte[] trustedCertificates = simpleDataStore.get(TRUSTED_CERTIFICATES);
     return (Set<X509Certificate>) deserialize(trustedCertificates);
-  }
-
-  public String storeSessionData(EnrollSessionData sessionData) throws IOException {
-    String sessionId = new String(sessionData.getChallenge());
-    sessions.put(sessionId, sessionData);
-    return sessionId;
-  }
-
-  public SignSessionData getSignSessionData(String sessionId) throws IOException {
-    return (SignSessionData) getEnrollSessionData(sessionId);
-  }
-
-  public EnrollSessionData getEnrollSessionData(String sessionId) throws IOException {
-    return sessions.get(sessionId);
   }
 
   public void addDevice(String accountName, Device device) throws IOException {

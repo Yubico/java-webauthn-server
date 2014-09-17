@@ -40,29 +40,17 @@ public class SignRequest {
   @JsonProperty
   private final String keyHandle;
 
-  /**
-   * A session id created by the RP. The RP can opaquely store things like
-   * expiration times for the sign-in session, protocol version used, public key
-   * expected to sign the identity assertion, etc. The response from the API
-   * will include the sessionId. This allows the RP to fire off multiple signing
-   * requests, and associate the responses with the correct request
-   */
-  @JsonProperty
-  private final String sessionId;
-
-  public SignRequest(String version, String challenge, String appId, String keyHandle,
-      String sessionId) {
+  public SignRequest(String version, String challenge, String appId, String keyHandle) {
     super();
     this.version = version;
     this.challenge = challenge;
     this.appId = appId;
     this.keyHandle = keyHandle;
-    this.sessionId = sessionId;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(version, challenge, appId, keyHandle, sessionId);
+    return Objects.hashCode(version, challenge, appId, keyHandle);
   }
 
   @Override
@@ -88,11 +76,6 @@ public class SignRequest {
       if (other.keyHandle != null)
         return false;
     } else if (!keyHandle.equals(other.keyHandle))
-      return false;
-    if (sessionId == null) {
-      if (other.sessionId != null)
-        return false;
-    } else if (!sessionId.equals(other.sessionId))
       return false;
     if (version == null) {
       if (other.version != null)

@@ -7,6 +7,9 @@
 
 package com.yubico.u2f.dropwizard;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.DataStore;
 import com.yubico.u2f.server.U2fServer;
@@ -15,11 +18,9 @@ import com.yubico.u2f.server.messages.RegistrationRequest;
 import com.yubico.u2f.server.messages.RegistrationResponse;
 import com.yubico.u2f.server.messages.SignRequest;
 import com.yubico.u2f.server.messages.SignResponse;
+import io.dropwizard.jackson.Jackson;
 
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Set;
 public class U2fResource {
 
   private final U2fServer u2fServer;
+  private final ObjectMapper mapper = Jackson.newObjectMapper();
 
   public U2fResource(DataStore dataStore, Set<String> allowedOrigins) {
     this.u2fServer = new U2fServerImpl(dataStore, allowedOrigins);
@@ -43,10 +45,10 @@ public class U2fResource {
 
   @POST
   @Path("bind")
-  public String bind(@QueryParam("registrationData") String registrationData,
-                     @QueryParam("clientData") String clientData) throws U2fException, IOException {
+  public String bind(@QueryParam("data") String data) throws U2fException, IOException {
+    JsonNode jsonData = mapper.readTree(data);
     return u2fServer.processRegistrationResponse(
-            new RegistrationResponse(registrationData, clientData),
+            new RegistrationResponse(jsonData.get("registrationData").asText(), jsonData.get("clientData").asText()),
             System.currentTimeMillis()
     ).toString();
   }
@@ -61,7 +63,7 @@ public class U2fResource {
   @POST
   @Path("verify")
   public String verify(@QueryParam("clientData") String clientData, @QueryParam("signData") String signData,
-                       @QueryParam("konstigt -- bort?") String challenge,
+                       @QueryParam("konstigt -- bort?") String challenge, //ersätt med key_handle
                        @QueryParam("appId") String appId) throws U2fException, IOException {
     u2fServer.processSignResponse(new SignResponse(clientData, signData, challenge, appId));
     return "Success";

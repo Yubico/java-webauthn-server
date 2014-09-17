@@ -25,15 +25,6 @@ public interface DataStore {
 
   Set<X509Certificate> getTrustedCertificates() throws IOException;
 
-
-  // session handling
-  String storeSessionData(EnrollSessionData sessionData) throws IOException;
-
-  SignSessionData getSignSessionData(String sessionId) throws IOException;
-  
-  EnrollSessionData getEnrollSessionData(String sessionId) throws IOException;
-
-  
   // device management
   void addDevice(String accountName, Device device) throws IOException;
 

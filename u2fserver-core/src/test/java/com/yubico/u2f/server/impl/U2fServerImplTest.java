@@ -12,6 +12,7 @@ package com.yubico.u2f.server.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +38,6 @@ import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.server.ChallengeGenerator;
 import com.yubico.u2f.server.Crypto;
 import com.yubico.u2f.server.DataStore;
-import com.yubico.u2f.server.SessionIdGenerator;
 import com.yubico.u2f.server.U2fServer;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import com.yubico.u2f.server.messages.RegistrationResponse;
@@ -45,9 +45,9 @@ import com.yubico.u2f.server.messages.SignRequest;
 
 public class U2fServerImplTest extends TestVectors {
   @Mock ChallengeGenerator mockChallengeGenerator;
-  @Mock SessionIdGenerator mockSessionIdGenerator;
   @Mock DataStore mockDataStore;
-  
+  SessionManager sessionManager;
+
   private final Crypto crypto = new BouncyCastleCrypto();
   private U2fServer u2fServer;
 
@@ -60,8 +60,6 @@ public class U2fServerImplTest extends TestVectors {
 
     when(mockChallengeGenerator.generateChallenge(ACCOUNT_NAME))
     .thenReturn(SERVER_CHALLENGE_ENROLL);
-    when(mockSessionIdGenerator.generateSessionId(ACCOUNT_NAME)).thenReturn(SESSION_ID);
-    when(mockDataStore.storeSessionData(Matchers.<EnrollSessionData>any())).thenReturn(SESSION_ID);
     when(mockDataStore.getTrustedCertificates()).thenReturn(trustedCertificates);
     when(mockDataStore.getDevice(ACCOUNT_NAME)).thenReturn(
         ImmutableList.of(new Device(0L, KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0)));
@@ -81,20 +79,19 @@ public class U2fServerImplTest extends TestVectors {
   @Test
   public void testGetRegistrationRequest() throws Exception {
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS);
+        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
 
     RegistrationRequest registrationRequest = u2fServer.getRegistrationRequest(ACCOUNT_NAME, APP_ID_ENROLL);
 
-    assertEquals(new RegistrationRequest("U2F_V2", SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL,
-        SESSION_ID), registrationRequest);
+    assertEquals(new RegistrationRequest("U2F_V2", SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL), registrationRequest);
   }
 
   @Test
   public void testProcessRegistrationResponse() throws Exception {
-	when(mockDataStore.getEnrollSessionData(SESSION_ID)).thenReturn(
+	when(sessionManager.getEnrollSessionData(anyString())).thenReturn(
         new EnrollSessionData(ACCOUNT_NAME, APP_ID_ENROLL, SERVER_CHALLENGE_ENROLL));
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS);
+        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
 
     RegistrationResponse registrationResponse = new RegistrationResponse(REGISTRATION_DATA_BASE64,
         BROWSER_DATA_ENROLL_BASE64);
@@ -107,14 +104,14 @@ public class U2fServerImplTest extends TestVectors {
 
   @Test
   public void testProcessRegistrationResponse2() throws Exception {
-	when(mockDataStore.getEnrollSessionData(SESSION_ID)).thenReturn(
+	when(sessionManager.getEnrollSessionData(anyString())).thenReturn(
 	     new EnrollSessionData(ACCOUNT_NAME, APP_ID_ENROLL, SERVER_CHALLENGE_ENROLL));
     HashSet<X509Certificate> trustedCertificates = new HashSet<X509Certificate>();
     trustedCertificates.add(VENDOR_CERTIFICATE);
     trustedCertificates.add(TRUSTED_CERTIFICATE_2);
     when(mockDataStore.getTrustedCertificates()).thenReturn(trustedCertificates);
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS);
+        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
 
     RegistrationResponse registrationResponse = new RegistrationResponse(REGISTRATION_DATA_2_BASE64,
         BROWSER_DATA_2_BASE64);
@@ -128,21 +125,21 @@ public class U2fServerImplTest extends TestVectors {
   @Test
   public void testGetSignRequest() throws Exception {
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS);
+        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
     when(mockChallengeGenerator.generateChallenge(ACCOUNT_NAME)).thenReturn(SERVER_CHALLENGE_SIGN);
 
     List<SignRequest> signRequest = u2fServer.getSignRequest(ACCOUNT_NAME, APP_ID_SIGN);
 
     assertEquals(new SignRequest("U2F_V2", SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN,
-        KEY_HANDLE_BASE64, SESSION_ID), signRequest.get(0));
+        KEY_HANDLE_BASE64), signRequest.get(0));
   }
 
   @Test
   public void testProcessSignResponse() throws Exception {
-	when(mockDataStore.getSignSessionData(SESSION_ID)).thenReturn(
+	when(sessionManager.getSignSessionData(anyString())).thenReturn(
 	    new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX));
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS);
+        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
     SignResponse signResponse = new SignResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
 
@@ -151,10 +148,10 @@ public class U2fServerImplTest extends TestVectors {
 
   @Test
   public void testProcessSignResponse_badOrigin() throws Exception {
-    when(mockDataStore.getSignSessionData(SESSION_ID)).thenReturn(
+    when(sessionManager.getSignSessionData(anyString())).thenReturn(
         new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX));
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, ImmutableSet.of("some-other-domain.com"));
+        mockDataStore, crypto, ImmutableSet.of("some-other-domain.com"), sessionManager);
     SignResponse signResponse = new SignResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
 
@@ -170,12 +167,12 @@ public class U2fServerImplTest extends TestVectors {
   // TODO: put test back in once we have signature sample on a correct browserdata json
   // (currently, this test uses an enrollment browserdata during a signature)
   public void testProcessSignResponse2() throws Exception {
-	when(mockDataStore.getSignSessionData(SESSION_ID)).thenReturn(
+	when(sessionManager.getSignSessionData(anyString())).thenReturn(
 	    new SignSessionData(ACCOUNT_NAME, APP_ID_2, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_2));
     when(mockDataStore.getDevice(ACCOUNT_NAME)).thenReturn(
         ImmutableList.of(new Device(0l, KEY_HANDLE_2, USER_PUBLIC_KEY_2, VENDOR_CERTIFICATE, 0)));
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS);
+        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
     SignResponse signResponse = new SignResponse(BROWSER_DATA_2_BASE64, SIGN_DATA_2_BASE64,
         CHALLENGE_2_BASE64, APP_ID_2);
 

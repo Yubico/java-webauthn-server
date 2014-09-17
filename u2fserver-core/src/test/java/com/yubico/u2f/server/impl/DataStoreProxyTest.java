@@ -58,13 +58,6 @@ public class DataStoreProxyTest {
   }
 
   @Test
-  public void shouldStoreSessionData() throws Exception {
-    EnrollSessionData sessionData = new EnrollSessionData(ACCOUNT_NAME, "bar", new byte[]{0x0, 0x1, 0x5F});
-    String sessionId = dataStoreProxy.storeSessionData(sessionData);
-    assertEquals(sessionData, dataStoreProxy.getEnrollSessionData(sessionId));
-  }
-
-  @Test
   public void shouldStoreCerts() throws Exception {
     X509Certificate certificate = DummyCertificateGenerator.generate();
     dataStoreProxy.addTrustedCertificate(certificate);

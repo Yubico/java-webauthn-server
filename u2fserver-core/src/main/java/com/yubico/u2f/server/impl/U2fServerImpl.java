@@ -62,6 +62,7 @@ public class U2fServerImpl implements U2fServer {
   private final DataStore dataStore;
   private final Crypto crypto;
   private final Set<String> allowedOrigins;
+  private final SessionManager sessionManager = new SessionManager();
 
   public U2fServerImpl(DataStore dataStore, Set<String> origins) {
     this.challengeGenerator = new ChallengeGeneratorImpl();
@@ -71,7 +72,7 @@ public class U2fServerImpl implements U2fServer {
   }
 
   public U2fServerImpl(ChallengeGenerator challengeGenerator,
-                       DataStore dataStore, Crypto crypto, Set<String> origins) {
+                       DataStore dataStore, Crypto crypto, Set<String> origins, SessionManager sessionManager) {
     this.challengeGenerator = challengeGenerator;
     this.dataStore = dataStore;
     this.crypto = crypto;
@@ -83,18 +84,20 @@ public class U2fServerImpl implements U2fServer {
 
     byte[] challenge = challengeGenerator.generateChallenge(accountName);
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
-    String sessionId = dataStore.storeSessionData(
+    sessionManager.storeSessionData(
             new EnrollSessionData(accountName, appId, challenge)
     );
 
-    return new RegistrationRequest(U2F_VERSION, challengeBase64, appId, sessionId);
+    return new RegistrationRequest(U2F_VERSION, challengeBase64, appId);
   }
 
   @Override
   public Device processRegistrationResponse(RegistrationResponse registrationResponse,
           long currentTimeInMillis) throws U2fException, IOException {
 
-    EnrollSessionData sessionData = dataStore.getEnrollSessionData(registrationResponse.getClientData());
+    EnrollSessionData sessionData = sessionManager.getEnrollSessionData(
+            getChallenge(registrationResponse.getClientData())
+    );
     if (sessionData == null) {
       throw new U2fException("Unknown sessionId");
     }
@@ -145,7 +148,7 @@ public class U2fServerImpl implements U2fServer {
     for (Device device : deviceList) {
       byte[] challenge = challengeGenerator.generateChallenge(accountName);
 
-      String sessionId = dataStore.storeSessionData(
+      sessionManager.storeSessionData(
               new SignSessionData(accountName, appId, challenge, device.getPublicKey())
       );
 
@@ -153,8 +156,7 @@ public class U2fServerImpl implements U2fServer {
               U2F_VERSION,
               Base64.encodeBase64URLSafeString(challenge),
               appId,
-              Base64.encodeBase64URLSafeString(device.getKeyHandle()),
-              sessionId
+              Base64.encodeBase64URLSafeString(device.getKeyHandle())
       );
       result.add(signRequest);
     }
@@ -164,7 +166,7 @@ public class U2fServerImpl implements U2fServer {
   @Override
   public Device processSignResponse(SignResponse signResponse) throws U2fException, IOException {
 
-    SignSessionData sessionData = dataStore.getSignSessionData(signResponse.getChallenge());
+    SignSessionData sessionData = sessionManager.getSignSessionData(signResponse.getChallenge());
     if (sessionData == null) {
       throw new U2fException("Unknown sessionId");
     }
@@ -246,6 +248,14 @@ public class U2fServerImpl implements U2fServer {
     // TODO: Deal with ChannelID
 
     return clientDataBytes;
+  }
+
+  private String getChallenge(String clientDataBase64) {
+
+    byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);
+    JsonElement clientDataAsElement = new JsonParser().parse(new String(clientDataBytes));
+    JsonObject clientData = clientDataAsElement.getAsJsonObject();
+    return new String(Base64.decodeBase64(clientData.get(CHALLENGE_PARAM).getAsString()));
   }
   
   private void verifyOrigin(String origin) throws U2fException {

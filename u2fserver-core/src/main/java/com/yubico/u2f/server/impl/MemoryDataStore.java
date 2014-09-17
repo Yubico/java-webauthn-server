@@ -14,7 +14,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.yubico.u2f.server.DataStore;
-import com.yubico.u2f.server.SessionIdGenerator;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.EnrollSessionData;
 import com.yubico.u2f.server.data.SignSessionData;
@@ -29,29 +28,11 @@ public class MemoryDataStore implements DataStore {
   private final Set<X509Certificate> trustedCertificateDataBase = Sets.newHashSet();
   private final HashMap<String, EnrollSessionData> sessionDataBase = Maps.newHashMap();
   private final HashMap<String, List<Device>> securityKeyDataBase = Maps.newHashMap();
-  private final SessionIdGenerator sessionIdGenerator;
-  
-  public MemoryDataStore(SessionIdGenerator sessionIdGenerator) {
-	  this.sessionIdGenerator = sessionIdGenerator;
-  }
-  
-  @Override
-  public String storeSessionData(EnrollSessionData sessionData) {
-	  String sessionId = sessionIdGenerator.generateSessionId(sessionData.getAccountName());
-    sessionDataBase.put(sessionId, sessionData);
-    return sessionId;
-  }
 
-  @Override
-  public EnrollSessionData getEnrollSessionData(String sessionId) {
-    return sessionDataBase.get(sessionId);
+  public MemoryDataStore() {
+
   }
   
-  @Override
-  public SignSessionData getSignSessionData(String sessionId) {
-    return (SignSessionData) sessionDataBase.get(sessionId);
-  }
-
   @Override
   public void addDevice(String accountName, Device device) {
     List<Device> tokens = getDevice(accountName);
