@@ -30,7 +30,6 @@ import com.yubico.u2f.server.data.SignSessionData;
 import com.yubico.u2f.server.messages.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 
 import com.google.common.collect.ImmutableList;
@@ -41,12 +40,12 @@ import com.yubico.u2f.server.DataStore;
 import com.yubico.u2f.server.U2fServer;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import com.yubico.u2f.server.messages.RegistrationResponse;
-import com.yubico.u2f.server.messages.SignRequest;
+import com.yubico.u2f.server.messages.AuthenticationRequest;
 
 public class U2fServerImplTest extends TestVectors {
   @Mock ChallengeGenerator mockChallengeGenerator;
   @Mock DataStore mockDataStore;
-  SessionManager sessionManager;
+  @Mock SessionManager sessionManager;
 
   private final Crypto crypto = new BouncyCastleCrypto();
   private U2fServer u2fServer;
@@ -59,10 +58,11 @@ public class U2fServerImplTest extends TestVectors {
     trustedCertificates.add(VENDOR_CERTIFICATE);
 
     when(mockChallengeGenerator.generateChallenge(ACCOUNT_NAME))
-    .thenReturn(SERVER_CHALLENGE_ENROLL);
-    when(mockDataStore.getTrustedCertificates()).thenReturn(trustedCertificates);
-    when(mockDataStore.getDevice(ACCOUNT_NAME)).thenReturn(
-        ImmutableList.of(new Device(0L, KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0)));
+        .thenReturn(SERVER_CHALLENGE_ENROLL);
+    when(mockDataStore.getTrustedCertificates())
+            .thenReturn(trustedCertificates);
+    when(mockDataStore.getDevice(ACCOUNT_NAME))
+            .thenReturn(ImmutableList.of(new Device(0L, KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0)));
   }
 
   @Test
@@ -81,7 +81,7 @@ public class U2fServerImplTest extends TestVectors {
     u2fServer = new U2fServerImpl(mockChallengeGenerator,
         mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
 
-    RegistrationRequest registrationRequest = u2fServer.getRegistrationRequest(ACCOUNT_NAME, APP_ID_ENROLL);
+    RegistrationRequest registrationRequest = u2fServer.startRegistration(ACCOUNT_NAME, APP_ID_ENROLL);
 
     assertEquals(new RegistrationRequest("U2F_V2", SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL), registrationRequest);
   }
@@ -96,7 +96,7 @@ public class U2fServerImplTest extends TestVectors {
     RegistrationResponse registrationResponse = new RegistrationResponse(REGISTRATION_DATA_BASE64,
         BROWSER_DATA_ENROLL_BASE64);
 
-    u2fServer.processRegistrationResponse(registrationResponse, 0L);
+    u2fServer.finishRegistration(registrationResponse, 0L);
 
     verify(mockDataStore).addDevice(eq(ACCOUNT_NAME),
             eq(new Device(0L, KEY_HANDLE, USER_PUBLIC_KEY_ENROLL_HEX, VENDOR_CERTIFICATE, 0)));
@@ -116,7 +116,7 @@ public class U2fServerImplTest extends TestVectors {
     RegistrationResponse registrationResponse = new RegistrationResponse(REGISTRATION_DATA_2_BASE64,
         BROWSER_DATA_2_BASE64);
 
-    u2fServer.processRegistrationResponse(registrationResponse, 0L);
+    u2fServer.finishRegistration(registrationResponse, 0L);
 
     verify(mockDataStore).addDevice(eq(ACCOUNT_NAME),
             eq(new Device(0L, KEY_HANDLE_2, USER_PUBLIC_KEY_2, TRUSTED_CERTIFICATE_2, 0)));
@@ -128,10 +128,10 @@ public class U2fServerImplTest extends TestVectors {
         mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
     when(mockChallengeGenerator.generateChallenge(ACCOUNT_NAME)).thenReturn(SERVER_CHALLENGE_SIGN);
 
-    List<SignRequest> signRequest = u2fServer.getSignRequest(ACCOUNT_NAME, APP_ID_SIGN);
+    List<AuthenticationRequest> authenticationRequest = u2fServer.startAuthentication(ACCOUNT_NAME, APP_ID_SIGN);
 
-    assertEquals(new SignRequest("U2F_V2", SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN,
-        KEY_HANDLE_BASE64), signRequest.get(0));
+    assertEquals(new AuthenticationRequest("U2F_V2", SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN,
+        KEY_HANDLE_BASE64), authenticationRequest.get(0));
   }
 
   @Test
@@ -143,7 +143,7 @@ public class U2fServerImplTest extends TestVectors {
     SignResponse signResponse = new SignResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
 
-    u2fServer.processSignResponse(signResponse);
+    u2fServer.finishAuthentication(signResponse);
   }
 
   @Test
@@ -156,7 +156,7 @@ public class U2fServerImplTest extends TestVectors {
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
 
     try {
-      u2fServer.processSignResponse(signResponse);
+      u2fServer.finishAuthentication(signResponse);
       fail("expected exception, but didn't get it");
     } catch(U2fException e) {
       assertTrue(e.getMessage().contains("is not a recognized home origin"));
@@ -176,6 +176,6 @@ public class U2fServerImplTest extends TestVectors {
     SignResponse signResponse = new SignResponse(BROWSER_DATA_2_BASE64, SIGN_DATA_2_BASE64,
         CHALLENGE_2_BASE64, APP_ID_2);
 
-    u2fServer.processSignResponse(signResponse);
+    u2fServer.finishAuthentication(signResponse);
   }
 }

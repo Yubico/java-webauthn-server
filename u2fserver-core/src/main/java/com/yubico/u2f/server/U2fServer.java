@@ -14,26 +14,26 @@ import java.util.List;
 
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.data.Device;
+import com.yubico.u2f.server.data.EnrollSessionData;
+import com.yubico.u2f.server.data.SignSessionData;
 import com.yubico.u2f.server.messages.RegistrationRequest;
 import com.yubico.u2f.server.messages.RegistrationResponse;
-import com.yubico.u2f.server.messages.SignRequest;
+import com.yubico.u2f.server.messages.AuthenticationRequest;
 import com.yubico.u2f.server.messages.SignResponse;
 
 public interface U2fServer {
 
   // registration //
-  RegistrationRequest getRegistrationRequest(String accountName, String appId) throws U2fException, IOException;
+  RegistrationRequest startRegistration()
+          throws U2fException, IOException;
 
-  Device processRegistrationResponse(RegistrationResponse registrationResponse, long currentTimeInMillis)
+  Device finishRegistration(RegistrationResponse registrationResponse, EnrollSessionData sessionData)
           throws U2fException, IOException;
 
   // authentication //
-  List<SignRequest> getSignRequest(String accountName, String appId) throws U2fException, IOException;
+  List<AuthenticationRequest> startAuthentication(String appId, Device device)
+          throws U2fException, IOException;
 
-  Device processSignResponse(SignResponse signResponse) throws U2fException, IOException;
-  
-  // token management //
-  List<Device> getAllDevices(String accountName) throws IOException;
-
-  void removeDevice(String accountName, byte[] publicKey) throws U2fException, IOException;
+  long finishAuthentication(SignResponse signResponse, SignSessionData sessionData, Device device)
+          throws U2fException, IOException;
 }

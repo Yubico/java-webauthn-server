@@ -20,32 +20,22 @@ import com.google.common.base.Objects;
 public class Device implements Serializable {
   private static final long serialVersionUID = -142942195464329902L;
 
-  private final long enrollmentTime;
   private final byte[] keyHandle;
   private final byte[] publicKey;
   private final X509Certificate attestationCert;
   private int counter;
 
   public Device(
-          long enrollmentTime,
           byte[] keyHandle,
           byte[] publicKey,
           X509Certificate attestationCert,
           int counter) {
-    this.enrollmentTime = enrollmentTime;
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
     this.attestationCert = attestationCert;
     this.counter = counter;
   }
 
-  /**
-   * When these keys were created/enrolled with the relying party.
-   */
-  public long getEnrollmentTime() {
-    return enrollmentTime;
-  }
-  
   public byte[] getKeyHandle() {
     return keyHandle;
   }
@@ -69,8 +59,7 @@ public class Device implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hashCode(
-        enrollmentTime,
-        keyHandle, 
+        keyHandle,
         publicKey, 
         attestationCert);
   }
@@ -82,7 +71,6 @@ public class Device implements Serializable {
     }
     Device that = (Device) obj;
     return Arrays.equals(this.keyHandle, that.keyHandle) 
-        && (this.enrollmentTime == that.enrollmentTime)
         && Arrays.equals(this.publicKey, that.publicKey)
         && Objects.equal(this.attestationCert, that.attestationCert);
   }

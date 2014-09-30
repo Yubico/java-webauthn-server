@@ -12,7 +12,7 @@ package com.yubico.u2f.server.messages;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-public class SignRequest {
+public class AuthenticationRequest {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
@@ -40,7 +40,7 @@ public class SignRequest {
   @JsonProperty
   private final String keyHandle;
 
-  public SignRequest(String version, String challenge, String appId, String keyHandle) {
+  public AuthenticationRequest(String version, String challenge, String appId, String keyHandle) {
     super();
     this.version = version;
     this.challenge = challenge;
@@ -61,7 +61,7 @@ public class SignRequest {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    SignRequest other = (SignRequest) obj;
+    AuthenticationRequest other = (AuthenticationRequest) obj;
     if (appId == null) {
       if (other.appId != null)
         return false;
