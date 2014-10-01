@@ -15,7 +15,7 @@ public class SignSessionData extends EnrollSessionData {
   private final byte[] publicKey;
   
   public SignSessionData(String accountName, String appId, byte[] challenge, byte[] publicKey) {
-    super(accountName, appId, challenge);
+    super(appId, challenge);
     this.publicKey = publicKey;
   }
 

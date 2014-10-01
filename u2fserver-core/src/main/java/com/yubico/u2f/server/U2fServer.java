@@ -16,24 +16,24 @@ import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.EnrollSessionData;
 import com.yubico.u2f.server.data.SignSessionData;
-import com.yubico.u2f.server.messages.RegistrationRequest;
-import com.yubico.u2f.server.messages.RegistrationResponse;
+import com.yubico.u2f.server.messages.TokenChallenge;
+import com.yubico.u2f.server.messages.TokenResponse;
 import com.yubico.u2f.server.messages.AuthenticationRequest;
 import com.yubico.u2f.server.messages.SignResponse;
 
 public interface U2fServer {
 
   // registration //
-  RegistrationRequest startRegistration()
+  TokenChallenge startRegistration()
           throws U2fException, IOException;
 
-  Device finishRegistration(RegistrationResponse registrationResponse, EnrollSessionData sessionData)
+  Device finishRegistration(TokenChallenge challenge, TokenResponse tokenResponse)
           throws U2fException, IOException;
 
   // authentication //
   List<AuthenticationRequest> startAuthentication(String appId, Device device)
           throws U2fException, IOException;
 
-  long finishAuthentication(SignResponse signResponse, SignSessionData sessionData, Device device)
+  long finishAuthentication(SignResponse signResponse, TokenChallenge sessionData, Device device)
           throws U2fException, IOException;
 }

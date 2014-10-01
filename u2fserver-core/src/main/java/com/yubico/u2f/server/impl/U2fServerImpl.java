@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -36,8 +37,8 @@ import com.yubico.u2f.key.messages.AuthenticateResponse;
 import com.yubico.u2f.key.messages.RegisterResponse;
 import com.yubico.u2f.server.ChallengeGenerator;
 import com.yubico.u2f.server.data.EnrollSessionData;
-import com.yubico.u2f.server.messages.RegistrationRequest;
-import com.yubico.u2f.server.messages.RegistrationResponse;
+import com.yubico.u2f.server.messages.TokenChallenge;
+import com.yubico.u2f.server.messages.TokenResponse;
 import com.yubico.u2f.server.messages.AuthenticationRequest;
 import com.yubico.u2f.server.messages.SignResponse;
 
@@ -60,43 +61,42 @@ public class U2fServerImpl implements U2fServer {
   private final ChallengeGenerator challengeGenerator;
   private final Crypto crypto;
   private final Set<String> allowedOrigins;
-  private Set<X509Certificate> trustedAttestationCertificates; //TODO: instantiate from constructor param
-    private String appId;
+  private Set<X509Certificate> trustedAttestationCertificates = new HashSet<X509Certificate>(); //TODO: instantiate from constructor param
+  private String appId;
 
-    public U2fServerImpl(Set<String> origins) {
-    this.challengeGenerator = new ChallengeGeneratorImpl();
-    this.crypto = new BouncyCastleCrypto();
-    this.allowedOrigins = canonicalizeOrigins(origins);
+  public U2fServerImpl(Set<String> origins, String appId) {
+    this(new BouncyCastleCrypto(), origins, appId);
   }
 
-  public U2fServerImpl(ChallengeGenerator challengeGenerator, Crypto crypto, Set<String> origins, SessionManager sessionManager) {
-    this.challengeGenerator = challengeGenerator;
+  public U2fServerImpl(Crypto crypto, Set<String> origins, String appId) {
+    this.challengeGenerator = new ChallengeGeneratorImpl();
     this.crypto = crypto;
     this.allowedOrigins = canonicalizeOrigins(origins);
+    this.appId = appId;
   }
 
   @Override
-  public RegistrationRequest startRegistration() throws IOException {
+  public TokenChallenge startRegistration() throws IOException {
 
     byte[] challenge = challengeGenerator.generateChallenge();
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
-    return new RegistrationRequest(U2F_VERSION, challengeBase64, appId);
+    return new TokenChallenge(U2F_VERSION, challengeBase64, appId);
   }
 
   @Override
-  public Device finishRegistration(RegistrationResponse registrationResponse, EnrollSessionData sessionData)
+  public Device finishRegistration(TokenChallenge challenge, TokenResponse tokenResponse)
           throws U2fException, IOException {
 
     RegisterResponse registerResponse = RawMessageCodec
-            .decodeRegisterResponse(registrationResponse.getRegistrationData());
+            .decodeRegisterResponse(tokenResponse.getRegistrationData());
     X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
     checkIsTrusted(attestationCertificate);
 
-    byte[] clientData = checkClientData(registrationResponse.getClientData(), "navigator.id.finishEnrollment", sessionData);
+    byte[] clientData = checkClientData(tokenResponse.getClientData(), "navigator.id.finishEnrollment", challenge);
     byte[] userPublicKey = registerResponse.getUserPublicKey();
     byte[] keyHandle = registerResponse.getKeyHandle();
     byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(
-            crypto.hash(sessionData.getAppId()),
+            crypto.hash(challenge.getAppId()),
             crypto.hash(clientData),
             keyHandle,
             userPublicKey
@@ -138,7 +138,7 @@ public class U2fServerImpl implements U2fServer {
     return result.build();
   }
 
-  public long finishAuthentication(SignResponse signResponse, SignSessionData sessionData, Device device) throws U2fException, IOException {
+  public long finishAuthentication(SignResponse signResponse, TokenChallenge sessionData, Device device) throws U2fException, IOException {
 
     byte[] clientData = checkClientData(signResponse.getBd(), "navigator.id.getAssertion", sessionData);
 
@@ -168,7 +168,7 @@ public class U2fServerImpl implements U2fServer {
     return counter + 1;
   }
 
-  private byte[] checkClientData(String clientDataBase64, String messageType, EnrollSessionData sessionData)
+  private byte[] checkClientData(String clientDataBase64, String messageType, TokenChallenge challenge)
           throws U2fException {
 
     byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);
@@ -198,8 +198,8 @@ public class U2fServerImpl implements U2fServer {
       verifyOrigin(clientData.get(ORIGIN_PARAM).getAsString());
     }
 
-    byte[] challengeFromClientData = Base64.decodeBase64(clientData.get(CHALLENGE_PARAM).getAsString());
-    if (!Arrays.equals(challengeFromClientData, sessionData.getChallenge())) {
+    String challengeFromClientData = clientData.get(CHALLENGE_PARAM).getAsString();
+    if (!challengeFromClientData.equals(challenge.getChallenge())) {
       throw new U2fException("Wrong challenge signed in clientData");
     }
 

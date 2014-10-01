@@ -15,18 +15,12 @@ import java.util.Arrays;
 public class EnrollSessionData implements Serializable {
   private static final long serialVersionUID = 1750990095756334568L;
 
-  private final String accountName;
   private final byte[] challenge;
   private final String appId;
 
-  public EnrollSessionData(String accountName, String appId, byte[] challenge) {
-    this.accountName = accountName;
+  public EnrollSessionData(String appId, byte[] challenge) {
     this.challenge = challenge;
     this.appId = appId;
-  }
-
-  public String getAccountName() {
-    return accountName;
   }
 
   public byte[] getChallenge() {
@@ -41,8 +35,7 @@ public class EnrollSessionData implements Serializable {
   public boolean equals(Object obj) {
     if (obj instanceof EnrollSessionData) {
       EnrollSessionData that = (EnrollSessionData) obj;
-      return this.accountName.equals(that.accountName)
-              && this.appId.equals(that.appId)
+      return this.appId.equals(that.appId)
               && Arrays.equals(this.challenge, that.challenge);
     }
     return false;

@@ -12,7 +12,7 @@ package com.yubico.u2f.server.messages;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
-public class RegistrationRequest {
+public class TokenChallenge {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
@@ -24,6 +24,10 @@ public class RegistrationRequest {
   @JsonProperty
   private final String challenge;
 
+  public String getChallenge() {
+    return challenge;
+  }
+
   /**
    * The application id that the RP would like to assert. The U2F token will
    * enforce that the key handle provided above is associated with this
@@ -33,7 +37,11 @@ public class RegistrationRequest {
   @JsonProperty
   private final String appId;
 
-  public RegistrationRequest(String version, String challenge, String appId) {
+  public String getAppId() {
+    return appId;
+  }
+
+  public TokenChallenge(String version, String challenge, String appId) {
     this.version = version;
     this.challenge = challenge;
     this.appId = appId;
@@ -52,7 +60,7 @@ public class RegistrationRequest {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    RegistrationRequest other = (RegistrationRequest) obj;
+    TokenChallenge other = (TokenChallenge) obj;
     if (appId == null) {
       if (other.appId != null)
         return false;
