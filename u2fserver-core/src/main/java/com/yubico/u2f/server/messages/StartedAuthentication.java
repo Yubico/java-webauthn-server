@@ -11,8 +11,18 @@ package com.yubico.u2f.server.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.yubico.u2f.U2fException;
+import com.yubico.u2f.codec.RawMessageCodec;
+import com.yubico.u2f.key.UserPresenceVerifier;
+import com.yubico.u2f.key.messages.AuthenticateResponse;
+import com.yubico.u2f.server.ClientDataChecker;
+import com.yubico.u2f.server.Crypto;
+import com.yubico.u2f.server.data.Device;
+import com.yubico.u2f.server.impl.BouncyCastleCrypto;
 
-public class AuthenticationRequest {
+import java.util.Set;
+
+public class StartedAuthentication {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
@@ -40,12 +50,15 @@ public class AuthenticationRequest {
   @JsonProperty
   private final String keyHandle;
 
-  public AuthenticationRequest(String version, String challenge, String appId, String keyHandle) {
-    super();
+  private final Crypto crypto = new BouncyCastleCrypto();
+  private final Set<String> allowedOrigins;
+
+  public StartedAuthentication(String version, String challenge, String appId, String keyHandle, Set<String> origins) {
     this.version = version;
     this.challenge = challenge;
     this.appId = appId;
     this.keyHandle = keyHandle;
+    this.allowedOrigins = ClientDataChecker.canonicalizeOrigins(origins);
   }
 
   @Override
@@ -61,7 +74,7 @@ public class AuthenticationRequest {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    AuthenticationRequest other = (AuthenticationRequest) obj;
+    StartedAuthentication other = (StartedAuthentication) obj;
     if (appId == null) {
       if (other.appId != null)
         return false;
@@ -83,5 +96,34 @@ public class AuthenticationRequest {
     } else if (!version.equals(other.version))
       return false;
     return true;
+  }
+
+  public int finish(TokenAuthenticationResponse tokenResponse, Device device) throws U2fException {
+    byte[] clientData = ClientDataChecker.checkClientData(tokenResponse.getBd(), "navigator.id.getAssertion", challenge, allowedOrigins);
+
+    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(tokenResponse.getSign());
+    byte userPresence = authenticateResponse.getUserPresence();
+    if (userPresence != UserPresenceVerifier.USER_PRESENT_FLAG) {
+      throw new U2fException("User presence invalid during authentication");
+    }
+
+    int counter = authenticateResponse.getCounter();
+    if (counter <= device.getCounter()) {
+      throw new U2fException("Counter value smaller than expected!");
+    }
+
+    byte[] signedBytes = RawMessageCodec.encodeAuthenticateSignedBytes(
+            crypto.hash(appId),
+            userPresence,
+            counter,
+            crypto.hash(clientData)
+    );
+    crypto.checkSignature(
+            crypto.decodePublicKey(device.getPublicKey()),
+            signedBytes,
+            authenticateResponse.getSignature()
+    );
+
+    return counter + 1;
   }
 }

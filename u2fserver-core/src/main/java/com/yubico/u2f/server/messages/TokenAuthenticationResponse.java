@@ -9,7 +9,7 @@
 
 package com.yubico.u2f.server.messages;
 
-public class SignResponse {
+public class TokenAuthenticationResponse {
 
   /** websafe-base64(client data) */
   private final String bd;
@@ -23,7 +23,7 @@ public class SignResponse {
   /** application id originally passed */
   private final String appId;
 
-  public SignResponse(String bd, String sign, String challenge, String appId) {
+  public TokenAuthenticationResponse(String bd, String sign, String challenge, String appId) {
     this.bd = bd;
     this.sign = sign;
     this.challenge = challenge;
@@ -65,7 +65,7 @@ public class SignResponse {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    SignResponse other = (SignResponse) obj;
+    TokenAuthenticationResponse other = (TokenAuthenticationResponse) obj;
     if (appId == null) {
       if (other.appId != null)
         return false;

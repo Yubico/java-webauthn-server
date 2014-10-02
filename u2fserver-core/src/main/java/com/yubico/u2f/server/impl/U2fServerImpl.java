@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,7 +24,6 @@ import com.yubico.u2f.key.UserPresenceVerifier;
 import com.yubico.u2f.server.Crypto;
 import com.yubico.u2f.server.U2fServer;
 import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.data.SignSessionData;
 import org.apache.commons.codec.binary.Base64;
 
 import com.google.common.collect.ImmutableList;
@@ -36,11 +34,10 @@ import com.google.gson.JsonParser;
 import com.yubico.u2f.key.messages.AuthenticateResponse;
 import com.yubico.u2f.key.messages.RegisterResponse;
 import com.yubico.u2f.server.ChallengeGenerator;
-import com.yubico.u2f.server.data.EnrollSessionData;
-import com.yubico.u2f.server.messages.TokenChallenge;
-import com.yubico.u2f.server.messages.TokenResponse;
-import com.yubico.u2f.server.messages.AuthenticationRequest;
-import com.yubico.u2f.server.messages.SignResponse;
+import com.yubico.u2f.server.messages.StartedRegistration;
+import com.yubico.u2f.server.messages.TokenRegistrationResponse;
+import com.yubico.u2f.server.messages.StartedAuthentication;
+import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
 
 public class U2fServerImpl implements U2fServer {
 
@@ -76,23 +73,23 @@ public class U2fServerImpl implements U2fServer {
   }
 
   @Override
-  public TokenChallenge startRegistration() throws IOException {
+  public StartedRegistration startRegistration() throws IOException {
 
     byte[] challenge = challengeGenerator.generateChallenge();
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
-    return new TokenChallenge(U2F_VERSION, challengeBase64, appId);
+    return new StartedRegistration(U2F_VERSION, challengeBase64, appId, new HashSet<String>());
   }
 
   @Override
-  public Device finishRegistration(TokenChallenge challenge, TokenResponse tokenResponse)
+  public Device finishRegistration(StartedRegistration challenge, TokenRegistrationResponse tokenRegistrationResponse)
           throws U2fException, IOException {
 
     RegisterResponse registerResponse = RawMessageCodec
-            .decodeRegisterResponse(tokenResponse.getRegistrationData());
+            .decodeRegisterResponse(tokenRegistrationResponse.getRegistrationData());
     X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
     checkIsTrusted(attestationCertificate);
 
-    byte[] clientData = checkClientData(tokenResponse.getClientData(), "navigator.id.finishEnrollment", challenge);
+    byte[] clientData = checkClientData(tokenRegistrationResponse.getClientData(), "navigator.id.finishEnrollment", challenge);
     byte[] userPublicKey = registerResponse.getUserPublicKey();
     byte[] keyHandle = registerResponse.getKeyHandle();
     byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(
@@ -122,27 +119,28 @@ public class U2fServerImpl implements U2fServer {
   }
 
   @Override
-  public List<AuthenticationRequest> startAuthentication(String appId, Device device) throws U2fException, IOException {
+  public List<StartedAuthentication> startAuthentication(String appId, Device device) throws U2fException, IOException {
 
-    ImmutableList.Builder<AuthenticationRequest> result = ImmutableList.builder();
+    ImmutableList.Builder<StartedAuthentication> result = ImmutableList.builder();
 
     byte[] challenge = challengeGenerator.generateChallenge();
 
-    AuthenticationRequest authenticationRequest = new AuthenticationRequest(
+    StartedAuthentication startedAuthentication = new StartedAuthentication(
           U2F_VERSION,
           Base64.encodeBase64URLSafeString(challenge),
           appId,
-          Base64.encodeBase64URLSafeString(device.getKeyHandle())
+          Base64.encodeBase64URLSafeString(device.getKeyHandle()),
+          new HashSet<String>()
     );
-    result.add(authenticationRequest);
+    result.add(startedAuthentication);
     return result.build();
   }
 
-  public long finishAuthentication(SignResponse signResponse, TokenChallenge sessionData, Device device) throws U2fException, IOException {
+  public long finishAuthentication(TokenAuthenticationResponse tokenAuthenticationResponse, StartedRegistration sessionData, Device device) throws U2fException, IOException {
 
-    byte[] clientData = checkClientData(signResponse.getBd(), "navigator.id.getAssertion", sessionData);
+    byte[] clientData = checkClientData(tokenAuthenticationResponse.getBd(), "navigator.id.getAssertion", sessionData);
 
-    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(signResponse.getSign());
+    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(tokenAuthenticationResponse.getSign());
     byte userPresence = authenticateResponse.getUserPresence();
     if (userPresence != UserPresenceVerifier.USER_PRESENT_FLAG) {
       throw new U2fException("User presence invalid during authentication");
@@ -152,7 +150,7 @@ public class U2fServerImpl implements U2fServer {
     if (counter <= device.getCounter()) {
       throw new U2fException("Counter value smaller than expected!");
     }
-    
+
     byte[] signedBytes = RawMessageCodec.encodeAuthenticateSignedBytes(
             crypto.hash(sessionData.getAppId()),
             userPresence,
@@ -168,7 +166,7 @@ public class U2fServerImpl implements U2fServer {
     return counter + 1;
   }
 
-  private byte[] checkClientData(String clientDataBase64, String messageType, TokenChallenge challenge)
+  private byte[] checkClientData(String clientDataBase64, String messageType, StartedRegistration challenge)
           throws U2fException {
 
     byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);

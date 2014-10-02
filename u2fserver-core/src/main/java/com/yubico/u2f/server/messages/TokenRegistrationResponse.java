@@ -11,14 +11,14 @@ package com.yubico.u2f.server.messages;
 
 import com.google.common.base.Objects;
 
-public class TokenResponse {
+public class TokenRegistrationResponse {
   /** websafe-base64(raw registration response message) */
   private final String registrationData;
 
   /** websafe-base64(UTF8(stringified(client data))) */
   private final String clientData;
 
-  public TokenResponse(String registrationData, String clientData) {
+  public TokenRegistrationResponse(String registrationData, String clientData) {
     this.registrationData = registrationData;
     this.clientData = clientData;
   }
@@ -44,7 +44,7 @@ public class TokenResponse {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    TokenResponse other = (TokenResponse) obj;
+    TokenRegistrationResponse other = (TokenRegistrationResponse) obj;
     if (clientData == null) {
       if (other.clientData != null)
         return false;
