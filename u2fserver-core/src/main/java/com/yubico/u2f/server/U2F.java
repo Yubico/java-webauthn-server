@@ -1,6 +1,5 @@
 package com.yubico.u2f.server;
 
-import com.google.common.collect.ImmutableList;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.impl.ChallengeGeneratorImpl;
 import com.yubico.u2f.server.messages.StartedAuthentication;
@@ -20,7 +19,7 @@ public class U2F {
     return new StartedRegistration(U2F_VERSION, challengeBase64, appId, trustedDomains);
   }
 
-  public static StartedAuthentication startAuthentication(String appId, Device device, Set<String> trustedDomains) {
+  public static StartedAuthentication startAuthentication(String appId, Set<String> trustedDomains, Device device) {
     byte[] challenge = challengeGenerator.generateChallenge();
 
     return new StartedAuthentication(

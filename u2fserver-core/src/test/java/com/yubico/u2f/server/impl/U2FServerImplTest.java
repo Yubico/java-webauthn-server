@@ -18,8 +18,11 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
+import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestVectors;
+import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.data.SignSessionData;
 import com.yubico.u2f.server.messages.StartedAuthentication;
@@ -84,24 +87,28 @@ public class U2FServerImplTest extends TestVectors {
     startedAuthentication.finish(tokenResponse, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0));
   }
 
-  /*
+
   @Test
   public void testProcessSignResponse_badOrigin() throws Exception {
-    when(sessionManager.getSignSessionData(anyString())).thenReturn(
-        new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX));
-    u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, ImmutableSet.of("some-other-domain.com"), sessionManager);
-    SignResponse signResponse = new SignResponse(BROWSER_DATA_SIGN_BASE64,
+    SignSessionData signSessionData =
+        new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX);
+
+    Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
+    StartedAuthentication authentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64,
+            APP_ID_SIGN, KEY_HANDLE_BASE64, allowedOrigins);
+
+    TokenAuthenticationResponse response = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
 
     try {
-      u2fServer.finishAuthentication(signResponse);
+      authentication.finish(response, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0));
       fail("expected exception, but didn't get it");
     } catch(U2fException e) {
       assertTrue(e.getMessage().contains("is not a recognized home origin"));
     }
   }
-  
+
+  /*
   // @Test
   // TODO: put test back in once we have signature sample on a correct browserdata json
   // (currently, this test uses an enrollment browserdata during a signature)
