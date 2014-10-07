@@ -49,9 +49,9 @@ public class TestVectors {
           + "03b4b8911ba0569994e101300a06082a8648ce3d0403020347003044022060cd"
           + "b6061e9c22262d1aac1d96d8c70829b2366531dda268832cb836bcd30dfa0220"
           + "631b1459f09e6330055722c8d89b7f48883b9089b88d60d1d9795902b30410df";
-  protected static final X509Certificate VENDOR_CERTIFICATE =
+  public static final X509Certificate VENDOR_CERTIFICATE =
       TestUtils.parseCertificate(VENDOR_CERTIFICATE_HEX);
-  protected static final PrivateKey VENDOR_CERTIFICATE_PRIVATE_KEY = TestUtils.parsePrivateKey(
+  public static final PrivateKey VENDOR_CERTIFICATE_PRIVATE_KEY = TestUtils.parsePrivateKey(
           "f3fccc0d00d8031954f90864d43c247f4bf5f0665c6b50cc17749a27d1cf7664");
   protected static final String CHANNEL_ID_STRING =
       "{"

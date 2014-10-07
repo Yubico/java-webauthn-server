@@ -20,7 +20,6 @@ public class AuthenticateResponse {
   private final byte[] signature;
 
   public AuthenticateResponse(byte userPresence, int counter, byte[] signature) {
-    super();
     this.userPresence = userPresence;
     this.counter = counter;
     this.signature = signature;

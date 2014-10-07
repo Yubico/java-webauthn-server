@@ -9,31 +9,27 @@
 
 package com.yubico.u2f.server.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
+import com.google.common.collect.ImmutableSet;
+import com.yubico.u2f.TestVectors;
+import com.yubico.u2f.U2fException;
+import com.yubico.u2f.server.ClientDataChecker;
+import com.yubico.u2f.server.data.Device;
+import com.yubico.u2f.server.data.SignSessionData;
+import com.yubico.u2f.server.messages.StartedAuthentication;
+import com.yubico.u2f.server.messages.StartedRegistration;
+import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
+import com.yubico.u2f.server.messages.TokenRegistrationResponse;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
-import com.yubico.u2f.TestVectors;
-import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.data.SignSessionData;
-import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.*;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-import com.yubico.u2f.server.messages.StartedRegistration;
-import com.yubico.u2f.server.messages.TokenRegistrationResponse;
-
-public class U2FServerImplTest extends TestVectors {
+public class U2FTest extends TestVectors {
   public static final String U2F_VERSION = "U2F_V2";
   final HashSet<String> allowedOrigins = new HashSet<String>();
 
@@ -48,13 +44,13 @@ public class U2FServerImplTest extends TestVectors {
 
   @Test
   public void testSanitizeOrigin() {
-    assertEquals("http://example.com", U2fServerImpl.canonicalizeOrigin("http://example.com"));
-    assertEquals("http://example.com", U2fServerImpl.canonicalizeOrigin("http://example.com/"));
-    assertEquals("http://example.com", U2fServerImpl.canonicalizeOrigin("http://example.com/foo"));
-    assertEquals("http://example.com", U2fServerImpl.canonicalizeOrigin("http://example.com/foo?bar=b"));
-    assertEquals("http://example.com", U2fServerImpl.canonicalizeOrigin("http://example.com/foo#fragment"));
-    assertEquals("https://example.com", U2fServerImpl.canonicalizeOrigin("https://example.com"));
-    assertEquals("https://example.com", U2fServerImpl.canonicalizeOrigin("https://example.com/foo"));
+    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com"));
+    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/"));
+    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/foo"));
+    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/foo?bar=b"));
+    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/foo#fragment"));
+    assertEquals("https://example.com", ClientDataChecker.canonicalizeOrigin("https://example.com"));
+    assertEquals("https://example.com", ClientDataChecker.canonicalizeOrigin("https://example.com/foo"));
   }
 
   @Test
@@ -82,7 +78,7 @@ public class U2FServerImplTest extends TestVectors {
     StartedAuthentication startedAuthentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64, allowedOrigins);
 
     TokenAuthenticationResponse tokenResponse = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
-        SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
+        SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     startedAuthentication.finish(tokenResponse, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0));
   }
@@ -98,7 +94,7 @@ public class U2FServerImplTest extends TestVectors {
             APP_ID_SIGN, KEY_HANDLE_BASE64, allowedOrigins);
 
     TokenAuthenticationResponse response = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
-        SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN);
+        SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     try {
       authentication.finish(response, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0));

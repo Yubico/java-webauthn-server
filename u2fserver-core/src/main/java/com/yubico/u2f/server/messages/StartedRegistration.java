@@ -12,14 +12,13 @@ package com.yubico.u2f.server.messages;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.codec.RawMessageCodec;
 import com.yubico.u2f.key.messages.RegisterResponse;
 import com.yubico.u2f.server.ClientDataChecker;
 import com.yubico.u2f.server.Crypto;
+import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.impl.BouncyCastleCrypto;
 import org.apache.commons.codec.binary.Base64;
@@ -108,12 +107,22 @@ public class StartedRegistration {
     return true;
   }
 
-  public Device finish(TokenRegistrationResponse tokenRegistrationResponse) throws U2fException {
-    RegisterResponse registerResponse = RawMessageCodec.decodeRegisterResponse(tokenRegistrationResponse.getRegistrationData());
+  public String json() {
+    Gson gson = new Gson();
+    return gson.toJson(new RegisterRequest(version, challenge, appId));
+  }
+
+  public Device finish(String tokenResponse) throws U2fException {
+    Gson gson = new Gson();
+    return finish(gson.fromJson(tokenResponse, TokenRegistrationResponse.class));
+  }
+
+  public Device finish(TokenRegistrationResponse tokenResponse) throws U2fException {
+    RegisterResponse registerResponse = RawMessageCodec.decodeRegisterResponse(tokenResponse.getRegistrationData());
     X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
     checkIsTrusted(attestationCertificate);
 
-    byte[] clientData = ClientDataChecker.checkClientData(tokenRegistrationResponse.getClientData(), "navigator.id.finishEnrollment", challenge, allowedOrigins);
+    byte[] clientData = ClientDataChecker.checkClientData(tokenResponse.getClientData(), "navigator.id.finishEnrollment", challenge, allowedOrigins);
     byte[] userPublicKey = registerResponse.getUserPublicKey();
     byte[] keyHandle = registerResponse.getKeyHandle();
     byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(
@@ -142,5 +151,16 @@ public class StartedRegistration {
     }
   }
 
+  public static class RegisterRequest {
+    private final String version;
+    private final String challenge;
+    private final String appId;
+
+    private RegisterRequest(String version, String challenge, String appId) {
+      this.version = version;
+      this.challenge = challenge;
+      this.appId = appId;
+    }
+  }
 
 }

@@ -74,7 +74,7 @@ public class ClientDataChecker {
     return result.build();
   }
 
-  static String canonicalizeOrigin(String url) {
+  public static String canonicalizeOrigin(String url) {
     try {
       URI uri = new URI(url);
       return uri.getScheme() + "://" + uri.getAuthority();

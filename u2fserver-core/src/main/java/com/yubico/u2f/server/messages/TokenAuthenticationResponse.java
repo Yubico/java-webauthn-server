@@ -9,51 +9,46 @@
 
 package com.yubico.u2f.server.messages;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class TokenAuthenticationResponse {
 
   /** websafe-base64(client data) */
-  private final String bd;
+  private final String clientData;
 
   /** websafe-base64(raw response from U2F device) */
-  private final String sign;
+  private final String signatureData;
 
   /** challenge originally passed */
   private final String challenge;
 
-  /** application id originally passed */
-  private final String appId;
-
-  public TokenAuthenticationResponse(String bd, String sign, String challenge, String appId) {
-    this.bd = bd;
-    this.sign = sign;
-    this.challenge = challenge;
-    this.appId = appId;
+  public TokenAuthenticationResponse(String clientData, String signatureData, String challenge) {
+    this.clientData = checkNotNull(clientData);
+    this.signatureData = checkNotNull(signatureData);
+    this.challenge = checkNotNull(challenge);
   }
 
-  public String getBd() {
-    return bd;
+  public String getClientData() {
+    return clientData;
   }
 
-  public String getSign() {
-    return sign;
+  public String getSignatureData() {
+    return signatureData;
   }
 
   public String getChallenge() {
     return challenge;
   }
 
-  public String getAppId() {
-    return appId;
-  }
-
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((appId == null) ? 0 : appId.hashCode());
-    result = prime * result + ((bd == null) ? 0 : bd.hashCode());
+    result = prime * result + ((clientData == null) ? 0 : clientData.hashCode());
     result = prime * result + ((challenge == null) ? 0 : challenge.hashCode());
-    result = prime * result + ((sign == null) ? 0 : sign.hashCode());
+    result = prime * result + ((signatureData == null) ? 0 : signatureData.hashCode());
     return result;
   }
 
@@ -66,25 +61,20 @@ public class TokenAuthenticationResponse {
     if (getClass() != obj.getClass())
       return false;
     TokenAuthenticationResponse other = (TokenAuthenticationResponse) obj;
-    if (appId == null) {
-      if (other.appId != null)
+    if (clientData == null) {
+      if (other.clientData != null)
         return false;
-    } else if (!appId.equals(other.appId))
-      return false;
-    if (bd == null) {
-      if (other.bd != null)
-        return false;
-    } else if (!bd.equals(other.bd))
+    } else if (!clientData.equals(other.clientData))
       return false;
     if (challenge == null) {
       if (other.challenge != null)
         return false;
     } else if (!challenge.equals(other.challenge))
       return false;
-    if (sign == null) {
-      if (other.sign != null)
+    if (signatureData == null) {
+      if (other.signatureData != null)
         return false;
-    } else if (!sign.equals(other.sign))
+    } else if (!signatureData.equals(other.signatureData))
       return false;
     return true;
   }
