@@ -19,7 +19,7 @@ public class ByteSink {
   ByteArrayOutputStream baos = new ByteArrayOutputStream();
   DataOutputStream dataOutputStream = new DataOutputStream(baos);
 
-  ByteSink putInt(int i) {
+  public ByteSink putInt(int i) {
     try {
       dataOutputStream.writeInt(i);
     } catch (IOException e) {
@@ -28,7 +28,7 @@ public class ByteSink {
     return this;
   }
 
-  ByteSink put(byte b) {
+  public ByteSink put(byte b) {
     try {
       dataOutputStream.write(b);
     } catch (IOException e) {
@@ -37,7 +37,7 @@ public class ByteSink {
     return this;
   }
 
-  ByteSink put(byte[] b) {
+  public ByteSink put(byte[] b) {
     try {
       dataOutputStream.write(b);
     } catch (IOException e) {
@@ -46,7 +46,7 @@ public class ByteSink {
     return this;
   }
 
-  byte[] toByteArray() {
+  public byte[] toByteArray() {
     try {
       dataOutputStream.flush();
     } catch (IOException e) {
@@ -55,7 +55,7 @@ public class ByteSink {
     return baos.toByteArray();
   }
 
-  static ByteSink create() {
+  public static ByteSink create() {
     return new ByteSink();
   }
 }

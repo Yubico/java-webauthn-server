@@ -17,11 +17,11 @@ import java.io.IOException;
 //  ByteArrayInputStream cannot throw IOExceptions, so this class is converting checked exceptions to unchecked.
 public class ByteInputStream extends DataInputStream {
 
-  ByteInputStream(byte[] data) {
+  public ByteInputStream(byte[] data) {
     super(new ByteArrayInputStream(data));
   }
 
-  byte[] read(int numberOfBytes) {
+  public byte[] read(int numberOfBytes) {
     byte[] readBytes = new byte[numberOfBytes];
     try {
       readFully(readBytes);
@@ -31,7 +31,7 @@ public class ByteInputStream extends DataInputStream {
     return readBytes;
   }
 
-  byte[] readAll() {
+  public byte[] readAll() {
     try {
       byte[] readBytes = new byte[available()];
       readFully(readBytes);
@@ -41,7 +41,7 @@ public class ByteInputStream extends DataInputStream {
     }
   }
 
-  int readInteger() {
+  public int readInteger() {
     try {
       return readInt();
     } catch (IOException e) {
@@ -49,7 +49,7 @@ public class ByteInputStream extends DataInputStream {
     }
   }
 
-  byte readSigned() {
+  public byte readSigned() {
     try {
       return readByte();
     } catch (IOException e) {
@@ -57,7 +57,7 @@ public class ByteInputStream extends DataInputStream {
     }
   }
 
-  int readUnsigned() {
+  public int readUnsigned() {
     try {
       return readUnsignedByte();
     } catch (IOException e) {

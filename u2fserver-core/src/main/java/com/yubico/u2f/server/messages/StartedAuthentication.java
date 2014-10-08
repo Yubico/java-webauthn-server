@@ -99,6 +99,10 @@ public class StartedAuthentication {
     return true;
   }
 
+  public String getKeyHandle() {
+    return keyHandle;
+  }
+
   public int finish(TokenAuthenticationResponse tokenResponse, Device device) throws U2fException {
     byte[] clientData = ClientDataChecker.checkClientData(tokenResponse.getClientData(), "navigator.id.getAssertion", challenge, allowedOrigins);
 
@@ -136,6 +140,15 @@ public class StartedAuthentication {
   public int finish(String tokenResponse, Device device) throws U2fException {
     Gson gson = new Gson();
     return finish(gson.fromJson(tokenResponse, TokenAuthenticationResponse.class), device);
+  }
+
+  public String getChallenge() {
+    return challenge;
+  }
+
+  public String getAppId() {
+
+    return appId;
   }
 
   private static class AuthenticateRequest {

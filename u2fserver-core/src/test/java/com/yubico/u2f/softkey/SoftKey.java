@@ -8,34 +8,42 @@ package com.yubico.u2f.softkey;
 
 import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.U2fException;
+import com.yubico.u2f.codec.ByteInputStream;
 import com.yubico.u2f.codec.RawMessageCodec;
+import com.yubico.u2f.key.UserPresenceVerifier;
 import com.yubico.u2f.key.messages.AuthenticateResponse;
 import com.yubico.u2f.key.messages.RegisterResponse;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.bouncycastle.asn1.x9.X962NamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SoftKey {
   private static final Logger Log = Logger.getLogger(SoftKey.class.getName());
 
   private final X509Certificate vendorCertificate;
   private final PrivateKey certificatePrivateKey;
-  private final Map<byte[], KeyPair> dataStore = new HashMap<byte[], KeyPair>();
-  private final Crypto crypto;
+  private final Map<String, KeyPair> dataStore = new HashMap<String, KeyPair>();
+  private final Crypto crypto = new Crypto();
   private int deviceCounter = 0;
 
   public SoftKey() {
     this.vendorCertificate = TestVectors.VENDOR_CERTIFICATE;
     this.certificatePrivateKey = TestVectors.VENDOR_CERTIFICATE_PRIVATE_KEY;
-    this.crypto = new Crypto();
   }
 
   public RegisterResponse register(RegisterRequest registerRequest) throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
@@ -58,9 +66,10 @@ public class SoftKey {
 
     byte[] keyHandle = new byte[64];
     random.nextBytes(keyHandle);
-    dataStore.put(keyHandle, keyPair);
+    System.out.println("Storing key for handle: " + Hex.encodeHexString(keyHandle));
+    dataStore.put(new String(keyHandle), keyPair);
 
-    byte[] userPublicKey = keyPair.getPublic().getEncoded();
+    byte[] userPublicKey = stripMetaData(keyPair.getPublic().getEncoded());
 
     byte[] signedData = RawMessageCodec.encodeRegistrationSignedBytes(applicationSha256, challengeSha256,
             keyHandle, userPublicKey);
@@ -79,6 +88,15 @@ public class SoftKey {
     return new RegisterResponse(userPublicKey, keyHandle, vendorCertificate, signature);
   }
 
+  private byte[] stripMetaData(byte[] a) {
+    ByteInputStream bis = new ByteInputStream(a);
+    bis.read(3);
+    bis.read(bis.readUnsigned() + 1);
+    int keyLength = bis.readUnsigned();
+    bis.read(1);
+    return bis.read(keyLength - 1);
+  }
+
   public AuthenticateResponse authenticate(AuthenticateRequest authenticateRequest)
           throws U2fException {
     Log.info(">> authenticate");
@@ -94,10 +112,10 @@ public class SoftKey {
     Log.info("  challengeSha256: " + Hex.encodeHexString(challengeSha256));
     Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
 
-    KeyPair keyPair = dataStore.get(keyHandle);
+    System.out.println("Fetching key for handle: " + Hex.encodeHexString(keyHandle));
+    KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
     int counter = ++deviceCounter;
-    byte userPresence = 0x1;
-    byte[] signedData = RawMessageCodec.encodeAuthenticateSignedBytes(applicationSha256, userPresence,
+    byte[] signedData = RawMessageCodec.encodeAuthenticateSignedBytes(applicationSha256, UserPresenceVerifier.USER_PRESENT_FLAG,
             counter, challengeSha256);
 
     Log.info("Signing bytes " + Hex.encodeHexString(signedData));
@@ -105,12 +123,12 @@ public class SoftKey {
     byte[] signature = crypto.sign(signedData, keyPair.getPrivate());
 
     Log.info(" -- Outputs --");
-    Log.info("  userPresence: " + userPresence);
+    Log.info("  userPresence: " + UserPresenceVerifier.USER_PRESENT_FLAG);
     Log.info("  deviceCounter: " + counter);
     Log.info("  signature: " + Hex.encodeHexString(signature));
 
     Log.info("<< authenticate");
 
-    return new AuthenticateResponse(userPresence, counter, signature);
+    return new AuthenticateResponse(UserPresenceVerifier.USER_PRESENT_FLAG, counter, signature);
   }
 }

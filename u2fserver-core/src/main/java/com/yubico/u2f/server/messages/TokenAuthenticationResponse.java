@@ -9,8 +9,6 @@
 
 package com.yubico.u2f.server.messages;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TokenAuthenticationResponse {

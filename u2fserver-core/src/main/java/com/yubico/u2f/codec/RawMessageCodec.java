@@ -17,6 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
 /**
  * Raw message formats, as per FIDO U2F: Raw Message Formats - Draft 4
@@ -30,6 +31,9 @@ public class RawMessageCodec {
   }
 
   public static RegisterResponse decodeRegisterResponse(byte[] data) throws U2fException {
+
+    System.out.println("RECEIVED CERT: " + Arrays.toString(data));
+
     ByteInputStream bytes = new ByteInputStream(data);
     byte reservedByte = bytes.readSigned();
     if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
@@ -37,6 +41,7 @@ public class RawMessageCodec {
           "Incorrect value of reserved byte. Expected: %d. Was: %d",
           REGISTRATION_RESERVED_BYTE_VALUE, reservedByte));
     }
+
     try {
       return new RegisterResponse(
               bytes.read(65),
