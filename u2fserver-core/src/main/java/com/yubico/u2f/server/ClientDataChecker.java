@@ -1,11 +1,11 @@
 package com.yubico.u2f.server;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.messages.StartedRegistration;
 import org.apache.commons.codec.binary.Base64;
 
 import java.net.URI;
@@ -18,8 +18,8 @@ public class ClientDataChecker {
   private static final String CHALLENGE_PARAM = "challenge";
   private static final String ORIGIN_PARAM = "origin";
 
-  public static byte[] checkClientData(String clientDataBase64, String messageType, String challenge,
-                                       Set<String> allowedOrigins)
+    public static byte[] checkClientData(String clientDataBase64, String messageType, String challenge,
+                                       Optional<Set<String>> allowedOrigins)
           throws U2fException {
 
     byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);
@@ -27,7 +27,6 @@ public class ClientDataChecker {
     if (!clientDataAsElement.isJsonObject()) {
       throw new U2fException("clientData has wrong format");
     }
-
     JsonObject clientData = clientDataAsElement.getAsJsonObject();
 
     // check that the right "typ" parameter is present in the clientData JSON
@@ -45,8 +44,10 @@ public class ClientDataChecker {
       throw new U2fException("Bad clientData: missing 'challenge' param");
     }
 
-    if (clientData.has(ORIGIN_PARAM)) {
-      verifyOrigin(clientData.get(ORIGIN_PARAM).getAsString(), allowedOrigins);
+    if(allowedOrigins.isPresent()) {
+      if (clientData.has(ORIGIN_PARAM)) {
+        verifyOrigin(clientData.get(ORIGIN_PARAM).getAsString(), allowedOrigins.get());
+      }
     }
 
     String challengeFromClientData = clientData.get(CHALLENGE_PARAM).getAsString();

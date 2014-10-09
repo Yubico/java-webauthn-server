@@ -11,6 +11,7 @@ package com.yubico.u2f.server.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.codec.RawMessageCodec;
@@ -28,11 +29,9 @@ public class StartedAuthentication {
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
    */
-  @JsonProperty
   private final String version;
 
   /** The websafe-base64-encoded challenge. */
-  @JsonProperty
   private final String challenge;
 
   /**
@@ -41,25 +40,19 @@ public class StartedAuthentication {
    * application id. The browser enforces that the calling origin belongs to the
    * application identified by the application id.
    */
-  @JsonProperty
   private final String appId;
 
   /**
    * websafe-base64 encoding of the key handle obtained from the U2F token
    * during registration.
    */
-  @JsonProperty
   private final String keyHandle;
 
-  private final Crypto crypto = new BouncyCastleCrypto();
-  private final Set<String> allowedOrigins;
-
-  public StartedAuthentication(String version, String challenge, String appId, String keyHandle, Set<String> origins) {
+  public StartedAuthentication(String version, String challenge, String appId, String keyHandle) {
     this.version = version;
     this.challenge = challenge;
     this.appId = appId;
     this.keyHandle = keyHandle;
-    this.allowedOrigins = ClientDataChecker.canonicalizeOrigins(origins);
   }
 
   @Override
@@ -103,47 +96,13 @@ public class StartedAuthentication {
     return keyHandle;
   }
 
-  public int finish(TokenAuthenticationResponse tokenResponse, Device device) throws U2fException {
-    byte[] clientData = ClientDataChecker.checkClientData(tokenResponse.getClientData(), "navigator.id.getAssertion", challenge, allowedOrigins);
-
-    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(tokenResponse.getSignatureData());
-    byte userPresence = authenticateResponse.getUserPresence();
-    if (userPresence != UserPresenceVerifier.USER_PRESENT_FLAG) {
-      throw new U2fException("User presence invalid during authentication");
-    }
-
-    int counter = authenticateResponse.getCounter();
-    if (counter <= device.getCounter()) {
-      throw new U2fException("Counter value smaller than expected!");
-    }
-
-    byte[] signedBytes = RawMessageCodec.encodeAuthenticateSignedBytes(
-            crypto.hash(appId),
-            userPresence,
-            counter,
-            crypto.hash(clientData)
-    );
-    crypto.checkSignature(
-            crypto.decodePublicKey(device.getPublicKey()),
-            signedBytes,
-            authenticateResponse.getSignature()
-    );
-
-    return counter + 1;
+  public String getChallenge() {
+    return challenge;
   }
 
   public String json() {
     Gson gson = new Gson();
-    return gson.toJson(new AuthenticateRequest(version, challenge, appId, keyHandle));
-  }
-
-  public int finish(String tokenResponse, Device device) throws U2fException {
-    Gson gson = new Gson();
-    return finish(gson.fromJson(tokenResponse, TokenAuthenticationResponse.class), device);
-  }
-
-  public String getChallenge() {
-    return challenge;
+    return gson.toJson(this);
   }
 
   public String getAppId() {
@@ -151,17 +110,8 @@ public class StartedAuthentication {
     return appId;
   }
 
-  private static class AuthenticateRequest {
-    private final String version;
-    private final String challenge;
-    private final String appId;
-    private final String keyHandle;
-
-    private AuthenticateRequest(String version, String challenge, String appId, String keyHandle) {
-      this.version = version;
-      this.challenge = challenge;
-      this.appId = appId;
-      this.keyHandle = keyHandle;
-    }
+  public static StartedAuthentication fromJson(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, StartedAuthentication.class);
   }
 }

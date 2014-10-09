@@ -9,6 +9,8 @@
 
 package com.yubico.u2f.server.messages;
 
+import com.google.gson.Gson;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TokenAuthenticationResponse {
@@ -75,5 +77,10 @@ public class TokenAuthenticationResponse {
     } else if (!signatureData.equals(other.signatureData))
       return false;
     return true;
+  }
+
+  public static TokenAuthenticationResponse fromJson(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, TokenAuthenticationResponse.class);
   }
 }

@@ -29,72 +29,25 @@ public class SoftKeyTest {
   public static final ImmutableSet<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
   public static final String APP_ID = "my-app";
 
-  private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
-  private final Gson gson = new Gson();
-
   @Test
   public void shouldRegister() throws Exception {
     SoftKey key = new SoftKey();
-    register(key);
+    Client client = new Client(key);
+    client.register();
   }
 
   @Test
   public void shouldAuthenticate() throws Exception {
     SoftKey key = new SoftKey();
+    Client client = new Client(key);
 
-    Device registeredDevice = register(key);
+    Device registeredDevice = client.register();
 
-    StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, TRUSTED_DOMAINS, registeredDevice);
+    StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(U2F.startAuthentication(APP_ID, registeredDevice));
+    TokenAuthenticationResponse tokenAuthenticationResponse = client.authenticate(registeredDevice, startedAuthentication);
 
-    // client
-    Map<String, String> clientData = new HashMap<String, String>();
-    clientData.put("typ", "navigator.id.getAssertion");
-    clientData.put("challenge", startedAuthentication.getChallenge());
-    clientData.put("origin", "http://example.com");
-    String clientDataJson = gson.toJson(clientData);
-
-
-    byte[] clientParam = crypto.hash(new String(clientDataJson));
-    byte[] appParam = crypto.hash(startedAuthentication.getAppId());
-    AuthenticateRequest authenticateRequest = new AuthenticateRequest((byte) 0x01, clientParam, appParam, registeredDevice.getKeyHandle());
-
-    AuthenticateResponse authenticateResponse = key.authenticate(authenticateRequest);
-
-    // client encodes data
-    String clientDataBase64 = Base64.encodeBase64URLSafeString(clientDataJson.getBytes());
-    byte[] authData = ByteSink.create()
-            .put(authenticateResponse.getUserPresence())
-            .putInt(authenticateResponse.getCounter())
-            .put(authenticateResponse.getSignature())
-            .toByteArray();
-
-    TokenAuthenticationResponse tokenAuthenticationResponse = new TokenAuthenticationResponse(
-            clientDataBase64,
-            Base64.encodeBase64URLSafeString(authData),
-            startedAuthentication.getChallenge()
-    );
-
-    startedAuthentication.finish(tokenAuthenticationResponse, registeredDevice);
+    U2F.finishAuthentication(startedAuthentication, tokenAuthenticationResponse, registeredDevice, TRUSTED_DOMAINS);
   }
 
-  private Device register(SoftKey key) throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
-    StartedRegistration startedRegistration = U2F.startRegistration(APP_ID, TRUSTED_DOMAINS);
 
-    // client
-    Map<String, String> clientData = new HashMap<String, String>();
-    clientData.put("typ", "navigator.id.finishEnrollment");
-    clientData.put("challenge", startedRegistration.getChallenge());
-    clientData.put("origin", "http://example.com");
-    String clientDataJson = gson.toJson(clientData);
-
-    byte[] clientParam = crypto.hash(new String(clientDataJson));
-    byte[] appParam = crypto.hash(startedRegistration.getAppId());
-
-    RegisterResponse registerResponse = key.register(new RegisterRequest(appParam, clientParam));
-
-    // client encodes data
-    TokenRegistrationResponse tokenResponse = Client.encodeTokenRegistrationResponse(clientDataJson, registerResponse);
-
-    return startedRegistration.finish(tokenResponse);
-  }
 }

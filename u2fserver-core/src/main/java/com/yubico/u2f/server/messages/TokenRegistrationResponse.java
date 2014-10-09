@@ -10,6 +10,7 @@
 package com.yubico.u2f.server.messages;
 
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
 
 public class TokenRegistrationResponse {
   /** websafe-base64(raw registration response message) */
@@ -29,6 +30,11 @@ public class TokenRegistrationResponse {
 
   public String getClientData() {
     return clientData;
+  }
+
+  public static TokenRegistrationResponse fromJson(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, TokenRegistrationResponse.class);
   }
 
   @Override

@@ -13,8 +13,8 @@ import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.ClientDataChecker;
+import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.data.SignSessionData;
 import com.yubico.u2f.server.messages.StartedAuthentication;
 import com.yubico.u2f.server.messages.StartedRegistration;
 import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
@@ -55,49 +55,46 @@ public class U2FTest extends TestVectors {
 
   @Test
   public void testProcessRegistrationResponse() throws Exception {
-    StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL, allowedOrigins);
+    StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
 
-    startedRegistration.finish(new TokenRegistrationResponse(REGISTRATION_DATA_BASE64, BROWSER_DATA_ENROLL_BASE64));
+    U2F.finishRegistration(startedRegistration, new TokenRegistrationResponse(REGISTRATION_DATA_BASE64, BROWSER_DATA_ENROLL_BASE64), TRUSTED_DOMAINS);
   }
 
   @Test
   public void testProcessRegistrationResponse2() throws Exception {
-    StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL, allowedOrigins);
+    StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
 
     HashSet<X509Certificate> trustedCertificates = new HashSet<X509Certificate>();
     trustedCertificates.add(VENDOR_CERTIFICATE);
     trustedCertificates.add(TRUSTED_CERTIFICATE_2);
 
-    Device device = startedRegistration.finish(new TokenRegistrationResponse(REGISTRATION_DATA_2_BASE64, BROWSER_DATA_2_BASE64));
+    Device device = U2F.finishRegistration(startedRegistration, new TokenRegistrationResponse(REGISTRATION_DATA_2_BASE64, BROWSER_DATA_2_BASE64), TRUSTED_DOMAINS);
 
     assertEquals(new Device(KEY_HANDLE_2, USER_PUBLIC_KEY_2, TRUSTED_CERTIFICATE_2, 0), device);
   }
 
   @Test
   public void testProcessSignResponse() throws Exception {
-    StartedAuthentication startedAuthentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64, allowedOrigins);
+    StartedAuthentication startedAuthentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
 
     TokenAuthenticationResponse tokenResponse = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-    startedAuthentication.finish(tokenResponse, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0));
+    U2F.finishAuthentication(startedAuthentication, tokenResponse, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0), allowedOrigins);
   }
 
 
   @Test
   public void testProcessSignResponse_badOrigin() throws Exception {
-    SignSessionData signSessionData =
-        new SignSessionData(ACCOUNT_NAME, APP_ID_SIGN, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_SIGN_HEX);
-
     Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
     StartedAuthentication authentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64,
-            APP_ID_SIGN, KEY_HANDLE_BASE64, allowedOrigins);
+            APP_ID_SIGN, KEY_HANDLE_BASE64);
 
     TokenAuthenticationResponse response = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     try {
-      authentication.finish(response, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0));
+      U2F.finishAuthentication(authentication, response, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0), allowedOrigins);
       fail("expected exception, but didn't get it");
     } catch(U2fException e) {
       assertTrue(e.getMessage().contains("is not a recognized home origin"));

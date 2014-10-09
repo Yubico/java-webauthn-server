@@ -21,25 +21,25 @@ public class SystemTest {
       u2f-host -aauthenticate -o http://example.com
    */
   public static void main(String... args) throws Exception {
-    StartedRegistration startedRegistration = U2F.startRegistration(APP_ID, TRUSTED_DOMAINS);
+    String startedRegistration = U2F.startRegistration(APP_ID);
     System.out.println("Registration data:");
-    System.out.println(startedRegistration.json());
+    System.out.println(startedRegistration);
 
     System.out.println();
     System.out.println("Enter token response:");
 
-    Device device = startedRegistration.finish(scan.nextLine());
+    Device device = U2F.finishRegistration(startedRegistration, scan.nextLine(), TRUSTED_DOMAINS);
 
     System.out.println(device);
 
-    StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, TRUSTED_DOMAINS, device);
+    String startedAuthentication = U2F.startAuthentication(APP_ID, device);
     System.out.println("Authentication data:");
-    System.out.println(startedAuthentication.json());
+    System.out.println(startedAuthentication);
 
     System.out.println();
     System.out.println("Enter token response:");
 
-    int deviceCounter = startedAuthentication.finish(scan.nextLine(), device);
+    int deviceCounter = U2F.finishAuthentication(startedAuthentication, scan.nextLine(), device, TRUSTED_DOMAINS);
     System.out.println("Device counter: " + deviceCounter);
   }
 }

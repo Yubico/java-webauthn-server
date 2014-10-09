@@ -9,37 +9,17 @@
 
 package com.yubico.u2f.server.messages;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableSet;
-import com.google.gson.*;
-import com.yubico.u2f.U2fException;
-import com.yubico.u2f.codec.RawMessageCodec;
-import com.yubico.u2f.key.messages.RegisterResponse;
-import com.yubico.u2f.server.ClientDataChecker;
-import com.yubico.u2f.server.Crypto;
-import com.yubico.u2f.server.U2F;
-import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.impl.BouncyCastleCrypto;
-import org.apache.commons.codec.binary.Base64;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.cert.X509Certificate;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.logging.Logger;
+import com.google.gson.Gson;
 
 public class StartedRegistration {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
    */
-  @JsonProperty
   private final String version;
 
   /** The websafe-base64-encoded challenge. */
-  @JsonProperty
   private final String challenge;
 
   public String getChallenge() {
@@ -52,27 +32,16 @@ public class StartedRegistration {
    * application id. The browser enforces that the calling origin belongs to the
    * application identified by the application id.
    */
-  @JsonProperty
   private final String appId;
-
-  private final Set<X509Certificate> trustedAttestationCertificates = new HashSet<X509Certificate>();
-
-  private final Crypto crypto = new BouncyCastleCrypto();
-  private final Set<String> allowedOrigins;
 
   public String getAppId() {
     return appId;
   }
 
-  private static final Logger Log = Logger.getLogger(StartedRegistration.class.getName());
-
-  public static final int INITIAL_COUNTER_VALUE = 0;
-
-  public StartedRegistration(String version, String challenge, String appId, Set<String> origins) {
+  public StartedRegistration(String version, String challenge, String appId) {
     this.version = version;
     this.challenge = challenge;
     this.appId = appId;
-    this.allowedOrigins = ClientDataChecker.canonicalizeOrigins(origins);
   }
 
   @Override
@@ -109,58 +78,11 @@ public class StartedRegistration {
 
   public String json() {
     Gson gson = new Gson();
-    return gson.toJson(new RegisterRequest(version, challenge, appId));
+    return gson.toJson(this);
   }
 
-  public Device finish(String tokenResponse) throws U2fException {
+  public static StartedRegistration fromJson(String json) {
     Gson gson = new Gson();
-    return finish(gson.fromJson(tokenResponse, TokenRegistrationResponse.class));
+    return gson.fromJson(json, StartedRegistration.class);
   }
-
-  public Device finish(TokenRegistrationResponse tokenResponse) throws U2fException {
-    RegisterResponse registerResponse = RawMessageCodec.decodeRegisterResponse(tokenResponse.getRegistrationData());
-    X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
-    checkIsTrusted(attestationCertificate);
-
-    byte[] clientData = ClientDataChecker.checkClientData(tokenResponse.getClientData(), "navigator.id.finishEnrollment", challenge, allowedOrigins);
-    byte[] userPublicKey = registerResponse.getUserPublicKey();
-    byte[] keyHandle = registerResponse.getKeyHandle();
-    byte[] signedBytes = RawMessageCodec.encodeRegistrationSignedBytes(
-            crypto.hash(getAppId()),
-            crypto.hash(clientData),
-            keyHandle,
-            userPublicKey
-    );
-    crypto.checkSignature(attestationCertificate, signedBytes, registerResponse.getSignature());
-
-    // The first time we create the SecurityKeyData, we set the counter value to 0.
-    // We don't actually know what the counter value of the real device is - but it will
-    // be something bigger (or equal) to 0, so subsequent signatures will check out ok.
-    Device device = new Device(
-            keyHandle,
-            userPublicKey,
-            attestationCertificate,
-            INITIAL_COUNTER_VALUE
-    );
-    return device;
-  }
-
-  private void checkIsTrusted(X509Certificate attestationCertificate)  {
-    if (!trustedAttestationCertificates.contains(attestationCertificate)) {
-      Log.warning("Attestation cert is not trusted"); // TODO: Should this be more than a warning?
-    }
-  }
-
-  public static class RegisterRequest {
-    private final String version;
-    private final String challenge;
-    private final String appId;
-
-    private RegisterRequest(String version, String challenge, String appId) {
-      this.version = version;
-      this.challenge = challenge;
-      this.appId = appId;
-    }
-  }
-
 }
