@@ -12,13 +12,13 @@ package com.yubico.u2f.server.impl;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.ClientDataChecker;
+import com.yubico.u2f.server.ClientDataUtils;
 import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.messages.StartedAuthentication;
 import com.yubico.u2f.server.messages.StartedRegistration;
-import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
-import com.yubico.u2f.server.messages.TokenRegistrationResponse;
+import com.yubico.u2f.server.messages.AuthenticationResponse;
+import com.yubico.u2f.server.messages.RegistrationResponse;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,20 +44,20 @@ public class U2FTest extends TestVectors {
 
   @Test
   public void testSanitizeOrigin() {
-    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com"));
-    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/"));
-    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/foo"));
-    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/foo?bar=b"));
-    assertEquals("http://example.com", ClientDataChecker.canonicalizeOrigin("http://example.com/foo#fragment"));
-    assertEquals("https://example.com", ClientDataChecker.canonicalizeOrigin("https://example.com"));
-    assertEquals("https://example.com", ClientDataChecker.canonicalizeOrigin("https://example.com/foo"));
+    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com"));
+    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/"));
+    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/foo"));
+    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/foo?bar=b"));
+    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/foo#fragment"));
+    assertEquals("https://example.com", ClientDataUtils.canonicalizeOrigin("https://example.com"));
+    assertEquals("https://example.com", ClientDataUtils.canonicalizeOrigin("https://example.com/foo"));
   }
 
   @Test
   public void testProcessRegistrationResponse() throws Exception {
     StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
 
-    U2F.finishRegistration(startedRegistration, new TokenRegistrationResponse(REGISTRATION_DATA_BASE64, BROWSER_DATA_ENROLL_BASE64), TRUSTED_DOMAINS);
+    U2F.finishRegistration(startedRegistration, new RegistrationResponse(REGISTRATION_DATA_BASE64, BROWSER_DATA_ENROLL_BASE64), TRUSTED_DOMAINS);
   }
 
   @Test
@@ -68,7 +68,7 @@ public class U2FTest extends TestVectors {
     trustedCertificates.add(VENDOR_CERTIFICATE);
     trustedCertificates.add(TRUSTED_CERTIFICATE_2);
 
-    Device device = U2F.finishRegistration(startedRegistration, new TokenRegistrationResponse(REGISTRATION_DATA_2_BASE64, BROWSER_DATA_2_BASE64), TRUSTED_DOMAINS);
+    Device device = U2F.finishRegistration(startedRegistration, new RegistrationResponse(REGISTRATION_DATA_2_BASE64, BROWSER_DATA_2_BASE64), TRUSTED_DOMAINS);
 
     assertEquals(new Device(KEY_HANDLE_2, USER_PUBLIC_KEY_2, TRUSTED_CERTIFICATE_2, 0), device);
   }
@@ -77,7 +77,7 @@ public class U2FTest extends TestVectors {
   public void testProcessSignResponse() throws Exception {
     StartedAuthentication startedAuthentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
 
-    TokenAuthenticationResponse tokenResponse = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
+    AuthenticationResponse tokenResponse = new AuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     U2F.finishAuthentication(startedAuthentication, tokenResponse, new Device(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, VENDOR_CERTIFICATE, 0), allowedOrigins);
@@ -90,7 +90,7 @@ public class U2FTest extends TestVectors {
     StartedAuthentication authentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64,
             APP_ID_SIGN, KEY_HANDLE_BASE64);
 
-    TokenAuthenticationResponse response = new TokenAuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
+    AuthenticationResponse response = new AuthenticationResponse(BROWSER_DATA_SIGN_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     try {

@@ -11,15 +11,17 @@ package com.yubico.u2f.server.messages;
 
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
+import com.yubico.u2f.U2fException;
+import com.yubico.u2f.server.ClientDataUtils;
 
-public class TokenRegistrationResponse {
+public class RegistrationResponse {
   /** websafe-base64(raw registration response message) */
   private final String registrationData;
 
   /** websafe-base64(UTF8(stringified(client data))) */
   private final String clientData;
 
-  public TokenRegistrationResponse(String registrationData, String clientData) {
+  public RegistrationResponse(String registrationData, String clientData) {
     this.registrationData = registrationData;
     this.clientData = clientData;
   }
@@ -28,13 +30,13 @@ public class TokenRegistrationResponse {
     return registrationData;
   }
 
-  public String getClientData() {
-    return clientData;
+  public ClientData getClientData() {
+    return new ClientData(clientData);
   }
 
-  public static TokenRegistrationResponse fromJson(String json) {
+  public static RegistrationResponse fromJson(String json) {
     Gson gson = new Gson();
-    return gson.fromJson(json, TokenRegistrationResponse.class);
+    return gson.fromJson(json, RegistrationResponse.class);
   }
 
   @Override
@@ -50,7 +52,7 @@ public class TokenRegistrationResponse {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    TokenRegistrationResponse other = (TokenRegistrationResponse) obj;
+    RegistrationResponse other = (RegistrationResponse) obj;
     if (clientData == null) {
       if (other.clientData != null)
         return false;

@@ -1,7 +1,6 @@
 package com.yubico.u2f.server;
 
 import com.google.common.base.Optional;
-import com.google.gson.Gson;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.codec.RawMessageCodec;
 import com.yubico.u2f.key.UserPresenceVerifier;
@@ -12,8 +11,8 @@ import com.yubico.u2f.server.impl.BouncyCastleCrypto;
 import com.yubico.u2f.server.impl.ChallengeGeneratorImpl;
 import com.yubico.u2f.server.messages.StartedAuthentication;
 import com.yubico.u2f.server.messages.StartedRegistration;
-import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
-import com.yubico.u2f.server.messages.TokenRegistrationResponse;
+import com.yubico.u2f.server.messages.AuthenticationResponse;
+import com.yubico.u2f.server.messages.RegistrationResponse;
 import org.apache.commons.codec.binary.Base64;
 
 import java.security.cert.X509Certificate;
@@ -26,33 +25,33 @@ public class U2F {
   private final static Crypto crypto = new BouncyCastleCrypto();
   public static final int INITIAL_COUNTER_VALUE = 0;
 
-  public static String startRegistration(String appId) {
+  public static StartedRegistration startRegistration(String appId) {
     byte[] challenge = challengeGenerator.generateChallenge();
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
-    return new StartedRegistration(U2F_VERSION, challengeBase64, appId).json();
+    return new StartedRegistration(U2F_VERSION, challengeBase64, appId);
   }
 
-  public static String startAuthentication(String appId, Device device) {
+  public static StartedAuthentication startAuthentication(String appId, Device device) {
     byte[] challenge = challengeGenerator.generateChallenge();
     return new StartedAuthentication(
             U2F_VERSION,
             Base64.encodeBase64URLSafeString(challenge),
             appId,
             Base64.encodeBase64URLSafeString(device.getKeyHandle())
-    ).json();
+    );
   }
 
   public static Device finishRegistration(String startedRegistration, String tokenResponse, Set<String> allowedOrigins) throws U2fException {
     return finishRegistration(
             StartedRegistration.fromJson(startedRegistration),
-            TokenRegistrationResponse.fromJson(tokenResponse),
+            RegistrationResponse.fromJson(tokenResponse),
             allowedOrigins
     );
   }
 
-  public static Device finishRegistration(StartedRegistration startedRegistration, TokenRegistrationResponse tokenResponse, Set<String> allowedOrigins) throws U2fException {
-    byte[] clientData = ClientDataChecker.checkClientData(tokenResponse.getClientData(), "navigator.id.finishEnrollment", startedRegistration.getChallenge(),
-            Optional.of(ClientDataChecker.canonicalizeOrigins(allowedOrigins)));
+  public static Device finishRegistration(StartedRegistration startedRegistration, RegistrationResponse tokenResponse, Set<String> allowedOrigins) throws U2fException {
+    byte[] clientData = ClientDataUtils.checkClientData(tokenResponse.getClientData().toString(), "navigator.id.finishEnrollment", startedRegistration.getChallenge(),
+            Optional.of(ClientDataUtils.canonicalizeOrigins(allowedOrigins)));
 
     RegisterResponse registerResponse = RawMessageCodec.decodeRegisterResponse(tokenResponse.getRegistrationData());
     X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
@@ -79,12 +78,12 @@ public class U2F {
     return device;
   }
 
-  public static int finishAuthentication(StartedAuthentication startedAuthentication, TokenAuthenticationResponse tokenResponse, Device device, Set<String> allowedOrigins) throws U2fException {
-    byte[] clientData = ClientDataChecker.checkClientData(
+  public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticationResponse tokenResponse, Device device, Set<String> allowedOrigins) throws U2fException {
+    byte[] clientData = ClientDataUtils.checkClientData(
             tokenResponse.getClientData(),
             "navigator.id.getAssertion",
             startedAuthentication.getChallenge(),
-            Optional.of(ClientDataChecker.canonicalizeOrigins(allowedOrigins))
+            Optional.of(ClientDataUtils.canonicalizeOrigins(allowedOrigins))
     );
 
     AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(tokenResponse.getSignatureData());
@@ -109,17 +108,15 @@ public class U2F {
             signedBytes,
             authenticateResponse.getSignature()
     );
-
     return counter + 1;
   }
 
   public static int finishAuthentication(String startedAuthentication, String tokenResponse, Device device, Set<String> allowedOrigins) throws U2fException {
     return finishAuthentication(
             StartedAuthentication.fromJson(startedAuthentication),
-            TokenAuthenticationResponse.fromJson(tokenResponse),
+            AuthenticationResponse.fromJson(tokenResponse),
             device,
             allowedOrigins
     );
   }
-
 }

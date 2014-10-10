@@ -12,10 +12,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-public class ClientDataChecker {
+public class ClientDataUtils {
 
   private static final String TYPE_PARAM = "typ";
-  private static final String CHALLENGE_PARAM = "challenge";
+  public static final String CHALLENGE_PARAM = "challenge";
   private static final String ORIGIN_PARAM = "origin";
 
     public static byte[] checkClientData(String clientDataBase64, String messageType, String challenge,
@@ -23,11 +23,7 @@ public class ClientDataChecker {
           throws U2fException {
 
     byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);
-    JsonElement clientDataAsElement = new JsonParser().parse(new String(clientDataBytes));
-    if (!clientDataAsElement.isJsonObject()) {
-      throw new U2fException("clientData has wrong format");
-    }
-    JsonObject clientData = clientDataAsElement.getAsJsonObject();
+    JsonObject clientData = toJsonObject(clientDataBytes);
 
     // check that the right "typ" parameter is present in the clientData JSON
     if (!clientData.has(TYPE_PARAM)) {
@@ -58,6 +54,14 @@ public class ClientDataChecker {
     // TODO: Deal with ChannelID
 
     return clientDataBytes;
+  }
+
+  public static JsonObject toJsonObject(byte[] clientDataBytes) throws U2fException {
+    JsonElement clientDataAsElement = new JsonParser().parse(new String(clientDataBytes));
+    if (!clientDataAsElement.isJsonObject()) {
+      throw new U2fException("clientData has wrong format");
+    }
+    return clientDataAsElement.getAsJsonObject();
   }
 
   private static void verifyOrigin(String origin, Set<String> allowedOrigins) throws U2fException {

@@ -76,7 +76,7 @@ public class StartedRegistration {
     return true;
   }
 
-  public String json() {
+  public String toJson() {
     Gson gson = new Gson();
     return gson.toJson(this);
   }

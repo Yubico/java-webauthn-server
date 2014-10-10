@@ -10,9 +10,13 @@
 package com.yubico.u2f.server.data;
 
 import java.io.Serializable;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+import com.google.gson.Gson;
+import com.yubico.u2f.codec.ByteInputStream;
 import org.apache.commons.codec.binary.Base64;
 
 import com.google.common.base.Objects;
@@ -22,7 +26,7 @@ public class Device implements Serializable {
 
   private final byte[] keyHandle;
   private final byte[] publicKey;
-  private final X509Certificate attestationCert;
+  private final byte[] attestationCert;
   private int counter;
 
   public Device(
@@ -32,7 +36,7 @@ public class Device implements Serializable {
           int counter) {
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
-    this.attestationCert = attestationCert;
+    this.attestationCert = attestationCert.getPublicKey().getEncoded();
     this.counter = counter;
   }
 
@@ -44,16 +48,12 @@ public class Device implements Serializable {
     return publicKey;
   }
 
-  public X509Certificate getAttestationCertificate() {
-    return attestationCert;
+  public X509Certificate getAttestationCertificate() throws CertificateException {
+    return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteInputStream(attestationCert));
   }
   
   public int getCounter() {
 	return counter; 
-  }
-  
-  public void setCounter(int newCounterValue) {
-    counter = newCounterValue;
   }
   
   @Override
@@ -72,7 +72,7 @@ public class Device implements Serializable {
     Device that = (Device) obj;
     return Arrays.equals(this.keyHandle, that.keyHandle) 
         && Arrays.equals(this.publicKey, that.publicKey)
-        && Objects.equal(this.attestationCert, that.attestationCert);
+        && Arrays.equals(this.attestationCert, that.attestationCert);
   }
   
   @Override
@@ -85,5 +85,15 @@ public class Device implements Serializable {
         + counter + "\n"
         + "attestation certificate:\n"
         + attestationCert;
+  }
+
+  public String toJson() {
+    Gson gson = new Gson();
+    return gson.toJson(this);
+  }
+
+  public static Device fromJson(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, Device.class);
   }
 }

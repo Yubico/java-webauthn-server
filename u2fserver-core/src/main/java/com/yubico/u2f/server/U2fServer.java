@@ -15,9 +15,9 @@ import java.util.List;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.data.Device;
 import com.yubico.u2f.server.messages.StartedRegistration;
-import com.yubico.u2f.server.messages.TokenRegistrationResponse;
+import com.yubico.u2f.server.messages.RegistrationResponse;
 import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
+import com.yubico.u2f.server.messages.AuthenticationResponse;
 
 public interface U2fServer {
 
@@ -25,13 +25,13 @@ public interface U2fServer {
   StartedRegistration startRegistration()
           throws U2fException, IOException;
 
-  Device finishRegistration(StartedRegistration challenge, TokenRegistrationResponse tokenRegistrationResponse)
+  Device finishRegistration(StartedRegistration challenge, RegistrationResponse registrationResponse)
           throws U2fException, IOException;
 
   // authentication //
   List<StartedAuthentication> startAuthentication(String appId, Device device)
           throws U2fException, IOException;
 
-  long finishAuthentication(TokenAuthenticationResponse tokenAuthenticationResponse, StartedRegistration sessionData, Device device)
+  long finishAuthentication(AuthenticationResponse authenticationResponse, StartedRegistration sessionData, Device device)
           throws U2fException, IOException;
 }

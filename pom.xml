@@ -7,10 +7,11 @@
     <groupId>com.yubico</groupId>
     <artifactId>u2fserver-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
     <name>U2F parent</name>
     <modules>
         <module>u2fserver-core</module>
+        <module>demo-server</module>
     </modules>
 
     <dependencies>

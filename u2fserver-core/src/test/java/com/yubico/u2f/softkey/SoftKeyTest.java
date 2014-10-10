@@ -1,28 +1,11 @@
 package com.yubico.u2f.softkey;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.yubico.u2f.U2fException;
-import com.yubico.u2f.codec.ByteSink;
-import com.yubico.u2f.key.messages.AuthenticateResponse;
-import com.yubico.u2f.key.messages.RegisterResponse;
 import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.impl.BouncyCastleCrypto;
 import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.StartedRegistration;
-import com.yubico.u2f.server.messages.TokenAuthenticationResponse;
-import com.yubico.u2f.server.messages.TokenRegistrationResponse;
-import com.yubico.u2f.softkey.messages.AuthenticateRequest;
-import com.yubico.u2f.softkey.messages.RegisterRequest;
-import org.apache.commons.codec.binary.Base64;
+import com.yubico.u2f.server.messages.AuthenticationResponse;
 import org.junit.Test;
-
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SoftKeyTest {
 
@@ -43,10 +26,10 @@ public class SoftKeyTest {
 
     Device registeredDevice = client.register();
 
-    StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(U2F.startAuthentication(APP_ID, registeredDevice));
-    TokenAuthenticationResponse tokenAuthenticationResponse = client.authenticate(registeredDevice, startedAuthentication);
+    StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, registeredDevice);
+    AuthenticationResponse authenticationResponse = client.authenticate(registeredDevice, startedAuthentication);
 
-    U2F.finishAuthentication(startedAuthentication, tokenAuthenticationResponse, registeredDevice, TRUSTED_DOMAINS);
+    U2F.finishAuthentication(startedAuthentication, authenticationResponse, registeredDevice, TRUSTED_DOMAINS);
   }
 
 

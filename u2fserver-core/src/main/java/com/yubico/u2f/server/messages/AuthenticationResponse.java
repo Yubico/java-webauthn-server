@@ -13,7 +13,7 @@ import com.google.gson.Gson;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class TokenAuthenticationResponse {
+public class AuthenticationResponse {
 
   /** websafe-base64(client data) */
   private final String clientData;
@@ -24,7 +24,7 @@ public class TokenAuthenticationResponse {
   /** challenge originally passed */
   private final String challenge;
 
-  public TokenAuthenticationResponse(String clientData, String signatureData, String challenge) {
+  public AuthenticationResponse(String clientData, String signatureData, String challenge) {
     this.clientData = checkNotNull(clientData);
     this.signatureData = checkNotNull(signatureData);
     this.challenge = checkNotNull(challenge);
@@ -60,7 +60,7 @@ public class TokenAuthenticationResponse {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    TokenAuthenticationResponse other = (TokenAuthenticationResponse) obj;
+    AuthenticationResponse other = (AuthenticationResponse) obj;
     if (clientData == null) {
       if (other.clientData != null)
         return false;
@@ -79,8 +79,8 @@ public class TokenAuthenticationResponse {
     return true;
   }
 
-  public static TokenAuthenticationResponse fromJson(String json) {
+  public static AuthenticationResponse fromJson(String json) {
     Gson gson = new Gson();
-    return gson.fromJson(json, TokenAuthenticationResponse.class);
+    return gson.fromJson(json, AuthenticationResponse.class);
   }
 }

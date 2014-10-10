@@ -9,20 +9,8 @@
 
 package com.yubico.u2f.server.messages;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import com.google.gson.Gson;
-import com.yubico.u2f.U2fException;
-import com.yubico.u2f.codec.RawMessageCodec;
-import com.yubico.u2f.key.UserPresenceVerifier;
-import com.yubico.u2f.key.messages.AuthenticateResponse;
-import com.yubico.u2f.server.ClientDataChecker;
-import com.yubico.u2f.server.Crypto;
-import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.impl.BouncyCastleCrypto;
-
-import java.util.Set;
 
 public class StartedAuthentication {
   /**
@@ -100,7 +88,7 @@ public class StartedAuthentication {
     return challenge;
   }
 
-  public String json() {
+  public String toJson() {
     Gson gson = new Gson();
     return gson.toJson(this);
   }

@@ -32,8 +32,6 @@ public class RawMessageCodec {
 
   public static RegisterResponse decodeRegisterResponse(byte[] data) throws U2fException {
 
-    System.out.println("RECEIVED CERT: " + Arrays.toString(data));
-
     ByteInputStream bytes = new ByteInputStream(data);
     byte reservedByte = bytes.readSigned();
     if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {

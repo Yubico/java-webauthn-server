@@ -3,8 +3,6 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.StartedRegistration;
 
 import java.util.Scanner;
 
@@ -21,7 +19,7 @@ public class SystemTest {
       u2f-host -aauthenticate -o http://example.com
    */
   public static void main(String... args) throws Exception {
-    String startedRegistration = U2F.startRegistration(APP_ID);
+    String startedRegistration = U2F.startRegistration(APP_ID).toJson();
     System.out.println("Registration data:");
     System.out.println(startedRegistration);
 
@@ -32,7 +30,7 @@ public class SystemTest {
 
     System.out.println(device);
 
-    String startedAuthentication = U2F.startAuthentication(APP_ID, device);
+    String startedAuthentication = U2F.startAuthentication(APP_ID, device).toJson();
     System.out.println("Authentication data:");
     System.out.println(startedAuthentication);
 
