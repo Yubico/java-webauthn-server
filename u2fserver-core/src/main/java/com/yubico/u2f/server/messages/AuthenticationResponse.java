@@ -30,8 +30,8 @@ public class AuthenticationResponse {
     this.challenge = checkNotNull(challenge);
   }
 
-  public String getClientData() {
-    return clientData;
+  public ClientData getClientData() {
+    return new ClientData(clientData);
   }
 
   public String getSignatureData() {

@@ -3,6 +3,7 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
+import com.yubico.u2f.server.messages.RegistrationResponse;
 
 import java.util.Scanner;
 
@@ -26,7 +27,11 @@ public class SystemTest {
     System.out.println();
     System.out.println("Enter token response:");
 
-    Device device = U2F.finishRegistration(startedRegistration, scan.nextLine(), TRUSTED_DOMAINS);
+    String json = scan.nextLine();
+    RegistrationResponse registrationResponse = RegistrationResponse.fromJson(json);
+    registrationResponse.getClientData().getChallenge();
+    Device device = U2F.finishRegistration(startedRegistration, json, TRUSTED_DOMAINS);
+
 
     System.out.println(device);
 

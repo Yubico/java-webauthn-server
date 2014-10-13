@@ -32,6 +32,7 @@ public class ClientDataUtils {
 
     String type = clientData.get(TYPE_PARAM).getAsString();
     if (!messageType.equals(type)) {
+      System.out.println("json+++ "+clientData.toString());
       throw new U2fException("Bad clientData: bad type " + type);
     }
 
@@ -58,6 +59,7 @@ public class ClientDataUtils {
 
   public static JsonObject toJsonObject(byte[] clientDataBytes) throws U2fException {
     JsonElement clientDataAsElement = new JsonParser().parse(new String(clientDataBytes));
+    System.out.println("json::: " + clientDataAsElement.toString());
     if (!clientDataAsElement.isJsonObject()) {
       throw new U2fException("clientData has wrong format");
     }

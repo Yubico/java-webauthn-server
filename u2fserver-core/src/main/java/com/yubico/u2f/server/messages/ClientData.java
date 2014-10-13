@@ -2,6 +2,7 @@ package com.yubico.u2f.server.messages;
 
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.ClientDataUtils;
+import org.apache.commons.codec.binary.Base64;
 
 public class ClientData {
 
@@ -17,6 +18,7 @@ public class ClientData {
   }
 
   public String getChallenge() throws U2fException {
-    return ClientDataUtils.toJsonObject(clientData.getBytes()).get(ClientDataUtils.CHALLENGE_PARAM).getAsString();
+    return ClientDataUtils.toJsonObject(Base64.decodeBase64(clientData.getBytes()))
+            .get(ClientDataUtils.CHALLENGE_PARAM).getAsString();
   }
 }

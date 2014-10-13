@@ -80,7 +80,7 @@ public class U2F {
 
   public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticationResponse tokenResponse, Device device, Set<String> allowedOrigins) throws U2fException {
     byte[] clientData = ClientDataUtils.checkClientData(
-            tokenResponse.getClientData(),
+            tokenResponse.getClientData().toString(),
             "navigator.id.getAssertion",
             startedAuthentication.getChallenge(),
             Optional.of(ClientDataUtils.canonicalizeOrigins(allowedOrigins))

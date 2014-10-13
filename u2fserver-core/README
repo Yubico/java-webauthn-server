@@ -20,7 +20,7 @@ U2fServer u2fServer = new U2fServerImpl(mySimpleDataStore);
 
 u2fServer.getRegistrationRequest(username, "http://localhost:8080");
 u2fServer.processRegistrationResponse(
-            new RegistrationResponse(registrationData, clientData, sessionId),
+            new RegistrationResponse(data, clientData, sessionId),
             System.currentTimeMillis()
 
 u2fServer.getSignRequest(username, "http://localhost:8080");

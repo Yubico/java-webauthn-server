@@ -1,11 +1,14 @@
+package demo;
+
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.views.ViewBundle;
 
 public class App extends Application<Config> {
   @Override
-  public void initialize(Bootstrap<Config> configBootstrap) {
-
+  public void initialize(Bootstrap<Config> bootstrap) {
+    bootstrap.addBundle(new ViewBundle());
   }
 
   @Override
