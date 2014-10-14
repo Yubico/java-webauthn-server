@@ -3,10 +3,15 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
+import com.yubico.u2f.server.messages.AuthenticationResponse;
 import com.yubico.u2f.server.messages.RegistrationResponse;
+import com.yubico.u2f.server.messages.StartedAuthentication;
+import com.yubico.u2f.server.messages.StartedRegistration;
+import org.junit.Ignore;
 
 import java.util.Scanner;
 
+@Ignore("Includes manual steps")
 public class SystemTest {
 
   public static final ImmutableSet<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
@@ -30,7 +35,11 @@ public class SystemTest {
     String json = scan.nextLine();
     RegistrationResponse registrationResponse = RegistrationResponse.fromJson(json);
     registrationResponse.getClientData().getChallenge();
-    Device device = U2F.finishRegistration(startedRegistration, json, TRUSTED_DOMAINS);
+    Device device = U2F.finishRegistration(
+            StartedRegistration.fromJson(startedRegistration),
+            registrationResponse,
+            TRUSTED_DOMAINS
+    );
 
 
     System.out.println(device);
@@ -42,7 +51,12 @@ public class SystemTest {
     System.out.println();
     System.out.println("Enter token response:");
 
-    int deviceCounter = U2F.finishAuthentication(startedAuthentication, scan.nextLine(), device, TRUSTED_DOMAINS);
+    int deviceCounter = U2F.finishAuthentication(
+            StartedAuthentication.fromJson(startedAuthentication),
+            AuthenticationResponse.fromJson(scan.nextLine()),
+            device,
+            TRUSTED_DOMAINS
+    );
     System.out.println("Device counter: " + deviceCounter);
   }
 }

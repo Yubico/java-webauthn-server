@@ -1,0 +1,71 @@
+== java-u2flib-server
+Serverside U2F library for Java. Provides functionality for registering
+tokens and authenticate with said tokens.
+
+To read more about U2F and how to use a U2F library, visit
+link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
+
+=== Dependency
+[source,xml]
+ <dependency>
+   <groupId>com.yubico</groupId>
+   <artifactId>u2fserver-core</artifactId>
+   <version>0.1.0-SNAPSHOT</version>
+ </dependency>
+
+=== API
+The library exposes the following methods in the `U2F` class:
+
+[source,java]
+----
+/**
+* Initiates the registration of a device.
+*
+* @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to 
+* support logging in from multiple Web Origins.
+* @return a StartedRegistration, which should be sent to the client and temporary saved by the
+* server.
+*/
+public static StartedRegistration startRegistration(String appId);
+
+/**
+* Finishes a previously started registration.
+*
+* @param startedRegistartion
+* @param tokenResponse the response from the token/client.
+* @return a Device object, holding information about the registered device. Servers should
+* persist this.
+*/
+public static Device finishRegistration(
+	StartedRegistration startedRegistration,
+	RegistrationResponse tokenResponse
+) throws U2fException;
+
+/**
+* Initiates the authentication process.
+*
+* @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to 
+* support logging in from multiple Web Origins.
+* @param device a previously registered Device, for which to initiate authentication.
+* @return a StartedAuthentication which should be sent to the client and temporary saved by
+* the server.
+*/
+public static StartedAuthentication startAuthentication(String appId, Device device);
+
+/**
+* Finishes a previously started authentication.
+*
+* @param startedAuthentication
+* @param tokenResponse the response from the token/client.
+* @return the new value of the Device's counter.
+*/
+public static int finishAuthentication(
+	StartedAuthentication startedAuthentication,
+	AuthenticationResponse tokenResponse,
+	Device device
+) throws U2fException;
+----
+
+=== Real world example
+See the demo server.
+

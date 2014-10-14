@@ -19,7 +19,7 @@ public class ClientDataUtils {
   private static final String ORIGIN_PARAM = "origin";
 
     public static byte[] checkClientData(String clientDataBase64, String messageType, String challenge,
-                                       Optional<Set<String>> allowedOrigins)
+                                       Optional<Set<String>> facets)
           throws U2fException {
 
     byte[] clientDataBytes = Base64.decodeBase64(clientDataBase64);
@@ -41,9 +41,12 @@ public class ClientDataUtils {
       throw new U2fException("Bad clientData: missing 'challenge' param");
     }
 
-    if(allowedOrigins.isPresent()) {
+    if(facets.isPresent()) {
       if (clientData.has(ORIGIN_PARAM)) {
-        verifyOrigin(clientData.get(ORIGIN_PARAM).getAsString(), allowedOrigins.get());
+        verifyOrigin(
+                clientData.get(ORIGIN_PARAM).getAsString(),
+                ClientDataUtils.canonicalizeOrigins(facets.get())
+        );
       }
     }
 
@@ -59,7 +62,6 @@ public class ClientDataUtils {
 
   public static JsonObject toJsonObject(byte[] clientDataBytes) throws U2fException {
     JsonElement clientDataAsElement = new JsonParser().parse(new String(clientDataBytes));
-    System.out.println("json::: " + clientDataAsElement.toString());
     if (!clientDataAsElement.isJsonObject()) {
       throw new U2fException("clientData has wrong format");
     }

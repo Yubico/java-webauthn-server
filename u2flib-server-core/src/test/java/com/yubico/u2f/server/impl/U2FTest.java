@@ -100,21 +100,4 @@ public class U2FTest extends TestVectors {
       assertTrue(e.getMessage().contains("is not a recognized home origin"));
     }
   }
-
-  /*
-  // @Test
-  // TODO: put test back in once we have signature sample on a correct browserdata json
-  // (currently, this test uses an enrollment browserdata during a signature)
-  public void testProcessSignResponse2() throws Exception {
-	when(sessionManager.getSignSessionData(anyString())).thenReturn(
-	    new SignSessionData(ACCOUNT_NAME, APP_ID_2, SERVER_CHALLENGE_SIGN, USER_PUBLIC_KEY_2));
-    when(mockDataStore.getDevice(ACCOUNT_NAME)).thenReturn(
-        ImmutableList.of(new Device(0l, KEY_HANDLE_2, USER_PUBLIC_KEY_2, VENDOR_CERTIFICATE, 0)));
-    u2fServer = new U2fServerImpl(mockChallengeGenerator,
-        mockDataStore, crypto, TRUSTED_DOMAINS, sessionManager);
-    SignResponse signResponse = new SignResponse(BROWSER_DATA_2_BASE64, SIGN_DATA_2_BASE64,
-        CHALLENGE_2_BASE64, APP_ID_2);
-
-    u2fServer.finishAuthentication(signResponse);
-  }*/
 }

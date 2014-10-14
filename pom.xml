@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.yubico</groupId>
-    <artifactId>u2fserver-parent</artifactId>
+    <artifactId>u2flib-server-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
     <name>U2F parent</name>
     <modules>
-        <module>u2fserver-core</module>
-        <module>demo-server</module>
+        <module>u2flib-server-core</module>
+        <module>u2flib-server-demo</module>
     </modules>
 
     <dependencies>

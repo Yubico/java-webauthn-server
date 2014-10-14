@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>u2fserver-parent</artifactId>
+        <artifactId>u2flib-server-parent</artifactId>
         <groupId>com.yubico</groupId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>u2fserver-core</artifactId>
+    <artifactId>u2flib-server-core</artifactId>
     <name>U2F core</name>
 
     <dependencies>

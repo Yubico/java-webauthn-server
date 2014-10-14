@@ -29,7 +29,6 @@ public class Resource {
   public View startRegistration() {
     StartedRegistration startedRegistration = U2F.startRegistration(APP_ID);
     storage.set(startedRegistration.getChallenge(), startedRegistration.toJson());
-    System.out.println("Started Registration: "+startedRegistration.toJson());
     return new HtmlView("Registration", startedRegistration.toJson());
   }
 
@@ -37,8 +36,10 @@ public class Resource {
   @POST
   public String finishRegistration(@FormParam("tokenResponse") String response) throws U2fException {
     RegistrationResponse registrationResponse = RegistrationResponse.fromJson(response);
-    String startedRegistration = storage.get(registrationResponse.getClientData().getChallenge());
-    Device registeredDevice = U2F.finishRegistration(startedRegistration, response, FACETS);
+    StartedRegistration startedRegistration = StartedRegistration.fromJson(
+            storage.get(registrationResponse.getClientData().getChallenge())
+    );
+    Device registeredDevice = U2F.finishRegistration(startedRegistration, registrationResponse, FACETS);
     storage.set("device", registeredDevice.toJson());
     return "<p>Successfully registered device:</p><code>" +
             registeredDevice.toJson() +
@@ -59,8 +60,10 @@ public class Resource {
   public String finishAuthentication(@FormParam("tokenResponse") String response) throws U2fException {
     Device device = Device.fromJson(storage.get(DEVICE));
     AuthenticationResponse authenticationResponse = AuthenticationResponse.fromJson(response);
-    String startedAuthentication = storage.get(authenticationResponse.getClientData().getChallenge());
-    U2F.finishAuthentication(startedAuthentication, response, device, FACETS);
+    StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(
+            storage.get(authenticationResponse.getClientData().getChallenge())
+    );
+    U2F.finishAuthentication(startedAuthentication, authenticationResponse, device, FACETS);
     return "Successfully authenticated.";
   }
 }

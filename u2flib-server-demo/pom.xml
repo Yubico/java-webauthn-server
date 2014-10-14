@@ -5,17 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>u2fserver-parent</artifactId>
+        <artifactId>u2flib-server-parent</artifactId>
         <groupId>com.yubico</groupId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
     <artifactId>java-u2flib-server-demo</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.yubico</groupId>
-            <artifactId>u2fserver-core</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <artifactId>u2flib-server-core</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
