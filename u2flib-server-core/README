@@ -1,4 +1,4 @@
-== java-u2flib-server
+== u2flib-server-core
 Serverside U2F library for Java. Provides functionality for registering
 tokens and authenticate with said tokens.
 

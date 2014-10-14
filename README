@@ -1,16 +1,9 @@
+== u2flib-server
 Provides functionality for working with the server side aspects of the
-http://www.yubico.com/products/yubikey-hardware/yubikey-neo/yubikey-neo-u2f[U2F protocol].
+link:https://fidoalliance.org/specifications[U2F] protocol.
 
 == Modules ==
-This project consists of several modules. The main module is `u2fserver-core`,
-which is all you need to add U2F support to any Java server. The other modules
-are plugins for various server frameworks:
+This project consists of several modules:
 
- * `u2fserver-dropwizard` for the http://dropwizard.github.io/dropwizard/[Dropwizard framework].
-
-=== Which module should I use? ===
-If you are using a framework that is listed above, use that corresponding module;
-if you are not, you will be just fine with just `u2fserver-core`.
-
-== Usage ==
-See respective module README for usage.
+ * `u2flib-server-core`, which is all you need to add U2F support to any Java server.
+ * `u2flib-server-demo` a simple demo server, showcasing a real world example.
