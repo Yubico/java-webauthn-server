@@ -29,8 +29,10 @@ setTimeout(function() {
 
 </head>
     <body>
-    <p>Touch your U2F token now.</p>
+    <p>Enter a username and then touch your U2F token.</p>
         <form method="POST" action="finish${method}" id="form">
+            <label for="username">Username</label>
+            <input name="username" id="username" autofocus />
             <input type="hidden" name="tokenResponse" id="tokenResponse"/>
         </form>
     </body>
