@@ -31,7 +31,7 @@ public static StartedRegistration startRegistration(String appId);
 /**
 * Finishes a previously started registration.
 *
-* @param startedRegistartion
+* @param startedRegistration
 * @param tokenResponse the response from the token/client.
 * @return a Device object, holding information about the registered device. Servers should
 * persist this.

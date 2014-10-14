@@ -26,11 +26,12 @@ public class U2F {
   public static final int INITIAL_COUNTER_VALUE = 0;
 
   /**
-   * Generates a
+   * Initiates the registration of a device.
    *
-   * @param appId
-   * @return a StartedRegistration, which should be sent to the client and saved by the server to be able to completes
-   * the registration.
+   * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
+   * support logging in from multiple Web Origins.
+   * @return a StartedRegistration, which should be sent to the client and temporary saved by the
+   * server.
    */
   public static StartedRegistration startRegistration(String appId) {
     byte[] challenge = challengeGenerator.generateChallenge();
@@ -38,6 +39,14 @@ public class U2F {
     return new StartedRegistration(U2F_VERSION, challengeBase64, appId);
   }
 
+  /**
+   * Finishes a previously started registration.
+   *
+   * @param startedRegistration
+   * @param tokenResponse the response from the token/client.
+   * @return a Device object, holding information about the registered device. Servers should
+   * persist this.
+   */
   public static Device finishRegistration(StartedRegistration startedRegistration, RegistrationResponse tokenResponse) throws U2fException {
     return finishRegistration(startedRegistration, tokenResponse, null);
   }
@@ -71,6 +80,15 @@ public class U2F {
     );
   }
 
+  /**
+   * Initiates the authentication process.
+   *
+   * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
+   * support logging in from multiple Web Origins.
+   * @param device a previously registered Device, for which to initiate authentication.
+   * @return a StartedAuthentication which should be sent to the client and temporary saved by
+   * the server.
+   */
   public static StartedAuthentication startAuthentication(String appId, Device device) {
     byte[] challenge = challengeGenerator.generateChallenge();
     return new StartedAuthentication(
@@ -81,6 +99,13 @@ public class U2F {
     );
   }
 
+  /**
+   * Finishes a previously started authentication.
+   *
+   * @param startedAuthentication
+   * @param tokenResponse the response from the token/client.
+   * @return the new value of the Device's counter.
+   */
   public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticationResponse tokenResponse, Device device) throws U2fException {
     return finishAuthentication(startedAuthentication, tokenResponse, device, null);
   }
