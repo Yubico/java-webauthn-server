@@ -17,10 +17,9 @@ import org.apache.commons.codec.binary.Base64;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 
 /**
- * Raw message formats, as per FIDO U2F: Raw Message Formats - Draft 4
+ * Raw message formats, as per FIDO U2F: Raw Message Formats
  */
 public class RawMessageCodec {
   public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;

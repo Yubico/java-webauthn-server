@@ -15,17 +15,12 @@ import com.yubico.u2f.key.messages.AuthenticateResponse;
 import com.yubico.u2f.key.messages.RegisterResponse;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
-import org.bouncycastle.asn1.x9.X962NamedCurves;
-import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;

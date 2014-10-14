@@ -11,8 +11,6 @@ package com.yubico.u2f.server.messages;
 
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
-import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.ClientDataUtils;
 
 public class RegistrationResponse {
   /** websafe-base64(raw registration response message) */

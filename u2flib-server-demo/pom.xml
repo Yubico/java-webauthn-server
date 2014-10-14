@@ -10,6 +10,7 @@
         <version>0.3.0-SNAPSHOT</version>
     </parent>
     <artifactId>java-u2flib-server-demo</artifactId>
+    <name>U2F demo</name>
 
     <dependencies>
         <dependency>

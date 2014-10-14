@@ -1,8 +1,6 @@
 package com.yubico.u2f.softkey.messages;
 
 public class AuthenticateRequest {
-  public static final byte CHECK_ONLY = 0x07;
-  public static final byte USER_PRESENCE_SIGN = 0x03;
 
   private final byte control;
   private final byte[] challengeSha256;

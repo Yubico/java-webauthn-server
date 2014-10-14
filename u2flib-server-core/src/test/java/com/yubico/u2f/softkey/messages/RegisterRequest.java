@@ -1,7 +1,5 @@
 package com.yubico.u2f.softkey.messages;
 
-import java.util.Arrays;
-
 public class RegisterRequest {
   private final byte[] challengeSha256;
   private final byte[] applicationSha256;
