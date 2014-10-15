@@ -1,6 +1,8 @@
 package demo;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.server.U2F;
 import com.yubico.u2f.server.data.Device;
@@ -8,11 +10,17 @@ import com.yubico.u2f.server.messages.AuthenticationResponse;
 import com.yubico.u2f.server.messages.RegistrationResponse;
 import com.yubico.u2f.server.messages.StartedAuthentication;
 import com.yubico.u2f.server.messages.StartedRegistration;
+import demo.view.AuthenticationView;
+import demo.view.RegistrationView;
 import io.dropwizard.views.View;
 import redis.clients.jedis.Jedis;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Set;
 
 @Path("/")
@@ -28,7 +36,7 @@ public class Resource {
   public View startRegistration() {
     StartedRegistration startedRegistration = U2F.startRegistration(APP_ID);
     storage.set(startedRegistration.getChallenge(), startedRegistration.toJson());
-    return new HtmlView("Registration", startedRegistration.toJson());
+    return new RegistrationView(startedRegistration.toJson());
   }
 
   @Path("finishRegistration")
@@ -43,24 +51,33 @@ public class Resource {
     storage.set(username, registeredDevice.toJson());
     return "<p>Successfully registered device:</p><code>" +
             registeredDevice.toJson() +
-            "</code><p>Now you might want to <a href='startAuthentication?username=" +
-            username +
-            "'>authenticate as " + username + "</a></p>.";
+            "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
+  }
+
+  @Path("loginIndex")
+  @GET
+  public String loginIndex() throws IOException, URISyntaxException {
+    URL defaultImage = Resource.class.getResource("loginIndex.html");
+    return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
+    //return Files.toString(new File("loginIndex.hmtl"), Charsets.UTF_8);
   }
 
   @Path("startAuthentication")
   @GET
   public View startAuthentication(@QueryParam("username") String username) {
     Device device = Device.fromJson(storage.get(username));
+    if(device == null) {
+      throw new U2fDemoException("No such user");
+    }
     StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, device);
     storage.set(startedAuthentication.getChallenge(), startedAuthentication.toJson());
-    return new HtmlView("Authentication", startedAuthentication.toJson());
+    return new AuthenticationView(startedAuthentication.toJson(), username);
   }
 
   @Path("finishAuthentication")
   @POST
   public String finishAuthentication(@FormParam("tokenResponse") String response,
-                                     @QueryParam("username") String username) throws U2fException {
+                                     @FormParam("username") String username) throws U2fException {
     Device device = Device.fromJson(storage.get(username));
     AuthenticationResponse authenticationResponse = AuthenticationResponse.fromJson(response);
     StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(

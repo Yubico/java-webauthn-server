@@ -24,6 +24,8 @@ public class U2F {
   private static final ChallengeGenerator challengeGenerator = new ChallengeGeneratorImpl();
   private final static Crypto crypto = new BouncyCastleCrypto();
   public static final int INITIAL_COUNTER_VALUE = 0;
+  public static final String AUTHENTICATE_TYP = "navigator.id.getAssertion";
+  public static final String REGISTER_TYP = "navigator.id.finishEnrollment";
 
   /**
    * Initiates the registration of a device.
@@ -54,7 +56,7 @@ public class U2F {
   public static Device finishRegistration(StartedRegistration startedRegistration, RegistrationResponse tokenResponse, Set<String> facets) throws U2fException {
     byte[] clientData = ClientDataUtils.checkClientData(
             tokenResponse.getClientData().toString(),
-            "navigator.id.finishEnrollment",
+            REGISTER_TYP,
             startedRegistration.getChallenge(),
             Optional.fromNullable(facets)
     );
@@ -113,7 +115,7 @@ public class U2F {
   public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticationResponse tokenResponse, Device device, Set<String> facets) throws U2fException {
     byte[] clientData = ClientDataUtils.checkClientData(
             tokenResponse.getClientData().toString(),
-            "navigator.id.getAssertion",
+            AUTHENTICATE_TYP,
             startedAuthentication.getChallenge(),
             Optional.fromNullable(facets)
     );

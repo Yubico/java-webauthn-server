@@ -1,4 +1,3 @@
-<#-- @ftlvariable name="" type="demo.HtmlView" -->
 <html>
 <head>
 <title>Java U2F Demo</title>
@@ -9,11 +8,7 @@
 var request = ${data};
 var signs = [];
 setTimeout(function() {
-    <#if method == "Registration">
-        u2f.register([request], signs,
-    <#else>
-        u2f.sign([request],
-    </#if>
+    u2f.register([request], signs,
     function(data) {
         var form = document.getElementById('form');
         var reg = document.getElementById('tokenResponse');
@@ -30,7 +25,7 @@ setTimeout(function() {
 </head>
     <body>
     <p>Enter a username and then touch your U2F token.</p>
-        <form method="POST" action="finish${method}" id="form">
+        <form method="POST" action="finishRegistration" id="form" onsubmit="return false;">
             <label for="username">Username</label>
             <input name="username" id="username" autofocus />
             <input type="hidden" name="tokenResponse" id="tokenResponse"/>
