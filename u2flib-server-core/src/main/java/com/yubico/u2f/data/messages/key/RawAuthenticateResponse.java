@@ -57,8 +57,7 @@ public class RawAuthenticateResponse {
     );
   }
 
-  public static byte[] packBytesToSign(byte[] appIdHash, byte userPresence,
-                                       int counter, byte[] challengeHash) {
+  public static byte[] packBytesToSign(byte[] appIdHash, byte userPresence, int counter, byte[] challengeHash) {
     return ByteSink.create()
             .put(appIdHash)
             .put(userPresence)

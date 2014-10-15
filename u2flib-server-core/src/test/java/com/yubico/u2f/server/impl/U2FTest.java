@@ -12,13 +12,9 @@ package com.yubico.u2f.server.impl;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.ClientDataUtils;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.Device;
-import com.yubico.u2f.data.messages.StartedAuthentication;
-import com.yubico.u2f.data.messages.StartedRegistration;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
-import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,13 +40,13 @@ public class U2FTest extends TestVectors {
 
   @Test
   public void testSanitizeOrigin() {
-    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com"));
-    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/"));
-    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/foo"));
-    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/foo?bar=b"));
-    assertEquals("http://example.com", ClientDataUtils.canonicalizeOrigin("http://example.com/foo#fragment"));
-    assertEquals("https://example.com", ClientDataUtils.canonicalizeOrigin("https://example.com"));
-    assertEquals("https://example.com", ClientDataUtils.canonicalizeOrigin("https://example.com/foo"));
+    assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com"));
+    assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com/"));
+    assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com/foo"));
+    assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com/foo?bar=b"));
+    assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com/foo#fragment"));
+    assertEquals("https://example.com", ClientData.canonicalizeOrigin("https://example.com"));
+    assertEquals("https://example.com", ClientData.canonicalizeOrigin("https://example.com/foo"));
   }
 
   @Test

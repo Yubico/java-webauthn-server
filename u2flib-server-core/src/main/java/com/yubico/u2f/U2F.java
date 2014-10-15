@@ -10,6 +10,7 @@
 package com.yubico.u2f;
 
 import com.google.common.base.Optional;
+import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.Device;
@@ -17,10 +18,6 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
-import com.yubico.u2f.data.messages.StartedAuthentication;
-import com.yubico.u2f.data.messages.StartedRegistration;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
-import com.yubico.u2f.data.messages.RegisterResponse;
 import org.apache.commons.codec.binary.Base64;
 
 import java.util.Set;
@@ -31,7 +28,7 @@ public class U2F {
   private static final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
   public static final Crypto crypto = new BouncyCastleCrypto();
   public static final String AUTHENTICATE_TYP = "navigator.id.getAssertion";
-  public static final String REGISTER_TYP = "navigator.id.finishEnrollment";
+  public static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
 
   /**
    * Initiates the registration of a device.
@@ -60,14 +57,11 @@ public class U2F {
   }
 
   public static Device finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse, Set<String> facets) throws U2fException {
-    byte[] clientData = ClientDataUtils.checkClientData(
-            tokenResponse.getClientData().toString(),
-            REGISTER_TYP,
-            startedRegistration.getChallenge(),
-            Optional.fromNullable(facets)
-    );
+    ClientData clientData = tokenResponse.getClientData();
+    clientData.checkContent(REGISTER_TYPE, startedRegistration.getChallenge(), Optional.fromNullable(facets));
+
     RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(tokenResponse.getRegistrationData());
-    rawRegisterResponse.checkSignature(startedRegistration.getAppId(), clientData);
+    rawRegisterResponse.checkSignature(startedRegistration.getAppId(), clientData.getRawClientData());
     return rawRegisterResponse.createDevice();
   }
 
@@ -102,14 +96,16 @@ public class U2F {
   }
 
   public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device, Set<String> facets) throws U2fException {
-    byte[] clientData = ClientDataUtils.checkClientData(
-            response.getClientData().toString(),
-            AUTHENTICATE_TYP,
-            startedAuthentication.getChallenge(),
-            Optional.fromNullable(facets)
-    );
+    ClientData clientData = response.getClientData();
+    clientData.checkContent(AUTHENTICATE_TYP, startedAuthentication.getChallenge(), Optional.fromNullable(facets));
+
+
     RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(response.getSignatureData());
-    rawAuthenticateResponse.checkSignature(startedAuthentication.getAppId(), clientData, device.getPublicKey());
+    rawAuthenticateResponse.checkSignature(
+            startedAuthentication.getAppId(),
+            clientData.getRawClientData(),
+            device.getPublicKey()
+    );
     rawAuthenticateResponse.checkUserPresence();
     return device.checkAndIncrementCounter(rawAuthenticateResponse.getCounter());
   }
