@@ -13,7 +13,6 @@ import com.yubico.u2f.server.messages.StartedRegistration;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
-import redis.clients.jedis.Jedis;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -21,21 +20,25 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Path("/")
 @Produces(MediaType.TEXT_HTML)
 public class Resource {
 
-  static final Set<String> FACETS = ImmutableSet.of("http://example.com:8080");
-  public static final String APP_ID = "http://example.com:8080";
-  Jedis storage = new Jedis("localhost");
+  public static final String SERVER_ADDRESS = "http://example.com:8080";
+  public static final Set<String> FACETS = ImmutableSet.of(SERVER_ADDRESS);
+
+  // In production, you want to store Devices persistently (e.g. in a database).
+  private final Map<String, String> storage = new HashMap<String, String>();
 
   @Path("startRegistration")
   @GET
   public View startRegistration() {
-    StartedRegistration startedRegistration = U2F.startRegistration(APP_ID);
-    storage.set(startedRegistration.getChallenge(), startedRegistration.toJson());
+    StartedRegistration startedRegistration = U2F.startRegistration(SERVER_ADDRESS);
+    storage.put(startedRegistration.getChallenge(), startedRegistration.toJson());
     return new RegistrationView(startedRegistration.toJson());
   }
 
@@ -48,7 +51,7 @@ public class Resource {
             storage.get(registrationResponse.getClientData().getChallenge())
     );
     Device registeredDevice = U2F.finishRegistration(startedRegistration, registrationResponse, FACETS);
-    storage.set(username, registeredDevice.toJson());
+    storage.put(username, registeredDevice.toJson());
     return "<p>Successfully registered device:</p><code>" +
             registeredDevice.toJson() +
             "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
@@ -59,7 +62,6 @@ public class Resource {
   public String loginIndex() throws IOException, URISyntaxException {
     URL defaultImage = Resource.class.getResource("loginIndex.html");
     return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
-    //return Files.toString(new File("loginIndex.hmtl"), Charsets.UTF_8);
   }
 
   @Path("startAuthentication")
@@ -69,8 +71,8 @@ public class Resource {
     if(device == null) {
       throw new U2fDemoException("No such user");
     }
-    StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, device);
-    storage.set(startedAuthentication.getChallenge(), startedAuthentication.toJson());
+    StartedAuthentication startedAuthentication = U2F.startAuthentication(SERVER_ADDRESS, device);
+    storage.put(startedAuthentication.getChallenge(), startedAuthentication.toJson());
     return new AuthenticationView(startedAuthentication.toJson(), username);
   }
 
