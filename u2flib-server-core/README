@@ -38,7 +38,7 @@ public static StartedRegistration startRegistration(String appId);
 */
 public static Device finishRegistration(
 	StartedRegistration startedRegistration,
-	RegistrationResponse tokenResponse
+	RegistrationResponse response
 ) throws U2fException;
 
 /**
@@ -61,7 +61,7 @@ public static StartedAuthentication startAuthentication(String appId, Device dev
 */
 public static int finishAuthentication(
 	StartedAuthentication startedAuthentication,
-	AuthenticationResponse tokenResponse,
+	AuthenticationResponse response,
 	Device device
 ) throws U2fException;
 ----
