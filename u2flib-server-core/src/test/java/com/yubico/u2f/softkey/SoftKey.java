@@ -8,11 +8,9 @@ package com.yubico.u2f.softkey;
 
 import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.codec.ByteInputStream;
-import com.yubico.u2f.codec.RawMessageCodec;
-import com.yubico.u2f.key.UserPresenceVerifier;
-import com.yubico.u2f.key.messages.AuthenticateResponse;
-import com.yubico.u2f.key.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.key.util.ByteInputStream;
+import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
+import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
 import org.apache.commons.codec.binary.Hex;
@@ -41,7 +39,7 @@ public class SoftKey {
     this.certificatePrivateKey = TestVectors.VENDOR_CERTIFICATE_PRIVATE_KEY;
   }
 
-  public RegisterResponse register(RegisterRequest registerRequest) throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
+  public RawRegisterResponse register(RegisterRequest registerRequest) throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
     Log.info(">> register");
 
     byte[] applicationSha256 = registerRequest.getApplicationSha256();
@@ -66,7 +64,7 @@ public class SoftKey {
 
     byte[] userPublicKey = stripMetaData(keyPair.getPublic().getEncoded());
 
-    byte[] signedData = RawMessageCodec.encodeRegistrationSignedBytes(applicationSha256, challengeSha256,
+    byte[] signedData = RawRegisterResponse.packBytesToSign(applicationSha256, challengeSha256,
             keyHandle, userPublicKey);
     Log.info("Signing bytes " + Hex.encodeHexString(signedData));
 
@@ -80,7 +78,7 @@ public class SoftKey {
 
     Log.info("<< register");
 
-    return new RegisterResponse(userPublicKey, keyHandle, vendorCertificate, signature);
+    return new RawRegisterResponse(userPublicKey, keyHandle, vendorCertificate, signature);
   }
 
   private byte[] stripMetaData(byte[] a) {
@@ -92,7 +90,7 @@ public class SoftKey {
     return bis.read(keyLength - 1);
   }
 
-  public AuthenticateResponse authenticate(AuthenticateRequest authenticateRequest)
+  public RawAuthenticateResponse authenticate(AuthenticateRequest authenticateRequest)
           throws U2fException {
     Log.info(">> authenticate");
 
@@ -110,7 +108,7 @@ public class SoftKey {
     System.out.println("Fetching key for handle: " + Hex.encodeHexString(keyHandle));
     KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
     int counter = ++deviceCounter;
-    byte[] signedData = RawMessageCodec.encodeAuthenticateSignedBytes(applicationSha256, UserPresenceVerifier.USER_PRESENT_FLAG,
+    byte[] signedData = RawAuthenticateResponse.packBytesToSign(applicationSha256, RawAuthenticateResponse.USER_PRESENT_FLAG,
             counter, challengeSha256);
 
     Log.info("Signing bytes " + Hex.encodeHexString(signedData));
@@ -118,12 +116,12 @@ public class SoftKey {
     byte[] signature = crypto.sign(signedData, keyPair.getPrivate());
 
     Log.info(" -- Outputs --");
-    Log.info("  userPresence: " + UserPresenceVerifier.USER_PRESENT_FLAG);
+    Log.info("  userPresence: " + RawAuthenticateResponse.USER_PRESENT_FLAG);
     Log.info("  deviceCounter: " + counter);
     Log.info("  signature: " + Hex.encodeHexString(signature));
 
     Log.info("<< authenticate");
 
-    return new AuthenticateResponse(UserPresenceVerifier.USER_PRESENT_FLAG, counter, signature);
+    return new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, counter, signature);
   }
 }

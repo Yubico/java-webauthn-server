@@ -1,11 +1,19 @@
-package com.yubico.u2f.server;
+package com.yubico.u2f;
+
+/*
+ * Copyright 2014 Yubico.
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.yubico.u2f.U2fException;
 import org.apache.commons.codec.binary.Base64;
 
 import java.net.URI;

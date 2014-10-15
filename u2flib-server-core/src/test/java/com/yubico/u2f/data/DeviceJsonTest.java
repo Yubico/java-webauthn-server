@@ -1,6 +1,6 @@
-package com.yubico.u2f.server.data;
+package com.yubico.u2f.data;
 
-import com.yubico.u2f.softkey.Client;
+import com.yubico.u2f.data.messages.key.Client;
 import com.yubico.u2f.softkey.SoftKey;
 import org.junit.Test;
 

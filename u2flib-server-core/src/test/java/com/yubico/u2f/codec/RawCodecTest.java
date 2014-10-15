@@ -10,13 +10,12 @@
 package com.yubico.u2f.codec;
 
 import com.yubico.u2f.TestVectors;
-import com.yubico.u2f.key.UserPresenceVerifier;
-import com.yubico.u2f.key.messages.AuthenticateResponse;
-import com.yubico.u2f.key.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
+import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import org.junit.Test;
 
-import static com.yubico.u2f.codec.CodecTestUtils.encodeAuthenticateResponse;
-import static com.yubico.u2f.codec.CodecTestUtils.encodeRegisterResponse;
+import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeAuthenticateResponse;
+import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeRegisterResponse;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -24,17 +23,17 @@ public class RawCodecTest extends TestVectors {
 
   @Test
   public void testEncodeRegisterResponse() throws Exception {
-    RegisterResponse registerResponse = new RegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
+    RawRegisterResponse rawRegisterResponse = new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
         KEY_HANDLE, VENDOR_CERTIFICATE, SIGNATURE_ENROLL);
 
-    byte[] encodedBytes = encodeRegisterResponse(registerResponse);
+    byte[] encodedBytes = encodeRegisterResponse(rawRegisterResponse);
 
     assertArrayEquals(REGISTRATION_RESPONSE_DATA, encodedBytes);
   }
 
   @Test
   public void testEncodeRegisterSignedBytes() throws Exception {
-    byte[] encodedBytes = RawMessageCodec.encodeRegistrationSignedBytes(APP_ID_ENROLL_SHA256,
+    byte[] encodedBytes = RawRegisterResponse.packBytesToSign(APP_ID_ENROLL_SHA256,
             BROWSER_DATA_ENROLL_SHA256, KEY_HANDLE, USER_PUBLIC_KEY_ENROLL_HEX);
 
     assertArrayEquals(EXPECTED_REGISTER_SIGNED_BYTES, encodedBytes);
@@ -42,34 +41,34 @@ public class RawCodecTest extends TestVectors {
 
   @Test
   public void testDecodeRegisterResponse() throws Exception {
-    RegisterResponse registerResponse = RawMessageCodec.decodeRegisterResponse(REGISTRATION_RESPONSE_DATA);
+    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(REGISTRATION_RESPONSE_DATA_BASE64);
 
-    assertEquals(new RegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
-        KEY_HANDLE, VENDOR_CERTIFICATE, SIGNATURE_ENROLL), registerResponse);
+    assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
+        KEY_HANDLE, VENDOR_CERTIFICATE, SIGNATURE_ENROLL), rawRegisterResponse);
   }
 
   @Test
   public void testEncodeAuthenticateResponse() throws Exception {
-    AuthenticateResponse authenticateResponse = new AuthenticateResponse(
-        UserPresenceVerifier.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_AUTHENTICATE);
+    RawAuthenticateResponse rawAuthenticateResponse = new RawAuthenticateResponse(
+        RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_AUTHENTICATE);
 
-    byte[] encodedBytes = encodeAuthenticateResponse(authenticateResponse);
+    byte[] encodedBytes = encodeAuthenticateResponse(rawAuthenticateResponse);
 
     assertArrayEquals(SIGN_RESPONSE_DATA, encodedBytes);
   }
 
   @Test
   public void testDecodeAuthenticateResponse() throws Exception {
-    AuthenticateResponse authenticateResponse = RawMessageCodec.decodeAuthenticateResponse(SIGN_RESPONSE_DATA);
+    RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64);
 
-    assertEquals(new AuthenticateResponse(UserPresenceVerifier.USER_PRESENT_FLAG, COUNTER_VALUE,
-        SIGNATURE_AUTHENTICATE), authenticateResponse);
+    assertEquals(new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE,
+        SIGNATURE_AUTHENTICATE), rawAuthenticateResponse);
   }
 
   @Test
   public void testEncodeAuthenticateSignedBytes() throws Exception {
-    byte[] encodedBytes = RawMessageCodec.encodeAuthenticateSignedBytes(APP_ID_SIGN_SHA256,
-            UserPresenceVerifier.USER_PRESENT_FLAG, COUNTER_VALUE, BROWSER_DATA_SIGN_SHA256);
+    byte[] encodedBytes = RawAuthenticateResponse.packBytesToSign(APP_ID_SIGN_SHA256,
+            RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE, BROWSER_DATA_SIGN_SHA256);
 
     assertArrayEquals(EXPECTED_AUTHENTICATE_SIGNED_BYTES, encodedBytes);
   }

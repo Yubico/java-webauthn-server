@@ -1,0 +1,124 @@
+/*
+ * Copyright 2014 Yubico.
+ * Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
+
+package com.yubico.u2f.data.messages.key;
+
+import com.google.common.base.Objects;
+import com.yubico.u2f.U2F;
+import com.yubico.u2f.U2fException;
+import com.yubico.u2f.data.messages.key.util.ByteInputStream;
+import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.yubico.u2f.data.Device;
+import org.apache.commons.codec.binary.Base64;
+
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
+/**
+ * The register response produced by the token/key, which is transformed by the client into an RegisterResponse
+ * and sent to the server.
+ */
+public class RawRegisterResponse {
+  public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
+  public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
+
+  /**
+   * The (uncompressed) x,y-representation of a curve point on the P-256
+   * NIST elliptic curve.
+   */
+  final byte[] userPublicKey;
+
+  /**
+   * A handle that allows the U2F token to identify the generated key pair.
+   */
+  final byte[] keyHandle;
+  final X509Certificate attestationCertificate;
+
+  /** A ECDSA signature (on P-256) */
+  final byte[] signature;
+
+  public RawRegisterResponse(byte[] userPublicKey, byte[] keyHandle,
+                             X509Certificate attestationCertificate, byte[] signature) {
+    this.userPublicKey = userPublicKey;
+    this.keyHandle = keyHandle;
+    this.attestationCertificate = attestationCertificate;
+    this.signature = signature;
+  }
+
+  public static RawRegisterResponse fromBase64(String rawDataBase64) throws U2fException {
+    ByteInputStream bytes = new ByteInputStream(Base64.decodeBase64(rawDataBase64));
+    byte reservedByte = bytes.readSigned();
+    if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
+      throw new U2fException(String.format(
+              "Incorrect value of reserved byte. Expected: %d. Was: %d",
+              REGISTRATION_RESERVED_BYTE_VALUE, reservedByte));
+    }
+
+    try {
+      return new RawRegisterResponse(
+              bytes.read(65),
+              bytes.read(bytes.readUnsigned()),
+              (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(bytes),
+              bytes.readAll()
+      );
+    } catch (CertificateException e) {
+      throw new U2fException("Error when parsing attestation certificate", e);
+    }
+  }
+
+  public void checkSignature(String appId, byte[] clientData) throws U2fException {
+    byte[] signedBytes = packBytesToSign(U2F.crypto.hash(appId), U2F.crypto.hash(clientData), keyHandle, userPublicKey);
+    U2F.crypto.checkSignature(attestationCertificate, signedBytes, signature);
+  }
+
+  public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey)
+          throws U2fException {
+    return ByteSink.create()
+              .put(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE)
+              .put(appIdHash)
+              .put(clientDataHash)
+              .put(keyHandle)
+              .put(userPublicKey)
+              .toByteArray();
+  }
+
+  public Device createDevice() {
+    return new Device(
+            keyHandle,
+            userPublicKey,
+            attestationCertificate,
+            Device.INITIAL_COUNTER_VALUE
+    );
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(userPublicKey, keyHandle, attestationCertificate, signature);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    RawRegisterResponse other = (RawRegisterResponse) obj;
+    if (!attestationCertificate.equals(other.attestationCertificate))
+      return false;
+    if (!Arrays.equals(keyHandle, other.keyHandle))
+      return false;
+    if (!Arrays.equals(signature, other.signature))
+      return false;
+    return Arrays.equals(userPublicKey, other.userPublicKey);
+  }
+}

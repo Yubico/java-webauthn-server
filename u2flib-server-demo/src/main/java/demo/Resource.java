@@ -4,12 +4,12 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.U2F;
-import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.messages.AuthenticationResponse;
-import com.yubico.u2f.server.messages.RegistrationResponse;
-import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.StartedRegistration;
+import com.yubico.u2f.U2F;
+import com.yubico.u2f.data.Device;
+import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.StartedAuthentication;
+import com.yubico.u2f.data.messages.StartedRegistration;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
@@ -46,14 +46,14 @@ public class Resource {
   @POST
   public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username)
           throws U2fException {
-    RegistrationResponse registrationResponse = RegistrationResponse.fromJson(response);
+    RegisterResponse registerResponse = RegisterResponse.fromJson(response);
     StartedRegistration startedRegistration = StartedRegistration.fromJson(
-            storage.get(registrationResponse.getClientData().getChallenge())
+            storage.get(registerResponse.getClientData().getChallenge())
     );
-    Device registeredDevice = U2F.finishRegistration(startedRegistration, registrationResponse, FACETS);
+    Device registeredDevice = U2F.finishRegistration(startedRegistration, registerResponse, FACETS);
     storage.put(username, registeredDevice.toJson());
     return "<p>Successfully registered device:</p><code>" +
-            registeredDevice.toJson() +
+            registeredDevice +
             "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
   }
 
@@ -81,11 +81,11 @@ public class Resource {
   public String finishAuthentication(@FormParam("tokenResponse") String response,
                                      @FormParam("username") String username) throws U2fException {
     Device device = Device.fromJson(storage.get(username));
-    AuthenticationResponse authenticationResponse = AuthenticationResponse.fromJson(response);
+    AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
     StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(
-            storage.get(authenticationResponse.getClientData().getChallenge())
+            storage.get(authenticateResponse.getClientData().getChallenge())
     );
-    U2F.finishAuthentication(startedAuthentication, authenticationResponse, device, FACETS);
+    U2F.finishAuthentication(startedAuthentication, authenticateResponse, device, FACETS);
     return "Successfully authenticated.";
   }
 }

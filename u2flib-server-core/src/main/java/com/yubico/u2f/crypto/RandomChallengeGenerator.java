@@ -7,13 +7,11 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.server.impl;
-
-import com.yubico.u2f.server.ChallengeGenerator;
+package com.yubico.u2f.crypto;
 
 import java.security.SecureRandom;
 
-public class ChallengeGeneratorImpl implements ChallengeGenerator {
+public class RandomChallengeGenerator implements ChallengeGenerator {
 
   private final SecureRandom random = new SecureRandom();
 

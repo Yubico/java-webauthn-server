@@ -1,10 +1,11 @@
 package com.yubico.u2f.softkey;
 
 import com.google.common.collect.ImmutableSet;
-import com.yubico.u2f.server.U2F;
-import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.AuthenticationResponse;
+import com.yubico.u2f.U2F;
+import com.yubico.u2f.data.Device;
+import com.yubico.u2f.data.messages.StartedAuthentication;
+import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.key.Client;
 import org.junit.Test;
 
 public class SoftKeyTest {
@@ -27,10 +28,8 @@ public class SoftKeyTest {
     Device registeredDevice = client.register();
 
     StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, registeredDevice);
-    AuthenticationResponse authenticationResponse = client.authenticate(registeredDevice, startedAuthentication);
+    AuthenticateResponse authenticateResponse = client.authenticate(registeredDevice, startedAuthentication);
 
-    U2F.finishAuthentication(startedAuthentication, authenticationResponse, registeredDevice, TRUSTED_DOMAINS);
+    U2F.finishAuthentication(startedAuthentication, authenticateResponse, registeredDevice, TRUSTED_DOMAINS);
   }
-
-
 }

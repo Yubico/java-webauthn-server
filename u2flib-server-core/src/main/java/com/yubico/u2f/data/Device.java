@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.server.data;
+package com.yubico.u2f.data;
 
 import java.io.Serializable;
 import java.security.cert.CertificateException;
@@ -15,25 +15,21 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-import com.google.gson.Gson;
-import com.yubico.u2f.codec.ByteInputStream;
-import org.apache.commons.codec.binary.Base64;
+import com.yubico.u2f.U2fException;
+import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 
 import com.google.common.base.Objects;
 
-public class Device implements Serializable {
+public class Device extends DataObject implements Serializable {
   private static final long serialVersionUID = -142942195464329902L;
+  public static final int INITIAL_COUNTER_VALUE = 0;
 
   private final byte[] keyHandle;
   private final byte[] publicKey;
   private final byte[] attestationCert;
   private int counter;
 
-  public Device(
-          byte[] keyHandle,
-          byte[] publicKey,
-          X509Certificate attestationCert,
-          int counter) {
+  public Device(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) {
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
     this.attestationCert = attestationCert.getPublicKey().getEncoded();
@@ -49,7 +45,8 @@ public class Device implements Serializable {
   }
 
   public X509Certificate getAttestationCertificate() throws CertificateException {
-    return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteInputStream(attestationCert));
+    return (X509Certificate) CertificateFactory.getInstance("X.509")
+            .generateCertificate(new ByteInputStream(attestationCert));
   }
   
   public int getCounter() {
@@ -58,10 +55,7 @@ public class Device implements Serializable {
   
   @Override
   public int hashCode() {
-    return Objects.hashCode(
-        keyHandle,
-        publicKey, 
-        attestationCert);
+    return Objects.hashCode(keyHandle, publicKey, attestationCert);
   }
 
   @Override
@@ -77,23 +71,17 @@ public class Device implements Serializable {
   
   @Override
   public String toString() {
-    return "public_key: "
-        + Base64.encodeBase64URLSafeString(publicKey) + "\n"
-        + "key_handle: "
-        + Base64.encodeBase64URLSafeString(keyHandle) + "\n"
-        + "counter: "
-        + counter + "\n"
-        + "attestation certificate:\n"
-        + attestationCert;
-  }
-
-  public String toJson() {
-    Gson gson = new Gson();
-    return gson.toJson(this);
+    return toJson();
   }
 
   public static Device fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, Device.class);
+    return GSON.fromJson(json, Device.class);
+  }
+
+  public int checkAndIncrementCounter(int clientCounter) throws U2fException {
+    if (clientCounter <= counter) {
+      throw new U2fException("Counter value smaller than expected!");
+    }
+    return ++counter;
   }
 }

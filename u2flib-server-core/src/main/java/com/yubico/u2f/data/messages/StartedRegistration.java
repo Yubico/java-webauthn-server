@@ -7,12 +7,14 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.server.messages;
+package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
-import com.google.gson.Gson;
+import com.yubico.u2f.data.DataObject;
 
-public class StartedAuthentication {
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class StartedRegistration extends DataObject {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
@@ -22,6 +24,10 @@ public class StartedAuthentication {
   /** The websafe-base64-encoded challenge. */
   private final String challenge;
 
+  public String getChallenge() {
+    return challenge;
+  }
+
   /**
    * The application id that the RP would like to assert. The U2F token will
    * enforce that the key handle provided above is associated with this
@@ -30,22 +36,19 @@ public class StartedAuthentication {
    */
   private final String appId;
 
-  /**
-   * websafe-base64 encoding of the key handle obtained from the U2F token
-   * during registration.
-   */
-  private final String keyHandle;
+  public String getAppId() {
+    return appId;
+  }
 
-  public StartedAuthentication(String version, String challenge, String appId, String keyHandle) {
-    this.version = version;
-    this.challenge = challenge;
-    this.appId = appId;
-    this.keyHandle = keyHandle;
+  public StartedRegistration(String version, String challenge, String appId) {
+    this.version = checkNotNull(version);
+    this.challenge = checkNotNull(challenge);
+    this.appId = checkNotNull(appId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(version, challenge, appId, keyHandle);
+    return Objects.hashCode(version, challenge, appId);
   }
 
   @Override
@@ -56,7 +59,7 @@ public class StartedAuthentication {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    StartedAuthentication other = (StartedAuthentication) obj;
+    StartedRegistration other = (StartedRegistration) obj;
     if (appId == null) {
       if (other.appId != null)
         return false;
@@ -67,11 +70,6 @@ public class StartedAuthentication {
         return false;
     } else if (!challenge.equals(other.challenge))
       return false;
-    if (keyHandle == null) {
-      if (other.keyHandle != null)
-        return false;
-    } else if (!keyHandle.equals(other.keyHandle))
-      return false;
     if (version == null) {
       if (other.version != null)
         return false;
@@ -80,26 +78,7 @@ public class StartedAuthentication {
     return true;
   }
 
-  public String getKeyHandle() {
-    return keyHandle;
-  }
-
-  public String getChallenge() {
-    return challenge;
-  }
-
-  public String toJson() {
-    Gson gson = new Gson();
-    return gson.toJson(this);
-  }
-
-  public String getAppId() {
-
-    return appId;
-  }
-
-  public static StartedAuthentication fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, StartedAuthentication.class);
+  public static StartedRegistration fromJson(String json) {
+    return GSON.fromJson(json, StartedRegistration.class);
   }
 }

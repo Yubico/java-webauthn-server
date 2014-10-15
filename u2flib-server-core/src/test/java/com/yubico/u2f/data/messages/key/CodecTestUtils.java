@@ -7,37 +7,36 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.codec;
+package com.yubico.u2f.data.messages.key;
 
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.key.messages.AuthenticateResponse;
-import com.yubico.u2f.key.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.key.util.ByteSink;
 
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {
-  public static byte[] encodeAuthenticateResponse(AuthenticateResponse authenticateResponse) throws U2fException {
+  public static byte[] encodeAuthenticateResponse(RawAuthenticateResponse rawAuthenticateResponse) throws U2fException {
     return ByteSink.create()
-            .put(authenticateResponse.getUserPresence())
-            .putInt(authenticateResponse.getCounter())
-            .put(authenticateResponse.getSignature())
+            .put(rawAuthenticateResponse.getUserPresence())
+            .putInt(rawAuthenticateResponse.getCounter())
+            .put(rawAuthenticateResponse.getSignature())
             .toByteArray();
   }
 
-  public static byte[] encodeRegisterResponse(RegisterResponse registerResponse) throws U2fException {
-    byte[] keyHandle = registerResponse.getKeyHandle();
+  public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fException {
+    byte[] keyHandle = rawRegisterResponse.keyHandle;
     if (keyHandle.length > 255) {
       throw new U2fException("keyHandle length cannot be longer than 255 bytes!");
     }
 
     try {
       return ByteSink.create()
-              .put(RawMessageCodec.REGISTRATION_RESERVED_BYTE_VALUE)
-              .put(registerResponse.getUserPublicKey())
+              .put(RawRegisterResponse.REGISTRATION_RESERVED_BYTE_VALUE)
+              .put(rawRegisterResponse.userPublicKey)
               .put((byte) keyHandle.length)
               .put(keyHandle)
-              .put(registerResponse.getAttestationCertificate().getEncoded())
-              .put(registerResponse.getSignature())
+              .put(rawRegisterResponse.attestationCertificate.getEncoded())
+              .put(rawRegisterResponse.signature)
               .toByteArray();
     } catch (CertificateEncodingException e) {
       throw new U2fException("Error when encoding attestation certificate.", e);

@@ -7,7 +7,7 @@
     <groupId>com.yubico</groupId>
     <artifactId>u2flib-server-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.3.0-SNAPSHOT</version>
+    <version>0.9.0</version>
     <name>U2F parent</name>
     <modules>
         <module>u2flib-server-core</module>

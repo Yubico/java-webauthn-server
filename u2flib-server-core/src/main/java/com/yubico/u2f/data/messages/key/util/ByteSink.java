@@ -5,7 +5,7 @@
  * license that can be found in the LICENSE.
  */
 
-package com.yubico.u2f.codec;
+package com.yubico.u2f.data.messages.key.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;

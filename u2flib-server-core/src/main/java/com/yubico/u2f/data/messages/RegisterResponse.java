@@ -7,21 +7,23 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.server.messages;
+package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
-import com.google.gson.Gson;
+import com.yubico.u2f.data.DataObject;
 
-public class RegistrationResponse {
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class RegisterResponse extends DataObject {
   /** websafe-base64(raw registration response message) */
   private final String registrationData;
 
   /** websafe-base64(UTF8(stringified(client data))) */
   private final String clientData;
 
-  public RegistrationResponse(String registrationData, String clientData) {
-    this.registrationData = registrationData;
-    this.clientData = clientData;
+  public RegisterResponse(String registrationData, String clientData) {
+    this.registrationData = checkNotNull(registrationData);
+    this.clientData = checkNotNull(clientData);
   }
 
   public String getRegistrationData() {
@@ -32,9 +34,8 @@ public class RegistrationResponse {
     return new ClientData(clientData);
   }
 
-  public static RegistrationResponse fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, RegistrationResponse.class);
+  public static RegisterResponse fromJson(String json) {
+    return GSON.fromJson(json, RegisterResponse.class);
   }
 
   @Override
@@ -50,7 +51,7 @@ public class RegistrationResponse {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    RegistrationResponse other = (RegistrationResponse) obj;
+    RegisterResponse other = (RegisterResponse) obj;
     if (clientData == null) {
       if (other.clientData != null)
         return false;

@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.server.impl;
+package com.yubico.u2f.crypto;
 
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -21,7 +21,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.server.Crypto;
+import com.yubico.u2f.crypto.Crypto;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -33,6 +33,9 @@ public class BouncyCastleCrypto implements Crypto {
   static {
     Security.addProvider(new BouncyCastleProvider());
   }
+
+  public static final String SIGNATURE_ERROR = "Error when verifying signature";
+  public static final String ERROR_DECODING_PUBLIC_KEY = "Error when decoding public key";
 
   @Override
   public void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes, byte[] signature)
@@ -51,11 +54,11 @@ public class BouncyCastleCrypto implements Crypto {
         throw new U2fException("Signature is invalid");
       }
     } catch (InvalidKeyException e) {
-      throw new U2fException("Error when verifying signature", e);
+      throw new U2fException(SIGNATURE_ERROR, e);
     } catch (SignatureException e) {
-      throw new U2fException("Error when verifying signature", e);
+      throw new U2fException(SIGNATURE_ERROR, e);
     } catch (NoSuchAlgorithmException e) {
-      throw new U2fException("Error when verifying signature", e);
+      throw new U2fException(SIGNATURE_ERROR, e);
     }
   }
 
@@ -76,11 +79,14 @@ public class BouncyCastleCrypto implements Crypto {
                   curve.getCurve(),
                   curve.getG(),
                   curve.getN(),
-                  curve.getH())));
+                  curve.getH()
+              )
+          )
+      );
     } catch (InvalidKeySpecException e) {
-      throw new U2fException("Error when decoding public key", e);
+      throw new U2fException(ERROR_DECODING_PUBLIC_KEY, e);
     } catch (NoSuchAlgorithmException e) {
-      throw new U2fException("Error when decoding public key", e);
+      throw new U2fException(ERROR_DECODING_PUBLIC_KEY, e);
     }
   }
 

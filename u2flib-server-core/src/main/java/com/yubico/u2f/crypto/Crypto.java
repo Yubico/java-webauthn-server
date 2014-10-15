@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.server;
+package com.yubico.u2f.crypto;
 
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;

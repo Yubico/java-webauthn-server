@@ -1,18 +1,17 @@
-package com.yubico.u2f.softkey;
+package com.yubico.u2f.data.messages.key;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.yubico.u2f.U2fException;
-import com.yubico.u2f.codec.ByteSink;
-import com.yubico.u2f.key.messages.AuthenticateResponse;
-import com.yubico.u2f.key.messages.RegisterResponse;
-import com.yubico.u2f.server.U2F;
-import com.yubico.u2f.server.data.Device;
-import com.yubico.u2f.server.impl.BouncyCastleCrypto;
-import com.yubico.u2f.server.messages.StartedAuthentication;
-import com.yubico.u2f.server.messages.StartedRegistration;
-import com.yubico.u2f.server.messages.AuthenticationResponse;
-import com.yubico.u2f.server.messages.RegistrationResponse;
+import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.yubico.u2f.U2F;
+import com.yubico.u2f.data.Device;
+import com.yubico.u2f.crypto.BouncyCastleCrypto;
+import com.yubico.u2f.data.messages.StartedAuthentication;
+import com.yubico.u2f.data.messages.StartedRegistration;
+import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.softkey.SoftKey;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
 import org.apache.commons.codec.binary.Base64;
@@ -39,12 +38,12 @@ public class Client {
     this.key = key;
   }
 
-  public static byte[] encodeRegisterResponse(RegisterResponse registerResponse)
+  public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse)
           throws U2fException {
-    byte[] userPublicKey = registerResponse.getUserPublicKey();
-    byte[] keyHandle = registerResponse.getKeyHandle();
-    X509Certificate attestationCertificate = registerResponse.getAttestationCertificate();
-    byte[] signature = registerResponse.getSignature();
+    byte[] userPublicKey = rawRegisterResponse.userPublicKey;
+    byte[] keyHandle = rawRegisterResponse.keyHandle;
+    X509Certificate attestationCertificate = rawRegisterResponse.attestationCertificate;
+    byte[] signature = rawRegisterResponse.signature;
 
     byte[] attestationCertificateBytes;
     try {
@@ -69,11 +68,11 @@ public class Client {
     return result;
   }
 
-  public static RegistrationResponse encodeTokenRegistrationResponse(String clientDataJson, RegisterResponse registerResponse) throws U2fException {
+  public static RegisterResponse encodeTokenRegistrationResponse(String clientDataJson, RawRegisterResponse registerResponse) throws U2fException {
     byte[] rawRegisterResponse = Client.encodeRegisterResponse(registerResponse);
     String rawRegisterResponseBase64 = Base64.encodeBase64URLSafeString(rawRegisterResponse);
     String clientDataBase64 = Base64.encodeBase64URLSafeString(clientDataJson.getBytes());
-    return new RegistrationResponse(rawRegisterResponseBase64, clientDataBase64);
+    return new RegisterResponse(rawRegisterResponseBase64, clientDataBase64);
   }
 
   public Device register() throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
@@ -88,15 +87,15 @@ public class Client {
     byte[] clientParam = crypto.hash(clientDataJson);
     byte[] appParam = crypto.hash(startedRegistration.getAppId());
 
-    RegisterResponse registerResponse = key.register(new RegisterRequest(appParam, clientParam));
+    RawRegisterResponse rawRegisterResponse = key.register(new RegisterRequest(appParam, clientParam));
 
     // client encodes data
-    RegistrationResponse tokenResponse = Client.encodeTokenRegistrationResponse(clientDataJson, registerResponse);
+    RegisterResponse tokenResponse = Client.encodeTokenRegistrationResponse(clientDataJson, rawRegisterResponse);
 
     return U2F.finishRegistration(startedRegistration, tokenResponse, TRUSTED_DOMAINS);
   }
 
-  AuthenticationResponse authenticate(Device registeredDevice, StartedAuthentication startedAuthentication) throws U2fException {
+  public AuthenticateResponse authenticate(Device registeredDevice, StartedAuthentication startedAuthentication) throws U2fException {
     Map<String, String> clientData = new HashMap<String, String>();
     clientData.put("typ", "navigator.id.getAssertion");
     clientData.put("challenge", startedAuthentication.getChallenge());
@@ -108,16 +107,16 @@ public class Client {
     byte[] appParam = crypto.hash(startedAuthentication.getAppId());
     AuthenticateRequest authenticateRequest = new AuthenticateRequest((byte) 0x01, clientParam, appParam, registeredDevice.getKeyHandle());
 
-    AuthenticateResponse authenticateResponse = key.authenticate(authenticateRequest);
+    RawAuthenticateResponse rawAuthenticateResponse = key.authenticate(authenticateRequest);
 
     String clientDataBase64 = Base64.encodeBase64URLSafeString(clientDataJson.getBytes());
     byte[] authData = ByteSink.create()
-            .put(authenticateResponse.getUserPresence())
-            .putInt(authenticateResponse.getCounter())
-            .put(authenticateResponse.getSignature())
+            .put(rawAuthenticateResponse.getUserPresence())
+            .putInt(rawAuthenticateResponse.getCounter())
+            .put(rawAuthenticateResponse.getSignature())
             .toByteArray();
 
-    return new AuthenticationResponse(
+    return new AuthenticateResponse(
             clientDataBase64,
             Base64.encodeBase64URLSafeString(authData),
             startedAuthentication.getChallenge()
