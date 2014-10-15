@@ -67,5 +67,5 @@ public static int finishAuthentication(
 ----
 
 === Real world example
-See the link:u2flib-server-demo[demo server].
+See the link:u2flib-server-demo[../demo server].
 
