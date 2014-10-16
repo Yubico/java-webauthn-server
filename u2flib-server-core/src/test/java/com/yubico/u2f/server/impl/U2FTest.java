@@ -39,7 +39,7 @@ public class U2FTest extends TestVectors {
   }
 
   @Test
-  public void testSanitizeOrigin() {
+  public void testSanitizeOrigin() throws U2fException {
     assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com"));
     assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com/"));
     assertEquals("http://example.com", ClientData.canonicalizeOrigin("http://example.com/foo"));

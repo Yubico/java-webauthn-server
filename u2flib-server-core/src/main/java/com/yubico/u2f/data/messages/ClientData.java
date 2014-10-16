@@ -80,7 +80,7 @@ public class ClientData {
     }
   }
 
-  public static Set<String> canonicalizeOrigins(Set<String> origins) {
+  public static Set<String> canonicalizeOrigins(Set<String> origins) throws U2fException {
     ImmutableSet.Builder<String> result = ImmutableSet.builder();
     for (String origin : origins) {
       result.add(canonicalizeOrigin(origin));
@@ -88,12 +88,12 @@ public class ClientData {
     return result.build();
   }
 
-  public static String canonicalizeOrigin(String url) {
+  public static String canonicalizeOrigin(String url) throws U2fException {
     try {
       URI uri = new URI(url);
       return uri.getScheme() + "://" + uri.getAuthority();
     } catch (URISyntaxException e) {
-      throw new AssertionError("specified bad origin", e);
+      throw new U2fException("specified bad origin", e);
     }
   }
 }
