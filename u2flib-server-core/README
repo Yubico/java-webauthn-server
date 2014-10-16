@@ -1,5 +1,5 @@
 == u2flib-server-core
-Serverside U2F library for Java. Provides functionality for registering
+Serverside link:https://fidoalliance.org/specifications[U2F] library for Java. Provides functionality for registering
 tokens and authenticate with said tokens.
 
 To read more about U2F and how to use a U2F library, visit
