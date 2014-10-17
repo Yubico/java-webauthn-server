@@ -29,11 +29,7 @@ public class ClientData {
     return rawClientData;
   }
 
-  public ClientData(String rawClientData) throws U2fException {
-    this(rawClientData.getBytes());
-  }
-
-  public ClientData(byte[] clientData) throws U2fException {
+  public ClientData(String clientData) throws U2fException {
 
     this.rawClientData = Base64.decodeBase64(clientData);
     JsonElement clientDataAsElement = new JsonParser().parse(new String(rawClientData));

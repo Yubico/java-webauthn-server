@@ -24,13 +24,13 @@ public class AuthenticateResponse extends DataObject {
   /** websafe-base64(raw response from U2F device) */
   private final String signatureData;
 
-  /** challenge originally passed */
-  private final String challenge;
+  /** keyHandle originally passed */
+  private final String keyHandle;
 
-  public AuthenticateResponse(String clientData, String signatureData, String challenge) {
+  public AuthenticateResponse(String clientData, String signatureData, String keyHandle) {
     this.clientData = checkNotNull(clientData);
     this.signatureData = checkNotNull(signatureData);
-    this.challenge = checkNotNull(challenge);
+    this.keyHandle = checkNotNull(keyHandle);
   }
 
   public ClientData getClientData() throws U2fException {
@@ -41,13 +41,13 @@ public class AuthenticateResponse extends DataObject {
     return signatureData;
   }
 
-  public String getChallenge() {
-    return challenge;
+  public String getKeyHandle() {
+    return keyHandle;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(clientData, signatureData, challenge);
+    return Objects.hashCode(clientData, signatureData, keyHandle);
   }
 
   @Override
@@ -64,10 +64,10 @@ public class AuthenticateResponse extends DataObject {
         return false;
     } else if (!clientData.equals(other.clientData))
       return false;
-    if (challenge == null) {
-      if (other.challenge != null)
+    if (keyHandle == null) {
+      if (other.keyHandle != null)
         return false;
-    } else if (!challenge.equals(other.challenge))
+    } else if (!keyHandle.equals(other.keyHandle))
       return false;
     if (signatureData == null) {
       if (other.signatureData != null)

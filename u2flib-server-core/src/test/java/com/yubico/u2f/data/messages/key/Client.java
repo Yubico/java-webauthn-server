@@ -119,7 +119,7 @@ public class Client {
     return new AuthenticateResponse(
             clientDataBase64,
             Base64.encodeBase64URLSafeString(authData),
-            startedAuthentication.getChallenge()
+            startedAuthentication.getKeyHandle()
     );
   }
 }

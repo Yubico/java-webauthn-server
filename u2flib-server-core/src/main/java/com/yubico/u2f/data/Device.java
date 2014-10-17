@@ -79,6 +79,7 @@ public class Device extends DataObject implements Serializable {
   }
 
   public int checkAndIncrementCounter(int clientCounter) throws U2fException {
+    System.out.println("COUNTER IS " + counter + ",   CLIENT COUNTER IS " +clientCounter);
     if (clientCounter <= counter) {
       throw new U2fException("Counter value smaller than expected!");
     }

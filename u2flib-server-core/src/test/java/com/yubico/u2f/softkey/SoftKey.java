@@ -25,18 +25,29 @@ import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SoftKey {
+public class SoftKey implements Cloneable {
   private static final Logger Log = Logger.getLogger(SoftKey.class.getName());
 
-  private final X509Certificate vendorCertificate;
+  private final X509Certificate vendorCertificate = TestVectors.VENDOR_CERTIFICATE;
   private final PrivateKey certificatePrivateKey;
-  private final Map<String, KeyPair> dataStore = new HashMap<String, KeyPair>();
+  private final Map<String, KeyPair> dataStore;
   private final Crypto crypto = new Crypto();
   private int deviceCounter = 0;
 
   public SoftKey() {
-    this.vendorCertificate = TestVectors.VENDOR_CERTIFICATE;
+    this.dataStore = new HashMap<String, KeyPair>();
     this.certificatePrivateKey = TestVectors.VENDOR_CERTIFICATE_PRIVATE_KEY;
+  }
+
+  public SoftKey(Map<String, KeyPair> dataStore,  int deviceCounter, PrivateKey certificatePrivateKey) {
+    this.dataStore = dataStore;
+    this.deviceCounter = deviceCounter;
+    this.certificatePrivateKey = TestVectors.VENDOR_CERTIFICATE_PRIVATE_KEY;
+  }
+
+  @Override
+  public SoftKey clone() {
+    return new SoftKey(this.dataStore, this.deviceCounter, this.certificatePrivateKey);
   }
 
   public RawRegisterResponse register(RegisterRequest registerRequest) throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
