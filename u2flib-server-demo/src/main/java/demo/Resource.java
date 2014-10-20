@@ -47,11 +47,11 @@ public class Resource {
   public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username)
           throws U2fException {
     RegisterResponse registerResponse = RegisterResponse.fromJson(response);
-    StartedRegistration startedRegistration = StartedRegistration.fromJson(
-            storage.get(registerResponse.getClientData().getChallenge())
-    );
+    String challenge = registerResponse.getClientData().getChallenge();
+    StartedRegistration startedRegistration = StartedRegistration.fromJson(storage.get(challenge));
     Device registeredDevice = U2F.finishRegistration(startedRegistration, registerResponse, FACETS);
     storage.put(username, registeredDevice.toJson());
+    storage.remove(challenge);
     return "<p>Successfully registered device:</p><code>" +
             registeredDevice +
             "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
@@ -82,9 +82,9 @@ public class Resource {
                                      @FormParam("username") String username) throws U2fException {
     Device device = Device.fromJson(storage.get(username));
     AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
-    StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(
-            storage.get(authenticateResponse.getClientData().getChallenge())
-    );
+    String challenge = authenticateResponse.getClientData().getChallenge();
+    StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(storage.get(challenge));
+    storage.remove(challenge);
     U2F.finishAuthentication(startedAuthentication, authenticateResponse, device, FACETS);
     return "Successfully authenticated.";
   }
