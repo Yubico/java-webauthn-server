@@ -95,11 +95,10 @@ public class Device extends DataObject implements Serializable {
     return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter));
   }
 
-  public int checkAndIncrementCounter(int clientCounter) throws U2fException {
-    if (clientCounter <= counter) {
+  public void checkAndIncrementCounter(int clientCounter) throws U2fException {
+    if (clientCounter <= counter++) {
       throw new U2fException("Counter value smaller than expected!");
     }
-    return ++counter;
   }
 
   private class DeviceWithoutCertificate {

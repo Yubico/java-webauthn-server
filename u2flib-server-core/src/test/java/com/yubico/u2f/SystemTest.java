@@ -50,12 +50,12 @@ public class SystemTest {
     System.out.println();
     System.out.println("Enter token response:");
 
-    int deviceCounter = U2F.finishAuthentication(
+    U2F.finishAuthentication(
             StartedAuthentication.fromJson(startedAuthentication),
             AuthenticateResponse.fromJson(scan.nextLine()),
             device,
             TRUSTED_DOMAINS
     );
-    System.out.println("Device counter: " + deviceCounter);
+    System.out.println("Device counter: " + device.getCounter());
   }
 }

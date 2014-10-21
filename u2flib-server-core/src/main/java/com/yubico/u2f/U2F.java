@@ -92,11 +92,11 @@ public class U2F {
    * @param response the response from the token/client.
    * @return the new value of the Device's counter.
    */
-  public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device) throws U2fException {
-    return finishAuthentication(startedAuthentication, response, device, null);
+  public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device) throws U2fException {
+    finishAuthentication(startedAuthentication, response, device, null);
   }
 
-  public static int finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device, Set<String> facets) throws U2fException {
+  public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device, Set<String> facets) throws U2fException {
     ClientData clientData = response.getClientData();
     clientData.checkContent(AUTHENTICATE_TYP, startedAuthentication.getChallenge(), Optional.fromNullable(facets));
 
@@ -108,6 +108,6 @@ public class U2F {
             device.getPublicKey()
     );
     rawAuthenticateResponse.checkUserPresence();
-    return device.checkAndIncrementCounter(rawAuthenticateResponse.getCounter());
+    device.checkAndIncrementCounter(rawAuthenticateResponse.getCounter());
   }
 }
