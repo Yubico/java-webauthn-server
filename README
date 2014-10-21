@@ -5,5 +5,5 @@ link:https://fidoalliance.org/specifications[U2F] protocol.
 == Modules ==
 This project consists of several modules:
 
- * `u2flib-server-core`, which is all you need to add U2F support to any Java server.
+ * `u2flib-server-core`, a library used to add U2F support to any Java server.
  * `u2flib-server-demo` a simple demo server, showcasing a real world example.
