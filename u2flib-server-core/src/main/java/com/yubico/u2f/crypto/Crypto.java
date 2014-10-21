@@ -12,7 +12,7 @@ package com.yubico.u2f.crypto;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 
 public interface Crypto {
   void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes,

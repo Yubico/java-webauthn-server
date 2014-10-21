@@ -11,7 +11,7 @@ package com.yubico.u2f.server.impl;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestVectors;
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.Device;
 import com.yubico.u2f.data.messages.*;

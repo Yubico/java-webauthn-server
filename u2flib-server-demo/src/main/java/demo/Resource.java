@@ -3,7 +3,7 @@ package demo;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.Device;
 import com.yubico.u2f.data.messages.AuthenticateResponse;

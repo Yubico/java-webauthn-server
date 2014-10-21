@@ -18,6 +18,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
+import com.yubico.u2f.exceptions.U2fException;
 import org.apache.commons.codec.binary.Base64;
 
 import java.util.Set;

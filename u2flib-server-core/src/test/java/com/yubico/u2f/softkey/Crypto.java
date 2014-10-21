@@ -7,7 +7,7 @@ import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class Crypto {

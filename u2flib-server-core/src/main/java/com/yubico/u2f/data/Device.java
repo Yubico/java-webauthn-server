@@ -16,8 +16,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-import com.google.gson.Gson;
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 
 import com.google.common.base.Objects;

@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f;
+package com.yubico.u2f.exceptions;
 
 @SuppressWarnings("serial")
 public class U2fException extends Exception {

@@ -20,8 +20,7 @@ import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 
-import com.yubico.u2f.U2fException;
-import com.yubico.u2f.crypto.Crypto;
+import com.yubico.u2f.exceptions.U2fException;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;

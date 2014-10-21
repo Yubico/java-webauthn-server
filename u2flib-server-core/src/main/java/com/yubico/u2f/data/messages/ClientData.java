@@ -5,7 +5,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.InvalidFacetException;
+import com.yubico.u2f.exceptions.U2fException;
 import org.apache.commons.codec.binary.Base64;
 
 import java.net.URI;
@@ -69,14 +70,14 @@ public class ClientData {
     }
   }
 
-  private static void verifyOrigin(String origin, Set<String> allowedOrigins) throws U2fException {
+  private static void verifyOrigin(String origin, Set<String> allowedOrigins) throws InvalidFacetException {
     if (!allowedOrigins.contains(canonicalizeOrigin(origin))) {
-      throw new U2fException(origin +
+      throw new InvalidFacetException(origin +
               " is not a recognized home origin for this backend");
     }
   }
 
-  public static Set<String> canonicalizeOrigins(Set<String> origins) throws U2fException {
+  public static Set<String> canonicalizeOrigins(Set<String> origins) throws InvalidFacetException {
     ImmutableSet.Builder<String> result = ImmutableSet.builder();
     for (String origin : origins) {
       result.add(canonicalizeOrigin(origin));
@@ -84,12 +85,12 @@ public class ClientData {
     return result.build();
   }
 
-  public static String canonicalizeOrigin(String url) throws U2fException {
+  public static String canonicalizeOrigin(String url) throws InvalidFacetException {
     try {
       URI uri = new URI(url);
       return uri.getScheme() + "://" + uri.getAuthority();
     } catch (URISyntaxException e) {
-      throw new U2fException("specified bad origin", e);
+      throw new InvalidFacetException("specified bad origin", e);
     }
   }
 }

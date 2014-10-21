@@ -9,7 +9,7 @@
 
 package com.yubico.u2f.data.messages.key;
 
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
 
 import java.security.cert.CertificateEncodingException;

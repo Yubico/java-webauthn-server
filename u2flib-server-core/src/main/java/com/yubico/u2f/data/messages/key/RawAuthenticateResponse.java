@@ -11,7 +11,7 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2F;
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
 import org.apache.commons.codec.binary.Base64;

@@ -7,7 +7,7 @@
 package com.yubico.u2f.softkey;
 
 import com.yubico.u2f.TestVectors;
-import com.yubico.u2f.U2fException;
+import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
