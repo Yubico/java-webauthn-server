@@ -10,11 +10,13 @@
 package com.yubico.u2f.data;
 
 import java.io.Serializable;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+import com.google.gson.Gson;
 import com.yubico.u2f.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 
@@ -29,10 +31,14 @@ public class Device extends DataObject implements Serializable {
   private final byte[] attestationCert;
   private int counter;
 
-  public Device(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) {
+  public Device(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
-    this.attestationCert = attestationCert.getPublicKey().getEncoded();
+    try {
+      this.attestationCert = attestationCert.getEncoded();
+    } catch (CertificateEncodingException e) {
+      throw new U2fException("Invalid attestation certificate", e);
+    }
     this.counter = counter;
   }
 
@@ -44,7 +50,10 @@ public class Device extends DataObject implements Serializable {
     return publicKey;
   }
 
-  public X509Certificate getAttestationCertificate() throws CertificateException {
+  public X509Certificate getAttestationCertificate() throws CertificateException, NoSuchFieldException {
+    if(attestationCert == null) {
+      throw new NoSuchFieldException();
+    }
     return (X509Certificate) CertificateFactory.getInstance("X.509")
             .generateCertificate(new ByteInputStream(attestationCert));
   }
@@ -78,11 +87,31 @@ public class Device extends DataObject implements Serializable {
     return GSON.fromJson(json, Device.class);
   }
 
+  @Override
+  public String toJson() {
+    return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter));
+  }
+
+  public String toJsonWithAttestationCert() {
+    return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter));
+  }
+
   public int checkAndIncrementCounter(int clientCounter) throws U2fException {
-    System.out.println("COUNTER IS " + counter + ",   CLIENT COUNTER IS " +clientCounter);
     if (clientCounter <= counter) {
       throw new U2fException("Counter value smaller than expected!");
     }
     return ++counter;
+  }
+
+  private class DeviceWithoutCertificate {
+    private final byte[] keyHandle;
+    private final byte[] publicKey;
+    private final int counter;
+
+    private DeviceWithoutCertificate(byte[] keyHandle, byte[] publicKey, int counter) {
+      this.keyHandle = keyHandle;
+      this.publicKey = publicKey;
+      this.counter = counter;
+    }
   }
 }

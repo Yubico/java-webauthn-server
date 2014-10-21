@@ -90,7 +90,7 @@ public class RawRegisterResponse {
               .toByteArray();
   }
 
-  public Device createDevice() {
+  public Device createDevice() throws U2fException {
     return new Device(
             keyHandle,
             userPublicKey,

@@ -13,6 +13,8 @@ import org.junit.Test;
 
 import java.util.logging.Logger;
 
+import static org.junit.Assert.assertEquals;
+
 public class SoftKeyTest {
 
   private static final Logger Log = Logger.getLogger(SoftKeyTest.class.getName());
@@ -31,6 +33,13 @@ public class SoftKeyTest {
     Client client = createClient();
     Device registeredDevice = client.register();
     authenticateUsing(client, registeredDevice);
+  }
+
+  @Test
+  public void shouldProvideAttestationCert() throws Exception {
+    Client client = createClient();
+    Device device = client.register();
+    assertEquals("CN=Gnubby Pilot", device.getAttestationCertificate().getIssuerDN().getName());
   }
 
   @Test(expected = U2fException.class)
