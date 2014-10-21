@@ -79,7 +79,7 @@ public class Device extends DataObject implements Serializable {
   
   @Override
   public String toString() {
-    return toJson();
+    return super.toJson();
   }
 
   public static Device fromJson(String json) {
@@ -92,7 +92,7 @@ public class Device extends DataObject implements Serializable {
   }
 
   public String toJsonWithAttestationCert() {
-    return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter));
+    return super.toJson();
   }
 
   public void checkAndIncrementCounter(int clientCounter) throws U2fException {
