@@ -10,6 +10,7 @@
 package com.yubico.u2f;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -21,6 +22,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Scanner;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -59,6 +61,11 @@ public class TestUtils {
     return parseCertificate(parseHex(encodedDerCertificateHex));
   }
 
+  public static PrivateKey parsePrivateKey(InputStream is) {
+    String keyBytesHex = new Scanner(is).nextLine();
+    return parsePrivateKey(keyBytesHex);
+  }
+
   public static PrivateKey parsePrivateKey(String keyBytesHex) {
     try {
       KeyFactory fac = KeyFactory.getInstance("ECDSA");
@@ -89,17 +96,5 @@ public class TestUtils {
     } catch (InvalidKeySpecException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public static byte[] computeHash(byte[] bytes) {
-    try {
-      return MessageDigest.getInstance("SHA-256").digest(bytes);
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static byte[] computeHash(String data) {
-    return computeHash(data.getBytes());
   }
 }

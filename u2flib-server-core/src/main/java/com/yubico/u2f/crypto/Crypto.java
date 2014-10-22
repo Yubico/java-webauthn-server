@@ -23,7 +23,7 @@ public interface Crypto {
 
   PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fException;
 
-  byte[] hash(byte[] bytes) throws U2fException;
+  byte[] hash(byte[] bytes);
 
-  byte[] hash(String str) throws U2fException;
+  byte[] hash(String str);
 }

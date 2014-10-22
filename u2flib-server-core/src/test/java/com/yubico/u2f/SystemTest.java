@@ -1,7 +1,7 @@
 package com.yubico.u2f;
 
 import com.google.common.collect.ImmutableSet;
-import com.yubico.u2f.data.Device;
+import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.StartedAuthentication;
@@ -34,16 +34,15 @@ public class SystemTest {
     String json = scan.nextLine();
     RegisterResponse registerResponse = RegisterResponse.fromJson(json);
     registerResponse.getClientData().getChallenge();
-    Device device = U2F.finishRegistration(
+    DeviceRegistration deviceRegistration = U2F.finishRegistration(
             StartedRegistration.fromJson(startedRegistration),
             registerResponse,
             TRUSTED_DOMAINS
     );
 
+    System.out.println(deviceRegistration);
 
-    System.out.println(device);
-
-    String startedAuthentication = U2F.startAuthentication(APP_ID, device).toJson();
+    String startedAuthentication = U2F.startAuthentication(APP_ID, deviceRegistration).toJson();
     System.out.println("Authentication data:");
     System.out.println(startedAuthentication);
 
@@ -53,9 +52,9 @@ public class SystemTest {
     U2F.finishAuthentication(
             StartedAuthentication.fromJson(startedAuthentication),
             AuthenticateResponse.fromJson(scan.nextLine()),
-            device,
+            deviceRegistration,
             TRUSTED_DOMAINS
     );
-    System.out.println("Device counter: " + device.getCounter());
+    System.out.println("Device counter: " + deviceRegistration.getCounter());
   }
 }

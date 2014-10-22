@@ -1,0 +1,26 @@
+package com.yubico.u2f.data;
+
+import com.yubico.u2f.data.messages.key.Client;
+import com.yubico.u2f.softkey.SoftKey;
+import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+public class DeviceRegistrationJsonTest {
+
+  @Test
+  public void shouldSerialize() throws Exception {
+    SoftKey key = new SoftKey();
+    Client client = new Client(key);
+    DeviceRegistration deviceRegistration = client.register();
+
+    String json = deviceRegistration.toJson();
+
+    DeviceRegistration deserializedDeviceRegistration = DeviceRegistration.fromJson(json);
+    assertArrayEquals(deviceRegistration.getKeyHandle(), deserializedDeviceRegistration.getKeyHandle());
+    assertArrayEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
+    assertEquals(deviceRegistration.getCounter(), deserializedDeviceRegistration.getCounter());
+  }
+
+}

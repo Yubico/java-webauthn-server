@@ -90,16 +90,16 @@ public class BouncyCastleCrypto implements Crypto {
   }
 
   @Override
-  public byte[] hash(byte[] bytes) throws U2fException {
+  public byte[] hash(byte[] bytes) {
     try {
       return MessageDigest.getInstance("SHA-256").digest(bytes);
     } catch (NoSuchAlgorithmException e) {
-      throw new U2fException("Error when computing SHA-256", e);
+      throw new UnsupportedOperationException("Error when computing SHA-256", e);
     }
   }
 
   @Override
-  public byte[] hash(String str) throws U2fException {
+  public byte[] hash(String str) {
     return  hash(str.getBytes());
   }
 }

@@ -21,7 +21,7 @@ import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 
 import com.google.common.base.Objects;
 
-public class Device extends DataObject implements Serializable {
+public class DeviceRegistration extends DataObject implements Serializable {
   private static final long serialVersionUID = -142942195464329902L;
   public static final int INITIAL_COUNTER_VALUE = 0;
 
@@ -30,7 +30,7 @@ public class Device extends DataObject implements Serializable {
   private final byte[] attestationCert;
   private int counter;
 
-  public Device(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
+  public DeviceRegistration(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
     try {
@@ -68,10 +68,10 @@ public class Device extends DataObject implements Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof Device)) {
+    if (!(obj instanceof DeviceRegistration)) {
       return false;
     }
-    Device that = (Device) obj;
+    DeviceRegistration that = (DeviceRegistration) obj;
     return Arrays.equals(this.keyHandle, that.keyHandle) 
         && Arrays.equals(this.publicKey, that.publicKey)
         && Arrays.equals(this.attestationCert, that.attestationCert);
@@ -82,8 +82,8 @@ public class Device extends DataObject implements Serializable {
     return super.toJson();
   }
 
-  public static Device fromJson(String json) {
-    return GSON.fromJson(json, Device.class);
+  public static DeviceRegistration fromJson(String json) {
+    return GSON.fromJson(json, DeviceRegistration.class);
   }
 
   @Override

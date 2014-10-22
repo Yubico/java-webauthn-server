@@ -12,6 +12,8 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.yubico.u2f.crypto.BouncyCastleCrypto;
+import com.yubico.u2f.crypto.Crypto;
 import org.apache.commons.codec.binary.Base64;
 
 import java.security.KeyPair;
@@ -21,15 +23,17 @@ import java.security.cert.X509Certificate;
 import java.util.Set;
 
 public class TestVectors {
+  private final static Crypto crypto = new BouncyCastleCrypto();
+
   //Test vectors from FIDO U2F: Raw Message Formats - Draft 4
   protected static final int COUNTER_VALUE = 1;
   protected static final String ACCOUNT_NAME = "test@example.com";
   protected static final Set<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
   protected static final String SESSION_ID = "session_id";
   protected static final String APP_ID_ENROLL = "http://example.com";
-  protected static final byte[] APP_ID_ENROLL_SHA256 = TestUtils.computeHash(APP_ID_ENROLL);
+  protected static final byte[] APP_ID_ENROLL_SHA256 = crypto.hash(APP_ID_ENROLL);
   protected static final String APP_ID_SIGN = "https://gstatic.com/securitykey/a/example.com";
-  protected static final byte[] APP_ID_SIGN_SHA256 = TestUtils.computeHash(APP_ID_SIGN);
+  protected static final byte[] APP_ID_SIGN_SHA256 = crypto.hash(APP_ID_SIGN);
   protected static final String ORIGIN = "http://example.com";
   protected static final String SERVER_CHALLENGE_ENROLL_BASE64 =
       "vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo";
@@ -38,21 +42,7 @@ public class TestVectors {
   protected static final String SERVER_CHALLENGE_SIGN_BASE64 = "opsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o";
   protected static final byte[] SERVER_CHALLENGE_SIGN = Base64
       .decodeBase64(SERVER_CHALLENGE_SIGN_BASE64);
-  protected static final String VENDOR_CERTIFICATE_HEX =
-      "3082013c3081e4a003020102020a47901280001155957352300a06082a8648ce"
-          + "3d0403023017311530130603550403130c476e756262792050696c6f74301e17"
-          + "0d3132303831343138323933325a170d3133303831343138323933325a303131"
-          + "2f302d0603550403132650696c6f74476e756262792d302e342e312d34373930"
-          + "313238303030313135353935373335323059301306072a8648ce3d020106082a"
-          + "8648ce3d030107034200048d617e65c9508e64bcc5673ac82a6799da3c144668"
-          + "2c258c463fffdf58dfd2fa3e6c378b53d795c4a4dffb4199edd7862f23abaf02"
-          + "03b4b8911ba0569994e101300a06082a8648ce3d0403020347003044022060cd"
-          + "b6061e9c22262d1aac1d96d8c70829b2366531dda268832cb836bcd30dfa0220"
-          + "631b1459f09e6330055722c8d89b7f48883b9089b88d60d1d9795902b30410df";
-  public static final X509Certificate VENDOR_CERTIFICATE =
-      TestUtils.parseCertificate(VENDOR_CERTIFICATE_HEX);
-  public static final PrivateKey VENDOR_CERTIFICATE_PRIVATE_KEY = TestUtils.parsePrivateKey(
-          "f3fccc0d00d8031954f90864d43c247f4bf5f0665c6b50cc17749a27d1cf7664");
+
   protected static final String CHANNEL_ID_STRING =
       "{"
           + "\"kty\":\"EC\","
@@ -71,9 +61,9 @@ public class TestVectors {
           SERVER_CHALLENGE_ENROLL_BASE64,
           CHANNEL_ID_STRING,
           ORIGIN);
-  protected static final String BROWSER_DATA_ENROLL_BASE64 = Base64
+  public static final String BROWSER_DATA_ENROLL_BASE64 = Base64
       .encodeBase64URLSafeString(BROWSER_DATA_ENROLL.getBytes());
-  protected static final byte[] BROWSER_DATA_ENROLL_SHA256 = TestUtils.computeHash(BROWSER_DATA_ENROLL
+  protected static final byte[] BROWSER_DATA_ENROLL_SHA256 = crypto.hash(BROWSER_DATA_ENROLL
           .getBytes());
   protected static final String BROWSER_DATA_SIGN = String.format(
       "{"
@@ -175,51 +165,5 @@ public class TestVectors {
   // Test vectors provided by Discretix
   protected static final String APP_ID_2 = APP_ID_ENROLL;
   protected static final String CHALLENGE_2_BASE64 = SERVER_CHALLENGE_ENROLL_BASE64;
-  protected static final String BROWSER_DATA_2_BASE64 = BROWSER_DATA_ENROLL_BASE64;
-  protected static final String TRUSTED_CERTIFICATE_2_HEX =
-      "308201443081eaa0030201020209019189ffffffff5183300a06082a8648ce3d"
-          + "040302301b3119301706035504031310476e756262792048534d204341203030"
-          + "3022180f32303132303630313030303030305a180f3230363230353331323335"
-          + "3935395a30303119301706035504031310476f6f676c6520476e756262792076"
-          + "3031133011060355042d030a00019189ffffffff51833059301306072a8648ce"
-          + "3d020106082a8648ce3d030107034200041f1302f12173a9cbea83d06d755411"
-          + "e582a87fbb5850eddcf3607ec759a4a12c3cb392235e8d5b17caee1b34e5b5eb"
-          + "548649696257f0ea8efb90846f88ad5f72300a06082a8648ce3d040302034900"
-          + "3046022100b4caea5dc60fbf9f004ed84fc4f18522981c1c303155c08274e889"
-          + "f3f10c5b23022100faafb4f10b92f4754e3b08b5af353f78485bc903ece7ea91"
-          + "1264fc1673b6598f";
-  protected static final X509Certificate TRUSTED_CERTIFICATE_2 =
-      TestUtils.parseCertificate(TRUSTED_CERTIFICATE_2_HEX);
-  protected static final byte[] REGISTRATION_DATA_2 = TestUtils.parseHex(
-          "0504478E16BBDBBB741A660A000314A8B6BD63095196ED704C52EEBC0FA02A61"
-                  + "8F19FF59DF18451A11CEE43DEFD9A29B5710F63DFC671F752B1B0C6CA76C8427"
-                  + "AF2D403C2415E1760D1108105720C6069A9039C99D09F76909C36D9EFC350937"
-                  + "31F85F55AC6D73EA69DE7D9005AE9507B95E149E19676272FC202D949A3AB151"
-                  + "B96870308201443081EAA0030201020209019189FFFFFFFF5183300A06082A86"
-                  + "48CE3D040302301B3119301706035504031310476E756262792048534D204341"
-                  + "2030303022180F32303132303630313030303030305A180F3230363230353331"
-                  + "3233353935395A30303119301706035504031310476F6F676C6520476E756262"
-                  + "7920763031133011060355042D030A00019189FFFFFFFF51833059301306072A"
-                  + "8648CE3D020106082A8648CE3D030107034200041F1302F12173A9CBEA83D06D"
-                  + "755411E582A87FBB5850EDDCF3607EC759A4A12C3CB392235E8D5B17CAEE1B34"
-                  + "E5B5EB548649696257F0EA8EFB90846F88AD5F72300A06082A8648CE3D040302"
-                  + "0349003046022100B4CAEA5DC60FBF9F004ED84FC4F18522981C1C303155C082"
-                  + "74E889F3F10C5B23022100FAAFB4F10B92F4754E3B08B5AF353F78485BC903EC"
-                  + "E7EA911264FC1673B6598F3046022100F3BE1BF12CBF0BE7EAB5EA32F3664EDB"
-                  + "18A24D4999AAC5AA40FF39CF6F34C9ED022100CE72631767367467DFE2AECF6A"
-                  + "5A4EBA9779FAC65F5CA8A2C325B174EE4769AC");
-  protected static final String REGISTRATION_DATA_2_BASE64 = Base64
-      .encodeBase64URLSafeString(REGISTRATION_DATA_2);
-  protected static final byte[] KEY_HANDLE_2 = TestUtils.parseHex(
-          "3c2415e1760d1108105720c6069a9039c99d09f76909c36d9efc35093731f85f"
-                  + "55ac6d73ea69de7d9005ae9507b95e149e19676272fc202d949a3ab151b96870");
-  protected static final byte[] USER_PUBLIC_KEY_2 = TestUtils.parseHex(
-          "04478e16bbdbbb741a660a000314a8b6bd63095196ed704c52eebc0fa02a618f"
-                  + "19ff59df18451a11cee43defd9a29b5710f63dfc671f752b1b0c6ca76c8427af"
-                  + "2d");
-  protected static final byte[] SIGN_DATA_2 = TestUtils.parseHex(
-          "01000000223045022100FB16D12F8EC73D93EAB43BFDF141BF94E31AD3B1C98E"
-                  + "E4459E9E80CBBBD892F70220796DBCB8BBF57EC95A20A76D9ED3365CB688BF88"
-                  + "2ECCEABCC8D4A674024F6ABA");
-  protected static final String SIGN_DATA_2_BASE64 = Base64.encodeBase64URLSafeString(SIGN_DATA_2);
+
 }

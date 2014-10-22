@@ -13,6 +13,7 @@ import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
+import com.yubico.u2f.testdata.Gnubby;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -28,29 +29,43 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SoftKey implements Cloneable {
   private static final Logger Log = Logger.getLogger(SoftKey.class.getName());
 
-  private final X509Certificate vendorCertificate = TestVectors.VENDOR_CERTIFICATE;
+  private final X509Certificate attestationCertificate;
   private final PrivateKey certificatePrivateKey;
   private final Map<String, KeyPair> dataStore;
-  private final Crypto crypto = new Crypto();
   private int deviceCounter = 0;
 
   public SoftKey() {
-    this.dataStore = new HashMap<String, KeyPair>();
-    this.certificatePrivateKey = TestVectors.VENDOR_CERTIFICATE_PRIVATE_KEY;
+    this(
+            new HashMap<String, KeyPair>(),
+            0,
+            Gnubby.ATTESTATION_CERTIFICATE,
+            Gnubby.ATTESTATION_CERTIFICATE_PRIVATE_KEY
+    );
   }
 
-  public SoftKey(Map<String, KeyPair> dataStore,  int deviceCounter, PrivateKey certificatePrivateKey) {
+  public SoftKey(
+          Map<String, KeyPair> dataStore,
+          int deviceCounter,
+          X509Certificate attestationCertificate,
+          PrivateKey certificatePrivateKey
+  ) {
     this.dataStore = dataStore;
     this.deviceCounter = deviceCounter;
-    this.certificatePrivateKey = TestVectors.VENDOR_CERTIFICATE_PRIVATE_KEY;
+    this.attestationCertificate = attestationCertificate;
+    this.certificatePrivateKey = certificatePrivateKey;
   }
 
   @Override
   public SoftKey clone() {
-    return new SoftKey(this.dataStore, this.deviceCounter, this.certificatePrivateKey);
+    return new SoftKey(
+            this.dataStore,
+            this.deviceCounter,
+            this.attestationCertificate,
+            this.certificatePrivateKey
+    );
   }
 
-  public RawRegisterResponse register(RegisterRequest registerRequest) throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
+  public RawRegisterResponse register(RegisterRequest registerRequest) throws Exception {
     Log.info(">> register");
 
     byte[] applicationSha256 = registerRequest.getApplicationSha256();
@@ -79,17 +94,17 @@ public class SoftKey implements Cloneable {
             keyHandle, userPublicKey);
     Log.info("Signing bytes " + Hex.encodeHexString(signedData));
 
-    byte[] signature = crypto.sign(signedData, certificatePrivateKey);
+    byte[] signature = sign(signedData, certificatePrivateKey);
 
     Log.info(" -- Outputs --");
     Log.info("  userPublicKey: " + Hex.encodeHexString(userPublicKey));
     Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
-    Log.info("  vendorCertificate: " + vendorCertificate);
+    Log.info("  attestationCertificate: " + attestationCertificate);
     Log.info("  signature: " + Hex.encodeHexString(signature));
 
     Log.info("<< register");
 
-    return new RawRegisterResponse(userPublicKey, keyHandle, vendorCertificate, signature);
+    return new RawRegisterResponse(userPublicKey, keyHandle, attestationCertificate, signature);
   }
 
   private byte[] stripMetaData(byte[] a) {
@@ -101,8 +116,7 @@ public class SoftKey implements Cloneable {
     return bis.read(keyLength - 1);
   }
 
-  public RawAuthenticateResponse authenticate(AuthenticateRequest authenticateRequest)
-          throws U2fException {
+  public RawAuthenticateResponse authenticate(AuthenticateRequest authenticateRequest) throws Exception {
     Log.info(">> authenticate");
 
     byte control = authenticateRequest.getControl();
@@ -124,7 +138,7 @@ public class SoftKey implements Cloneable {
 
     Log.info("Signing bytes " + Hex.encodeHexString(signedData));
 
-    byte[] signature = crypto.sign(signedData, keyPair.getPrivate());
+    byte[] signature = sign(signedData, keyPair.getPrivate());
 
     Log.info(" -- Outputs --");
     Log.info("  userPresence: " + RawAuthenticateResponse.USER_PRESENT_FLAG);
@@ -134,5 +148,12 @@ public class SoftKey implements Cloneable {
     Log.info("<< authenticate");
 
     return new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, counter, signature);
+  }
+
+  private byte[] sign(byte[] signedData, PrivateKey privateKey) throws Exception {
+    Signature signature = Signature.getInstance("SHA256withECDSA");
+    signature.initSign(privateKey);
+    signature.update(signedData);
+    return signature.sign();
   }
 }

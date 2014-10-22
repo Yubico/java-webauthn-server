@@ -10,7 +10,7 @@ link:http://developers.yubico.com/U2F[developers.yubico.com/U2F].
  <dependency>
    <groupId>com.yubico</groupId>
    <artifactId>u2fserver-core</artifactId>
-   <version>0.9.0</version>
+   <version>0.10.0</version>
  </dependency>
 
 === API
@@ -69,3 +69,13 @@ public static int finishAuthentication(
 === Real world example
 See the link:../u2flib-server-demo[demo server].
 
+=== Advanced topics
+
+==== Verifying attestation certificates.
+Attestation certificates can be verified like this:
+
+[source, java]
+----
+DeviceRegistration registration = U2F.finishRegistration(startedRegistration, registerResponse);
+registration.getAttestationCertificate().verify(VENDOR_CA);
+----

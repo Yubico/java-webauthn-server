@@ -10,10 +10,10 @@
 package com.yubico.u2f;
 
 import com.google.common.base.Optional;
+import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
-import com.yubico.u2f.data.Device;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
@@ -50,14 +50,14 @@ public class U2F {
    *
    * @param startedRegistration
    * @param tokenResponse the response from the token/client.
-   * @return a Device object, holding information about the registered device. Servers should
+   * @return a DeviceRegistration object, holding information about the registered device. Servers should
    * persist this.
    */
-  public static Device finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse) throws U2fException {
+  public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse) throws U2fException {
     return finishRegistration(startedRegistration, tokenResponse, null);
   }
 
-  public static Device finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse, Set<String> facets) throws U2fException {
+  public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse, Set<String> facets) throws U2fException {
     ClientData clientData = tokenResponse.getClientData();
     clientData.checkContent(REGISTER_TYPE, startedRegistration.getChallenge(), Optional.fromNullable(facets));
 
@@ -71,17 +71,17 @@ public class U2F {
    *
    * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
    * support logging in from multiple Web Origins.
-   * @param device a previously registered Device, for which to initiate authentication.
+   * @param deviceRegistration the DeviceRegistration for which to initiate authentication.
    * @return a StartedAuthentication which should be sent to the client and temporary saved by
    * the server.
    */
-  public static StartedAuthentication startAuthentication(String appId, Device device) {
+  public static StartedAuthentication startAuthentication(String appId, DeviceRegistration deviceRegistration) {
     byte[] challenge = challengeGenerator.generateChallenge();
     return new StartedAuthentication(
             U2F_VERSION,
             Base64.encodeBase64URLSafeString(challenge),
             appId,
-            Base64.encodeBase64URLSafeString(device.getKeyHandle())
+            Base64.encodeBase64URLSafeString(deviceRegistration.getKeyHandle())
     );
   }
 
@@ -90,13 +90,13 @@ public class U2F {
    *
    * @param startedAuthentication
    * @param response the response from the token/client.
-   * @return the new value of the Device's counter.
+   * @return the new value of the DeviceRegistration's counter.
    */
-  public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device) throws U2fException {
-    finishAuthentication(startedAuthentication, response, device, null);
+  public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, DeviceRegistration deviceRegistration) throws U2fException {
+    finishAuthentication(startedAuthentication, response, deviceRegistration, null);
   }
 
-  public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, Device device, Set<String> facets) throws U2fException {
+  public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, DeviceRegistration deviceRegistration, Set<String> facets) throws U2fException {
     ClientData clientData = response.getClientData();
     clientData.checkContent(AUTHENTICATE_TYP, startedAuthentication.getChallenge(), Optional.fromNullable(facets));
 
@@ -105,9 +105,9 @@ public class U2F {
     rawAuthenticateResponse.checkSignature(
             startedAuthentication.getAppId(),
             clientData.getRawClientData(),
-            device.getPublicKey()
+            deviceRegistration.getPublicKey()
     );
     rawAuthenticateResponse.checkUserPresence();
-    device.checkAndIncrementCounter(rawAuthenticateResponse.getCounter());
+    deviceRegistration.checkAndIncrementCounter(rawAuthenticateResponse.getCounter());
   }
 }

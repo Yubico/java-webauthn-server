@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
 import com.yubico.u2f.U2F;
-import com.yubico.u2f.data.Device;
+import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.data.messages.StartedAuthentication;
 import com.yubico.u2f.data.messages.StartedRegistration;
@@ -75,7 +75,7 @@ public class Client {
     return new RegisterResponse(rawRegisterResponseBase64, clientDataBase64);
   }
 
-  public Device register() throws U2fException, InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
+  public DeviceRegistration register() throws Exception {
     StartedRegistration startedRegistration = U2F.startRegistration(APP_ID);
 
     Map<String, String> clientData = new HashMap<String, String>();
@@ -95,7 +95,7 @@ public class Client {
     return U2F.finishRegistration(startedRegistration, tokenResponse, TRUSTED_DOMAINS);
   }
 
-  public AuthenticateResponse authenticate(Device registeredDevice, StartedAuthentication startedAuthentication) throws U2fException {
+  public AuthenticateResponse authenticate(DeviceRegistration registeredDevice, StartedAuthentication startedAuthentication) throws Exception {
     Map<String, String> clientData = new HashMap<String, String>();
     clientData.put("typ", "navigator.id.getAssertion");
     clientData.put("challenge", startedAuthentication.getChallenge());

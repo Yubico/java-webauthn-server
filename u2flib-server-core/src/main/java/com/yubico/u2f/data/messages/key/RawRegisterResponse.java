@@ -11,10 +11,10 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2F;
+import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
-import com.yubico.u2f.data.Device;
 import org.apache.commons.codec.binary.Base64;
 
 import java.security.cert.CertificateException;
@@ -90,12 +90,12 @@ public class RawRegisterResponse {
               .toByteArray();
   }
 
-  public Device createDevice() throws U2fException {
-    return new Device(
+  public DeviceRegistration createDevice() throws U2fException {
+    return new DeviceRegistration(
             keyHandle,
             userPublicKey,
             attestationCertificate,
-            Device.INITIAL_COUNTER_VALUE
+            DeviceRegistration.INITIAL_COUNTER_VALUE
     );
   }
 
