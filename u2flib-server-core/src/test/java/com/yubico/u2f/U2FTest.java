@@ -24,7 +24,6 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.yubico.u2f.data.messages.ClientData.canonicalizeOrigin;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
 import static org.junit.Assert.assertEquals;
@@ -37,17 +36,6 @@ public class U2FTest {
   public void setup() throws Exception {
     initMocks(this);
     allowedOrigins.add("http://example.com");
-  }
-
-  @Test
-  public void sanitizeOrigin() throws U2fException {
-    assertEquals("http://example.com", canonicalizeOrigin("http://example.com"));
-    assertEquals("http://example.com", canonicalizeOrigin("http://example.com/"));
-    assertEquals("http://example.com", canonicalizeOrigin("http://example.com/foo"));
-    assertEquals("http://example.com", canonicalizeOrigin("http://example.com/foo?bar=b"));
-    assertEquals("http://example.com", canonicalizeOrigin("http://example.com/foo#fragment"));
-    assertEquals("https://example.com", canonicalizeOrigin("https://example.com"));
-    assertEquals("https://example.com", canonicalizeOrigin("https://example.com/foo"));
   }
 
   @Test

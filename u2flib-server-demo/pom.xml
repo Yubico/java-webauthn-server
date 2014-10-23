@@ -9,7 +9,7 @@
         <groupId>com.yubico</groupId>
         <version>0.10.0</version>
     </parent>
-    <artifactId>java-u2flib-server-demo</artifactId>
+    <artifactId>u2flib-server-demo</artifactId>
     <name>U2F demo</name>
 
     <dependencies>
