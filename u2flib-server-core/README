@@ -21,7 +21,7 @@ The library exposes the following methods in the `U2F` class:
 /**
 * Initiates the registration of a device.
 *
-* @param appId the U2F AppID.
+* @param appId the U2F AppID. // <1>
 * @return a StartedRegistration, which should be sent to the client and temporary saved by the
 * server.
 */
@@ -31,9 +31,8 @@ public static StartedRegistration startRegistration(String appId);
 * Finishes a previously started registration.
 *
 * @param startedRegistration
-* @param response the response from the token/client.
-* @return a Device object, holding information about the registered device. Servers should
-* persist this.
+* @param response the response from the device/client.
+* @return a DeviceRegistration. Servers should persist this.
 */
 public static void finishRegistration(
 	StartedRegistration startedRegistration,
@@ -43,18 +42,21 @@ public static void finishRegistration(
 /**
 * Initiates the authentication process.
 *
-* @param appId the U2F AppID.
+* @param appId the U2F AppID. // <1>
 * @param the previously finished registration, for which to initiate authentication.
 * @return a StartedAuthentication which should be sent to the client and temporary saved by
 * the server.
 */
-public static StartedAuthentication startAuthentication(String appId, DeviceRegistration registration);
+public static StartedAuthentication startAuthentication(
+	String appId, 
+	DeviceRegistration registration
+);
 
 /**
 * Finishes a previously started authentication.
 *
 * @param startedAuthentication
-* @param response the response from the token/client.
+* @param response the response from the device/client.
 * @param the same registration that was passed to startAuthentication().
 */
 public static int finishAuthentication(
@@ -63,8 +65,7 @@ public static int finishAuthentication(
 	DeviceRegistration registration
 ) throws U2fException;
 ----
-
-The `appId` parameter is explained link:https://developers.yubico.com/U2F/App_ID.html[here].
+<1> The `appId` parameter is explained link:https://developers.yubico.com/U2F/App_ID.html[here].
 
 
 === Real world example
