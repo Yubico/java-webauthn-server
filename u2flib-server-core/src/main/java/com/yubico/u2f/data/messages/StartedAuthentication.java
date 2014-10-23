@@ -10,6 +10,7 @@
 package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
+import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DataObject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -38,8 +39,8 @@ public class StartedAuthentication extends DataObject {
    */
   private final String keyHandle;
 
-  public StartedAuthentication(String version, String challenge, String appId, String keyHandle) {
-    this.version = checkNotNull(version);
+  public StartedAuthentication(String challenge, String appId, String keyHandle) {
+    this.version = U2F.U2F_VERSION;
     this.challenge = checkNotNull(challenge);
     this.appId = checkNotNull(appId);
     this.keyHandle = checkNotNull(keyHandle);

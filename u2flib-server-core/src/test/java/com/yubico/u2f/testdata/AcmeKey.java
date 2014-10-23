@@ -1,7 +1,6 @@
 package com.yubico.u2f.testdata;
 
 import com.yubico.u2f.TestUtils;
-import com.yubico.u2f.TestVectors;
 import org.apache.commons.codec.binary.Base64;
 
 import java.security.cert.X509Certificate;

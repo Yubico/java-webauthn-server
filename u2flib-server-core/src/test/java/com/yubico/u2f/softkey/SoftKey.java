@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SoftKey implements Cloneable {
-  private static final Logger Log = Logger.getLogger(SoftKey.class.getName());
 
   private final X509Certificate attestationCertificate;
   private final PrivateKey certificatePrivateKey;
@@ -64,15 +63,9 @@ public class SoftKey implements Cloneable {
   }
 
   public RawRegisterResponse register(RegisterRequest registerRequest) throws Exception {
-    Log.info(">> register");
 
     byte[] applicationSha256 = registerRequest.getApplicationSha256();
     byte[] challengeSha256 = registerRequest.getChallengeSha256();
-
-    Log.info(" -- Inputs --");
-    Log.info("  applicationSha256: " + Hex.encodeHexString(applicationSha256));
-    Log.info("  challengeSha256: " + Hex.encodeHexString(challengeSha256));
-
 
     // generate ECC key
     SecureRandom random = new SecureRandom();
@@ -89,17 +82,8 @@ public class SoftKey implements Cloneable {
 
     byte[] signedData = RawRegisterResponse.packBytesToSign(applicationSha256, challengeSha256,
             keyHandle, userPublicKey);
-    Log.info("Signing bytes " + Hex.encodeHexString(signedData));
 
     byte[] signature = sign(signedData, certificatePrivateKey);
-
-    Log.info(" -- Outputs --");
-    Log.info("  userPublicKey: " + Hex.encodeHexString(userPublicKey));
-    Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
-    Log.info("  attestationCertificate: " + attestationCertificate);
-    Log.info("  signature: " + Hex.encodeHexString(signature));
-
-    Log.info("<< register");
 
     return new RawRegisterResponse(userPublicKey, keyHandle, attestationCertificate, signature);
   }
@@ -114,34 +98,17 @@ public class SoftKey implements Cloneable {
   }
 
   public RawAuthenticateResponse authenticate(AuthenticateRequest authenticateRequest) throws Exception {
-    Log.info(">> authenticate");
 
-    byte control = authenticateRequest.getControl();
     byte[] applicationSha256 = authenticateRequest.getApplicationSha256();
     byte[] challengeSha256 = authenticateRequest.getChallengeSha256();
     byte[] keyHandle = authenticateRequest.getKeyHandle();
-
-    Log.info(" -- Inputs --");
-    Log.info("  control: " + control);
-    Log.info("  applicationSha256: " + Hex.encodeHexString(applicationSha256));
-    Log.info("  challengeSha256: " + Hex.encodeHexString(challengeSha256));
-    Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
 
     KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
     int counter = ++deviceCounter;
     byte[] signedData = RawAuthenticateResponse.packBytesToSign(applicationSha256, RawAuthenticateResponse.USER_PRESENT_FLAG,
             counter, challengeSha256);
 
-    Log.info("Signing bytes " + Hex.encodeHexString(signedData));
-
     byte[] signature = sign(signedData, keyPair.getPrivate());
-
-    Log.info(" -- Outputs --");
-    Log.info("  userPresence: " + RawAuthenticateResponse.USER_PRESENT_FLAG);
-    Log.info("  deviceCounter: " + counter);
-    Log.info("  signature: " + Hex.encodeHexString(signature));
-
-    Log.info("<< authenticate");
 
     return new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, counter, signature);
   }

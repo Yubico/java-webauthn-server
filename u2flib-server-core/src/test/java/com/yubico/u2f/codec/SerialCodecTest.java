@@ -12,15 +12,16 @@ package com.yubico.u2f.codec;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static com.yubico.u2f.testdata.TestVectors.*;
 
-import com.yubico.u2f.TestVectors;
+import com.yubico.u2f.testdata.TestVectors;
 import com.yubico.u2f.data.messages.key.CodecTestUtils;
 import org.junit.Test;
 
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 
-public class SerialCodecTest extends TestVectors {
+public class SerialCodecTest {
 
   @Test
   public void testEncodeRegisterResponse() throws Exception {
@@ -29,20 +30,20 @@ public class SerialCodecTest extends TestVectors {
 
     byte[] encodedBytes = CodecTestUtils.encodeRegisterResponse(rawRegisterResponse);
 
-    assertArrayEquals(REGISTRATION_RESPONSE_DATA, encodedBytes);
+    assertArrayEquals(TestVectors.REGISTRATION_RESPONSE_DATA, encodedBytes);
   }
 
   @Test
   public void testEncodeRegisterSignedBytes() throws Exception {
     byte[] encodedBytes = RawRegisterResponse.packBytesToSign(APP_ID_ENROLL_SHA256,
-            BROWSER_DATA_ENROLL_SHA256, KEY_HANDLE, USER_PUBLIC_KEY_ENROLL_HEX);
+            CLIENT_DATA_ENROLL_SHA256, KEY_HANDLE, USER_PUBLIC_KEY_ENROLL_HEX);
 
     assertArrayEquals(EXPECTED_REGISTER_SIGNED_BYTES, encodedBytes);
   }
 
   @Test
   public void testDecodeRegisterResponse() throws Exception {
-    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(REGISTRATION_RESPONSE_DATA_BASE64);
+    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_RESPONSE_DATA_BASE64);
 
     assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
         KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER), rawRegisterResponse);
@@ -55,7 +56,7 @@ public class SerialCodecTest extends TestVectors {
 
     byte[] encodedBytes = CodecTestUtils.encodeAuthenticateResponse(rawAuthenticateResponse);
 
-    assertArrayEquals(SIGN_RESPONSE_DATA, encodedBytes);
+    assertArrayEquals(AUTHENTICATE_RESPONSE_DATA, encodedBytes);
   }
 
   @Test
@@ -69,7 +70,7 @@ public class SerialCodecTest extends TestVectors {
   @Test
   public void testEncodeAuthenticateSignedBytes() throws Exception {
     byte[] encodedBytes = RawAuthenticateResponse.packBytesToSign(APP_ID_SIGN_SHA256,
-            RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE, BROWSER_DATA_SIGN_SHA256);
+            RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_AUTHENTICATE_SHA256);
 
     assertArrayEquals(EXPECTED_AUTHENTICATE_SIGNED_BYTES, encodedBytes);
   }

@@ -11,32 +11,32 @@ package com.yubico.u2f;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
+import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.StartedAuthentication;
+import com.yubico.u2f.data.messages.StartedRegistration;
 import com.yubico.u2f.exceptions.U2fException;
-import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.testdata.AcmeKey;
-import com.yubico.u2f.testdata.GnubbyKey;
+import com.yubico.u2f.testdata.TestVectors;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Set;
 
 import static com.yubico.u2f.data.messages.ClientData.canonicalizeOrigin;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
-import static org.junit.Assert.*;
+import static com.yubico.u2f.testdata.TestVectors.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-public class U2FTest extends TestVectors {
-  public static final String U2F_VERSION = "U2F_V2";
+public class U2FTest {
   final HashSet<String> allowedOrigins = new HashSet<String>();
 
   @Before
   public void setup() throws Exception {
     initMocks(this);
     allowedOrigins.add("http://example.com");
-    HashSet<X509Certificate> trustedCertificates = new HashSet<X509Certificate>();
-    trustedCertificates.add(ATTESTATION_CERTIFICATE);
   }
 
   @Test
@@ -52,18 +52,14 @@ public class U2FTest extends TestVectors {
 
   @Test
   public void finishRegistration() throws Exception {
-    StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
+    StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-    U2F.finishRegistration(startedRegistration, new RegisterResponse(REGISTRATION_RESPONSE_DATA_BASE64, CLIENT_DATA_REGISTER_BASE64), TRUSTED_DOMAINS);
+    U2F.finishRegistration(startedRegistration, new RegisterResponse(TestVectors.REGISTRATION_RESPONSE_DATA_BASE64, CLIENT_DATA_REGISTER_BASE64), TRUSTED_DOMAINS);
   }
 
   @Test
   public void finishRegistration2() throws Exception {
-    StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
-
-    HashSet<X509Certificate> trustedCertificates = new HashSet<X509Certificate>();
-    trustedCertificates.add(GnubbyKey.ATTESTATION_CERTIFICATE);
-    trustedCertificates.add(AcmeKey.ATTESTATION_CERTIFICATE);
+    StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
     DeviceRegistration deviceRegistration = U2F.finishRegistration(startedRegistration, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
 
@@ -72,9 +68,9 @@ public class U2FTest extends TestVectors {
 
   @Test
   public void finishAuthentication() throws Exception {
-    StartedAuthentication startedAuthentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
+    StartedAuthentication startedAuthentication = new StartedAuthentication(SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
 
-    AuthenticateResponse tokenResponse = new AuthenticateResponse(BROWSER_DATA_AUTHENTICATE_BASE64,
+    AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     U2F.finishAuthentication(startedAuthentication, tokenResponse, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
@@ -84,10 +80,10 @@ public class U2FTest extends TestVectors {
   @Test(expected = U2fException.class)
   public void finishAuthentication_badOrigin() throws Exception {
     Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
-    StartedAuthentication authentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64,
+    StartedAuthentication authentication = new StartedAuthentication(SERVER_CHALLENGE_SIGN_BASE64,
             APP_ID_SIGN, KEY_HANDLE_BASE64);
 
-    AuthenticateResponse response = new AuthenticateResponse(BROWSER_DATA_AUTHENTICATE_BASE64,
+    AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     U2F.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);

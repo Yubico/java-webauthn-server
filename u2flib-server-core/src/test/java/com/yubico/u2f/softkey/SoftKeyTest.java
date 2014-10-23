@@ -20,8 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 public class SoftKeyTest {
 
-  private static final Logger Log = Logger.getLogger(SoftKeyTest.class.getName());
-
   public static final String APP_ID = "my-app";
 
   @Test
@@ -73,6 +71,7 @@ public class SoftKeyTest {
 
   @Test(expected = U2fException.class)
   public void shouldVerifyKeySignatures() throws Exception {
+
     Client client = createClient();
 
     DeviceRegistration registeredDevice = client.register();
@@ -88,9 +87,8 @@ public class SoftKeyTest {
   }
 
   private String tamperChallenge(ClientData clientData) throws U2fException {
-
     byte[] rawClientData = clientData.getRawClientData();
-    rawClientData[50] = 85;
+    rawClientData[50] += 1;
     return Base64.encodeBase64URLSafeString(rawClientData);
   }
 
