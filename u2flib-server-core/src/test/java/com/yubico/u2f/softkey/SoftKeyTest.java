@@ -1,17 +1,14 @@
 package com.yubico.u2f.softkey;
 
-import com.google.common.collect.ImmutableSet;
-import com.yubico.u2f.TestUtils;
-import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.StartedAuthentication;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.key.Client;
-import com.yubico.u2f.testdata.Gnubby;
-import com.yubico.u2f.testdata.YubiKey;
+import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.testdata.AcmeKey;
+import com.yubico.u2f.testdata.GnubbyKey;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
 
@@ -53,8 +50,8 @@ public class SoftKeyTest {
     SoftKey key = new SoftKey(
             new HashMap<String, KeyPair>(),
             0,
-            YubiKey.ATTESTATION_CERTIFICATE,
-            Gnubby.ATTESTATION_CERTIFICATE_PRIVATE_KEY
+            AcmeKey.ATTESTATION_CERTIFICATE,
+            GnubbyKey.ATTESTATION_CERTIFICATE_PRIVATE_KEY
     );
     new Client(key).register();
   }

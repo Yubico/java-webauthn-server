@@ -25,6 +25,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Scanner;
 
 import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -46,6 +47,12 @@ public class TestUtils {
     } catch (DecoderException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static X509Certificate fetchCertificate(InputStream resourceAsStream) {
+    Scanner in = new Scanner(resourceAsStream);
+    String base64String = in.nextLine();
+    return parseCertificate(Base64.decodeBase64(base64String));
   }
 
   public static X509Certificate parseCertificate(byte[] encodedDerCertificate) {

@@ -9,13 +9,12 @@
 
 package com.yubico.u2f.codec;
 
-import static com.yubico.u2f.testdata.Gnubby.ATTESTATION_CERTIFICATE;
+import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import com.yubico.u2f.TestVectors;
 import com.yubico.u2f.data.messages.key.CodecTestUtils;
-import com.yubico.u2f.testdata.Gnubby;
 import org.junit.Test;
 
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
@@ -26,7 +25,7 @@ public class SerialCodecTest extends TestVectors {
   @Test
   public void testEncodeRegisterResponse() throws Exception {
     RawRegisterResponse rawRegisterResponse = new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
-        KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_ENROLL);
+        KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER);
 
     byte[] encodedBytes = CodecTestUtils.encodeRegisterResponse(rawRegisterResponse);
 
@@ -46,7 +45,7 @@ public class SerialCodecTest extends TestVectors {
     RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(REGISTRATION_RESPONSE_DATA_BASE64);
 
     assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
-        KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_ENROLL), rawRegisterResponse);
+        KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER), rawRegisterResponse);
   }
 
   @Test

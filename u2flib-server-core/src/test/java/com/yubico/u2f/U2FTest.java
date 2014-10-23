@@ -13,8 +13,8 @@ import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.*;
-import com.yubico.u2f.testdata.DeterministicKey;
-import com.yubico.u2f.testdata.Gnubby;
+import com.yubico.u2f.testdata.AcmeKey;
+import com.yubico.u2f.testdata.GnubbyKey;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.yubico.u2f.data.messages.ClientData.canonicalizeOrigin;
-import static com.yubico.u2f.testdata.Gnubby.ATTESTATION_CERTIFICATE;
+import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static org.junit.Assert.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -54,7 +54,7 @@ public class U2FTest extends TestVectors {
   public void finishRegistration() throws Exception {
     StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
 
-    U2F.finishRegistration(startedRegistration, new RegisterResponse(REGISTRATION_RESPONSE_DATA_BASE64, BROWSER_DATA_ENROLL_BASE64), TRUSTED_DOMAINS);
+    U2F.finishRegistration(startedRegistration, new RegisterResponse(REGISTRATION_RESPONSE_DATA_BASE64, CLIENT_DATA_REGISTER_BASE64), TRUSTED_DOMAINS);
   }
 
   @Test
@@ -62,19 +62,19 @@ public class U2FTest extends TestVectors {
     StartedRegistration startedRegistration = new StartedRegistration(U2F_VERSION, SERVER_CHALLENGE_ENROLL_BASE64, APP_ID_ENROLL);
 
     HashSet<X509Certificate> trustedCertificates = new HashSet<X509Certificate>();
-    trustedCertificates.add(Gnubby.ATTESTATION_CERTIFICATE);
-    trustedCertificates.add(DeterministicKey.ATTESTATION_CERTIFICATE);
+    trustedCertificates.add(GnubbyKey.ATTESTATION_CERTIFICATE);
+    trustedCertificates.add(AcmeKey.ATTESTATION_CERTIFICATE);
 
-    DeviceRegistration deviceRegistration = U2F.finishRegistration(startedRegistration, new RegisterResponse(DeterministicKey.REGISTRATION_DATA_BASE64, DeterministicKey.BROWSER_DATA_BASE64), TRUSTED_DOMAINS);
+    DeviceRegistration deviceRegistration = U2F.finishRegistration(startedRegistration, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
 
-    assertEquals(new DeviceRegistration(DeterministicKey.KEY_HANDLE, DeterministicKey.USER_PUBLIC_KEY, DeterministicKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
+    assertEquals(new DeviceRegistration(AcmeKey.KEY_HANDLE, AcmeKey.USER_PUBLIC_KEY, AcmeKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
   }
 
   @Test
   public void finishAuthentication() throws Exception {
     StartedAuthentication startedAuthentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
 
-    AuthenticateResponse tokenResponse = new AuthenticateResponse(BROWSER_DATA_SIGN_BASE64,
+    AuthenticateResponse tokenResponse = new AuthenticateResponse(BROWSER_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     U2F.finishAuthentication(startedAuthentication, tokenResponse, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
@@ -87,7 +87,7 @@ public class U2FTest extends TestVectors {
     StartedAuthentication authentication = new StartedAuthentication(U2F_VERSION, SERVER_CHALLENGE_SIGN_BASE64,
             APP_ID_SIGN, KEY_HANDLE_BASE64);
 
-    AuthenticateResponse response = new AuthenticateResponse(BROWSER_DATA_SIGN_BASE64,
+    AuthenticateResponse response = new AuthenticateResponse(BROWSER_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
     U2F.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);

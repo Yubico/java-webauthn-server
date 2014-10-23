@@ -19,7 +19,6 @@ import org.apache.commons.codec.binary.Base64;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.cert.X509Certificate;
 import java.util.Set;
 
 public class TestVectors {
@@ -27,9 +26,7 @@ public class TestVectors {
 
   //Test vectors from FIDO U2F: Raw Message Formats - Draft 4
   protected static final int COUNTER_VALUE = 1;
-  protected static final String ACCOUNT_NAME = "test@example.com";
   protected static final Set<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
-  protected static final String SESSION_ID = "session_id";
   protected static final String APP_ID_ENROLL = "http://example.com";
   protected static final byte[] APP_ID_ENROLL_SHA256 = crypto.hash(APP_ID_ENROLL);
   protected static final String APP_ID_SIGN = "https://gstatic.com/securitykey/a/example.com";
@@ -37,11 +34,7 @@ public class TestVectors {
   protected static final String ORIGIN = "http://example.com";
   protected static final String SERVER_CHALLENGE_ENROLL_BASE64 =
       "vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo";
-  protected static final byte[] SERVER_CHALLENGE_ENROLL = Base64
-      .decodeBase64(SERVER_CHALLENGE_ENROLL_BASE64);
   protected static final String SERVER_CHALLENGE_SIGN_BASE64 = "opsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o";
-  protected static final byte[] SERVER_CHALLENGE_SIGN = Base64
-      .decodeBase64(SERVER_CHALLENGE_SIGN_BASE64);
 
   protected static final String CHANNEL_ID_STRING =
       "{"
@@ -61,11 +54,11 @@ public class TestVectors {
           SERVER_CHALLENGE_ENROLL_BASE64,
           CHANNEL_ID_STRING,
           ORIGIN);
-  public static final String BROWSER_DATA_ENROLL_BASE64 = Base64
+  public static final String CLIENT_DATA_REGISTER_BASE64 = Base64
       .encodeBase64URLSafeString(BROWSER_DATA_ENROLL.getBytes());
   protected static final byte[] BROWSER_DATA_ENROLL_SHA256 = crypto.hash(BROWSER_DATA_ENROLL
           .getBytes());
-  protected static final String BROWSER_DATA_SIGN = String.format(
+  protected static final String BROWSER_AUTHENTICATE_SIGN = String.format(
       "{"
           + "\"typ\":\"navigator.id.getAssertion\","
           + "\"challenge\":\"%s\","
@@ -74,8 +67,8 @@ public class TestVectors {
           SERVER_CHALLENGE_SIGN_BASE64,
           CHANNEL_ID_STRING,
           ORIGIN);
-  protected static final String BROWSER_DATA_SIGN_BASE64 = Base64
-      .encodeBase64URLSafeString(BROWSER_DATA_SIGN.getBytes());
+  protected static final String BROWSER_DATA_AUTHENTICATE_BASE64 = Base64
+      .encodeBase64URLSafeString(BROWSER_AUTHENTICATE_SIGN.getBytes());
   protected static final byte[] BROWSER_DATA_SIGN_SHA256 = TestUtils.parseHex(
           "ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c4821b3b9dbc57");
   protected static final byte[] REGISTRATION_REQUEST_DATA = TestUtils.parseHex(
@@ -153,7 +146,7 @@ public class TestVectors {
           "4b0be934baebb5d12d26011b69227fa5e86df94e7d94aa2949a89f2d493992ca"
                   + "0100000001ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c482"
                   + "1b3b9dbc57");
-  protected static final byte[] SIGNATURE_ENROLL = TestUtils.parseHex(
+  protected static final byte[] SIGNATURE_REGISTER = TestUtils.parseHex(
           "304502201471899bcc3987e62e8202c9b39c33c19033f7340352dba80fcab017"
                   + "db9230e402210082677d673d891933ade6f617e5dbde2e247e70423fd5ad7804"
                   + "a6d3d3961ef871");
@@ -161,9 +154,4 @@ public class TestVectors {
           "304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030ce43d406de8"
                   + "70b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f53c7b22272"
                   + "ec10047a923f");
-
-  // Test vectors provided by Discretix
-  protected static final String APP_ID_2 = APP_ID_ENROLL;
-  protected static final String CHALLENGE_2_BASE64 = SERVER_CHALLENGE_ENROLL_BASE64;
-
 }

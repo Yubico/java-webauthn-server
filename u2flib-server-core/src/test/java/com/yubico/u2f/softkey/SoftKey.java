@@ -6,14 +6,12 @@
 
 package com.yubico.u2f.softkey;
 
-import com.yubico.u2f.TestVectors;
-import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
-import com.yubico.u2f.testdata.Gnubby;
+import com.yubico.u2f.testdata.GnubbyKey;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -38,8 +36,8 @@ public class SoftKey implements Cloneable {
     this(
             new HashMap<String, KeyPair>(),
             0,
-            Gnubby.ATTESTATION_CERTIFICATE,
-            Gnubby.ATTESTATION_CERTIFICATE_PRIVATE_KEY
+            GnubbyKey.ATTESTATION_CERTIFICATE,
+            GnubbyKey.ATTESTATION_CERTIFICATE_PRIVATE_KEY
     );
   }
 
@@ -85,7 +83,6 @@ public class SoftKey implements Cloneable {
 
     byte[] keyHandle = new byte[64];
     random.nextBytes(keyHandle);
-    System.out.println("Storing key for handle: " + Hex.encodeHexString(keyHandle));
     dataStore.put(new String(keyHandle), keyPair);
 
     byte[] userPublicKey = stripMetaData(keyPair.getPublic().getEncoded());
@@ -130,7 +127,6 @@ public class SoftKey implements Cloneable {
     Log.info("  challengeSha256: " + Hex.encodeHexString(challengeSha256));
     Log.info("  keyHandle: " + Hex.encodeHexString(keyHandle));
 
-    System.out.println("Fetching key for handle: " + Hex.encodeHexString(keyHandle));
     KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
     int counter = ++deviceCounter;
     byte[] signedData = RawAuthenticateResponse.packBytesToSign(applicationSha256, RawAuthenticateResponse.USER_PRESENT_FLAG,

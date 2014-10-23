@@ -36,7 +36,7 @@ public static StartedRegistration startRegistration(String appId);
 * @return a Device object, holding information about the registered device. Servers should
 * persist this.
 */
-public static Device finishRegistration(
+public static void finishRegistration(
 	StartedRegistration startedRegistration,
 	RegistrationResponse response
 ) throws U2fException;
@@ -66,15 +66,19 @@ public static int finishAuthentication(
 ) throws U2fException;
 ----
 
+The `appId` parameter is explained link:https://developers.yubico.com/U2F/App_ID.html[here].
+
+
 === Real world example
 See the link:../u2flib-server-demo[demo server].
+
 
 === Advanced topics
 
 ==== Verifying attestation certificates.
 Attestation certificates can be verified like this:
 
-[source, java]
+[source,java]
 ----
 DeviceRegistration registration = U2F.finishRegistration(startedRegistration, registerResponse);
 registration.getAttestationCertificate().verify(VENDOR_CA);

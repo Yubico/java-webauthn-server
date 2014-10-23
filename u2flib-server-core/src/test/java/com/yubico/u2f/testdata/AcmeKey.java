@@ -6,23 +6,14 @@ import org.apache.commons.codec.binary.Base64;
 
 import java.security.cert.X509Certificate;
 
-public class DeterministicKey {
+import static com.yubico.u2f.TestUtils.fetchCertificate;
 
-  public static final String BROWSER_DATA_BASE64 = TestVectors.BROWSER_DATA_ENROLL_BASE64;
-  public static final String TRUSTED_CERTIFICATE_HEX =
-          "308201443081eaa0030201020209019189ffffffff5183300a06082a8648ce3d"
-                  + "040302301b3119301706035504031310476e756262792048534d204341203030"
-                  + "3022180f32303132303630313030303030305a180f3230363230353331323335"
-                  + "3935395a30303119301706035504031310476f6f676c6520476e756262792076"
-                  + "3031133011060355042d030a00019189ffffffff51833059301306072a8648ce"
-                  + "3d020106082a8648ce3d030107034200041f1302f12173a9cbea83d06d755411"
-                  + "e582a87fbb5850eddcf3607ec759a4a12c3cb392235e8d5b17caee1b34e5b5eb"
-                  + "548649696257f0ea8efb90846f88ad5f72300a06082a8648ce3d040302034900"
-                  + "3046022100b4caea5dc60fbf9f004ed84fc4f18522981c1c303155c08274e889"
-                  + "f3f10c5b23022100faafb4f10b92f4754e3b08b5af353f78485bc903ece7ea91"
-                  + "1264fc1673b6598f";
+public class AcmeKey {
+
   public static final X509Certificate ATTESTATION_CERTIFICATE =
-          TestUtils.parseCertificate(TRUSTED_CERTIFICATE_HEX);
+          fetchCertificate(GnubbyKey.class.getResourceAsStream("acme/attestation-certificate.der"));
+
+  public static final String CLIENT_DATA_BASE64 = TestVectors.CLIENT_DATA_REGISTER_BASE64;
   public static final byte[] REGISTRATION_DATA = TestUtils.parseHex(
           "0504478E16BBDBBB741A660A000314A8B6BD63095196ED704C52EEBC0FA02A61"
                   + "8F19FF59DF18451A11CEE43DEFD9A29B5710F63DFC671F752B1B0C6CA76C8427"
