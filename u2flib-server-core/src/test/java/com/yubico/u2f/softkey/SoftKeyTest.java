@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import java.security.KeyPair;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 
@@ -87,7 +86,7 @@ public class SoftKeyTest {
   }
 
   private String tamperChallenge(ClientData clientData) throws U2fException {
-    byte[] rawClientData = clientData.getRawClientData();
+    byte[] rawClientData = clientData.asJson().getBytes();
     rawClientData[50] += 1;
     return Base64.encodeBase64URLSafeString(rawClientData);
   }

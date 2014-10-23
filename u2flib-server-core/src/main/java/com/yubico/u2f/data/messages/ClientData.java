@@ -24,16 +24,16 @@ public class ClientData {
   private final String type;
   private final String challenge;
   private final String origin;
-  private final byte[] rawClientData;
+  private final String rawClientData;
 
-  public byte[] getRawClientData() {
+  public String asJson() {
     return rawClientData;
   }
 
   public ClientData(String clientData) throws U2fException {
 
-    this.rawClientData = Base64.decodeBase64(clientData);
-    JsonElement clientDataAsElement = new JsonParser().parse(new String(rawClientData));
+    this.rawClientData = new String(Base64.decodeBase64(clientData));
+    JsonElement clientDataAsElement = new JsonParser().parse(rawClientData);
     if (!clientDataAsElement.isJsonObject()) {
       throw new U2fException("ClientData has wrong format");
     }

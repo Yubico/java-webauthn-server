@@ -92,11 +92,11 @@ final public class TestVectors {
           "2a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2e3925a"
                   + "6019551bab61d16591659cbaf00b4950f7abfe6660e2e006f76868b772d70c25");
   public static final String KEY_HANDLE_BASE64 = Base64.encodeBase64URLSafeString(KEY_HANDLE);
-  public static final byte[] USER_PUBLIC_KEY_ENROLL_HEX = TestUtils.parseHex(
+  public static final byte[] USER_PUBLIC_KEY_REGISTER_HEX = TestUtils.parseHex(
           "04b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b65"
                   + "7c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2f6"
                   + "d9");
-  public static final byte[] USER_PUBLIC_KEY_SIGN_HEX = TestUtils.parseHex(
+  public static final byte[] USER_PUBLIC_KEY_AUTHENTICATE_HEX = TestUtils.parseHex(
           "04d368f1b665bade3c33a20f1e429c7750d5033660c019119d29aa4ba7abc04a"
                   + "a7c80a46bbe11ca8cb5674d74f31f8a903f6bad105fb6ab74aefef4db8b0025e"
                   + "1d");

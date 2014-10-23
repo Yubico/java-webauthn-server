@@ -74,7 +74,7 @@ public class RawRegisterResponse {
     }
   }
 
-  public void checkSignature(String appId, byte[] clientData) throws U2fException {
+  public void checkSignature(String appId, String clientData) throws U2fException {
     byte[] signedBytes = packBytesToSign(U2F.crypto.hash(appId), U2F.crypto.hash(clientData), keyHandle, userPublicKey);
     U2F.crypto.checkSignature(attestationCertificate, signedBytes, signature);
   }

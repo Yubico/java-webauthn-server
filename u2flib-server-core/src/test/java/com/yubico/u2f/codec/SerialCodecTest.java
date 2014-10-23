@@ -25,7 +25,7 @@ public class SerialCodecTest {
 
   @Test
   public void testEncodeRegisterResponse() throws Exception {
-    RawRegisterResponse rawRegisterResponse = new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
+    RawRegisterResponse rawRegisterResponse = new RawRegisterResponse(USER_PUBLIC_KEY_REGISTER_HEX,
         KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER);
 
     byte[] encodedBytes = CodecTestUtils.encodeRegisterResponse(rawRegisterResponse);
@@ -36,7 +36,7 @@ public class SerialCodecTest {
   @Test
   public void testEncodeRegisterSignedBytes() throws Exception {
     byte[] encodedBytes = RawRegisterResponse.packBytesToSign(APP_ID_ENROLL_SHA256,
-            CLIENT_DATA_ENROLL_SHA256, KEY_HANDLE, USER_PUBLIC_KEY_ENROLL_HEX);
+            CLIENT_DATA_ENROLL_SHA256, KEY_HANDLE, USER_PUBLIC_KEY_REGISTER_HEX);
 
     assertArrayEquals(EXPECTED_REGISTER_SIGNED_BYTES, encodedBytes);
   }
@@ -45,7 +45,7 @@ public class SerialCodecTest {
   public void testDecodeRegisterResponse() throws Exception {
     RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_RESPONSE_DATA_BASE64);
 
-    assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_ENROLL_HEX,
+    assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_REGISTER_HEX,
         KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER), rawRegisterResponse);
   }
 

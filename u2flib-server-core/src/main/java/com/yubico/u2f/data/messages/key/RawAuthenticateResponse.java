@@ -43,7 +43,7 @@ public class RawAuthenticateResponse {
     );
   }
 
-  public void checkSignature(String appId, byte[] clientData, byte[] publicKey) throws U2fException {
+  public void checkSignature(String appId, String clientData, byte[] publicKey) throws U2fException {
     byte[] signedBytes = packBytesToSign(
             U2F.crypto.hash(appId),
             userPresence,

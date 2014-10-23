@@ -62,7 +62,7 @@ public class U2F {
     clientData.checkContent(REGISTER_TYPE, startedRegistration.getChallenge(), Optional.fromNullable(facets));
 
     RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(tokenResponse.getRegistrationData());
-    rawRegisterResponse.checkSignature(startedRegistration.getAppId(), clientData.getRawClientData());
+    rawRegisterResponse.checkSignature(startedRegistration.getAppId(), clientData.asJson());
     return rawRegisterResponse.createDevice();
   }
 
@@ -103,7 +103,7 @@ public class U2F {
     RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(response.getSignatureData());
     rawAuthenticateResponse.checkSignature(
             startedAuthentication.getAppId(),
-            clientData.getRawClientData(),
+            clientData.asJson(),
             deviceRegistration.getPublicKey()
     );
     rawAuthenticateResponse.checkUserPresence();
