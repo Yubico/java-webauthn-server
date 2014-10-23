@@ -21,8 +21,7 @@ The library exposes the following methods in the `U2F` class:
 /**
 * Initiates the registration of a device.
 *
-* @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to 
-* support logging in from multiple Web Origins.
+* @param appId the U2F AppID.
 * @return a StartedRegistration, which should be sent to the client and temporary saved by the
 * server.
 */
@@ -44,25 +43,24 @@ public static void finishRegistration(
 /**
 * Initiates the authentication process.
 *
-* @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to 
-* support logging in from multiple Web Origins.
-* @param device a previously registered Device, for which to initiate authentication.
+* @param appId the U2F AppID.
+* @param the previously finished registration, for which to initiate authentication.
 * @return a StartedAuthentication which should be sent to the client and temporary saved by
 * the server.
 */
-public static StartedAuthentication startAuthentication(String appId, Device device);
+public static StartedAuthentication startAuthentication(String appId, DeviceRegistration registration);
 
 /**
 * Finishes a previously started authentication.
 *
 * @param startedAuthentication
 * @param response the response from the token/client.
-* @return the new value of the Device's counter.
+* @param the same registration that was passed to startAuthentication().
 */
 public static int finishAuthentication(
 	StartedAuthentication startedAuthentication,
 	AuthenticationResponse response,
-	Device device
+	DeviceRegistration registration
 ) throws U2fException;
 ----
 

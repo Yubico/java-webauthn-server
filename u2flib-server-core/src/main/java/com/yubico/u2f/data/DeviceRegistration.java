@@ -101,7 +101,7 @@ public class DeviceRegistration extends DataObject implements Serializable {
     }
   }
 
-  private class DeviceWithoutCertificate {
+  private static class DeviceWithoutCertificate {
     private final byte[] keyHandle;
     private final byte[] publicKey;
     private final int counter;
