@@ -54,29 +54,12 @@ public class StartedRegistration extends DataObject {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (!(obj instanceof StartedRegistration))
       return false;
     StartedRegistration other = (StartedRegistration) obj;
-    if (appId == null) {
-      if (other.appId != null)
-        return false;
-    } else if (!appId.equals(other.appId))
-      return false;
-    if (challenge == null) {
-      if (other.challenge != null)
-        return false;
-    } else if (!challenge.equals(other.challenge))
-      return false;
-    if (version == null) {
-      if (other.version != null)
-        return false;
-    } else if (!version.equals(other.version))
-      return false;
-    return true;
+    return Objects.equal(appId, other.appId)
+            && Objects.equal(challenge, other.challenge)
+            && Objects.equal(version, other.version);
   }
 
   public static StartedRegistration fromJson(String json) {

@@ -106,19 +106,12 @@ public class RawRegisterResponse {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (!(obj instanceof RawRegisterResponse))
       return false;
     RawRegisterResponse other = (RawRegisterResponse) obj;
-    if (!attestationCertificate.equals(other.attestationCertificate))
-      return false;
-    if (!Arrays.equals(keyHandle, other.keyHandle))
-      return false;
-    if (!Arrays.equals(signature, other.signature))
-      return false;
-    return Arrays.equals(userPublicKey, other.userPublicKey);
+    return Objects.equal(attestationCertificate, other.attestationCertificate)
+            && Arrays.equals(keyHandle, other.keyHandle)
+            && Arrays.equals(signature, other.signature)
+            && Arrays.equals(userPublicKey, other.userPublicKey);
   }
 }

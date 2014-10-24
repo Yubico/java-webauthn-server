@@ -52,29 +52,12 @@ public class AuthenticateResponse extends DataObject {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (!(obj instanceof AuthenticateResponse))
       return false;
     AuthenticateResponse other = (AuthenticateResponse) obj;
-    if (clientData == null) {
-      if (other.clientData != null)
-        return false;
-    } else if (!clientData.equals(other.clientData))
-      return false;
-    if (keyHandle == null) {
-      if (other.keyHandle != null)
-        return false;
-    } else if (!keyHandle.equals(other.keyHandle))
-      return false;
-    if (signatureData == null) {
-      if (other.signatureData != null)
-        return false;
-    } else if (!signatureData.equals(other.signatureData))
-      return false;
-    return true;
+    return Objects.equal(clientData, other.clientData)
+            && Objects.equal(keyHandle, other.keyHandle)
+            && Objects.equal(signatureData, other.signatureData);
   }
 
   public static AuthenticateResponse fromJson(String json) {

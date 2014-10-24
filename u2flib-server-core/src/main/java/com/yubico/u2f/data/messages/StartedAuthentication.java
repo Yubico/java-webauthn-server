@@ -53,34 +53,13 @@ public class StartedAuthentication extends DataObject {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (!(obj instanceof StartedAuthentication))
       return false;
     StartedAuthentication other = (StartedAuthentication) obj;
-    if (appId == null) {
-      if (other.appId != null)
-        return false;
-    } else if (!appId.equals(other.appId))
-      return false;
-    if (challenge == null) {
-      if (other.challenge != null)
-        return false;
-    } else if (!challenge.equals(other.challenge))
-      return false;
-    if (keyHandle == null) {
-      if (other.keyHandle != null)
-        return false;
-    } else if (!keyHandle.equals(other.keyHandle))
-      return false;
-    if (version == null) {
-      if (other.version != null)
-        return false;
-    } else if (!version.equals(other.version))
-      return false;
-    return true;
+    return Objects.equal(appId, other.appId)
+            && Objects.equal(challenge, other.challenge)
+            && Objects.equal(keyHandle, other.keyHandle)
+            && Objects.equal(version, other.version);
   }
 
   public String getKeyHandle() {

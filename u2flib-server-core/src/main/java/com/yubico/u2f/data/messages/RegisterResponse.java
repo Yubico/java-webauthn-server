@@ -46,23 +46,10 @@ public class RegisterResponse extends DataObject {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (!(obj instanceof RegisterResponse))
       return false;
     RegisterResponse other = (RegisterResponse) obj;
-    if (clientData == null) {
-      if (other.clientData != null)
-        return false;
-    } else if (!clientData.equals(other.clientData))
-      return false;
-    if (registrationData == null) {
-      if (other.registrationData != null)
-        return false;
-    } else if (!registrationData.equals(other.registrationData))
-      return false;
-    return true;
+    return Objects.equal(clientData, other.clientData)
+            && Objects.equal(registrationData, other.registrationData);
   }
 }

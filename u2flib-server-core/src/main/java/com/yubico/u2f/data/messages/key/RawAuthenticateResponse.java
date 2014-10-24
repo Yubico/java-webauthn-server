@@ -97,18 +97,12 @@ public class RawAuthenticateResponse {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
+    if (!(obj instanceof RawAuthenticateResponse))
       return false;
     RawAuthenticateResponse other = (RawAuthenticateResponse) obj;
-    if (counter != other.counter)
-      return false;
-    if (!Arrays.equals(signature, other.signature))
-      return false;
-    return userPresence == other.userPresence;
+    return Objects.equal(counter, other.counter)
+            && Arrays.equals(signature, signature)
+            && Objects.equal(userPresence, other.userPresence);
   }
 
   public void checkUserPresence() throws U2fException {
