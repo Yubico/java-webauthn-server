@@ -1,8 +1,5 @@
 package com.yubico.u2f.testdata;
 
-import com.yubico.u2f.TestUtils;
-import org.apache.commons.codec.binary.Base64;
-
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 

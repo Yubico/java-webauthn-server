@@ -51,7 +51,7 @@ public class ClientData {
 
   @Override
   public String toString() {
-    return new String(rawClientData);
+    return rawClientData;
   }
 
   public String getChallenge() {

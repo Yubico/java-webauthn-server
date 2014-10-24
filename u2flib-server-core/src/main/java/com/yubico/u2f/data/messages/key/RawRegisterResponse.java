@@ -79,8 +79,7 @@ public class RawRegisterResponse {
     U2F.crypto.checkSignature(attestationCertificate, signedBytes, signature);
   }
 
-  public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey)
-          throws U2fException {
+  public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey) {
     return ByteSink.create()
               .put(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE)
               .put(appIdHash)

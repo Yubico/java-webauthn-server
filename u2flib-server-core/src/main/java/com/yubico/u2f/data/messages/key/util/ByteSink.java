@@ -16,8 +16,8 @@ import java.io.IOException;
  */
 public class ByteSink {
 
-  ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  DataOutputStream dataOutputStream = new DataOutputStream(baos);
+  private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  private final DataOutputStream dataOutputStream = new DataOutputStream(baos);
 
   public ByteSink putInt(int i) {
     try {

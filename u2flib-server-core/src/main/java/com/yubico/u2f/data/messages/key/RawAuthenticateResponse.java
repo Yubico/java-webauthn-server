@@ -34,7 +34,7 @@ public class RawAuthenticateResponse {
     this.signature = signature;
   }
 
-  public static RawAuthenticateResponse fromBase64(String rawDataBase64) throws U2fException {
+  public static RawAuthenticateResponse fromBase64(String rawDataBase64) {
     ByteInputStream bytes = new ByteInputStream(Base64.decodeBase64(rawDataBase64));
     return new RawAuthenticateResponse(
             bytes.readSigned(),

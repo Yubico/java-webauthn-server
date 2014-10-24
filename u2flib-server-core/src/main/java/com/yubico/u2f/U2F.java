@@ -49,12 +49,12 @@ public class U2F {
    * Finishes a previously started registration.
    *
    * @param startedRegistration
-   * @param tokenResponse the response from the token/client.
+   * @param response the response from the device/client.
    * @return a DeviceRegistration object, holding information about the registered device. Servers should
    * persist this.
    */
-  public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse) throws U2fException {
-    return finishRegistration(startedRegistration, tokenResponse, null);
+  public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse response) throws U2fException {
+    return finishRegistration(startedRegistration, response, null);
   }
 
   public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse, Set<String> facets) throws U2fException {
@@ -88,8 +88,7 @@ public class U2F {
    * Finishes a previously started authentication.
    *
    * @param startedAuthentication
-   * @param response the response from the token/client.
-   * @return the new value of the DeviceRegistration's counter.
+   * @param response the response from the device/client.
    */
   public static void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, DeviceRegistration deviceRegistration) throws U2fException {
     finishAuthentication(startedAuthentication, response, deviceRegistration, null);

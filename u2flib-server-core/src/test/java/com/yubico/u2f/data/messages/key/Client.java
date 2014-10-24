@@ -17,9 +17,6 @@ import com.yubico.u2f.softkey.messages.RegisterRequest;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;

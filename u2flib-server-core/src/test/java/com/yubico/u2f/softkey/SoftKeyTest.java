@@ -85,7 +85,7 @@ public class SoftKeyTest {
     U2F.finishAuthentication(startedAuthentication, tamperedResponse, registeredDevice);
   }
 
-  private String tamperChallenge(ClientData clientData) throws U2fException {
+  private String tamperChallenge(ClientData clientData) {
     byte[] rawClientData = clientData.asJson().getBytes();
     rawClientData[50] += 1;
     return Base64.encodeBase64URLSafeString(rawClientData);

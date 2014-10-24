@@ -15,7 +15,7 @@ import com.yubico.u2f.data.messages.key.util.ByteSink;
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {
-  public static byte[] encodeAuthenticateResponse(RawAuthenticateResponse rawAuthenticateResponse) throws U2fException {
+  public static byte[] encodeAuthenticateResponse(RawAuthenticateResponse rawAuthenticateResponse) {
     return ByteSink.create()
             .put(rawAuthenticateResponse.getUserPresence())
             .putInt(rawAuthenticateResponse.getCounter())

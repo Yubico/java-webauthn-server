@@ -4,7 +4,6 @@ import com.yubico.u2f.exceptions.U2fException;
 import org.junit.Test;
 
 import static com.yubico.u2f.data.messages.ClientData.canonicalizeOrigin;
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 public class ClientDataTest {

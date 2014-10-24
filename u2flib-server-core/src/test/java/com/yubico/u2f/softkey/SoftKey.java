@@ -12,7 +12,6 @@ import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
 import com.yubico.u2f.testdata.GnubbyKey;
-import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 
@@ -20,11 +19,10 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SoftKey implements Cloneable {
+public final class SoftKey implements Cloneable {
 
   private final X509Certificate attestationCertificate;
   private final PrivateKey certificatePrivateKey;
