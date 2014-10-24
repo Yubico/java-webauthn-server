@@ -43,7 +43,7 @@ public class SerialCodecTest {
 
   @Test
   public void testDecodeRegisterResponse() throws Exception {
-    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_RESPONSE_DATA_BASE64);
+    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_DATA_BASE64);
 
     assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_REGISTER_HEX,
         KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER), rawRegisterResponse);

@@ -12,7 +12,7 @@ public class AcmeKey {
   public static final X509Certificate ATTESTATION_CERTIFICATE =
           fetchCertificate(GnubbyKey.class.getResourceAsStream("acme/attestation-certificate.der"));
 
-  public static final String CLIENT_DATA_BASE64 = TestVectors.CLIENT_DATA_REGISTER_BASE64;
+  public static final String CLIENT_DATA_BASE64 = TestVectors.CLIENT_DATA_REGISTRATION_BASE64;
   public static final byte[] REGISTRATION_DATA = TestUtils.parseHex(
           "0504478E16BBDBBB741A660A000314A8B6BD63095196ED704C52EEBC0FA02A61"
                   + "8F19FF59DF18451A11CEE43DEFD9A29B5710F63DFC671F752B1B0C6CA76C8427"

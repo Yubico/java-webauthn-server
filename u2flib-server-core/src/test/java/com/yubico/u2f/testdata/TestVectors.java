@@ -48,7 +48,7 @@ final public class TestVectors {
           SERVER_CHALLENGE_REGISTER_BASE64,
           CHANNEL_ID_STRING,
           ORIGIN);
-  public static final String CLIENT_DATA_REGISTER_BASE64 = Base64
+  public static final String CLIENT_DATA_REGISTRATION_BASE64 = Base64
       .encodeBase64URLSafeString(CLIENT_DATA_REGISTER.getBytes());
   public static final byte[] CLIENT_DATA_ENROLL_SHA256 = crypto.hash(CLIENT_DATA_REGISTER
           .getBytes());
@@ -86,7 +86,7 @@ final public class TestVectors {
                   + "0410df304502201471899bcc3987e62e8202c9b39c33c19033f7340352dba80f"
                   + "cab017db9230e402210082677d673d891933ade6f617e5dbde2e247e70423fd5"
                   + "ad7804a6d3d3961ef871");
-  public static final String REGISTRATION_RESPONSE_DATA_BASE64 = Base64
+  public static final String REGISTRATION_DATA_BASE64 = Base64
       .encodeBase64URLSafeString(REGISTRATION_RESPONSE_DATA);
   public static final byte[] KEY_HANDLE = TestUtils.parseHex(
           "2a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2e3925a"
