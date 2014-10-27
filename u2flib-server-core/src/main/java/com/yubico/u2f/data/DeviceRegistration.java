@@ -16,12 +16,13 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
+import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 
 import com.google.common.base.Objects;
 
-public class DeviceRegistration extends DataObject implements Serializable {
+public class DeviceRegistration extends JsonObject implements Serializable {
   private static final long serialVersionUID = -142942195464329902L;
   public static final int INITIAL_COUNTER_VALUE = 0;
 

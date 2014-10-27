@@ -11,12 +11,12 @@ package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
+import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.exceptions.U2fException;
-import com.yubico.u2f.data.DataObject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class AuthenticateResponse extends DataObject {
+public class AuthenticateResponse extends JsonObject {
 
   /** websafe-base64(client data) */
   private final String clientData;

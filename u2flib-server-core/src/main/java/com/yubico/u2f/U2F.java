@@ -98,7 +98,6 @@ public class U2F {
     ClientData clientData = response.getClientData();
     clientData.checkContent(AUTHENTICATE_TYP, startedAuthentication.getChallenge(), Optional.fromNullable(facets));
 
-
     RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(response.getSignatureData());
     rawAuthenticateResponse.checkSignature(
             startedAuthentication.getAppId(),

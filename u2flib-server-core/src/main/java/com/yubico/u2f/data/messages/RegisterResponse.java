@@ -10,12 +10,12 @@
 package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
+import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.exceptions.U2fException;
-import com.yubico.u2f.data.DataObject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RegisterResponse extends DataObject {
+public class RegisterResponse extends JsonObject {
   /** websafe-base64(raw registration response message) */
   private final String registrationData;
 

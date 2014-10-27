@@ -11,11 +11,11 @@ package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2F;
-import com.yubico.u2f.data.DataObject;
+import com.yubico.u2f.data.messages.json.JsonObject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class StartedRegistration extends DataObject {
+public class StartedRegistration extends JsonObject {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
