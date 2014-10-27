@@ -14,9 +14,11 @@ import com.google.gson.Gson;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.exceptions.U2fException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AuthenticateResponse extends JsonObject {
+  private static final int MAX_SIZE = 20000;
 
   /* base64(client data) */
   private final String clientData;
@@ -61,7 +63,7 @@ public class AuthenticateResponse extends JsonObject {
   }
 
   public static AuthenticateResponse fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, AuthenticateResponse.class);
+    checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
+    return GSON.fromJson(json, AuthenticateResponse.class);
   }
 }

@@ -13,9 +13,12 @@ import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.exceptions.U2fException;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RegisterResponse extends JsonObject {
+  private static final int MAX_SIZE = 20000;
+
   /** base64(raw registration response message) */
   private final String registrationData;
 
@@ -35,10 +38,6 @@ public class RegisterResponse extends JsonObject {
     return new ClientData(clientData);
   }
 
-  public static RegisterResponse fromJson(String json) {
-    return GSON.fromJson(json, RegisterResponse.class);
-  }
-
   @Override
   public int hashCode() {
     return Objects.hashCode(registrationData, clientData);
@@ -51,5 +50,10 @@ public class RegisterResponse extends JsonObject {
     RegisterResponse other = (RegisterResponse) obj;
     return Objects.equal(clientData, other.clientData)
             && Objects.equal(registrationData, other.registrationData);
+  }
+
+  public static RegisterResponse fromJson(String json) {
+    checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
+    return GSON.fromJson(json, RegisterResponse.class);
   }
 }
