@@ -42,7 +42,6 @@ public class U2FTest {
   public void finishRegistration() throws Exception {
     StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-    System.out.println(REGISTRATION_DATA_BASE64);
     U2F.finishRegistration(startedRegistration, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
   }
 

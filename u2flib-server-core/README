@@ -68,6 +68,14 @@ public static int finishAuthentication(
 <1> The `appId` parameter is explained link:https://developers.yubico.com/U2F/App_ID.html[here].
 
 
+== Serialization
+You have two options for serialization of relevant classes
+(StartedRegistration, StartedAuthentication and DeviceRegistration):
+
+ - Using their `toJson()` method.
+ - Using Java's built in serialization mechanism (since they implement `java.io.Serializable`)
+
+
 === Real world example
 See the link:../u2flib-server-demo[demo server].
 

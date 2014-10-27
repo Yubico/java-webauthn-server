@@ -18,13 +18,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AuthenticateResponse extends JsonObject {
 
-  /** websafe-base64(client data) */
+  /* base64(client data) */
   private final String clientData;
 
-  /** websafe-base64(raw response from U2F device) */
+  /* base64(raw response from U2F device) */
   private final String signatureData;
 
-  /** keyHandle originally passed */
+  /* keyHandle originally passed */
   private final String keyHandle;
 
   public AuthenticateResponse(String clientData, String signatureData, String keyHandle) {

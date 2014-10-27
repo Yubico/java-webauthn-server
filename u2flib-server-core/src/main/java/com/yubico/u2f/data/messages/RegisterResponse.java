@@ -16,10 +16,10 @@ import com.yubico.u2f.exceptions.U2fException;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RegisterResponse extends JsonObject {
-  /** websafe-base64(raw registration response message) */
+  /** base64(raw registration response message) */
   private final String registrationData;
 
-  /** websafe-base64(UTF8(stringified(client data))) */
+  /** base64(UTF8(client data)) */
   private final String clientData;
 
   public RegisterResponse(String registrationData, String clientData) {

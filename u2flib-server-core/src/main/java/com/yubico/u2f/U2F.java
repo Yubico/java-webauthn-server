@@ -57,11 +57,11 @@ public class U2F {
     return finishRegistration(startedRegistration, response, null);
   }
 
-  public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse tokenResponse, Set<String> facets) throws U2fException {
-    ClientData clientData = tokenResponse.getClientData();
+  public static DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse response, Set<String> facets) throws U2fException {
+    ClientData clientData = response.getClientData();
     clientData.checkContent(REGISTER_TYPE, startedRegistration.getChallenge(), Optional.fromNullable(facets));
 
-    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(tokenResponse.getRegistrationData());
+    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(response.getRegistrationData());
     rawRegisterResponse.checkSignature(startedRegistration.getAppId(), clientData.asJson());
     return rawRegisterResponse.createDevice();
   }
