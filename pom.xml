@@ -127,7 +127,6 @@
                 <version>2.8.1</version>
                 <configuration>
                     <excludePackageNames>*.crypto;*.json;*.key</excludePackageNames>
-                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
                 <executions>
                     <execution>
