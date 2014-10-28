@@ -67,7 +67,7 @@ public static int finishAuthentication(
 ----
 <1> The `appId` parameter is explained link:https://developers.yubico.com/U2F/App_ID.html[here].
 
-JavaDoc can be founds at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
+JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
 
 == Serialization
 You have two options for serialization of relevant classes
