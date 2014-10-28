@@ -9,14 +9,12 @@ var request = ${data};
 setTimeout(function() {
     u2f.sign([request],
     function(data) {
-        var form = document.getElementById('form');
-        var reg = document.getElementById('tokenResponse');
         if(data.errorCode) {
-            alert("U2F failed with error: " + data.errorCode);
+            alert("U2F failed with error code: " + data.errorCode);
             return;
         }
-        reg.value=JSON.stringify(data);
-        form.submit();
+        document.getElementById('tokenResponse').value = JSON.stringify(data);
+        document.getElementById('form').submit();
     });
 }, 1000);
 </script>

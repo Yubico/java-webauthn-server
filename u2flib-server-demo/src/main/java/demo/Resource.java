@@ -29,7 +29,6 @@ import java.util.Set;
 public class Resource {
 
   public static final String SERVER_ADDRESS = "http://example.com:8080";
-  public static final Set<String> FACETS = ImmutableSet.of(SERVER_ADDRESS);
 
   // In production, you want to store Devices persistently (e.g. in a database).
   private final Map<String, String> storage = new HashMap<String, String>();
