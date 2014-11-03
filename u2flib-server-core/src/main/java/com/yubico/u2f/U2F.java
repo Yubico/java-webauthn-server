@@ -26,10 +26,13 @@ import java.util.Set;
 public class U2F {
 
   public static final String U2F_VERSION = "U2F_V2";
-  private static final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
   public static final Crypto crypto = new BouncyCastleCrypto();
   public static final String AUTHENTICATE_TYP = "navigator.id.getAssertion";
   public static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
+
+  private static final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
+
+  private U2F() {}
 
   /**
    * Initiates the registration of a device.
