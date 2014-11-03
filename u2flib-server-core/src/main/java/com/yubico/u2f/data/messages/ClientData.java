@@ -88,6 +88,9 @@ public class ClientData {
   public static String canonicalizeOrigin(String url) throws InvalidFacetException {
     try {
       URI uri = new URI(url);
+      if(uri.getAuthority() == null) {
+        return url;
+      }
       return uri.getScheme() + "://" + uri.getAuthority();
     } catch (URISyntaxException e) {
       throw new InvalidFacetException("specified bad origin", e);

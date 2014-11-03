@@ -17,5 +17,7 @@ public class ClientDataTest {
     assertEquals("http://example.com", canonicalizeOrigin("http://example.com/foo#fragment"));
     assertEquals("https://example.com", canonicalizeOrigin("https://example.com"));
     assertEquals("https://example.com", canonicalizeOrigin("https://example.com/foo"));
+    assertEquals("android:apk-key-hash:2jmj7l5rSw0yVb/vlWAYkK/YBwk",
+            canonicalizeOrigin("android:apk-key-hash:2jmj7l5rSw0yVb/vlWAYkK/YBwk"));
   }
 }
