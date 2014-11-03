@@ -22,8 +22,8 @@ The library exposes the following methods in the `U2F` class:
 * Initiates the registration of a device.
 *
 * @param appId the U2F AppID. // <1>
-* @return a StartedRegistration, which should be sent to the client and temporary saved by the
-* server.
+* @return a StartedRegistration, which should be sent to the client and temporary saved by
+* the server.
 */
 public static StartedRegistration startRegistration(String appId);
 
