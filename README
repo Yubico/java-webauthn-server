@@ -1,4 +1,4 @@
-== u2flib-server
+== java-u2flib-server
 Serverside https://fidoalliance.org/specifications[U2F] library for Java (and other JVM languages). Provides functionality for registering
 U2F devices and authenticate with said devices.
 
