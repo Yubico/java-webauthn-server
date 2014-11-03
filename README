@@ -87,6 +87,7 @@ Attestation certificates can be verified like this:
 
 [source,java]
 ----
-DeviceRegistration registration = U2F.finishRegistration(startedRegistration, registerResponse);
+DeviceRegistration registration =
+	U2F.finishRegistration(startedRegistration, registerResponse);
 registration.getAttestationCertificate().verify(VENDOR_CA);
 ----
