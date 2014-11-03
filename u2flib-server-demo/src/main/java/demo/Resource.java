@@ -30,7 +30,7 @@ public class Resource {
 
   public static final String SERVER_ADDRESS = "http://example.com:8080";
 
-  // In production, you want to store Devices persistently (e.g. in a database).
+  // In production, you want to store DeviceRegistrations persistently (e.g. in a database).
   private final Map<String, String> storage = new HashMap<String, String>();
 
   @Path("startRegistration")
