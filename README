@@ -2,7 +2,7 @@
 Serverside https://fidoalliance.org/specifications[U2F] library for Java (and other JVM languages). Provides functionality for registering
 U2F devices and authenticate with said devices.
 
-To read more about U2F and how to use a U2F library, visit
+NOTE: To learn about U2F and how to use a U2F library, visit
 http://developers.yubico.com/U2F[developers.yubico.com/U2F].
 
 === Dependency
