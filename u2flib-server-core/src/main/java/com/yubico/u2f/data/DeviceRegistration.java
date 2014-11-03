@@ -17,6 +17,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 
@@ -98,7 +99,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
 
   public void checkAndIncrementCounter(int clientCounter) throws U2fException {
     if (clientCounter <= counter++) {
-      throw new U2fException("Counter value smaller than expected!");
+      throw new InvalidDeviceCounterException();
     }
   }
 
