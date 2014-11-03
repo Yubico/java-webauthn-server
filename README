@@ -1,6 +1,5 @@
 == u2flib-server
-Provides functionality for working with the server side aspects of the
-link:https://fidoalliance.org/specifications[U2F] protocol.
+FIDO https://fidoalliance.org/specifications[U2F] server-side library written in Java.
 
 == Modules ==
 This project consists of several modules:
