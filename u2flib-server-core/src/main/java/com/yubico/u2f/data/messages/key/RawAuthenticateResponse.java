@@ -11,6 +11,8 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2F;
+import com.yubico.u2f.crypto.BouncyCastleCrypto;
+import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
@@ -24,34 +26,42 @@ import java.util.Arrays;
  */
 public class RawAuthenticateResponse {
   public static final byte USER_PRESENT_FLAG = 0x01;
+
   private final byte userPresence;
   private final int counter;
   private final byte[] signature;
+  private final Crypto crypto;
 
   public RawAuthenticateResponse(byte userPresence, int counter, byte[] signature) {
+    this(userPresence, counter, signature, new BouncyCastleCrypto());
+  }
+
+  public RawAuthenticateResponse(byte userPresence, int counter, byte[] signature, Crypto crypto) {
     this.userPresence = userPresence;
     this.counter = counter;
     this.signature = signature;
+    this.crypto = crypto;
   }
 
-  public static RawAuthenticateResponse fromBase64(String rawDataBase64) {
+  public static RawAuthenticateResponse fromBase64(String rawDataBase64, Crypto crypto) {
     ByteInputStream bytes = new ByteInputStream(Base64.decodeBase64(rawDataBase64));
     return new RawAuthenticateResponse(
             bytes.readSigned(),
             bytes.readInteger(),
-            bytes.readAll()
+            bytes.readAll(),
+            crypto
     );
   }
 
   public void checkSignature(String appId, String clientData, byte[] publicKey) throws U2fException {
     byte[] signedBytes = packBytesToSign(
-            U2F.crypto.hash(appId),
+            crypto.hash(appId),
             userPresence,
             counter,
-            U2F.crypto.hash(clientData)
+            crypto.hash(clientData)
     );
-    U2F.crypto.checkSignature(
-            U2F.crypto.decodePublicKey(publicKey),
+    crypto.checkSignature(
+            crypto.decodePublicKey(publicKey),
             signedBytes,
             signature
     );

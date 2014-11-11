@@ -30,6 +30,7 @@ public class Client {
   private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
   private final Gson gson = new Gson();
   private final SoftKey key;
+  private final U2F u2f = new U2F();
 
   public Client(SoftKey key) {
     this.key = key;
@@ -73,7 +74,7 @@ public class Client {
   }
 
   public DeviceRegistration register() throws Exception {
-    StartedRegistration startedRegistration = U2F.startRegistration(APP_ID);
+    StartedRegistration startedRegistration = u2f.startRegistration(APP_ID);
 
     Map<String, String> clientData = new HashMap<String, String>();
     clientData.put("typ", "navigator.id.finishEnrollment");
@@ -89,7 +90,7 @@ public class Client {
     // client encodes data
     RegisterResponse tokenResponse = Client.encodeTokenRegistrationResponse(clientDataJson, rawRegisterResponse);
 
-    return U2F.finishRegistration(startedRegistration, tokenResponse, TRUSTED_DOMAINS);
+    return u2f.finishRegistration(startedRegistration, tokenResponse, TRUSTED_DOMAINS);
   }
 
   public AuthenticateResponse authenticate(DeviceRegistration registeredDevice, StartedAuthentication startedAuthentication) throws Exception {

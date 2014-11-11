@@ -7,7 +7,7 @@
     <groupId>com.yubico</groupId>
     <artifactId>u2flib-server-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.10.1-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <name>U2F parent</name>
     <description>Client library written in Java for verifying Yubikey one-time passwords (OTPs).</description>
     <organization>
@@ -60,6 +60,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.51</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>18.0</version>
@@ -74,11 +79,6 @@
             <artifactId>mockito-all</artifactId>
             <version>1.9.5</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.51</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>

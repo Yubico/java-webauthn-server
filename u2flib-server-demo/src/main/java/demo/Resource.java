@@ -32,11 +32,12 @@ public class Resource {
 
   // In production, you want to store DeviceRegistrations persistently (e.g. in a database).
   private final Map<String, String> storage = new HashMap<String, String>();
+  private final U2F u2f = new U2F();
 
   @Path("startRegistration")
   @GET
   public View startRegistration() {
-    StartedRegistration startedRegistration = U2F.startRegistration(SERVER_ADDRESS);
+    StartedRegistration startedRegistration = u2f.startRegistration(SERVER_ADDRESS);
     storage.put(startedRegistration.getChallenge(), startedRegistration.toJson());
     return new RegistrationView(startedRegistration.toJson());
   }
@@ -48,7 +49,7 @@ public class Resource {
     RegisterResponse registerResponse = RegisterResponse.fromJson(response);
     String challenge = registerResponse.getClientData().getChallenge();
     StartedRegistration startedRegistration = StartedRegistration.fromJson(storage.get(challenge));
-    DeviceRegistration registration = U2F.finishRegistration(startedRegistration, registerResponse);
+    DeviceRegistration registration = u2f.finishRegistration(startedRegistration, registerResponse);
     storage.put(username, registration.toJson());
     storage.remove(challenge);
     return "<p>Successfully registered device:</p><code>" +
@@ -70,7 +71,7 @@ public class Resource {
     if(registration == null) {
       throw new U2fDemoException("No device registered for that username");
     }
-    StartedAuthentication startedAuthentication = U2F.startAuthentication(SERVER_ADDRESS, registration);
+    StartedAuthentication startedAuthentication = u2f.startAuthentication(SERVER_ADDRESS, registration);
     storage.put(startedAuthentication.getChallenge(), startedAuthentication.toJson());
     return new AuthenticationView(startedAuthentication.toJson(), username);
   }
@@ -84,7 +85,7 @@ public class Resource {
     String challenge = authenticateResponse.getClientData().getChallenge();
     StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(storage.get(challenge));
     storage.remove(challenge);
-    U2F.finishAuthentication(startedAuthentication, authenticateResponse, registration);
+    u2f.finishAuthentication(startedAuthentication, authenticateResponse, registration);
     return "Successfully authenticated.";
   }
 }

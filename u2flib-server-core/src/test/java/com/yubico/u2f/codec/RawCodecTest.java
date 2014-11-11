@@ -9,6 +9,9 @@
 
 package com.yubico.u2f.codec;
 
+import com.yubico.u2f.U2F;
+import com.yubico.u2f.crypto.BouncyCastleCrypto;
+import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.testdata.TestVectors;
@@ -22,6 +25,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class RawCodecTest {
+
+  Crypto crypto = new BouncyCastleCrypto();
 
   @Test
   public void testEncodeRegisterResponse() throws Exception {
@@ -40,7 +45,8 @@ public class RawCodecTest {
 
   @Test
   public void testDecodeRegisterResponse() throws Exception {
-    RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_DATA_BASE64);
+    RawRegisterResponse rawRegisterResponse =
+            RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_DATA_BASE64, crypto);
 
     assertEquals(new RawRegisterResponse(USER_PUBLIC_KEY_REGISTER_HEX,
         KEY_HANDLE, ATTESTATION_CERTIFICATE, SIGNATURE_REGISTER), rawRegisterResponse);
@@ -58,7 +64,8 @@ public class RawCodecTest {
 
   @Test
   public void testDecodeAuthenticateResponse() throws Exception {
-    RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64);
+    RawAuthenticateResponse rawAuthenticateResponse =
+            RawAuthenticateResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64, crypto);
 
     assertEquals(new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE,
         SIGNATURE_AUTHENTICATE), rawAuthenticateResponse);

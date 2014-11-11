@@ -11,6 +11,8 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2F;
+import com.yubico.u2f.crypto.BouncyCastleCrypto;
+import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
@@ -30,6 +32,8 @@ public class RawRegisterResponse {
   public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
   public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
+  private final Crypto crypto;
+
   /**
    * The (uncompressed) x,y-representation of a curve point on the P-256
    * NIST elliptic curve.
@@ -45,21 +49,33 @@ public class RawRegisterResponse {
   /** A ECDSA signature (on P-256) */
   final byte[] signature;
 
-  public RawRegisterResponse(byte[] userPublicKey, byte[] keyHandle,
-                             X509Certificate attestationCertificate, byte[] signature) {
+  public RawRegisterResponse(byte[] userPublicKey,
+                             byte[] keyHandle,
+                             X509Certificate attestationCertificate,
+                             byte[] signature) {
+    this(userPublicKey, keyHandle, attestationCertificate, signature, new BouncyCastleCrypto());
+  }
+
+  public RawRegisterResponse(byte[] userPublicKey,
+                             byte[] keyHandle,
+                             X509Certificate attestationCertificate,
+                             byte[] signature,
+                             Crypto crypto) {
     this.userPublicKey = userPublicKey;
     this.keyHandle = keyHandle;
     this.attestationCertificate = attestationCertificate;
     this.signature = signature;
+    this.crypto = crypto;
   }
 
-  public static RawRegisterResponse fromBase64(String rawDataBase64) throws U2fException {
+  public static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fException {
     ByteInputStream bytes = new ByteInputStream(Base64.decodeBase64(rawDataBase64));
     byte reservedByte = bytes.readSigned();
     if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
-      throw new U2fException(String.format(
-              "Incorrect value of reserved byte. Expected: %d. Was: %d",
-              REGISTRATION_RESERVED_BYTE_VALUE, reservedByte));
+      throw new U2fException(
+              "Incorrect value of reserved byte. Expected: " + REGISTRATION_RESERVED_BYTE_VALUE +
+              ". Was: " + reservedByte
+      );
     }
 
     try {
@@ -67,7 +83,8 @@ public class RawRegisterResponse {
               bytes.read(65),
               bytes.read(bytes.readUnsigned()),
               (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(bytes),
-              bytes.readAll()
+              bytes.readAll(),
+              crypto
       );
     } catch (CertificateException e) {
       throw new U2fException("Error when parsing attestation certificate", e);
@@ -75,8 +92,8 @@ public class RawRegisterResponse {
   }
 
   public void checkSignature(String appId, String clientData) throws U2fException {
-    byte[] signedBytes = packBytesToSign(U2F.crypto.hash(appId), U2F.crypto.hash(clientData), keyHandle, userPublicKey);
-    U2F.crypto.checkSignature(attestationCertificate, signedBytes, signature);
+    byte[] signedBytes = packBytesToSign(crypto.hash(appId), crypto.hash(clientData), keyHandle, userPublicKey);
+    crypto.checkSignature(attestationCertificate, signedBytes, signature);
   }
 
   public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey) {

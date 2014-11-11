@@ -31,6 +31,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class U2FTest {
   final HashSet<String> allowedOrigins = new HashSet<String>();
+  U2F u2f = new U2F();
 
   @Before
   public void setup() throws Exception {
@@ -42,14 +43,14 @@ public class U2FTest {
   public void finishRegistration() throws Exception {
     StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-    U2F.finishRegistration(startedRegistration, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
+    u2f.finishRegistration(startedRegistration, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
   }
 
   @Test
   public void finishRegistration2() throws Exception {
     StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-    DeviceRegistration deviceRegistration = U2F.finishRegistration(startedRegistration, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
+    DeviceRegistration deviceRegistration = u2f.finishRegistration(startedRegistration, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
 
     assertEquals(new DeviceRegistration(AcmeKey.KEY_HANDLE, AcmeKey.USER_PUBLIC_KEY, AcmeKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
   }
@@ -61,7 +62,7 @@ public class U2FTest {
     AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-    U2F.finishAuthentication(startedAuthentication, tokenResponse, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+    u2f.finishAuthentication(startedAuthentication, tokenResponse, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
   }
 
 
@@ -74,6 +75,6 @@ public class U2FTest {
     AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-    U2F.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+    u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
   }
 }

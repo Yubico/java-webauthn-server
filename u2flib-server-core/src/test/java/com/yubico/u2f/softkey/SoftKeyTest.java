@@ -10,6 +10,7 @@ import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.GnubbyKey;
 import org.apache.commons.codec.binary.Base64;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.security.KeyPair;
@@ -20,6 +21,13 @@ import static org.junit.Assert.assertEquals;
 public class SoftKeyTest {
 
   public static final String APP_ID = "my-app";
+
+  private U2F u2f;
+
+  @Before
+  public void setup() {
+    u2f = new U2F();
+  }
 
   @Test
   public void shouldRegister() throws Exception {
@@ -75,14 +83,14 @@ public class SoftKeyTest {
 
     DeviceRegistration registeredDevice = client.register();
 
-    StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, registeredDevice);
+    StartedAuthentication startedAuthentication = u2f.startAuthentication(APP_ID, registeredDevice);
     AuthenticateResponse originalResponse = client.authenticate(registeredDevice, startedAuthentication);
     AuthenticateResponse tamperedResponse = new AuthenticateResponse(
             tamperChallenge(originalResponse.getClientData()),
             originalResponse.getSignatureData(),
             originalResponse.getKeyHandle()
     );
-    U2F.finishAuthentication(startedAuthentication, tamperedResponse, registeredDevice);
+    u2f.finishAuthentication(startedAuthentication, tamperedResponse, registeredDevice);
   }
 
   private String tamperChallenge(ClientData clientData) {
@@ -97,8 +105,8 @@ public class SoftKeyTest {
   }
 
   private void authenticateUsing(Client client, DeviceRegistration registeredDevice) throws Exception {
-    StartedAuthentication startedAuthentication = U2F.startAuthentication(APP_ID, registeredDevice);
+    StartedAuthentication startedAuthentication = u2f.startAuthentication(APP_ID, registeredDevice);
     AuthenticateResponse authenticateResponse = client.authenticate(registeredDevice, startedAuthentication);
-    U2F.finishAuthentication(startedAuthentication, authenticateResponse, registeredDevice);
+    u2f.finishAuthentication(startedAuthentication, authenticateResponse, registeredDevice);
   }
 }

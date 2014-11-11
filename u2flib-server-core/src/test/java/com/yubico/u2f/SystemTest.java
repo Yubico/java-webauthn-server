@@ -16,6 +16,7 @@ public class SystemTest {
   public static final ImmutableSet<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
   public static final String APP_ID = "my-app";
   private static Scanner scan = new Scanner(System.in);
+  private static final U2F u2f = new U2F();
 
   /*
     For manual testing with physical keys. Can e.g. be combined with these libu2f-host commands:
@@ -24,7 +25,7 @@ public class SystemTest {
       u2f-host -aauthenticate -o http://example.com
    */
   public static void main(String... args) throws Exception {
-    String startedRegistration = U2F.startRegistration(APP_ID).toJson();
+    String startedRegistration = u2f.startRegistration(APP_ID).toJson();
     System.out.println("Registration data:");
     System.out.println(startedRegistration);
 
@@ -34,7 +35,7 @@ public class SystemTest {
     String json = scan.nextLine();
     RegisterResponse registerResponse = RegisterResponse.fromJson(json);
     registerResponse.getClientData().getChallenge();
-    DeviceRegistration deviceRegistration = U2F.finishRegistration(
+    DeviceRegistration deviceRegistration = u2f.finishRegistration(
             StartedRegistration.fromJson(startedRegistration),
             registerResponse,
             TRUSTED_DOMAINS
@@ -42,14 +43,14 @@ public class SystemTest {
 
     System.out.println(deviceRegistration);
 
-    String startedAuthentication = U2F.startAuthentication(APP_ID, deviceRegistration).toJson();
+    String startedAuthentication = u2f.startAuthentication(APP_ID, deviceRegistration).toJson();
     System.out.println("Authentication data:");
     System.out.println(startedAuthentication);
 
     System.out.println();
     System.out.println("Enter token response:");
 
-    U2F.finishAuthentication(
+    u2f.finishAuthentication(
             StartedAuthentication.fromJson(startedAuthentication),
             AuthenticateResponse.fromJson(scan.nextLine()),
             deviceRegistration,
