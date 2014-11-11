@@ -9,7 +9,7 @@ http://developers.yubico.com/U2F[developers.yubico.com/U2F].
 [source,xml]
  <dependency>
    <groupId>com.yubico</groupId>
-   <artifactId>u2fserver-core</artifactId>
+   <artifactId>u2flib-server-core</artifactId>
    <version>0.10.0</version>
  </dependency>
 
