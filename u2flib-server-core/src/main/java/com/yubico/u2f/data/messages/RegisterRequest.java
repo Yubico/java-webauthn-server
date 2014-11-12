@@ -17,7 +17,7 @@ import java.io.Serializable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class StartedRegistration extends JsonObject implements Serializable {
+public class RegisterRequest extends JsonObject implements Serializable {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
@@ -43,7 +43,7 @@ public class StartedRegistration extends JsonObject implements Serializable {
     return appId;
   }
 
-  public StartedRegistration(String challenge, String appId) {
+  public RegisterRequest(String challenge, String appId) {
     this.version = U2F.U2F_VERSION;
     this.challenge = checkNotNull(challenge);
     this.appId = checkNotNull(appId);
@@ -56,15 +56,15 @@ public class StartedRegistration extends JsonObject implements Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof StartedRegistration))
+    if (!(obj instanceof RegisterRequest))
       return false;
-    StartedRegistration other = (StartedRegistration) obj;
+    RegisterRequest other = (RegisterRequest) obj;
     return Objects.equal(appId, other.appId)
             && Objects.equal(challenge, other.challenge)
             && Objects.equal(version, other.version);
   }
 
-  public static StartedRegistration fromJson(String json) {
-    return GSON.fromJson(json, StartedRegistration.class);
+  public static RegisterRequest fromJson(String json) {
+    return GSON.fromJson(json, RegisterRequest.class);
   }
 }

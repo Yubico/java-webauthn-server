@@ -2,18 +2,16 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
+import com.yubico.u2f.data.messages.AuthenticateRequest;
+import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.u2f.data.messages.StartedAuthentication;
-import com.yubico.u2f.data.messages.StartedRegistration;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.softkey.SoftKey;
-import com.yubico.u2f.softkey.messages.AuthenticateRequest;
-import com.yubico.u2f.softkey.messages.RegisterRequest;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.ByteBuffer;
@@ -74,26 +72,26 @@ public class Client {
   }
 
   public DeviceRegistration register() throws Exception {
-    StartedRegistration startedRegistration = u2f.startRegistration(APP_ID);
+    RegisterRequest registerRequest = u2f.startRegistration(APP_ID);
 
     Map<String, String> clientData = new HashMap<String, String>();
     clientData.put("typ", "navigator.id.finishEnrollment");
-    clientData.put("challenge", startedRegistration.getChallenge());
+    clientData.put("challenge", registerRequest.getChallenge());
     clientData.put("origin", "http://example.com");
     String clientDataJson = gson.toJson(clientData);
 
     byte[] clientParam = crypto.hash(clientDataJson);
-    byte[] appParam = crypto.hash(startedRegistration.getAppId());
+    byte[] appParam = crypto.hash(registerRequest.getAppId());
 
-    RawRegisterResponse rawRegisterResponse = key.register(new RegisterRequest(appParam, clientParam));
+    RawRegisterResponse rawRegisterResponse = key.register(new com.yubico.u2f.softkey.messages.RegisterRequest(appParam, clientParam));
 
     // client encodes data
     RegisterResponse tokenResponse = Client.encodeTokenRegistrationResponse(clientDataJson, rawRegisterResponse);
 
-    return u2f.finishRegistration(startedRegistration, tokenResponse, TRUSTED_DOMAINS);
+    return u2f.finishRegistration(registerRequest, tokenResponse, TRUSTED_DOMAINS);
   }
 
-  public AuthenticateResponse authenticate(DeviceRegistration registeredDevice, StartedAuthentication startedAuthentication) throws Exception {
+  public AuthenticateResponse authenticate(DeviceRegistration registeredDevice, AuthenticateRequest startedAuthentication) throws Exception {
     Map<String, String> clientData = new HashMap<String, String>();
     clientData.put("typ", "navigator.id.getAssertion");
     clientData.put("challenge", startedAuthentication.getChallenge());
@@ -103,7 +101,7 @@ public class Client {
 
     byte[] clientParam = crypto.hash(clientDataJson);
     byte[] appParam = crypto.hash(startedAuthentication.getAppId());
-    AuthenticateRequest authenticateRequest = new AuthenticateRequest((byte) 0x01, clientParam, appParam, registeredDevice.getKeyHandle());
+    com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, registeredDevice.getKeyHandle());
 
     RawAuthenticateResponse rawAuthenticateResponse = key.authenticate(authenticateRequest);
 

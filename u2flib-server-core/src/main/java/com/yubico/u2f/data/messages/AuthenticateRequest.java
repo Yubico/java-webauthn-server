@@ -17,7 +17,7 @@ import java.io.Serializable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class StartedAuthentication extends JsonObject implements Serializable {
+public class AuthenticateRequest extends JsonObject implements Serializable {
   /**
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
@@ -41,7 +41,7 @@ public class StartedAuthentication extends JsonObject implements Serializable {
    */
   private final String keyHandle;
 
-  public StartedAuthentication(String challenge, String appId, String keyHandle) {
+  public AuthenticateRequest(String challenge, String appId, String keyHandle) {
     this.version = U2F.U2F_VERSION;
     this.challenge = checkNotNull(challenge);
     this.appId = checkNotNull(appId);
@@ -55,9 +55,9 @@ public class StartedAuthentication extends JsonObject implements Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof StartedAuthentication))
+    if (!(obj instanceof AuthenticateRequest))
       return false;
-    StartedAuthentication other = (StartedAuthentication) obj;
+    AuthenticateRequest other = (AuthenticateRequest) obj;
     return Objects.equal(appId, other.appId)
             && Objects.equal(challenge, other.challenge)
             && Objects.equal(keyHandle, other.keyHandle)
@@ -76,7 +76,7 @@ public class StartedAuthentication extends JsonObject implements Serializable {
     return appId;
   }
 
-  public static StartedAuthentication fromJson(String json) {
-    return GSON.fromJson(json, StartedAuthentication.class);
+  public static AuthenticateRequest fromJson(String json) {
+    return GSON.fromJson(json, AuthenticateRequest.class);
   }
 }

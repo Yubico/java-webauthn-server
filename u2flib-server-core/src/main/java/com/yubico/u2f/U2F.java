@@ -46,34 +46,49 @@ public class U2F {
    *
    * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
    * support logging in from multiple Web Origins.
-   * @return a StartedRegistration, which should be sent to the client and temporary saved by the
+   * @return a RegisterRequest, which should be sent to the client and temporary saved by the
    * server.
    */
-  public StartedRegistration startRegistration(String appId) {
+  public RegisterRequest startRegistration(String appId) {
     byte[] challenge = challengeGenerator.generateChallenge();
     String challengeBase64 = Base64.encodeBase64URLSafeString(challenge);
-    return new StartedRegistration(challengeBase64, appId);
+    return new RegisterRequest(challengeBase64, appId);
+  }
+
+
+  /**
+   * @see U2F#finishRegistration(com.yubico.u2f.data.messages.RegisterRequest, com.yubico.u2f.data.messages.RegisterResponse)
+   */
+  public DeviceRegistration finishRegistration(RegisterRequest registerRequest, RegisterResponse response) throws U2fException {
+    return finishRegistration(registerRequest, response, null);
   }
 
   /**
    * Finishes a previously started registration.
    *
-   * @param startedRegistration
+   * @param registerRequest
    * @param response the response from the device/client.
    * @return a DeviceRegistration object, holding information about the registered device. Servers should
    * persist this.
    */
-  public DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse response) throws U2fException {
-    return finishRegistration(startedRegistration, response, null);
-  }
-
-  public DeviceRegistration finishRegistration(StartedRegistration startedRegistration, RegisterResponse response, Set<String> facets) throws U2fException {
+  public DeviceRegistration finishRegistration(RegisterRequest registerRequest,
+                                               RegisterResponse response,
+                                               Set<String> facets) throws U2fException {
     ClientData clientData = response.getClientData();
-    clientData.checkContent(REGISTER_TYPE, startedRegistration.getChallenge(), Optional.fromNullable(facets));
+    clientData.checkContent(REGISTER_TYPE, registerRequest.getChallenge(), Optional.fromNullable(facets));
 
     RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(response.getRegistrationData(), crypto);
-    rawRegisterResponse.checkSignature(startedRegistration.getAppId(), clientData.asJson());
+    rawRegisterResponse.checkSignature(registerRequest.getAppId(), clientData.asJson());
     return rawRegisterResponse.createDevice();
+  }
+
+  /**
+   * Initiates the authentication process.
+   *
+   * @see U2F#startAuthentication(String, com.yubico.u2f.data.DeviceRegistration, byte[])
+   */
+  public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration) {
+    return startAuthentication(appId, deviceRegistration, challengeGenerator.generateChallenge());
   }
 
   /**
@@ -82,12 +97,12 @@ public class U2F {
    * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
    * support logging in from multiple Web Origins.
    * @param deviceRegistration the DeviceRegistration for which to initiate authentication.
-   * @return a StartedAuthentication which should be sent to the client and temporary saved by
+   * @param challenge the challenge to use
+   * @return an AuthenticateRequest which should be sent to the client and temporary saved by
    * the server.
    */
-  public StartedAuthentication startAuthentication(String appId, DeviceRegistration deviceRegistration) {
-    byte[] challenge = challengeGenerator.generateChallenge();
-    return new StartedAuthentication(
+  public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
+    return new AuthenticateRequest(
             Base64.encodeBase64URLSafeString(challenge),
             appId,
             Base64.encodeBase64URLSafeString(deviceRegistration.getKeyHandle())
@@ -95,22 +110,32 @@ public class U2F {
   }
 
   /**
-   * Finishes a previously started authentication.
-   *
-   * @param startedAuthentication
-   * @param response the response from the device/client.
+   * @see U2F#finishAuthentication(com.yubico.u2f.data.messages.AuthenticateRequest, com.yubico.u2f.data.messages.AuthenticateResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
    */
-  public void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, DeviceRegistration deviceRegistration) throws U2fException {
-    finishAuthentication(startedAuthentication, response, deviceRegistration, null);
+  public void finishAuthentication(AuthenticateRequest authenticateRequest,
+                                   AuthenticateResponse response,
+                                   DeviceRegistration deviceRegistration) throws U2fException {
+    finishAuthentication(authenticateRequest, response, deviceRegistration, null);
   }
 
-  public void finishAuthentication(StartedAuthentication startedAuthentication, AuthenticateResponse response, DeviceRegistration deviceRegistration, Set<String> facets) throws U2fException {
+  /**
+   * Finishes a previously started authentication.
+   *
+   * @param authenticateRequest
+   * @param response the response from the device/client.
+   */
+  public void finishAuthentication(AuthenticateRequest authenticateRequest,
+                                   AuthenticateResponse response,
+                                   DeviceRegistration deviceRegistration,
+                                   Set<String> facets) throws U2fException {
     ClientData clientData = response.getClientData();
-    clientData.checkContent(AUTHENTICATE_TYP, startedAuthentication.getChallenge(), Optional.fromNullable(facets));
+    clientData.checkContent(AUTHENTICATE_TYP, authenticateRequest.getChallenge(), Optional.fromNullable(facets));
 
-    RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(response.getSignatureData(), crypto);
+    RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(
+            response.getSignatureData(), crypto
+    );
     rawAuthenticateResponse.checkSignature(
-            startedAuthentication.getAppId(),
+            authenticateRequest.getAppId(),
             clientData.asJson(),
             deviceRegistration.getPublicKey()
     );

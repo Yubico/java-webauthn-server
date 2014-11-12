@@ -1,15 +1,14 @@
 package demo;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import com.yubico.u2f.data.DeviceRegistration;
+import com.yubico.u2f.data.messages.AuthenticateRequest;
+import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterResponse;
-import com.yubico.u2f.data.messages.StartedAuthentication;
-import com.yubico.u2f.data.messages.StartedRegistration;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
@@ -22,7 +21,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Path("/")
 @Produces(MediaType.TEXT_HTML)
@@ -37,9 +35,9 @@ public class Resource {
   @Path("startRegistration")
   @GET
   public View startRegistration() {
-    StartedRegistration startedRegistration = u2f.startRegistration(SERVER_ADDRESS);
-    storage.put(startedRegistration.getChallenge(), startedRegistration.toJson());
-    return new RegistrationView(startedRegistration.toJson());
+    RegisterRequest registerRequest = u2f.startRegistration(SERVER_ADDRESS);
+    storage.put(registerRequest.getChallenge(), registerRequest.toJson());
+    return new RegistrationView(registerRequest.toJson());
   }
 
   @Path("finishRegistration")
@@ -48,8 +46,8 @@ public class Resource {
           throws U2fException {
     RegisterResponse registerResponse = RegisterResponse.fromJson(response);
     String challenge = registerResponse.getClientData().getChallenge();
-    StartedRegistration startedRegistration = StartedRegistration.fromJson(storage.get(challenge));
-    DeviceRegistration registration = u2f.finishRegistration(startedRegistration, registerResponse);
+    RegisterRequest registerRequest = RegisterRequest.fromJson(storage.get(challenge));
+    DeviceRegistration registration = u2f.finishRegistration(registerRequest, registerResponse);
     storage.put(username, registration.toJson());
     storage.remove(challenge);
     return "<p>Successfully registered device:</p><code>" +
@@ -71,9 +69,9 @@ public class Resource {
     if(registration == null) {
       throw new U2fDemoException("No device registered for that username");
     }
-    StartedAuthentication startedAuthentication = u2f.startAuthentication(SERVER_ADDRESS, registration);
-    storage.put(startedAuthentication.getChallenge(), startedAuthentication.toJson());
-    return new AuthenticationView(startedAuthentication.toJson(), username);
+    AuthenticateRequest authenticateRequest = u2f.startAuthentication(SERVER_ADDRESS, registration);
+    storage.put(authenticateRequest.getChallenge(), authenticateRequest.toJson());
+    return new AuthenticationView(authenticateRequest.toJson(), username);
   }
 
   @Path("finishAuthentication")
@@ -83,9 +81,9 @@ public class Resource {
     DeviceRegistration registration = DeviceRegistration.fromJson(storage.get(username));
     AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
     String challenge = authenticateResponse.getClientData().getChallenge();
-    StartedAuthentication startedAuthentication = StartedAuthentication.fromJson(storage.get(challenge));
+    AuthenticateRequest authenticateRequest = AuthenticateRequest.fromJson(storage.get(challenge));
     storage.remove(challenge);
-    u2f.finishAuthentication(startedAuthentication, authenticateResponse, registration);
+    u2f.finishAuthentication(authenticateRequest, authenticateResponse, registration);
     return "Successfully authenticated.";
   }
 }

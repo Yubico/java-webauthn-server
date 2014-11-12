@@ -11,10 +11,10 @@ package com.yubico.u2f;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
+import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
-import com.yubico.u2f.data.messages.StartedAuthentication;
-import com.yubico.u2f.data.messages.StartedRegistration;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.TestVectors;
@@ -41,35 +41,35 @@ public class U2FTest {
 
   @Test
   public void finishRegistration() throws Exception {
-    StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+    RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-    u2f.finishRegistration(startedRegistration, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
+    u2f.finishRegistration(registerRequest, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
   }
 
   @Test
   public void finishRegistration2() throws Exception {
-    StartedRegistration startedRegistration = new StartedRegistration(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+    RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-    DeviceRegistration deviceRegistration = u2f.finishRegistration(startedRegistration, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
+    DeviceRegistration deviceRegistration = u2f.finishRegistration(registerRequest, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
 
     assertEquals(new DeviceRegistration(AcmeKey.KEY_HANDLE, AcmeKey.USER_PUBLIC_KEY, AcmeKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
   }
 
   @Test
   public void finishAuthentication() throws Exception {
-    StartedAuthentication startedAuthentication = new StartedAuthentication(SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
+    AuthenticateRequest authenticateRequest = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
 
     AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
         SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-    u2f.finishAuthentication(startedAuthentication, tokenResponse, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+    u2f.finishAuthentication(authenticateRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
   }
 
 
   @Test(expected = U2fException.class)
   public void finishAuthentication_badOrigin() throws Exception {
     Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
-    StartedAuthentication authentication = new StartedAuthentication(SERVER_CHALLENGE_SIGN_BASE64,
+    AuthenticateRequest authentication = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64,
             APP_ID_SIGN, KEY_HANDLE_BASE64);
 
     AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
