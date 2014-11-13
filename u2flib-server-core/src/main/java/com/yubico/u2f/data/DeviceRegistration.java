@@ -27,7 +27,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
   private static final long serialVersionUID = -142942195464329902L;
   public static final int INITIAL_COUNTER_VALUE = 0;
 
-  private final byte[] keyHandle;
+  private final String keyHandle;
   private final byte[] publicKey;
   private final byte[] attestationCert;
   private int counter;
@@ -36,7 +36,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
     keyHandle = null; publicKey = null; attestationCert = null; // Gson requires a no-args constructor.
   }
 
-  public DeviceRegistration(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
+  public DeviceRegistration(String keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;
     try {
@@ -47,7 +47,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
     this.counter = counter;
   }
 
-  public byte[] getKeyHandle() {
+  public String getKeyHandle() {
     return keyHandle;
   }
 
@@ -78,7 +78,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
       return false;
     }
     DeviceRegistration that = (DeviceRegistration) obj;
-    return Arrays.equals(this.keyHandle, that.keyHandle) 
+    return Objects.equal(this.keyHandle, that.keyHandle)
         && Arrays.equals(this.publicKey, that.publicKey)
         && Arrays.equals(this.attestationCert, that.attestationCert);
   }
@@ -108,11 +108,11 @@ public class DeviceRegistration extends JsonObject implements Serializable {
   }
 
   private static class DeviceWithoutCertificate {
-    private final byte[] keyHandle;
+    private final String keyHandle;
     private final byte[] publicKey;
     private final int counter;
 
-    private DeviceWithoutCertificate(byte[] keyHandle, byte[] publicKey, int counter) {
+    private DeviceWithoutCertificate(String keyHandle, byte[] publicKey, int counter) {
       this.keyHandle = keyHandle;
       this.publicKey = publicKey;
       this.counter = counter;

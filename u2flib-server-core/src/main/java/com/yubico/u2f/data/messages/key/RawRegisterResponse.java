@@ -108,7 +108,7 @@ public class RawRegisterResponse {
 
   public DeviceRegistration createDevice() throws U2fException {
     return new DeviceRegistration(
-            keyHandle,
+            Base64.encodeBase64URLSafeString(keyHandle),
             userPublicKey,
             attestationCertificate,
             DeviceRegistration.INITIAL_COUNTER_VALUE

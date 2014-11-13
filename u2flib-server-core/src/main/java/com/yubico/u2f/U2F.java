@@ -105,7 +105,7 @@ public class U2F {
     return new AuthenticateRequest(
             Base64.encodeBase64URLSafeString(challenge),
             appId,
-            Base64.encodeBase64URLSafeString(deviceRegistration.getKeyHandle())
+            deviceRegistration.getKeyHandle()
     );
   }
 

@@ -33,9 +33,7 @@ public class AcmeKey {
                   + "5A4EBA9779FAC65F5CA8A2C325B174EE4769AC");
   public static final String REGISTRATION_DATA_BASE64 = Base64
           .encodeBase64URLSafeString(REGISTRATION_DATA);
-  public static final byte[] KEY_HANDLE = TestUtils.parseHex(
-          "3c2415e1760d1108105720c6069a9039c99d09f76909c36d9efc35093731f85f"
-                  + "55ac6d73ea69de7d9005ae9507b95e149e19676272fc202d949a3ab151b96870");
+  public static final String KEY_HANDLE = "PCQV4XYNEQgQVyDGBpqQOcmdCfdpCcNtnvw1CTcx-F9VrG1z6mnefZAFrpUHuV4UnhlnYnL8IC2UmjqxUblocA";
   public static final byte[] USER_PUBLIC_KEY = TestUtils.parseHex(
           "04478e16bbdbbb741a660a000314a8b6bd63095196ed704c52eebc0fa02a618f"
                   + "19ff59df18451a11cee43defd9a29b5710f63dfc671f752b1b0c6ca76c8427af"

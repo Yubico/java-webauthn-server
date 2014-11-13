@@ -101,7 +101,7 @@ public class Client {
 
     byte[] clientParam = crypto.hash(clientDataJson);
     byte[] appParam = crypto.hash(startedAuthentication.getAppId());
-    com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, registeredDevice.getKeyHandle());
+    com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, Base64.decodeBase64(registeredDevice.getKeyHandle()));
 
     RawAuthenticateResponse rawAuthenticateResponse = key.authenticate(authenticateRequest);
 
