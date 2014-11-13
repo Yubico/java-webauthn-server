@@ -22,7 +22,7 @@ public class AuthenticateRequest extends JsonObject implements Serializable {
    * Version of the protocol that the to-be-registered U2F token must speak. For
    * the version of the protocol described herein, must be "U2F_V2"
    */
-  private final String version;
+  private final String version = U2F.U2F_VERSION;
 
   /** The websafe-base64-encoded challenge. */
   private final String challenge;
@@ -41,8 +41,11 @@ public class AuthenticateRequest extends JsonObject implements Serializable {
    */
   private final String keyHandle;
 
+  private AuthenticateRequest() {
+    challenge = null; appId = null; keyHandle = null; // Gson requires a no-args constructor.
+  }
+
   public AuthenticateRequest(String challenge, String appId, String keyHandle) {
-    this.version = U2F.U2F_VERSION;
     this.challenge = checkNotNull(challenge);
     this.appId = checkNotNull(appId);
     this.keyHandle = checkNotNull(keyHandle);

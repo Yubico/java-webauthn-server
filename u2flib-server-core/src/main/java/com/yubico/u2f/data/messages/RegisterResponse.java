@@ -25,6 +25,10 @@ public class RegisterResponse extends JsonObject {
   /** base64(UTF8(client data)) */
   private final String clientData;
 
+  private RegisterResponse() {
+    registrationData = null; clientData = null;
+  }
+
   public RegisterResponse(String registrationData, String clientData) {
     this.registrationData = checkNotNull(registrationData);
     this.clientData = checkNotNull(clientData);

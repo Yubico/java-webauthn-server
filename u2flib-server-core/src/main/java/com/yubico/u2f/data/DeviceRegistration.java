@@ -32,6 +32,10 @@ public class DeviceRegistration extends JsonObject implements Serializable {
   private final byte[] attestationCert;
   private int counter;
 
+  private DeviceRegistration() {
+    keyHandle = null; publicKey = null; attestationCert = null; // Gson requires a no-args constructor.
+  }
+
   public DeviceRegistration(byte[] keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
     this.keyHandle = keyHandle;
     this.publicKey = publicKey;

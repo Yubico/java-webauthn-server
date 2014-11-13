@@ -29,6 +29,10 @@ public class AuthenticateResponse extends JsonObject {
   /* keyHandle originally passed */
   private final String keyHandle;
 
+  private AuthenticateResponse() {
+    clientData = null; signatureData = null; keyHandle = null; // Gson requires a no-args constructor.
+  }
+
   public AuthenticateResponse(String clientData, String signatureData, String keyHandle) {
     this.clientData = checkNotNull(clientData);
     this.signatureData = checkNotNull(signatureData);
