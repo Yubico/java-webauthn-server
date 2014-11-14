@@ -6,9 +6,8 @@
 
 <script>
 var request = ${data};
-var signs = [];
 setTimeout(function() {
-    u2f.register([request], signs,
+    u2f.register(request.registerRequests, request.authenticateRequests,
     function(data) {
         var form = document.getElementById('form');
         var reg = document.getElementById('tokenResponse');

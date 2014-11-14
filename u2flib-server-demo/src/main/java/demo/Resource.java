@@ -1,25 +1,30 @@
 package demo;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
-import com.yubico.u2f.data.messages.RegisterRequest;
-import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.*;
+import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Path("/")
@@ -30,14 +35,36 @@ public class Resource {
 
     // In production, you want to store DeviceRegistrations persistently (e.g. in a database).
     private final Map<String, String> storage = new HashMap<String, String>();
+    private final Map<String, List<String>> userStorage = new HashMap<String, List<String>>();
     private final U2F u2f = new U2F();
+
+    private Iterable<DeviceRegistration> getRegistrations(String username) {
+        List<String> serializedRegistrations = userStorage.get(username);
+        if(serializedRegistrations == null) {
+            return ImmutableList.of();
+        }
+        List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
+        for(String serialized : serializedRegistrations) {
+            registrations.add(DeviceRegistration.fromJson(serialized));
+        }
+        return registrations;
+    }
+
+    private void addRegistration(String username, DeviceRegistration registration) {
+        List<String> serializedRegistrations = userStorage.get(username);
+        if(serializedRegistrations == null) {
+            userStorage.put(username, Lists.newArrayList(registration.toJson()));
+        } else {
+            serializedRegistrations.add(registration.toJson());
+        }
+    }
 
     @Path("startRegistration")
     @GET
-    public View startRegistration() {
-        RegisterRequest registerRequest = u2f.startRegistration(SERVER_ADDRESS);
-        storage.put(registerRequest.getChallenge(), registerRequest.toJson());
-        return new RegistrationView(registerRequest.toJson());
+    public View startRegistration(@QueryParam("username") String username) {
+        RegisterRequestData registerRequestData = u2f.startRegistration(SERVER_ADDRESS, getRegistrations(username));
+        storage.put(registerRequestData.getKey(), registerRequestData.toJson());
+        return new RegistrationView(registerRequestData.toJson());
     }
 
     @Path("finishRegistration")
@@ -45,11 +72,10 @@ public class Resource {
     public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username)
             throws U2fException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
-        String challenge = registerResponse.getClientData().getChallenge();
-        RegisterRequest registerRequest = RegisterRequest.fromJson(storage.get(challenge));
-        DeviceRegistration registration = u2f.finishRegistration(registerRequest, registerResponse);
-        storage.put(username, registration.toJson());
-        storage.remove(challenge);
+        RegisterRequestData registerRequestData = RegisterRequestData.fromJson(storage.get(registerResponse.getKey()));
+        DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
+        addRegistration(username, registration);
+        storage.remove(registerResponse.getKey());
         return "<p>Successfully registered device:</p><code>" +
                 registration +
                 "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
@@ -62,28 +88,29 @@ public class Resource {
         return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
     }
 
+    @Path("registerIndex")
+    @GET
+    public String registerIndex() throws IOException, URISyntaxException {
+        URL defaultImage = Resource.class.getResource("registerIndex.html");
+        return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
+    }
+
     @Path("startAuthentication")
     @GET
     public View startAuthentication(@QueryParam("username") String username) {
-        DeviceRegistration registration = DeviceRegistration.fromJson(storage.get(username));
-        if (registration == null) {
-            throw new U2fDemoException("No device registered for that username");
-        }
-        AuthenticateRequest authenticateRequest = u2f.startAuthentication(SERVER_ADDRESS, registration);
-        storage.put(authenticateRequest.getChallenge(), authenticateRequest.toJson());
-        return new AuthenticationView(authenticateRequest.toJson(), username);
+        AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
+        storage.put(authenticateRequestData.getKey(), authenticateRequestData.toJson());
+        return new AuthenticationView(authenticateRequestData.toJson(), username);
     }
 
     @Path("finishAuthentication")
     @POST
     public String finishAuthentication(@FormParam("tokenResponse") String response,
                                        @FormParam("username") String username) throws U2fException {
-        DeviceRegistration registration = DeviceRegistration.fromJson(storage.get(username));
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
-        String challenge = authenticateResponse.getClientData().getChallenge();
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.fromJson(storage.get(challenge));
-        storage.remove(challenge);
-        u2f.finishAuthentication(authenticateRequest, authenticateResponse, registration);
+        AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(storage.get(authenticateResponse.getKey()));
+        storage.remove(authenticateResponse.getKey());
+        u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
         return "Successfully authenticated.";
     }
 }

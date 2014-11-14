@@ -7,7 +7,7 @@
 <script>
 var request = ${data};
 setTimeout(function() {
-    u2f.sign([request],
+    u2f.sign(request.authenticateRequests,
     function(data) {
         if(data.errorCode) {
             alert("U2F failed with error code: " + data.errorCode);
