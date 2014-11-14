@@ -64,7 +64,7 @@ public class Resource {
     public View startRegistration(@QueryParam("username") String username) {
         RegisterRequestData registerRequestData = u2f.startRegistration(SERVER_ADDRESS, getRegistrations(username));
         storage.put(registerRequestData.getKey(), registerRequestData.toJson());
-        return new RegistrationView(registerRequestData.toJson());
+        return new RegistrationView(username, registerRequestData.toJson());
     }
 
     @Path("finishRegistration")
