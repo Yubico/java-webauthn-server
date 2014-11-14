@@ -24,12 +24,12 @@ import java.util.Arrays;
 
 public class DeviceRegistration extends JsonObject implements Serializable {
     private static final long serialVersionUID = -142942195464329902L;
-    public static final int INITIAL_COUNTER_VALUE = 0;
+    public static final long INITIAL_COUNTER_VALUE = -1;
 
     private final String keyHandle;
     private final byte[] publicKey;
     private final byte[] attestationCert;
-    private int counter;
+    private long counter;
 
     private DeviceRegistration() {
         keyHandle = null;
@@ -37,7 +37,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
         attestationCert = null; // Gson requires a no-args constructor.
     }
 
-    public DeviceRegistration(String keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
+    public DeviceRegistration(String keyHandle, byte[] publicKey, X509Certificate attestationCert, long counter) throws U2fException {
         this.keyHandle = keyHandle;
         this.publicKey = publicKey;
         try {
@@ -64,7 +64,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
                 .generateCertificate(new ByteInputStream(attestationCert));
     }
 
-    public int getCounter() {
+    public long getCounter() {
         return counter;
     }
 
@@ -102,18 +102,19 @@ public class DeviceRegistration extends JsonObject implements Serializable {
         return super.toJson();
     }
 
-    public void checkAndIncrementCounter(int clientCounter) throws U2fException {
-        if (clientCounter <= counter++) {
+    public void checkAndUpdateCounter(int clientCounter) throws U2fException {
+        if (clientCounter <= counter) {
             throw new InvalidDeviceCounterException();
         }
+        counter = clientCounter;
     }
 
     private static class DeviceWithoutCertificate {
         private final String keyHandle;
         private final byte[] publicKey;
-        private final int counter;
+        private final long counter;
 
-        private DeviceWithoutCertificate(String keyHandle, byte[] publicKey, int counter) {
+        private DeviceWithoutCertificate(String keyHandle, byte[] publicKey, long counter) {
             this.keyHandle = keyHandle;
             this.publicKey = publicKey;
             this.counter = counter;

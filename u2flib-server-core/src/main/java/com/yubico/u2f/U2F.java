@@ -140,6 +140,6 @@ public class U2F {
                 deviceRegistration.getPublicKey()
         );
         rawAuthenticateResponse.checkUserPresence();
-        deviceRegistration.checkAndIncrementCounter(rawAuthenticateResponse.getCounter());
+        deviceRegistration.checkAndUpdateCounter(rawAuthenticateResponse.getCounter());
     }
 }
