@@ -11,12 +11,13 @@ package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class AuthenticateResponse extends JsonObject {
+public class AuthenticateResponse extends JsonObject implements Persistable {
     private static final int MAX_SIZE = 20000;
 
     /* base64(client data) */
@@ -50,6 +51,10 @@ public class AuthenticateResponse extends JsonObject {
 
     public String getKeyHandle() {
         return keyHandle;
+    }
+
+    public String getKey() throws U2fException {
+        return getClientData().getChallenge();
     }
 
     @Override

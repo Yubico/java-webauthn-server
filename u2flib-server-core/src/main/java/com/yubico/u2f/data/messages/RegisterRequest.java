@@ -12,12 +12,14 @@ package com.yubico.u2f.data.messages;
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.Persistable;
+import com.yubico.u2f.exceptions.U2fException;
 
 import java.io.Serializable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RegisterRequest extends JsonObject implements Serializable {
+public class RegisterRequest extends JsonObject implements Serializable, Persistable {
     /**
      * Version of the protocol that the to-be-registered U2F token must speak. For
      * the version of the protocol described herein, must be "U2F_V2"
@@ -41,10 +43,6 @@ public class RegisterRequest extends JsonObject implements Serializable {
      */
     private final String appId;
 
-    public String getAppId() {
-        return appId;
-    }
-
     private RegisterRequest() {
         challenge = null;
         appId = null; // Gson requires a no-args constructor.
@@ -53,6 +51,15 @@ public class RegisterRequest extends JsonObject implements Serializable {
     public RegisterRequest(String challenge, String appId) {
         this.challenge = checkNotNull(challenge);
         this.appId = checkNotNull(appId);
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    @Override
+    public String getKey() {
+        return getChallenge();
     }
 
     @Override

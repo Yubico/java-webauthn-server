@@ -11,12 +11,13 @@ package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RegisterResponse extends JsonObject {
+public class RegisterResponse extends JsonObject implements Persistable {
     private static final int MAX_SIZE = 20000;
 
     /**
@@ -45,6 +46,10 @@ public class RegisterResponse extends JsonObject {
 
     public ClientData getClientData() throws U2fException {
         return new ClientData(clientData);
+    }
+
+    public String getKey() throws U2fException {
+        return getClientData().getChallenge();
     }
 
     @Override
