@@ -5,9 +5,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidFacetException;
 import com.yubico.u2f.exceptions.U2fException;
-import org.apache.commons.codec.binary.Base64;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -32,7 +32,7 @@ public class ClientData {
 
     public ClientData(String clientData) throws U2fException {
 
-        this.rawClientData = new String(Base64.decodeBase64(clientData));
+        this.rawClientData = new String(U2fB64Encoding.decode(clientData));
         JsonElement clientDataAsElement = new JsonParser().parse(rawClientData);
         if (!clientDataAsElement.isJsonObject()) {
             throw new U2fException("ClientData has wrong format");

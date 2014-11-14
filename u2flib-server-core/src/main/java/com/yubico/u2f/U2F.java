@@ -12,8 +12,6 @@ package com.yubico.u2f;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
@@ -24,11 +22,9 @@ import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
-import com.yubico.u2f.data.messages.key.util.U2FEncoding;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
-import org.apache.commons.codec.binary.Base64;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -67,7 +63,7 @@ public class U2F {
      * server.
      */
     public RegisterRequest startRegistration(String appId, byte[] challenge) {
-        return new RegisterRequest(U2FEncoding.encode(challenge), appId);
+        return new RegisterRequest(U2fB64Encoding.encode(challenge), appId);
     }
 
     /**
@@ -158,7 +154,7 @@ public class U2F {
      */
     public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
         return new AuthenticateRequest(
-                Base64.encodeBase64URLSafeString(challenge),
+                U2fB64Encoding.encode(challenge),
                 appId,
                 deviceRegistration.getKeyHandle()
         );

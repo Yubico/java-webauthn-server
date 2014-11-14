@@ -10,9 +10,9 @@ import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.softkey.SoftKey;
-import org.apache.commons.codec.binary.Base64;
 
 import java.nio.ByteBuffer;
 import java.security.cert.CertificateEncodingException;
@@ -66,8 +66,8 @@ public class Client {
 
     public static RegisterResponse encodeTokenRegistrationResponse(String clientDataJson, RawRegisterResponse registerResponse) throws U2fException {
         byte[] rawRegisterResponse = Client.encodeRegisterResponse(registerResponse);
-        String rawRegisterResponseBase64 = Base64.encodeBase64URLSafeString(rawRegisterResponse);
-        String clientDataBase64 = Base64.encodeBase64URLSafeString(clientDataJson.getBytes());
+        String rawRegisterResponseBase64 = U2fB64Encoding.encode(rawRegisterResponse);
+        String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());
         return new RegisterResponse(rawRegisterResponseBase64, clientDataBase64);
     }
 
@@ -101,11 +101,11 @@ public class Client {
 
         byte[] clientParam = crypto.hash(clientDataJson);
         byte[] appParam = crypto.hash(startedAuthentication.getAppId());
-        com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, Base64.decodeBase64(registeredDevice.getKeyHandle()));
+        com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, U2fB64Encoding.decode(registeredDevice.getKeyHandle()));
 
         RawAuthenticateResponse rawAuthenticateResponse = key.authenticate(authenticateRequest);
 
-        String clientDataBase64 = Base64.encodeBase64URLSafeString(clientDataJson.getBytes());
+        String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());
         byte[] authData = ByteSink.create()
                 .put(rawAuthenticateResponse.getUserPresence())
                 .putInt(rawAuthenticateResponse.getCounter())
@@ -114,7 +114,7 @@ public class Client {
 
         return new AuthenticateResponse(
                 clientDataBase64,
-                Base64.encodeBase64URLSafeString(authData),
+                U2fB64Encoding.encode(authData),
                 startedAuthentication.getKeyHandle()
         );
     }

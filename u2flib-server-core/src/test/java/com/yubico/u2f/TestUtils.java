@@ -9,9 +9,7 @@
 
 package com.yubico.u2f;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
+import com.google.common.io.BaseEncoding;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -36,18 +34,13 @@ public class TestUtils {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    public static byte[] parseHex(String hexEncoded) {
-        try {
-            return Hex.decodeHex(hexEncoded.toCharArray());
-        } catch (DecoderException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
+    public static final BaseEncoding BASE64 = BaseEncoding.base64();
 
     public static X509Certificate fetchCertificate(InputStream resourceAsStream) {
         Scanner in = new Scanner(resourceAsStream);
         String base64String = in.nextLine();
-        return parseCertificate(Base64.decodeBase64(base64String));
+        return parseCertificate(BASE64.decode(base64String));
     }
 
     public static X509Certificate parseCertificate(byte[] encodedDerCertificate) {
@@ -60,7 +53,7 @@ public class TestUtils {
     }
 
     public static X509Certificate parseCertificate(String encodedDerCertificateHex) {
-        return parseCertificate(parseHex(encodedDerCertificateHex));
+        return parseCertificate(HEX.decode(encodedDerCertificateHex));
     }
 
     public static PrivateKey parsePrivateKey(InputStream is) {

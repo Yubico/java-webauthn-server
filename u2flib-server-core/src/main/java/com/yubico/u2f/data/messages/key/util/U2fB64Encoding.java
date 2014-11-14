@@ -5,7 +5,7 @@ import com.google.common.io.BaseEncoding;
 /**
  * Created by dain on 11/14/14.
  */
-public class U2FEncoding {
+public class U2fB64Encoding {
     private final static BaseEncoding U2F_ENCODING = BaseEncoding.base64Url().omitPadding();
 
     public static String encode(byte[] decoded) {

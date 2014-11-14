@@ -15,8 +15,8 @@ import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
-import org.apache.commons.codec.binary.Base64;
 
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -70,7 +70,7 @@ public class RawRegisterResponse {
     }
 
     public static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fException {
-        ByteInputStream bytes = new ByteInputStream(Base64.decodeBase64(rawDataBase64));
+        ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
         byte reservedByte = bytes.readSigned();
         if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
             throw new U2fException(
@@ -109,7 +109,7 @@ public class RawRegisterResponse {
 
     public DeviceRegistration createDevice() throws U2fException {
         return new DeviceRegistration(
-                Base64.encodeBase64URLSafeString(keyHandle),
+                U2fB64Encoding.encode(keyHandle),
                 userPublicKey,
                 attestationCertificate,
                 DeviceRegistration.INITIAL_COUNTER_VALUE

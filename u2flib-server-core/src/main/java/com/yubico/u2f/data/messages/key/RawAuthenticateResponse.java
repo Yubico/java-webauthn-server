@@ -14,8 +14,8 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
-import org.apache.commons.codec.binary.Base64;
 
 import java.util.Arrays;
 
@@ -43,7 +43,7 @@ public class RawAuthenticateResponse {
     }
 
     public static RawAuthenticateResponse fromBase64(String rawDataBase64, Crypto crypto) {
-        ByteInputStream bytes = new ByteInputStream(Base64.decodeBase64(rawDataBase64));
+        ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
         return new RawAuthenticateResponse(
                 bytes.readSigned(),
                 bytes.readInteger(),

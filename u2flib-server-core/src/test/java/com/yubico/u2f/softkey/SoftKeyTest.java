@@ -6,10 +6,10 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.key.Client;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.GnubbyKey;
-import org.apache.commons.codec.binary.Base64;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -96,7 +96,7 @@ public class SoftKeyTest {
     private String tamperChallenge(ClientData clientData) {
         byte[] rawClientData = clientData.asJson().getBytes();
         rawClientData[50] += 1;
-        return Base64.encodeBase64URLSafeString(rawClientData);
+        return U2fB64Encoding.encode(rawClientData);
     }
 
     private Client createClient() {
