@@ -18,56 +18,59 @@ import java.io.Serializable;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RegisterRequest extends JsonObject implements Serializable {
-  /**
-   * Version of the protocol that the to-be-registered U2F token must speak. For
-   * the version of the protocol described herein, must be "U2F_V2"
-   */
-  private final String version = U2F.U2F_VERSION;
+    /**
+     * Version of the protocol that the to-be-registered U2F token must speak. For
+     * the version of the protocol described herein, must be "U2F_V2"
+     */
+    private final String version = U2F.U2F_VERSION;
 
-  /** The websafe-base64-encoded challenge. */
-  private final String challenge;
+    /**
+     * The websafe-base64-encoded challenge.
+     */
+    private final String challenge;
 
-  public String getChallenge() {
-    return challenge;
-  }
+    public String getChallenge() {
+        return challenge;
+    }
 
-  /**
-   * The application id that the RP would like to assert. The U2F token will
-   * enforce that the key handle provided above is associated with this
-   * application id. The browser enforces that the calling origin belongs to the
-   * application identified by the application id.
-   */
-  private final String appId;
+    /**
+     * The application id that the RP would like to assert. The U2F token will
+     * enforce that the key handle provided above is associated with this
+     * application id. The browser enforces that the calling origin belongs to the
+     * application identified by the application id.
+     */
+    private final String appId;
 
-  public String getAppId() {
-    return appId;
-  }
+    public String getAppId() {
+        return appId;
+    }
 
-  private RegisterRequest() {
-    challenge = null; appId = null; // Gson requires a no-args constructor.
-  }
+    private RegisterRequest() {
+        challenge = null;
+        appId = null; // Gson requires a no-args constructor.
+    }
 
-  public RegisterRequest(String challenge, String appId) {
-    this.challenge = checkNotNull(challenge);
-    this.appId = checkNotNull(appId);
-  }
+    public RegisterRequest(String challenge, String appId) {
+        this.challenge = checkNotNull(challenge);
+        this.appId = checkNotNull(appId);
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(version, challenge, appId);
-  }
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(version, challenge, appId);
+    }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof RegisterRequest))
-      return false;
-    RegisterRequest other = (RegisterRequest) obj;
-    return Objects.equal(appId, other.appId)
-            && Objects.equal(challenge, other.challenge)
-            && Objects.equal(version, other.version);
-  }
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof RegisterRequest))
+            return false;
+        RegisterRequest other = (RegisterRequest) obj;
+        return Objects.equal(appId, other.appId)
+                && Objects.equal(challenge, other.challenge)
+                && Objects.equal(version, other.version);
+    }
 
-  public static RegisterRequest fromJson(String json) {
-    return GSON.fromJson(json, RegisterRequest.class);
-  }
+    public static RegisterRequest fromJson(String json) {
+        return GSON.fromJson(json, RegisterRequest.class);
+    }
 }

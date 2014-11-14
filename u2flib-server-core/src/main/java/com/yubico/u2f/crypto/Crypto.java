@@ -9,21 +9,21 @@
 
 package com.yubico.u2f.crypto;
 
+import com.yubico.u2f.exceptions.U2fException;
+
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
-import com.yubico.u2f.exceptions.U2fException;
-
 public interface Crypto {
-  void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes,
-                      byte[] signature) throws U2fException;
+    void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes,
+                        byte[] signature) throws U2fException;
 
-  void checkSignature(PublicKey publicKey, byte[] signedBytes,
-                      byte[] signature) throws U2fException;
+    void checkSignature(PublicKey publicKey, byte[] signedBytes,
+                        byte[] signature) throws U2fException;
 
-  PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fException;
+    PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fException;
 
-  byte[] hash(byte[] bytes);
+    byte[] hash(byte[] bytes);
 
-  byte[] hash(String str);
+    byte[] hash(String str);
 }

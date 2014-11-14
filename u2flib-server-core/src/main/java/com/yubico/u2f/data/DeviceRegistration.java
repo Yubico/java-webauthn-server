@@ -9,6 +9,12 @@
 
 package com.yubico.u2f.data;
 
+import com.google.common.base.Objects;
+import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.key.util.ByteInputStream;
+import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
+import com.yubico.u2f.exceptions.U2fException;
+
 import java.io.Serializable;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -16,106 +22,101 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
-import com.yubico.u2f.data.messages.json.JsonObject;
-import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
-import com.yubico.u2f.exceptions.U2fException;
-import com.yubico.u2f.data.messages.key.util.ByteInputStream;
-
-import com.google.common.base.Objects;
-
 public class DeviceRegistration extends JsonObject implements Serializable {
-  private static final long serialVersionUID = -142942195464329902L;
-  public static final int INITIAL_COUNTER_VALUE = 0;
+    private static final long serialVersionUID = -142942195464329902L;
+    public static final int INITIAL_COUNTER_VALUE = 0;
 
-  private final String keyHandle;
-  private final byte[] publicKey;
-  private final byte[] attestationCert;
-  private int counter;
-
-  private DeviceRegistration() {
-    keyHandle = null; publicKey = null; attestationCert = null; // Gson requires a no-args constructor.
-  }
-
-  public DeviceRegistration(String keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
-    this.keyHandle = keyHandle;
-    this.publicKey = publicKey;
-    try {
-      this.attestationCert = attestationCert.getEncoded();
-    } catch (CertificateEncodingException e) {
-      throw new U2fException("Invalid attestation certificate", e);
-    }
-    this.counter = counter;
-  }
-
-  public String getKeyHandle() {
-    return keyHandle;
-  }
-
-  public byte[] getPublicKey() {
-    return publicKey;
-  }
-
-  public X509Certificate getAttestationCertificate() throws CertificateException, NoSuchFieldException {
-    if(attestationCert == null) {
-      throw new NoSuchFieldException();
-    }
-    return (X509Certificate) CertificateFactory.getInstance("X.509")
-            .generateCertificate(new ByteInputStream(attestationCert));
-  }
-  
-  public int getCounter() {
-	return counter; 
-  }
-  
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(keyHandle, publicKey, attestationCert);
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof DeviceRegistration)) {
-      return false;
-    }
-    DeviceRegistration that = (DeviceRegistration) obj;
-    return Objects.equal(this.keyHandle, that.keyHandle)
-        && Arrays.equals(this.publicKey, that.publicKey)
-        && Arrays.equals(this.attestationCert, that.attestationCert);
-  }
-  
-  @Override
-  public String toString() {
-    return super.toJson();
-  }
-
-  public static DeviceRegistration fromJson(String json) {
-    return GSON.fromJson(json, DeviceRegistration.class);
-  }
-
-  @Override
-  public String toJson() {
-    return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter));
-  }
-
-  public String toJsonWithAttestationCert() {
-    return super.toJson();
-  }
-
-  public void checkAndIncrementCounter(int clientCounter) throws U2fException {
-    if (clientCounter <= counter++) {
-      throw new InvalidDeviceCounterException();
-    }
-  }
-
-  private static class DeviceWithoutCertificate {
     private final String keyHandle;
     private final byte[] publicKey;
-    private final int counter;
+    private final byte[] attestationCert;
+    private int counter;
 
-    private DeviceWithoutCertificate(String keyHandle, byte[] publicKey, int counter) {
-      this.keyHandle = keyHandle;
-      this.publicKey = publicKey;
-      this.counter = counter;
+    private DeviceRegistration() {
+        keyHandle = null;
+        publicKey = null;
+        attestationCert = null; // Gson requires a no-args constructor.
     }
-  }
+
+    public DeviceRegistration(String keyHandle, byte[] publicKey, X509Certificate attestationCert, int counter) throws U2fException {
+        this.keyHandle = keyHandle;
+        this.publicKey = publicKey;
+        try {
+            this.attestationCert = attestationCert.getEncoded();
+        } catch (CertificateEncodingException e) {
+            throw new U2fException("Invalid attestation certificate", e);
+        }
+        this.counter = counter;
+    }
+
+    public String getKeyHandle() {
+        return keyHandle;
+    }
+
+    public byte[] getPublicKey() {
+        return publicKey;
+    }
+
+    public X509Certificate getAttestationCertificate() throws CertificateException, NoSuchFieldException {
+        if (attestationCert == null) {
+            throw new NoSuchFieldException();
+        }
+        return (X509Certificate) CertificateFactory.getInstance("X.509")
+                .generateCertificate(new ByteInputStream(attestationCert));
+    }
+
+    public int getCounter() {
+        return counter;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(keyHandle, publicKey, attestationCert);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof DeviceRegistration)) {
+            return false;
+        }
+        DeviceRegistration that = (DeviceRegistration) obj;
+        return Objects.equal(this.keyHandle, that.keyHandle)
+                && Arrays.equals(this.publicKey, that.publicKey)
+                && Arrays.equals(this.attestationCert, that.attestationCert);
+    }
+
+    @Override
+    public String toString() {
+        return super.toJson();
+    }
+
+    public static DeviceRegistration fromJson(String json) {
+        return GSON.fromJson(json, DeviceRegistration.class);
+    }
+
+    @Override
+    public String toJson() {
+        return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter));
+    }
+
+    public String toJsonWithAttestationCert() {
+        return super.toJson();
+    }
+
+    public void checkAndIncrementCounter(int clientCounter) throws U2fException {
+        if (clientCounter <= counter++) {
+            throw new InvalidDeviceCounterException();
+        }
+    }
+
+    private static class DeviceWithoutCertificate {
+        private final String keyHandle;
+        private final byte[] publicKey;
+        private final int counter;
+
+        private DeviceWithoutCertificate(String keyHandle, byte[] publicKey, int counter) {
+            this.keyHandle = keyHandle;
+            this.publicKey = publicKey;
+            this.counter = counter;
+        }
+    }
 }

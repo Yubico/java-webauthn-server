@@ -17,47 +17,52 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RegisterResponse extends JsonObject {
-  private static final int MAX_SIZE = 20000;
+    private static final int MAX_SIZE = 20000;
 
-  /** base64(raw registration response message) */
-  private final String registrationData;
+    /**
+     * base64(raw registration response message)
+     */
+    private final String registrationData;
 
-  /** base64(UTF8(client data)) */
-  private final String clientData;
+    /**
+     * base64(UTF8(client data))
+     */
+    private final String clientData;
 
-  private RegisterResponse() {
-    registrationData = null; clientData = null;
-  }
+    private RegisterResponse() {
+        registrationData = null;
+        clientData = null;
+    }
 
-  public RegisterResponse(String registrationData, String clientData) {
-    this.registrationData = checkNotNull(registrationData);
-    this.clientData = checkNotNull(clientData);
-  }
+    public RegisterResponse(String registrationData, String clientData) {
+        this.registrationData = checkNotNull(registrationData);
+        this.clientData = checkNotNull(clientData);
+    }
 
-  public String getRegistrationData() {
-    return registrationData;
-  }
+    public String getRegistrationData() {
+        return registrationData;
+    }
 
-  public ClientData getClientData() throws U2fException {
-    return new ClientData(clientData);
-  }
+    public ClientData getClientData() throws U2fException {
+        return new ClientData(clientData);
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(registrationData, clientData);
-  }
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(registrationData, clientData);
+    }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof RegisterResponse))
-      return false;
-    RegisterResponse other = (RegisterResponse) obj;
-    return Objects.equal(clientData, other.clientData)
-            && Objects.equal(registrationData, other.registrationData);
-  }
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof RegisterResponse))
+            return false;
+        RegisterResponse other = (RegisterResponse) obj;
+        return Objects.equal(clientData, other.clientData)
+                && Objects.equal(registrationData, other.registrationData);
+    }
 
-  public static RegisterResponse fromJson(String json) {
-    checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
-    return GSON.fromJson(json, RegisterResponse.class);
-  }
+    public static RegisterResponse fromJson(String json) {
+        checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
+        return GSON.fromJson(json, RegisterResponse.class);
+    }
 }

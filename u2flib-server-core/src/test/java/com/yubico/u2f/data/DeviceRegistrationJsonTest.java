@@ -9,18 +9,18 @@ import static org.junit.Assert.assertEquals;
 
 public class DeviceRegistrationJsonTest {
 
-  @Test
-  public void shouldSerialize() throws Exception {
-    SoftKey key = new SoftKey();
-    Client client = new Client(key);
-    DeviceRegistration deviceRegistration = client.register();
+    @Test
+    public void shouldSerialize() throws Exception {
+        SoftKey key = new SoftKey();
+        Client client = new Client(key);
+        DeviceRegistration deviceRegistration = client.register();
 
-    String json = deviceRegistration.toJson();
+        String json = deviceRegistration.toJson();
 
-    DeviceRegistration deserializedDeviceRegistration = DeviceRegistration.fromJson(json);
-    assertEquals(deviceRegistration.getKeyHandle(), deserializedDeviceRegistration.getKeyHandle());
-    assertArrayEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
-    assertEquals(deviceRegistration.getCounter(), deserializedDeviceRegistration.getCounter());
-  }
+        DeviceRegistration deserializedDeviceRegistration = DeviceRegistration.fromJson(json);
+        assertEquals(deviceRegistration.getKeyHandle(), deserializedDeviceRegistration.getKeyHandle());
+        assertArrayEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
+        assertEquals(deviceRegistration.getCounter(), deserializedDeviceRegistration.getCounter());
+    }
 
 }

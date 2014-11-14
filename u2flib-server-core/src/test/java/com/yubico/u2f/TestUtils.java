@@ -9,20 +9,6 @@
 
 package com.yubico.u2f;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Scanner;
-
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
@@ -34,73 +20,83 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Scanner;
+
 public class TestUtils {
 
-  static {
-    Security.addProvider(new BouncyCastleProvider());
-  }
-
-  public static byte[] parseHex(String hexEncoded) {
-    try {
-      return Hex.decodeHex(hexEncoded.toCharArray());
-    } catch (DecoderException e) {
-      throw new RuntimeException(e);
+    static {
+        Security.addProvider(new BouncyCastleProvider());
     }
-  }
 
-  public static X509Certificate fetchCertificate(InputStream resourceAsStream) {
-    Scanner in = new Scanner(resourceAsStream);
-    String base64String = in.nextLine();
-    return parseCertificate(Base64.decodeBase64(base64String));
-  }
-
-  public static X509Certificate parseCertificate(byte[] encodedDerCertificate) {
-    try {
-      return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
-          new ByteArrayInputStream(encodedDerCertificate));
-    } catch (CertificateException e) {
-      throw new RuntimeException(e);
+    public static byte[] parseHex(String hexEncoded) {
+        try {
+            return Hex.decodeHex(hexEncoded.toCharArray());
+        } catch (DecoderException e) {
+            throw new RuntimeException(e);
+        }
     }
-  }
 
-  public static X509Certificate parseCertificate(String encodedDerCertificateHex) {
-    return parseCertificate(parseHex(encodedDerCertificateHex));
-  }
-
-  public static PrivateKey parsePrivateKey(InputStream is) {
-    String keyBytesHex = new Scanner(is).nextLine();
-    return parsePrivateKey(keyBytesHex);
-  }
-
-  public static PrivateKey parsePrivateKey(String keyBytesHex) {
-    try {
-      KeyFactory fac = KeyFactory.getInstance("ECDSA");
-      X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
-      ECParameterSpec curveSpec = new ECParameterSpec(
-          curve.getCurve(), curve.getG(), curve.getN(), curve.getH());
-      ECPrivateKeySpec keySpec = new ECPrivateKeySpec(
-          new BigInteger(keyBytesHex, 16),
-          curveSpec);
-      return fac.generatePrivate(keySpec);
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    } catch (InvalidKeySpecException e) {
-      throw new RuntimeException(e);
+    public static X509Certificate fetchCertificate(InputStream resourceAsStream) {
+        Scanner in = new Scanner(resourceAsStream);
+        String base64String = in.nextLine();
+        return parseCertificate(Base64.decodeBase64(base64String));
     }
-  }
 
-  public static PublicKey parsePublicKey(byte[] keyBytes) {
-    try {
-      X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
-      ECParameterSpec curveSpec = new ECParameterSpec(curve.getCurve(), curve.getG(), curve.getN(),
-          curve.getH());
-      ECPoint point = curve.getCurve().decodePoint(keyBytes);
-      return KeyFactory.getInstance("ECDSA").generatePublic(
-          new ECPublicKeySpec(point, curveSpec));
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    } catch (InvalidKeySpecException e) {
-      throw new RuntimeException(e);
+    public static X509Certificate parseCertificate(byte[] encodedDerCertificate) {
+        try {
+            return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
+                    new ByteArrayInputStream(encodedDerCertificate));
+        } catch (CertificateException e) {
+            throw new RuntimeException(e);
+        }
     }
-  }
+
+    public static X509Certificate parseCertificate(String encodedDerCertificateHex) {
+        return parseCertificate(parseHex(encodedDerCertificateHex));
+    }
+
+    public static PrivateKey parsePrivateKey(InputStream is) {
+        String keyBytesHex = new Scanner(is).nextLine();
+        return parsePrivateKey(keyBytesHex);
+    }
+
+    public static PrivateKey parsePrivateKey(String keyBytesHex) {
+        try {
+            KeyFactory fac = KeyFactory.getInstance("ECDSA");
+            X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
+            ECParameterSpec curveSpec = new ECParameterSpec(
+                    curve.getCurve(), curve.getG(), curve.getN(), curve.getH());
+            ECPrivateKeySpec keySpec = new ECPrivateKeySpec(
+                    new BigInteger(keyBytesHex, 16),
+                    curveSpec);
+            return fac.generatePrivate(keySpec);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static PublicKey parsePublicKey(byte[] keyBytes) {
+        try {
+            X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
+            ECParameterSpec curveSpec = new ECParameterSpec(curve.getCurve(), curve.getG(), curve.getN(),
+                    curve.getH());
+            ECPoint point = curve.getCurve().decodePoint(keyBytes);
+            return KeyFactory.getInstance("ECDSA").generatePublic(
+                    new ECPublicKeySpec(point, curveSpec));
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

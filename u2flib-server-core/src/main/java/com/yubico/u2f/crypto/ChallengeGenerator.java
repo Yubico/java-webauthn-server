@@ -11,5 +11,5 @@ package com.yubico.u2f.crypto;
 
 public interface ChallengeGenerator {
 
-  byte[] generateChallenge();
+    byte[] generateChallenge();
 }

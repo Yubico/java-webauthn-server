@@ -12,11 +12,11 @@ package com.yubico.u2f.exceptions;
 @SuppressWarnings("serial")
 public class U2fException extends Exception {
 
-  public U2fException(String message) {
-    super(message);
-  }
+    public U2fException(String message) {
+        super(message);
+    }
 
-  public U2fException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    public U2fException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

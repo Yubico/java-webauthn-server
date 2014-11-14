@@ -6,17 +6,17 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
 
 public class App extends Application<Config> {
-  @Override
-  public void initialize(Bootstrap<Config> bootstrap) {
-    bootstrap.addBundle(new ViewBundle());
-  }
+    @Override
+    public void initialize(Bootstrap<Config> bootstrap) {
+        bootstrap.addBundle(new ViewBundle());
+    }
 
-  @Override
-  public void run(Config config, Environment environment) throws Exception {
-    environment.jersey().register(new Resource());
-  }
+    @Override
+    public void run(Config config, Environment environment) throws Exception {
+        environment.jersey().register(new Resource());
+    }
 
-  public static void main(String... args) throws Exception {
-    new App().run(args);
-  }
+    public static void main(String... args) throws Exception {
+        new App().run(args);
+    }
 }

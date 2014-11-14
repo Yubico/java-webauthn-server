@@ -13,12 +13,12 @@ import java.security.SecureRandom;
 
 public class RandomChallengeGenerator implements ChallengeGenerator {
 
-  private final SecureRandom random = new SecureRandom();
+    private final SecureRandom random = new SecureRandom();
 
-  @Override
-  public byte[] generateChallenge() {
-    byte[] randomBytes = new byte[32];
-    random.nextBytes(randomBytes);
-    return randomBytes;
-  }
+    @Override
+    public byte[] generateChallenge() {
+        byte[] randomBytes = new byte[32];
+        random.nextBytes(randomBytes);
+        return randomBytes;
+    }
 }

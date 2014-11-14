@@ -16,46 +16,46 @@ import java.io.IOException;
  */
 public class ByteSink {
 
-  private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  private final DataOutputStream dataOutputStream = new DataOutputStream(baos);
+    private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    private final DataOutputStream dataOutputStream = new DataOutputStream(baos);
 
-  public ByteSink putInt(int i) {
-    try {
-      dataOutputStream.writeInt(i);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    public ByteSink putInt(int i) {
+        try {
+            dataOutputStream.writeInt(i);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return this;
     }
-    return this;
-  }
 
-  public ByteSink put(byte b) {
-    try {
-      dataOutputStream.write(b);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    public ByteSink put(byte b) {
+        try {
+            dataOutputStream.write(b);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return this;
     }
-    return this;
-  }
 
-  public ByteSink put(byte[] b) {
-    try {
-      dataOutputStream.write(b);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    public ByteSink put(byte[] b) {
+        try {
+            dataOutputStream.write(b);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return this;
     }
-    return this;
-  }
 
-  public byte[] toByteArray() {
-    try {
-      dataOutputStream.flush();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    public byte[] toByteArray() {
+        try {
+            dataOutputStream.flush();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return baos.toByteArray();
     }
-    return baos.toByteArray();
-  }
 
-  public static ByteSink create() {
-    return new ByteSink();
-  }
+    public static ByteSink create() {
+        return new ByteSink();
+    }
 }
