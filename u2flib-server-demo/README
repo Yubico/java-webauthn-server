@@ -13,4 +13,4 @@ This mean that you must add the following to your hosts file:
 	127.0.0.1 example.com
 
 Then point a U2F-compatible web browser (e.g. Chrome) to
-link:http://example.com:8080/startRegistration[example.com:8080/registerIndex].
+link:http://example.com:8080/registerIndex[example.com:8080/registerIndex].
