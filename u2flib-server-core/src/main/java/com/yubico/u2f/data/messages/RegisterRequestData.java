@@ -12,9 +12,6 @@ import com.yubico.u2f.exceptions.U2fException;
 
 import java.util.List;
 
-/**
- * Created by dain on 11/11/14.
- */
 public class RegisterRequestData extends JsonObject implements Persistable {
     private final List<AuthenticateRequest> authenticateRequests;
     private final List<RegisterRequest> registerRequests;
