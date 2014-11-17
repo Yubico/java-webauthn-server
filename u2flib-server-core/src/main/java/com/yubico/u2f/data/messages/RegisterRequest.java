@@ -14,8 +14,6 @@ import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.data.messages.json.Persistable;
 
-import java.io.Serializable;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RegisterRequest extends JsonObject implements Persistable {
@@ -26,7 +24,7 @@ public class RegisterRequest extends JsonObject implements Persistable {
      * Version of the protocol that the to-be-registered U2F token must speak. For
      * the version of the protocol described herein, must be "U2F_V2"
      */
-    private static final String VERSION = U2F.U2F_VERSION;
+    private final String version = U2F.U2F_VERSION;
 
     /**
      * The websafe-base64-encoded challenge.
@@ -66,7 +64,7 @@ public class RegisterRequest extends JsonObject implements Persistable {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(VERSION, challenge, appId);
+        return Objects.hashCode(version, challenge, appId);
     }
 
     @Override
@@ -76,7 +74,7 @@ public class RegisterRequest extends JsonObject implements Persistable {
         RegisterRequest other = (RegisterRequest) obj;
         return Objects.equal(appId, other.appId)
                 && Objects.equal(challenge, other.challenge)
-                && Objects.equal(VERSION, other.VERSION);
+                && Objects.equal(version, other.version);
     }
 
     public static RegisterRequest fromJson(String json) {

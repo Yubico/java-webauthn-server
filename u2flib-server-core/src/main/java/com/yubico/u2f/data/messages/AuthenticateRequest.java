@@ -14,8 +14,6 @@ import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.data.messages.json.Persistable;
 
-import java.io.Serializable;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AuthenticateRequest extends JsonObject implements Persistable {
@@ -26,7 +24,7 @@ public class AuthenticateRequest extends JsonObject implements Persistable {
      * Version of the protocol that the to-be-registered U2F token must speak. For
      * the version of the protocol described herein, must be "U2F_V2"
      */
-    private static final String VERSION = U2F.U2F_VERSION;
+    private final String version = U2F.U2F_VERSION;
 
     /**
      * The websafe-base64-encoded challenge.
@@ -61,7 +59,7 @@ public class AuthenticateRequest extends JsonObject implements Persistable {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(VERSION, challenge, appId, keyHandle);
+        return Objects.hashCode(version, challenge, appId, keyHandle);
     }
 
     @Override
@@ -72,7 +70,7 @@ public class AuthenticateRequest extends JsonObject implements Persistable {
         return Objects.equal(appId, other.appId)
                 && Objects.equal(challenge, other.challenge)
                 && Objects.equal(keyHandle, other.keyHandle)
-                && Objects.equal(VERSION, other.VERSION);
+                && Objects.equal(version, other.version);
     }
 
     public String getKeyHandle() {
