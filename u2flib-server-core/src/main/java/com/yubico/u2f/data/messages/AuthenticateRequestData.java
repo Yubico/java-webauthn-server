@@ -8,6 +8,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.data.messages.json.Persistable;
+import com.yubico.u2f.exceptions.NoDevicesRegisteredException;
 import com.yubico.u2f.exceptions.U2fException;
 
 import java.util.List;
@@ -18,7 +19,10 @@ public class AuthenticateRequestData extends JsonObject implements Persistable {
 
     private final List<AuthenticateRequest> authenticateRequests;
 
-    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2F u2f, ChallengeGenerator challengeGenerator) {
+    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2F u2f, ChallengeGenerator challengeGenerator) throws U2fException {
+        if(Iterables.isEmpty(devices)) {
+            throw new NoDevicesRegisteredException();
+        }
         ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
         byte[] challenge = challengeGenerator.generateChallenge();
         for(DeviceRegistration device : devices) {

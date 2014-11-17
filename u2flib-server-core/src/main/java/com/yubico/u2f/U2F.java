@@ -127,7 +127,7 @@ public class U2F {
         return rawRegisterResponse.createDevice();
     }
 
-    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) {
+    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fException {
         return new AuthenticateRequestData(appId, devices, this, challengeGenerator);
     }
 
