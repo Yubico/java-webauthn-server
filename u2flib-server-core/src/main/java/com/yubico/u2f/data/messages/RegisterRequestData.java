@@ -13,6 +13,9 @@ import com.yubico.u2f.exceptions.U2fException;
 import java.util.List;
 
 public class RegisterRequestData extends JsonObject implements Persistable {
+
+    private static final long serialVersionUID = 60855174227617680L;
+
     private final List<AuthenticateRequest> authenticateRequests;
     private final List<RegisterRequest> registerRequests;
 

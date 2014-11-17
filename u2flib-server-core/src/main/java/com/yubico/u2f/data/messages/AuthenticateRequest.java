@@ -18,12 +18,15 @@ import java.io.Serializable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class AuthenticateRequest extends JsonObject implements Serializable, Persistable {
+public class AuthenticateRequest extends JsonObject implements Persistable {
+
+    private static final long serialVersionUID = -27808961388655010L;
+
     /**
      * Version of the protocol that the to-be-registered U2F token must speak. For
      * the version of the protocol described herein, must be "U2F_V2"
      */
-    private final String version = U2F.U2F_VERSION;
+    private static final String VERSION = U2F.U2F_VERSION;
 
     /**
      * The websafe-base64-encoded challenge.
@@ -58,7 +61,7 @@ public class AuthenticateRequest extends JsonObject implements Serializable, Per
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(version, challenge, appId, keyHandle);
+        return Objects.hashCode(VERSION, challenge, appId, keyHandle);
     }
 
     @Override
@@ -69,7 +72,7 @@ public class AuthenticateRequest extends JsonObject implements Serializable, Per
         return Objects.equal(appId, other.appId)
                 && Objects.equal(challenge, other.challenge)
                 && Objects.equal(keyHandle, other.keyHandle)
-                && Objects.equal(version, other.version);
+                && Objects.equal(VERSION, other.VERSION);
     }
 
     public String getKeyHandle() {

@@ -14,6 +14,9 @@ import com.yubico.u2f.exceptions.U2fException;
 import java.util.List;
 
 public class AuthenticateRequestData extends JsonObject implements Persistable {
+
+    private static final long serialVersionUID = 35378338769078256L;
+
     private final List<AuthenticateRequest> authenticateRequests;
 
     public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2F u2f, ChallengeGenerator challengeGenerator) {
