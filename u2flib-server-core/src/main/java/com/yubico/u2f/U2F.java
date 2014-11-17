@@ -78,8 +78,6 @@ public class U2F {
         for(DeviceRegistration device : devices) {
             authenticateRequests.add(startAuthentication(appId, device));
         }
-
-        RegisterRequest registerRequest = startRegistration(appId);
         return new RegisterRequestData(appId, devices, this, challengeGenerator);
     }
 
