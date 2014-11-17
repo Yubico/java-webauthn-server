@@ -93,7 +93,7 @@ public class Resource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) {
+    public View startAuthentication(@QueryParam("username") String username) throws U2fException {
         AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
         storage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
         return new AuthenticationView(authenticateRequestData.toJson(), username);
