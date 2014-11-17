@@ -1,7 +1,6 @@
 package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.yubico.u2f.U2F;
@@ -33,7 +32,7 @@ public class AuthenticateRequestData extends JsonObject implements Persistable {
     }
 
     public AuthenticateRequest getAuthenticateRequest(AuthenticateResponse response) throws U2fException {
-        if(!Objects.equal(getKey(), response.getKey())) {
+        if(!Objects.equal(getRequestId(), response.getRequestId())) {
             throw new U2fException("Wrong request for response data");
         }
         for(AuthenticateRequest request : authenticateRequests) {
@@ -44,7 +43,7 @@ public class AuthenticateRequestData extends JsonObject implements Persistable {
         throw new U2fException("Unknown keyHandle");
     }
 
-    public String getKey() {
+    public String getRequestId() {
         return Iterables.getFirst(authenticateRequests, null).getChallenge();
     }
 

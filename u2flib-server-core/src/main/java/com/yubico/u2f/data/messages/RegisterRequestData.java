@@ -46,7 +46,7 @@ public class RegisterRequestData extends JsonObject implements Persistable {
         return Iterables.getOnlyElement(registerRequests);
     }
 
-    public String getKey()  {
+    public String getRequestId()  {
         return Iterables.getOnlyElement(registerRequests).getChallenge();
     }
 

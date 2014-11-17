@@ -48,7 +48,7 @@ public class RegisterResponse extends JsonObject implements Persistable {
         return new ClientData(clientData);
     }
 
-    public String getKey() throws U2fException {
+    public String getRequestId() throws U2fException {
         return getClientData().getChallenge();
     }
 

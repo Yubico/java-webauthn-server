@@ -1,21 +1,17 @@
 package demo;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
-import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
 
-import javax.annotation.Nullable;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
@@ -63,7 +59,7 @@ public class Resource {
     @GET
     public View startRegistration(@QueryParam("username") String username) {
         RegisterRequestData registerRequestData = u2f.startRegistration(SERVER_ADDRESS, getRegistrations(username));
-        storage.put(registerRequestData.getKey(), registerRequestData.toJson());
+        storage.put(registerRequestData.getRequestId(), registerRequestData.toJson());
         return new RegistrationView(username, registerRequestData.toJson());
     }
 
@@ -72,10 +68,10 @@ public class Resource {
     public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username)
             throws U2fException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
-        RegisterRequestData registerRequestData = RegisterRequestData.fromJson(storage.get(registerResponse.getKey()));
+        RegisterRequestData registerRequestData = RegisterRequestData.fromJson(storage.get(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
         addRegistration(username, registration);
-        storage.remove(registerResponse.getKey());
+        storage.remove(registerResponse.getRequestId());
         return "<p>Successfully registered device:</p><code>" +
                 registration +
                 "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
@@ -99,7 +95,7 @@ public class Resource {
     @GET
     public View startAuthentication(@QueryParam("username") String username) {
         AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
-        storage.put(authenticateRequestData.getKey(), authenticateRequestData.toJson());
+        storage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
         return new AuthenticationView(authenticateRequestData.toJson(), username);
     }
 
@@ -108,8 +104,8 @@ public class Resource {
     public String finishAuthentication(@FormParam("tokenResponse") String response,
                                        @FormParam("username") String username) throws U2fException {
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
-        AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(storage.get(authenticateResponse.getKey()));
-        storage.remove(authenticateResponse.getKey());
+        AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(storage.get(authenticateResponse.getRequestId()));
+        storage.remove(authenticateResponse.getRequestId());
         u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
         return "Successfully authenticated.";
     }

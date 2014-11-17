@@ -87,7 +87,7 @@ public class AuthenticateRequest extends JsonObject implements Persistable {
         return appId;
     }
 
-    public String getKey() {
+    public String getRequestId() {
         return challenge;
     }
 

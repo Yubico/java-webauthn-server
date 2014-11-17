@@ -60,7 +60,7 @@ public class RegisterRequest extends JsonObject implements Persistable {
     }
 
     @Override
-    public String getKey() {
+    public String getRequestId() {
         return getChallenge();
     }
 

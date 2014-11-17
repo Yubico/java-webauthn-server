@@ -53,7 +53,7 @@ public class AuthenticateResponse extends JsonObject implements Persistable {
         return keyHandle;
     }
 
-    public String getKey() throws U2fException {
+    public String getRequestId() throws U2fException {
         return getClientData().getChallenge();
     }
 
