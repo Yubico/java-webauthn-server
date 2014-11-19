@@ -19,7 +19,7 @@ public class DeviceRegistrationJsonTest {
 
         DeviceRegistration deserializedDeviceRegistration = DeviceRegistration.fromJson(json);
         assertEquals(deviceRegistration.getKeyHandle(), deserializedDeviceRegistration.getKeyHandle());
-        assertArrayEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
+        assertEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
         assertEquals(deviceRegistration.getCounter(), deserializedDeviceRegistration.getCounter());
     }
 

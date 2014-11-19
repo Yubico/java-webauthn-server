@@ -93,10 +93,7 @@ final public class TestVectors {
             "04b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b65"
                     + "7c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2f6"
                     + "d9");
-    public static final byte[] USER_PUBLIC_KEY_AUTHENTICATE_HEX = TestUtils.HEX.decode(
-            "04d368f1b665bade3c33a20f1e429c7750d5033660c019119d29aa4ba7abc04a"
-                    + "a7c80a46bbe11ca8cb5674d74f31f8a903f6bad105fb6ab74aefef4db8b0025e"
-                    + "1d");
+    public static final String USER_PUBLIC_KEY_AUTHENTICATE_HEX = "BNNo8bZlut48M6IPHkKcd1DVAzZgwBkRnSmqS6erwEqnyApGu-EcqMtWdNdPMfipA_a60QX7ardK7-9NuLACXh0";
     public static final byte[] AUTHENTICATE_RESPONSE_DATA = TestUtils.HEX.decode(
             "0100000001304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030c"
                     + "e43d406de870b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f"

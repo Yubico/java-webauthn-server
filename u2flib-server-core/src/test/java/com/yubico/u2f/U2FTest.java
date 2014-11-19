@@ -52,7 +52,7 @@ public class U2FTest {
 
         DeviceRegistration deviceRegistration = u2f.finishRegistration(registerRequest, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
 
-        assertEquals(new DeviceRegistration(AcmeKey.KEY_HANDLE, AcmeKey.USER_PUBLIC_KEY, AcmeKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
+        assertEquals(new DeviceRegistration(AcmeKey.KEY_HANDLE, AcmeKey.USER_PUBLIC_KEY_B64, AcmeKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
     }
 
     @Test

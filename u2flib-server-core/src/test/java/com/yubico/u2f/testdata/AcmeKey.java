@@ -34,8 +34,5 @@ public class AcmeKey {
     public static final String REGISTRATION_DATA_BASE64 = U2fB64Encoding
             .encode(REGISTRATION_DATA);
     public static final String KEY_HANDLE = "PCQV4XYNEQgQVyDGBpqQOcmdCfdpCcNtnvw1CTcx-F9VrG1z6mnefZAFrpUHuV4UnhlnYnL8IC2UmjqxUblocA";
-    public static final byte[] USER_PUBLIC_KEY = TestUtils.HEX.decode(
-            "04478e16bbdbbb741a660a000314a8b6bd63095196ed704c52eebc0fa02a618f"
-                    + "19ff59df18451a11cee43defd9a29b5710f63dfc671f752b1b0c6ca76c8427af"
-                    + "2d");
+    public static final String USER_PUBLIC_KEY_B64 = "BEeOFrvbu3QaZgoAAxSotr1jCVGW7XBMUu68D6AqYY8Z_1nfGEUaEc7kPe_ZoptXEPY9_GcfdSsbDGynbIQnry0";
 }

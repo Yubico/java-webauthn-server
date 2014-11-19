@@ -13,6 +13,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fException;
 
@@ -28,8 +29,8 @@ public class DeviceRegistration extends JsonObject implements Serializable {
     public static final long INITIAL_COUNTER_VALUE = -1;
 
     private final String keyHandle;
-    private final byte[] publicKey;
-    private final byte[] attestationCert;
+    private final String publicKey;
+    private final String attestationCert;
     private long counter;
 
     private DeviceRegistration() {
@@ -38,11 +39,12 @@ public class DeviceRegistration extends JsonObject implements Serializable {
         attestationCert = null; // Gson requires a no-args constructor.
     }
 
-    public DeviceRegistration(String keyHandle, byte[] publicKey, X509Certificate attestationCert, long counter) throws U2fException {
+    public DeviceRegistration(String keyHandle, String publicKey, X509Certificate attestationCert, long counter)
+            throws U2fException {
         this.keyHandle = keyHandle;
         this.publicKey = publicKey;
         try {
-            this.attestationCert = attestationCert.getEncoded();
+            this.attestationCert = U2fB64Encoding.encode(attestationCert.getEncoded());
         } catch (CertificateEncodingException e) {
             throw new U2fException("Invalid attestation certificate", e);
         }
@@ -53,7 +55,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
         return keyHandle;
     }
 
-    public byte[] getPublicKey() {
+    public String getPublicKey() {
         return publicKey;
     }
 
@@ -62,7 +64,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
             throw new NoSuchFieldException();
         }
         return (X509Certificate) CertificateFactory.getInstance("X.509")
-                .generateCertificate(new ByteInputStream(attestationCert));
+                .generateCertificate(new ByteInputStream(U2fB64Encoding.decode(attestationCert)));
     }
 
     public long getCounter() {
@@ -81,8 +83,8 @@ public class DeviceRegistration extends JsonObject implements Serializable {
         }
         DeviceRegistration that = (DeviceRegistration) obj;
         return Objects.equal(this.keyHandle, that.keyHandle)
-                && Arrays.equals(this.publicKey, that.publicKey)
-                && Arrays.equals(this.attestationCert, that.attestationCert);
+                && Objects.equal(this.publicKey, that.publicKey)
+                && Objects.equal(this.attestationCert, that.attestationCert);
     }
 
     @Override
@@ -126,10 +128,10 @@ public class DeviceRegistration extends JsonObject implements Serializable {
 
     private static class DeviceWithoutCertificate {
         private final String keyHandle;
-        private final byte[] publicKey;
+        private final String publicKey;
         private final long counter;
 
-        private DeviceWithoutCertificate(String keyHandle, byte[] publicKey, long counter) {
+        private DeviceWithoutCertificate(String keyHandle, String publicKey, long counter) {
             this.keyHandle = keyHandle;
             this.publicKey = publicKey;
             this.counter = counter;

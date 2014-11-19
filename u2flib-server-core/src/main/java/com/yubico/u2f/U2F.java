@@ -215,7 +215,7 @@ public class U2F {
         rawAuthenticateResponse.checkSignature(
                 authenticateRequest.getAppId(),
                 clientData.asJson(),
-                deviceRegistration.getPublicKey()
+                U2fB64Encoding.decode(deviceRegistration.getPublicKey())
         );
         rawAuthenticateResponse.checkUserPresence();
         deviceRegistration.checkAndUpdateCounter(rawAuthenticateResponse.getCounter());

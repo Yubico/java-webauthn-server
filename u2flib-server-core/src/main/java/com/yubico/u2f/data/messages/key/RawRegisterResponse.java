@@ -110,7 +110,7 @@ public class RawRegisterResponse {
     public DeviceRegistration createDevice() throws U2fException {
         return new DeviceRegistration(
                 U2fB64Encoding.encode(keyHandle),
-                userPublicKey,
+                U2fB64Encoding.encode(userPublicKey),
                 attestationCertificate,
                 DeviceRegistration.INITIAL_COUNTER_VALUE
         );
