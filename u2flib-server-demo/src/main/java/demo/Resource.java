@@ -73,9 +73,9 @@ public class Resource {
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
         addRegistration(username, registration);
         storage.remove(registerResponse.getRequestId());
-        return "<p>Successfully registered device:</p><code>" + // TODO: Pretty print attestation cert?
+        return "<p>Successfully registered device:</p><pre>" +
                 registration +
-                "</code>" + NAVIGATION_MENU;
+                "</pre>" + NAVIGATION_MENU;
     }
 
     @Path("loginIndex")

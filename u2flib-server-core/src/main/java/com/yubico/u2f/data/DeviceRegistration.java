@@ -9,6 +9,7 @@
 
 package com.yubico.u2f.data;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
@@ -86,7 +87,21 @@ public class DeviceRegistration extends JsonObject implements Serializable {
 
     @Override
     public String toString() {
-        return super.toJson();
+        X509Certificate certificate = null;
+        try {
+            certificate = getAttestationCertificate();
+        } catch (CertificateException e) {
+            // do nothing
+        } catch (NoSuchFieldException e) {
+            // do nothing
+        }
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("Key handle", keyHandle)
+                .add("Public key", publicKey)
+                .add("Counter", counter)
+                .add("Attestation certificate", certificate)
+                .toString();
     }
 
     public static DeviceRegistration fromJson(String json) {
