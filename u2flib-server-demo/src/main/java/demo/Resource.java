@@ -28,6 +28,7 @@ import java.util.Map;
 public class Resource {
 
     public static final String SERVER_ADDRESS = "http://example.com:8080";
+    public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='registerIndex'>Register</a></li><li><a href='loginIndex'>Login</a></li></ul>.";
 
     // In production, you want to store DeviceRegistrations persistently (e.g. in a database).
     private final Map<String, String> storage = new HashMap<String, String>();
@@ -60,7 +61,7 @@ public class Resource {
     public View startRegistration(@QueryParam("username") String username) {
         RegisterRequestData registerRequestData = u2f.startRegistration(SERVER_ADDRESS, getRegistrations(username));
         storage.put(registerRequestData.getRequestId(), registerRequestData.toJson());
-        return new RegistrationView(username, registerRequestData.toJson());
+        return new RegistrationView(registerRequestData.toJson(), username);
     }
 
     @Path("finishRegistration")
@@ -72,9 +73,9 @@ public class Resource {
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
         addRegistration(username, registration);
         storage.remove(registerResponse.getRequestId());
-        return "<p>Successfully registered device:</p><code>" +
+        return "<p>Successfully registered device:</p><code>" + // TODO: Pretty print attestation cert?
                 registration +
-                "</code><p>Now you might want to <a href='loginIndex'>login</a></p>.";
+                "</code>" + NAVIGATION_MENU;
     }
 
     @Path("loginIndex")
@@ -107,6 +108,6 @@ public class Resource {
         AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(storage.get(authenticateResponse.getRequestId()));
         storage.remove(authenticateResponse.getRequestId());
         u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
-        return "Successfully authenticated.";
+        return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
     }
 }

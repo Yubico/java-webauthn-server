@@ -2,6 +2,8 @@ package demo.view;
 
 import io.dropwizard.views.View;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class AuthenticationView extends View {
 
     private final String data;
@@ -17,8 +19,8 @@ public class AuthenticationView extends View {
 
     public AuthenticationView(String data, String username) {
         super("authenticate.ftl");
-        this.data = data;
-        this.username = username;
+        this.data = checkNotNull(data);
+        this.username = checkNotNull(username);
 
     }
 
