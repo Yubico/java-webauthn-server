@@ -1,8 +1,7 @@
 package demo;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 import com.google.common.io.Files;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
@@ -18,10 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Path("/")
 @Produces(MediaType.TEXT_HTML)
@@ -32,14 +28,11 @@ public class Resource {
 
     // In production, you want to store DeviceRegistrations persistently (e.g. in a database).
     private final Map<String, String> storage = new HashMap<String, String>();
-    private final Map<String, List<String>> userStorage = new HashMap<String, List<String>>();
+    private final Multimap<String, String> userStorage = ArrayListMultimap.create();
     private final U2F u2f = new U2F();
 
     private Iterable<DeviceRegistration> getRegistrations(String username) {
-        List<String> serializedRegistrations = userStorage.get(username);
-        if(serializedRegistrations == null) {
-            return ImmutableList.of();
-        }
+        Collection<String> serializedRegistrations = userStorage.get(username);
         List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
         for(String serialized : serializedRegistrations) {
             registrations.add(DeviceRegistration.fromJson(serialized));
@@ -48,12 +41,7 @@ public class Resource {
     }
 
     private void addRegistration(String username, DeviceRegistration registration) {
-        List<String> serializedRegistrations = userStorage.get(username);
-        if(serializedRegistrations == null) {
-            userStorage.put(username, Lists.newArrayList(registration.toJson()));
-        } else {
-            serializedRegistrations.add(registration.toJson());
-        }
+        userStorage.put(username, registration.toJson());
     }
 
     @Path("startRegistration")
@@ -78,20 +66,6 @@ public class Resource {
                 "</pre>" + NAVIGATION_MENU;
     }
 
-    @Path("loginIndex")
-    @GET
-    public String loginIndex() throws IOException, URISyntaxException {
-        URL defaultImage = Resource.class.getResource("loginIndex.html");
-        return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
-    }
-
-    @Path("registerIndex")
-    @GET
-    public String registerIndex() throws IOException, URISyntaxException {
-        URL defaultImage = Resource.class.getResource("registerIndex.html");
-        return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
-    }
-
     @Path("startAuthentication")
     @GET
     public View startAuthentication(@QueryParam("username") String username) throws U2fException {
@@ -109,5 +83,19 @@ public class Resource {
         storage.remove(authenticateResponse.getRequestId());
         u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
         return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
+    }
+
+    @Path("loginIndex")
+    @GET
+    public String loginIndex() throws Exception {
+        URL index = Resource.class.getResource("loginIndex.html");
+        return Files.toString(new File(index.toURI()), Charsets.UTF_8);
+    }
+
+    @Path("registerIndex")
+    @GET
+    public String registerIndex() throws Exception {
+        URL defaultImage = Resource.class.getResource("registerIndex.html");
+        return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
     }
 }

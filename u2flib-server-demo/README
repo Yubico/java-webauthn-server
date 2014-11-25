@@ -1,5 +1,5 @@
 == u2flib-server-demo
-A simple self-contained demo server. The central part is the
+A simple self-contained demo server supporting multiple devices per user. The central part is the
 https://github.com/Yubico/java-u2flib-server/blob/master/u2flib-server-demo/src/main/java/demo/Resource.java[Resource]
 class.
 
