@@ -10,7 +10,7 @@ http://developers.yubico.com/U2F[developers.yubico.com/U2F].
  <dependency>
    <groupId>com.yubico</groupId>
    <artifactId>u2flib-server-core</artifactId>
-   <version>0.11.0</version>
+   <version>0.12.1</version>
  </dependency>
 
 === API
