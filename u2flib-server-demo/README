@@ -5,7 +5,7 @@ class.
 
 === Usage
 Compile using `mvn clean install` and then run using
-`java -jar target/java-u2flib-server-demo.jar server config.yml`.
+`java -jar target/u2flib-server-demo.jar server config.yml`.
 
 The demo server is configured to use _example.com:8080_ as _AppID_.
 This mean that you must add the following to your hosts file:

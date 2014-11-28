@@ -1,11 +1,13 @@
 package demo;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.*;
-import com.google.common.io.Files;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.*;
+import com.yubico.u2f.data.messages.AuthenticateRequestData;
+import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterRequestData;
+import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.U2fException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
@@ -13,8 +15,7 @@ import io.dropwizard.views.View;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.io.File;
-import java.net.URL;
+import javax.ws.rs.core.Response;
 import java.util.*;
 
 @Path("/")
@@ -84,15 +85,17 @@ public class Resource {
 
     @Path("loginIndex")
     @GET
-    public String loginIndex() throws Exception {
-        URL index = Resource.class.getResource("loginIndex.html");
-        return Files.toString(new File(index.toURI()), Charsets.UTF_8);
+    public Response loginIndex() throws Exception {
+      return Response.ok()
+              .entity(Resource.class.getResourceAsStream("loginIndex.html"))
+              .build();
     }
 
     @Path("registerIndex")
     @GET
-    public String registerIndex() throws Exception {
-        URL defaultImage = Resource.class.getResource("registerIndex.html");
-        return Files.toString(new File(defaultImage.toURI()), Charsets.UTF_8);
+    public Response registerIndex() throws Exception {
+        return Response.ok()
+                .entity(Resource.class.getResourceAsStream("registerIndex.html"))
+                .build();
     }
 }
