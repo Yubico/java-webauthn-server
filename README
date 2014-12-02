@@ -2,9 +2,6 @@
 Server-side https://fidoalliance.org/specifications[U2F] library for Java. Provides functionality for registering
 U2F devices and authenticate with said devices.
 
-NOTE: To learn about U2F and how to use a U2F library, visit
-http://developers.yubico.com/U2F[developers.yubico.com/U2F].
-
 === Dependency
 [source, xml]
  <dependency>
@@ -14,6 +11,7 @@ http://developers.yubico.com/U2F[developers.yubico.com/U2F].
  </dependency>
 
 === Example Usage
+NOTE: Make sure that you have read https://developers.yubico.com/U2F/Libraries/Using_a_library.html[Using a U2F library] before continuing.
 
 [source, java]
 ----
