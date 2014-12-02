@@ -76,7 +76,7 @@ RegisterRequest registerRequest = U2F.finishRegistration(...);
 persistentStorage.put(user, registerRequest.toJson());
 ----
 
-NOTE: All relevant classes implements `Serializable`, so instead of using the `toJson()` method, you can use Java's built in serialization mechanism.
+NOTE: All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
 
 === Advanced topics
 
