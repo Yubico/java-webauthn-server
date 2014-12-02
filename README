@@ -51,30 +51,6 @@ See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (in
 === JavaDoc
 JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
 
-=== Storing data
-
-==== Register and Authenticate Requests
-
-A RegisterRequest and its corresponding RegisterResponse shares a common _request ID_ (same goes for AuthenticateRequest and AuthenticateResponses). Thus, the request ID could well be used as a key when storing these objects:
-
-[source, java]
-----
-RegisterRequest registerRequest = U2F.startRegistration(...);
-temporaryStorage.put(registerRequest.getRequestId(), registerRequest.toJson());
-----
-
-
-==== Device Registration
-
-DeviceRegistrations are typically tied to users:
-
-[source, java]
-----
-RegisterRequest registerRequest = U2F.finishRegistration(...);
-persistentStorage.put(user, registerRequest.toJson());
-----
-
-NOTE: All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
 
 === Advanced topics
 
@@ -87,3 +63,6 @@ DeviceRegistration registration =
 	U2F.finishRegistration(request, response);
 registration.getAttestationCertificate().verify(VENDOR_CA);
 ----
+
+==== Serialization
+All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
