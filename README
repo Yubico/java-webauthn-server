@@ -11,7 +11,7 @@ U2F devices and authenticate with said devices.
  </dependency>
 
 === Example Usage
-NOTE: Make sure that you have read https://developers.yubico.com/U2F/Libraries/Using_a_library.html[Using a U2F library] before continuing.
+IMPORTANT: Make sure that you have read https://developers.yubico.com/U2F/Libraries/Using_a_library.html[Using a U2F library] before continuing.
 
 [source, java]
 ----
