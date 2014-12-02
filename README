@@ -32,20 +32,23 @@ public View startAuthentication(String username) throws U2fException {
 }
 
 @POST
-public String finishAuthentication(AuthenticateResponse response, String username) throws U2fException {
+public String finishAuthentication(AuthenticateResponse response, String username)
+		throws U2fException {
 
 	// Get the challenges that we stored when starting the authentication
 	AuthenticateRequestData authenticateRequest
 		= requestStorage.remove(authenticateResponse.getRequestId());
 
 	// Verify the that the given response is valid for one of the registered devices
-	u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
+	u2f.finishAuthentication(authenticateRequest,
+				 authenticateResponse, 
+				 getRegistrations(username));
 
 	return "Successfully authenticated!";
 }
 ----
 
-See link:u2flib-server-demo[`u2flib-server-demo`]; a simple demo server, showcasing a fully functional example.
+See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (including registration of U2F devices).
 
 === JavaDoc
 JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
