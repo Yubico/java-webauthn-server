@@ -1,5 +1,5 @@
 == java-u2flib-server
-Serverside https://fidoalliance.org/specifications[U2F] library for Java (and other JVM languages). Provides functionality for registering
+Server-side https://fidoalliance.org/specifications[U2F] library for Java (and other JVM languages). Provides functionality for registering
 U2F devices and authenticate with said devices.
 
 NOTE: To learn about U2F and how to use a U2F library, visit
@@ -13,60 +13,41 @@ http://developers.yubico.com/U2F[developers.yubico.com/U2F].
    <version>0.12.1</version>
  </dependency>
 
-=== API
-The library exposes the following methods in the `U2F` class:
+=== Example Usage
 
-[source,java]
+[source, java]
 ----
-/**
-* Initiates the registration of a device.
-*
-* @param appId the U2F AppID. // <1>
-* @return a RegisterRequest, which should be sent to the client and temporary saved by
-* the server.
-*/
-public RegisterRequest startRegistration(String appId);
+@GET
+public View startAuthentication(String username) throws U2fException {
 
-/**
-* Finishes a previously started registration.
-*
-* @param request
-* @param response the response from the device/client.
-* @return a DeviceRegistration. Servers should persist this.
-*/
-public void finishRegistration(
-	RegisterRequest request,
-	RegisterResponse response
-) throws U2fException;
+	// Generate a challenge for each U2F device that this user has registered
+	AuthenticateRequestData requestData
+		= u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
 
-/**
-* Initiates the authentication process.
-*
-* @param appId the U2F AppID. // <1>
-* @param the previously finished registration, for which to initiate authentication.
-* @return a AuthenticateRequest which should be sent to the client and temporary saved by
-* the server.
-*/
-public AuthenticateRequest startAuthentication(
-	String appId, 
-	DeviceRegistration registration
-);
+	// Store the challenges for future reference
+	requestStorage.put(requestData.getRequestId(), requestData.toJson());
 
-/**
-* Finishes a previously started authentication.
-*
-* @param authenticateRequest
-* @param response the response from the device/client.
-* @param the same registration that was passed to startAuthentication().
-*/
-public int finishAuthentication(
-	AuthenticateRequest request,
-	AuthenticateResponse response,
-	DeviceRegistration registration
-) throws U2fException;
+	// Return an HTML page containing the challenges
+	return new AuthenticationView(requestData.toJson(), username);
+}
+
+@POST
+public String finishAuthentication(AuthenticateResponse response, String username) throws U2fException {
+
+	// Get the challenges that we stored when starting the authentication
+	AuthenticateRequestData authenticateRequest
+		= requestStorage.remove(authenticateResponse.getRequestId());
+
+	// Verify the that the given response is valid for one of the registered devices
+	u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
+
+	return "Successfully authenticated!";
+}
 ----
-<1> The `appId` parameter is explained link:https://developers.yubico.com/U2F/App_ID.html[here].
 
+See link:u2flib-server-demo[`u2flib-server-demo`]; a simple demo server, showcasing a fully functional example.
+
+=== JavaDoc
 JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
 
 === Storing data
@@ -93,10 +74,6 @@ persistentStorage.put(user, registerRequest.toJson());
 ----
 
 NOTE: All relevant classes implements `Serializable`, so instead of using the `toJson()` method, you can use Java's built in serialization mechanism.
-
-
-=== Real world example
-See link:u2flib-server-demo[`u2flib-server-demo`]; a simple demo server, showcasing a real world example.
 
 === Advanced topics
 
