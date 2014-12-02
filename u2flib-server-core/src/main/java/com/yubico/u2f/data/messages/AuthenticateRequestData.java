@@ -3,7 +3,7 @@ package com.yubico.u2f.data.messages;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.yubico.u2f.U2F;
+import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.json.JsonObject;
@@ -19,7 +19,7 @@ public class AuthenticateRequestData extends JsonObject implements Persistable {
 
     private final List<AuthenticateRequest> authenticateRequests;
 
-    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2F u2f, ChallengeGenerator challengeGenerator) throws U2fException {
+    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fException {
         if(Iterables.isEmpty(devices)) {
             throw new NoDevicesRegisteredException();
         }

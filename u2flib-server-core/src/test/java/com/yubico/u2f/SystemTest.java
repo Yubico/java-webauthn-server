@@ -16,7 +16,7 @@ public class SystemTest {
     public static final ImmutableSet<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
     public static final String APP_ID = "my-app";
     private static Scanner scan = new Scanner(System.in);
-    private static final U2F u2f = new U2F();
+    private static final U2fPrimitives u2f = new U2fPrimitives();
 
     /*
       For manual testing with physical keys. Can e.g. be combined with these libu2f-host commands:

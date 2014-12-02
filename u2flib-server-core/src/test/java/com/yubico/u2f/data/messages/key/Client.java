@@ -2,7 +2,7 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
-import com.yubico.u2f.U2F;
+import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.AuthenticateRequest;
@@ -28,7 +28,7 @@ public class Client {
     private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
     private final Gson gson = new Gson();
     private final SoftKey key;
-    private final U2F u2f = new U2F();
+    private final U2fPrimitives u2f = new U2fPrimitives();
 
     public Client(SoftKey key) {
         this.key = key;

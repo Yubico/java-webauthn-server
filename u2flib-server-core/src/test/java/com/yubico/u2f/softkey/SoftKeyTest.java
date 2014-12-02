@@ -1,6 +1,6 @@
 package com.yubico.u2f.softkey;
 
-import com.yubico.u2f.U2F;
+import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
@@ -22,11 +22,11 @@ public class SoftKeyTest {
 
     public static final String APP_ID = "my-app";
 
-    private U2F u2f;
+    private U2fPrimitives u2f;
 
     @Before
     public void setup() {
-        u2f = new U2F();
+        u2f = new U2fPrimitives();
     }
 
     @Test

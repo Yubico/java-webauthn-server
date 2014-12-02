@@ -10,7 +10,7 @@
 package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
-import com.yubico.u2f.U2F;
+import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.messages.json.JsonObject;
 import com.yubico.u2f.data.messages.json.Persistable;
 
@@ -24,7 +24,7 @@ public class RegisterRequest extends JsonObject implements Persistable {
      * Version of the protocol that the to-be-registered U2F token must speak. For
      * the version of the protocol described herein, must be "U2F_V2"
      */
-    private final String version = U2F.U2F_VERSION;
+    private final String version = U2fPrimitives.U2F_VERSION;
 
     /**
      * The websafe-base64-encoded challenge.

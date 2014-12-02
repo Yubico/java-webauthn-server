@@ -29,9 +29,9 @@ import static com.yubico.u2f.testdata.TestVectors.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-public class U2FTest {
+public class U2fPrimitivesTest {
     final HashSet<String> allowedOrigins = new HashSet<String>();
-    U2F u2f = new U2F();
+    U2fPrimitives u2f = new U2fPrimitives();
 
     @Before
     public void setup() throws Exception {
