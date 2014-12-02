@@ -30,19 +30,6 @@ public class Resource {
     private final Multimap<String, String> userStorage = ArrayListMultimap.create();
     private final U2F u2f = new U2F();
 
-    private Iterable<DeviceRegistration> getRegistrations(String username) {
-        Collection<String> serializedRegistrations = userStorage.get(username);
-        List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
-        for(String serialized : serializedRegistrations) {
-            registrations.add(DeviceRegistration.fromJson(serialized));
-        }
-        return registrations;
-    }
-
-    private void addRegistration(String username, DeviceRegistration registration) {
-        userStorage.put(username, registration.toJson());
-    }
-
     @Path("startRegistration")
     @GET
     public View startRegistration(@QueryParam("username") String username) {
@@ -56,10 +43,9 @@ public class Resource {
     public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username)
             throws U2fException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
-        RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.get(registerResponse.getRequestId()));
+        RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.remove(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
         addRegistration(username, registration);
-        requestStorage.remove(registerResponse.getRequestId());
         return "<p>Successfully registered device:</p><pre>" +
                 registration +
                 "</pre>" + NAVIGATION_MENU;
@@ -78,10 +64,22 @@ public class Resource {
     public String finishAuthentication(@FormParam("tokenResponse") String response,
                                        @FormParam("username") String username) throws U2fException {
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
-        AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.get(authenticateResponse.getRequestId()));
-        requestStorage.remove(authenticateResponse.getRequestId());
+        AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.remove(authenticateResponse.getRequestId()));
         u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
         return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
+    }
+
+    private Iterable<DeviceRegistration> getRegistrations(String username) {
+        Collection<String> serializedRegistrations = userStorage.get(username);
+        List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
+        for(String serialized : serializedRegistrations) {
+            registrations.add(DeviceRegistration.fromJson(serialized));
+        }
+        return registrations;
+    }
+
+    private void addRegistration(String username, DeviceRegistration registration) {
+        userStorage.put(username, registration.toJson());
     }
 
     @Path("loginIndex")
