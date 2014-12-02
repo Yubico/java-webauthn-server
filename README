@@ -1,5 +1,5 @@
 == java-u2flib-server
-Server-side https://fidoalliance.org/specifications[U2F] library for Java. Provides functionality for registering
+Server-side https://developers.yubico.com/U2F[U2F] library for Java. Provides functionality for registering
 U2F devices and authenticate with said devices.
 
 === Dependency
