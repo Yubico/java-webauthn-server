@@ -46,7 +46,9 @@ public String finishAuthentication(AuthenticateResponse response, String usernam
 }
 ----
 
-See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (including registration of U2F devices).
+In the above example `getRegistrations()` returns the U2F devices currently associated with a given user.
+This is most likely stored in a database. 
+See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (including registration and storage of U2F devices).
 
 === JavaDoc
 JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
