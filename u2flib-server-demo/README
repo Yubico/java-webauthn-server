@@ -3,14 +3,22 @@ A simple self-contained demo server supporting multiple devices per user. The ce
 https://github.com/Yubico/java-u2flib-server/blob/master/u2flib-server-demo/src/main/java/demo/Resource.java[Resource]
 class.
 
-=== Usage
+=== 1. Clone
+ git clone https://github.com/Yubico/java-u2flib-server.git
+
+=== 2. Compile
+Go to the demo server directory:
+ 
+ cd java-u2flib-server/u2flib-server-demo
+
 Compile using `mvn clean install` and then run using
 `java -jar target/u2flib-server-demo.jar server config.yml`.
 
+=== 3. Run
 The demo server is configured to use _example.com:8080_ as _AppID_.
 This mean that you must add the following to your hosts file:
 
-	127.0.0.1 example.com
+ 127.0.0.1 example.com
 
 Then point a U2F-compatible web browser (e.g. Chrome) to
 link:http://example.com:8080/registerIndex[example.com:8080/registerIndex].
