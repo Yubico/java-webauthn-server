@@ -23,7 +23,7 @@ import java.util.*;
 @Produces(MediaType.TEXT_HTML)
 public class Resource {
 
-    public static final String SERVER_ADDRESS = "http://example.com:8080";
+    public static final String SERVER_ADDRESS = "http://localhost:8080";
     public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='registerIndex'>Register</a></li><li><a href='loginIndex'>Login</a></li></ul>.";
 
     private final Map<String, String> requestStorage = new HashMap<String, String>();
