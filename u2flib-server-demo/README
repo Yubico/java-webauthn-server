@@ -16,4 +16,4 @@ Compile using `mvn clean install` and then run using
 
 === 3. Run
 Then point a U2F-compatible web browser (e.g. Chrome) to
-link:http://localhost.com:8080/registerIndex[localhost.com:8080/registerIndex].
+link:http://localhost:8080/registerIndex[localhost:8080/registerIndex].
