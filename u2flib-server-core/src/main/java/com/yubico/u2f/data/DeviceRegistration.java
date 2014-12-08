@@ -119,7 +119,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
         return super.toJson();
     }
 
-    public void checkAndUpdateCounter(int clientCounter) throws U2fException {
+    public void checkAndUpdateCounter(long clientCounter) throws U2fException {
         if (clientCounter <= counter) {
             throw new InvalidDeviceCounterException();
         }

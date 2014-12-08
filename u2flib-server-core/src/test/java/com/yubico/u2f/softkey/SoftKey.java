@@ -27,7 +27,7 @@ public final class SoftKey implements Cloneable {
     private final X509Certificate attestationCertificate;
     private final PrivateKey certificatePrivateKey;
     private final Map<String, KeyPair> dataStore;
-    private int deviceCounter = 0;
+    private long deviceCounter = 0;
 
     public SoftKey() {
         this(
@@ -40,7 +40,7 @@ public final class SoftKey implements Cloneable {
 
     public SoftKey(
             Map<String, KeyPair> dataStore,
-            int deviceCounter,
+            long deviceCounter,
             X509Certificate attestationCertificate,
             PrivateKey certificatePrivateKey
     ) {
@@ -102,7 +102,7 @@ public final class SoftKey implements Cloneable {
         byte[] keyHandle = authenticateRequest.getKeyHandle();
 
         KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
-        int counter = ++deviceCounter;
+        long counter = ++deviceCounter;
         byte[] signedData = RawAuthenticateResponse.packBytesToSign(applicationSha256, RawAuthenticateResponse.USER_PRESENT_FLAG,
                 counter, challengeSha256);
 

@@ -19,9 +19,12 @@ public class ByteSink {
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     private final DataOutputStream dataOutputStream = new DataOutputStream(baos);
 
-    public ByteSink putInt(int i) {
+    public ByteSink putUnsignedInt(long v) {
         try {
-            dataOutputStream.writeInt(i);
+            dataOutputStream.writeByte((int) (v >>> 24) & 0xFF);
+            dataOutputStream.writeByte((int) (v >>> 16) & 0xFF);
+            dataOutputStream.writeByte((int) (v >>> 8) & 0xFF);
+            dataOutputStream.writeByte((int) (v >>> 0) & 0xFF);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

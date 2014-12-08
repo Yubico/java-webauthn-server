@@ -18,7 +18,7 @@ public class CodecTestUtils {
     public static byte[] encodeAuthenticateResponse(RawAuthenticateResponse rawAuthenticateResponse) {
         return ByteSink.create()
                 .put(rawAuthenticateResponse.getUserPresence())
-                .putInt(rawAuthenticateResponse.getCounter())
+                .putUnsignedInt(rawAuthenticateResponse.getCounter())
                 .put(rawAuthenticateResponse.getSignature())
                 .toByteArray();
     }

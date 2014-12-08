@@ -27,15 +27,15 @@ public class RawAuthenticateResponse {
     public static final byte USER_PRESENT_FLAG = 0x01;
 
     private final byte userPresence;
-    private final int counter;
+    private final long counter;
     private final byte[] signature;
     private final Crypto crypto;
 
-    public RawAuthenticateResponse(byte userPresence, int counter, byte[] signature) {
+    public RawAuthenticateResponse(byte userPresence, long counter, byte[] signature) {
         this(userPresence, counter, signature, new BouncyCastleCrypto());
     }
 
-    public RawAuthenticateResponse(byte userPresence, int counter, byte[] signature, Crypto crypto) {
+    public RawAuthenticateResponse(byte userPresence, long counter, byte[] signature, Crypto crypto) {
         this.userPresence = userPresence;
         this.counter = counter;
         this.signature = signature;
@@ -66,11 +66,11 @@ public class RawAuthenticateResponse {
         );
     }
 
-    public static byte[] packBytesToSign(byte[] appIdHash, byte userPresence, int counter, byte[] challengeHash) {
+    public static byte[] packBytesToSign(byte[] appIdHash, byte userPresence, long counter, byte[] challengeHash) {
         return ByteSink.create()
                 .put(appIdHash)
                 .put(userPresence)
-                .putInt(counter)
+                .putUnsignedInt(counter)
                 .put(challengeHash)
                 .toByteArray();
     }
@@ -90,7 +90,7 @@ public class RawAuthenticateResponse {
      * This is the big-endian representation of a counter value that the U2F device
      * increments every time it performs an authentication operation.
      */
-    public int getCounter() {
+    public long getCounter() {
         return counter;
     }
 

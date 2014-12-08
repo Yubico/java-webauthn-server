@@ -108,7 +108,7 @@ public class Client {
         String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());
         byte[] authData = ByteSink.create()
                 .put(rawAuthenticateResponse.getUserPresence())
-                .putInt(rawAuthenticateResponse.getCounter())
+                .putUnsignedInt(rawAuthenticateResponse.getCounter())
                 .put(rawAuthenticateResponse.getSignature())
                 .toByteArray();
 
