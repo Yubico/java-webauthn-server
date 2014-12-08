@@ -100,8 +100,7 @@ public class SoftKeyTest {
     }
 
     private Client createClient() {
-        SoftKey key = new SoftKey();
-        return new Client(key);
+        return new Client(new SoftKey());
     }
 
     private void authenticateUsing(Client client, DeviceRegistration registeredDevice) throws Exception {

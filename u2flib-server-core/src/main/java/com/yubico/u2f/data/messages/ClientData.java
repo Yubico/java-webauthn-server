@@ -25,28 +25,22 @@ public class ClientData {
     private final String challenge;
     private final String origin;
     private final String rawClientData;
+    private final JsonObject jsonObject;
 
     public String asJson() {
         return rawClientData;
     }
 
     public ClientData(String clientData) throws U2fException {
-
         this.rawClientData = new String(U2fB64Encoding.decode(clientData));
         JsonElement clientDataAsElement = new JsonParser().parse(rawClientData);
         if (!clientDataAsElement.isJsonObject()) {
-            throw new U2fException("ClientData has wrong format");
+            throw new U2fException("ClientData is not valid JSON.");
         }
-        JsonObject jsonObject = clientDataAsElement.getAsJsonObject();
-        if (!jsonObject.has(TYPE_PARAM)) {
-            throw new U2fException("Bad clientData: missing 'typ' param");
-        }
-        this.type = jsonObject.get(TYPE_PARAM).getAsString();
-        if (!jsonObject.has(CHALLENGE_PARAM)) {
-            throw new U2fException("Bad clientData: missing 'challenge' param");
-        }
-        this.challenge = jsonObject.get(CHALLENGE_PARAM).getAsString();
-        this.origin = checkNotNull(jsonObject.get(ORIGIN_PARAM).getAsString());
+        jsonObject = clientDataAsElement.getAsJsonObject();
+        this.type = getString(TYPE_PARAM);
+        this.challenge = getString(CHALLENGE_PARAM);
+        this.origin = getString(ORIGIN_PARAM);
     }
 
     @Override
@@ -56,6 +50,13 @@ public class ClientData {
 
     public String getChallenge() {
         return challenge;
+    }
+
+    public String getString(String key) throws U2fException {
+        if (!jsonObject.has(key)) {
+            throw new U2fException("Missing missing '" + key + "' param in clientData.");
+        }
+        return jsonObject.get(key).getAsString();
     }
 
     public void checkContent(String type, String challenge, Optional<Set<String>> facets) throws U2fException {
