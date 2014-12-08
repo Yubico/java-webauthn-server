@@ -1,0 +1,7 @@
+* Version 0.13.1 (unreleased)
+ ** Changed demo server URL to `localhost:8080`.
+ ** Added the method `ClientData.getString` to get arbitrary clientData fields.
+
+* Version 0.13.0
+ ** Added built-in support for multiple devices per user.
+ ** Fixed demo server bug when running from jar. Thanks to axianx.
