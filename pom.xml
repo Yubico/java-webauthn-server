@@ -38,6 +38,7 @@
     <modules>
         <module>u2flib-server-core</module>
         <module>u2flib-server-demo</module>
+        <module>u2flib-server-attestation</module>
     </modules>
 
     <distributionManagement>
