@@ -2,6 +2,7 @@
 
 package com.yubico.u2f.attestation;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Predicates;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -9,11 +10,18 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.yubico.u2f.attestation.matchers.OidMatcher;
+import com.yubico.u2f.attestation.matchers.ExtensionMatcher;
+import com.yubico.u2f.attestation.resolvers.SimpleResolver;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -23,8 +31,24 @@ public class MetadataService {
     public static final String SELECTOR = "selector";
 
     public static final Set<DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableSet.of(
-            (DeviceMatcher) new OidMatcher()
+            (DeviceMatcher) new ExtensionMatcher()
     );
+
+    private static MetadataResolver createDefaultMetadataResolver() {
+        SimpleResolver resolver = new SimpleResolver();
+        InputStream is = null;
+        try {
+            is = MetadataService.class.getResourceAsStream("/metadata.json");
+            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } finally {
+            Closeables.closeQuietly(is);
+        }
+        return resolver;
+    }
 
     private final Attestation unknownAttestation = new Attestation(null, null, null);
     private final MetadataResolver resolver;
@@ -32,12 +56,16 @@ public class MetadataService {
     private final Cache<String, Attestation> cache;
 
     public MetadataService(MetadataResolver resolver, Cache<String, Attestation> cache, Collection<? extends DeviceMatcher> matchers) {
-        this.resolver = resolver;
+        this.resolver = resolver != null ? resolver : createDefaultMetadataResolver();
         this.cache = cache != null ? cache : CacheBuilder.newBuilder().<String, Attestation>build();
         if (matchers == null) {
             matchers = DEFAULT_DEVICE_MATCHERS;
         }
         this.matchers.addAll(matchers);
+    }
+
+    public MetadataService() {
+        this(null, null, null);
     }
 
     public MetadataService(MetadataResolver resolver) {
