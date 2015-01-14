@@ -1,3 +1,5 @@
+/* Copyright 2015 Yubico */
+
 package com.yubico.u2f.attestation;
 
 import com.google.common.base.Predicates;
@@ -17,9 +19,6 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-/**
- * Created by dain on 12/5/14.
- */
 public class MetadataService {
     public static final String SELECTOR = "selector";
 
@@ -88,7 +87,7 @@ public class MetadataService {
             });
         } catch (ExecutionException e) {
             return unknownAttestation;
-        } catch(CertificateEncodingException e) {
+        } catch (CertificateEncodingException e) {
             return unknownAttestation;
         }
     }

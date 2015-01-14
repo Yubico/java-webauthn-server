@@ -1,14 +1,12 @@
+/* Copyright 2015 Yubico */
+
 package com.yubico.u2f.attestation;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.Serializable;
 import java.util.Map;
 
-/**
- * Created by dain on 12/5/14.
- */
 public class Attestation implements Serializable {
     private final String metadataIdentifier;
     private final Map<String, String> vendorProperties;

@@ -1,3 +1,5 @@
+/* Copyright 2015 Yubico */
+
 package com.yubico.u2f.attestation;
 
 import com.google.common.base.MoreObjects;
