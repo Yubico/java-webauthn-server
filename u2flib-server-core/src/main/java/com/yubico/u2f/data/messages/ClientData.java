@@ -13,8 +13,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class ClientData {
 
     private static final String TYPE_PARAM = "typ";

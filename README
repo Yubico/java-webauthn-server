@@ -7,7 +7,7 @@ U2F devices and authenticate with said devices.
  <dependency>
    <groupId>com.yubico</groupId>
    <artifactId>u2flib-server-core</artifactId>
-   <version>0.13.0</version>
+   <version>0.13.1</version>
  </dependency>
 
 === Example Usage
@@ -56,14 +56,26 @@ JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[develop
 
 === Advanced topics
 
-==== Verifying attestation certificates.
-Attestation certificates can be verified like this:
+==== Verifying attestation certificates and device metadata.
+Attestation certificates can be verified, and additional device metadata can be provided, by use of the u2flib-server-attestation module.
+To use this module, you will need to add it as a dependency to your project:
+
+[source, xml]
+ <dependency>
+   <groupId>com.yubico</groupId>
+   <artifactId>u2flib-server-attestation</artifactId>
+   <version>0.13.1</version>
+ </dependency>
+
+This allows you to extract attestation data through the MetadataService class:
 
 [source,java]
 ----
 DeviceRegistration registration = U2F.finishRegistration(request, response);
-registration.getAttestationCertificate().verify(VENDOR_CA);
+Attestation attestation = metadataService.getAttestation(registration.getAttestationCertificate();
 ----
+
+The Attestation class lets you know if the attestation certificate from the registration is trusted, and provides you with metadata about the vendor as well as the device itself.
 
 ==== Serialization
 All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.

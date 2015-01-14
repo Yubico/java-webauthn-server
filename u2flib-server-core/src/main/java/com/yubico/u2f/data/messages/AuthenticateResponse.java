@@ -10,14 +10,14 @@
 package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
-import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class AuthenticateResponse extends JsonObject implements Persistable {
+public class AuthenticateResponse extends JsonSerializable implements Persistable {
     private static final int MAX_SIZE = 20000;
 
     /* base64(client data) */
@@ -74,6 +74,6 @@ public class AuthenticateResponse extends JsonObject implements Persistable {
 
     public static AuthenticateResponse fromJson(String json) {
         checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
-        return GSON.fromJson(json, AuthenticateResponse.class);
+        return fromJson(json, AuthenticateResponse.class);
     }
 }

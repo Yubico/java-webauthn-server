@@ -11,12 +11,12 @@ package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
 import com.yubico.u2f.U2fPrimitives;
-import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class AuthenticateRequest extends JsonObject implements Persistable {
+public class AuthenticateRequest extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = -27808961388655010L;
 
@@ -90,6 +90,6 @@ public class AuthenticateRequest extends JsonObject implements Persistable {
     }
 
     public static AuthenticateRequest fromJson(String json) {
-        return GSON.fromJson(json, AuthenticateRequest.class);
+        return fromJson(json, AuthenticateRequest.class);
     }
 }

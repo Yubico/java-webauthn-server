@@ -6,14 +6,14 @@ import com.google.common.collect.Iterables;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.NoDevicesRegisteredException;
 import com.yubico.u2f.exceptions.U2fException;
 
 import java.util.List;
 
-public class AuthenticateRequestData extends JsonObject implements Persistable {
+public class AuthenticateRequestData extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = 35378338769078256L;
 
@@ -52,6 +52,6 @@ public class AuthenticateRequestData extends JsonObject implements Persistable {
     }
 
     public static AuthenticateRequestData fromJson(String json) {
-        return GSON.fromJson(json, AuthenticateRequestData.class);
+        return fromJson(json, AuthenticateRequestData.class);
     }
 }

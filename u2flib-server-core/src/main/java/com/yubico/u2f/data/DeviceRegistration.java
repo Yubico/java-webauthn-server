@@ -11,7 +11,7 @@ package com.yubico.u2f.data;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.yubico.u2f.data.messages.json.JsonObject;
+import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
@@ -22,9 +22,8 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 
-public class DeviceRegistration extends JsonObject implements Serializable {
+public class DeviceRegistration extends JsonSerializable implements Serializable {
     private static final long serialVersionUID = -142942195464329902L;
     public static final long INITIAL_COUNTER_VALUE = -1;
 
@@ -107,7 +106,7 @@ public class DeviceRegistration extends JsonObject implements Serializable {
     }
 
     public static DeviceRegistration fromJson(String json) {
-        return GSON.fromJson(json, DeviceRegistration.class);
+        return fromJson(json, DeviceRegistration.class);
     }
 
     @Override
