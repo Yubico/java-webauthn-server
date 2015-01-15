@@ -19,8 +19,10 @@ public class ExtensionMatcher implements DeviceMatcher {
         String matchKey = parameters.getAsJsonObject().get(EXTENSION_KEY).getAsString();
         JsonElement matchValue = parameters.getAsJsonObject().get(EXTENSION_VALUE);
         byte[] extensionValue = attestationCertificate.getExtensionValue(matchKey);
-        if (matchValue == null || matchValue.getAsString().equals(Strings.fromByteArray(extensionValue))) {
-            return true;
+        if(extensionValue != null) {
+            if (matchValue == null || matchValue.getAsString().equals(Strings.fromByteArray(extensionValue))) {
+                return true;
+            }
         }
         return false;
     }

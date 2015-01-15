@@ -20,6 +20,6 @@ public class MetadataServiceTest {
 
         assertTrue(attestation.isTrusted());
         assertEquals("Yubico", attestation.getVendorProperties().get("name"));
-        assertEquals("1.3.6.1.4.1.41482.1.1", attestation.getDeviceProperties().get("deviceId"));
+        assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get("deviceId"));
     }
 }
