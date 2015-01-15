@@ -8,13 +8,22 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
 public class MetadataObject extends JsonSerializable {
-    private final JsonObject data;
+    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
+    }.getType();
+    private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() {
+    }.getType();
+    private static final Type LIST_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() {
+    }.getType();
+
+    private final transient String json;
 
     private final String identifier;
     private final long version;
@@ -22,18 +31,20 @@ public class MetadataObject extends JsonSerializable {
     private final List<String> trustedCertificates;
     private final List<JsonObject> devices;
 
-    private MetadataObject() {
-        data = null;
-        identifier = null;
-        version = -1;
-        vendorInfo = null;
-        trustedCertificates = null;
-        devices = null; // Gson requires a no-args constructor.
+    private MetadataObject(String json) {
+        this.json = json;
+        JsonObject data = new JsonParser().parse(json).getAsJsonObject();
+
+        identifier = data.get("identifier").getAsString();
+        version = data.get("version").getAsLong();
+        vendorInfo = GSON.fromJson(data.get("vendorInfo"), MAP_STRING_STRING_TYPE);
+        trustedCertificates = GSON.fromJson(data.get("trustedCertificates"), LIST_STRING_TYPE);
+        devices = GSON.fromJson(data.get("devices"), LIST_JSONOBJECT_TYPE);
     }
 
     @Override
     public String toJson() {
-        return data.toString();
+        return json;
     }
 
     public String getIdentifier() {
@@ -74,6 +85,6 @@ public class MetadataObject extends JsonSerializable {
     }
 
     public static MetadataObject fromJson(String json) {
-        return fromJson(json, MetadataObject.class);
+        return new MetadataObject(json);
     }
 }
