@@ -7,7 +7,6 @@ import com.google.common.base.Predicates;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.CharStreams;
@@ -23,15 +22,18 @@ import java.io.InputStreamReader;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 public class MetadataService {
-    public static final String SELECTOR = "selector";
+    public static final String SELECTORS = "selectors";
+    private static final String SELECTOR_TYPE = "type";
+    private static final String SELECTOR_PARAMETERS = "parameters";
 
-    public static final Set<DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableSet.of(
-            (DeviceMatcher) new ExtensionMatcher()
+    public static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableMap.of(
+            ExtensionMatcher.EXTENSION_TYPE, (DeviceMatcher) new ExtensionMatcher()
     );
 
     private static MetadataResolver createDefaultMetadataResolver() {
@@ -52,16 +54,16 @@ public class MetadataService {
 
     private final Attestation unknownAttestation = new Attestation(null, null, null);
     private final MetadataResolver resolver;
-    private final List<DeviceMatcher> matchers = new ArrayList<DeviceMatcher>();
+    private final Map<String, DeviceMatcher> matchers = new HashMap<String, DeviceMatcher>();
     private final Cache<String, Attestation> cache;
 
-    public MetadataService(MetadataResolver resolver, Cache<String, Attestation> cache, Collection<? extends DeviceMatcher> matchers) {
+    public MetadataService(MetadataResolver resolver, Cache<String, Attestation> cache, Map<String, ? extends DeviceMatcher> matchers) {
         this.resolver = resolver != null ? resolver : createDefaultMetadataResolver();
         this.cache = cache != null ? cache : CacheBuilder.newBuilder().<String, Attestation>build();
         if (matchers == null) {
             matchers = DEFAULT_DEVICE_MATCHERS;
         }
-        this.matchers.addAll(matchers);
+        this.matchers.putAll(matchers);
     }
 
     public MetadataService() {
@@ -72,7 +74,7 @@ public class MetadataService {
         this(resolver, null, null);
     }
 
-    public MetadataService(MetadataResolver resolver, Collection<? extends DeviceMatcher> matchers) {
+    public MetadataService(MetadataResolver resolver, Map<String, ? extends DeviceMatcher> matchers) {
         this(resolver, null, matchers);
     }
 
@@ -80,24 +82,22 @@ public class MetadataService {
         this(resolver, cache, null);
     }
 
-    public void registerDeviceMatcher(DeviceMatcher matcher) {
-        matchers.add(matcher);
+    public void registerDeviceMatcher(String matcherType, DeviceMatcher matcher) {
+        matchers.put(matcherType, matcher);
     }
 
-    private boolean deviceMatches(JsonElement selector, X509Certificate attestationCertificate) {
-        if (selector != null && !selector.isJsonNull()) {
-            try {
-                for (DeviceMatcher matcher : matchers) {
-                    if (matcher.matches(attestationCertificate, selector.getAsJsonObject())) {
-                        return true;
-                    }
+    private boolean deviceMatches(JsonElement selectors, X509Certificate attestationCertificate) {
+        if (selectors != null && !selectors.isJsonNull()) {
+            for (JsonElement selectorElement : selectors.getAsJsonArray()) {
+                JsonObject selector = selectorElement.getAsJsonObject();
+                DeviceMatcher matcher = matchers.get(selector.get(SELECTOR_TYPE).getAsString());
+                if (matcher != null && matcher.matches(attestationCertificate, selector.get(SELECTOR_PARAMETERS))) {
+                    return true;
                 }
-            } catch (Exception e) {
-                //Fall through to return false.
             }
             return false;
         }
-        return true; //Match if selector is absent.
+        return true; //Match if selectors is null or missing.
     }
 
     public Attestation getCachedAttestation(String attestationCertificateFingerprint) {
@@ -126,7 +126,7 @@ public class MetadataService {
             Map<String, String> vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
             Map<String, String> deviceProperties = null;
             for (JsonObject device : metadata.getDevices()) {
-                if (deviceMatches(device.get(SELECTOR), attestationCertificate)) {
+                if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
                     ImmutableMap.Builder<String, String> devicePropertiesBuilder = ImmutableMap.builder();
                     for (Map.Entry<String, JsonElement> deviceEntry : device.entrySet()) {
                         JsonElement value = deviceEntry.getValue();

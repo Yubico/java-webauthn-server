@@ -4,19 +4,15 @@ package com.yubico.u2f.attestation.resolvers;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.io.BaseEncoding;
-import com.google.common.io.Closeables;
 import com.yubico.u2f.attestation.MetadataObject;
 import com.yubico.u2f.attestation.MetadataResolver;
+import com.yubico.u2f.data.messages.key.util.CertificateParser;
 
-import java.io.InputStream;
-import java.io.StringReader;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +29,7 @@ public class SimpleResolver implements MetadataResolver {
 
     public void addMetadata(MetadataObject object) throws CertificateException {
         for (String caPem : object.getTrustedCertificates()) {
-            X509Certificate caCert = parsePem(caPem);
+            X509Certificate caCert = CertificateParser.parsePem(caPem);
             certs.put(caCert.getSubjectDN().getName(), caCert);
             metadata.put(caCert, object);
         }
@@ -59,16 +55,5 @@ public class SimpleResolver implements MetadataResolver {
             }
         }
         return null;
-    }
-
-    public static X509Certificate parsePem(String pem) throws CertificateException {
-        pem = pem.replaceAll("-----BEGIN CERTIFICATE-----", "").replaceAll("-----END CERTIFICATE-----", "").replaceAll("\n", "");
-        InputStream inputStream = null;
-        try {
-            inputStream = BaseEncoding.base64().decodingStream(new StringReader(pem));
-            return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(inputStream);
-        } finally {
-            Closeables.closeQuietly(inputStream);
-        }
     }
 }
