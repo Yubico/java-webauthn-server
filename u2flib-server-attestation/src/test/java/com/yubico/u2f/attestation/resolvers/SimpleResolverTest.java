@@ -1,14 +1,13 @@
 package com.yubico.u2f.attestation.resolvers;
 
-import com.google.common.io.BaseEncoding;
 import com.yubico.u2f.attestation.MetadataObject;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
-import org.bouncycastle.util.Strings;
 import org.junit.Test;
 
 import java.security.cert.X509Certificate;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class SimpleResolverTest {
 
