@@ -9,7 +9,7 @@ import org.bouncycastle.util.Strings;
 import java.security.cert.X509Certificate;
 
 public class ExtensionMatcher implements DeviceMatcher {
-    public static final String EXTENSION_TYPE = "x509extension";
+    public static final String EXTENSION_TYPE = "x509Extension";
 
     private static final String EXTENSION_KEY = "key";
     private static final String EXTENSION_VALUE = "value";

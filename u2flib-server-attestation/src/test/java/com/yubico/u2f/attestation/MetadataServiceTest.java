@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.security.cert.X509Certificate;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class MetadataServiceTest {
@@ -18,5 +19,7 @@ public class MetadataServiceTest {
         Attestation attestation = service.getAttestation(attestationCert);
 
         assertTrue(attestation.isTrusted());
+        assertEquals("Yubico", attestation.getVendorProperties().get("name"));
+        assertEquals("1.3.6.1.4.1.41482.1.1", attestation.getDeviceProperties().get("deviceId"));
     }
 }
