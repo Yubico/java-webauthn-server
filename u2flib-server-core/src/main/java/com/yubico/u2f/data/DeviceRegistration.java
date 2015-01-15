@@ -13,6 +13,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
+import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fException;
@@ -62,8 +63,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
         if (attestationCert == null) {
             throw new NoSuchFieldException();
         }
-        return (X509Certificate) CertificateFactory.getInstance("X.509")
-                .generateCertificate(new ByteInputStream(U2fB64Encoding.decode(attestationCert)));
+        return CertificateParser.parseDer(U2fB64Encoding.decode(attestationCert));
     }
 
     public long getCounter() {

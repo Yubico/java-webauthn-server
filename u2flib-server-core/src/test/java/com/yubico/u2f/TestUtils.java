@@ -10,6 +10,7 @@
 package com.yubico.u2f;
 
 import com.google.common.io.BaseEncoding;
+import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -45,15 +46,14 @@ public class TestUtils {
 
     public static X509Certificate parseCertificate(byte[] encodedDerCertificate) {
         try {
-            return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
-                    new ByteArrayInputStream(encodedDerCertificate));
+            return CertificateParser.parseDer(encodedDerCertificate);
         } catch (CertificateException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static X509Certificate parseCertificate(String encodedDerCertificateHex) {
-        return parseCertificate(HEX.decode(encodedDerCertificateHex));
+    public static X509Certificate parseCertificate(String encodedDerCertificateHex) throws CertificateException {
+        return CertificateParser.parseDer(HEX.decode(encodedDerCertificateHex));
     }
 
     public static PrivateKey parsePrivateKey(InputStream is) {

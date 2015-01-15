@@ -15,6 +15,7 @@ import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
 
@@ -83,7 +84,7 @@ public class RawRegisterResponse {
             return new RawRegisterResponse(
                     bytes.read(65),
                     bytes.read(bytes.readUnsigned()),
-                    (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(bytes),
+                    CertificateParser.parseDer(bytes),
                     bytes.readAll(),
                     crypto
             );
