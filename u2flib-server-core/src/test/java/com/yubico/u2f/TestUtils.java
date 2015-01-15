@@ -52,10 +52,6 @@ public class TestUtils {
         }
     }
 
-    public static X509Certificate parseCertificate(String encodedDerCertificateHex) throws CertificateException {
-        return CertificateParser.parseDer(HEX.decode(encodedDerCertificateHex));
-    }
-
     public static PrivateKey parsePrivateKey(InputStream is) {
         String keyBytesHex = new Scanner(is).nextLine();
         return parsePrivateKey(keyBytesHex);
