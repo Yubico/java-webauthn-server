@@ -10,10 +10,11 @@
 package com.yubico.u2f.data.messages.key;
 
 import com.google.common.base.Objects;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
-import com.yubico.u2f.data.messages.key.util.ByteSink;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
 
@@ -67,12 +68,12 @@ public class RawAuthenticateResponse {
     }
 
     public static byte[] packBytesToSign(byte[] appIdHash, byte userPresence, long counter, byte[] challengeHash) {
-        return ByteSink.create()
-                .put(appIdHash)
-                .put(userPresence)
-                .putUnsignedInt(counter)
-                .put(challengeHash)
-                .toByteArray();
+        ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
+        encoded.write(appIdHash);
+        encoded.write(userPresence);
+        encoded.writeInt((int) counter);
+        encoded.write(challengeHash);
+        return encoded.toByteArray();
     }
 
     /**

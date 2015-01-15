@@ -1,6 +1,8 @@
 package com.yubico.u2f.data.messages.key;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
@@ -9,7 +11,6 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
-import com.yubico.u2f.data.messages.key.util.ByteSink;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
 import com.yubico.u2f.softkey.SoftKey;
@@ -106,15 +107,14 @@ public class Client {
         RawAuthenticateResponse rawAuthenticateResponse = key.authenticate(authenticateRequest);
 
         String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());
-        byte[] authData = ByteSink.create()
-                .put(rawAuthenticateResponse.getUserPresence())
-                .putUnsignedInt(rawAuthenticateResponse.getCounter())
-                .put(rawAuthenticateResponse.getSignature())
-                .toByteArray();
+        ByteArrayDataOutput authData = ByteStreams.newDataOutput();
+        authData.write(rawAuthenticateResponse.getUserPresence());
+        authData.writeInt((int) rawAuthenticateResponse.getCounter());
+        authData.write(rawAuthenticateResponse.getSignature());
 
         return new AuthenticateResponse(
                 clientDataBase64,
-                U2fB64Encoding.encode(authData),
+                U2fB64Encoding.encode(authData.toByteArray()),
                 startedAuthentication.getKeyHandle()
         );
     }

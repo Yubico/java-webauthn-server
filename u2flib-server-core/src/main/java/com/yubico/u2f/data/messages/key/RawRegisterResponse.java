@@ -10,11 +10,12 @@
 package com.yubico.u2f.data.messages.key;
 
 import com.google.common.base.Objects;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
-import com.yubico.u2f.data.messages.key.util.ByteSink;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fException;
@@ -99,13 +100,13 @@ public class RawRegisterResponse {
     }
 
     public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey) {
-        return ByteSink.create()
-                .put(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE)
-                .put(appIdHash)
-                .put(clientDataHash)
-                .put(keyHandle)
-                .put(userPublicKey)
-                .toByteArray();
+        ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
+        encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
+        encoded.write(appIdHash);
+        encoded.write(clientDataHash);
+        encoded.write(keyHandle);
+        encoded.write(userPublicKey);
+        return encoded.toByteArray();
     }
 
     public DeviceRegistration createDevice() throws U2fException {

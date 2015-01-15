@@ -9,18 +9,19 @@
 
 package com.yubico.u2f.data.messages.key;
 
-import com.yubico.u2f.data.messages.key.util.ByteSink;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
 import com.yubico.u2f.exceptions.U2fException;
 
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {
     public static byte[] encodeAuthenticateResponse(RawAuthenticateResponse rawAuthenticateResponse) {
-        return ByteSink.create()
-                .put(rawAuthenticateResponse.getUserPresence())
-                .putUnsignedInt(rawAuthenticateResponse.getCounter())
-                .put(rawAuthenticateResponse.getSignature())
-                .toByteArray();
+        ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
+        encoded.write(rawAuthenticateResponse.getUserPresence());
+        encoded.writeInt((int) rawAuthenticateResponse.getCounter());
+        encoded.write(rawAuthenticateResponse.getSignature());
+        return encoded.toByteArray();
     }
 
     public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fException {
@@ -30,14 +31,14 @@ public class CodecTestUtils {
         }
 
         try {
-            return ByteSink.create()
-                    .put(RawRegisterResponse.REGISTRATION_RESERVED_BYTE_VALUE)
-                    .put(rawRegisterResponse.userPublicKey)
-                    .put((byte) keyHandle.length)
-                    .put(keyHandle)
-                    .put(rawRegisterResponse.attestationCertificate.getEncoded())
-                    .put(rawRegisterResponse.signature)
-                    .toByteArray();
+            ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
+            encoded.write(RawRegisterResponse.REGISTRATION_RESERVED_BYTE_VALUE);
+            encoded.write(rawRegisterResponse.userPublicKey);
+            encoded.write((byte) keyHandle.length);
+            encoded.write(keyHandle);
+            encoded.write(rawRegisterResponse.attestationCertificate.getEncoded());
+            encoded.write(rawRegisterResponse.signature);
+            return encoded.toByteArray();
         } catch (CertificateEncodingException e) {
             throw new U2fException("Error when encoding attestation certificate.", e);
         }
