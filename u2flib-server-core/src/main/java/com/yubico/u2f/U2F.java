@@ -37,15 +37,16 @@ public class U2F {
 
     /**
      * Initiates a high-level registration of a device, given a set of already registered devices.
-     * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
-     *              support logging in from multiple Web Origins.
+     *
+     * @param appId   the U2F AppID. Set this to the Web Origin of the login page, unless you need to
+     *                support logging in from multiple Web Origins.
      * @param devices the devices currently registered to the user.
      * @return a RegisterRequestData, which should be sent to the client and temporarily saved by the server.
      */
     public RegisterRequestData startRegistration(String appId, Iterable<? extends DeviceRegistration> devices) {
         Iterable<? extends DeviceRegistration> uncompromisedDevices = Iterables.filter(devices, NOT_COMPROMISED);
         List<AuthenticateRequest> authenticateRequests = Lists.newArrayList();
-        for(DeviceRegistration device : uncompromisedDevices) {
+        for (DeviceRegistration device : uncompromisedDevices) {
             authenticateRequests.add(primitives.startAuthentication(appId, device));
         }
         return new RegisterRequestData(appId, uncompromisedDevices, primitives, challengeGenerator);
@@ -64,9 +65,10 @@ public class U2F {
 
     /**
      * Finishes a previously started high-level registration.
+     *
      * @param registerRequestData the RegisterResponseData created by calling startRegistration
-     * @param response The response from the device/client.
-     * @param facets A list of valid facets to verify against.
+     * @param response            The response from the device/client.
+     * @param facets              A list of valid facets to verify against.
      * @return a DeviceRegistration object, holding information about the registered device. Servers should
      * persist this.
      * @throws com.yubico.u2f.exceptions.U2fBadInputException
@@ -84,11 +86,12 @@ public class U2F {
 
     /**
      * Finishes a previously started high-level authentication.
+     *
      * @param authenticateRequestData the AuthenticateRequestData created by calling startAuthentication
      * @param response                the response from the device/client.
      * @param devices                 the devices currently registered to the user.
      * @param facets                  A list of valid facets to verify against.
-     * @return                        The (updated) DeviceRegistration that was authenticated against.
+     * @return The (updated) DeviceRegistration that was authenticated against.
      * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
     public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
@@ -100,7 +103,7 @@ public class U2F {
             }
         });
 
-        if(device.isCompromised()) {
+        if (device.isCompromised()) {
             throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot be authenticated");
         }
 

@@ -10,7 +10,6 @@
 package com.yubico.u2f;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.Crypto;
@@ -26,7 +25,7 @@ import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class U2fPrimitives {
 
@@ -56,9 +55,9 @@ public class U2fPrimitives {
     /**
      * Initiates the registration of a device.
      *
-     * @param appId the U2F AppID. Set this to the Web Origin of the login page, unless you need to
-     *              support logging in from multiple Web Origins.
-     * @param challenge          the challenge to use
+     * @param appId     the U2F AppID. Set this to the Web Origin of the login page, unless you need to
+     *                  support logging in from multiple Web Origins.
+     * @param challenge the challenge to use
      * @return a RegisterRequest, which should be sent to the client and temporary saved by the
      * server.
      */
@@ -142,7 +141,7 @@ public class U2fPrimitives {
                                      Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
         checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
         checkArgument(Objects.equals(authenticateRequest.getKeyHandle(), deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given AuthenticateRequest");
-        if(!Objects.equals(deviceRegistration.getKeyHandle(), response.getKeyHandle())) {
+        if (!Objects.equals(deviceRegistration.getKeyHandle(), response.getKeyHandle())) {
             throw new U2fBadInputException("KeyHandle of AuthenticateResponse does not match");
         }
 

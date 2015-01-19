@@ -19,7 +19,6 @@ import org.bouncycastle.math.ec.ECPoint;
 
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.security.spec.InvalidKeySpecException;
 
 public class BouncyCastleCrypto implements Crypto {
     static {

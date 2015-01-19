@@ -20,7 +20,7 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
 
     public RegisterRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) {
         ImmutableList.Builder<AuthenticateRequest> authenticateRequests = ImmutableList.builder();
-        for(DeviceRegistration device : devices) {
+        for (DeviceRegistration device : devices) {
             authenticateRequests.add(u2f.startAuthentication(appId, device));
         }
 
@@ -45,7 +45,7 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
         return Iterables.getOnlyElement(registerRequests);
     }
 
-    public String getRequestId()  {
+    public String getRequestId() {
         return Iterables.getOnlyElement(registerRequests).getChallenge();
     }
 

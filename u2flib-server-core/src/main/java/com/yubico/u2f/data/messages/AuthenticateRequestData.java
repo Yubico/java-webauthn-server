@@ -23,12 +23,12 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoDevicesRegisteredException {
         ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
         byte[] challenge = challengeGenerator.generateChallenge();
-        for(DeviceRegistration device : devices) {
+        for (DeviceRegistration device : devices) {
             requestBuilder.add(u2f.startAuthentication(appId, device, challenge));
         }
         authenticateRequests = requestBuilder.build();
 
-        if(authenticateRequests.isEmpty()) {
+        if (authenticateRequests.isEmpty()) {
             throw new NoDevicesRegisteredException();
         }
     }
@@ -40,8 +40,8 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     public AuthenticateRequest getAuthenticateRequest(AuthenticateResponse response) throws U2fBadInputException {
         checkArgument(Objects.equal(getRequestId(), response.getRequestId()), "Wrong request for response data");
 
-        for(AuthenticateRequest request : authenticateRequests) {
-            if(Objects.equal(request.getKeyHandle(), response.getKeyHandle())) {
+        for (AuthenticateRequest request : authenticateRequests) {
+            if (Objects.equal(request.getKeyHandle(), response.getKeyHandle())) {
                 return request;
             }
         }
