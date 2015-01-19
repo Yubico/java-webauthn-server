@@ -27,7 +27,6 @@ import java.util.Set;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 public class U2fPrimitivesTest {
     final HashSet<String> allowedOrigins = new HashSet<String>();
@@ -35,7 +34,6 @@ public class U2fPrimitivesTest {
 
     @Before
     public void setup() throws Exception {
-        initMocks(this);
         allowedOrigins.add("http://example.com");
     }
 
@@ -60,7 +58,7 @@ public class U2fPrimitivesTest {
         AuthenticateRequest authenticateRequest = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
 
         AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
-                SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
+                SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         u2f.finishAuthentication(authenticateRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
@@ -76,5 +74,27 @@ public class U2fPrimitivesTest {
                 SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
         u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void startAuthentication_compromisedDevice() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+        DeviceRegistration deviceRegistration = u2f.finishRegistration(registerRequest, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
+        deviceRegistration.markCompromised();
+
+        u2f.startAuthentication(APP_ID_ENROLL, deviceRegistration);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void finishAuthentication_compromisedDevice() throws Exception {
+        AuthenticateRequest authenticateRequest = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64, APP_ID_SIGN, KEY_HANDLE_BASE64);
+
+        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+                SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
+
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        deviceRegistration.markCompromised();
+
+        u2f.finishAuthentication(authenticateRequest, tokenResponse, deviceRegistration, allowedOrigins);
     }
 }

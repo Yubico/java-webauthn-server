@@ -2,7 +2,6 @@ package com.yubico.u2f.data.messages;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
@@ -25,9 +24,7 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
         ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
         byte[] challenge = challengeGenerator.generateChallenge();
         for(DeviceRegistration device : devices) {
-            if(!device.isCompromised()) {
-                requestBuilder.add(u2f.startAuthentication(appId, device, challenge));
-            }
+            requestBuilder.add(u2f.startAuthentication(appId, device, challenge));
         }
         authenticateRequests = requestBuilder.build();
 

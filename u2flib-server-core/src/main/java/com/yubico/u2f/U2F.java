@@ -20,6 +20,13 @@ import java.util.Set;
 
 public class U2F {
 
+    private static final Predicate<DeviceRegistration> NOT_COMPROMISED = new Predicate<DeviceRegistration>() {
+        @Override
+        public boolean apply(DeviceRegistration input) {
+            return !input.isCompromised();
+        }
+    };
+
     private final ChallengeGenerator challengeGenerator;
     private final U2fPrimitives primitives;
 
@@ -36,15 +43,16 @@ public class U2F {
      * @return a RegisterRequestData, which should be sent to the client and temporarily saved by the server.
      */
     public RegisterRequestData startRegistration(String appId, Iterable<? extends DeviceRegistration> devices) {
+        Iterable<? extends DeviceRegistration> uncompromisedDevices = Iterables.filter(devices, NOT_COMPROMISED);
         List<AuthenticateRequest> authenticateRequests = Lists.newArrayList();
-        for(DeviceRegistration device : devices) {
+        for(DeviceRegistration device : uncompromisedDevices) {
             authenticateRequests.add(primitives.startAuthentication(appId, device));
         }
-        return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
+        return new RegisterRequestData(appId, uncompromisedDevices, primitives, challengeGenerator);
     }
 
     public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoDevicesRegisteredException {
-        return new AuthenticateRequestData(appId, devices, primitives, challengeGenerator);
+        return new AuthenticateRequestData(appId, Iterables.filter(devices, NOT_COMPROMISED), primitives, challengeGenerator);
     }
 
     /***
@@ -91,6 +99,10 @@ public class U2F {
                 return Objects.equal(request.getKeyHandle(), input.getKeyHandle());
             }
         });
+
+        if(device.isCompromised()) {
+            throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot be authenticated");
+        }
 
         primitives.finishAuthentication(request, response, device, facets);
         return device;
