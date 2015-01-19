@@ -16,7 +16,7 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.util.Arrays;
 
@@ -53,7 +53,7 @@ public class RawAuthenticateResponse {
         );
     }
 
-    public void checkSignature(String appId, String clientData, byte[] publicKey) throws U2fException {
+    public void checkSignature(String appId, String clientData, byte[] publicKey) throws U2fBadInputException {
         byte[] signedBytes = packBytesToSign(
                 crypto.hash(appId),
                 userPresence,
@@ -117,9 +117,9 @@ public class RawAuthenticateResponse {
                 && Objects.equal(userPresence, other.userPresence);
     }
 
-    public void checkUserPresence() throws U2fException {
+    public void checkUserPresence() throws U2fBadInputException {
         if (userPresence != USER_PRESENT_FLAG) {
-            throw new U2fException("User presence invalid during authentication");
+            throw new U2fBadInputException("User presence invalid during authentication");
         }
     }
 }

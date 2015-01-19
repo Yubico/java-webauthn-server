@@ -4,12 +4,10 @@ package com.yubico.u2f.attestation;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -31,9 +29,14 @@ public class MetadataObject extends JsonSerializable {
     private final List<String> trustedCertificates;
     private final List<JsonObject> devices;
 
-    private MetadataObject(String json) {
+    private MetadataObject(String json) throws U2fBadInputException {
         this.json = json;
-        JsonObject data = new JsonParser().parse(json).getAsJsonObject();
+        JsonObject data = null;
+        try {
+            data = new JsonParser().parse(json).getAsJsonObject();
+        } catch (JsonSyntaxException e) {
+            throw new U2fBadInputException("Invalid JSON data", e);
+        }
 
         identifier = data.get("identifier").getAsString();
         version = data.get("version").getAsLong();
@@ -67,7 +70,7 @@ public class MetadataObject extends JsonSerializable {
         return MoreObjects.firstNonNull(devices, ImmutableList.<JsonObject>of());
     }
 
-    public static List<MetadataObject> parseFromJson(String jsonData) {
+    public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadInputException {
         JsonParser parser = new JsonParser();
         JsonElement parsed = parser.parse(jsonData);
         JsonArray items;
@@ -84,7 +87,7 @@ public class MetadataObject extends JsonSerializable {
         return objects.build();
     }
 
-    public static MetadataObject fromJson(String json) {
+    public static MetadataObject fromJson(String json) throws U2fBadInputException {
         return new MetadataObject(json);
     }
 }

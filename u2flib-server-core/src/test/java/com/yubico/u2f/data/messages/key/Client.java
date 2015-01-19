@@ -12,7 +12,7 @@ import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.u2f.softkey.SoftKey;
 
 import java.nio.ByteBuffer;
@@ -36,7 +36,7 @@ public class Client {
     }
 
     public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse)
-            throws U2fException {
+            throws U2fBadInputException {
         byte[] userPublicKey = rawRegisterResponse.userPublicKey;
         byte[] keyHandle = rawRegisterResponse.keyHandle;
         X509Certificate attestationCertificate = rawRegisterResponse.attestationCertificate;
@@ -46,11 +46,11 @@ public class Client {
         try {
             attestationCertificateBytes = attestationCertificate.getEncoded();
         } catch (CertificateEncodingException e) {
-            throw new U2fException("Error when encoding attestation certificate.", e);
+            throw new U2fBadInputException("Error when encoding attestation certificate.", e);
         }
 
         if (keyHandle.length > 255) {
-            throw new U2fException("keyHandle length cannot be longer than 255 bytes!");
+            throw new U2fBadInputException("keyHandle length cannot be longer than 255 bytes!");
         }
 
         byte[] result = new byte[1 + userPublicKey.length + 1 + keyHandle.length
@@ -65,7 +65,7 @@ public class Client {
         return result;
     }
 
-    public static RegisterResponse encodeTokenRegistrationResponse(String clientDataJson, RawRegisterResponse registerResponse) throws U2fException {
+    public static RegisterResponse encodeTokenRegistrationResponse(String clientDataJson, RawRegisterResponse registerResponse) throws U2fBadInputException {
         byte[] rawRegisterResponse = Client.encodeRegisterResponse(registerResponse);
         String rawRegisterResponseBase64 = U2fB64Encoding.encode(rawRegisterResponse);
         String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());

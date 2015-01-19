@@ -10,13 +10,13 @@
 package com.yubico.u2f.exceptions;
 
 @SuppressWarnings("serial")
-public class U2fException extends Exception {
+public class U2fBadInputException extends Exception {
 
-    public U2fException(String message) {
+    public U2fBadInputException(String message) {
         super(message);
     }
 
-    public U2fException(String message, Throwable cause) {
+    public U2fBadInputException(String message, Throwable cause) {
         super(message, cause);
     }
 }

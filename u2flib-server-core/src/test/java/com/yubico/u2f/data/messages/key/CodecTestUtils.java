@@ -11,7 +11,7 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.security.cert.CertificateEncodingException;
 
@@ -24,10 +24,10 @@ public class CodecTestUtils {
         return encoded.toByteArray();
     }
 
-    public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fException {
+    public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fBadInputException {
         byte[] keyHandle = rawRegisterResponse.keyHandle;
         if (keyHandle.length > 255) {
-            throw new U2fException("keyHandle length cannot be longer than 255 bytes!");
+            throw new U2fBadInputException("keyHandle length cannot be longer than 255 bytes!");
         }
 
         try {
@@ -40,7 +40,7 @@ public class CodecTestUtils {
             encoded.write(rawRegisterResponse.signature);
             return encoded.toByteArray();
         } catch (CertificateEncodingException e) {
-            throw new U2fException("Error when encoding attestation certificate.", e);
+            throw new U2fBadInputException("Error when encoding attestation certificate.", e);
         }
     }
 }

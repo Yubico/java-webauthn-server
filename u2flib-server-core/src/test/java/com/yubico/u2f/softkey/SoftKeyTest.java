@@ -7,7 +7,8 @@ import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.key.Client;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.GnubbyKey;
 import org.junit.Before;
@@ -50,7 +51,7 @@ public class SoftKeyTest {
         assertEquals("CN=Gnubby Pilot", deviceRegistration.getAttestationCertificate().getIssuerDN().getName());
     }
 
-    @Test(expected = U2fException.class)
+    @Test(expected = U2fBadInputException.class)
     public void shouldVerifyAttestationCert() throws Exception {
         SoftKey key = new SoftKey(
                 new HashMap<String, KeyPair>(),
@@ -62,7 +63,7 @@ public class SoftKeyTest {
     }
 
     // Tests FIDO Security Measure [SM-15]
-    @Test(expected = U2fException.class)
+    @Test(expected = InvalidDeviceCounterException.class)
     public void shouldProtectAgainstClonedDevices() throws Exception {
         SoftKey key = new SoftKey();
         Client client = new Client(key);
@@ -76,7 +77,7 @@ public class SoftKeyTest {
         authenticateUsing(clientUsingClone, registeredDevice);
     }
 
-    @Test(expected = U2fException.class)
+    @Test(expected = U2fBadInputException.class)
     public void shouldVerifyKeySignatures() throws Exception {
 
         Client client = createClient();

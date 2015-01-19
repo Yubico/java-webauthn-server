@@ -15,6 +15,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.yubico.u2f.attestation.matchers.ExtensionMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +46,8 @@ public class MetadataService {
         } catch (IOException e) {
             e.printStackTrace();
         } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (U2fBadInputException e) {
             e.printStackTrace();
         } finally {
             Closeables.closeQuietly(is);

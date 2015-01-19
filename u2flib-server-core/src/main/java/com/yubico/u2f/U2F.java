@@ -11,7 +11,9 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.DeviceCompromisedException;
+import com.yubico.u2f.exceptions.NoDevicesRegisteredException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.util.List;
 import java.util.Set;
@@ -41,14 +43,14 @@ public class U2F {
         return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
-    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fException {
+    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoDevicesRegisteredException {
         return new AuthenticateRequestData(appId, devices, primitives, challengeGenerator);
     }
 
     /***
      *
      */
-    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response) throws U2fException {
+    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response) throws U2fBadInputException {
         return finishRegistration(registerRequestData, response, null);
     }
 
@@ -59,16 +61,16 @@ public class U2F {
      * @param facets A list of valid facets to verify against.
      * @return a DeviceRegistration object, holding information about the registered device. Servers should
      * persist this.
-     * @throws U2fException
+     * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
-    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response, Set<String> facets) throws U2fException {
+    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response, Set<String> facets) throws U2fBadInputException {
         return primitives.finishRegistration(registerRequestData.getRegisterRequest(response), response, facets);
     }
 
     /**
      * @see U2F#finishAuthentication(com.yubico.u2f.data.messages.AuthenticateRequestData, com.yubico.u2f.data.messages.AuthenticateResponse, Iterable, java.util.Set)
      */
-    public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fException {
+    public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
         return finishAuthentication(authenticateRequestData, response, devices, null);
     }
 
@@ -79,9 +81,9 @@ public class U2F {
      * @param devices                 the devices currently registered to the user.
      * @param facets                  A list of valid facets to verify against.
      * @return                        The (updated) DeviceRegistration that was authenticated against.
-     * @throws U2fException
+     * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
-    public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fException {
+    public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
         final AuthenticateRequest request = authenticateRequestData.getAuthenticateRequest(response);
         DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
             @Override

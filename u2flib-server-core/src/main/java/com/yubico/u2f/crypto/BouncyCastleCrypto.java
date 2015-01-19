@@ -9,7 +9,7 @@
 
 package com.yubico.u2f.crypto;
 
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -26,43 +26,36 @@ public class BouncyCastleCrypto implements Crypto {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    public static final String SIGNATURE_ERROR = "Error when verifying signature";
-    public static final String ERROR_DECODING_PUBLIC_KEY = "Error when decoding public key";
-
     @Override
     public void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes, byte[] signature)
-            throws U2fException {
+            throws U2fBadInputException {
         checkSignature(attestationCertificate.getPublicKey(), signedBytes, signature);
     }
 
     @Override
     public void checkSignature(PublicKey publicKey, byte[] signedBytes, byte[] signature)
-            throws U2fException {
+            throws U2fBadInputException {
         try {
             Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA");
             ecdsaSignature.initVerify(publicKey);
             ecdsaSignature.update(signedBytes);
             if (!ecdsaSignature.verify(signature)) {
-                throw new U2fException("Signature is invalid");
+                throw new U2fBadInputException("Signature is invalid");
             }
-        } catch (InvalidKeyException e) {
-            throw new U2fException(SIGNATURE_ERROR, e);
-        } catch (SignatureException e) {
-            throw new U2fException(SIGNATURE_ERROR, e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new U2fException(SIGNATURE_ERROR, e);
+        } catch (GeneralSecurityException e) { //This should not happen
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fException {
+    public PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fBadInputException {
         try {
             X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
             ECPoint point;
             try {
                 point = curve.getCurve().decodePoint(encodedPublicKey);
             } catch (RuntimeException e) {
-                throw new U2fException("Could not parse user public key", e);
+                throw new U2fBadInputException("Could not parse user public key", e);
             }
 
             return KeyFactory.getInstance("ECDSA").generatePublic(
@@ -75,10 +68,8 @@ public class BouncyCastleCrypto implements Crypto {
                             )
                     )
             );
-        } catch (InvalidKeySpecException e) {
-            throw new U2fException(ERROR_DECODING_PUBLIC_KEY, e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new U2fException(ERROR_DECODING_PUBLIC_KEY, e);
+        } catch (GeneralSecurityException e) { //This should not happen
+            throw new RuntimeException(e);
         }
     }
 
@@ -87,7 +78,7 @@ public class BouncyCastleCrypto implements Crypto {
         try {
             return MessageDigest.getInstance("SHA-256").digest(bytes);
         } catch (NoSuchAlgorithmException e) {
-            throw new UnsupportedOperationException("Error when computing SHA-256", e);
+            throw new RuntimeException(e);
         }
     }
 

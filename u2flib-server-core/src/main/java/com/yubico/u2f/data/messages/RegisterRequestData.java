@@ -7,6 +7,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
         return Iterables.getOnlyElement(registerRequests).getChallenge();
     }
 
-    public static RegisterRequestData fromJson(String json) {
+    public static RegisterRequestData fromJson(String json) throws U2fBadInputException {
         return fromJson(json, RegisterRequestData.class);
     }
 }

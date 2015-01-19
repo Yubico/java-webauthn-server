@@ -18,10 +18,9 @@ import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
@@ -71,11 +70,11 @@ public class RawRegisterResponse {
         this.crypto = crypto;
     }
 
-    public static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fException {
+    public static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
         ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
         byte reservedByte = bytes.readSigned();
         if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
-            throw new U2fException(
+            throw new U2fBadInputException(
                     "Incorrect value of reserved byte. Expected: " + REGISTRATION_RESERVED_BYTE_VALUE +
                             ". Was: " + reservedByte
             );
@@ -90,11 +89,11 @@ public class RawRegisterResponse {
                     crypto
             );
         } catch (CertificateException e) {
-            throw new U2fException("Error when parsing attestation certificate", e);
+            throw new U2fBadInputException("Malformed attestation certificate", e);
         }
     }
 
-    public void checkSignature(String appId, String clientData) throws U2fException {
+    public void checkSignature(String appId, String clientData) throws U2fBadInputException {
         byte[] signedBytes = packBytesToSign(crypto.hash(appId), crypto.hash(clientData), keyHandle, userPublicKey);
         crypto.checkSignature(attestationCertificate, signedBytes, signature);
     }
@@ -109,7 +108,7 @@ public class RawRegisterResponse {
         return encoded.toByteArray();
     }
 
-    public DeviceRegistration createDevice() throws U2fException {
+    public DeviceRegistration createDevice() throws U2fBadInputException {
         return new DeviceRegistration(
                 U2fB64Encoding.encode(keyHandle),
                 U2fB64Encoding.encode(userPublicKey),

@@ -13,6 +13,7 @@ import com.google.common.base.Objects;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -89,7 +90,7 @@ public class AuthenticateRequest extends JsonSerializable implements Persistable
         return challenge;
     }
 
-    public static AuthenticateRequest fromJson(String json) {
+    public static AuthenticateRequest fromJson(String json) throws U2fBadInputException {
         return fromJson(json, AuthenticateRequest.class);
     }
 }

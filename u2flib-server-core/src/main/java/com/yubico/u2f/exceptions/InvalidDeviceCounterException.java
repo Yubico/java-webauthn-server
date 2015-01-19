@@ -1,8 +1,10 @@
 package com.yubico.u2f.exceptions;
 
-public class InvalidDeviceCounterException extends U2fException {
-    public InvalidDeviceCounterException() {
-        super("The device's internal counter was was smaller than expected." +
-                "Either the device's firmware is noncompliant, or the device has been cloned.");
+import com.yubico.u2f.data.DeviceRegistration;
+
+public class InvalidDeviceCounterException extends DeviceCompromisedException {
+    public InvalidDeviceCounterException(DeviceRegistration registration) {
+        super(registration, "The device's internal counter was was smaller than expected." +
+                "It's possible that the device has been cloned!");
     }
 }

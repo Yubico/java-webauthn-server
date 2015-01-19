@@ -1,9 +1,8 @@
 package com.yubico.u2f.attestation;
 
 import com.google.common.collect.Iterables;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -25,7 +24,7 @@ public class MetadataObjectTest {
     }
 
     @Test
-    public void testParseFromJson() {
+    public void testParseFromJson() throws U2fBadInputException {
         MetadataObject parsed1 = Iterables.getOnlyElement(MetadataObject.parseFromJson(METADATA_JSON));
         MetadataObject parsed2 = Iterables.getOnlyElement(MetadataObject.parseFromJson("[" + METADATA_JSON + "]"));
         MetadataObject expected = MetadataObject.fromJson(METADATA_JSON);

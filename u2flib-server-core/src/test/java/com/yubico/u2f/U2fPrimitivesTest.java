@@ -15,7 +15,7 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.TestVectors;
 import org.junit.Before;
@@ -66,7 +66,7 @@ public class U2fPrimitivesTest {
     }
 
 
-    @Test(expected = U2fException.class)
+    @Test(expected = U2fBadInputException.class)
     public void finishAuthentication_badOrigin() throws Exception {
         Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
         AuthenticateRequest authentication = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64,

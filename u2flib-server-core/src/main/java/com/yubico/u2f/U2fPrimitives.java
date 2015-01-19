@@ -10,6 +10,7 @@
 package com.yubico.u2f;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.Crypto;
@@ -19,9 +20,12 @@ import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.DeviceCompromisedException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.*;
 
 public class U2fPrimitives {
 
@@ -64,7 +68,7 @@ public class U2fPrimitives {
     /**
      * @see U2fPrimitives#finishRegistration(com.yubico.u2f.data.messages.RegisterRequest, com.yubico.u2f.data.messages.RegisterResponse, java.util.Set)
      */
-    public DeviceRegistration finishRegistration(RegisterRequest registerRequest, RegisterResponse response) throws U2fException {
+    public DeviceRegistration finishRegistration(RegisterRequest registerRequest, RegisterResponse response) throws U2fBadInputException {
         return finishRegistration(registerRequest, response, null);
     }
 
@@ -78,7 +82,7 @@ public class U2fPrimitives {
      */
     public DeviceRegistration finishRegistration(RegisterRequest registerRequest,
                                                  RegisterResponse response,
-                                                 Set<String> facets) throws U2fException {
+                                                 Set<String> facets) throws U2fBadInputException {
         ClientData clientData = response.getClientData();
         clientData.checkContent(REGISTER_TYPE, registerRequest.getChallenge(), Optional.fromNullable(facets));
 
@@ -107,6 +111,8 @@ public class U2fPrimitives {
      * the server.
      */
     public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
+        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
+
         return new AuthenticateRequest(
                 U2fB64Encoding.encode(challenge),
                 appId,
@@ -119,7 +125,7 @@ public class U2fPrimitives {
      */
     public void finishAuthentication(AuthenticateRequest authenticateRequest,
                                      AuthenticateResponse response,
-                                     DeviceRegistration deviceRegistration) throws U2fException {
+                                     DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
         finishAuthentication(authenticateRequest, response, deviceRegistration, null);
     }
 
@@ -132,7 +138,9 @@ public class U2fPrimitives {
     public void finishAuthentication(AuthenticateRequest authenticateRequest,
                                      AuthenticateResponse response,
                                      DeviceRegistration deviceRegistration,
-                                     Set<String> facets) throws U2fException {
+                                     Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
+
         ClientData clientData = response.getClientData();
         clientData.checkContent(AUTHENTICATE_TYP, authenticateRequest.getChallenge(), Optional.fromNullable(facets));
 

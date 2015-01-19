@@ -12,7 +12,7 @@ package com.yubico.u2f.data.messages;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
-import com.yubico.u2f.exceptions.U2fException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,7 +41,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
         this.keyHandle = checkNotNull(keyHandle);
     }
 
-    public ClientData getClientData() throws U2fException {
+    public ClientData getClientData() {
         return new ClientData(clientData);
     }
 
@@ -53,7 +53,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
         return keyHandle;
     }
 
-    public String getRequestId() throws U2fException {
+    public String getRequestId() {
         return getClientData().getChallenge();
     }
 
@@ -72,7 +72,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
                 && Objects.equal(signatureData, other.signatureData);
     }
 
-    public static AuthenticateResponse fromJson(String json) {
+    public static AuthenticateResponse fromJson(String json) throws U2fBadInputException {
         checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
         return fromJson(json, AuthenticateResponse.class);
     }
