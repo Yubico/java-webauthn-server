@@ -22,7 +22,6 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
-import java.util.Objects;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -140,8 +139,8 @@ public class U2fPrimitives {
                                      DeviceRegistration deviceRegistration,
                                      Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
         checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
-        checkArgument(Objects.equals(authenticateRequest.getKeyHandle(), deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given AuthenticateRequest");
-        if (!Objects.equals(deviceRegistration.getKeyHandle(), response.getKeyHandle())) {
+        checkArgument(authenticateRequest.getKeyHandle().equals(deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given AuthenticateRequest");
+        if (!deviceRegistration.getKeyHandle().equals(response.getKeyHandle())) {
             throw new U2fBadInputException("KeyHandle of AuthenticateResponse does not match");
         }
 
