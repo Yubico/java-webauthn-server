@@ -1,14 +1,18 @@
 package com.yubico.u2f.data.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidFacetException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
@@ -23,19 +27,22 @@ public class ClientData {
     private final String challenge;
     private final String origin;
     private final String rawClientData;
-    private final JsonObject jsonObject;
+    private final JsonNode data;
 
     public String asJson() {
         return rawClientData;
     }
 
-    public ClientData(String clientData) {
-        this.rawClientData = new String(U2fB64Encoding.decode(clientData));
-        JsonElement clientDataAsElement = new JsonParser().parse(rawClientData);
-        jsonObject = clientDataAsElement.getAsJsonObject();
-        this.type = getString(TYPE_PARAM);
-        this.challenge = getString(CHALLENGE_PARAM);
-        this.origin = getString(ORIGIN_PARAM);
+    public ClientData(String clientData) throws U2fBadInputException {
+        rawClientData = new String(U2fB64Encoding.decode(clientData));
+        try {
+            data = new ObjectMapper().readTree(rawClientData);
+            type = getString(TYPE_PARAM);
+            challenge = getString(CHALLENGE_PARAM);
+            origin = getString(ORIGIN_PARAM);
+        } catch (IOException e) {
+            throw new U2fBadInputException("Malformed ClientData", e);
+        }
     }
 
     @Override
@@ -48,7 +55,7 @@ public class ClientData {
     }
 
     public String getString(String key) {
-        return jsonObject.get(key).getAsString();
+        return data.get(key).asText();
     }
 
     public void checkContent(String type, String challenge, Optional<Set<String>> facets) throws U2fBadInputException {

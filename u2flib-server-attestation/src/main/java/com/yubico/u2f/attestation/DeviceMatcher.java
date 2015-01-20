@@ -2,10 +2,10 @@
 
 package com.yubico.u2f.attestation;
 
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.security.cert.X509Certificate;
 
 public interface DeviceMatcher {
-    public boolean matches(X509Certificate attestationCertificate, JsonElement parameters);
+    public boolean matches(X509Certificate attestationCertificate, JsonNode parameters);
 }

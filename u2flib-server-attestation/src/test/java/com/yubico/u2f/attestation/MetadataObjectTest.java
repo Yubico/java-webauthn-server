@@ -18,7 +18,7 @@ public class MetadataObjectTest {
         assertEquals(1, metadata.getTrustedCertificates().size());
 
         assertEquals("Yubico", metadata.getVendorInfo().get("name"));
-        assertEquals("1.3.6.1.4.1.41482.1.2", metadata.getDevices().get(0).get("deviceId").getAsString());
+        assertEquals("1.3.6.1.4.1.41482.1.2", metadata.getDevices().get(0).get("deviceId").asText());
 
         assertEquals(METADATA_JSON, metadata.toJson());
     }

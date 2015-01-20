@@ -2,7 +2,7 @@
 
 package com.yubico.u2f.attestation.matchers;
 
-import com.google.gson.JsonElement;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.u2f.attestation.DeviceMatcher;
 import org.bouncycastle.util.Strings;
 
@@ -15,12 +15,12 @@ public class ExtensionMatcher implements DeviceMatcher {
     private static final String EXTENSION_VALUE = "value";
 
     @Override
-    public boolean matches(X509Certificate attestationCertificate, JsonElement parameters) {
-        String matchKey = parameters.getAsJsonObject().get(EXTENSION_KEY).getAsString();
-        JsonElement matchValue = parameters.getAsJsonObject().get(EXTENSION_VALUE);
+    public boolean matches(X509Certificate attestationCertificate, JsonNode parameters) {
+        String matchKey = parameters.get(EXTENSION_KEY).asText();
+        JsonNode matchValue = parameters.get(EXTENSION_VALUE);
         byte[] extensionValue = attestationCertificate.getExtensionValue(matchKey);
-        if(extensionValue != null) {
-            if (matchValue == null || matchValue.getAsString().equals(Strings.fromByteArray(extensionValue))) {
+        if (extensionValue != null) {
+            if (matchValue == null || matchValue.asText().equals(Strings.fromByteArray(extensionValue))) {
                 return true;
             }
         }

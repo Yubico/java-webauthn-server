@@ -2,24 +2,27 @@
 
 package com.yubico.u2f.attestation;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
-import java.lang.reflect.Type;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class MetadataObject extends JsonSerializable {
-    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
-    }.getType();
-    private static final Type LIST_STRING_TYPE = new TypeToken<List<String>>() {
-    }.getType();
-    private static final Type LIST_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() {
-    }.getType();
+    private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {
+    };
+    private static final TypeReference LIST_STRING_TYPE = new TypeReference<List<String>>() {
+    };
+    private static final TypeReference LIST_JSONNODE_TYPE = new TypeReference<List<JsonNode>>() {
+    };
 
     private final transient String json;
 
@@ -27,22 +30,27 @@ public class MetadataObject extends JsonSerializable {
     private final long version;
     private final Map<String, String> vendorInfo;
     private final List<String> trustedCertificates;
-    private final List<JsonObject> devices;
+    private final List<JsonNode> devices;
 
-    private MetadataObject(String json) throws U2fBadInputException {
+    @JsonCreator
+    public MetadataObject(String json) throws U2fBadInputException {
         this.json = json;
-        JsonObject data = null;
+        JsonNode data;
         try {
-            data = new JsonParser().parse(json).getAsJsonObject();
-        } catch (JsonSyntaxException e) {
+            data = OBJECT_MAPPER.readTree(json);
+            vendorInfo = OBJECT_MAPPER.readValue(data.get("vendorInfo").traverse(), MAP_STRING_STRING_TYPE);
+            trustedCertificates = OBJECT_MAPPER.readValue(data.get("trustedCertificates").traverse(), LIST_STRING_TYPE);
+            devices = OBJECT_MAPPER.readValue(data.get("devices").traverse(), LIST_JSONNODE_TYPE);
+        } catch (JsonMappingException e) {
+            throw new U2fBadInputException("Invalid JSON data", e);
+        } catch (JsonParseException e) {
+            throw new U2fBadInputException("Invalid JSON data", e);
+        } catch (IOException e) {
             throw new U2fBadInputException("Invalid JSON data", e);
         }
 
-        identifier = data.get("identifier").getAsString();
-        version = data.get("version").getAsLong();
-        vendorInfo = GSON.fromJson(data.get("vendorInfo"), MAP_STRING_STRING_TYPE);
-        trustedCertificates = GSON.fromJson(data.get("trustedCertificates"), LIST_STRING_TYPE);
-        devices = GSON.fromJson(data.get("devices"), LIST_JSONOBJECT_TYPE);
+        identifier = data.get("identifier").asText();
+        version = data.get("version").asLong();
     }
 
     @Override
@@ -66,22 +74,23 @@ public class MetadataObject extends JsonSerializable {
         return trustedCertificates;
     }
 
-    public List<JsonObject> getDevices() {
-        return MoreObjects.firstNonNull(devices, ImmutableList.<JsonObject>of());
+    public List<JsonNode> getDevices() {
+        return MoreObjects.firstNonNull(devices, ImmutableList.<JsonNode>of());
     }
 
     public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadInputException {
-        JsonParser parser = new JsonParser();
-        JsonElement parsed = parser.parse(jsonData);
-        JsonArray items;
-        if (!parsed.isJsonArray()) {
-            items = new JsonArray();
-            items.add(parsed);
-        } else {
-            items = parsed.getAsJsonArray();
+        JsonNode items;
+        try {
+            items = OBJECT_MAPPER.readValue(jsonData, JsonNode.class);
+            if (!items.isArray()) {
+                items = OBJECT_MAPPER.createArrayNode().add(items);
+            }
+        } catch (IOException e) {
+            throw new U2fBadInputException("Malformed data", e);
         }
+
         ImmutableList.Builder<MetadataObject> objects = ImmutableList.builder();
-        for (JsonElement item : items) {
+        for (JsonNode item : items) {
             objects.add(MetadataObject.fromJson(item.toString()));
         }
         return objects.build();

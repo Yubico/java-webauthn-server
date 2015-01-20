@@ -9,9 +9,9 @@
 
 package com.yubico.u2f.data.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
@@ -29,16 +29,19 @@ public class RegisterResponse extends JsonSerializable implements Persistable {
     /**
      * base64(raw registration response message)
      */
+    @JsonProperty
     private final String registrationData;
 
     /**
      * base64(UTF8(client data))
      */
+    @JsonProperty
     private final String clientData;
 
     private transient ClientData clientDataRef;
 
-    public RegisterResponse(String registrationData, String clientData) {
+    @JsonCreator
+    public RegisterResponse(@JsonProperty("registrationData") String registrationData, @JsonProperty("clientData") String clientData) throws U2fBadInputException {
         this.registrationData = checkNotNull(registrationData);
         this.clientData = checkNotNull(clientData);
         this.clientDataRef = new ClientData(clientData);
@@ -72,8 +75,7 @@ public class RegisterResponse extends JsonSerializable implements Persistable {
 
     public static RegisterResponse fromJson(String json) throws U2fBadInputException {
         checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
-        JsonObject data = new JsonParser().parse(json).getAsJsonObject();
-        return new RegisterResponse(data.get("registrationData").getAsString(), data.get("clientData").getAsString());
+        return JsonSerializable.fromJson(json, RegisterResponse.class);
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
@@ -82,6 +84,10 @@ public class RegisterResponse extends JsonSerializable implements Persistable {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
-        clientDataRef = new ClientData(clientData);
+        try {
+            clientDataRef = new ClientData(clientData);
+        } catch (U2fBadInputException e) {
+            throw new IOException(e);
+        }
     }
 }

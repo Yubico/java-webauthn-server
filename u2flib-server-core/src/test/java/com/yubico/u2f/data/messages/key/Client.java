@@ -1,9 +1,9 @@
 package com.yubico.u2f.data.messages.key;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.google.gson.Gson;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.data.DeviceRegistration;
@@ -27,9 +27,9 @@ public class Client {
     public static final String APP_ID = "my-app";
 
     private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
-    private final Gson gson = new Gson();
     private final SoftKey key;
     private final U2fPrimitives u2f = new U2fPrimitives();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Client(SoftKey key) {
         this.key = key;
@@ -79,7 +79,7 @@ public class Client {
         clientData.put("typ", "navigator.id.finishEnrollment");
         clientData.put("challenge", registerRequest.getChallenge());
         clientData.put("origin", "http://example.com");
-        String clientDataJson = gson.toJson(clientData);
+        String clientDataJson = objectMapper.writeValueAsString(clientData);
 
         byte[] clientParam = crypto.hash(clientDataJson);
         byte[] appParam = crypto.hash(registerRequest.getAppId());
@@ -97,7 +97,7 @@ public class Client {
         clientData.put("typ", "navigator.id.getAssertion");
         clientData.put("challenge", startedAuthentication.getChallenge());
         clientData.put("origin", "http://example.com");
-        String clientDataJson = gson.toJson(clientData);
+        String clientDataJson = objectMapper.writeValueAsString(clientData);
 
 
         byte[] clientParam = crypto.hash(clientDataJson);

@@ -9,6 +9,10 @@
 
 package com.yubico.u2f.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
@@ -26,16 +30,24 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     private static final long serialVersionUID = -142942195464329902L;
     public static final long INITIAL_COUNTER_VALUE = -1;
 
+    @JsonProperty
     private final String keyHandle;
+    @JsonProperty
     private final String publicKey;
+    @JsonProperty
     private final String attestationCert;
+    @JsonProperty
     private long counter;
+    @JsonProperty
     private boolean compromised;
 
-    private DeviceRegistration() {
-        keyHandle = null;
-        publicKey = null;
-        attestationCert = null; // Gson requires a no-args constructor.
+    @JsonCreator
+    private DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
+        this.keyHandle = keyHandle;
+        this.publicKey = publicKey;
+        this.attestationCert = attestationCert;
+        this.counter = counter;
+        this.compromised = compromised;
     }
 
     public DeviceRegistration(String keyHandle, String publicKey, X509Certificate attestationCert, long counter)
@@ -118,7 +130,11 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
 
     @Override
     public String toJson() {
-        return GSON.toJson(new DeviceWithoutCertificate(keyHandle, publicKey, counter, compromised));
+        try {
+            return OBJECT_MAPPER.writeValueAsString(new DeviceWithoutCertificate(keyHandle, publicKey, counter, compromised));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public String toJsonWithAttestationCert() {
@@ -134,9 +150,13 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     private static class DeviceWithoutCertificate {
+        @JsonProperty
         private final String keyHandle;
+        @JsonProperty
         private final String publicKey;
+        @JsonProperty
         private final long counter;
+        @JsonProperty
         private final boolean compromised;
 
         private DeviceWithoutCertificate(String keyHandle, String publicKey, long counter, boolean compromised) {

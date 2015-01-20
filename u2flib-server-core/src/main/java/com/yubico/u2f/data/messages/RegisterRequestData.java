@@ -1,5 +1,6 @@
 package com.yubico.u2f.data.messages;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.yubico.u2f.U2fPrimitives;
@@ -15,8 +16,15 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
 
     private static final long serialVersionUID = 60855174227617680L;
 
+    @JsonProperty
     private final List<AuthenticateRequest> authenticateRequests;
+    @JsonProperty
     private final List<RegisterRequest> registerRequests;
+
+    private RegisterRequestData(@JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests, @JsonProperty("registerRequests") List<RegisterRequest> registerRequests) {
+        this.authenticateRequests = authenticateRequests;
+        this.registerRequests = registerRequests;
+    }
 
     public RegisterRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) {
         ImmutableList.Builder<AuthenticateRequest> authenticateRequests = ImmutableList.builder();
@@ -26,11 +34,6 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
 
         this.authenticateRequests = authenticateRequests.build();
         this.registerRequests = ImmutableList.of(u2f.startRegistration(appId, challengeGenerator.generateChallenge()));
-    }
-
-    private RegisterRequestData() {
-        authenticateRequests = null;
-        registerRequests = null; // Gson requires a no-args constructor.
     }
 
     public List<AuthenticateRequest> getAuthenticateRequests() {

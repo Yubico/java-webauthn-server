@@ -1,5 +1,7 @@
 package com.yubico.u2f.data.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.yubico.u2f.U2fPrimitives;
@@ -18,7 +20,13 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
 
     private static final long serialVersionUID = 35378338769078256L;
 
+    @JsonProperty
     private final List<AuthenticateRequest> authenticateRequests;
+
+    @JsonCreator
+    private AuthenticateRequestData(@JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests) {
+        this.authenticateRequests = authenticateRequests;
+    }
 
     public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoDevicesRegisteredException {
         ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();

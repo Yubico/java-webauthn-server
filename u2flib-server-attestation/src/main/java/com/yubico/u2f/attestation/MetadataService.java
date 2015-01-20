@@ -2,17 +2,17 @@
 
 package com.yubico.u2f.attestation;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicates;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.yubico.u2f.attestation.matchers.ExtensionMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
 import com.yubico.u2f.exceptions.U2fBadInputException;
@@ -89,11 +89,10 @@ public class MetadataService {
         matchers.put(matcherType, matcher);
     }
 
-    private boolean deviceMatches(JsonElement selectors, X509Certificate attestationCertificate) {
-        if (selectors != null && !selectors.isJsonNull()) {
-            for (JsonElement selectorElement : selectors.getAsJsonArray()) {
-                JsonObject selector = selectorElement.getAsJsonObject();
-                DeviceMatcher matcher = matchers.get(selector.get(SELECTOR_TYPE).getAsString());
+    private boolean deviceMatches(JsonNode selectors, X509Certificate attestationCertificate) {
+        if (selectors != null && !selectors.isNull()) {
+            for (JsonNode selector : selectors) {
+                DeviceMatcher matcher = matchers.get(selector.get(SELECTOR_TYPE).asText());
                 if (matcher != null && matcher.matches(attestationCertificate, selector.get(SELECTOR_PARAMETERS))) {
                     return true;
                 }
@@ -128,13 +127,13 @@ public class MetadataService {
         if (metadata != null) {
             Map<String, String> vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
             Map<String, String> deviceProperties = null;
-            for (JsonObject device : metadata.getDevices()) {
+            for (JsonNode device : metadata.getDevices()) {
                 if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
                     ImmutableMap.Builder<String, String> devicePropertiesBuilder = ImmutableMap.builder();
-                    for (Map.Entry<String, JsonElement> deviceEntry : device.entrySet()) {
-                        JsonElement value = deviceEntry.getValue();
-                        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-                            devicePropertiesBuilder.put(deviceEntry.getKey(), value.getAsString());
+                    for (Map.Entry<String, JsonNode> deviceEntry : Lists.newArrayList(device.fields())) {
+                        JsonNode value = deviceEntry.getValue();
+                        if (value.isTextual()) {
+                            devicePropertiesBuilder.put(deviceEntry.getKey(), value.asText());
                         }
                     }
                     deviceProperties = devicePropertiesBuilder.build();

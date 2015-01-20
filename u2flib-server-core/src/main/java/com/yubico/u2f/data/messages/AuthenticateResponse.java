@@ -9,6 +9,9 @@
 
 package com.yubico.u2f.data.messages;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
@@ -21,28 +24,30 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
     private static final int MAX_SIZE = 20000;
 
     /* base64(client data) */
+    @JsonProperty
     private final String clientData;
 
+    @JsonIgnore
+    private final ClientData clientDataRef;
+
     /* base64(raw response from U2F device) */
+    @JsonProperty
     private final String signatureData;
 
     /* keyHandle originally passed */
+    @JsonProperty
     private final String keyHandle;
 
-    private AuthenticateResponse() {
-        clientData = null;
-        signatureData = null;
-        keyHandle = null; // Gson requires a no-args constructor.
-    }
-
-    public AuthenticateResponse(String clientData, String signatureData, String keyHandle) {
+    @JsonCreator
+    public AuthenticateResponse(@JsonProperty("clientData") String clientData, @JsonProperty("signatureData") String signatureData, @JsonProperty("keyHandle") String keyHandle) throws U2fBadInputException {
         this.clientData = checkNotNull(clientData);
         this.signatureData = checkNotNull(signatureData);
         this.keyHandle = checkNotNull(keyHandle);
+        clientDataRef = new ClientData(clientData);
     }
 
     public ClientData getClientData() {
-        return new ClientData(clientData);
+        return clientDataRef;
     }
 
     public String getSignatureData() {
