@@ -11,6 +11,7 @@ package com.yubico.u2f.data.messages;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
@@ -24,6 +25,7 @@ import java.io.ObjectOutputStream;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AuthenticateResponse extends JsonSerializable implements Persistable {
     private static final int MAX_SIZE = 20000;
 

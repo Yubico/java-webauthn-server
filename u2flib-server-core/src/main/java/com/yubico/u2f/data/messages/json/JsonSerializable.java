@@ -1,7 +1,6 @@
 package com.yubico.u2f.data.messages.json;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,10 +8,10 @@ import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.io.IOException;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class JsonSerializable {
     protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    @JsonIgnore
     public String toJson() {
         try {
             return OBJECT_MAPPER.writeValueAsString(this);
