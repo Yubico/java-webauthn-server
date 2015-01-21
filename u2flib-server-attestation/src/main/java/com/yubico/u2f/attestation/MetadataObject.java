@@ -3,11 +3,13 @@
 package com.yubico.u2f.attestation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MetadataObject extends JsonSerializable {
     private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {
     };
@@ -24,7 +27,7 @@ public class MetadataObject extends JsonSerializable {
     private static final TypeReference LIST_JSONNODE_TYPE = new TypeReference<List<JsonNode>>() {
     };
 
-    private final transient String json;
+    private final transient JsonNode data;
 
     private final String identifier;
     private final long version;
@@ -33,11 +36,9 @@ public class MetadataObject extends JsonSerializable {
     private final List<JsonNode> devices;
 
     @JsonCreator
-    public MetadataObject(String json) throws U2fBadInputException {
-        this.json = json;
-        JsonNode data;
+    public MetadataObject(JsonNode data) throws U2fBadInputException {
+        this.data = data;
         try {
-            data = OBJECT_MAPPER.readTree(json);
             vendorInfo = OBJECT_MAPPER.readValue(data.get("vendorInfo").traverse(), MAP_STRING_STRING_TYPE);
             trustedCertificates = OBJECT_MAPPER.readValue(data.get("trustedCertificates").traverse(), LIST_STRING_TYPE);
             devices = OBJECT_MAPPER.readValue(data.get("devices").traverse(), LIST_JSONNODE_TYPE);
@@ -55,7 +56,7 @@ public class MetadataObject extends JsonSerializable {
 
     @Override
     public String toJson() {
-        return json;
+        return data.toString();
     }
 
     public String getIdentifier() {
@@ -78,6 +79,19 @@ public class MetadataObject extends JsonSerializable {
         return MoreObjects.firstNonNull(devices, ImmutableList.<JsonNode>of());
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(data);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof MetadataObject))
+            return false;
+        MetadataObject other = (MetadataObject) obj;
+        return Objects.equal(data, other.data);
+    }
+
     public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadInputException {
         JsonNode items;
         try {
@@ -97,6 +111,10 @@ public class MetadataObject extends JsonSerializable {
     }
 
     public static MetadataObject fromJson(String json) throws U2fBadInputException {
-        return new MetadataObject(json);
+        try {
+            return new MetadataObject(OBJECT_MAPPER.readTree(json));
+        } catch (IOException e) {
+            throw new U2fBadInputException("Malformed data", e);
+        }
     }
 }
