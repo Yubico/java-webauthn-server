@@ -20,11 +20,13 @@ public class AuthenticateResponseTest {
 
     @Test
     public void testToAndFromJson() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(JSON);
-        AuthenticateResponse authenticateResponse2 = new ObjectMapper().readValue(authenticateResponse.toJson(), AuthenticateResponse.class);
+        AuthenticateResponse authenticateResponse2 = objectMapper.readValue(authenticateResponse.toJson(), AuthenticateResponse.class);
 
         assertEquals(authenticateResponse, authenticateResponse2);
         assertEquals(authenticateResponse.getRequestId(), authenticateResponse2.getRequestId());
+        assertEquals(authenticateResponse.toJson(), objectMapper.writeValueAsString(authenticateResponse));
     }
 
     @Test

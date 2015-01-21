@@ -41,11 +41,13 @@ public class RegisterRequestDataTest {
 
     @Test
     public void testToAndFromJson() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
         RegisterRequestData requestData = RegisterRequestData.fromJson(JSON);
-        RegisterRequestData requestData2 = new ObjectMapper().readValue(requestData.toJson(), RegisterRequestData.class);
+        RegisterRequestData requestData2 = objectMapper.readValue(requestData.toJson(), RegisterRequestData.class);
 
         assertEquals(requestData, requestData2);
         assertEquals(requestData.getRequestId(), requestData2.getRequestId());
+        assertEquals(requestData.toJson(), objectMapper.writeValueAsString(requestData));
     }
 
     @Test

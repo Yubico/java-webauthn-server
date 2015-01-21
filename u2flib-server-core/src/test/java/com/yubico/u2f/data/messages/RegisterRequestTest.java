@@ -21,12 +21,14 @@ public class RegisterRequestTest {
 
     @Test
     public void testToAndFromJson() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
         RegisterRequest registerRequest = RegisterRequest.fromJson(JSON);
-        RegisterRequest registerRequest2 = new ObjectMapper().readValue(registerRequest.toJson(), RegisterRequest.class);
+        RegisterRequest registerRequest2 = objectMapper.readValue(registerRequest.toJson(), RegisterRequest.class);
 
         assertEquals(registerRequest.getRequestId(), registerRequest2.getRequestId());
         assertEquals(registerRequest.getChallenge(), registerRequest2.getChallenge());
         assertEquals(registerRequest.getAppId(), registerRequest2.getAppId());
+        assertEquals(registerRequest.toJson(), objectMapper.writeValueAsString(registerRequest));
     }
 
     @Test

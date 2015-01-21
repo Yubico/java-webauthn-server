@@ -21,11 +21,13 @@ public class AuthenticateRequestTest {
 
     @Test
     public void testToAndFromJson() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
         AuthenticateRequest authenticateRequest = AuthenticateRequest.fromJson(JSON);
-        AuthenticateRequest authenticateRequest2 = new ObjectMapper().readValue(authenticateRequest.toJson(), AuthenticateRequest.class);
+        AuthenticateRequest authenticateRequest2 = objectMapper.readValue(authenticateRequest.toJson(), AuthenticateRequest.class);
 
         assertEquals(authenticateRequest.getRequestId(), authenticateRequest2.getRequestId());
         assertEquals(authenticateRequest, authenticateRequest2);
+        assertEquals(authenticateRequest.toJson(), objectMapper.writeValueAsString(authenticateRequest));
     }
 
     @Test
