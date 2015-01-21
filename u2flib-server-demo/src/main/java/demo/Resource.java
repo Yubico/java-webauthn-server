@@ -1,7 +1,8 @@
 package demo;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.yubico.u2f.U2F;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
@@ -18,7 +19,10 @@ import io.dropwizard.views.View;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Path("/")
 @Produces(MediaType.TEXT_HTML)
@@ -28,7 +32,12 @@ public class Resource {
     public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='registerIndex'>Register</a></li><li><a href='loginIndex'>Login</a></li></ul>.";
 
     private final Map<String, String> requestStorage = new HashMap<String, String>();
-    private final Multimap<String, String> userStorage = ArrayListMultimap.create();
+    private final LoadingCache<String, Map<String, String>> userStorage = CacheBuilder.newBuilder().build(new CacheLoader<String, Map<String, String>>() {
+        @Override
+        public Map<String, String> load(String key) throws Exception {
+            return new HashMap<String, String>();
+        }
+    });
     private final U2F u2f = new U2F();
 
     @Path("startRegistration")
@@ -63,32 +72,39 @@ public class Resource {
     @Path("finishAuthentication")
     @POST
     public String finishAuthentication(@FormParam("tokenResponse") String response,
-                                       @FormParam("username") String username) throws U2fBadInputException, DeviceCompromisedException {
+                                       @FormParam("username") String username) throws U2fBadInputException {
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
         AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.remove(authenticateResponse.getRequestId()));
-        u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
+        DeviceRegistration registration = null;
+        try {
+            registration = u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
+        } catch (DeviceCompromisedException e) {
+            registration = e.getDeviceRegistration();
+            return "<p>Device possibly compromised and therefore blocked: " + e.getMessage() + "</p>" + NAVIGATION_MENU;
+        } finally {
+            userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
+        }
         return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
     }
 
     private Iterable<DeviceRegistration> getRegistrations(String username) throws U2fBadInputException {
-        Collection<String> serializedRegistrations = userStorage.get(username);
         List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
-        for(String serialized : serializedRegistrations) {
+        for (String serialized : userStorage.getUnchecked(username).values()) {
             registrations.add(DeviceRegistration.fromJson(serialized));
         }
         return registrations;
     }
 
     private void addRegistration(String username, DeviceRegistration registration) {
-        userStorage.put(username, registration.toJson());
+        userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
     }
 
     @Path("loginIndex")
     @GET
     public Response loginIndex() throws Exception {
-      return Response.ok()
-              .entity(Resource.class.getResourceAsStream("loginIndex.html"))
-              .build();
+        return Response.ok()
+                .entity(Resource.class.getResourceAsStream("loginIndex.html"))
+                .build();
     }
 
     @Path("registerIndex")
