@@ -1,6 +1,7 @@
 package com.yubico.u2f.data.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.yubico.u2f.U2fPrimitives;
@@ -50,6 +51,20 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
 
     public String getRequestId() {
         return Iterables.getOnlyElement(registerRequests).getChallenge();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(authenticateRequests, registerRequests);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof RegisterRequestData))
+            return false;
+        RegisterRequestData other = (RegisterRequestData) obj;
+        return Objects.equal(authenticateRequests, other.authenticateRequests)
+                && Objects.equal(registerRequests, other.registerRequests);
     }
 
     public static RegisterRequestData fromJson(String json) throws U2fBadInputException {

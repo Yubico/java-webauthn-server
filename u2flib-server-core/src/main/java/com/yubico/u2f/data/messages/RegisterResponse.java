@@ -10,6 +10,7 @@
 package com.yubico.u2f.data.messages;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
@@ -51,6 +52,7 @@ public class RegisterResponse extends JsonSerializable implements Persistable {
         return registrationData;
     }
 
+    @JsonIgnore
     public ClientData getClientData() {
         return clientDataRef;
     }

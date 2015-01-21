@@ -1,13 +1,9 @@
 package com.yubico.u2f.data.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
-import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidFacetException;
 import com.yubico.u2f.exceptions.U2fBadInputException;

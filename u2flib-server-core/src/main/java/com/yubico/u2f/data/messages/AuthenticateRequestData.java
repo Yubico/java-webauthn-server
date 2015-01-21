@@ -60,6 +60,19 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
         return authenticateRequests.get(0).getChallenge();
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(authenticateRequests);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof AuthenticateRequestData))
+            return false;
+        AuthenticateRequestData other = (AuthenticateRequestData) obj;
+        return Objects.equal(authenticateRequests, other.authenticateRequests);
+    }
+
     public static AuthenticateRequestData fromJson(String json) throws U2fBadInputException {
         return fromJson(json, AuthenticateRequestData.class);
     }

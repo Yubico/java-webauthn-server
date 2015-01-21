@@ -10,6 +10,7 @@
 package com.yubico.u2f;
 
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.ByteArrayDataOutput;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -19,7 +20,7 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -85,5 +86,25 @@ public class TestUtils {
         } catch (InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static byte[] serialize(Object o) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream objectOut = new ObjectOutputStream(out);
+        objectOut.writeObject(o);
+        objectOut.close();
+        return out.toByteArray();
+    }
+
+    public static <T> T deserialize(byte[] serialized) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream is = new ByteArrayInputStream(serialized);
+        ObjectInputStream objectIn = new ObjectInputStream(is);
+        T object = (T) objectIn.readObject();
+        objectIn.close();
+        return  object;
+    }
+
+    public static <T> T clone(T input) throws IOException, ClassNotFoundException {
+        return deserialize(serialize(input));
     }
 }

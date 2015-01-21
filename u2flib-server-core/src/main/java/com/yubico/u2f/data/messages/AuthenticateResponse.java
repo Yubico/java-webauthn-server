@@ -17,6 +17,10 @@ import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,7 +32,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
     private final String clientData;
 
     @JsonIgnore
-    private final ClientData clientDataRef;
+    private transient ClientData clientDataRef;
 
     /* base64(raw response from U2F device) */
     @JsonProperty
@@ -46,6 +50,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
         clientDataRef = new ClientData(clientData);
     }
 
+    @JsonIgnore
     public ClientData getClientData() {
         return clientDataRef;
     }
@@ -80,5 +85,18 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
     public static AuthenticateResponse fromJson(String json) throws U2fBadInputException {
         checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
         return fromJson(json, AuthenticateResponse.class);
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        try {
+            clientDataRef = new ClientData(clientData);
+        } catch (U2fBadInputException e) {
+            throw new IOException(e);
+        }
     }
 }

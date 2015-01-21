@@ -53,7 +53,7 @@ public class AuthenticateRequest extends JsonSerializable implements Persistable
     private final String keyHandle;
 
     @JsonCreator
-    public AuthenticateRequest(@JsonProperty("") String challenge, @JsonProperty("appId") String appId, @JsonProperty("keyHandle") String keyHandle) {
+    public AuthenticateRequest(@JsonProperty("challenge") String challenge, @JsonProperty("appId") String appId, @JsonProperty("keyHandle") String keyHandle) {
         this.challenge = checkNotNull(challenge);
         this.appId = checkNotNull(appId);
         this.keyHandle = checkNotNull(keyHandle);
