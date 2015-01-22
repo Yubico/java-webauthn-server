@@ -11,7 +11,6 @@ import com.yubico.u2f.data.messages.RegisterRequestData;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligableDevicesException;
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
@@ -42,7 +41,7 @@ public class Resource {
 
     @Path("startRegistration")
     @GET
-    public View startRegistration(@QueryParam("username") String username) throws U2fBadInputException {
+    public View startRegistration(@QueryParam("username") String username) {
         RegisterRequestData registerRequestData = u2f.startRegistration(SERVER_ADDRESS, getRegistrations(username));
         requestStorage.put(registerRequestData.getRequestId(), registerRequestData.toJson());
         return new RegistrationView(registerRequestData.toJson(), username);
@@ -50,8 +49,7 @@ public class Resource {
 
     @Path("finishRegistration")
     @POST
-    public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username)
-            throws U2fBadInputException {
+    public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
         RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.remove(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
@@ -63,7 +61,7 @@ public class Resource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) throws U2fBadInputException, NoEligableDevicesException {
+    public View startAuthentication(@QueryParam("username") String username) throws NoEligableDevicesException {
         AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
         requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
         return new AuthenticationView(authenticateRequestData.toJson(), username);
@@ -72,7 +70,7 @@ public class Resource {
     @Path("finishAuthentication")
     @POST
     public String finishAuthentication(@FormParam("tokenResponse") String response,
-                                       @FormParam("username") String username) throws U2fBadInputException {
+                                       @FormParam("username") String username) {
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
         AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.remove(authenticateResponse.getRequestId()));
         DeviceRegistration registration = null;
@@ -87,7 +85,7 @@ public class Resource {
         return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
     }
 
-    private Iterable<DeviceRegistration> getRegistrations(String username) throws U2fBadInputException {
+    private Iterable<DeviceRegistration> getRegistrations(String username) {
         List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
         for (String serialized : userStorage.getUnchecked(username).values()) {
             registrations.add(DeviceRegistration.fromJson(serialized));

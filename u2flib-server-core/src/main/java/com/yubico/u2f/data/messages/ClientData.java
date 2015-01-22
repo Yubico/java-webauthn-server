@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.InvalidFacetException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.io.IOException;
@@ -73,9 +72,9 @@ public class ClientData {
         }
     }
 
-    private static void verifyOrigin(String origin, Set<String> allowedOrigins) throws InvalidFacetException {
+    private static void verifyOrigin(String origin, Set<String> allowedOrigins) throws U2fBadInputException {
         if (!allowedOrigins.contains(origin)) {
-            throw new InvalidFacetException(origin +
+            throw new U2fBadInputException(origin +
                     " is not a recognized facet for this application");
         }
     }

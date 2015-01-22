@@ -7,8 +7,8 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
-import com.yubico.u2f.exceptions.InvalidFacetException;
 import com.yubico.u2f.exceptions.NoEligableDevicesException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.junit.Test;
 
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
@@ -50,7 +50,7 @@ public class U2FTest {
         u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration));
     }
 
-    @Test(expected = InvalidFacetException.class)
+    @Test(expected = U2fBadInputException.class)
     public void finishAuthentication_invalidFacet() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
