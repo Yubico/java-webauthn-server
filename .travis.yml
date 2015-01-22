@@ -4,3 +4,9 @@ jdk:
   - openjdk6
   - oraclejdk7
   - oraclejdk8
+matrix:
+  include:
+    - jdk: openjdk7
+      env: COVERALLS=true
+after_success:
+  - test -z $COVERALLS || mvn clean test jacoco:report coveralls:report
