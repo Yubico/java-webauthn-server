@@ -10,7 +10,7 @@ import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequestData;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
-import com.yubico.u2f.exceptions.NoDevicesRegisteredException;
+import com.yubico.u2f.exceptions.NoEligableDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
@@ -63,7 +63,7 @@ public class Resource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) throws U2fBadInputException, NoDevicesRegisteredException {
+    public View startAuthentication(@QueryParam("username") String username) throws U2fBadInputException, NoEligableDevicesException {
         AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
         requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
         return new AuthenticationView(authenticateRequestData.toJson(), username);

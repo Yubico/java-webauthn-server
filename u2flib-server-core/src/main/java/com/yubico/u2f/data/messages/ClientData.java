@@ -76,7 +76,7 @@ public class ClientData {
     private static void verifyOrigin(String origin, Set<String> allowedOrigins) throws InvalidFacetException {
         if (!allowedOrigins.contains(origin)) {
             throw new InvalidFacetException(origin +
-                    " is not a recognized home origin for this backend");
+                    " is not a recognized facet for this application");
         }
     }
 

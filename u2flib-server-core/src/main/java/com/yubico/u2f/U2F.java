@@ -4,6 +4,7 @@ package com.yubico.u2f;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
@@ -12,20 +13,13 @@ import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
-import com.yubico.u2f.exceptions.NoDevicesRegisteredException;
+import com.yubico.u2f.exceptions.NoEligableDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.util.List;
 import java.util.Set;
 
 public class U2F {
-
-    private static final Predicate<DeviceRegistration> NOT_COMPROMISED = new Predicate<DeviceRegistration>() {
-        @Override
-        public boolean apply(DeviceRegistration input) {
-            return !input.isCompromised();
-        }
-    };
 
     private final ChallengeGenerator challengeGenerator;
     private final U2fPrimitives primitives;
@@ -44,16 +38,11 @@ public class U2F {
      * @return a RegisterRequestData, which should be sent to the client and temporarily saved by the server.
      */
     public RegisterRequestData startRegistration(String appId, Iterable<? extends DeviceRegistration> devices) {
-        Iterable<? extends DeviceRegistration> uncompromisedDevices = Iterables.filter(devices, NOT_COMPROMISED);
-        List<AuthenticateRequest> authenticateRequests = Lists.newArrayList();
-        for (DeviceRegistration device : uncompromisedDevices) {
-            authenticateRequests.add(primitives.startAuthentication(appId, device));
-        }
-        return new RegisterRequestData(appId, uncompromisedDevices, primitives, challengeGenerator);
+        return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
-    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoDevicesRegisteredException {
-        return new AuthenticateRequestData(appId, Iterables.filter(devices, NOT_COMPROMISED), primitives, challengeGenerator);
+    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligableDevicesException {
+        return new AuthenticateRequestData(appId, devices, primitives, challengeGenerator);
     }
 
     /***

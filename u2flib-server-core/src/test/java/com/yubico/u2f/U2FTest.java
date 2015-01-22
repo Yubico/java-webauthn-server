@@ -6,7 +6,7 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
-import com.yubico.u2f.exceptions.NoDevicesRegisteredException;
+import com.yubico.u2f.exceptions.NoEligableDevicesException;
 import org.junit.Test;
 
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
@@ -24,7 +24,7 @@ public class U2FTest {
         u2f.startRegistration(APP_ID_ENROLL, ImmutableList.of(deviceRegistration));
     }
 
-    @Test(expected = NoDevicesRegisteredException.class)
+    @Test(expected = NoEligableDevicesException.class)
     public void startAuthentication_compromisedDevices() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
