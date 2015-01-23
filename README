@@ -30,7 +30,8 @@ public View startAuthentication(String username) throws NoEligableDevicesExcepti
 }
 
 @POST
-public String finishAuthentication(AuthenticateResponse response, String username) throws DeviceCompromisedException {
+public String finishAuthentication(AuthenticateResponse response, String username) throws 
+        DeviceCompromisedException {
 
     // Get the challenges that we stored when starting the authentication
     AuthenticateRequestData authenticateRequest
