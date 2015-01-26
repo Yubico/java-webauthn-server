@@ -72,7 +72,9 @@ This allows you to extract attestation data through the MetadataService class:
 [source,java]
 ----
 DeviceRegistration registration = U2F.finishRegistration(request, response);
-Attestation attestation = metadataService.getAttestation(registration.getAttestationCertificate();
+Attestation attestation = metadataService.getAttestation(
+    registration.getAttestationCertificate()
+);
 ----
 
 The Attestation class lets you know if the attestation certificate from the registration is trusted, and provides you with metadata about the vendor as well as the device itself.
