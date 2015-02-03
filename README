@@ -54,31 +54,9 @@ See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (in
 JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[developers.yubico.com/java-u2flib-server].
 
 
-=== Advanced topics
+=== Attestation
+link:u2flib-server-attestation[The attestation module] enables you to restrict registrations to certain U2F devices (e.g. devices made by a specific vendor). It can also provide metadata for devices.
 
-==== Verifying attestation certificates and device metadata.
-Attestation certificates can be verified, and additional device metadata can be provided, by use of the u2flib-server-attestation module.
-To use this module, you will need to add it as a dependency to your project:
-
-[source, xml]
- <dependency>
-   <groupId>com.yubico</groupId>
-   <artifactId>u2flib-server-attestation</artifactId>
-   <version>0.14.0</version>
- </dependency>
-
-This allows you to extract attestation data through the MetadataService class:
-
-[source,java]
-----
-DeviceRegistration registration = U2F.finishRegistration(request, response);
-Attestation attestation = metadataService.getAttestation(
-    registration.getAttestationCertificate()
-);
-----
-
-The Attestation class lets you know if the attestation certificate from the registration is trusted, and provides you with metadata about the vendor as well as the device itself.
-
-==== Serialization
+=== Serialization
 All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
 Internally the classes use Jackson to serialize to and from JSON, and the ObjectMapper from Jackson can be used.

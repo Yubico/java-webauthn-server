@@ -1,0 +1,40 @@
+== Device attestation  module
+Module for verifying attestation certificates and provide additional device metadata.
+
+This is useful if you want to:
+
+ - Restrict which type of devices that can be registered with your server.
+ - Give users rich data about their registered devices, such as:
+   * The vendor and model name.
+   * Display an image of the device model.
+
+
+=== Dependency
+[source, xml]
+ <dependency>
+   <groupId>com.yubico</groupId>
+   <artifactId>u2flib-server-attestation</artifactId>
+   <version>0.14.0</version>
+ </dependency>
+
+
+=== Usage
+The Attestation class lets you know if the attestation certificate from the registration is trusted, and provides you with metadata about the vendor as well as the device itself.
+
+[source,java]
+----
+DeviceRegistration registration = U2F.finishRegistration(request, response);
+Attestation attestation = metadataService.getAttestation(
+    registration.getAttestationCertificate()
+);
+
+// Check if the device is trusted
+assert attestation.isTrusted();
+
+// Check that the vendor is Yubico
+assert attestation.getVendorProperties().get("name").equals("Yubico");
+
+// Get device name and image
+String deviceName = attestation.getDeviceProperties().get("displayName");
+String imageUrl = attestation.getDeviceProperties().get("imageUrl");
+----
