@@ -14,6 +14,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.u2f.attestation.matchers.ExtensionMatcher;
+import com.yubico.u2f.attestation.matchers.FingerprintMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
@@ -34,7 +35,8 @@ public class MetadataService {
     private static final String SELECTOR_PARAMETERS = "parameters";
 
     public static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableMap.of(
-            ExtensionMatcher.EXTENSION_TYPE, (DeviceMatcher) new ExtensionMatcher()
+            ExtensionMatcher.SELECTOR_TYPE, new ExtensionMatcher(),
+            FingerprintMatcher.SELECTOR_TYPE, new FingerprintMatcher()
     );
 
     private static MetadataResolver createDefaultMetadataResolver() {
