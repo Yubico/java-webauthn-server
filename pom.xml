@@ -7,7 +7,7 @@
     <groupId>com.yubico</groupId>
     <artifactId>u2flib-server-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.14.0-SNAPSHOT</version>
+    <version>0.14.0</version>
     <name>U2F parent</name>
     <description>Client library written in Java for verifying YubiKey one-time passwords (OTPs).</description>
     <properties>
