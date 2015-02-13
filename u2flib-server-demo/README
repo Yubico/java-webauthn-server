@@ -16,4 +16,7 @@ Compile using `mvn clean install` and then run using
 
 === 3. Run
 Then point a U2F-compatible web browser (e.g. Chrome) to
-link:http://localhost:8080/registerIndex[localhost:8080/registerIndex].
+link:https://localhost:8443/assets/registerIndex.html[https://localhost:8443/assets/registerIndex.html].
+
+NOTE: Since U2F requires a HTTPS connection, this demo server uses a dummy certificate.
+This will cause Chrome to show a warning, which it is safe to bypass.

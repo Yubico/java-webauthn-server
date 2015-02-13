@@ -27,8 +27,8 @@ import java.util.Map;
 @Produces(MediaType.TEXT_HTML)
 public class Resource {
 
-    public static final String SERVER_ADDRESS = "http://localhost:8080";
-    public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='registerIndex'>Register</a></li><li><a href='loginIndex'>Login</a></li></ul>.";
+    public static final String SERVER_ADDRESS = "https://localhost:8443";
+    public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='/assets/registerIndex.html'>Register</a></li><li><a href='/assets/loginIndex.html'>Login</a></li></ul>";
 
     private final Map<String, String> requestStorage = new HashMap<String, String>();
     private final LoadingCache<String, Map<String, String>> userStorage = CacheBuilder.newBuilder().build(new CacheLoader<String, Map<String, String>>() {
@@ -95,21 +95,5 @@ public class Resource {
 
     private void addRegistration(String username, DeviceRegistration registration) {
         userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
-    }
-
-    @Path("loginIndex")
-    @GET
-    public Response loginIndex() throws Exception {
-        return Response.ok()
-                .entity(Resource.class.getResourceAsStream("loginIndex.html"))
-                .build();
-    }
-
-    @Path("registerIndex")
-    @GET
-    public Response registerIndex() throws Exception {
-        return Response.ok()
-                .entity(Resource.class.getResourceAsStream("registerIndex.html"))
-                .build();
     }
 }
