@@ -17,7 +17,6 @@ import io.dropwizard.views.View;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.Map;
 @Produces(MediaType.TEXT_HTML)
 public class Resource {
 
-    public static final String SERVER_ADDRESS = "https://localhost:8443";
+    public static final String APP_ID = "https://localhost:8443";
     public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='/assets/registerIndex.html'>Register</a></li><li><a href='/assets/loginIndex.html'>Login</a></li></ul>";
 
     private final Map<String, String> requestStorage = new HashMap<String, String>();
@@ -42,7 +41,7 @@ public class Resource {
     @Path("startRegistration")
     @GET
     public View startRegistration(@QueryParam("username") String username) {
-        RegisterRequestData registerRequestData = u2f.startRegistration(SERVER_ADDRESS, getRegistrations(username));
+        RegisterRequestData registerRequestData = u2f.startRegistration(APP_ID, getRegistrations(username));
         requestStorage.put(registerRequestData.getRequestId(), registerRequestData.toJson());
         return new RegistrationView(registerRequestData.toJson(), username);
     }
@@ -62,7 +61,7 @@ public class Resource {
     @Path("startAuthentication")
     @GET
     public View startAuthentication(@QueryParam("username") String username) throws NoEligableDevicesException {
-        AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(SERVER_ADDRESS, getRegistrations(username));
+        AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
         requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
         return new AuthenticationView(authenticateRequestData.toJson(), username);
     }
