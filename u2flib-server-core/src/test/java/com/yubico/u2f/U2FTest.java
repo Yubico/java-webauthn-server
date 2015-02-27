@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class U2FTest {
-    U2F u2f = new U2F();
+    U2F u2f = U2F.withoutAppIdValidation();
 
     @Test
     public void startRegistration_compromisedDevice() throws Exception {
