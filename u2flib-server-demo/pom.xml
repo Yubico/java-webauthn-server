@@ -23,6 +23,11 @@
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-assets</artifactId>
+            <version>0.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-views</artifactId>
             <version>0.7.1</version>
         </dependency>

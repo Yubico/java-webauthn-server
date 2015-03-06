@@ -4,9 +4,7 @@ package com.yubico.u2f;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
@@ -16,17 +14,30 @@ import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligableDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Set;
 
 public class U2F {
 
     private final ChallengeGenerator challengeGenerator;
     private final U2fPrimitives primitives;
+    private final boolean validateAppId;
+
+
 
     public U2F() {
+        this(true);
+    }
+
+    public static U2F withoutAppIdValidation() {
+        return new U2F(false);
+    }
+
+    private U2F(boolean validateAppId) {
         this.challengeGenerator = new RandomChallengeGenerator();
         primitives = new U2fPrimitives(new BouncyCastleCrypto(), challengeGenerator);
+        this.validateAppId = validateAppId;
     }
 
     /**
@@ -38,10 +49,16 @@ public class U2F {
      * @return a RegisterRequestData, which should be sent to the client and temporarily saved by the server.
      */
     public RegisterRequestData startRegistration(String appId, Iterable<? extends DeviceRegistration> devices) {
+        if(validateAppId) {
+            AppId.checkIsValid(appId);
+        }
         return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
     public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligableDevicesException {
+        if(validateAppId) {
+            AppId.checkIsValid(appId);
+        }
         return new AuthenticateRequestData(appId, devices, primitives, challengeGenerator);
     }
 
@@ -99,5 +116,4 @@ public class U2F {
         primitives.finishAuthentication(request, response, device, facets);
         return device;
     }
-
 }
