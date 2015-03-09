@@ -11,7 +11,7 @@ public class AppIdTest {
     @Test
     public void validUrls() {
         assertTrue(isValid("https://www.example.com"));
-        assertTrue(isValid("https://internal-server/"));
+        assertTrue(isValid("https://internal-server"));
         assertTrue(isValid("https://åäö.se:8443"));
         assertTrue(isValid("https://localhost:8443/myAppId.json"));
     }
@@ -25,6 +25,11 @@ public class AppIdTest {
     @Test
     public void disallowHttp() {
         assertFalse(isValid("http://www.example.com"));
+    }
+
+    @Test
+    public void disallowSlashAsPath() {
+        assertFalse(isValid("https://www.example.com/"));
     }
 
     @Test
