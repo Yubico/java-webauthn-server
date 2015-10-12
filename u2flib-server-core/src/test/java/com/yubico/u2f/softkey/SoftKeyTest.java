@@ -78,7 +78,7 @@ public class SoftKeyTest {
     }
 
     @Test(expected = U2fBadInputException.class)
-    public void shouldVerifyKeySignatures() throws Exception {
+     public void shouldVerifyChallenge() throws Exception {
 
         Client client = createClient();
 
@@ -98,6 +98,28 @@ public class SoftKeyTest {
         byte[] rawClientData = clientData.asJson().getBytes();
         rawClientData[50] += 1;
         return U2fB64Encoding.encode(rawClientData);
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void shouldVerifySignature() throws Exception {
+
+        Client client = createClient();
+
+        DeviceRegistration registeredDevice = client.register();
+
+        AuthenticateRequest authenticateRequest = u2f.startAuthentication(APP_ID, registeredDevice);
+        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, authenticateRequest);
+        AuthenticateResponse tamperedResponse = new AuthenticateResponse(
+                U2fB64Encoding.encode(originalResponse.getClientData().asJson().getBytes()),
+                tamperSignature(originalResponse.getSignatureData()),
+                originalResponse.getKeyHandle()
+        );
+        u2f.finishAuthentication(authenticateRequest, tamperedResponse, registeredDevice);
+    }
+
+
+    private String tamperSignature(String signature) {
+        return signature.substring(0, 5) + "47" + signature.substring(7);
     }
 
     private Client createClient() {

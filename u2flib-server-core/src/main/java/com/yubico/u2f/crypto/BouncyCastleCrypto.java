@@ -41,8 +41,8 @@ public class BouncyCastleCrypto implements Crypto {
             if (!ecdsaSignature.verify(signature)) {
                 throw new U2fBadInputException("Signature is invalid");
             }
-        } catch (GeneralSecurityException e) { //This should not happen
-            throw new RuntimeException(e);
+        } catch (GeneralSecurityException e) {
+            throw new U2fBadInputException("Bad signature");
         }
     }
 
