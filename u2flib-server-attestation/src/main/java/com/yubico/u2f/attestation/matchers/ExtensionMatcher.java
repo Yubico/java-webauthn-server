@@ -7,6 +7,7 @@ import com.yubico.u2f.attestation.DeviceMatcher;
 import org.bouncycastle.util.Strings;
 
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
 public class ExtensionMatcher implements DeviceMatcher {
     public static final String SELECTOR_TYPE = "x509Extension";
@@ -20,8 +21,14 @@ public class ExtensionMatcher implements DeviceMatcher {
         JsonNode matchValue = parameters.get(EXTENSION_VALUE);
         byte[] extensionValue = attestationCertificate.getExtensionValue(matchKey);
         if (extensionValue != null) {
-            if (matchValue == null || matchValue.asText().equals(Strings.fromByteArray(extensionValue))) {
+            if (matchValue == null) {
                 return true;
+            } else {
+                //TODO: Handle long lengths? Verify length?
+                String readValue = Strings.fromByteArray(Arrays.copyOfRange(extensionValue, 2, extensionValue.length));
+                if (matchValue.asText().equals(readValue)) {
+                    return true;
+                }
             }
         }
         return false;
