@@ -11,7 +11,7 @@ import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
-import com.yubico.u2f.exceptions.NoEligableDevicesException;
+import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.net.MalformedURLException;
@@ -55,7 +55,7 @@ public class U2F {
         return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
-    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligableDevicesException {
+    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligibleDevicesException {
         if(validateAppId) {
             AppId.checkIsValid(appId);
         }

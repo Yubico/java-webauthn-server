@@ -16,7 +16,7 @@ NOTE: Make sure that you have read https://developers.yubico.com/U2F/Libraries/U
 [source, java]
 ----
 @GET
-public View startAuthentication(String username) throws NoEligableDevicesException {
+public View startAuthentication(String username) throws NoEligibleDevicesException {
 
     // Generate a challenge for each U2F device that this user has registered
     AuthenticateRequestData requestData

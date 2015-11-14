@@ -5,6 +5,10 @@ import com.yubico.u2f.data.DeviceRegistration;
 
 import java.util.List;
 
+/**
+ * @deprecated use {@link NoEligibleDevicesException}
+ */
+@Deprecated
 public class NoEligableDevicesException extends Exception {
     private final List<DeviceRegistration> devices;
 

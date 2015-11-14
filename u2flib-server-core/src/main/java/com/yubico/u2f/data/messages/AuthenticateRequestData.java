@@ -10,7 +10,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
-import com.yubico.u2f.exceptions.NoEligableDevicesException;
+import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
         this.authenticateRequests = authenticateRequests;
     }
 
-    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligableDevicesException {
+    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
         ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
         byte[] challenge = challengeGenerator.generateChallenge();
         for (DeviceRegistration device : devices) {
@@ -41,9 +41,9 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
 
         if (authenticateRequests.isEmpty()) {
             if(Iterables.isEmpty(devices)) {
-                throw new NoEligableDevicesException(devices, "No devices registrered");
+                throw new NoEligibleDevicesException(devices, "No devices registrered");
             } else {
-                throw new NoEligableDevicesException(devices, "All devices compromised");
+                throw new NoEligibleDevicesException(devices, "All devices compromised");
             }
         }
     }

@@ -10,7 +10,7 @@ import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequestData;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
-import com.yubico.u2f.exceptions.NoEligableDevicesException;
+import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
@@ -60,7 +60,7 @@ public class Resource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) throws NoEligableDevicesException {
+    public View startAuthentication(@QueryParam("username") String username) throws NoEligibleDevicesException {
         AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
         requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
         return new AuthenticationView(authenticateRequestData.toJson(), username);
