@@ -1,13 +1,13 @@
 package com.yubico.u2f.data;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.yubico.u2f.data.messages.key.Client;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.softkey.SoftKey;
 import org.junit.Test;
 
-import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
-import static com.yubico.u2f.testdata.TestVectors.KEY_HANDLE_BASE64;
-import static com.yubico.u2f.testdata.TestVectors.USER_PUBLIC_KEY_AUTHENTICATE_HEX;
 import static junit.framework.Assert.fail;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
@@ -25,6 +25,19 @@ public class DeviceRegistrationTest {
         assertEquals(deviceRegistration.getKeyHandle(), deserializedDeviceRegistration.getKeyHandle());
         assertEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
         assertEquals(deviceRegistration.getCounter(), deserializedDeviceRegistration.getCounter());
+    }
+
+    @Test
+    public void serializationRoundTripWithJackson() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(DeserializationFeature.UNWRAP_ROOT_VALUE);
+        objectMapper.disable(SerializationFeature.WRAP_ROOT_VALUE);
+
+        DeviceRegistration input = getDeviceRegistration();
+        String json = objectMapper.writeValueAsString(input);
+        DeviceRegistration output = objectMapper.readValue(json, DeviceRegistration.class);
+
+        assertEquals(input, output);
     }
 
     @Test
