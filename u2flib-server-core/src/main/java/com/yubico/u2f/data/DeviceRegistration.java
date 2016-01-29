@@ -10,8 +10,8 @@
 package com.yubico.u2f.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -70,6 +70,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
         return publicKey;
     }
 
+    @JsonIgnore
     public X509Certificate getAttestationCertificate() throws CertificateException, NoSuchFieldException {
         if (attestationCert == null) {
             throw new NoSuchFieldException();
