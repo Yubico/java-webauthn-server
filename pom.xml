@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <!-- Release using: `mvn deploy -P release-sign-artifacts` -->
-
     <groupId>com.yubico</groupId>
     <artifactId>u2flib-server-parent</artifactId>
     <packaging>pom</packaging>
@@ -15,15 +12,10 @@
     </properties>
     <organization>
         <name>Yubico</name>
-        <url>http://www.yubico.com/</url>
+        <url>https://www.yubico.com/</url>
     </organization>
-    <url>http://developers.yubico.com/</url>
+    <url>https://developers.yubico.com/</url>
     <developers>
-        <developer>
-            <id>henrik</id>
-            <name>Henrik Stråth</name>
-            <email>henrik@yubico.com</email>
-        </developer>
         <developer>
             <id>dain</id>
             <name>Dain Nilsson</name>
@@ -40,8 +32,8 @@
         <url>scm:git:git://github.com/Yubico/java-u2flib-server.git</url>
         <connection>scm:git:git://github.com/Yubico/java-u2flib-server.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/Yubico/java-u2flib-server.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>u2flib-server-core</module>
@@ -66,29 +58,29 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.51</version>
+            <version>1.54</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>18.0</version>
+            <version>19.0</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
-            <version>1.9.5</version>
+            <version>2.0.2-beta</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.5.0</version>
+            <version>2.7.1-1</version>
         </dependency>
     </dependencies>
 
@@ -170,7 +162,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

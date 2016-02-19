@@ -19,22 +19,22 @@
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>0.7.1</version>
+            <version>0.9.2</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-assets</artifactId>
-            <version>0.7.1</version>
+            <version>0.9.2</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-views</artifactId>
-            <version>0.7.1</version>
+            <version>0.9.2</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-views-freemarker</artifactId>
-            <version>0.7.1</version>
+            <version>0.9.2</version>
         </dependency>
     </dependencies>
 
