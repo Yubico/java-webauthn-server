@@ -18,6 +18,8 @@ import com.yubico.u2f.attestation.matchers.FingerprintMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
+import org.bouncycastle.asn1.DERBitString;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,6 +35,9 @@ public class MetadataService {
     public static final String SELECTORS = "selectors";
     private static final String SELECTOR_TYPE = "type";
     private static final String SELECTOR_PARAMETERS = "parameters";
+
+    private static final String TRANSPORTS = "transports";
+    private static final String TRANSPORTS_EXT_OID = "1.3.6.1.4.1.45724.2.1.1";
 
     public static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableMap.of(
             ExtensionMatcher.SELECTOR_TYPE, new ExtensionMatcher(),
@@ -57,7 +62,7 @@ public class MetadataService {
         return resolver;
     }
 
-    private final Attestation unknownAttestation = new Attestation(null, null, null);
+    private final Attestation unknownAttestation = new Attestation(null, null, null, null);
     private final MetadataResolver resolver;
     private final Map<String, DeviceMatcher> matchers = new HashMap<String, DeviceMatcher>();
     private final Cache<String, Attestation> cache;
@@ -126,11 +131,19 @@ public class MetadataService {
 
     private Attestation lookupAttestation(X509Certificate attestationCertificate) {
         MetadataObject metadata = resolver.resolve(attestationCertificate);
+        Map<String, String> vendorProperties = null;
+        Map<String, String> deviceProperties = null;
+        String identifier = null;
+        int transports = 0;
         if (metadata != null) {
-            Map<String, String> vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
-            Map<String, String> deviceProperties = null;
+            identifier = metadata.getIdentifier();
+            vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
             for (JsonNode device : metadata.getDevices()) {
                 if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
+                    JsonNode transportNode = device.get(TRANSPORTS);
+                    if(transportNode != null) {
+                        transports = transportNode.asInt(0);
+                    }
                     ImmutableMap.Builder<String, String> devicePropertiesBuilder = ImmutableMap.builder();
                     for (Map.Entry<String, JsonNode> deviceEntry : Lists.newArrayList(device.fields())) {
                         JsonNode value = deviceEntry.getValue();
@@ -142,9 +155,34 @@ public class MetadataService {
                     break;
                 }
             }
-            return new Attestation(metadata.getIdentifier(), vendorProperties, deviceProperties);
         }
 
-        return unknownAttestation;
+        transports |= get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
+
+        return new Attestation(identifier, vendorProperties, deviceProperties, Transport.fromInt(transports));
+    }
+
+    private int get_transports(byte[] extensionValue) {
+        if(extensionValue == null) {
+            return 0;
+        }
+
+        // Mask out unused bits (shouldn't be needed as they should already be 0).
+        int unusedBitMask = 0xff;
+        for(int i=0; i < extensionValue[3]; i++) {
+            unusedBitMask <<= 1;
+        }
+        extensionValue[extensionValue.length-1] &= unusedBitMask;
+
+        int transports = 0;
+        for(int i=extensionValue.length - 1; i >= 5; i--) {
+            byte b = extensionValue[i];
+            for(int bi=0; bi < 8; bi++) {
+                transports = (transports << 1) | (b & 1);
+                b >>= 1;
+            }
+        }
+
+        return transports;
     }
 }
