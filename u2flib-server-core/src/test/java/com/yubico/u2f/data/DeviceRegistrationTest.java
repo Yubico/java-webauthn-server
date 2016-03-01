@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.yubico.u2f.data.messages.key.Client;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.softkey.SoftKey;
+
 import org.junit.Test;
 
 import static junit.framework.Assert.fail;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class DeviceRegistrationTest {
@@ -25,6 +27,17 @@ public class DeviceRegistrationTest {
         assertEquals(deviceRegistration.getKeyHandle(), deserializedDeviceRegistration.getKeyHandle());
         assertEquals(deviceRegistration.getPublicKey(), deserializedDeviceRegistration.getPublicKey());
         assertEquals(deviceRegistration.getCounter(), deserializedDeviceRegistration.getCounter());
+        assertNotEquals(deviceRegistration, deserializedDeviceRegistration);  // Cert should be missing
+    }
+
+    @Test
+    public void shouldSerializeWithAttestationCertificate() throws Exception {
+        DeviceRegistration deviceRegistration = getDeviceRegistration();
+
+        String json = deviceRegistration.toJsonWithAttestationCert();
+
+        DeviceRegistration deserializedDeviceRegistration = DeviceRegistration.fromJson(json);
+        assertEquals(deviceRegistration, deserializedDeviceRegistration);
     }
 
     @Test
