@@ -4,7 +4,7 @@
     <groupId>com.yubico</groupId>
     <artifactId>u2flib-server-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.16.0</version>
+    <version>0.16.1-SNAPSHOT</version>
     <name>U2F parent</name>
     <description>Client library written in Java for verifying YubiKey one-time passwords (OTPs).</description>
     <properties>
@@ -32,7 +32,7 @@
         <url>scm:git:git://github.com/Yubico/java-u2flib-server.git</url>
         <connection>scm:git:git://github.com/Yubico/java-u2flib-server.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/Yubico/java-u2flib-server.git</developerConnection>
-        <tag>u2flib-server-parent-0.16.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
