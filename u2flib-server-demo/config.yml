@@ -5,3 +5,6 @@ server:
       keyStorePath: keystore.jks
       keyStorePassword: p@ssw0rd
       validateCerts: false
+  adminConnectors:
+      - type: http
+        port: 8081  
