@@ -115,6 +115,8 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
             // do nothing
         } catch (NoSuchFieldException e) {
             // do nothing
+        } catch (U2fBadInputException e) {
+            // do nothing
         }
         return MoreObjects.toStringHelper(this)
                 .omitNullValues()

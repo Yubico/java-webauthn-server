@@ -97,6 +97,17 @@ public class U2fPrimitivesTest {
         u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0));
     }
 
+    @Test(expected = U2fBadInputException.class)
+    public void finishAuthentication_truncatedData() throws Exception {
+        AuthenticateRequest authentication = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64,
+          APP_ID_SIGN, KEY_HANDLE_BASE64);
+
+        AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+                "", KEY_HANDLE_BASE64);
+
+        u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void startAuthentication_compromisedDevice() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
