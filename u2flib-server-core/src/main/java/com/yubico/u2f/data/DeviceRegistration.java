@@ -42,7 +42,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     private boolean compromised;
 
     @JsonCreator
-    private DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
+    public DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
         this.keyHandle = keyHandle;
         this.publicKey = publicKey;
         this.attestationCert = attestationCert;
