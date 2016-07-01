@@ -43,7 +43,7 @@ public class RawAuthenticateResponse {
         this.crypto = crypto;
     }
 
-    public static RawAuthenticateResponse fromBase64(String rawDataBase64, Crypto crypto) {
+    public static RawAuthenticateResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
         ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
         return new RawAuthenticateResponse(
                 bytes.readSigned(),

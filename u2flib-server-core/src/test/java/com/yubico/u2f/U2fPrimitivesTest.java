@@ -15,6 +15,7 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.TestVectors;
@@ -74,6 +75,16 @@ public class U2fPrimitivesTest {
                 SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
         u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishAuthentication_badBase64() throws Exception {
+        AuthenticateRequest authentication = new AuthenticateRequest(SERVER_CHALLENGE_SIGN_BASE64,
+                APP_ID_SIGN, KEY_HANDLE_BASE64);
+
+        AuthenticateResponse response = new AuthenticateResponse("****", "****", "****");
+
+        u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0));
     }
 
     @Test(expected = U2fBadInputException.class)

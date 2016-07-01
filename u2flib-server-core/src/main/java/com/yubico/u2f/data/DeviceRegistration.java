@@ -71,7 +71,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     @JsonIgnore
-    public X509Certificate getAttestationCertificate() throws CertificateException, NoSuchFieldException {
+    public X509Certificate getAttestationCertificate() throws U2fBadInputException, CertificateException, NoSuchFieldException {
         if (attestationCert == null) {
             throw new NoSuchFieldException();
         }
