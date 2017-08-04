@@ -39,7 +39,6 @@ import java.util.Map;
 public class Resource {
 
     public static final String APP_ID = "https://localhost:8443";
-    public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='/assets/registerIndex.html'>Register</a></li><li><a href='/assets/loginIndex.html'>Login</a></li></ul>";
 
     private final Map<String, String> requestStorage = new HashMap<String, String>();
     private final LoadingCache<String, Map<String, String>> userStorage = CacheBuilder.newBuilder().build(new CacheLoader<String, Map<String, String>>() {

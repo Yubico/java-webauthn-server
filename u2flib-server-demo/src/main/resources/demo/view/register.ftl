@@ -39,4 +39,6 @@ setTimeout(function() {
             <input type="hidden" name="tokenResponse" id="tokenResponse"/>
         </form>
     </body>
+
+    <#include "navigation.ftl">
 </html>
