@@ -13,11 +13,12 @@ import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
 import java.util.List;
+import lombok.EqualsAndHashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+@EqualsAndHashCode
 public class AuthenticateRequestData extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = 35378338769078256L;
@@ -81,19 +82,6 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
 
     public String getRequestId() {
         return authenticateRequests.get(0).getChallenge();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(authenticateRequests);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof AuthenticateRequestData))
-            return false;
-        AuthenticateRequestData other = (AuthenticateRequestData) obj;
-        return Objects.equal(authenticateRequests, other.authenticateRequests);
     }
 
     public static AuthenticateRequestData fromJson(String json) throws U2fBadInputException {
