@@ -9,7 +9,6 @@
 
 package com.yubico.u2f.data.messages;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.yubico.u2f.U2fPrimitives;
