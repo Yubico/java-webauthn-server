@@ -7,24 +7,27 @@
 <script>
 var request = ${data};
 setTimeout(function() {
-    u2f.register(request.registerRequests, request.authenticateRequests,
-    function(data) {
-        var form = document.getElementById('form');
-        var reg = document.getElementById('tokenResponse');
-        if(data.errorCode) {
-            switch (data.errorCode) {
-                case 4:
-                    alert("This device is already registered.");
-                    break;
+    u2f.register(
+        request.registerRequests,
+        request.authenticateRequests,
+        function(data) {
+            var form = document.getElementById('form');
+            var reg = document.getElementById('tokenResponse');
+            if(data.errorCode) {
+                switch (data.errorCode) {
+                    case 4:
+                        alert("This device is already registered.");
+                        break;
 
-                default:
-                    alert("U2F failed with error: " + data.errorCode);
+                    default:
+                        alert("U2F failed with error: " + data.errorCode);
+                }
+            } else {
+                reg.value=JSON.stringify(data);
+                form.submit();
             }
-        } else {
-            reg.value=JSON.stringify(data);
-            form.submit();
         }
-    });
+    );
 }, 1000);
 </script>
 
