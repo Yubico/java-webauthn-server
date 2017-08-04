@@ -13,25 +13,25 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import lombok.EqualsAndHashCode;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode
 public class AuthenticateResponse extends JsonSerializable implements Persistable {
     private static final int MAX_SIZE = 20000;
 
     /* base64(client data) */
-    @JsonProperty
-    private final String clientData;
+    @JsonProperty("clientData")
+    private final String clientDataRaw;
 
     @JsonIgnore
     private transient ClientData clientDataRef;
@@ -46,7 +46,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
 
     @JsonCreator
     public AuthenticateResponse(@JsonProperty("clientData") String clientData, @JsonProperty("signatureData") String signatureData, @JsonProperty("keyHandle") String keyHandle) throws U2fBadInputException {
-        this.clientData = checkNotNull(clientData);
+        this.clientDataRaw = checkNotNull(clientData);
         this.signatureData = checkNotNull(signatureData);
         this.keyHandle = checkNotNull(keyHandle);
         clientDataRef = new ClientData(clientData);
@@ -69,21 +69,6 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
         return getClientData().getChallenge();
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(clientData, signatureData, keyHandle);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof AuthenticateResponse))
-            return false;
-        AuthenticateResponse other = (AuthenticateResponse) obj;
-        return Objects.equal(clientData, other.clientData)
-                && Objects.equal(keyHandle, other.keyHandle)
-                && Objects.equal(signatureData, other.signatureData);
-    }
-
     public static AuthenticateResponse fromJson(String json) throws U2fBadInputException {
         checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
         return fromJson(json, AuthenticateResponse.class);
@@ -96,7 +81,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         try {
-            clientDataRef = new ClientData(clientData);
+            clientDataRef = new ClientData(clientDataRaw);
         } catch (U2fBadInputException e) {
             throw new IOException(e);
         }
