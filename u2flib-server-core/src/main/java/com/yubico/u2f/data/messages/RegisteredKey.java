@@ -1,16 +1,24 @@
 package com.yubico.u2f.data.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
-import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.io.Serializable;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
+@Value
+@Builder
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonDeserialize(builder = RegisteredKey.RegisteredKeyBuilder.class)
 public class RegisteredKey extends JsonSerializable implements Serializable {
 
     private static final long serialVersionUID = -5509788965855488374L;
@@ -19,41 +27,26 @@ public class RegisteredKey extends JsonSerializable implements Serializable {
      * Version of the protocol that the to-be-registered U2F token must speak. For
      * the version of the protocol described herein, must be "U2F_V2"
      */
-    @JsonProperty
-    private final String version = U2fPrimitives.U2F_VERSION;
+    @NonNull
+    String version;
 
     /**
      * websafe-base64 encoding of the key handle obtained from the U2F token
      * during registration.
      */
-    @JsonProperty
-    private final String keyHandle;
+    @NonNull String keyHandle;
 
-    @JsonCreator
-    public RegisteredKey(@JsonProperty("keyHandle") String keyHandle) {
-        this.keyHandle = checkNotNull(keyHandle);
-    }
+    String appId;
+    Set<String> transports;
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(keyHandle);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof RegisteredKey))
-            return false;
-        RegisteredKey other = (RegisteredKey) obj;
-        return Objects.equal(keyHandle, other.keyHandle)
-                && Objects.equal(version, other.version);
-    }
-
-    public String getKeyHandle() {
-        return keyHandle;
+    public RegisteredKey(String keyHandle) {
+        this(U2fPrimitives.U2F_VERSION, keyHandle, null, null);
     }
 
     public static RegisteredKey fromJson(String json) throws U2fBadInputException {
         return fromJson(json, RegisteredKey.class);
     }
 
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class RegisteredKeyBuilder {}
 }
