@@ -5,12 +5,10 @@
 <script src="/assets/u2f-api.js"></script>
 
 <script>
-var request = ${data};
+var request = ${dataJson};
 setTimeout(function() {
 
-    if (request.authenticateRequests.length === 0) {
-        alert("No devices are registered for this account.");
-    } else {
+    if (request.authenticateRequests.length > 0) {
         u2f.sign(
             request.authenticateRequests,
             function(data) {
@@ -36,11 +34,18 @@ setTimeout(function() {
 
 </head>
     <body>
-    <p>Touch your U2F token to authenticate.</p>
-        <form method="POST" action="finishAuthentication" id="form">
-            <input type="hidden" name="tokenResponse" id="tokenResponse"/>
-            <input type="hidden" name="username" id="username" value="${username}"/>
-        </form>
+
+    <#list data.getAuthenticateRequests() as authenticateRequests>
+      <p>Touch your U2F token to authenticate.</p>
+          <form method="POST" action="finishAuthentication" id="form">
+              <input type="hidden" name="tokenResponse" id="tokenResponse"/>
+              <input type="hidden" name="username" id="username" value="${username}"/>
+          </form>
+        <#break>
+    <#else>
+        <p>No devices are registered for this account.</p>
+    </#list>
+
 
     <#include "navigation.ftl">
     </body>
