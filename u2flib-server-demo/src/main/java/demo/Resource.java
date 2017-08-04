@@ -23,6 +23,7 @@ import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import demo.view.AuthenticationView;
+import demo.view.FinishRegistrationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
 import java.security.cert.CertificateException;
@@ -59,7 +60,7 @@ public class Resource {
 
     @Path("finishRegistration")
     @POST
-    public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, NoSuchFieldException {
+    public View finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, NoSuchFieldException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
         RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.remove(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
@@ -67,45 +68,8 @@ public class Resource {
         Attestation attestation = metadataService.getAttestation(registration.getAttestationCertificate());
 
         addRegistration(username, registration);
-        StringBuilder buf = new StringBuilder();
-        buf.append("<p>Successfully registered device:</p>");
-        if(!attestation.getVendorProperties().isEmpty()) {
-            buf.append("<p>Vendor metadata</p><pre>");
-            for(Map.Entry<String, String> entry : attestation.getVendorProperties().entrySet()) {
-                buf.append(entry.getKey())
-                        .append(": ")
-                        .append(entry.getValue())
-                        .append("\n");
-            }
-            buf.append("</pre>");
-        } else {
-            buf.append("<p>No vendor metadata present!</p>");
-        }
-        if(!attestation.getDeviceProperties().isEmpty()) {
-            buf.append("<p>Device metadata</p><pre>");
-            for(Map.Entry<String, String> entry : attestation.getDeviceProperties().entrySet()) {
-                buf.append(entry.getKey())
-                        .append(": ")
-                        .append(entry.getValue())
-                        .append("\n");
-            }
-            buf.append("</pre>");
-        } else {
-            buf.append("<p>No device metadata present!</p>");
-        }
-        if(!attestation.getTransports().isEmpty()) {
-            buf.append("<p>Device transports: ")
-                    .append(attestation.getTransports())
-                    .append("</p>");
-        } else {
-            buf.append("<p>No device transports reported!</p>");
-        }
-        buf.append("<p>Registration data</p><pre>")
-                .append(registration)
-                .append("</pre>")
-                .append(NAVIGATION_MENU);
 
-        return buf.toString();
+        return new FinishRegistrationView(attestation, registration);
     }
 
     @Path("startAuthentication")
