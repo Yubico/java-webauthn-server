@@ -23,6 +23,7 @@ import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import demo.view.AuthenticationView;
+import demo.view.FinishAuthenticationView;
 import demo.view.FinishRegistrationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
@@ -86,7 +87,7 @@ public class Resource {
 
     @Path("finishAuthentication")
     @POST
-    public String finishAuthentication(@FormParam("tokenResponse") String response,
+    public View finishAuthentication(@FormParam("tokenResponse") String response,
                                        @FormParam("username") String username) {
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
         AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.remove(authenticateResponse.getRequestId()));
@@ -95,11 +96,11 @@ public class Resource {
             registration = u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
         } catch (DeviceCompromisedException e) {
             registration = e.getDeviceRegistration();
-            return "<p>Device possibly compromised and therefore blocked: " + e.getMessage() + "</p>" + NAVIGATION_MENU;
+            return new FinishAuthenticationView(false, "Device possibly compromised and therefore blocked: " + e.getMessage());
         } finally {
             userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
         }
-        return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
+        return new FinishAuthenticationView(true);
     }
 
     private Iterable<DeviceRegistration> getRegistrations(String username) {
