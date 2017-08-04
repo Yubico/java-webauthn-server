@@ -10,7 +10,15 @@ setTimeout(function() {
     u2f.sign(request.authenticateRequests,
     function(data) {
         if(data.errorCode) {
-            alert("U2F failed with error code: " + data.errorCode);
+            switch (data.errorCode) {
+                case 4:
+                    alert("This device is not registered for this account.");
+                    break;
+
+                default:
+                    alert("U2F failed with error code: " + data.errorCode);
+            }
+            return;
         } else {
             document.getElementById('tokenResponse').value = JSON.stringify(data);
             document.getElementById('form').submit();
