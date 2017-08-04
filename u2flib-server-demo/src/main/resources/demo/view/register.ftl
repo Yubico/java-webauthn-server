@@ -12,7 +12,14 @@ setTimeout(function() {
         var form = document.getElementById('form');
         var reg = document.getElementById('tokenResponse');
         if(data.errorCode) {
-            alert("U2F failed with error: " + data.errorCode);
+            switch (data.errorCode) {
+                case 4:
+                    alert("This device is already registered.");
+                    break;
+
+                default:
+                    alert("U2F failed with error: " + data.errorCode);
+            }
             return;
         }
         reg.value=JSON.stringify(data);
