@@ -11,10 +11,10 @@ setTimeout(function() {
     function(data) {
         if(data.errorCode) {
             alert("U2F failed with error code: " + data.errorCode);
-            return;
+        } else {
+            document.getElementById('tokenResponse').value = JSON.stringify(data);
+            document.getElementById('form').submit();
         }
-        document.getElementById('tokenResponse').value = JSON.stringify(data);
-        document.getElementById('form').submit();
     });
 }, 1000);
 </script>

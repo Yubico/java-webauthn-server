@@ -20,10 +20,10 @@ setTimeout(function() {
                 default:
                     alert("U2F failed with error: " + data.errorCode);
             }
-            return;
+        } else {
+            reg.value=JSON.stringify(data);
+            form.submit();
         }
-        reg.value=JSON.stringify(data);
-        form.submit();
     });
 }, 1000);
 </script>
