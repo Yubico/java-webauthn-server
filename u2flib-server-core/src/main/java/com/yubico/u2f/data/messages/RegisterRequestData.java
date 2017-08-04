@@ -1,7 +1,6 @@
 package com.yubico.u2f.data.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.yubico.u2f.U2fPrimitives;
@@ -10,9 +9,10 @@ import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
 import java.util.List;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode
 public class RegisterRequestData extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = 60855174227617680L;
@@ -58,20 +58,6 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
 
     public String getRequestId() {
         return Iterables.getOnlyElement(registerRequests).getChallenge();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(registeredKeys, registerRequests);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof RegisterRequestData))
-            return false;
-        RegisterRequestData other = (RegisterRequestData) obj;
-        return Objects.equal(registeredKeys, other.registeredKeys)
-                && Objects.equal(registerRequests, other.registerRequests);
     }
 
     public static RegisterRequestData fromJson(String json) throws U2fBadInputException {
