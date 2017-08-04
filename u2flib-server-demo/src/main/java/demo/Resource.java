@@ -80,7 +80,7 @@ public class Resource {
             requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
             return new AuthenticationView(authenticateRequestData, username);
         } catch (NoEligibleDevicesException e) {
-            return new AuthenticationView(new AuthenticateRequestData(Collections.<AuthenticateRequest>emptyList()), username);
+            return new AuthenticationView(new AuthenticateRequestData(APP_ID, "", Collections.<AuthenticateRequest>emptyList()), username);
         }
     }
 

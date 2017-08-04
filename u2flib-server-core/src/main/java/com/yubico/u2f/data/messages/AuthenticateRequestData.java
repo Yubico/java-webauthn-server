@@ -10,6 +10,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
@@ -22,16 +23,31 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     private static final long serialVersionUID = 35378338769078256L;
 
     @JsonProperty
+    private final String appId;
+
+    /**
+     * The websafe-base64-encoded challenge.
+     */
+    @JsonProperty
+    private final String challenge;
+
+    @JsonProperty
     private final List<AuthenticateRequest> authenticateRequests;
 
     @JsonCreator
-    public AuthenticateRequestData(@JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests) {
+    public AuthenticateRequestData(@JsonProperty("appId") String appId, @JsonProperty("challenge") String challenge, @JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests) {
+        this.appId = appId;
+        this.challenge = challenge;
         this.authenticateRequests = authenticateRequests;
     }
 
     public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
-        ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
+        this.appId = appId;
+
         byte[] challenge = challengeGenerator.generateChallenge();
+        this.challenge = U2fB64Encoding.encode(challenge);
+
+        ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
         for (DeviceRegistration device : devices) {
             if(!device.isCompromised()) {
                 requestBuilder.add(u2f.startAuthentication(appId, device, challenge));

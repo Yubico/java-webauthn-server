@@ -2,14 +2,15 @@
 <head>
 <title>Java U2F Demo</title>
 
-<script src="/assets/u2f-api.js"></script>
+<script src="/assets/u2f-api-1.1.js"></script>
 
 <script>
 var request = ${data};
 setTimeout(function() {
     u2f.register(
+        request.appId,
         request.registerRequests,
-        request.authenticateRequests,
+        request.registeredKeys,
         function(data) {
             var form = document.getElementById('form');
             var reg = document.getElementById('tokenResponse');

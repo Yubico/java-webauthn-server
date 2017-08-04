@@ -2,7 +2,7 @@
 <head>
 <title>Java U2F Demo</title>
 
-<script src="/assets/u2f-api.js"></script>
+<script src="/assets/u2f-api-1.1.js"></script>
 
 <script>
 var request = ${dataJson};
@@ -10,6 +10,8 @@ setTimeout(function() {
 
     if (request.authenticateRequests.length > 0) {
         u2f.sign(
+            request.appId,
+            request.challenge,
             request.authenticateRequests,
             function(data) {
                 if(data.errorCode) {

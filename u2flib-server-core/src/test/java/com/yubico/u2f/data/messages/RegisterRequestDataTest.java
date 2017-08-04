@@ -17,11 +17,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class RegisterRequestDataTest {
-    public static final String JSON = "{\"authenticateRequests\":[{\"challenge\":\"opsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o\",\"appId\":\"https://gstatic.com/securitykey/a/example.com\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\",\"version\":\"U2F_V2\",\"requestId\":\"opsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o\"}],\"registerRequests\":[{\"challenge\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\",\"appId\":\"http://example.com\",\"version\":\"U2F_V2\",\"requestId\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\"}]}";
+    public static final String KEY_HANDLE = "KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ";
+    public static final String JSON = "{\"registeredKeys\":[{\"keyHandle\":\"" + KEY_HANDLE + "\",\"version\":\"U2F_V2\"}],\"registerRequests\":[{\"challenge\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\",\"appId\":\"http://example.com\",\"version\":\"U2F_V2\",\"requestId\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\"}]}";
 
     @Test
     public void testGetters() throws Exception {
         DeviceRegistration device = mock(DeviceRegistration.class);
+        when(device.getKeyHandle()).thenReturn(KEY_HANDLE);
+
         U2fPrimitives primitives = mock(U2fPrimitives.class);
         ChallengeGenerator challengeGenerator = mock(ChallengeGenerator.class);
 
