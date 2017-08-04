@@ -25,7 +25,7 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     private final List<AuthenticateRequest> authenticateRequests;
 
     @JsonCreator
-    private AuthenticateRequestData(@JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests) {
+    public AuthenticateRequestData(@JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests) {
         this.authenticateRequests = authenticateRequests;
     }
 

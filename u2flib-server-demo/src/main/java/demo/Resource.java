@@ -1,5 +1,13 @@
 package demo;
 
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -7,6 +15,7 @@ import com.yubico.u2f.U2F;
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.data.DeviceRegistration;
+import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequestData;
@@ -16,12 +25,9 @@ import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import demo.view.AuthenticationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,10 +110,14 @@ public class Resource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) throws NoEligibleDevicesException {
-        AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
-        requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
-        return new AuthenticationView(authenticateRequestData.toJson(), username);
+    public View startAuthentication(@QueryParam("username") String username) {
+        try {
+            AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
+            requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
+            return new AuthenticationView(authenticateRequestData.toJson(), username);
+        } catch (NoEligibleDevicesException e) {
+            return new AuthenticationView(new AuthenticateRequestData(Collections.<AuthenticateRequest>emptyList()).toJson(), username);
+        }
     }
 
     @Path("finishAuthentication")

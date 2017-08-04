@@ -7,25 +7,30 @@
 <script>
 var request = ${data};
 setTimeout(function() {
-    u2f.sign(
-        request.authenticateRequests,
-        function(data) {
-            if(data.errorCode) {
-                switch (data.errorCode) {
-                    case 4:
-                        alert("This device is not registered for this account.");
-                        break;
 
-                    default:
-                        alert("U2F failed with error code: " + data.errorCode);
+    if (request.authenticateRequests.length === 0) {
+        alert("No devices are registered for this account.");
+    } else {
+        u2f.sign(
+            request.authenticateRequests,
+            function(data) {
+                if(data.errorCode) {
+                    switch (data.errorCode) {
+                        case 4:
+                            alert("This device is not registered for this account.");
+                            break;
+
+                        default:
+                            alert("U2F failed with error code: " + data.errorCode);
+                    }
+                    return;
+                } else {
+                    document.getElementById('tokenResponse').value = JSON.stringify(data);
+                    document.getElementById('form').submit();
                 }
-                return;
-            } else {
-                document.getElementById('tokenResponse').value = JSON.stringify(data);
-                document.getElementById('form').submit();
             }
-        }
-    );
+        );
+    }
 }, 1000);
 </script>
 
