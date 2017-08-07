@@ -9,16 +9,20 @@
 
 package com.yubico.u2f.data.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Objects;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.json.Persistable;
 import com.yubico.u2f.exceptions.U2fBadInputException;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+@Value
+@Builder
+@JsonDeserialize(builder = AuthenticateRequest.AuthenticateRequestBuilder.class)
 public class AuthenticateRequest extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = -27808961388655010L;
@@ -28,13 +32,13 @@ public class AuthenticateRequest extends JsonSerializable implements Persistable
      * the version of the protocol described herein, must be "U2F_V2"
      */
     @JsonProperty
-    private final String version = U2fPrimitives.U2F_VERSION;
+    @NonNull @Builder.Default String version = U2fPrimitives.U2F_VERSION;
 
     /**
      * The websafe-base64-encoded challenge.
      */
     @JsonProperty
-    private final String challenge;
+    @NonNull String challenge;
 
     /**
      * The application id that the RP would like to assert. The U2F token will
@@ -43,49 +47,14 @@ public class AuthenticateRequest extends JsonSerializable implements Persistable
      * application identified by the application id.
      */
     @JsonProperty
-    private final String appId;
+    @NonNull String appId;
 
     /**
      * websafe-base64 encoding of the key handle obtained from the U2F token
      * during registration.
      */
     @JsonProperty
-    private final String keyHandle;
-
-    @JsonCreator
-    public AuthenticateRequest(@JsonProperty("challenge") String challenge, @JsonProperty("appId") String appId, @JsonProperty("keyHandle") String keyHandle) {
-        this.challenge = checkNotNull(challenge);
-        this.appId = checkNotNull(appId);
-        this.keyHandle = checkNotNull(keyHandle);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(version, challenge, appId, keyHandle);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof AuthenticateRequest))
-            return false;
-        AuthenticateRequest other = (AuthenticateRequest) obj;
-        return Objects.equal(appId, other.appId)
-                && Objects.equal(challenge, other.challenge)
-                && Objects.equal(keyHandle, other.keyHandle)
-                && Objects.equal(version, other.version);
-    }
-
-    public String getKeyHandle() {
-        return keyHandle;
-    }
-
-    public String getChallenge() {
-        return challenge;
-    }
-
-    public String getAppId() {
-        return appId;
-    }
+    @NonNull String keyHandle;
 
     public String getRequestId() {
         return challenge;
@@ -94,4 +63,7 @@ public class AuthenticateRequest extends JsonSerializable implements Persistable
     public static AuthenticateRequest fromJson(String json) throws U2fBadInputException {
         return fromJson(json, AuthenticateRequest.class);
     }
+
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class AuthenticateRequestBuilder {}
 }

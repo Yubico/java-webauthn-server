@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 
 public class RegisterRequestDataTest {
     public static final String KEY_HANDLE = "KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ";
-    public static final String JSON = "{\"registeredKeys\":[{\"keyHandle\":\"" + KEY_HANDLE + "\",\"version\":\"U2F_V2\"}],\"registerRequests\":[{\"challenge\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\",\"appId\":\"http://example.com\",\"version\":\"U2F_V2\",\"requestId\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\"}]}";
+    public static final String JSON = "{\"registeredKeys\":[{\"keyHandle\":\"" + KEY_HANDLE + "\",\"version\":\"U2F_V2\"}],\"registerRequests\":[{\"challenge\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\",\"appId\":\"http://example.com\",\"version\":\"U2F_V2\"}]}";
 
     @Test
     public void testGetters() throws Exception {
