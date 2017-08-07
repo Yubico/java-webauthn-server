@@ -1,5 +1,13 @@
 package demo;
 
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -7,6 +15,7 @@ import com.yubico.u2f.U2F;
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.data.DeviceRegistration;
+import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequestData;
@@ -14,14 +23,13 @@ import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import demo.view.AuthenticationView;
+import demo.view.FinishAuthenticationView;
+import demo.view.FinishRegistrationView;
 import demo.view.RegistrationView;
 import io.dropwizard.views.View;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +39,6 @@ import java.util.Map;
 public class Resource {
 
     public static final String APP_ID = "https://localhost:8443";
-    public static final String NAVIGATION_MENU = "<h2>Navigation</h2><ul><li><a href='/assets/registerIndex.html'>Register</a></li><li><a href='/assets/loginIndex.html'>Login</a></li></ul>";
 
     private final Map<String, String> requestStorage = new HashMap<String, String>();
     private final LoadingCache<String, Map<String, String>> userStorage = CacheBuilder.newBuilder().build(new CacheLoader<String, Map<String, String>>() {
@@ -53,7 +60,7 @@ public class Resource {
 
     @Path("finishRegistration")
     @POST
-    public String finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, NoSuchFieldException {
+    public View finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, NoSuchFieldException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
         RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.remove(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
@@ -61,58 +68,25 @@ public class Resource {
         Attestation attestation = metadataService.getAttestation(registration.getAttestationCertificate());
 
         addRegistration(username, registration);
-        StringBuilder buf = new StringBuilder();
-        buf.append("<p>Successfully registered device:</p>");
-        if(!attestation.getVendorProperties().isEmpty()) {
-            buf.append("<p>Vendor metadata</p><pre>");
-            for(Map.Entry<String, String> entry : attestation.getVendorProperties().entrySet()) {
-                buf.append(entry.getKey())
-                        .append(": ")
-                        .append(entry.getValue())
-                        .append("\n");
-            }
-            buf.append("</pre>");
-        } else {
-            buf.append("<p>No vendor metadata present!</p>");
-        }
-        if(!attestation.getDeviceProperties().isEmpty()) {
-            buf.append("<p>Device metadata</p><pre>");
-            for(Map.Entry<String, String> entry : attestation.getDeviceProperties().entrySet()) {
-                buf.append(entry.getKey())
-                        .append(": ")
-                        .append(entry.getValue())
-                        .append("\n");
-            }
-            buf.append("</pre>");
-        } else {
-            buf.append("<p>No device metadata present!</p>");
-        }
-        if(!attestation.getTransports().isEmpty()) {
-            buf.append("<p>Device transports: ")
-                    .append(attestation.getTransports())
-                    .append("</p>");
-        } else {
-            buf.append("<p>No device transports reported!</p>");
-        }
-        buf.append("<p>Registration data</p><pre>")
-                .append(registration)
-                .append("</pre>")
-                .append(NAVIGATION_MENU);
 
-        return buf.toString();
+        return new FinishRegistrationView(attestation, registration);
     }
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) throws NoEligibleDevicesException {
-        AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
-        requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
-        return new AuthenticationView(authenticateRequestData.toJson(), username);
+    public View startAuthentication(@QueryParam("username") String username) {
+        try {
+            AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
+            requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
+            return new AuthenticationView(authenticateRequestData, username);
+        } catch (NoEligibleDevicesException e) {
+            return new AuthenticationView(new AuthenticateRequestData(Collections.<AuthenticateRequest>emptyList()), username);
+        }
     }
 
     @Path("finishAuthentication")
     @POST
-    public String finishAuthentication(@FormParam("tokenResponse") String response,
+    public View finishAuthentication(@FormParam("tokenResponse") String response,
                                        @FormParam("username") String username) {
         AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
         AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.remove(authenticateResponse.getRequestId()));
@@ -121,11 +95,11 @@ public class Resource {
             registration = u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
         } catch (DeviceCompromisedException e) {
             registration = e.getDeviceRegistration();
-            return "<p>Device possibly compromised and therefore blocked: " + e.getMessage() + "</p>" + NAVIGATION_MENU;
+            return new FinishAuthenticationView(false, "Device possibly compromised and therefore blocked: " + e.getMessage());
         } finally {
             userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
         }
-        return "<p>Successfully authenticated!<p>" + NAVIGATION_MENU;
+        return new FinishAuthenticationView(true);
     }
 
     private Iterable<DeviceRegistration> getRegistrations(String username) {

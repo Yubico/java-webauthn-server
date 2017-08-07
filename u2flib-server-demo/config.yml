@@ -7,4 +7,11 @@ server:
       validateCerts: false
   adminConnectors:
       - type: http
-        port: 8081  
+        port: 8081
+
+logging:
+  level: INFO
+  loggers:
+    javax.ws.rs.ext.MessageBodyWriter: DEBUG
+  appenders:
+    - type: console
