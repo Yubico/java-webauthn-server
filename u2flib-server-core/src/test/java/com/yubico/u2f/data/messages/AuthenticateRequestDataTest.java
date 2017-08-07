@@ -34,7 +34,7 @@ public class AuthenticateRequestDataTest {
 
         assertEquals(SERVER_CHALLENGE_SIGN_BASE64, requestData.getRequestId());
         AuthenticateRequest authenticateRequest2 = Iterables.getOnlyElement(requestData.getAuthenticateRequests());
-        assertEquals(authenticateRequest, authenticateRequest);
+        assertEquals(authenticateRequest, authenticateRequest2);
     }
 
     @Test
