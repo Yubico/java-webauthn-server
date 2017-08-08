@@ -27,6 +27,7 @@ import java.util.Set;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class U2fPrimitivesTest {
     final HashSet<String> allowedOrigins = new HashSet<String>();
@@ -108,4 +109,34 @@ public class U2fPrimitivesTest {
 
         u2f.finishAuthentication(authenticateRequest, tokenResponse, deviceRegistration, allowedOrigins);
     }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishAuthenticationShouldDetectInvalidUserPresence() throws Exception {
+        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+                .challenge(SERVER_CHALLENGE_SIGN_BASE64)
+                .appId(APP_ID_SIGN)
+                .keyHandle(KEY_HANDLE_BASE64)
+                .build();
+
+        AuthenticateResponse tokenResponse = new AuthenticateResponse(
+            CLIENT_DATA_AUTHENTICATE_BASE64,
+            SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64,
+            KEY_HANDLE_BASE64
+        );
+
+        u2f.finishAuthentication(
+            authenticateRequest,
+            tokenResponse,
+            new DeviceRegistration(
+                KEY_HANDLE_BASE64,
+                USER_PUBLIC_KEY_AUTHENTICATE_HEX,
+                ATTESTATION_CERTIFICATE,
+                0
+            ),
+            allowedOrigins
+        );
+
+        fail("finishAuthentication did not detect a non-0x01 user presence byte in the authentication response.");
+    }
+
 }

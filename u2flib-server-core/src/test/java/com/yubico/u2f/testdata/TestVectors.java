@@ -119,4 +119,10 @@ final public class TestVectors {
             "304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030ce43d406de8"
                     + "70b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f53c7b22272"
                     + "ec10047a923f");
+
+    public static final byte[] AUTHENTICATE_RESPONSE_INVALID_USER_PRESENCE = TestUtils.HEX.decode(
+            "00000000013045022100adf3521ceb4e143fb3966d3017510bfbc9085a44ff13c6945aadd8"
+                    + "e26ec5cc00022004916d120830f2ee44ab3c6c58c80a3dd6f5a09b01599e686d"
+                    + "ea2e7288903cae");
+    public static final String SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64 = U2fB64Encoding.encode(AUTHENTICATE_RESPONSE_INVALID_USER_PRESENCE);
 }
