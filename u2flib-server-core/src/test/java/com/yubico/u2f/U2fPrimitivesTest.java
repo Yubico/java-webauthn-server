@@ -53,6 +53,22 @@ public class U2fPrimitivesTest {
         DeviceRegistration deviceRegistration = u2f.finishRegistration(registerRequest, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
 
         assertEquals(new DeviceRegistration(AcmeKey.KEY_HANDLE, AcmeKey.USER_PUBLIC_KEY_B64, AcmeKey.ATTESTATION_CERTIFICATE, 0), deviceRegistration);
+
+    }
+
+    @Test
+    public void finishRegistrationWithoutAllowedAppIds() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+
+        DeviceRegistration response = u2f.finishRegistration(
+            registerRequest,
+            new RegisterResponse(
+                TestVectors.REGISTRATION_DATA_BASE64,
+                CLIENT_DATA_REGISTRATION_BASE64
+            )
+        );
+
+        assertEquals(KEY_HANDLE_BASE64, response.getKeyHandle());
     }
 
     @Test
