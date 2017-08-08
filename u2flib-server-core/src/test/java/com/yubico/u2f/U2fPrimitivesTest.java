@@ -71,6 +71,21 @@ public class U2fPrimitivesTest {
         assertEquals(KEY_HANDLE_BASE64, response.getKeyHandle());
     }
 
+    @Test(expected = U2fBadInputException.class)
+    public void finishRegistrationShouldDetectIncorrectAppId() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+
+        DeviceRegistration response = u2f.finishRegistration(
+            registerRequest,
+            new RegisterResponse(
+                TestVectors.REGISTRATION_DATA_WITH_DIFFERENT_APP_ID_BASE64,
+                CLIENT_DATA_REGISTRATION_BASE64
+            )
+        );
+
+        fail("finishRegistration did not detect incorrect app ID");
+    }
+
     @Test
     public void finishAuthentication() throws Exception {
         AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()

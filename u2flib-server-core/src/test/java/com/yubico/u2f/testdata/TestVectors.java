@@ -84,7 +84,29 @@ final public class TestVectors {
                     + "0410df304502201471899bcc3987e62e8202c9b39c33c19033f7340352dba80f"
                     + "cab017db9230e402210082677d673d891933ade6f617e5dbde2e247e70423fd5"
                     + "ad7804a6d3d3961ef871");
+
     public static final String REGISTRATION_DATA_BASE64 = U2fB64Encoding.encode(REGISTRATION_RESPONSE_DATA);
+
+    public static final byte[] REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_APP_ID = TestUtils.HEX.decode(
+                "0504b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b"
+                    + "657c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2"
+                    + "f6d9402a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2"
+                    + "e3925a6019551bab61d16591659cbaf00b4950f7abfe6660e2e006f76868b772"
+                    + "d70c253082013c3081e4a003020102020a47901280001155957352300a06082a"
+                    + "8648ce3d0403023017311530130603550403130c476e756262792050696c6f74"
+                    + "301e170d3132303831343138323933325a170d3133303831343138323933325a"
+                    + "3031312f302d0603550403132650696c6f74476e756262792d302e342e312d34"
+                    + "373930313238303030313135353935373335323059301306072a8648ce3d0201"
+                    + "06082a8648ce3d030107034200048d617e65c9508e64bcc5673ac82a6799da3c"
+                    + "1446682c258c463fffdf58dfd2fa3e6c378b53d795c4a4dffb4199edd7862f23"
+                    + "abaf0203b4b8911ba0569994e101300a06082a8648ce3d040302034700304402"
+                    + "2060cdb6061e9c22262d1aac1d96d8c70829b2366531dda268832cb836bcd30d"
+                    + "fa0220631b1459f09e6330055722c8d89b7f48883b9089b88d60d1d9795902b3"
+                    + "0410df3046022100d2b4702fea46b322c5addd921b3f4f0fb15c69737fe7441e"
+                    + "b764c03dc8f49d09022100eef7dcdf6070d8e5a45ed6be18dfc036ebf8b4faaa"
+                    + "ce7287b56e7fac1d2cb552");
+    public static final String REGISTRATION_DATA_WITH_DIFFERENT_APP_ID_BASE64 = U2fB64Encoding.encode(REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_APP_ID);
+
     public static final byte[] KEY_HANDLE = TestUtils.HEX.decode(
             "2a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2e3925a"
                     + "6019551bab61d16591659cbaf00b4950f7abfe6660e2e006f76868b772d70c25");
