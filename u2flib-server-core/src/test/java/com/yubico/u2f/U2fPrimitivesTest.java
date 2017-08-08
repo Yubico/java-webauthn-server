@@ -42,7 +42,8 @@ public class U2fPrimitivesTest {
     public void finishRegistration() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
-        u2f.finishRegistration(registerRequest, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
+        DeviceRegistration response = u2f.finishRegistration(registerRequest, new RegisterResponse(TestVectors.REGISTRATION_DATA_BASE64, CLIENT_DATA_REGISTRATION_BASE64), TRUSTED_DOMAINS);
+        assertEquals(KEY_HANDLE_BASE64, response.getKeyHandle());
     }
 
     @Test
