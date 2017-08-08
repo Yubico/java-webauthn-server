@@ -139,4 +139,31 @@ public class U2fPrimitivesTest {
         fail("finishAuthentication did not detect a non-0x01 user presence byte in the authentication response.");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void finishAuthenticationShouldDetectIncorrectDeviceRegistration() throws Exception {
+        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+            .challenge(SERVER_CHALLENGE_SIGN_BASE64)
+            .appId(APP_ID_SIGN)
+            .keyHandle(KEY_HANDLE_BASE64)
+            .build();
+
+        AuthenticateResponse tokenResponse = new AuthenticateResponse(
+            CLIENT_DATA_AUTHENTICATE_BASE64,
+            SIGN_RESPONSE_DATA_BASE64,
+            KEY_HANDLE_BASE64
+        );
+
+        u2f.finishAuthentication(
+            authenticateRequest,
+            tokenResponse,
+            new DeviceRegistration(
+                "ARGHABLARGHLER",
+                USER_PUBLIC_KEY_AUTHENTICATE_HEX,
+                ATTESTATION_CERTIFICATE,
+                0
+            ),
+            allowedOrigins
+        );
+    }
+
 }
