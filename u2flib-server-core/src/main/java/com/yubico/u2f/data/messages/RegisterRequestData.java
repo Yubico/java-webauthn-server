@@ -24,7 +24,7 @@ public class RegisterRequestData extends JsonSerializable implements Persistable
     @JsonProperty
     private final List<RegisterRequest> registerRequests;
 
-    private RegisterRequestData(@JsonProperty("appId") String appId, @JsonProperty("registeredKeys") List<RegisteredKey> registeredKeys, @JsonProperty("registerRequests") List<RegisterRequest> registerRequests) {
+    public RegisterRequestData(@JsonProperty("appId") String appId, @JsonProperty("registeredKeys") List<RegisteredKey> registeredKeys, @JsonProperty("registerRequests") List<RegisterRequest> registerRequests) {
         this.appId = appId;
         this.registeredKeys = registeredKeys;
         this.registerRequests = registerRequests;

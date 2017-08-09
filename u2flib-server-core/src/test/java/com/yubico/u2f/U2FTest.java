@@ -6,7 +6,10 @@ import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterRequestData;
+import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.RegisteredKey;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
@@ -111,6 +114,32 @@ public class U2FTest {
         when(authenticateRequest.getAuthenticateRequest(tokenResponse)).thenReturn(request);
 
         u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
+    }
+
+
+    @Test
+    public void finishRegistrationShouldReturnAMatchedDevice() throws Exception {
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+
+        RegisterRequest request = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+
+        RegisterResponse tokenResponse = new RegisterResponse(
+            REGISTRATION_DATA_BASE64,
+            CLIENT_DATA_REGISTRATION_BASE64
+        );
+
+        RegisterRequestData registerRequest = new RegisterRequestData(
+            APP_ID_ENROLL,
+            ImmutableList.<RegisteredKey>of(),
+            ImmutableList.of(request)
+        );
+
+        DeviceRegistration device = u2f.finishRegistration(registerRequest, tokenResponse, ImmutableSet.of(APP_ID_ENROLL));
+        DeviceRegistration overloadDevice = u2f.finishRegistration(registerRequest, tokenResponse);
+
+        assertEquals(KEY_HANDLE_BASE64, device.getKeyHandle());
+        assertEquals(device, overloadDevice);
     }
 
     @Test
