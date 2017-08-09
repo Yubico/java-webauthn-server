@@ -112,4 +112,32 @@ public class U2FTest {
 
         u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
     }
+
+    @Test
+    public void finishAuthenticationShouldReturnAMatchedDevice() throws Exception {
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+
+        AuthenticateRequest request = AuthenticateRequest.builder()
+            .challenge(SERVER_CHALLENGE_SIGN_BASE64)
+            .appId(APP_ID_SIGN)
+            .keyHandle(KEY_HANDLE_BASE64)
+            .build();
+
+        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+            SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
+
+        AuthenticateRequestData authenticateRequest = new AuthenticateRequestData(
+            APP_ID_SIGN,
+            SERVER_CHALLENGE_SIGN_BASE64,
+            ImmutableList.of(request)
+        );
+
+        DeviceRegistration device = u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of(APP_ID_ENROLL));
+        DeviceRegistration overloadDevice = u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration2));
+
+        assertEquals(KEY_HANDLE_BASE64, device.getKeyHandle());
+        assertEquals(device, overloadDevice);
+    }
+
 }
