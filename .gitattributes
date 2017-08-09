@@ -1,0 +1,9 @@
+# Auto-detect text files
+* text=auto
+
+# Always treat these as LF
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Always treat these as CRLF
+*.bat text eol=crlf

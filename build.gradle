@@ -1,0 +1,44 @@
+allprojects  {
+  apply plugin: 'maven'
+
+  group = 'com.yubico'
+  version = '0.16.1-SNAPSHOT'
+}
+
+subprojects {
+  apply plugin: 'java'
+  sourceCompatibility = 1.6
+  targetCompatibility = 1.6
+
+  task wrapper(type: Wrapper) {
+    gradleVersion = '4.1'
+  }
+
+  tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+  }
+
+  task packageSources(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+
+  artifacts.archives packageSources
+
+  repositories {
+    mavenLocal()
+
+    maven { url "http://repo.maven.apache.org/maven2" }
+  }
+
+
+  dependencies {
+
+    testCompile(
+      [group: 'junit', name: 'junit', version:'4.12'],
+      [group: 'org.mockito', name: 'mockito-all', version:'2.0.2-beta'],
+    )
+
+  }
+
+}

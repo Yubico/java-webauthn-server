@@ -1,0 +1,15 @@
+description = 'U2F demo'
+
+dependencies {
+
+  compile(
+    project(':u2flib-server-core'),
+    project(':u2flib-server-attestation'),
+    [group: 'io.dropwizard', name: 'dropwizard-core', version:'0.9.2'],
+    [group: 'io.dropwizard', name: 'dropwizard-assets', version:'0.9.2'],
+    [group: 'io.dropwizard', name: 'dropwizard-views', version:'0.9.2'],
+    [group: 'io.dropwizard', name: 'dropwizard-views-freemarker', version:'0.9.2'],
+    [group: 'org.freemarker', name: 'freemarker', version:'2.3.26-incubating'],
+  )
+
+}
