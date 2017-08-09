@@ -1,5 +1,7 @@
 description = 'U2F attestation'
 
+apply plugin: 'info.solidsoft.pitest'
+
 dependencies {
 
   compile(
