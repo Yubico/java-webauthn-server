@@ -56,6 +56,24 @@ public class U2FTest {
         assertNotNull(data.getRegisterRequests().get(0).getChallenge());
     }
 
+    @Test(expected = U2fBadConfigurationException.class)
+    public void defaultConstructedU2FstartAuthenticationShouldRefuseInvalidAppId() throws Exception {
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        deviceRegistration.markCompromised();
+        new U2F().startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+
+        fail("startRegistration did not refuse an invalid app ID.");
+    }
+
+    @Test
+    public void startAuthenticationShouldReturnAChallenge() throws Exception {
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        AuthenticateRequestData data = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+
+        assertEquals(1, data.getAuthenticateRequests().size());
+        assertNotNull(data.getAuthenticateRequests().get(0).getChallenge());
+    }
+
     @Test(expected = DeviceCompromisedException.class)
     public void finishAuthentication_compromisedDevice() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
