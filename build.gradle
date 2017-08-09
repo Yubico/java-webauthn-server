@@ -22,8 +22,14 @@ subprojects {
     classifier = 'sources'
     from sourceSets.main.allSource
   }
-
   artifacts.archives packageSources
+
+  task packageJavadoc(type: Jar) {
+    classifier = 'javadoc'
+    inputs.files javadoc.outputs
+    from javadoc.destinationDir
+  }
+  artifacts.archives packageJavadoc
 
   repositories {
     mavenLocal()
