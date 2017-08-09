@@ -6,13 +6,18 @@ import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.RegisterRequestData;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.junit.Test;
 
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +36,24 @@ public class U2FTest {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
         u2f.startAuthentication(APP_ID_ENROLL, ImmutableList.of(deviceRegistration));
+    }
+
+    @Test(expected = U2fBadConfigurationException.class)
+    public void defaultConstructedU2FstartRegistrationShouldRefuseInvalidAppId() {
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        deviceRegistration.markCompromised();
+        new U2F().startRegistration("example.com", ImmutableList.of(deviceRegistration));
+
+        fail("startRegistration did not refuse an invalid app ID.");
+    }
+
+    @Test
+    public void startRegistrationShouldReturnAChallenge() {
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        RegisterRequestData data = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
+
+        assertEquals(1, data.getRegisterRequests().size());
+        assertNotNull(data.getRegisterRequests().get(0).getChallenge());
     }
 
     @Test(expected = DeviceCompromisedException.class)
