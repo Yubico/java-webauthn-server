@@ -19,6 +19,7 @@ import org.junit.Test;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -51,12 +52,18 @@ public class U2FTest {
     }
 
     @Test
-    public void startRegistrationShouldReturnAChallenge() {
+    public void startRegistrationShouldReturnARandomChallenge() {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         RegisterRequestData data = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
+        RegisterRequestData data2 = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
 
         assertEquals(1, data.getRegisterRequests().size());
-        assertNotNull(data.getRegisterRequests().get(0).getChallenge());
+        assertEquals(1, data2.getRegisterRequests().size());
+        assertNotEquals(
+            "startRegistration must not return the same challenge twice in a row.",
+            data.getRegisterRequests().get(0).getChallenge(),
+            data2.getRegisterRequests().get(0).getChallenge()
+        );
     }
 
     @Test(expected = U2fBadConfigurationException.class)
@@ -69,12 +76,18 @@ public class U2FTest {
     }
 
     @Test
-    public void startAuthenticationShouldReturnAChallenge() throws Exception {
+    public void startAuthenticationShouldReturnARandomChallenge() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         AuthenticateRequestData data = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+        AuthenticateRequestData data2 = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
 
         assertEquals(1, data.getAuthenticateRequests().size());
         assertNotNull(data.getAuthenticateRequests().get(0).getChallenge());
+        assertNotEquals(
+            "startAuthentication must not return the same challenge twice in a row.",
+            data.getAuthenticateRequests().get(0).getChallenge(),
+            data2.getAuthenticateRequests().get(0).getChallenge()
+        );
     }
 
     @Test(expected = DeviceCompromisedException.class)
