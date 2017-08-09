@@ -15,6 +15,7 @@ import com.yubico.u2f.data.messages.AuthenticateRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.TestVectors;
@@ -84,6 +85,57 @@ public class U2fPrimitivesTest {
         );
 
         fail("finishRegistration did not detect incorrect app ID");
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishRegistrationShouldDetectIncorrectChallenge() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+
+        String clientDataBase64 = U2fB64Encoding.encode("{\"typ\":\"navigator.id.finishEnrollment\",\"challenge\":\"ARGHABLARGHLER\",\"origin\":\"http://example.com\"}".getBytes("UTF-8"));
+
+        u2f.finishRegistration(
+            registerRequest,
+            new RegisterResponse(
+                TestVectors.REGISTRATION_DATA_BASE64,
+                clientDataBase64
+            )
+        );
+
+        fail("finishRegistration did not detect incorrect challenge");
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishRegistrationShouldDetectIncorrectClientDataType() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+
+        String clientDataBase64 = U2fB64Encoding.encode("{\"typ\":\"navigator.id.launchNukes\",\"challenge\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\",\"origin\":\"http://example.com\"}".getBytes("UTF-8"));
+
+        u2f.finishRegistration(
+            registerRequest,
+            new RegisterResponse(
+                TestVectors.REGISTRATION_DATA_WITH_DIFFERENT_CLIENT_DATA_TYPE_BASE64,
+                clientDataBase64
+            )
+        );
+
+        fail("finishRegistration did not detect incorrect type in client data");
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishRegistrationShouldDetectIncorrectClientDataOrigin() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
+
+        String clientDataBase64 = U2fB64Encoding.encode("{\"typ\":\"navigator.id.finishEnrollment\",\"challenge\":\"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo\",\"origin\":\"http://evil.com\"}".getBytes("UTF-8"));
+
+        u2f.finishRegistration(
+            registerRequest,
+            new RegisterResponse(
+                TestVectors.REGISTRATION_DATA_BASE64,
+                clientDataBase64
+            )
+        );
+
+        fail("finishRegistration did not detect incorrect origin in client data");
     }
 
     @Test

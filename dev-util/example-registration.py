@@ -83,6 +83,8 @@ example_response_message_hex = '05' + public_user_key_hex + '40' + key_handle_he
 public_attestation_key.verify(unhexlify(example_signature_hex), unhexlify(example_signature_base_hex), sig_alg)
 
 
+different_client_data = '{"typ":"navigator.id.launchNukes","challenge":"vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo","origin":"http://example.com"}'
+different_challenge_parameter_hex = sha256(bytes(different_client_data, 'UTF-8')).hex()
 
 public_attestation_key.verify(private_attestation_key.sign(b'Hello, World!', sig_alg), b'Hello, World!', sig_alg)
 
@@ -107,7 +109,7 @@ print_results(
   public_user_key_hex,
   private_attestation_key,
   application_parameter_hex,
-  client_data,
+  different_client_data,
   key_handle_hex,
   public_user_key_hex
 )
