@@ -9,4 +9,4 @@ matrix:
     - jdk: oraclejdk7
       env: COVERALLS=true
 after_success:
-  - test -z $COVERALLS || mvn clean test jacoco:report coveralls:report
+  - gradle clean test jacocoRootReport coveralls
