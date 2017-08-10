@@ -8,6 +8,7 @@ buildscript {
 }
 plugins {
   id 'io.codearte.nexus-staging' version '0.9.0'
+  id 'net.researchgate.release' version '2.4.0'
 }
 
 nexusStaging {
