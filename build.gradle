@@ -7,6 +7,7 @@ buildscript {
   }
 }
 plugins {
+  id 'com.github.kt3k.coveralls' version '2.8.1'
   id 'io.codearte.nexus-staging' version '0.9.0'
   id 'net.researchgate.release' version '2.4.0'
 }
@@ -19,13 +20,21 @@ nexusStaging {
 
 allprojects  {
   apply plugin: 'maven'
+  apply plugin: 'jacoco'
 
   group = 'com.yubico'
   version = '0.16.1-SNAPSHOT'
+
+  repositories {
+    mavenLocal()
+
+    maven { url "http://repo.maven.apache.org/maven2" }
+  }
 }
 
 subprojects {
   apply plugin: 'java'
+
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
 
@@ -49,13 +58,6 @@ subprojects {
     from javadoc.destinationDir
   }
   artifacts.archives packageJavadoc
-
-  repositories {
-    mavenLocal()
-
-    maven { url "http://repo.maven.apache.org/maven2" }
-  }
-
 
   dependencies {
 
@@ -89,4 +91,34 @@ configure(subprojects.findAll { it.name != 'u2flib-server-demo' }) {
     timestampedReports = false
     outputFormats = ['XML', 'HTML']
   }
+}
+
+task jacocoMerge(type: JacocoMerge) {
+  subprojects.each { subproject ->
+    executionData subproject.tasks.withType(Test)
+  }
+  doFirst {
+    executionData = files(executionData.findAll { it.exists() })
+  }
+}
+
+task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
+  description = 'Generates an aggregate report from all subprojects'
+
+  inputs.files jacocoMerge.outputs.files
+
+  additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+  sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+  classDirectories = files(subprojects.sourceSets.main.output)
+  executionData jacocoMerge.destinationFile
+
+  reports {
+    html.enabled = true
+    xml.enabled = true
+  }
+}
+
+coveralls {
+  sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
+  jacocoReportPath = jacocoRootReport.outputs.files.find { it.name == 'jacocoRootReport.xml' }
 }
