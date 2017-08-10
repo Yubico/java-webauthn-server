@@ -1,7 +1,5 @@
 description = 'U2F core'
 
-apply plugin: 'info.solidsoft.pitest'
-
 dependencies {
 
   compile(
