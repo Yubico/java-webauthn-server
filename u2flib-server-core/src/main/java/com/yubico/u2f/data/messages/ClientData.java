@@ -22,7 +22,6 @@ public class ClientData {
     private final String challenge;
     private final String origin;
     private final String rawClientData;
-    private final JsonNode data;
 
     public String asJson() {
         return rawClientData;
@@ -31,10 +30,10 @@ public class ClientData {
     public ClientData(String clientData) throws U2fBadInputException {
         rawClientData = new String(U2fB64Encoding.decode(clientData));
         try {
-            data = new ObjectMapper().readTree(rawClientData);
-            type = getString(TYPE_PARAM);
-            challenge = getString(CHALLENGE_PARAM);
-            origin = getString(ORIGIN_PARAM);
+            JsonNode data = new ObjectMapper().readTree(rawClientData);
+            type = getString(data, TYPE_PARAM);
+            challenge = getString(data, CHALLENGE_PARAM);
+            origin = getString(data, ORIGIN_PARAM);
         } catch (IOException e) {
             throw new U2fBadInputException("Malformed ClientData", e);
         }
@@ -49,7 +48,7 @@ public class ClientData {
         return challenge;
     }
 
-    public String getString(String key) {
+    private static String getString(JsonNode data, String key) {
         return data.get(key).asText();
     }
 
