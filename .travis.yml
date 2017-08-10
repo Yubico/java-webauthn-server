@@ -3,8 +3,5 @@ jdk:
   - openjdk7
   - oraclejdk7
   - oraclejdk8
-matrix:
-  include:
-    - jdk: oraclejdk7
 after_success:
   - ./gradlew coveralls
