@@ -122,3 +122,6 @@ coveralls {
   sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
   jacocoReportPath = jacocoRootReport.outputs.files.find { it.name == 'jacocoRootReport.xml' }
 }
+tasks.coveralls {
+  inputs.files jacocoRootReport.outputs.files
+}

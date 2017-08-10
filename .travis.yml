@@ -7,6 +7,5 @@ jdk:
 matrix:
   include:
     - jdk: oraclejdk7
-      env: COVERALLS=true
 after_success:
-  - gradle clean test jacocoRootReport coveralls
+  - ./gradlew coveralls
