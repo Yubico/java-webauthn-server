@@ -6,6 +6,15 @@ buildscript {
     classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
   }
 }
+plugins {
+  id 'io.codearte.nexus-staging' version '0.9.0'
+}
+
+nexusStaging {
+  username = ossrhUsername
+  password = ossrhPassword
+  stagingProfileId = '6c61426e6529d'
+}
 
 allprojects  {
   apply plugin: 'maven'
