@@ -23,6 +23,10 @@ allprojects  {
   apply plugin: 'maven'
   apply plugin: 'jacoco'
 
+  task wrapper(type: Wrapper) {
+    gradleVersion = '4.1'
+  }
+
   group = 'com.yubico'
   version = '0.16.1-SNAPSHOT'
 
@@ -41,10 +45,6 @@ allprojects  {
 }
 
 subprojects {
-  task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
-  }
-
   task packageSources(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
