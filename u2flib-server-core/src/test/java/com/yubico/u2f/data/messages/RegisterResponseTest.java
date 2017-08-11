@@ -19,6 +19,7 @@ public class RegisterResponseTest {
         RegisterResponse registerResponse = new RegisterResponse(REGISTRATION_DATA_BASE64, CLIENT_DATA_AUTHENTICATE_BASE64);
 
         assertEquals(CLIENT_DATA_AUTHENTICATE, registerResponse.getClientData().toString());
+        assertEquals(SERVER_CHALLENGE_SIGN_BASE64, registerResponse.getRequestId());
         assertEquals(REGISTRATION_DATA_BASE64, registerResponse.getRegistrationData());
     }
 
