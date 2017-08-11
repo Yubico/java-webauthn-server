@@ -6,34 +6,27 @@ import java.io.OutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.gradle.plugins.signing.signatory.SignatorySupport;
-import org.gradle.plugins.signing.signatory.pgp.PgpKeyId;
-import org.gradle.plugins.signing.signatory.pgp.PgpSignatory;
 
-class GpgSignatory extends SignatorySupport implements PgpSignatory {
+class GpgSignatory extends SignatorySupport {
 
-    private final PgpKeyId keyId;
+    private final String keyId;
 
     public GpgSignatory(String keyId) {
         if (keyId == null) {
             throw new IllegalArgumentException("keyId must not be null.");
         }
-        this.keyId = new PgpKeyId(keyId);
-    }
-
-    @Override
-    public PgpKeyId getKeyId() {
-        return keyId;
+        this.keyId = keyId;
     }
 
     @Override
     public String getName() {
-        return keyId.getAsHex();
+        return keyId;
     }
 
     @Override
     public void sign(InputStream toSign, OutputStream destination) {
         try {
-            Process gpgProcess = new ProcessBuilder("gpg", "--local-user", keyId.getAsHex() + "!", "--detach-sign", "--use-agent").start();
+            Process gpgProcess = new ProcessBuilder("gpg", "--local-user", keyId, "--detach-sign", "--use-agent").start();
 
             IOUtils.copy(toSign, gpgProcess.getOutputStream());
             gpgProcess.getOutputStream().close();
