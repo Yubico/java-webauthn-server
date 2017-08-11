@@ -6,6 +6,7 @@ import com.google.common.collect.Iterables;
 import com.yubico.u2f.TestUtils;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.ChallengeGenerator;
+import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import org.junit.Test;
 import static com.yubico.u2f.testdata.TestVectors.APP_ID_ENROLL;
 import static com.yubico.u2f.testdata.TestVectors.SERVER_CHALLENGE_REGISTER_BASE64;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,4 +63,31 @@ public class RegisterRequestDataTest {
         assertEquals(requestData, requestData2);
         assertEquals(requestData.getRequestId(), requestData2.getRequestId());
     }
+
+    private DeviceRegistration mockDevice(final String keyHandle, boolean compromised) {
+        DeviceRegistration device = mock(DeviceRegistration.class);
+        when(device.getKeyHandle()).thenReturn(keyHandle);
+        when(device.isCompromised()).thenReturn(compromised);
+        return device;
+    }
+
+    @Test
+    public void testConstructorAddsOneRegisteredKeyForEachGivenNonCompromisedDeviceRegistration() {
+        DeviceRegistration good1 = mockDevice("A", false);
+        DeviceRegistration good2 = mockDevice("B", false);
+        DeviceRegistration bad1 = mockDevice("C", true);
+        DeviceRegistration bad2 = mockDevice("D", true);
+
+        RegisterRequestData result = new RegisterRequestData(
+            "AppId",
+            ImmutableList.of(good1, bad1, bad2, good2),
+            new U2fPrimitives(),
+            new RandomChallengeGenerator()
+        );
+
+        assertEquals(2, result.getRegisteredKeys().size());
+        assertTrue(result.getRegisteredKeys().contains(new RegisteredKey(U2fPrimitives.U2F_VERSION, "A", null, null)));
+        assertTrue(result.getRegisteredKeys().contains(new RegisteredKey(U2fPrimitives.U2F_VERSION, "B", null, null)));
+    }
+
 }
