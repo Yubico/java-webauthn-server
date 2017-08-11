@@ -25,7 +25,9 @@ import java.io.Serializable;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(of = { "keyHandle", "publicKey", "attestationCert" })
 public class DeviceRegistration extends JsonSerializable implements Serializable {
     private static final long serialVersionUID = -142942195464329902L;
     public static final long INITIAL_COUNTER_VALUE = -1;
@@ -88,22 +90,6 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
 
     public void markCompromised() {
         compromised = true;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(keyHandle, publicKey, attestationCert);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof DeviceRegistration)) {
-            return false;
-        }
-        DeviceRegistration that = (DeviceRegistration) obj;
-        return Objects.equal(this.keyHandle, that.keyHandle)
-                && Objects.equal(this.publicKey, that.publicKey)
-                && Objects.equal(this.attestationCert, that.attestationCert);
     }
 
     @Override
