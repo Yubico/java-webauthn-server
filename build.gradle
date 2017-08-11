@@ -26,6 +26,7 @@ allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
   apply plugin: 'jacoco'
+  apply plugin: 'signing'
 
   task wrapper(type: Wrapper) {
     gradleVersion = '4.1'
@@ -39,6 +40,10 @@ allprojects  {
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+  }
+
+  signing {
+    sign configurations.archives
   }
 
   repositories {
@@ -75,6 +80,8 @@ subprojects {
     uploadArchives {
       repositories {
         mavenDeployer {
+          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
           repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
             authentication(userName: ossrhUsername, password: ossrhPassword)
           }
