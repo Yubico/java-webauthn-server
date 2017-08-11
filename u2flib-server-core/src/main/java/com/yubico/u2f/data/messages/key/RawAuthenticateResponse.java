@@ -9,7 +9,6 @@
 
 package com.yubico.u2f.data.messages.key;
 
-import com.google.common.base.Objects;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
@@ -18,12 +17,13 @@ import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
-import java.util.Arrays;
+import lombok.EqualsAndHashCode;
 
 /**
  * The authenticate response produced by the token/key, which is transformed by the client into an AuthenticateResponse
  * and sent to the server.
  */
+@EqualsAndHashCode(of = { "userPresence", "counter", "signature" })
 public class RawAuthenticateResponse {
     public static final byte USER_PRESENT_FLAG = 0x01;
 
@@ -100,21 +100,6 @@ public class RawAuthenticateResponse {
      */
     public byte[] getSignature() {
         return signature;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(userPresence, counter, signature);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof RawAuthenticateResponse))
-            return false;
-        RawAuthenticateResponse other = (RawAuthenticateResponse) obj;
-        return Objects.equal(counter, other.counter)
-                && Arrays.equals(signature, signature)
-                && Objects.equal(userPresence, other.userPresence);
     }
 
     public void checkUserPresence() throws U2fBadInputException {
