@@ -71,7 +71,7 @@ public class DeviceRegistrationTest {
         deviceRegistration.checkAndUpdateCounter(9);
 
         try {
-            deviceRegistration.checkAndUpdateCounter(5);
+            deviceRegistration.checkAndUpdateCounter(9);
             fail();
         } catch (InvalidDeviceCounterException e) {
             assertTrue(deviceRegistration.isCompromised());

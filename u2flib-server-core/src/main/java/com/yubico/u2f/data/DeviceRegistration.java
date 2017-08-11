@@ -143,7 +143,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     public void checkAndUpdateCounter(long clientCounter) throws InvalidDeviceCounterException {
-        if (clientCounter <= counter) {
+        if (clientCounter <= getCounter()) {
             markCompromised();
             throw new InvalidDeviceCounterException(this);
         }
