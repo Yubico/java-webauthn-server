@@ -12,6 +12,8 @@ plugins {
   id 'net.researchgate.release' version '2.4.0'
 }
 
+import com.yubico.gradle.plugins.signing.GpgSigningPlugin
+
 project.ext.publishEnabled = System.env.CI != 'true'
 
 if (publishEnabled) {
@@ -26,7 +28,7 @@ allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
   apply plugin: 'jacoco'
-  apply plugin: 'signing'
+  apply plugin: GpgSigningPlugin
 
   task wrapper(type: Wrapper) {
     gradleVersion = '4.1'
