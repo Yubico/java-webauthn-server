@@ -102,6 +102,7 @@ configure(subprojects.findAll { it.name != 'u2flib-server-demo' }) {
   apply plugin: 'info.solidsoft.pitest'
 
   pitest {
+    pitestVersion = '1.2.2'
     timestampedReports = false
     outputFormats = ['XML', 'HTML']
   }
