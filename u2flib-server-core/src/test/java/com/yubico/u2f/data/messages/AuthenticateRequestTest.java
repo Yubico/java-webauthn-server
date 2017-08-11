@@ -15,6 +15,7 @@ public class AuthenticateRequestTest {
     public void testGetters() throws Exception {
         AuthenticateRequest authenticateRequest = AuthenticateRequest.builder().challenge(SERVER_CHALLENGE_SIGN_BASE64).appId(APP_ID_SIGN).keyHandle(KEY_HANDLE_BASE64).build();
         assertEquals(SERVER_CHALLENGE_SIGN_BASE64, authenticateRequest.getChallenge());
+        assertEquals(SERVER_CHALLENGE_SIGN_BASE64, authenticateRequest.getRequestId());
         assertEquals(APP_ID_SIGN, authenticateRequest.getAppId());
         assertEquals(KEY_HANDLE_BASE64, authenticateRequest.getKeyHandle());
     }
