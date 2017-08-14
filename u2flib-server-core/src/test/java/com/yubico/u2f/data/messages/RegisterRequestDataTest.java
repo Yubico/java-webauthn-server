@@ -53,6 +53,7 @@ public class RegisterRequestDataTest {
         assertEquals(requestData, requestData2);
         assertEquals(requestData.getRequestId(), requestData2.getRequestId());
         assertEquals(requestData.toJson(), objectMapper.writeValueAsString(requestData));
+        assertEquals(KEY_HANDLE, requestData.getRegisteredKeys().get(0).getKeyHandle());
     }
 
     @Test
