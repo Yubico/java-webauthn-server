@@ -30,8 +30,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MetadataService {
+    private static final Logger logger = LoggerFactory.getLogger(MetadataService.class);
+
     public static final String SELECTORS = "selectors";
     private static final String SELECTOR_TYPE = "type";
     private static final String SELECTOR_PARAMETERS = "parameters";
@@ -51,11 +55,11 @@ public class MetadataService {
             is = MetadataService.class.getResourceAsStream("/metadata.json");
             resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("createDefaultMetadataResolver failed", e);
         } catch (CertificateException e) {
-            e.printStackTrace();
+            logger.error("createDefaultMetadataResolver failed", e);
         } catch (U2fBadInputException e) {
-            e.printStackTrace();
+            logger.error("createDefaultMetadataResolver failed", e);
         } finally {
             Closeables.closeQuietly(is);
         }
