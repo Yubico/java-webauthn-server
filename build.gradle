@@ -35,7 +35,7 @@ allprojects  {
   }
 
   group = 'com.yubico'
-  version = '0.16.1-SNAPSHOT'
+  version = '0.17.0'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6

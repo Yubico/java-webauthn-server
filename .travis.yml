@@ -3,6 +3,7 @@ jdk:
   - openjdk7
   - oraclejdk7
   - oraclejdk8
+script: ./gradlew build --exclude-task signArchives
 after_success:
   - ./gradlew coveralls
 
