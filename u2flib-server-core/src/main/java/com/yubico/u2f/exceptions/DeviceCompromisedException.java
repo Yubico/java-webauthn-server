@@ -1,21 +1,20 @@
 package com.yubico.u2f.exceptions;
 
 import com.yubico.u2f.data.DeviceRegistration;
+import lombok.Getter;
 
+@Getter
 public class DeviceCompromisedException extends Exception {
-    private final DeviceRegistration registration;
+    private final DeviceRegistration deviceRegistration;
 
-    public DeviceCompromisedException(DeviceRegistration registration, String message, Throwable cause) {
+    public DeviceCompromisedException(DeviceRegistration deviceRegistration, String message, Throwable cause) {
         super(message, cause);
-        this.registration = registration;
+        this.deviceRegistration = deviceRegistration;
     }
 
-    public DeviceCompromisedException(DeviceRegistration registration, String message) {
+    public DeviceCompromisedException(DeviceRegistration deviceRegistration, String message) {
         super(message);
-        this.registration = registration;
+        this.deviceRegistration = deviceRegistration;
     }
 
-    public DeviceRegistration getDeviceRegistration() {
-        return registration;
-    }
 }
