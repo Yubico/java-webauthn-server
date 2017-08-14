@@ -10,7 +10,9 @@ import java.io.Serializable;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 
+@Getter
 public class Attestation implements Serializable {
     private final String metadataIdentifier;
     private final Map<String, String> vendorProperties;
@@ -21,7 +23,7 @@ public class Attestation implements Serializable {
         metadataIdentifier = null;
         vendorProperties = null;
         deviceProperties = null;
-        transports = null;
+        transports = Sets.immutableEnumSet(null);
     }
 
     public Attestation(String metadataIdentifier, Map<String, String> vendorProperties, Map<String, String> deviceProperties, Set<Transport> transports) {
@@ -35,19 +37,4 @@ public class Attestation implements Serializable {
         return metadataIdentifier != null;
     }
 
-    public String getMetadataIdentifier() {
-        return metadataIdentifier;
-    }
-
-    public Map<String, String> getVendorProperties() {
-        return vendorProperties;
-    }
-
-    public Map<String, String> getDeviceProperties() {
-        return deviceProperties;
-    }
-
-    public Set<Transport> getTransports() {
-        return Sets.immutableEnumSet(transports);
-    }
 }
