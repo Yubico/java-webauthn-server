@@ -43,10 +43,6 @@ public class RegisteredKey extends JsonSerializable implements Serializable {
         this(U2fPrimitives.U2F_VERSION, keyHandle, null, null);
     }
 
-    public static RegisteredKey fromJson(String json) throws U2fBadInputException {
-        return fromJson(json, RegisteredKey.class);
-    }
-
     @JsonPOJOBuilder(withPrefix = "")
     public static class RegisteredKeyBuilder {}
 }
