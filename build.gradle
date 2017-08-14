@@ -28,7 +28,13 @@ allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
   apply plugin: 'jacoco'
-  apply plugin: GpgSigningPlugin
+
+  if (publishEnabled) {
+    apply plugin: GpgSigningPlugin
+    signing {
+      sign configurations.archives
+    }
+  }
 
   task wrapper(type: Wrapper) {
     gradleVersion = '4.1'
@@ -42,10 +48,6 @@ allprojects  {
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-  }
-
-  signing {
-    sign configurations.archives
   }
 
   repositories {
