@@ -9,7 +9,6 @@
 
 package com.yubico.u2f.data.messages.key;
 
-import com.google.common.base.Objects;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
@@ -19,20 +18,20 @@ import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
+import lombok.EqualsAndHashCode;
 
 /**
  * The register response produced by the token/key, which is transformed by the client into an RegisterResponse
  * and sent to the server.
  */
+@EqualsAndHashCode
 public class RawRegisterResponse {
     public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
-    private final Crypto crypto;
+    private transient final Crypto crypto;
 
     /**
      * The (uncompressed) x,y-representation of a curve point on the P-256
@@ -117,19 +116,4 @@ public class RawRegisterResponse {
         );
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(userPublicKey, keyHandle, attestationCertificate, signature);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof RawRegisterResponse))
-            return false;
-        RawRegisterResponse other = (RawRegisterResponse) obj;
-        return Objects.equal(attestationCertificate, other.attestationCertificate)
-                && Arrays.equals(keyHandle, other.keyHandle)
-                && Arrays.equals(signature, other.signature)
-                && Arrays.equals(userPublicKey, other.userPublicKey);
-    }
 }
