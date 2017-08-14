@@ -14,6 +14,8 @@ import org.junit.Test;
 import static com.yubico.u2f.testdata.TestVectors.APP_ID_SIGN;
 import static com.yubico.u2f.testdata.TestVectors.SERVER_CHALLENGE_SIGN_BASE64;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -80,7 +82,7 @@ public class AuthenticateRequestDataTest {
         try {
             new AuthenticateRequestData(APP_ID_SIGN, ImmutableList.<DeviceRegistration>of(), mock(U2fPrimitives.class), challengeGenerator);
         } catch (NoEligibleDevicesException e) {
-            assertEquals(NoEligibleDevicesException.ErrorType.NONE_REGISTERED, e.getType());
+            assertFalse(e.hasDevices());
         }
 
         DeviceRegistration compromisedDevice = mock(DeviceRegistration.class);
@@ -89,7 +91,7 @@ public class AuthenticateRequestDataTest {
         try {
             new AuthenticateRequestData(APP_ID_SIGN, ImmutableList.of(compromisedDevice), mock(U2fPrimitives.class), challengeGenerator);
         } catch (NoEligibleDevicesException e) {
-            assertEquals(NoEligibleDevicesException.ErrorType.ALL_COMPROMISED, e.getType());
+            assertTrue(e.hasDevices());
         }
 
     }
