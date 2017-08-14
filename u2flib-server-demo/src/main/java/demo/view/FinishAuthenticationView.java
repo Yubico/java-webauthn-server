@@ -3,7 +3,9 @@ package demo.view;
 import io.dropwizard.views.View;
 import java.util.Collections;
 import java.util.List;
+import lombok.Getter;
 
+@Getter
 public class FinishAuthenticationView extends View {
 
     private final boolean success;
@@ -23,11 +25,4 @@ public class FinishAuthenticationView extends View {
         this(success, Collections.<String>emptyList());
     }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public List<String> getMessages() {
-        return messages;
-    }
 }
