@@ -6,7 +6,7 @@
     <packaging>pom</packaging>
     <version>0.17.0</version>
     <name>U2F parent</name>
-    <description>Client library written in Java for verifying YubiKey one-time passwords (OTPs).</description>
+    <description>Java server-side library for U2F</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
