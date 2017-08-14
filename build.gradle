@@ -27,7 +27,6 @@ if (publishEnabled) {
 allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
-  apply plugin: 'jacoco'
 
   if (publishEnabled) {
     apply plugin: GpgSigningPlugin
@@ -110,35 +109,11 @@ configure(subprojects.findAll { it.name != 'u2flib-server-demo' }) {
   }
 }
 
-task jacocoMerge(type: JacocoMerge) {
-  subprojects.each { subproject ->
-    executionData subproject.tasks.withType(Test)
-  }
-  doFirst {
-    executionData = files(executionData.findAll { it.exists() })
-  }
-}
-
-task jacocoRootReport(type: JacocoReport, group: 'Coverage reports') {
-  description = 'Generates an aggregate report from all subprojects'
-
-  inputs.files jacocoMerge.outputs.files
-
-  additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
-  sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
-  classDirectories = files(subprojects.sourceSets.main.output)
-  executionData jacocoMerge.destinationFile
-
-  reports {
-    html.enabled = true
-    xml.enabled = true
-  }
-}
+task pitestMerge(type: com.yubico.gradle.pitest.tasks.PitestMergeTask)
 
 coveralls {
   sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
-  jacocoReportPath = jacocoRootReport.outputs.files.find { it.name == 'jacocoRootReport.xml' }
 }
 tasks.coveralls {
-  inputs.files jacocoRootReport.outputs.files
+  inputs.files pitestMerge.outputs.files
 }
