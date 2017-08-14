@@ -1,5 +1,6 @@
 package com.yubico.u2f.attestation;
 
+import com.google.common.hash.Hashing;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import org.junit.Test;
 
@@ -8,6 +9,7 @@ import java.security.cert.X509Certificate;
 import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -59,4 +61,23 @@ public class MetadataServiceTest {
 
         assertEquals(EnumSet.of(Transport.USB), attestation.getTransports());
     }
+
+    @Test
+    public void getCachedAttestationReturnsCertIfPresent() throws Exception {
+        MetadataService service = new MetadataService();
+
+        final X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT);
+        final String certFingerprint = Hashing.sha1().hashBytes(attestationCert.getEncoded()).toString();
+
+        assertNull(service.getCachedAttestation(certFingerprint));
+
+        service.getAttestation(attestationCert);
+
+        Attestation attestation = service.getCachedAttestation(certFingerprint);
+
+        assertTrue(attestation.isTrusted());
+        assertEquals("Yubico", attestation.getVendorProperties().get("name"));
+        assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get("deviceId"));
+    }
+
 }
