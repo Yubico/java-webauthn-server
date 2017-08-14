@@ -14,13 +14,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
 import java.io.Serializable;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;

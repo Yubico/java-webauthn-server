@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.io.Serializable;
 import java.util.Set;
 import lombok.AllArgsConstructor;
