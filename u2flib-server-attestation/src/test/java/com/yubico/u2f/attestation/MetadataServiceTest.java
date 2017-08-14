@@ -1,19 +1,23 @@
 package com.yubico.u2f.attestation;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import java.security.cert.CertificateEncodingException;
-import org.junit.Test;
-
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.EnumSet;
+import org.junit.Test;
+import org.mockito.Matchers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MetadataServiceTest {
@@ -93,6 +97,23 @@ public class MetadataServiceTest {
         Attestation attestation = service.getAttestation(attestationCert);
 
         assertFalse(attestation.isTrusted());
+    }
+
+    @Test
+    public void deviceMatchesReturnsTrueIfNoSelectorsAreGiven() throws Exception {
+        MetadataResolver resolver = mock(MetadataResolver.class);
+        JsonNode device = mock(JsonNode.class);
+        MetadataObject metadata = mock(MetadataObject.class);
+        when(metadata.getDevices()).thenReturn(ImmutableList.of(device));
+        when(resolver.resolve(Matchers.<X509Certificate>any())).thenReturn(metadata);
+
+        MetadataService service = new MetadataService(resolver);
+
+        final X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT);
+
+        Attestation attestation = service.getAttestation(attestationCert);
+
+        verify(device, times(1)).get("transports");
     }
 
 }
