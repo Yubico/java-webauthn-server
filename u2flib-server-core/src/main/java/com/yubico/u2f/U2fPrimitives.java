@@ -112,11 +112,11 @@ public class U2fPrimitives {
     public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
         checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
 
-        return new AuthenticateRequest(
-                U2fB64Encoding.encode(challenge),
-                appId,
-                deviceRegistration.getKeyHandle()
-        );
+        return AuthenticateRequest.builder()
+            .appId(appId)
+            .challenge(U2fB64Encoding.encode(challenge))
+            .keyHandle(deviceRegistration.getKeyHandle())
+            .build();
     }
 
     /**

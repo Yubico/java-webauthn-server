@@ -21,6 +21,11 @@
             <name>Dain Nilsson</name>
             <email>dain@yubico.com</email>
         </developer>
+        <developer>
+            <id>emil</id>
+            <name>Emil Lundberg</name>
+            <email>emil@yubico.com</email>
+        </developer>
     </developers>
     <licenses>
         <license>
@@ -131,6 +136,16 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>1.2.2</version>
+                <configuration>
+                    <timestampedReports>false</timestampedReports>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
     <profiles>

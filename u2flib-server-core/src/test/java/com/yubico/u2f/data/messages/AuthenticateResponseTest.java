@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import static com.yubico.u2f.testdata.TestVectors.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 public class AuthenticateResponseTest {
     public static final String JSON = "{\"clientData\":\"eyJ0eXAiOiJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIiwiY2hhbGxlbmdlIjoib3BzWHFVaWZEcmlBQW1XY2xpbmZiUzBlLVVTWTBDZ3lKSGVfT3RkN3o4byIsImNpZF9wdWJrZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsIngiOiJIelF3bGZYWDdRNFM1TXRDQ25aVU5CdzNSTXpQTzl0T3lXakJxUmw0dEo4IiwieSI6IlhWZ3VHRkxJWngxZlhnM3dOcWZkYm43NWhpNC1fNy1CeGhNbGp3NDJIdDQifSwib3JpZ2luIjoiaHR0cDovL2V4YW1wbGUuY29tIn0\",\"signatureData\":\"\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\"}";
@@ -37,4 +39,23 @@ public class AuthenticateResponseTest {
         assertEquals(authenticateResponse, authenticateResponse2);
         assertEquals(authenticateResponse.getRequestId(), authenticateResponse2.getRequestId());
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void fromJsonDetectsTooLongJsonContent() {
+        AuthenticateResponse.fromJson(makeLongJson(20000));
+        fail("fromJson did not detect too long JSON content.");
+    }
+
+    @Test
+    public void fromJsonAllowsShortJsonContent() {
+        assertNotNull(AuthenticateResponse.fromJson(makeLongJson(19999)));
+    }
+
+    private String makeLongJson(int totalLength) {
+        final String jsonPrefix = "{\"clientData\":\"eyJ0eXAiOiJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIiwiY2hhbGxlbmdlIjoib3BzWHFVaWZEcmlBQW1XY2xpbmZiUzBlLVVTWTBDZ3lKSGVfT3RkN3o4byIsImNpZF9wdWJrZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsIngiOiJIelF3bGZYWDdRNFM1TXRDQ25aVU5CdzNSTXpQTzl0T3lXakJxUmw0dEo4IiwieSI6IlhWZ3VHRkxJWngxZlhnM3dOcWZkYm43NWhpNC1fNy1CeGhNbGp3NDJIdDQifSwib3JpZ2luIjoiaHR0cDovL2V4YW1wbGUuY29tIn0\",\"signatureData\":\"\",\"keyHandle\":\"";
+        final String jsonSuffix = "\"}";
+        final int infixLength = totalLength - jsonPrefix.length() - jsonSuffix.length();
+        return jsonPrefix + String.format("%0" + infixLength + "d", 0).replace("0", "a") + jsonSuffix;
+    }
+
 }

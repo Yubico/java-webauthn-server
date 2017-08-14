@@ -1,0 +1,9 @@
+apply plugin: 'groovy'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'commons-io:commons-io:2.5'
+}

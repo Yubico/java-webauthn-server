@@ -14,18 +14,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
 import java.io.Serializable;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(of = { "keyHandle", "publicKey", "attestationCert" })
 public class DeviceRegistration extends JsonSerializable implements Serializable {
     private static final long serialVersionUID = -142942195464329902L;
     public static final long INITIAL_COUNTER_VALUE = -1;
@@ -42,7 +42,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     private boolean compromised;
 
     @JsonCreator
-    private DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
+    DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
         this.keyHandle = keyHandle;
         this.publicKey = publicKey;
         this.attestationCert = attestationCert;
@@ -91,22 +91,6 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(keyHandle, publicKey, attestationCert);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof DeviceRegistration)) {
-            return false;
-        }
-        DeviceRegistration that = (DeviceRegistration) obj;
-        return Objects.equal(this.keyHandle, that.keyHandle)
-                && Objects.equal(this.publicKey, that.publicKey)
-                && Objects.equal(this.attestationCert, that.attestationCert);
-    }
-
-    @Override
     public String toString() {
         X509Certificate certificate = null;
         try {
@@ -143,7 +127,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     public void checkAndUpdateCounter(long clientCounter) throws InvalidDeviceCounterException {
-        if (clientCounter <= counter) {
+        if (clientCounter <= getCounter()) {
             markCompromised();
             throw new InvalidDeviceCounterException(this);
         }

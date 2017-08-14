@@ -13,6 +13,7 @@ import static junit.framework.Assert.fail;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class DeviceRegistrationTest {
@@ -71,11 +72,61 @@ public class DeviceRegistrationTest {
         deviceRegistration.checkAndUpdateCounter(9);
 
         try {
-            deviceRegistration.checkAndUpdateCounter(5);
+            deviceRegistration.checkAndUpdateCounter(9);
             fail();
         } catch (InvalidDeviceCounterException e) {
             assertTrue(deviceRegistration.isCompromised());
         }
+    }
+
+    @Test
+    public void equalsAndHashCodeIgnoreCounter() {
+        DeviceRegistration dr1 = new DeviceRegistration("A", "B", "C", 0, false);
+        DeviceRegistration dr2 = new DeviceRegistration("A", "B", "C", 1, false);
+
+        assertEquals(dr1, dr2);
+        assertEquals(dr1.hashCode(), dr2.hashCode());
+    }
+
+    @Test
+    public void equalsAndHashCodeIgnoreCompromisedFlag() {
+        DeviceRegistration dr1 = new DeviceRegistration("A", "B", "C", 0, false);
+        DeviceRegistration dr2 = new DeviceRegistration("A", "B", "C", 1, true);
+
+        assertEquals(dr1, dr2);
+        assertEquals(dr1.hashCode(), dr2.hashCode());
+    }
+
+    @Test
+    public void equalsAndHashCodeDoNotIgnoreKeyHandle() {
+        DeviceRegistration dr1 = new DeviceRegistration("A", "B", "C", 0, false);
+        DeviceRegistration dr2 = new DeviceRegistration("D", "B", "C", 0, false);
+
+        assertNotEquals(dr1, dr2);
+        assertNotEquals(dr1.hashCode(), dr2.hashCode());
+    }
+
+    @Test
+    public void equalsAndHashCodeDoNotIgnorePublicKey() {
+        DeviceRegistration dr1 = new DeviceRegistration("A", "B", "C", 0, false);
+        DeviceRegistration dr2 = new DeviceRegistration("A", "D", "C", 0, false);
+
+        assertNotEquals(dr1, dr2);
+        assertNotEquals(dr1.hashCode(), dr2.hashCode());
+    }
+
+    @Test
+    public void equalsAndHashCodeDoNotIgnoreAttestationCert() {
+        DeviceRegistration dr1 = new DeviceRegistration("A", "B", "C", 0, false);
+        DeviceRegistration dr2 = new DeviceRegistration("A", "B", "D", 0, false);
+
+        assertNotEquals(dr1, dr2);
+        assertNotEquals(dr1.hashCode(), dr2.hashCode());
+    }
+
+    @Test
+    public void toStringDoesNotReturnNull() {
+        assertNotNull(new DeviceRegistration("A", "B", null, 0, false).toString());
     }
 
     private DeviceRegistration getDeviceRegistration() throws Exception {

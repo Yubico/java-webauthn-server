@@ -7,6 +7,7 @@ import org.junit.Test;
 import static com.yubico.u2f.testdata.TestVectors.APP_ID_ENROLL;
 import static com.yubico.u2f.testdata.TestVectors.SERVER_CHALLENGE_REGISTER_BASE64;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class RegisterRequestTest {
 
@@ -17,6 +18,7 @@ public class RegisterRequestTest {
         RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
         assertEquals(SERVER_CHALLENGE_REGISTER_BASE64, registerRequest.getChallenge());
         assertEquals(APP_ID_ENROLL, registerRequest.getAppId());
+        assertNotNull(SERVER_CHALLENGE_REGISTER_BASE64, registerRequest.getRequestId());
     }
 
     @Test

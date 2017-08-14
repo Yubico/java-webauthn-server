@@ -4,11 +4,13 @@ import com.google.common.collect.ImmutableList;
 import com.yubico.u2f.data.DeviceRegistration;
 
 import java.util.List;
+import lombok.Getter;
 
 /**
  * @deprecated use {@link NoEligibleDevicesException}
  */
 @Deprecated
+@Getter
 public class NoEligableDevicesException extends Exception {
     private final List<DeviceRegistration> devices;
 
@@ -20,10 +22,6 @@ public class NoEligableDevicesException extends Exception {
     public NoEligableDevicesException(Iterable<? extends DeviceRegistration> devices, String message) {
         super(message);
         this.devices = ImmutableList.copyOf(devices);
-    }
-
-    public Iterable<DeviceRegistration> getDeviceRegistrations() {
-        return devices;
     }
 
     public boolean hasDevices() {
