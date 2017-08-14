@@ -18,18 +18,14 @@ import com.yubico.u2f.attestation.matchers.FingerprintMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
-import org.bouncycastle.asn1.DERBitString;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,9 +122,7 @@ public class MetadataService {
                     return lookupAttestation(attestationCertificate);
                 }
             });
-        } catch (ExecutionException e) {
-            return unknownAttestation;
-        } catch (CertificateEncodingException e) {
+        } catch (Exception e) {
             return unknownAttestation;
         }
     }
