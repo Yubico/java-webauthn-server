@@ -8,6 +8,7 @@ import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import org.junit.Test;
 
 import static com.yubico.u2f.testdata.TestVectors.APP_ID_SIGN;
@@ -67,6 +68,30 @@ public class AuthenticateRequestDataTest {
         requestData.getAuthenticateRequest(AuthenticateResponse.fromJson(authenticateResponseJson));
 
         fail("getAuthenticateRequest did not detect wrong request ID.");
+    }
+
+    @Test
+    public void testFailureModesAreIdentifiable() throws Exception {
+
+        byte[] challenge = U2fB64Encoding.decode(SERVER_CHALLENGE_SIGN_BASE64);
+        ChallengeGenerator challengeGenerator = mock(ChallengeGenerator.class);
+        when(challengeGenerator.generateChallenge()).thenReturn(challenge);
+
+        try {
+            new AuthenticateRequestData(APP_ID_SIGN, ImmutableList.<DeviceRegistration>of(), mock(U2fPrimitives.class), challengeGenerator);
+        } catch (NoEligibleDevicesException e) {
+            assertEquals(NoEligibleDevicesException.ErrorType.NONE_REGISTERED, e.getType());
+        }
+
+        DeviceRegistration compromisedDevice = mock(DeviceRegistration.class);
+        when(compromisedDevice.isCompromised()).thenReturn(true);
+
+        try {
+            new AuthenticateRequestData(APP_ID_SIGN, ImmutableList.of(compromisedDevice), mock(U2fPrimitives.class), challengeGenerator);
+        } catch (NoEligibleDevicesException e) {
+            assertEquals(NoEligibleDevicesException.ErrorType.ALL_COMPROMISED, e.getType());
+        }
+
     }
 
 }

@@ -58,9 +58,9 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
 
         if (authenticateRequests.isEmpty()) {
             if(Iterables.isEmpty(devices)) {
-                throw new NoEligibleDevicesException(devices, "No devices registrered");
+                throw new NoEligibleDevicesException(devices, "No devices registrered", NoEligibleDevicesException.ErrorType.NONE_REGISTERED);
             } else {
-                throw new NoEligibleDevicesException(devices, "All devices compromised");
+                throw new NoEligibleDevicesException(devices, "All devices compromised", NoEligibleDevicesException.ErrorType.ALL_COMPROMISED);
             }
         }
     }
