@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.SignRequest;
-import com.yubico.u2f.data.messages.AuthenticateRequestData;
+import com.yubico.u2f.data.messages.SignRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterRequestData;
@@ -78,8 +78,8 @@ public class U2FTest {
     @Test
     public void startAuthenticationShouldReturnARandomChallenge() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
-        AuthenticateRequestData data = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
-        AuthenticateRequestData data2 = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+        SignRequestData data = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+        SignRequestData data2 = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
 
         assertEquals(1, data.getSignRequests().size());
         assertNotNull(data.getSignRequests().get(0).getChallenge());
@@ -103,11 +103,11 @@ public class U2FTest {
         AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        AuthenticateRequestData authenticateRequest = mock(AuthenticateRequestData.class);
-        when(authenticateRequest.getSignRequest(tokenResponse)).thenReturn(request);
+        SignRequestData requestData = mock(SignRequestData.class);
+        when(requestData.getSignRequest(tokenResponse)).thenReturn(request);
 
         deviceRegistration.markCompromised();
-        u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration));
+        u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration));
     }
 
     @Test(expected = U2fBadInputException.class)
@@ -123,10 +123,10 @@ public class U2FTest {
         AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        AuthenticateRequestData authenticateRequest = mock(AuthenticateRequestData.class);
-        when(authenticateRequest.getSignRequest(tokenResponse)).thenReturn(request);
+        SignRequestData requestData = mock(SignRequestData.class);
+        when(requestData.getSignRequest(tokenResponse)).thenReturn(request);
 
-        u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
+        u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
     }
 
 
@@ -169,14 +169,14 @@ public class U2FTest {
         AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
             SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        AuthenticateRequestData authenticateRequest = new AuthenticateRequestData(
+        SignRequestData requestData = new SignRequestData(
             APP_ID_SIGN,
             SERVER_CHALLENGE_SIGN_BASE64,
             ImmutableList.of(request)
         );
 
-        DeviceRegistration device = u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of(APP_ID_ENROLL));
-        DeviceRegistration overloadDevice = u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration2));
+        DeviceRegistration device = u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of(APP_ID_ENROLL));
+        DeviceRegistration overloadDevice = u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration2));
 
         assertEquals(KEY_HANDLE_BASE64, device.getKeyHandle());
         assertEquals(device, overloadDevice);

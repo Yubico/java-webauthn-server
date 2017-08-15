@@ -53,11 +53,11 @@ public class U2F {
         return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
-    public AuthenticateRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligibleDevicesException {
+    public SignRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligibleDevicesException {
         if(validateAppId) {
             AppId.checkIsValid(appId);
         }
-        return new AuthenticateRequestData(appId, devices, primitives, challengeGenerator);
+        return new SignRequestData(appId, devices, primitives, challengeGenerator);
     }
 
     /***
@@ -82,24 +82,24 @@ public class U2F {
     }
 
     /**
-     * @see U2F#finishAuthentication(com.yubico.u2f.data.messages.AuthenticateRequestData, com.yubico.u2f.data.messages.AuthenticateResponse, Iterable, java.util.Set)
+     * @see U2F#finishAuthentication(SignRequestData, com.yubico.u2f.data.messages.AuthenticateResponse, Iterable, java.util.Set)
      */
-    public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
-        return finishAuthentication(authenticateRequestData, response, devices, null);
+    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
+        return finishAuthentication(signRequestData, response, devices, null);
     }
 
     /**
      * Finishes a previously started high-level authentication.
      *
-     * @param authenticateRequestData the AuthenticateRequestData created by calling startAuthentication
+     * @param signRequestData the SignRequestData created by calling startAuthentication
      * @param response                the response from the device/client.
      * @param devices                 the devices currently registered to the user.
      * @param facets                  A list of valid facets to verify against.
      * @return The (updated) DeviceRegistration that was authenticated against.
      * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
-    public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
-        final SignRequest request = authenticateRequestData.getSignRequest(response);
+    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+        final SignRequest request = signRequestData.getSignRequest(response);
         DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
             @Override
             public boolean apply(DeviceRegistration input) {

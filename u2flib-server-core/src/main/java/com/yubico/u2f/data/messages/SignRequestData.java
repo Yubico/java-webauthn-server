@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 import static com.google.common.base.Preconditions.checkArgument;
 
 @EqualsAndHashCode
-public class AuthenticateRequestData extends JsonSerializable implements Persistable {
+public class SignRequestData extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = 35378338769078256L;
 
@@ -36,13 +36,13 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     private final List<SignRequest> signRequests;
 
     @JsonCreator
-    public AuthenticateRequestData(@JsonProperty("appId") String appId, @JsonProperty("challenge") String challenge, @JsonProperty("signRequests") List<SignRequest> signRequests) {
+    public SignRequestData(@JsonProperty("appId") String appId, @JsonProperty("challenge") String challenge, @JsonProperty("signRequests") List<SignRequest> signRequests) {
         this.appId = appId;
         this.challenge = challenge;
         this.signRequests = signRequests;
     }
 
-    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
+    public SignRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
         this.appId = appId;
 
         byte[] challenge = challengeGenerator.generateChallenge();
@@ -84,7 +84,7 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
         return signRequests.get(0).getChallenge();
     }
 
-    public static AuthenticateRequestData fromJson(String json) throws U2fBadInputException {
-        return fromJson(json, AuthenticateRequestData.class);
+    public static SignRequestData fromJson(String json) throws U2fBadInputException {
+        return fromJson(json, SignRequestData.class);
     }
 }
