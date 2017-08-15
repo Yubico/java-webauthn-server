@@ -17,8 +17,10 @@ import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import lombok.EqualsAndHashCode;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(of = { "data" })
 public class MetadataObject extends JsonSerializable {
     private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {
     };
@@ -77,19 +79,6 @@ public class MetadataObject extends JsonSerializable {
 
     public List<JsonNode> getDevices() {
         return MoreObjects.firstNonNull(devices, ImmutableList.<JsonNode>of());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(data);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof MetadataObject))
-            return false;
-        MetadataObject other = (MetadataObject) obj;
-        return Objects.equal(data, other.data);
     }
 
     public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadInputException {

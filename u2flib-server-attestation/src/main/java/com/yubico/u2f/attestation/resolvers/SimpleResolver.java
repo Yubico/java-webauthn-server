@@ -17,8 +17,12 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SimpleResolver implements MetadataResolver {
+    private static final Logger logger = LoggerFactory.getLogger(SimpleResolver.class);
+
     private final Multimap<String, X509Certificate> certs = ArrayListMultimap.create();
     private final Map<X509Certificate, MetadataObject> metadata = new HashMap<X509Certificate, MetadataObject>();
 
@@ -44,15 +48,15 @@ public class SimpleResolver implements MetadataResolver {
                 attestationCertificate.verify(cert.getPublicKey());
                 return metadata.get(cert);
             } catch (CertificateException e) {
-                e.printStackTrace();
+                logger.error("resolve failed", e);
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
+                logger.error("resolve failed", e);
             } catch (InvalidKeyException e) {
-                e.printStackTrace();
+                logger.error("resolve failed", e);
             } catch (NoSuchProviderException e) {
-                e.printStackTrace();
+                logger.error("resolve failed", e);
             } catch (SignatureException e) {
-                e.printStackTrace();
+                logger.error("resolve failed", e);
             }
         }
         return null;

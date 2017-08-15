@@ -1,7 +1,7 @@
 == java-u2flib-server
 
-![Build Status](https://travis-ci.org/Yubico/java-u2flib-server.svg?branch=master)
-![Coverage Status](https://coveralls.io/repos/github/Yubico/java-u2flib-server/badge.svg)
+image:https://travis-ci.org/Yubico/java-u2flib-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-u2flib-server"]
+image:https://coveralls.io/repos/github/Yubico/java-u2flib-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-u2flib-server"]
 
 Server-side https://developers.yubico.com/U2F[U2F] library for Java. Provides functionality for registering
 U2F devices and authenticate with said devices.
