@@ -2,12 +2,19 @@ package com.yubico.u2f.attestation.resolvers;
 
 import com.yubico.u2f.attestation.MetadataObject;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
-import org.junit.Test;
-
+import java.security.Principal;
+import java.security.PublicKey;
+import java.security.SignatureException;
 import java.security.cert.X509Certificate;
+import org.junit.Test;
+import org.mockito.Matchers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class SimpleResolverTest {
 
@@ -26,4 +33,21 @@ public class SimpleResolverTest {
         assertNotNull(metadata);
         assertEquals("foobar", metadata.getIdentifier());
     }
+
+    @Test
+    public void resolveReturnsNullOnUntrustedSignature() throws Exception {
+        SimpleResolver resolver = new SimpleResolver();
+        resolver.addMetadata(METADATA_JSON);
+
+        X509Certificate cert = mock(X509Certificate.class);
+        doThrow(new SignatureException("Forced failure")).when(cert).verify(Matchers.<PublicKey>any());
+        Principal issuerDN = mock(Principal.class);
+        when(issuerDN.getName()).thenReturn("CN=Yubico U2F Root CA Serial 457200631");
+        when(cert.getIssuerDN()).thenReturn(issuerDN);
+
+        MetadataObject metadata = resolver.resolve(cert);
+
+        assertNull(metadata);
+    }
+
 }
