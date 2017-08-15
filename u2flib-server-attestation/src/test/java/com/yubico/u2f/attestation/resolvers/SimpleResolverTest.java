@@ -2,9 +2,13 @@ package com.yubico.u2f.attestation.resolvers;
 
 import com.yubico.u2f.attestation.MetadataObject;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.Principal;
 import java.security.PublicKey;
 import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import org.junit.Test;
 import org.mockito.Matchers;
@@ -40,14 +44,22 @@ public class SimpleResolverTest {
         resolver.addMetadata(METADATA_JSON);
 
         X509Certificate cert = mock(X509Certificate.class);
-        doThrow(new SignatureException("Forced failure")).when(cert).verify(Matchers.<PublicKey>any());
+        doThrow(
+            new CertificateException("Forced failure"),
+            new NoSuchAlgorithmException("Forced failure"),
+            new InvalidKeyException("Forced failure"),
+            new NoSuchProviderException("Forced failure"),
+            new SignatureException("Forced failure")
+        ).when(cert).verify(Matchers.<PublicKey>any());
         Principal issuerDN = mock(Principal.class);
         when(issuerDN.getName()).thenReturn("CN=Yubico U2F Root CA Serial 457200631");
         when(cert.getIssuerDN()).thenReturn(issuerDN);
 
-        MetadataObject metadata = resolver.resolve(cert);
-
-        assertNull(metadata);
+        assertNull(resolver.resolve(cert));
+        assertNull(resolver.resolve(cert));
+        assertNull(resolver.resolve(cert));
+        assertNull(resolver.resolve(cert));
+        assertNull(resolver.resolve(cert));
     }
 
 }
