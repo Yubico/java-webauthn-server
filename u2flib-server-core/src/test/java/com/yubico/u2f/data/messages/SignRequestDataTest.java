@@ -20,8 +20,8 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AuthenticateRequestDataTest {
-    public static final String JSON = "{\"authenticateRequests\":[{\"challenge\":\"opsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o\",\"appId\":\"https://gstatic.com/securitykey/a/example.com\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\",\"version\":\"U2F_V2\"}]}";
+public class SignRequestDataTest {
+    public static final String JSON = "{\"signRequests\":[{\"challenge\":\"opsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o\",\"appId\":\"https://gstatic.com/securitykey/a/example.com\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\",\"version\":\"U2F_V2\"}]}";
 
     @Test
     public void testGetters() throws Exception {
@@ -31,14 +31,14 @@ public class AuthenticateRequestDataTest {
 
         byte[] challenge = U2fB64Encoding.decode(SERVER_CHALLENGE_SIGN_BASE64);
         when(challengeGenerator.generateChallenge()).thenReturn(challenge);
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.fromJson(AuthenticateRequestTest.JSON);
-        when(primitives.startAuthentication(APP_ID_SIGN, device, challenge)).thenReturn(authenticateRequest);
+        SignRequest signRequest = SignRequest.fromJson(SignRequestTest.JSON);
+        when(primitives.startAuthentication(APP_ID_SIGN, device, challenge)).thenReturn(signRequest);
 
         AuthenticateRequestData requestData = new AuthenticateRequestData(APP_ID_SIGN, ImmutableList.of(device), primitives, challengeGenerator);
 
         assertEquals(SERVER_CHALLENGE_SIGN_BASE64, requestData.getRequestId());
-        AuthenticateRequest authenticateRequest2 = Iterables.getOnlyElement(requestData.getAuthenticateRequests());
-        assertEquals(authenticateRequest, authenticateRequest2);
+        SignRequest signRequest2 = Iterables.getOnlyElement(requestData.getSignRequests());
+        assertEquals(signRequest, signRequest2);
     }
 
     @Test
@@ -62,14 +62,14 @@ public class AuthenticateRequestDataTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void getAuthenticateChecksResponseId() throws Exception {
+    public void getSignRequestChecksResponseId() throws Exception {
         AuthenticateRequestData requestData = AuthenticateRequestData.fromJson(JSON);
 
         final String clientDataJson = "{\"typ\":\"navigator.id.getAssertion\",\"challenge\":\"OpsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o\",\"cid_pubkey\":{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"HzQwlfXX7Q4S5MtCCnZUNBw3RMzPO9tOyWjBqRl4tJ8\",\"y\":\"XVguGFLIZx1fXg3wNqfdbn75hi4-_7-BxhMljw42Ht4\"},\"origin\":\"http://example.com\"}";
-        final String authenticateResponseJson = "{\"clientData\":\"" + U2fB64Encoding.encode(clientDataJson.getBytes("UTF-8")) + "\",\"signatureData\":\"\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\"}";
-        requestData.getAuthenticateRequest(AuthenticateResponse.fromJson(authenticateResponseJson));
+        final String signResponseJson = "{\"clientData\":\"" + U2fB64Encoding.encode(clientDataJson.getBytes("UTF-8")) + "\",\"signatureData\":\"\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\"}";
+        requestData.getSignRequest(AuthenticateResponse.fromJson(signResponseJson));
 
-        fail("getAuthenticateRequest did not detect wrong request ID.");
+        fail("getSignRequest did not detect wrong request ID.");
     }
 
     @Test

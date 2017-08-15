@@ -11,7 +11,7 @@ package com.yubico.u2f;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
+import com.yubico.u2f.data.messages.SignRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
@@ -140,7 +140,7 @@ public class U2fPrimitivesTest {
 
     @Test
     public void finishAuthentication() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+        SignRequest signRequest = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
@@ -149,14 +149,14 @@ public class U2fPrimitivesTest {
         AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        u2f.finishAuthentication(authenticateRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+        u2f.finishAuthentication(signRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
 
     @Test(expected = U2fBadInputException.class)
     public void finishAuthentication_badOrigin() throws Exception {
         Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
-        AuthenticateRequest authentication = AuthenticateRequest.builder()
+        SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
@@ -165,7 +165,7 @@ public class U2fPrimitivesTest {
         AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-        u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+        u2f.finishAuthentication(request, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -179,7 +179,7 @@ public class U2fPrimitivesTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void finishAuthentication_compromisedDevice() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+        SignRequest signRequest = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
@@ -191,12 +191,12 @@ public class U2fPrimitivesTest {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
 
-        u2f.finishAuthentication(authenticateRequest, tokenResponse, deviceRegistration, allowedOrigins);
+        u2f.finishAuthentication(signRequest, tokenResponse, deviceRegistration, allowedOrigins);
     }
 
     @Test(expected = U2fBadInputException.class)
     public void finishAuthenticationShouldDetectInvalidUserPresence() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+        SignRequest signRequest = SignRequest.builder()
                 .challenge(SERVER_CHALLENGE_SIGN_BASE64)
                 .appId(APP_ID_SIGN)
                 .keyHandle(KEY_HANDLE_BASE64)
@@ -209,7 +209,7 @@ public class U2fPrimitivesTest {
         );
 
         u2f.finishAuthentication(
-            authenticateRequest,
+            signRequest,
             tokenResponse,
             new DeviceRegistration(
                 KEY_HANDLE_BASE64,
@@ -225,7 +225,7 @@ public class U2fPrimitivesTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void finishAuthenticationShouldDetectIncorrectDeviceRegistration() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+        SignRequest signRequest = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
@@ -238,7 +238,7 @@ public class U2fPrimitivesTest {
         );
 
         u2f.finishAuthentication(
-            authenticateRequest,
+            signRequest,
             tokenResponse,
             new DeviceRegistration(
                 "ARGHABLARGHLER",

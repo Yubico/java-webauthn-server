@@ -15,7 +15,7 @@ import com.yubico.u2f.U2F;
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
+import com.yubico.u2f.data.messages.SignRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequestData;
@@ -80,7 +80,7 @@ public class Resource {
             requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
             return new AuthenticationView(authenticateRequestData, username);
         } catch (NoEligibleDevicesException e) {
-            return new AuthenticationView(new AuthenticateRequestData(APP_ID, "", Collections.<AuthenticateRequest>emptyList()), username);
+            return new AuthenticationView(new AuthenticateRequestData(APP_ID, "", Collections.<SignRequest>emptyList()), username);
         }
     }
 

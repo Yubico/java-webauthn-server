@@ -14,8 +14,6 @@ import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Set;
 
 public class U2F {
@@ -101,7 +99,7 @@ public class U2F {
      * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
     public DeviceRegistration finishAuthentication(AuthenticateRequestData authenticateRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
-        final AuthenticateRequest request = authenticateRequestData.getAuthenticateRequest(response);
+        final SignRequest request = authenticateRequestData.getSignRequest(response);
         DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
             @Override
             public boolean apply(DeviceRegistration input) {

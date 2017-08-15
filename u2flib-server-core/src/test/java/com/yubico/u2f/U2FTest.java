@@ -3,7 +3,7 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
+import com.yubico.u2f.data.messages.SignRequest;
 import com.yubico.u2f.data.messages.AuthenticateRequestData;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
@@ -81,12 +81,12 @@ public class U2FTest {
         AuthenticateRequestData data = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
         AuthenticateRequestData data2 = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
 
-        assertEquals(1, data.getAuthenticateRequests().size());
-        assertNotNull(data.getAuthenticateRequests().get(0).getChallenge());
+        assertEquals(1, data.getSignRequests().size());
+        assertNotNull(data.getSignRequests().get(0).getChallenge());
         assertNotEquals(
             "startAuthentication must not return the same challenge twice in a row.",
-            data.getAuthenticateRequests().get(0).getChallenge(),
-            data2.getAuthenticateRequests().get(0).getChallenge()
+            data.getSignRequests().get(0).getChallenge(),
+            data2.getSignRequests().get(0).getChallenge()
         );
     }
 
@@ -94,7 +94,7 @@ public class U2FTest {
     public void finishAuthentication_compromisedDevice() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
-        AuthenticateRequest request = AuthenticateRequest.builder()
+        SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
@@ -104,7 +104,7 @@ public class U2FTest {
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         AuthenticateRequestData authenticateRequest = mock(AuthenticateRequestData.class);
-        when(authenticateRequest.getAuthenticateRequest(tokenResponse)).thenReturn(request);
+        when(authenticateRequest.getSignRequest(tokenResponse)).thenReturn(request);
 
         deviceRegistration.markCompromised();
         u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration));
@@ -114,7 +114,7 @@ public class U2FTest {
     public void finishAuthentication_invalidFacet() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
-        AuthenticateRequest request = AuthenticateRequest.builder()
+        SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
@@ -124,7 +124,7 @@ public class U2FTest {
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         AuthenticateRequestData authenticateRequest = mock(AuthenticateRequestData.class);
-        when(authenticateRequest.getAuthenticateRequest(tokenResponse)).thenReturn(request);
+        when(authenticateRequest.getSignRequest(tokenResponse)).thenReturn(request);
 
         u2f.finishAuthentication(authenticateRequest, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
     }
@@ -160,7 +160,7 @@ public class U2FTest {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
-        AuthenticateRequest request = AuthenticateRequest.builder()
+        SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)

@@ -2,7 +2,7 @@ package com.yubico.u2f.softkey;
 
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
+import com.yubico.u2f.data.messages.SignRequest;
 import com.yubico.u2f.data.messages.AuthenticateResponse;
 import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.key.Client;
@@ -84,14 +84,14 @@ public class SoftKeyTest {
 
         DeviceRegistration registeredDevice = client.register();
 
-        AuthenticateRequest authenticateRequest = u2f.startAuthentication(APP_ID, registeredDevice);
-        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, authenticateRequest);
+        SignRequest signRequest = u2f.startAuthentication(APP_ID, registeredDevice);
+        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, signRequest);
         AuthenticateResponse tamperedResponse = new AuthenticateResponse(
                 tamperChallenge(originalResponse.getClientData()),
                 originalResponse.getSignatureData(),
                 originalResponse.getKeyHandle()
         );
-        u2f.finishAuthentication(authenticateRequest, tamperedResponse, registeredDevice);
+        u2f.finishAuthentication(signRequest, tamperedResponse, registeredDevice);
     }
 
     private String tamperChallenge(ClientData clientData) {
@@ -107,14 +107,14 @@ public class SoftKeyTest {
 
         DeviceRegistration registeredDevice = client.register();
 
-        AuthenticateRequest authenticateRequest = u2f.startAuthentication(APP_ID, registeredDevice);
-        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, authenticateRequest);
+        SignRequest signRequest = u2f.startAuthentication(APP_ID, registeredDevice);
+        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, signRequest);
         AuthenticateResponse tamperedResponse = new AuthenticateResponse(
                 U2fB64Encoding.encode(originalResponse.getClientData().asJson().getBytes()),
                 tamperSignature(originalResponse.getSignatureData()),
                 originalResponse.getKeyHandle()
         );
-        u2f.finishAuthentication(authenticateRequest, tamperedResponse, registeredDevice);
+        u2f.finishAuthentication(signRequest, tamperedResponse, registeredDevice);
     }
 
 
@@ -127,8 +127,8 @@ public class SoftKeyTest {
     }
 
     private void authenticateUsing(Client client, DeviceRegistration registeredDevice) throws Exception {
-        AuthenticateRequest authenticateRequest = u2f.startAuthentication(APP_ID, registeredDevice);
-        AuthenticateResponse authenticateResponse = client.authenticate(registeredDevice, authenticateRequest);
-        u2f.finishAuthentication(authenticateRequest, authenticateResponse, registeredDevice);
+        SignRequest signRequest = u2f.startAuthentication(APP_ID, registeredDevice);
+        AuthenticateResponse authenticateResponse = client.authenticate(registeredDevice, signRequest);
+        u2f.finishAuthentication(signRequest, authenticateResponse, registeredDevice);
     }
 }
