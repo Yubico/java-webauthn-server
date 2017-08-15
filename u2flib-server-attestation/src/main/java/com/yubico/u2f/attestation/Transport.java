@@ -1,5 +1,6 @@
 package com.yubico.u2f.attestation;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -38,10 +39,6 @@ public enum Transport {
     }
 
     public static int toInt(Transport...transports) {
-        int transportsInt = 0;
-        for(Transport transport : transports) {
-            transportsInt |= transport.bitpos;
-        }
-        return transportsInt;
+        return toInt(Arrays.asList(transports));
     }
 }

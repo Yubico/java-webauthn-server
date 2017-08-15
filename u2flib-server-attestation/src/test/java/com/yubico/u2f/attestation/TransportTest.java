@@ -27,4 +27,21 @@ public class TransportTest {
         assertEquals(EnumSet.of(Transport.BT_CLASSIC, Transport.BLE, Transport.USB, Transport.NFC),
                 Transport.fromInt(15));
     }
+
+    @Test
+    public void testEncodingSingleValuesToInt() {
+        assertEquals(1, Transport.toInt(Transport.BT_CLASSIC));
+        assertEquals(2, Transport.toInt(Transport.BLE));
+        assertEquals(4, Transport.toInt(Transport.USB));
+        assertEquals(8, Transport.toInt(Transport.NFC));
+    }
+
+    @Test
+    public void testEncodingSetsToInt() {
+        assertEquals(0, Transport.toInt());
+        assertEquals(10, Transport.toInt(Transport.BLE, Transport.NFC));
+        assertEquals(5, Transport.toInt(Transport.USB, Transport.BT_CLASSIC));
+        assertEquals(15, Transport.toInt(Transport.BT_CLASSIC, Transport.BLE, Transport.USB, Transport.NFC));
+    }
+
 }
