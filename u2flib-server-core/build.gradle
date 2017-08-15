@@ -6,7 +6,6 @@ dependencies {
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
     [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.6.5'],
-    [group: 'org.projectlombok', name: 'lombok', version:'1.16.18'],
   )
 
 }
