@@ -146,10 +146,10 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        u2f.finishSignature(signRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+        u2f.finishSignature(signRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
 
@@ -162,10 +162,10 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        SignResponse response = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse response = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-        u2f.finishSignature(request, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+        u2f.finishSignature(request, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -185,10 +185,10 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
 
         u2f.finishSignature(signRequest, tokenResponse, deviceRegistration, allowedOrigins);
@@ -203,7 +203,7 @@ public class U2fPrimitivesTest {
                 .build();
 
         SignResponse tokenResponse = new SignResponse(
-            CLIENT_DATA_AUTHENTICATE_BASE64,
+            CLIENT_DATA_SIGN_BASE64,
             SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64,
             KEY_HANDLE_BASE64
         );
@@ -213,7 +213,7 @@ public class U2fPrimitivesTest {
             tokenResponse,
             new DeviceRegistration(
                 KEY_HANDLE_BASE64,
-                USER_PUBLIC_KEY_AUTHENTICATE_HEX,
+                USER_PUBLIC_KEY_SIGN_HEX,
                 ATTESTATION_CERTIFICATE,
                 0
             ),
@@ -232,7 +232,7 @@ public class U2fPrimitivesTest {
             .build();
 
         SignResponse tokenResponse = new SignResponse(
-            CLIENT_DATA_AUTHENTICATE_BASE64,
+            CLIENT_DATA_SIGN_BASE64,
             SIGN_RESPONSE_DATA_BASE64,
             KEY_HANDLE_BASE64
         );
@@ -242,7 +242,7 @@ public class U2fPrimitivesTest {
             tokenResponse,
             new DeviceRegistration(
                 "ARGHABLARGHLER",
-                USER_PUBLIC_KEY_AUTHENTICATE_HEX,
+                USER_PUBLIC_KEY_SIGN_HEX,
                 ATTESTATION_CERTIFICATE,
                 0
             ),

@@ -14,9 +14,9 @@ public class SignResponseTest {
 
     @Test
     public void testGetters() throws Exception {
-        SignResponse signResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64, "", KEY_HANDLE_BASE64);
+        SignResponse signResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64, "", KEY_HANDLE_BASE64);
 
-        assertEquals(CLIENT_DATA_AUTHENTICATE, signResponse.getClientData().toString());
+        assertEquals(CLIENT_DATA_SIGN, signResponse.getClientData().toString());
         assertEquals(KEY_HANDLE_BASE64, signResponse.getKeyHandle());
     }
 

@@ -54,11 +54,11 @@ public class RawCodecTest {
     @Test
     public void testEncodeSignResponse() throws Exception {
         RawSignResponse rawSignResponse = new RawSignResponse(
-                RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_AUTHENTICATE);
+                RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_SIGN);
 
         byte[] encodedBytes = encodeSignResponse(rawSignResponse);
 
-        assertArrayEquals(AUTHENTICATE_RESPONSE_DATA, encodedBytes);
+        assertArrayEquals(SIGN_RESPONSE_DATA, encodedBytes);
     }
 
     @Test
@@ -67,14 +67,14 @@ public class RawCodecTest {
                 RawSignResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64, crypto);
 
         assertEquals(new RawSignResponse(RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE,
-                SIGNATURE_AUTHENTICATE), rawSignResponse);
+            SIGNATURE_SIGN), rawSignResponse);
     }
 
     @Test
     public void testEncodeSignedBytes() throws Exception {
         byte[] encodedBytes = RawSignResponse.packBytesToSign(APP_ID_SIGN_SHA256,
-                RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_AUTHENTICATE_SHA256);
+                RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_SIGN_SHA256);
 
-        assertArrayEquals(EXPECTED_AUTHENTICATE_SIGNED_BYTES, encodedBytes);
+        assertArrayEquals(EXPECTED_SIGN_SIGNED_BYTES, encodedBytes);
     }
 }

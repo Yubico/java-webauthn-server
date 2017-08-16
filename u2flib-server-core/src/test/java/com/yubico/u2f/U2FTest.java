@@ -30,21 +30,21 @@ public class U2FTest {
 
     @Test
     public void startRegistration_compromisedDevice() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
         u2f.startRegistration(APP_ID_ENROLL, ImmutableList.of(deviceRegistration));
     }
 
     @Test(expected = NoEligibleDevicesException.class)
     public void startSignature_compromisedDevices() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
         u2f.startSignature(APP_ID_ENROLL, ImmutableList.of(deviceRegistration));
     }
 
     @Test(expected = U2fBadConfigurationException.class)
     public void defaultConstructedU2FstartRegistrationShouldRefuseInvalidAppId() {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
         new U2F().startRegistration("example.com", ImmutableList.of(deviceRegistration));
 
@@ -53,7 +53,7 @@ public class U2FTest {
 
     @Test
     public void startRegistrationShouldReturnARandomChallenge() {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         RegisterRequestData data = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
         RegisterRequestData data2 = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
 
@@ -68,7 +68,7 @@ public class U2FTest {
 
     @Test(expected = U2fBadConfigurationException.class)
     public void defaultConstructedU2FstartSignatureShouldRefuseInvalidAppId() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
         new U2F().startSignature("example.com", ImmutableList.of(deviceRegistration));
 
@@ -77,7 +77,7 @@ public class U2FTest {
 
     @Test
     public void startSignatureShouldReturnARandomChallenge() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         SignRequestData data = u2f.startSignature("example.com", ImmutableList.of(deviceRegistration));
         SignRequestData data2 = u2f.startSignature("example.com", ImmutableList.of(deviceRegistration));
 
@@ -92,7 +92,7 @@ public class U2FTest {
 
     @Test(expected = DeviceCompromisedException.class)
     public void finishSignature_compromisedDevice() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
 
         SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
@@ -100,7 +100,7 @@ public class U2FTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         SignRequestData requestData = mock(SignRequestData.class);
@@ -112,7 +112,7 @@ public class U2FTest {
 
     @Test(expected = U2fBadInputException.class)
     public void finishSignature_invalidFacet() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
 
         SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
@@ -120,7 +120,7 @@ public class U2FTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         SignRequestData requestData = mock(SignRequestData.class);
@@ -132,8 +132,8 @@ public class U2FTest {
 
     @Test
     public void finishRegistrationShouldReturnAMatchedDevice() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
-        DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
 
         RegisterRequest request = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
 
@@ -157,8 +157,8 @@ public class U2FTest {
 
     @Test
     public void finishSignatureShouldReturnAMatchedDevice() throws Exception {
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
-        DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
 
         SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
@@ -166,7 +166,7 @@ public class U2FTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
             SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         SignRequestData requestData = new SignRequestData(
