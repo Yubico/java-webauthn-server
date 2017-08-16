@@ -92,7 +92,7 @@ public class Client {
         return u2f.finishRegistration(registerRequest, tokenResponse, TRUSTED_DOMAINS);
     }
 
-    public SignResponse authenticate(DeviceRegistration registeredDevice, SignRequest startedSignature) throws Exception {
+    public SignResponse sign(DeviceRegistration registeredDevice, SignRequest startedSignature) throws Exception {
         Map<String, String> clientData = new HashMap<String, String>();
         clientData.put("typ", "navigator.id.getAssertion");
         clientData.put("challenge", startedSignature.getChallenge());
