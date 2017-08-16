@@ -11,8 +11,8 @@ package com.yubico.u2f;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignRequest;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
@@ -139,110 +139,110 @@ public class U2fPrimitivesTest {
     }
 
     @Test
-    public void finishAuthentication() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+    public void finishSignature() throws Exception {
+        SignRequest signRequest = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        u2f.finishAuthentication(authenticateRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+        u2f.finishSignature(signRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
 
     @Test(expected = U2fBadInputException.class)
-    public void finishAuthentication_badOrigin() throws Exception {
+    public void finishSignature_badOrigin() throws Exception {
         Set<String> allowedOrigins = ImmutableSet.of("some-other-domain.com");
-        AuthenticateRequest authentication = AuthenticateRequest.builder()
+        SignRequest request = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse response = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
-        u2f.finishAuthentication(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
+        u2f.finishSignature(request, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void startAuthentication_compromisedDevice() throws Exception {
+    public void startSignature_compromisedDevice() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
         DeviceRegistration deviceRegistration = u2f.finishRegistration(registerRequest, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
         deviceRegistration.markCompromised();
 
-        u2f.startAuthentication(APP_ID_ENROLL, deviceRegistration);
+        u2f.startSignature(APP_ID_ENROLL, deviceRegistration);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void finishAuthentication_compromisedDevice() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+    public void finishSignature_compromisedDevice() throws Exception {
+        SignRequest signRequest = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
-        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
+        DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
 
-        u2f.finishAuthentication(authenticateRequest, tokenResponse, deviceRegistration, allowedOrigins);
+        u2f.finishSignature(signRequest, tokenResponse, deviceRegistration, allowedOrigins);
     }
 
     @Test(expected = U2fBadInputException.class)
-    public void finishAuthenticationShouldDetectInvalidUserPresence() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+    public void finishSignatureShouldDetectInvalidUserPresence() throws Exception {
+        SignRequest signRequest = SignRequest.builder()
                 .challenge(SERVER_CHALLENGE_SIGN_BASE64)
                 .appId(APP_ID_SIGN)
                 .keyHandle(KEY_HANDLE_BASE64)
                 .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(
-            CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(
+            CLIENT_DATA_SIGN_BASE64,
             SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64,
             KEY_HANDLE_BASE64
         );
 
-        u2f.finishAuthentication(
-            authenticateRequest,
+        u2f.finishSignature(
+            signRequest,
             tokenResponse,
             new DeviceRegistration(
                 KEY_HANDLE_BASE64,
-                USER_PUBLIC_KEY_AUTHENTICATE_HEX,
+                USER_PUBLIC_KEY_SIGN_HEX,
                 ATTESTATION_CERTIFICATE,
                 0
             ),
             allowedOrigins
         );
 
-        fail("finishAuthentication did not detect a non-0x01 user presence byte in the authentication response.");
+        fail("finishSignature did not detect a non-0x01 user presence byte in the sign response.");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void finishAuthenticationShouldDetectIncorrectDeviceRegistration() throws Exception {
-        AuthenticateRequest authenticateRequest = AuthenticateRequest.builder()
+    public void finishSignatureShouldDetectIncorrectDeviceRegistration() throws Exception {
+        SignRequest signRequest = SignRequest.builder()
             .challenge(SERVER_CHALLENGE_SIGN_BASE64)
             .appId(APP_ID_SIGN)
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(
-            CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(
+            CLIENT_DATA_SIGN_BASE64,
             SIGN_RESPONSE_DATA_BASE64,
             KEY_HANDLE_BASE64
         );
 
-        u2f.finishAuthentication(
-            authenticateRequest,
+        u2f.finishSignature(
+            signRequest,
             tokenResponse,
             new DeviceRegistration(
                 "ARGHABLARGHLER",
-                USER_PUBLIC_KEY_AUTHENTICATE_HEX,
+                USER_PUBLIC_KEY_SIGN_HEX,
                 ATTESTATION_CERTIFICATE,
                 0
             ),

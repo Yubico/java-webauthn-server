@@ -1,3 +1,47 @@
+* Release 0.18.0
+  * u2flib-server-core:
+    * Breaking changes:
+      * "Authenticate" renamed to "sign" everywhere in `u2flib-server-core`
+        * Classes `AuthenticateRequest` renamed to `SignRequest`
+        * Class `AuthenticateRequestData` renamed to `SignRequestData`
+        * Class `AuthenticateResponse` renamed to `SignResponse`
+        * Method `Client.authenticate` renamed to `sign`
+        * Class `RawAuthenticateResponse` renamed to `RawSignResponse`
+        * Method `SoftKey.authenticate` renamed to `sign`
+        * Method `U2F.finishAuthentication` renamed to `finishSignature`
+        * Method `U2F.startAuthentication` renamed to `startSignature`
+        * Method `U2fPrimitives.finishAuthentication` renamed to
+          `finishSignature`
+        * Method `U2fPrimitives.startAuthenticateion` renamed to
+          `startSignature`
+      * Constants `AUTHENTICATE_TYP` and `REGISTER_TYPE` in `U2fPrimitives`
+          are now private
+
+* Version 0.17.1
+  * u2flib-server-attestation module now uses SLF4J logging instead of
+    `Throwable.printStackTrace`
+
+* Version 0.17.0
+  * u2flib-server-core:
+    * Breaking changes:
+      * Field
+       `RegisterRequestData.authenticateRequests: List<AuthenticateRequest>`
+       replaced by field `registeredKeys: List<RegisteredKey>`
+    * Additions:
+      * Fields added to class `AuthenticateRequestData`:
+        * `challenge: String`
+        * `appId: String`
+      * New class `RegisteredKey`
+      * Field `appId: String` added to `RegisterRequestData`
+
+  * u2flib-server-demo:
+    * `u2f-api.js` upgraded from version 1.0 to 1.1
+    * JS calls in views updated to work with version 1.1 of the JS API
+    * All views except `loginIndex` and `registerIndex` are now rendered via
+      templates
+    * Navigation links added to all views
+    * Error feedback improved
+
 * Version 0.13.1 (unreleased)
  ** Changed demo server URL to `localhost:8080`.
  ** Added the method `ClientData.getString` to get arbitrary clientData fields.

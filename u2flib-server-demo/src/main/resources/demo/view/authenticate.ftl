@@ -8,11 +8,11 @@
 var request = ${dataJson};
 setTimeout(function() {
 
-    if (request.authenticateRequests.length > 0) {
+    if (request.signRequests.length > 0) {
         u2f.sign(
             request.appId,
             request.challenge,
-            request.authenticateRequests,
+            request.signRequests,
             function(data) {
                 if(data.errorCode) {
                     switch (data.errorCode) {
@@ -37,7 +37,7 @@ setTimeout(function() {
 </head>
     <body>
 
-    <#list data.getAuthenticateRequests() as authenticateRequests>
+    <#list data.getSignRequests() as signRequests>
       <p>Touch your U2F token to authenticate.</p>
           <form method="POST" action="finishAuthentication" id="form">
               <input type="hidden" name="tokenResponse" id="tokenResponse"/>

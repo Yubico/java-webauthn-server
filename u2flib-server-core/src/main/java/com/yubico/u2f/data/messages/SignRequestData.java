@@ -19,7 +19,7 @@ import lombok.EqualsAndHashCode;
 import static com.google.common.base.Preconditions.checkArgument;
 
 @EqualsAndHashCode
-public class AuthenticateRequestData extends JsonSerializable implements Persistable {
+public class SignRequestData extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = 35378338769078256L;
 
@@ -33,30 +33,30 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     private final String challenge;
 
     @JsonProperty
-    private final List<AuthenticateRequest> authenticateRequests;
+    private final List<SignRequest> signRequests;
 
     @JsonCreator
-    public AuthenticateRequestData(@JsonProperty("appId") String appId, @JsonProperty("challenge") String challenge, @JsonProperty("authenticateRequests") List<AuthenticateRequest> authenticateRequests) {
+    public SignRequestData(@JsonProperty("appId") String appId, @JsonProperty("challenge") String challenge, @JsonProperty("signRequests") List<SignRequest> signRequests) {
         this.appId = appId;
         this.challenge = challenge;
-        this.authenticateRequests = authenticateRequests;
+        this.signRequests = signRequests;
     }
 
-    public AuthenticateRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
+    public SignRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
         this.appId = appId;
 
         byte[] challenge = challengeGenerator.generateChallenge();
         this.challenge = U2fB64Encoding.encode(challenge);
 
-        ImmutableList.Builder<AuthenticateRequest> requestBuilder = ImmutableList.builder();
+        ImmutableList.Builder<SignRequest> requestBuilder = ImmutableList.builder();
         for (DeviceRegistration device : devices) {
             if(!device.isCompromised()) {
-                requestBuilder.add(u2f.startAuthentication(appId, device, challenge));
+                requestBuilder.add(u2f.startSignature(appId, device, challenge));
             }
         }
-        authenticateRequests = requestBuilder.build();
+        signRequests = requestBuilder.build();
 
-        if (authenticateRequests.isEmpty()) {
+        if (signRequests.isEmpty()) {
             if(Iterables.isEmpty(devices)) {
                 throw new NoEligibleDevicesException(ImmutableList.<DeviceRegistration>of(), "No devices registrered");
             } else {
@@ -65,14 +65,14 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
         }
     }
 
-    public List<AuthenticateRequest> getAuthenticateRequests() {
-        return ImmutableList.copyOf(authenticateRequests);
+    public List<SignRequest> getSignRequests() {
+        return ImmutableList.copyOf(signRequests);
     }
 
-    public AuthenticateRequest getAuthenticateRequest(AuthenticateResponse response) throws U2fBadInputException {
+    public SignRequest getSignRequest(SignResponse response) throws U2fBadInputException {
         checkArgument(Objects.equal(getRequestId(), response.getRequestId()), "Wrong request for response data");
 
-        for (AuthenticateRequest request : authenticateRequests) {
+        for (SignRequest request : signRequests) {
             if (Objects.equal(request.getKeyHandle(), response.getKeyHandle())) {
                 return request;
             }
@@ -81,10 +81,10 @@ public class AuthenticateRequestData extends JsonSerializable implements Persist
     }
 
     public String getRequestId() {
-        return authenticateRequests.get(0).getChallenge();
+        return signRequests.get(0).getChallenge();
     }
 
-    public static AuthenticateRequestData fromJson(String json) throws U2fBadInputException {
-        return fromJson(json, AuthenticateRequestData.class);
+    public static SignRequestData fromJson(String json) throws U2fBadInputException {
+        return fromJson(json, SignRequestData.class);
     }
 }

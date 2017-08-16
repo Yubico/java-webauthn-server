@@ -40,7 +40,7 @@ allprojects  {
   }
 
   group = 'com.yubico'
-  version = '0.17.1'
+  version = '0.18.0'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6

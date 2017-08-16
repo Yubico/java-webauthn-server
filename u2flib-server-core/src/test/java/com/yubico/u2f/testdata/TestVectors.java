@@ -51,7 +51,7 @@ final public class TestVectors {
     public static final String CLIENT_DATA_REGISTRATION_BASE64 = TestUtils.BASE64.encode(CLIENT_DATA_REGISTER.getBytes());
     public static final byte[] CLIENT_DATA_ENROLL_SHA256 = crypto.hash(CLIENT_DATA_REGISTER
             .getBytes());
-    public static final String CLIENT_DATA_AUTHENTICATE = String.format(
+    public static final String CLIENT_DATA_SIGN = String.format(
             "{"
                     + "\"typ\":\"navigator.id.getAssertion\","
                     + "\"challenge\":\"%s\","
@@ -60,8 +60,8 @@ final public class TestVectors {
             SERVER_CHALLENGE_SIGN_BASE64,
             CHANNEL_ID_STRING,
             ORIGIN);
-    public static final String CLIENT_DATA_AUTHENTICATE_BASE64 = U2fB64Encoding.encode(CLIENT_DATA_AUTHENTICATE.getBytes());
-    public static final byte[] CLIENT_DATA_AUTHENTICATE_SHA256 = TestUtils.HEX.decode(
+    public static final String CLIENT_DATA_SIGN_BASE64 = U2fB64Encoding.encode(CLIENT_DATA_SIGN.getBytes());
+    public static final byte[] CLIENT_DATA_SIGN_SHA256 = TestUtils.HEX.decode(
             "ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c4821b3b9dbc57");
     public static final byte[] REGISTRATION_REQUEST_DATA = TestUtils.HEX.decode(
             "4142d21c00d94ffb9d504ada8f99b721f4b191ae4e37ca0140f696b6983cfacb"
@@ -135,12 +135,12 @@ final public class TestVectors {
             "04b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b65"
                     + "7c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2f6"
                     + "d9");
-    public static final String USER_PUBLIC_KEY_AUTHENTICATE_HEX = "BNNo8bZlut48M6IPHkKcd1DVAzZgwBkRnSmqS6erwEqnyApGu-EcqMtWdNdPMfipA_a60QX7ardK7-9NuLACXh0";
-    public static final byte[] AUTHENTICATE_RESPONSE_DATA = TestUtils.HEX.decode(
+    public static final String USER_PUBLIC_KEY_SIGN_HEX = "BNNo8bZlut48M6IPHkKcd1DVAzZgwBkRnSmqS6erwEqnyApGu-EcqMtWdNdPMfipA_a60QX7ardK7-9NuLACXh0";
+    public static final byte[] SIGN_RESPONSE_DATA = TestUtils.HEX.decode(
             "0100000001304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030c"
                     + "e43d406de870b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f"
                     + "53c7b22272ec10047a923f");
-    public static final String SIGN_RESPONSE_DATA_BASE64 = U2fB64Encoding.encode(AUTHENTICATE_RESPONSE_DATA);
+    public static final String SIGN_RESPONSE_DATA_BASE64 = U2fB64Encoding.encode(SIGN_RESPONSE_DATA);
     public static final byte[] EXPECTED_REGISTER_SIGNED_BYTES = TestUtils.HEX.decode(
             "00f0e6a6a97042a4f1f1c87f5f7d44315b2d852c2df5c7991cc66241bf7072d1"
                     + "c44142d21c00d94ffb9d504ada8f99b721f4b191ae4e37ca0140f696b6983cfa"
@@ -149,7 +149,7 @@ final public class TestVectors {
                     + "2504b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b"
                     + "657c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2"
                     + "f6d9");
-    public static final byte[] EXPECTED_AUTHENTICATE_SIGNED_BYTES = TestUtils.HEX.decode(
+    public static final byte[] EXPECTED_SIGN_SIGNED_BYTES = TestUtils.HEX.decode(
             "4b0be934baebb5d12d26011b69227fa5e86df94e7d94aa2949a89f2d493992ca"
                     + "0100000001ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c482"
                     + "1b3b9dbc57");
@@ -157,14 +157,14 @@ final public class TestVectors {
             "304502201471899bcc3987e62e8202c9b39c33c19033f7340352dba80fcab017"
                     + "db9230e402210082677d673d891933ade6f617e5dbde2e247e70423fd5ad7804"
                     + "a6d3d3961ef871");
-    public static final byte[] SIGNATURE_AUTHENTICATE = TestUtils.HEX.decode(
+    public static final byte[] SIGNATURE_SIGN = TestUtils.HEX.decode(
             "304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030ce43d406de8"
                     + "70b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f53c7b22272"
                     + "ec10047a923f");
 
-    public static final byte[] AUTHENTICATE_RESPONSE_INVALID_USER_PRESENCE = TestUtils.HEX.decode(
+    public static final byte[] SIGN_RESPONSE_INVALID_USER_PRESENCE = TestUtils.HEX.decode(
             "00000000013045022100adf3521ceb4e143fb3966d3017510bfbc9085a44ff13c6945aadd8"
                     + "e26ec5cc00022004916d120830f2ee44ab3c6c58c80a3dd6f5a09b01599e686d"
                     + "ea2e7288903cae");
-    public static final String SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64 = U2fB64Encoding.encode(AUTHENTICATE_RESPONSE_INVALID_USER_PRESENCE);
+    public static final String SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64 = U2fB64Encoding.encode(SIGN_RESPONSE_INVALID_USER_PRESENCE);
 }

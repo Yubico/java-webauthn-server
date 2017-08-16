@@ -1,14 +1,14 @@
 package com.yubico.u2f.softkey.messages;
 
-public class AuthenticateRequest {
+public class SignRequest {
 
     private final byte control;
     private final byte[] challengeSha256;
     private final byte[] applicationSha256;
     private final byte[] keyHandle;
 
-    public AuthenticateRequest(byte control, byte[] challengeSha256, byte[] applicationSha256,
-                               byte[] keyHandle) {
+    public SignRequest(byte control, byte[] challengeSha256, byte[] applicationSha256,
+                       byte[] keyHandle) {
         this.control = control;
         this.challengeSha256 = challengeSha256;
         this.applicationSha256 = applicationSha256;

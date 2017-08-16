@@ -13,6 +13,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
@@ -20,11 +21,11 @@ import com.yubico.u2f.exceptions.U2fBadInputException;
 import lombok.EqualsAndHashCode;
 
 /**
- * The authenticate response produced by the token/key, which is transformed by the client into an AuthenticateResponse
- * and sent to the server.
+ * The sign response produced by the token/key, which is transformed by the client into an
+ * {@link SignResponse} and sent to the server.
  */
 @EqualsAndHashCode(of = { "userPresence", "counter", "signature" })
-public class RawAuthenticateResponse {
+public class RawSignResponse {
     public static final byte USER_PRESENT_FLAG = 0x01;
 
     private final byte userPresence;
@@ -32,20 +33,20 @@ public class RawAuthenticateResponse {
     private final byte[] signature;
     private final Crypto crypto;
 
-    public RawAuthenticateResponse(byte userPresence, long counter, byte[] signature) {
+    public RawSignResponse(byte userPresence, long counter, byte[] signature) {
         this(userPresence, counter, signature, new BouncyCastleCrypto());
     }
 
-    public RawAuthenticateResponse(byte userPresence, long counter, byte[] signature, Crypto crypto) {
+    public RawSignResponse(byte userPresence, long counter, byte[] signature, Crypto crypto) {
         this.userPresence = userPresence;
         this.counter = counter;
         this.signature = signature;
         this.crypto = crypto;
     }
 
-    public static RawAuthenticateResponse fromBase64(String rawDataBase64, Crypto crypto) {
+    public static RawSignResponse fromBase64(String rawDataBase64, Crypto crypto) {
         ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
-        return new RawAuthenticateResponse(
+        return new RawSignResponse(
                 bytes.readSigned(),
                 bytes.readInteger(),
                 bytes.readAll(),
@@ -77,11 +78,9 @@ public class RawAuthenticateResponse {
     }
 
     /**
-     * Bit 0 is set to 1, which means that user presence was verified. (This
-     * version of the protocol doesn't specify a way to request authentication
-     * responses without requiring user presence.) A different value of bit 0, as
-     * well as bits 1 through 7, are reserved for future use. The values of bit 1
-     * through 7 SHOULD be 0
+     * Bit 0 is set to 1, which means that user presence was verified. (This version of the protocol doesn't specify a
+     * way to request sign responses without requiring user presence.) A different value of bit 0, as well as bits 1
+     * through 7, are reserved for future use. The values of bit 1 through 7 SHOULD be 0
      */
     public byte getUserPresence() {
         return userPresence;
@@ -89,7 +88,7 @@ public class RawAuthenticateResponse {
 
     /**
      * This is the big-endian representation of a counter value that the U2F device
-     * increments every time it performs an authentication operation.
+     * increments every time it performs a sign operation.
      */
     public long getCounter() {
         return counter;
@@ -104,7 +103,7 @@ public class RawAuthenticateResponse {
 
     public void checkUserPresence() throws U2fBadInputException {
         if (userPresence != USER_PRESENT_FLAG) {
-            throw new U2fBadInputException("User presence invalid during authentication");
+            throw new U2fBadInputException("User presence invalid during signing");
         }
     }
 }

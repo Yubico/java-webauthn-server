@@ -9,46 +9,46 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class AuthenticateResponseTest {
+public class SignResponseTest {
     public static final String JSON = "{\"clientData\":\"eyJ0eXAiOiJuYXZpZ2F0b3IuaWQuZ2V0QXNzZXJ0aW9uIiwiY2hhbGxlbmdlIjoib3BzWHFVaWZEcmlBQW1XY2xpbmZiUzBlLVVTWTBDZ3lKSGVfT3RkN3o4byIsImNpZF9wdWJrZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJQLTI1NiIsIngiOiJIelF3bGZYWDdRNFM1TXRDQ25aVU5CdzNSTXpQTzl0T3lXakJxUmw0dEo4IiwieSI6IlhWZ3VHRkxJWngxZlhnM3dOcWZkYm43NWhpNC1fNy1CeGhNbGp3NDJIdDQifSwib3JpZ2luIjoiaHR0cDovL2V4YW1wbGUuY29tIn0\",\"signatureData\":\"\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\"}";
 
     @Test
     public void testGetters() throws Exception {
-        AuthenticateResponse authenticateResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64, "", KEY_HANDLE_BASE64);
+        SignResponse signResponse = new SignResponse(CLIENT_DATA_SIGN_BASE64, "", KEY_HANDLE_BASE64);
 
-        assertEquals(CLIENT_DATA_AUTHENTICATE, authenticateResponse.getClientData().toString());
-        assertEquals(KEY_HANDLE_BASE64, authenticateResponse.getKeyHandle());
+        assertEquals(CLIENT_DATA_SIGN, signResponse.getClientData().toString());
+        assertEquals(KEY_HANDLE_BASE64, signResponse.getKeyHandle());
     }
 
     @Test
     public void testToAndFromJson() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(JSON);
-        AuthenticateResponse authenticateResponse2 = objectMapper.readValue(authenticateResponse.toJson(), AuthenticateResponse.class);
+        SignResponse signResponse = SignResponse.fromJson(JSON);
+        SignResponse signResponse2 = objectMapper.readValue(signResponse.toJson(), SignResponse.class);
 
-        assertEquals(authenticateResponse, authenticateResponse2);
-        assertEquals(authenticateResponse.getRequestId(), authenticateResponse2.getRequestId());
-        assertEquals(authenticateResponse.toJson(), objectMapper.writeValueAsString(authenticateResponse));
+        assertEquals(signResponse, signResponse2);
+        assertEquals(signResponse.getRequestId(), signResponse2.getRequestId());
+        assertEquals(signResponse.toJson(), objectMapper.writeValueAsString(signResponse));
     }
 
     @Test
     public void testJavaSerializer() throws Exception {
-        AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(JSON);
-        AuthenticateResponse authenticateResponse2 = TestUtils.clone(authenticateResponse);
+        SignResponse signResponse = SignResponse.fromJson(JSON);
+        SignResponse signResponse2 = TestUtils.clone(signResponse);
 
-        assertEquals(authenticateResponse, authenticateResponse2);
-        assertEquals(authenticateResponse.getRequestId(), authenticateResponse2.getRequestId());
+        assertEquals(signResponse, signResponse2);
+        assertEquals(signResponse.getRequestId(), signResponse2.getRequestId());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void fromJsonDetectsTooLongJsonContent() {
-        AuthenticateResponse.fromJson(makeLongJson(20000));
+        SignResponse.fromJson(makeLongJson(20000));
         fail("fromJson did not detect too long JSON content.");
     }
 
     @Test
     public void fromJsonAllowsShortJsonContent() {
-        assertNotNull(AuthenticateResponse.fromJson(makeLongJson(19999)));
+        assertNotNull(SignResponse.fromJson(makeLongJson(19999)));
     }
 
     private String makeLongJson(int totalLength) {

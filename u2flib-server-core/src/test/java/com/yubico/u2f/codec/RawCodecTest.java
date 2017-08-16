@@ -11,12 +11,12 @@ package com.yubico.u2f.codec;
 
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
+import com.yubico.u2f.data.messages.key.RawSignResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.testdata.TestVectors;
 import org.junit.Test;
 
-import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeAuthenticateResponse;
+import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeSignResponse;
 import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeRegisterResponse;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
@@ -52,29 +52,29 @@ public class RawCodecTest {
     }
 
     @Test
-    public void testEncodeAuthenticateResponse() throws Exception {
-        RawAuthenticateResponse rawAuthenticateResponse = new RawAuthenticateResponse(
-                RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_AUTHENTICATE);
+    public void testEncodeSignResponse() throws Exception {
+        RawSignResponse rawSignResponse = new RawSignResponse(
+                RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_SIGN);
 
-        byte[] encodedBytes = encodeAuthenticateResponse(rawAuthenticateResponse);
+        byte[] encodedBytes = encodeSignResponse(rawSignResponse);
 
-        assertArrayEquals(AUTHENTICATE_RESPONSE_DATA, encodedBytes);
+        assertArrayEquals(SIGN_RESPONSE_DATA, encodedBytes);
     }
 
     @Test
-    public void testDecodeAuthenticateResponse() throws Exception {
-        RawAuthenticateResponse rawAuthenticateResponse =
-                RawAuthenticateResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64, crypto);
+    public void testDecodeSignResponse() throws Exception {
+        RawSignResponse rawSignResponse =
+                RawSignResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64, crypto);
 
-        assertEquals(new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE,
-                SIGNATURE_AUTHENTICATE), rawAuthenticateResponse);
+        assertEquals(new RawSignResponse(RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE,
+            SIGNATURE_SIGN), rawSignResponse);
     }
 
     @Test
-    public void testEncodeAuthenticateSignedBytes() throws Exception {
-        byte[] encodedBytes = RawAuthenticateResponse.packBytesToSign(APP_ID_SIGN_SHA256,
-                RawAuthenticateResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_AUTHENTICATE_SHA256);
+    public void testEncodeSignedBytes() throws Exception {
+        byte[] encodedBytes = RawSignResponse.packBytesToSign(APP_ID_SIGN_SHA256,
+                RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_SIGN_SHA256);
 
-        assertArrayEquals(EXPECTED_AUTHENTICATE_SIGNED_BYTES, encodedBytes);
+        assertArrayEquals(EXPECTED_SIGN_SIGNED_BYTES, encodedBytes);
     }
 }

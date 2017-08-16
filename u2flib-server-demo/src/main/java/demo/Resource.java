@@ -15,9 +15,9 @@ import com.yubico.u2f.U2F;
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
-import com.yubico.u2f.data.messages.AuthenticateRequestData;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignRequest;
+import com.yubico.u2f.data.messages.SignRequestData;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequestData;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
@@ -76,11 +76,11 @@ public class Resource {
     @GET
     public View startAuthentication(@QueryParam("username") String username) {
         try {
-            AuthenticateRequestData authenticateRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
-            requestStorage.put(authenticateRequestData.getRequestId(), authenticateRequestData.toJson());
-            return new AuthenticationView(authenticateRequestData, username);
+            SignRequestData signRequestData = u2f.startSignature(APP_ID, getRegistrations(username));
+            requestStorage.put(signRequestData.getRequestId(), signRequestData.toJson());
+            return new AuthenticationView(signRequestData, username);
         } catch (NoEligibleDevicesException e) {
-            return new AuthenticationView(new AuthenticateRequestData(APP_ID, "", Collections.<AuthenticateRequest>emptyList()), username);
+            return new AuthenticationView(new SignRequestData(APP_ID, "", Collections.<SignRequest>emptyList()), username);
         }
     }
 
@@ -88,11 +88,11 @@ public class Resource {
     @POST
     public View finishAuthentication(@FormParam("tokenResponse") String response,
                                        @FormParam("username") String username) {
-        AuthenticateResponse authenticateResponse = AuthenticateResponse.fromJson(response);
-        AuthenticateRequestData authenticateRequest = AuthenticateRequestData.fromJson(requestStorage.remove(authenticateResponse.getRequestId()));
+        SignResponse signResponse = SignResponse.fromJson(response);
+        SignRequestData authenticateRequest = SignRequestData.fromJson(requestStorage.remove(signResponse.getRequestId()));
         DeviceRegistration registration = null;
         try {
-            registration = u2f.finishAuthentication(authenticateRequest, authenticateResponse, getRegistrations(username));
+            registration = u2f.finishSignature(authenticateRequest, signResponse, getRegistrations(username));
         } catch (DeviceCompromisedException e) {
             registration = e.getDeviceRegistration();
             return new FinishAuthenticationView(false, "Device possibly compromised and therefore blocked: " + e.getMessage());

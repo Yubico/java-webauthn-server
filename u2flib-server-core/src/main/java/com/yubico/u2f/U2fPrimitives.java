@@ -16,7 +16,7 @@ import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
-import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
+import com.yubico.u2f.data.messages.key.RawSignResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
@@ -28,8 +28,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class U2fPrimitives {
 
-    public static final String AUTHENTICATE_TYP = "navigator.id.getAssertion";
-    public static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
+    private static final String SIGN_TYPE = "navigator.id.getAssertion";
+    private static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
     public static final String U2F_VERSION = "U2F_V2";
 
     private final Crypto crypto;
@@ -91,28 +91,28 @@ public class U2fPrimitives {
     }
 
     /**
-     * Initiates the authentication process.
+     * Initiates the signing process.
      *
-     * @see U2fPrimitives#startAuthentication(String, com.yubico.u2f.data.DeviceRegistration, byte[])
+     * @see U2fPrimitives#startSignature(String, com.yubico.u2f.data.DeviceRegistration, byte[])
      */
-    public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration) {
-        return startAuthentication(appId, deviceRegistration, challengeGenerator.generateChallenge());
+    public SignRequest startSignature(String appId, DeviceRegistration deviceRegistration) {
+        return startSignature(appId, deviceRegistration, challengeGenerator.generateChallenge());
     }
 
     /**
-     * Initiates the authentication process.
+     * Initiates the signing process.
      *
      * @param appId              the U2F AppID. Set this to the Web Origin of the login page, unless you need to
      *                           support logging in from multiple Web Origins.
-     * @param deviceRegistration the DeviceRegistration for which to initiate authentication.
+     * @param deviceRegistration the DeviceRegistration for which to initiate signing.
      * @param challenge          the challenge to use
-     * @return an AuthenticateRequest which should be sent to the client and temporary saved by
+     * @return an SignRequest which should be sent to the client and temporary saved by
      * the server.
      */
-    public AuthenticateRequest startAuthentication(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
-        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
+    public SignRequest startSignature(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
+        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot sign.");
 
-        return AuthenticateRequest.builder()
+        return SignRequest.builder()
             .appId(appId)
             .challenge(U2fB64Encoding.encode(challenge))
             .keyHandle(deviceRegistration.getKeyHandle())
@@ -120,42 +120,42 @@ public class U2fPrimitives {
     }
 
     /**
-     * @see U2fPrimitives#finishAuthentication(com.yubico.u2f.data.messages.AuthenticateRequest, com.yubico.u2f.data.messages.AuthenticateResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
+     * @see U2fPrimitives#finishSignature(SignRequest, SignResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
      */
-    public void finishAuthentication(AuthenticateRequest authenticateRequest,
-                                     AuthenticateResponse response,
-                                     DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
-        finishAuthentication(authenticateRequest, response, deviceRegistration, null);
+    public void finishSignature(SignRequest signRequest,
+                                SignResponse response,
+                                DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
+        finishSignature(signRequest, response, deviceRegistration, null);
     }
 
     /**
-     * Finishes a previously started authentication.
+     * Finishes a previously started signature.
      *
-     * @param authenticateRequest
+     * @param signRequest
      * @param response            the response from the device/client.
      */
-    public void finishAuthentication(AuthenticateRequest authenticateRequest,
-                                     AuthenticateResponse response,
-                                     DeviceRegistration deviceRegistration,
-                                     Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
-        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
-        checkArgument(authenticateRequest.getKeyHandle().equals(deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given AuthenticateRequest");
+    public void finishSignature(SignRequest signRequest,
+                                SignResponse response,
+                                DeviceRegistration deviceRegistration,
+                                Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot sign.");
+        checkArgument(signRequest.getKeyHandle().equals(deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given SignRequest");
         if (!deviceRegistration.getKeyHandle().equals(response.getKeyHandle())) {
-            throw new U2fBadInputException("KeyHandle of AuthenticateResponse does not match");
+            throw new U2fBadInputException("KeyHandle of SignResponse does not match");
         }
 
         ClientData clientData = response.getClientData();
-        clientData.checkContent(AUTHENTICATE_TYP, authenticateRequest.getChallenge(), Optional.fromNullable(facets));
+        clientData.checkContent(SIGN_TYPE, signRequest.getChallenge(), Optional.fromNullable(facets));
 
-        RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(
+        RawSignResponse rawSignResponse = RawSignResponse.fromBase64(
                 response.getSignatureData(), crypto
         );
-        rawAuthenticateResponse.checkSignature(
-                authenticateRequest.getAppId(),
+        rawSignResponse.checkSignature(
+                signRequest.getAppId(),
                 clientData.asJson(),
                 U2fB64Encoding.decode(deviceRegistration.getPublicKey())
         );
-        rawAuthenticateResponse.checkUserPresence();
-        deviceRegistration.checkAndUpdateCounter(rawAuthenticateResponse.getCounter());
+        rawSignResponse.checkUserPresence();
+        deviceRegistration.checkAndUpdateCounter(rawSignResponse.getCounter());
     }
 }

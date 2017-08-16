@@ -2,8 +2,8 @@ package com.yubico.u2f;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignRequest;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import org.junit.Ignore;
@@ -43,16 +43,16 @@ public class SystemTest {
 
         System.out.println(deviceRegistration);
 
-        String startedAuthentication = u2f.startAuthentication(APP_ID, deviceRegistration).toJson();
-        System.out.println("Authentication data:");
-        System.out.println(startedAuthentication);
+        String startedSignature = u2f.startSignature(APP_ID, deviceRegistration).toJson();
+        System.out.println("Signature data:");
+        System.out.println(startedSignature);
 
         System.out.println();
         System.out.println("Enter token response:");
 
-        u2f.finishAuthentication(
-                AuthenticateRequest.fromJson(startedAuthentication),
-                AuthenticateResponse.fromJson(scan.nextLine()),
+        u2f.finishSignature(
+                SignRequest.fromJson(startedSignature),
+                SignResponse.fromJson(scan.nextLine()),
                 deviceRegistration,
                 TRUSTED_DOMAINS
         );

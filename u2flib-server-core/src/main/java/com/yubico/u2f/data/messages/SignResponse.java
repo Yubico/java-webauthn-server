@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode
-public class AuthenticateResponse extends JsonSerializable implements Persistable {
+public class SignResponse extends JsonSerializable implements Persistable {
     private static final int MAX_SIZE = 20000;
 
     /* base64(client data) */
@@ -45,7 +45,7 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
     private final String keyHandle;
 
     @JsonCreator
-    public AuthenticateResponse(@JsonProperty("clientData") String clientData, @JsonProperty("signatureData") String signatureData, @JsonProperty("keyHandle") String keyHandle) throws U2fBadInputException {
+    public SignResponse(@JsonProperty("clientData") String clientData, @JsonProperty("signatureData") String signatureData, @JsonProperty("keyHandle") String keyHandle) throws U2fBadInputException {
         this.clientDataRaw = checkNotNull(clientData);
         this.signatureData = checkNotNull(signatureData);
         this.keyHandle = checkNotNull(keyHandle);
@@ -69,9 +69,9 @@ public class AuthenticateResponse extends JsonSerializable implements Persistabl
         return getClientData().getChallenge();
     }
 
-    public static AuthenticateResponse fromJson(String json) throws U2fBadInputException {
+    public static SignResponse fromJson(String json) throws U2fBadInputException {
         checkArgument(json.length() < MAX_SIZE, "Client response bigger than allowed");
-        return fromJson(json, AuthenticateResponse.class);
+        return fromJson(json, SignResponse.class);
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

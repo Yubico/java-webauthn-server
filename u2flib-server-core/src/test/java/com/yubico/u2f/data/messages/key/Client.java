@@ -7,8 +7,8 @@ import com.google.common.io.ByteStreams;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.data.DeviceRegistration;
-import com.yubico.u2f.data.messages.AuthenticateRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignRequest;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
@@ -92,30 +92,30 @@ public class Client {
         return u2f.finishRegistration(registerRequest, tokenResponse, TRUSTED_DOMAINS);
     }
 
-    public AuthenticateResponse authenticate(DeviceRegistration registeredDevice, AuthenticateRequest startedAuthentication) throws Exception {
+    public SignResponse sign(DeviceRegistration registeredDevice, SignRequest startedSignature) throws Exception {
         Map<String, String> clientData = new HashMap<String, String>();
         clientData.put("typ", "navigator.id.getAssertion");
-        clientData.put("challenge", startedAuthentication.getChallenge());
+        clientData.put("challenge", startedSignature.getChallenge());
         clientData.put("origin", "http://example.com");
         String clientDataJson = objectMapper.writeValueAsString(clientData);
 
 
         byte[] clientParam = crypto.hash(clientDataJson);
-        byte[] appParam = crypto.hash(startedAuthentication.getAppId());
-        com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, U2fB64Encoding.decode(registeredDevice.getKeyHandle()));
+        byte[] appParam = crypto.hash(startedSignature.getAppId());
+        com.yubico.u2f.softkey.messages.SignRequest signRequest = new com.yubico.u2f.softkey.messages.SignRequest((byte) 0x01, clientParam, appParam, U2fB64Encoding.decode(registeredDevice.getKeyHandle()));
 
-        RawAuthenticateResponse rawAuthenticateResponse = key.authenticate(authenticateRequest);
+        RawSignResponse rawSignResponse = key.sign(signRequest);
 
         String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());
         ByteArrayDataOutput authData = ByteStreams.newDataOutput();
-        authData.write(rawAuthenticateResponse.getUserPresence());
-        authData.writeInt((int) rawAuthenticateResponse.getCounter());
-        authData.write(rawAuthenticateResponse.getSignature());
+        authData.write(rawSignResponse.getUserPresence());
+        authData.writeInt((int) rawSignResponse.getCounter());
+        authData.write(rawSignResponse.getSignature());
 
-        return new AuthenticateResponse(
+        return new SignResponse(
                 clientDataBase64,
                 U2fB64Encoding.encode(authData.toByteArray()),
-                startedAuthentication.getKeyHandle()
+                startedSignature.getKeyHandle()
         );
     }
 }

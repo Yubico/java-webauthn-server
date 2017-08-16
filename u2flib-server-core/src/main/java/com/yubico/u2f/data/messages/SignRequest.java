@@ -22,8 +22,8 @@ import lombok.Value;
 
 @Value
 @Builder
-@JsonDeserialize(builder = AuthenticateRequest.AuthenticateRequestBuilder.class)
-public class AuthenticateRequest extends JsonSerializable implements Persistable {
+@JsonDeserialize(builder = SignRequest.SignRequestBuilder.class)
+public class SignRequest extends JsonSerializable implements Persistable {
 
     private static final long serialVersionUID = -27808961388655010L;
 
@@ -60,10 +60,10 @@ public class AuthenticateRequest extends JsonSerializable implements Persistable
         return challenge;
     }
 
-    public static AuthenticateRequest fromJson(String json) throws U2fBadInputException {
-        return fromJson(json, AuthenticateRequest.class);
+    public static SignRequest fromJson(String json) throws U2fBadInputException {
+        return fromJson(json, SignRequest.class);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class AuthenticateRequestBuilder {}
+    public static class SignRequestBuilder {}
 }
