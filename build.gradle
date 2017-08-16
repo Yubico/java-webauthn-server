@@ -56,6 +56,8 @@ allprojects  {
   }
 }
 
+evaluationDependsOnChildren()
+
 subprojects {
   task packageSources(type: Jar) {
     classifier = 'sources'
@@ -100,6 +102,39 @@ subprojects {
 
           snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
             authentication(userName: ossrhUsername, password: ossrhPassword)
+          }
+
+          pom.project {
+            name project.description
+            description 'Java server-side library for U2F'
+            url 'https://developers.yubico.com/'
+
+            developers {
+              developer {
+                id 'dain'
+                name 'Dain Nilsson'
+                email 'dain@yubico.com'
+              }
+              developer {
+                id 'emil'
+                name 'Emil Lundberg'
+                email 'emil@yubico.com'
+              }
+            }
+
+            licenses {
+              license {
+                name 'BSD-license'
+                comments 'Revised 2-clause BSD license'
+              }
+            }
+
+            scm {
+              url 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
+              connection 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
+              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-u2flib-server.git'
+              tag 'HEAD'
+            }
           }
         }
       }
