@@ -43,15 +43,15 @@ public class SystemTest {
 
         System.out.println(deviceRegistration);
 
-        String startedAuthentication = u2f.startSignature(APP_ID, deviceRegistration).toJson();
-        System.out.println("Authentication data:");
-        System.out.println(startedAuthentication);
+        String startedSignature = u2f.startSignature(APP_ID, deviceRegistration).toJson();
+        System.out.println("Signature data:");
+        System.out.println(startedSignature);
 
         System.out.println();
         System.out.println("Enter token response:");
 
         u2f.finishSignature(
-                SignRequest.fromJson(startedAuthentication),
+                SignRequest.fromJson(startedSignature),
                 SignResponse.fromJson(scan.nextLine()),
                 deviceRegistration,
                 TRUSTED_DOMAINS
