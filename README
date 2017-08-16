@@ -42,7 +42,7 @@ public String finishAuthentication(SignResponse response, String username) throw
         = requestStorage.remove(response.getRequestId());
 
     // Verify the that the given response is valid for one of the registered devices
-    u2f.finishAuthentication(signRequest,
+    u2f.finishSignature(signRequest,
                              response,
                              getRegistrations(username));
 

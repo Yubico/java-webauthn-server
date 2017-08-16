@@ -91,7 +91,7 @@ public class U2FTest {
     }
 
     @Test(expected = DeviceCompromisedException.class)
-    public void finishAuthentication_compromisedDevice() throws Exception {
+    public void finishSignature_compromisedDevice() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
         SignRequest request = SignRequest.builder()
@@ -107,11 +107,11 @@ public class U2FTest {
         when(requestData.getSignRequest(tokenResponse)).thenReturn(request);
 
         deviceRegistration.markCompromised();
-        u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration));
+        u2f.finishSignature(requestData, tokenResponse, ImmutableList.of(deviceRegistration));
     }
 
     @Test(expected = U2fBadInputException.class)
-    public void finishAuthentication_invalidFacet() throws Exception {
+    public void finishSignature_invalidFacet() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
         SignRequest request = SignRequest.builder()
@@ -126,7 +126,7 @@ public class U2FTest {
         SignRequestData requestData = mock(SignRequestData.class);
         when(requestData.getSignRequest(tokenResponse)).thenReturn(request);
 
-        u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
+        u2f.finishSignature(requestData, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of("https://wrongfacet.com"));
     }
 
 
@@ -156,7 +156,7 @@ public class U2FTest {
     }
 
     @Test
-    public void finishAuthenticationShouldReturnAMatchedDevice() throws Exception {
+    public void finishSignatureShouldReturnAMatchedDevice() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         DeviceRegistration deviceRegistration2 = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
 
@@ -175,8 +175,8 @@ public class U2FTest {
             ImmutableList.of(request)
         );
 
-        DeviceRegistration device = u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of(APP_ID_ENROLL));
-        DeviceRegistration overloadDevice = u2f.finishAuthentication(requestData, tokenResponse, ImmutableList.of(deviceRegistration2));
+        DeviceRegistration device = u2f.finishSignature(requestData, tokenResponse, ImmutableList.of(deviceRegistration), ImmutableSet.of(APP_ID_ENROLL));
+        DeviceRegistration overloadDevice = u2f.finishSignature(requestData, tokenResponse, ImmutableList.of(deviceRegistration2));
 
         assertEquals(KEY_HANDLE_BASE64, device.getKeyHandle());
         assertEquals(device, overloadDevice);

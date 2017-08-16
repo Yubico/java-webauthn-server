@@ -82,23 +82,23 @@ public class U2F {
     }
 
     /**
-     * @see U2F#finishAuthentication(SignRequestData, SignResponse, Iterable, java.util.Set)
+     * @see U2F#finishSignature(SignRequestData, SignResponse, Iterable, java.util.Set)
      */
-    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
-        return finishAuthentication(signRequestData, response, devices, null);
+    public DeviceRegistration finishSignature(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
+        return finishSignature(signRequestData, response, devices, null);
     }
 
     /**
-     * Finishes a previously started high-level authentication.
+     * Finishes a previously started high-level signing action.
      *
      * @param signRequestData the SignRequestData created by calling startSignature
      * @param response                the response from the device/client.
      * @param devices                 the devices currently registered to the user.
      * @param facets                  A list of valid facets to verify against.
-     * @return The (updated) DeviceRegistration that was authenticated against.
+     * @return The (updated) DeviceRegistration that signed the challenge.
      * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
-    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+    public DeviceRegistration finishSignature(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
         final SignRequest request = signRequestData.getSignRequest(response);
         DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
             @Override
@@ -108,7 +108,7 @@ public class U2F {
         });
 
         if (device.isCompromised()) {
-            throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot be authenticated");
+            throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot make trusted signatures.");
         }
 
         primitives.finishSignature(request, response, device, facets);

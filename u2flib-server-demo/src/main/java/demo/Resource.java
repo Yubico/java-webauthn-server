@@ -92,7 +92,7 @@ public class Resource {
         SignRequestData authenticateRequest = SignRequestData.fromJson(requestStorage.remove(signResponse.getRequestId()));
         DeviceRegistration registration = null;
         try {
-            registration = u2f.finishAuthentication(authenticateRequest, signResponse, getRegistrations(username));
+            registration = u2f.finishSignature(authenticateRequest, signResponse, getRegistrations(username));
         } catch (DeviceCompromisedException e) {
             registration = e.getDeviceRegistration();
             return new FinishAuthenticationView(false, "Device possibly compromised and therefore blocked: " + e.getMessage());
