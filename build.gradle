@@ -33,6 +33,7 @@ allprojects  {
     signing {
       sign configurations.archives
     }
+    signArchives.dependsOn check
   }
 
   task wrapper(type: Wrapper) {
