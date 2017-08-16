@@ -19,6 +19,9 @@ NOTE: Make sure that you have read https://developers.yubico.com/U2F/Libraries/U
 
 [source, java]
 ----
+
+private abstract Iterable<DeviceRegistration> getRegistrations(String username);
+
 @GET
 public View startAuthentication(String username) throws NoEligibleDevicesException {
 
@@ -50,7 +53,7 @@ public String finishAuthentication(SignResponse response, String username) throw
 }
 ----
 
-In the above example `getRegistrations()` returns the U2F devices currently associated with a given user.
+In the above example `getRegistrations()` will return the U2F devices currently associated with a given user.
 This is most likely stored in a database. 
 See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (including registration and storage of U2F devices).
 
