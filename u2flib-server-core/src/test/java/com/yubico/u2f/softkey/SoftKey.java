@@ -95,7 +95,7 @@ public final class SoftKey implements Cloneable {
         return bis.read(keyLength - 1);
     }
 
-    public RawSignResponse authenticate(SignRequest signRequest) throws Exception {
+    public RawSignResponse sign(SignRequest signRequest) throws Exception {
 
         byte[] applicationSha256 = signRequest.getApplicationSha256();
         byte[] challengeSha256 = signRequest.getChallengeSha256();

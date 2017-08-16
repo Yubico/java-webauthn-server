@@ -37,10 +37,10 @@ public class SoftKeyTest {
     }
 
     @Test
-    public void shouldAuthenticate() throws Exception {
+    public void shouldSign() throws Exception {
         Client client = createClient();
         DeviceRegistration registeredDevice = client.register();
-        authenticateUsing(client, registeredDevice);
+        signUsing(client, registeredDevice);
     }
 
     // Tests FIDO Security Measure [SM-3]
@@ -73,8 +73,8 @@ public class SoftKeyTest {
 
         DeviceRegistration registeredDevice = client.register();
 
-        authenticateUsing(client, registeredDevice);
-        authenticateUsing(clientUsingClone, registeredDevice);
+        signUsing(client, registeredDevice);
+        signUsing(clientUsingClone, registeredDevice);
     }
 
     @Test(expected = U2fBadInputException.class)
@@ -126,7 +126,7 @@ public class SoftKeyTest {
         return new Client(new SoftKey());
     }
 
-    private void authenticateUsing(Client client, DeviceRegistration registeredDevice) throws Exception {
+    private void signUsing(Client client, DeviceRegistration registeredDevice) throws Exception {
         SignRequest signRequest = u2f.startSignature(APP_ID, registeredDevice);
         SignResponse signResponse = client.sign(registeredDevice, signRequest);
         u2f.finishSignature(signRequest, signResponse, registeredDevice);
