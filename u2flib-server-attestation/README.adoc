@@ -1,12 +1,12 @@
 == Device attestation  module
-Module for verifying attestation certificates and provide additional device metadata.
+Module for verifying attestation certificates and providing additional device metadata.
 
 This is useful if you want to:
 
- - Restrict which type of devices that can be registered with your server.
+ - Restrict which types of devices that can be registered with your server
  - Give users rich data about their registered devices, such as:
-   * The vendor and model name.
-   * Display an image of the device model.
+   * The vendor and model name
+   * An image of the device model
 
 
 === Dependency
