@@ -32,7 +32,7 @@ public class SignRequestDataTest {
         byte[] challenge = U2fB64Encoding.decode(SERVER_CHALLENGE_SIGN_BASE64);
         when(challengeGenerator.generateChallenge()).thenReturn(challenge);
         SignRequest signRequest = SignRequest.fromJson(SignRequestTest.JSON);
-        when(primitives.startAuthentication(APP_ID_SIGN, device, challenge)).thenReturn(signRequest);
+        when(primitives.startSignature(APP_ID_SIGN, device, challenge)).thenReturn(signRequest);
 
         SignRequestData requestData = new SignRequestData(APP_ID_SIGN, ImmutableList.of(device), primitives, challengeGenerator);
 

@@ -169,12 +169,12 @@ public class U2fPrimitivesTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void startAuthentication_compromisedDevice() throws Exception {
+    public void startSignature_compromisedDevice() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);
         DeviceRegistration deviceRegistration = u2f.finishRegistration(registerRequest, new RegisterResponse(AcmeKey.REGISTRATION_DATA_BASE64, AcmeKey.CLIENT_DATA_BASE64), TRUSTED_DOMAINS);
         deviceRegistration.markCompromised();
 
-        u2f.startAuthentication(APP_ID_ENROLL, deviceRegistration);
+        u2f.startSignature(APP_ID_ENROLL, deviceRegistration);
     }
 
     @Test(expected = IllegalArgumentException.class)

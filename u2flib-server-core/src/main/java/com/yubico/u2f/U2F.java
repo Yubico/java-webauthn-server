@@ -91,7 +91,7 @@ public class U2F {
     /**
      * Finishes a previously started high-level authentication.
      *
-     * @param signRequestData the SignRequestData created by calling startAuthentication
+     * @param signRequestData the SignRequestData created by calling startSignature
      * @param response                the response from the device/client.
      * @param devices                 the devices currently registered to the user.
      * @param facets                  A list of valid facets to verify against.

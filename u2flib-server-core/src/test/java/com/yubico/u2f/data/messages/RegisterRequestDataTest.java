@@ -33,7 +33,7 @@ public class RegisterRequestDataTest {
         byte[] challenge = U2fB64Encoding.decode(SERVER_CHALLENGE_REGISTER_BASE64);
         when(challengeGenerator.generateChallenge()).thenReturn(challenge);
         SignRequest signRequest = SignRequest.fromJson(SignRequestTest.JSON);
-        when(primitives.startAuthentication(APP_ID_ENROLL, device)).thenReturn(signRequest);
+        when(primitives.startSignature(APP_ID_ENROLL, device)).thenReturn(signRequest);
         RegisterRequest registerRequest = RegisterRequest.fromJson(RegisterRequestTest.JSON);
         when(primitives.startRegistration(APP_ID_ENROLL, challenge)).thenReturn(registerRequest);
 

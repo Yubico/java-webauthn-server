@@ -43,7 +43,7 @@ public class SystemTest {
 
         System.out.println(deviceRegistration);
 
-        String startedAuthentication = u2f.startAuthentication(APP_ID, deviceRegistration).toJson();
+        String startedAuthentication = u2f.startSignature(APP_ID, deviceRegistration).toJson();
         System.out.println("Authentication data:");
         System.out.println(startedAuthentication);
 

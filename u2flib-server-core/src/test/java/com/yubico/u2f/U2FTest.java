@@ -84,7 +84,7 @@ public class U2FTest {
         assertEquals(1, data.getSignRequests().size());
         assertNotNull(data.getSignRequests().get(0).getChallenge());
         assertNotEquals(
-            "startAuthentication must not return the same challenge twice in a row.",
+            "startSignature must not return the same challenge twice in a row.",
             data.getSignRequests().get(0).getChallenge(),
             data2.getSignRequests().get(0).getChallenge()
         );

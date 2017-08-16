@@ -51,7 +51,7 @@ public class SignRequestData extends JsonSerializable implements Persistable {
         ImmutableList.Builder<SignRequest> requestBuilder = ImmutableList.builder();
         for (DeviceRegistration device : devices) {
             if(!device.isCompromised()) {
-                requestBuilder.add(u2f.startAuthentication(appId, device, challenge));
+                requestBuilder.add(u2f.startSignature(appId, device, challenge));
             }
         }
         signRequests = requestBuilder.build();

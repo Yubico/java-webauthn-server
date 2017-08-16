@@ -91,26 +91,26 @@ public class U2fPrimitives {
     }
 
     /**
-     * Initiates the authentication process.
+     * Initiates the signing process.
      *
-     * @see U2fPrimitives#startAuthentication(String, com.yubico.u2f.data.DeviceRegistration, byte[])
+     * @see U2fPrimitives#startSignature(String, com.yubico.u2f.data.DeviceRegistration, byte[])
      */
-    public SignRequest startAuthentication(String appId, DeviceRegistration deviceRegistration) {
-        return startAuthentication(appId, deviceRegistration, challengeGenerator.generateChallenge());
+    public SignRequest startSignature(String appId, DeviceRegistration deviceRegistration) {
+        return startSignature(appId, deviceRegistration, challengeGenerator.generateChallenge());
     }
 
     /**
-     * Initiates the authentication process.
+     * Initiates the signing process.
      *
      * @param appId              the U2F AppID. Set this to the Web Origin of the login page, unless you need to
      *                           support logging in from multiple Web Origins.
-     * @param deviceRegistration the DeviceRegistration for which to initiate authentication.
+     * @param deviceRegistration the DeviceRegistration for which to initiate signing.
      * @param challenge          the challenge to use
      * @return an SignRequest which should be sent to the client and temporary saved by
      * the server.
      */
-    public SignRequest startAuthentication(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
-        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
+    public SignRequest startSignature(String appId, DeviceRegistration deviceRegistration, byte[] challenge) {
+        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot sign.");
 
         return SignRequest.builder()
             .appId(appId)
