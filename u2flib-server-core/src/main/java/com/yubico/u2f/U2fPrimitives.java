@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class U2fPrimitives {
 
-    public static final String AUTHENTICATE_TYP = "navigator.id.getAssertion";
+    public static final String SIGN_TYPE = "navigator.id.getAssertion";
     public static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
     public static final String U2F_VERSION = "U2F_V2";
 
@@ -145,7 +145,7 @@ public class U2fPrimitives {
         }
 
         ClientData clientData = response.getClientData();
-        clientData.checkContent(AUTHENTICATE_TYP, signRequest.getChallenge(), Optional.fromNullable(facets));
+        clientData.checkContent(SIGN_TYPE, signRequest.getChallenge(), Optional.fromNullable(facets));
 
         RawSignResponse rawSignResponse = RawSignResponse.fromBase64(
                 response.getSignatureData(), crypto
