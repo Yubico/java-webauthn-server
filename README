@@ -39,11 +39,11 @@ public String finishAuthentication(AuthenticateResponse response, String usernam
 
     // Get the challenges that we stored when starting the authentication
     AuthenticateRequestData authenticateRequest
-        = requestStorage.remove(authenticateResponse.getRequestId());
+        = requestStorage.remove(response.getRequestId());
 
     // Verify the that the given response is valid for one of the registered devices
     u2f.finishAuthentication(authenticateRequest,
-                             authenticateResponse, 
+                             response,
                              getRegistrations(username));
 
     return "Successfully authenticated!";
