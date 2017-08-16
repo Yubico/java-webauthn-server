@@ -67,7 +67,7 @@ public class SignRequestDataTest {
 
         final String clientDataJson = "{\"typ\":\"navigator.id.getAssertion\",\"challenge\":\"OpsXqUifDriAAmWclinfbS0e-USY0CgyJHe_Otd7z8o\",\"cid_pubkey\":{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"HzQwlfXX7Q4S5MtCCnZUNBw3RMzPO9tOyWjBqRl4tJ8\",\"y\":\"XVguGFLIZx1fXg3wNqfdbn75hi4-_7-BxhMljw42Ht4\"},\"origin\":\"http://example.com\"}";
         final String signResponseJson = "{\"clientData\":\"" + U2fB64Encoding.encode(clientDataJson.getBytes("UTF-8")) + "\",\"signatureData\":\"\",\"keyHandle\":\"KlUt_bdHftZf2EEz-GGWAQsiFbV9p10xW3uej-LjklpgGVUbq2HRZZFlnLrwC0lQ96v-ZmDi4Ab3aGi3ctcMJQ\"}";
-        requestData.getSignRequest(AuthenticateResponse.fromJson(signResponseJson));
+        requestData.getSignRequest(SignResponse.fromJson(signResponseJson));
 
         fail("getSignRequest did not detect wrong request ID.");
     }

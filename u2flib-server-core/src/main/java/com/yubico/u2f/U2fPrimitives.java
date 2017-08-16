@@ -120,10 +120,10 @@ public class U2fPrimitives {
     }
 
     /**
-     * @see U2fPrimitives#finishAuthentication(SignRequest, com.yubico.u2f.data.messages.AuthenticateResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
+     * @see U2fPrimitives#finishAuthentication(SignRequest, SignResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
      */
     public void finishAuthentication(SignRequest signRequest,
-                                     AuthenticateResponse response,
+                                     SignResponse response,
                                      DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
         finishAuthentication(signRequest, response, deviceRegistration, null);
     }
@@ -135,13 +135,13 @@ public class U2fPrimitives {
      * @param response            the response from the device/client.
      */
     public void finishAuthentication(SignRequest signRequest,
-                                     AuthenticateResponse response,
+                                     SignResponse response,
                                      DeviceRegistration deviceRegistration,
                                      Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
         checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
         checkArgument(signRequest.getKeyHandle().equals(deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given SignRequest");
         if (!deviceRegistration.getKeyHandle().equals(response.getKeyHandle())) {
-            throw new U2fBadInputException("KeyHandle of AuthenticateResponse does not match");
+            throw new U2fBadInputException("KeyHandle of SignResponse does not match");
         }
 
         ClientData clientData = response.getClientData();

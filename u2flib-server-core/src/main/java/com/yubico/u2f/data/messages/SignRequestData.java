@@ -69,7 +69,7 @@ public class SignRequestData extends JsonSerializable implements Persistable {
         return ImmutableList.copyOf(signRequests);
     }
 
-    public SignRequest getSignRequest(AuthenticateResponse response) throws U2fBadInputException {
+    public SignRequest getSignRequest(SignResponse response) throws U2fBadInputException {
         checkArgument(Objects.equal(getRequestId(), response.getRequestId()), "Wrong request for response data");
 
         for (SignRequest request : signRequests) {

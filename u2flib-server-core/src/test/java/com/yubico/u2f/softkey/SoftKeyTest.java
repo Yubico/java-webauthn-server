@@ -3,7 +3,7 @@ package com.yubico.u2f.softkey;
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.SignRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.key.Client;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
@@ -85,8 +85,8 @@ public class SoftKeyTest {
         DeviceRegistration registeredDevice = client.register();
 
         SignRequest signRequest = u2f.startAuthentication(APP_ID, registeredDevice);
-        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, signRequest);
-        AuthenticateResponse tamperedResponse = new AuthenticateResponse(
+        SignResponse originalResponse = client.authenticate(registeredDevice, signRequest);
+        SignResponse tamperedResponse = new SignResponse(
                 tamperChallenge(originalResponse.getClientData()),
                 originalResponse.getSignatureData(),
                 originalResponse.getKeyHandle()
@@ -108,8 +108,8 @@ public class SoftKeyTest {
         DeviceRegistration registeredDevice = client.register();
 
         SignRequest signRequest = u2f.startAuthentication(APP_ID, registeredDevice);
-        AuthenticateResponse originalResponse = client.authenticate(registeredDevice, signRequest);
-        AuthenticateResponse tamperedResponse = new AuthenticateResponse(
+        SignResponse originalResponse = client.authenticate(registeredDevice, signRequest);
+        SignResponse tamperedResponse = new SignResponse(
                 U2fB64Encoding.encode(originalResponse.getClientData().asJson().getBytes()),
                 tamperSignature(originalResponse.getSignatureData()),
                 originalResponse.getKeyHandle()
@@ -128,7 +128,7 @@ public class SoftKeyTest {
 
     private void authenticateUsing(Client client, DeviceRegistration registeredDevice) throws Exception {
         SignRequest signRequest = u2f.startAuthentication(APP_ID, registeredDevice);
-        AuthenticateResponse authenticateResponse = client.authenticate(registeredDevice, signRequest);
-        u2f.finishAuthentication(signRequest, authenticateResponse, registeredDevice);
+        SignResponse signResponse = client.authenticate(registeredDevice, signRequest);
+        u2f.finishAuthentication(signRequest, signResponse, registeredDevice);
     }
 }

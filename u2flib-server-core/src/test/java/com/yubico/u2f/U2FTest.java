@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.SignRequest;
 import com.yubico.u2f.data.messages.SignRequestData;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterRequestData;
 import com.yubico.u2f.data.messages.RegisterResponse;
@@ -100,7 +100,7 @@ public class U2FTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         SignRequestData requestData = mock(SignRequestData.class);
@@ -120,7 +120,7 @@ public class U2FTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         SignRequestData requestData = mock(SignRequestData.class);
@@ -166,7 +166,7 @@ public class U2FTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
             SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         SignRequestData requestData = new SignRequestData(

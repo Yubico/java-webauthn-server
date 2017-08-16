@@ -54,17 +54,17 @@ public class SerialCodecTest {
     }
 
     @Test
-    public void testEncodeAuthenticateResponse() throws Exception {
+    public void testEncodeSignResponse() throws Exception {
         RawSignResponse rawSignResponse = new RawSignResponse(
                 RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_AUTHENTICATE);
 
-        byte[] encodedBytes = CodecTestUtils.encodeAuthenticateResponse(rawSignResponse);
+        byte[] encodedBytes = CodecTestUtils.encodeSignResponse(rawSignResponse);
 
         assertArrayEquals(AUTHENTICATE_RESPONSE_DATA, encodedBytes);
     }
 
     @Test
-    public void testDecodeAuthenticateResponse() throws Exception {
+    public void testDecodeSignResponse() throws Exception {
         RawSignResponse rawSignResponse =
                 RawSignResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64, crypto);
 
@@ -73,7 +73,7 @@ public class SerialCodecTest {
     }
 
     @Test
-    public void testEncodeAuthenticateSignedBytes() throws Exception {
+    public void testEncodeSignedBytes() throws Exception {
         byte[] encodedBytes = RawSignResponse.packBytesToSign(APP_ID_SIGN_SHA256,
                 RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_AUTHENTICATE_SHA256);
 

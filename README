@@ -34,7 +34,7 @@ public View startAuthentication(String username) throws NoEligibleDevicesExcepti
 }
 
 @POST
-public String finishAuthentication(AuthenticateResponse response, String username) throws 
+public String finishAuthentication(SignResponse response, String username) throws
         DeviceCompromisedException {
 
     // Get the challenges that we stored when starting the authentication

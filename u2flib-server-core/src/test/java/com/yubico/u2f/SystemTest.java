@@ -3,7 +3,7 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.SignRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import org.junit.Ignore;
@@ -52,7 +52,7 @@ public class SystemTest {
 
         u2f.finishAuthentication(
                 SignRequest.fromJson(startedAuthentication),
-                AuthenticateResponse.fromJson(scan.nextLine()),
+                SignResponse.fromJson(scan.nextLine()),
                 deviceRegistration,
                 TRUSTED_DOMAINS
         );

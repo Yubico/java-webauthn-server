@@ -82,9 +82,9 @@ public class U2F {
     }
 
     /**
-     * @see U2F#finishAuthentication(SignRequestData, com.yubico.u2f.data.messages.AuthenticateResponse, Iterable, java.util.Set)
+     * @see U2F#finishAuthentication(SignRequestData, SignResponse, Iterable, java.util.Set)
      */
-    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
+    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
         return finishAuthentication(signRequestData, response, devices, null);
     }
 
@@ -98,7 +98,7 @@ public class U2F {
      * @return The (updated) DeviceRegistration that was authenticated against.
      * @throws com.yubico.u2f.exceptions.U2fBadInputException
      */
-    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, AuthenticateResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+    public DeviceRegistration finishAuthentication(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
         final SignRequest request = signRequestData.getSignRequest(response);
         DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
             @Override

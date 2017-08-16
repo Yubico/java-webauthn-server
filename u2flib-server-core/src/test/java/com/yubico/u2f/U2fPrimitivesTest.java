@@ -12,7 +12,7 @@ package com.yubico.u2f;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.SignRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
@@ -146,7 +146,7 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         u2f.finishAuthentication(signRequest, tokenResponse, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
@@ -162,7 +162,7 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse response = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse response = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, SERVER_CHALLENGE_SIGN_BASE64);
 
         u2f.finishAuthentication(request, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
@@ -185,7 +185,7 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
+        SignResponse tokenResponse = new SignResponse(CLIENT_DATA_AUTHENTICATE_BASE64,
                 SIGN_RESPONSE_DATA_BASE64, KEY_HANDLE_BASE64);
 
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
@@ -202,7 +202,7 @@ public class U2fPrimitivesTest {
                 .keyHandle(KEY_HANDLE_BASE64)
                 .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(
+        SignResponse tokenResponse = new SignResponse(
             CLIENT_DATA_AUTHENTICATE_BASE64,
             SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64,
             KEY_HANDLE_BASE64
@@ -220,7 +220,7 @@ public class U2fPrimitivesTest {
             allowedOrigins
         );
 
-        fail("finishAuthentication did not detect a non-0x01 user presence byte in the authentication response.");
+        fail("finishAuthentication did not detect a non-0x01 user presence byte in the sign response.");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -231,7 +231,7 @@ public class U2fPrimitivesTest {
             .keyHandle(KEY_HANDLE_BASE64)
             .build();
 
-        AuthenticateResponse tokenResponse = new AuthenticateResponse(
+        SignResponse tokenResponse = new SignResponse(
             CLIENT_DATA_AUTHENTICATE_BASE64,
             SIGN_RESPONSE_DATA_BASE64,
             KEY_HANDLE_BASE64

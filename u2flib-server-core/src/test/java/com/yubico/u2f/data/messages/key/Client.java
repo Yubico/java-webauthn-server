@@ -8,7 +8,7 @@ import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.SignRequest;
-import com.yubico.u2f.data.messages.AuthenticateResponse;
+import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.RegisterRequest;
 import com.yubico.u2f.data.messages.RegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
@@ -92,7 +92,7 @@ public class Client {
         return u2f.finishRegistration(registerRequest, tokenResponse, TRUSTED_DOMAINS);
     }
 
-    public AuthenticateResponse authenticate(DeviceRegistration registeredDevice, SignRequest startedSignature) throws Exception {
+    public SignResponse authenticate(DeviceRegistration registeredDevice, SignRequest startedSignature) throws Exception {
         Map<String, String> clientData = new HashMap<String, String>();
         clientData.put("typ", "navigator.id.getAssertion");
         clientData.put("challenge", startedSignature.getChallenge());
@@ -112,7 +112,7 @@ public class Client {
         authData.writeInt((int) rawSignResponse.getCounter());
         authData.write(rawSignResponse.getSignature());
 
-        return new AuthenticateResponse(
+        return new SignResponse(
                 clientDataBase64,
                 U2fB64Encoding.encode(authData.toByteArray()),
                 startedSignature.getKeyHandle()

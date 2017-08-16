@@ -16,7 +16,7 @@ import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {
-    public static byte[] encodeAuthenticateResponse(RawSignResponse rawSignResponse) {
+    public static byte[] encodeSignResponse(RawSignResponse rawSignResponse) {
         ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
         encoded.write(rawSignResponse.getUserPresence());
         encoded.writeInt((int) rawSignResponse.getCounter());

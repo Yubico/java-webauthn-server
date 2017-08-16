@@ -16,7 +16,7 @@ import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.testdata.TestVectors;
 import org.junit.Test;
 
-import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeAuthenticateResponse;
+import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeSignResponse;
 import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeRegisterResponse;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
@@ -52,17 +52,17 @@ public class RawCodecTest {
     }
 
     @Test
-    public void testEncodeAuthenticateResponse() throws Exception {
+    public void testEncodeSignResponse() throws Exception {
         RawSignResponse rawSignResponse = new RawSignResponse(
                 RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_AUTHENTICATE);
 
-        byte[] encodedBytes = encodeAuthenticateResponse(rawSignResponse);
+        byte[] encodedBytes = encodeSignResponse(rawSignResponse);
 
         assertArrayEquals(AUTHENTICATE_RESPONSE_DATA, encodedBytes);
     }
 
     @Test
-    public void testDecodeAuthenticateResponse() throws Exception {
+    public void testDecodeSignResponse() throws Exception {
         RawSignResponse rawSignResponse =
                 RawSignResponse.fromBase64(SIGN_RESPONSE_DATA_BASE64, crypto);
 
@@ -71,7 +71,7 @@ public class RawCodecTest {
     }
 
     @Test
-    public void testEncodeAuthenticateSignedBytes() throws Exception {
+    public void testEncodeSignedBytes() throws Exception {
         byte[] encodedBytes = RawSignResponse.packBytesToSign(APP_ID_SIGN_SHA256,
                 RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_AUTHENTICATE_SHA256);
 
