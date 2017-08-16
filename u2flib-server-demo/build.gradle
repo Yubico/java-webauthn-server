@@ -1,5 +1,9 @@
 description = 'U2F demo'
 
+apply plugin: 'application'
+
+mainClassName = 'demo.App'
+
 dependencies {
 
   compile(
@@ -12,4 +16,11 @@ dependencies {
     [group: 'org.freemarker', name: 'freemarker', version:'2.3.26-incubating'],
   )
 
+}
+
+project.ext.serverConfigFile = file('config.yml')
+
+run {
+  inputs.file serverConfigFile
+  args 'server', project.serverConfigFile.path
 }
