@@ -102,9 +102,9 @@ public class Client {
 
         byte[] clientParam = crypto.hash(clientDataJson);
         byte[] appParam = crypto.hash(startedSignature.getAppId());
-        com.yubico.u2f.softkey.messages.AuthenticateRequest authenticateRequest = new com.yubico.u2f.softkey.messages.AuthenticateRequest((byte) 0x01, clientParam, appParam, U2fB64Encoding.decode(registeredDevice.getKeyHandle()));
+        com.yubico.u2f.softkey.messages.SignRequest signRequest = new com.yubico.u2f.softkey.messages.SignRequest((byte) 0x01, clientParam, appParam, U2fB64Encoding.decode(registeredDevice.getKeyHandle()));
 
-        RawSignResponse rawSignResponse = key.authenticate(authenticateRequest);
+        RawSignResponse rawSignResponse = key.authenticate(signRequest);
 
         String clientDataBase64 = U2fB64Encoding.encode(clientDataJson.getBytes());
         ByteArrayDataOutput authData = ByteStreams.newDataOutput();

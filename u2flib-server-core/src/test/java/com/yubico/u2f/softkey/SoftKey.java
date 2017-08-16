@@ -9,7 +9,7 @@ package com.yubico.u2f.softkey;
 import com.yubico.u2f.data.messages.key.RawSignResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
-import com.yubico.u2f.softkey.messages.AuthenticateRequest;
+import com.yubico.u2f.softkey.messages.SignRequest;
 import com.yubico.u2f.softkey.messages.RegisterRequest;
 import com.yubico.u2f.testdata.GnubbyKey;
 import org.bouncycastle.jce.ECNamedCurveTable;
@@ -95,11 +95,11 @@ public final class SoftKey implements Cloneable {
         return bis.read(keyLength - 1);
     }
 
-    public RawSignResponse authenticate(AuthenticateRequest authenticateRequest) throws Exception {
+    public RawSignResponse authenticate(SignRequest signRequest) throws Exception {
 
-        byte[] applicationSha256 = authenticateRequest.getApplicationSha256();
-        byte[] challengeSha256 = authenticateRequest.getChallengeSha256();
-        byte[] keyHandle = authenticateRequest.getKeyHandle();
+        byte[] applicationSha256 = signRequest.getApplicationSha256();
+        byte[] challengeSha256 = signRequest.getChallengeSha256();
+        byte[] keyHandle = signRequest.getKeyHandle();
 
         KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
         long counter = ++deviceCounter;
