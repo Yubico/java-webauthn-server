@@ -76,7 +76,7 @@ public class Resource {
     @GET
     public View startAuthentication(@QueryParam("username") String username) {
         try {
-            SignRequestData signRequestData = u2f.startAuthentication(APP_ID, getRegistrations(username));
+            SignRequestData signRequestData = u2f.startSignature(APP_ID, getRegistrations(username));
             requestStorage.put(signRequestData.getRequestId(), signRequestData.toJson());
             return new AuthenticationView(signRequestData, username);
         } catch (NoEligibleDevicesException e) {

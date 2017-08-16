@@ -36,10 +36,10 @@ public class U2FTest {
     }
 
     @Test(expected = NoEligibleDevicesException.class)
-    public void startAuthentication_compromisedDevices() throws Exception {
+    public void startSignature_compromisedDevices() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
-        u2f.startAuthentication(APP_ID_ENROLL, ImmutableList.of(deviceRegistration));
+        u2f.startSignature(APP_ID_ENROLL, ImmutableList.of(deviceRegistration));
     }
 
     @Test(expected = U2fBadConfigurationException.class)
@@ -67,19 +67,19 @@ public class U2FTest {
     }
 
     @Test(expected = U2fBadConfigurationException.class)
-    public void defaultConstructedU2FstartAuthenticationShouldRefuseInvalidAppId() throws Exception {
+    public void defaultConstructedU2FstartSignatureShouldRefuseInvalidAppId() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
-        new U2F().startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+        new U2F().startSignature("example.com", ImmutableList.of(deviceRegistration));
 
         fail("startRegistration did not refuse an invalid app ID.");
     }
 
     @Test
-    public void startAuthenticationShouldReturnARandomChallenge() throws Exception {
+    public void startSignatureShouldReturnARandomChallenge() throws Exception {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_AUTHENTICATE_HEX, ATTESTATION_CERTIFICATE, 0);
-        SignRequestData data = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
-        SignRequestData data2 = u2f.startAuthentication("example.com", ImmutableList.of(deviceRegistration));
+        SignRequestData data = u2f.startSignature("example.com", ImmutableList.of(deviceRegistration));
+        SignRequestData data2 = u2f.startSignature("example.com", ImmutableList.of(deviceRegistration));
 
         assertEquals(1, data.getSignRequests().size());
         assertNotNull(data.getSignRequests().get(0).getChallenge());

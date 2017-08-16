@@ -53,7 +53,7 @@ public class U2F {
         return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
-    public SignRequestData startAuthentication(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligibleDevicesException {
+    public SignRequestData startSignature(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligibleDevicesException {
         if(validateAppId) {
             AppId.checkIsValid(appId);
         }
