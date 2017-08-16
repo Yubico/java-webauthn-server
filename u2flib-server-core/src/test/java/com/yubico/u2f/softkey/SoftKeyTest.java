@@ -91,7 +91,7 @@ public class SoftKeyTest {
                 originalResponse.getSignatureData(),
                 originalResponse.getKeyHandle()
         );
-        u2f.finishAuthentication(signRequest, tamperedResponse, registeredDevice);
+        u2f.finishSignature(signRequest, tamperedResponse, registeredDevice);
     }
 
     private String tamperChallenge(ClientData clientData) {
@@ -114,7 +114,7 @@ public class SoftKeyTest {
                 tamperSignature(originalResponse.getSignatureData()),
                 originalResponse.getKeyHandle()
         );
-        u2f.finishAuthentication(signRequest, tamperedResponse, registeredDevice);
+        u2f.finishSignature(signRequest, tamperedResponse, registeredDevice);
     }
 
 
@@ -129,6 +129,6 @@ public class SoftKeyTest {
     private void authenticateUsing(Client client, DeviceRegistration registeredDevice) throws Exception {
         SignRequest signRequest = u2f.startSignature(APP_ID, registeredDevice);
         SignResponse signResponse = client.authenticate(registeredDevice, signRequest);
-        u2f.finishAuthentication(signRequest, signResponse, registeredDevice);
+        u2f.finishSignature(signRequest, signResponse, registeredDevice);
     }
 }

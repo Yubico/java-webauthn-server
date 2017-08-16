@@ -50,7 +50,7 @@ public class SystemTest {
         System.out.println();
         System.out.println("Enter token response:");
 
-        u2f.finishAuthentication(
+        u2f.finishSignature(
                 SignRequest.fromJson(startedAuthentication),
                 SignResponse.fromJson(scan.nextLine()),
                 deviceRegistration,

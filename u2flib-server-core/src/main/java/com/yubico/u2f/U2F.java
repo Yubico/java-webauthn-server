@@ -111,7 +111,7 @@ public class U2F {
             throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot be authenticated");
         }
 
-        primitives.finishAuthentication(request, response, device, facets);
+        primitives.finishSignature(request, response, device, facets);
         return device;
     }
 }

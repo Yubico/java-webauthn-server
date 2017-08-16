@@ -120,25 +120,25 @@ public class U2fPrimitives {
     }
 
     /**
-     * @see U2fPrimitives#finishAuthentication(SignRequest, SignResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
+     * @see U2fPrimitives#finishSignature(SignRequest, SignResponse, com.yubico.u2f.data.DeviceRegistration, java.util.Set)
      */
-    public void finishAuthentication(SignRequest signRequest,
-                                     SignResponse response,
-                                     DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
-        finishAuthentication(signRequest, response, deviceRegistration, null);
+    public void finishSignature(SignRequest signRequest,
+                                SignResponse response,
+                                DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
+        finishSignature(signRequest, response, deviceRegistration, null);
     }
 
     /**
-     * Finishes a previously started authentication.
+     * Finishes a previously started signature.
      *
      * @param signRequest
      * @param response            the response from the device/client.
      */
-    public void finishAuthentication(SignRequest signRequest,
-                                     SignResponse response,
-                                     DeviceRegistration deviceRegistration,
-                                     Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
-        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot authenticate");
+    public void finishSignature(SignRequest signRequest,
+                                SignResponse response,
+                                DeviceRegistration deviceRegistration,
+                                Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+        checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot sign.");
         checkArgument(signRequest.getKeyHandle().equals(deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given SignRequest");
         if (!deviceRegistration.getKeyHandle().equals(response.getKeyHandle())) {
             throw new U2fBadInputException("KeyHandle of SignResponse does not match");
