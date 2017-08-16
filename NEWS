@@ -1,6 +1,6 @@
-= Version 0.18.0 =
+== Version 0.18.0 ==
 
-== u2flib-server-core ==
+=== u2flib-server-core ===
 
 Breaking changes:
 
@@ -18,15 +18,15 @@ Breaking changes:
 * Constants `AUTHENTICATE_TYP` and `REGISTER_TYPE` in `U2fPrimitives` are
   now private
 
-= Version 0.17.1 =
+== Version 0.17.1 ==
 
 * u2flib-server-attestation module now uses SLF4J logging instead of
   `Throwable.printStackTrace`
 
 
-= Version 0.17.0 =
+== Version 0.17.0 ==
 
-== u2flib-server-core ==
+=== u2flib-server-core ===
 
 Breaking changes:
 
@@ -41,7 +41,7 @@ Additions:
 * New class `RegisteredKey`
 * Field `appId: String` added to `RegisterRequestData`
 
-== u2flib-server-demo ==
+=== u2flib-server-demo ===
 
 * `u2f-api.js` upgraded from version 1.0 to 1.1
 * JS calls in views updated to work with version 1.1 of the JS API
@@ -51,14 +51,14 @@ Additions:
 * Error feedback improved
 
 
-= Version 0.13.1 (unreleased) =
+== Version 0.13.1 (unreleased) ==
 
 * Changed demo server URL to `localhost:8080`.
 * Added the method `ClientData.getString` to get arbitrary clientData fields.
 * Added u2flib-server-attestation for device attestation and metadata.
 
 
-= Version 0.13.0 =
+== Version 0.13.0 ==
 
 * Added built-in support for multiple devices per user.
 * Fixed demo server bug when running from jar. Thanks to axianx.
