@@ -6,7 +6,7 @@
 
 package com.yubico.u2f.softkey;
 
-import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
+import com.yubico.u2f.data.messages.key.RawSignResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.softkey.messages.AuthenticateRequest;
@@ -95,7 +95,7 @@ public final class SoftKey implements Cloneable {
         return bis.read(keyLength - 1);
     }
 
-    public RawAuthenticateResponse authenticate(AuthenticateRequest authenticateRequest) throws Exception {
+    public RawSignResponse authenticate(AuthenticateRequest authenticateRequest) throws Exception {
 
         byte[] applicationSha256 = authenticateRequest.getApplicationSha256();
         byte[] challengeSha256 = authenticateRequest.getChallengeSha256();
@@ -103,12 +103,12 @@ public final class SoftKey implements Cloneable {
 
         KeyPair keyPair = checkNotNull(dataStore.get(new String(keyHandle)));
         long counter = ++deviceCounter;
-        byte[] signedData = RawAuthenticateResponse.packBytesToSign(applicationSha256, RawAuthenticateResponse.USER_PRESENT_FLAG,
+        byte[] signedData = RawSignResponse.packBytesToSign(applicationSha256, RawSignResponse.USER_PRESENT_FLAG,
                 counter, challengeSha256);
 
         byte[] signature = sign(signedData, keyPair.getPrivate());
 
-        return new RawAuthenticateResponse(RawAuthenticateResponse.USER_PRESENT_FLAG, counter, signature);
+        return new RawSignResponse(RawSignResponse.USER_PRESENT_FLAG, counter, signature);
     }
 
     private byte[] sign(byte[] signedData, PrivateKey privateKey) throws Exception {

@@ -16,7 +16,7 @@ import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
-import com.yubico.u2f.data.messages.key.RawAuthenticateResponse;
+import com.yubico.u2f.data.messages.key.RawSignResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
@@ -147,15 +147,15 @@ public class U2fPrimitives {
         ClientData clientData = response.getClientData();
         clientData.checkContent(AUTHENTICATE_TYP, signRequest.getChallenge(), Optional.fromNullable(facets));
 
-        RawAuthenticateResponse rawAuthenticateResponse = RawAuthenticateResponse.fromBase64(
+        RawSignResponse rawSignResponse = RawSignResponse.fromBase64(
                 response.getSignatureData(), crypto
         );
-        rawAuthenticateResponse.checkSignature(
+        rawSignResponse.checkSignature(
                 signRequest.getAppId(),
                 clientData.asJson(),
                 U2fB64Encoding.decode(deviceRegistration.getPublicKey())
         );
-        rawAuthenticateResponse.checkUserPresence();
-        deviceRegistration.checkAndUpdateCounter(rawAuthenticateResponse.getCounter());
+        rawSignResponse.checkUserPresence();
+        deviceRegistration.checkAndUpdateCounter(rawSignResponse.getCounter());
     }
 }
