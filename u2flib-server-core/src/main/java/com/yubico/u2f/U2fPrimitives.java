@@ -28,8 +28,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public class U2fPrimitives {
 
-    public static final String SIGN_TYPE = "navigator.id.getAssertion";
-    public static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
+    private static final String SIGN_TYPE = "navigator.id.getAssertion";
+    private static final String REGISTER_TYPE = "navigator.id.finishEnrollment";
     public static final String U2F_VERSION = "U2F_V2";
 
     private final Crypto crypto;
