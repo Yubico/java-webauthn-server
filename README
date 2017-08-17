@@ -74,5 +74,5 @@ JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[develop
 The attestation module (`u2flib-server-attestation`) enables you to restrict registrations to certain U2F devices (e.g. devices made by a specific vendor). It can also provide metadata for devices.
 
 === Serialization
-All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
+All relevant classes implement `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
 Internally the classes use Jackson to serialize to and from JSON, and the ObjectMapper from Jackson can be used.
