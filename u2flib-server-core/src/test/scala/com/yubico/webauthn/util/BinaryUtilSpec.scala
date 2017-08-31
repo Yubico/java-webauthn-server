@@ -9,6 +9,27 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class BinaryUtilSpec extends FunSpec with Matchers {
 
+  describe("BinaryUtil.fromHex") {
+
+    it("decodes 00 to [0].") {
+      BinaryUtil.fromHex("00").get should equal (Array[Byte](0))
+    }
+
+    it("decodes 2a to [42].") {
+      BinaryUtil.fromHex("2a").get should equal (Array[Byte](42))
+    }
+
+    it("decodes 000101020305080d15 to [0, 1, 1, 2, 3, 5, 8, 13, 21].") {
+      BinaryUtil.fromHex("000101020305080d15").get should equal (Array[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21))
+    }
+  }
+
+  describe("BinaryUtil.toHex") {
+    it("encodes [0, 1, 1, 2, 3, 5, 8, 13, 21] to 000101020305080d15.") {
+      BinaryUtil.toHex(Array[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21)) should equal ("000101020305080d15")
+    }
+  }
+
   describe("BinaryUtil.getUint8") {
 
     it("returns 0 for 0x00.") {
