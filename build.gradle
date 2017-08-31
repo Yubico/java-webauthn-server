@@ -57,8 +57,24 @@ allprojects  {
     maven { url "http://repo.maven.apache.org/maven2" }
   }
 
+  configurations {
+    scalaRepl { extendsFrom testRuntime }
+  }
+
   dependencies {
     compile 'org.scala-lang:scala-library:2.12.3'
+    scalaRepl(
+      'org.scala-lang:scala-compiler:2.12.3',
+      sourceSets.main.output,
+      sourceSets.test.output,
+    )
+  }
+
+  task scalaRepl(type: JavaExec) {
+    main = "scala.tools.nsc.MainGenericRunner"
+    classpath = configurations.scalaRepl
+    standardInput System.in
+    args '-usejavacp'
   }
 }
 
