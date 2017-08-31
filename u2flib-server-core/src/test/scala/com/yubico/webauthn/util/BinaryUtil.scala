@@ -10,7 +10,7 @@ object BinaryUtil {
     * @param bytes Bytes to encode
     * @return The `bytes` encoded as lowercase hexadecimal digits
     */
-  def toHex(bytes: Seq[Byte]): HexString = bytes map (_.toInt.toHexString) mkString ""
+  def toHex(bytes: Seq[Byte]): String = bytes map ("%02x" format _) mkString ""
 
   /**
     * @param hex String of hexadecimal digits to decode as bytes.
