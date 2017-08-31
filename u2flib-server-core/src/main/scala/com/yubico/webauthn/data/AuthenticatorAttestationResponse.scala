@@ -15,4 +15,9 @@ trait AuthenticatorAttestationResponse extends AuthenticatorResponse {
     */
   def clientData: JsonNode
 
+  /**
+    * The fully qualified origin of the requester, as identified by the client
+    */
+  def origin: String
+
 }

@@ -19,4 +19,6 @@ case class AuthenticatorAttestationResponse (
   override lazy val clientData: JsonNode =
     new ObjectMapper().readTree(new ByteArrayInputStream(clientDataJSON.toArray))
 
+  override lazy val origin: String = clientData.get("origin").asText
+
 }
