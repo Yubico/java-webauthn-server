@@ -15,11 +15,13 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
 
     describe("has a clientDataJSON field which") {
 
+      val booExtension = "far"
       val challenge = "HfpNmDkOp66Edjd5-uvwlg"
+      val fooExtension = "bar"
       val hashAlgorithm = "SHA-256"
       val origin = "localhost"
       val tokenBindingId = "IgqNmDkOp68Edjd8-uwxmh"
-      val exampleJson: ArrayBuffer = Vector(s"""{"challenge":"${challenge}","hashAlgorithm":"${hashAlgorithm}","origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8") :_*)
+      val exampleJson: ArrayBuffer = Vector(s"""{"authenticatorExtensions":{"boo":"${booExtension}"},"challenge":"${challenge}","clientExtensions":{"foo":"${fooExtension}"},"hashAlgorithm":"${hashAlgorithm}","origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8") :_*)
 
       it("can be parsed as JSON.") {
         val clientData: JsonNode = new AuthenticatorAttestationResponse(null, exampleJson).clientData
@@ -31,8 +33,16 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
       describe("defines attributes on the contained CollectedClientData:") {
         val response = new AuthenticatorAttestationResponse(null, exampleJson)
 
+        it("authenticatorExtensions") {
+          response.collectedClientData.authenticatorExtensions.get.get("boo").asText should equal (booExtension)
+        }
+
         it("challenge") {
           response.collectedClientData.challenge should equal (challenge)
+        }
+
+        it("clientExtensions") {
+          response.collectedClientData.clientExtensions.get.get("foo").asText should equal (fooExtension)
         }
 
         it("hashAlgorithm") {

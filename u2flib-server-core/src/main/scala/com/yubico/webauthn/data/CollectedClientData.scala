@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.JsonNode
 /**
   * High-level API for reading W3C specified values out of client data.
   *
-  * @todo Implement client extensions and authenticator extensions.
-  *
   * @param clientData the client data returned from, or to be sent to, the client.
   */
 case class CollectedClientData(
@@ -16,9 +14,19 @@ case class CollectedClientData(
 ) {
 
   /**
+    * Input or output values for or from authenticator extensions, if any.
+    */
+  def authenticatorExtensions: Optional[AuthenticationExtensions] = Optional.ofNullable(clientData.get("authenticatorExtensions"))
+
+  /**
     * The URL-safe Base64 encoded challenge as provided by the RP.
     */
   def challenge: Base64UrlString = clientData.get("challenge").asText
+
+  /**
+    * Input or output values for or from client extensions, if any.
+    */
+  def clientExtensions: Optional[AuthenticationExtensions] = Optional.ofNullable(clientData.get("clientExtensions"))
 
   /**
     * The name of the algorithm the client used to compute the hash of the serialized client data.
