@@ -24,14 +24,14 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
       val exampleJson: ArrayBuffer = Vector(s"""{"authenticatorExtensions":{"boo":"${booExtension}"},"challenge":"${challenge}","clientExtensions":{"foo":"${fooExtension}"},"hashAlgorithm":"${hashAlgorithm}","origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8") :_*)
 
       it("can be parsed as JSON.") {
-        val clientData: JsonNode = new AuthenticatorAttestationResponse(null, exampleJson).clientData
+        val clientData: JsonNode = AuthenticatorAttestationResponse(null, exampleJson).clientData
 
         clientData.isObject should be (true)
         clientData.asInstanceOf[JsonNode].get("challenge").asText should equal (challenge)
       }
 
       describe("defines attributes on the contained CollectedClientData:") {
-        val response = new AuthenticatorAttestationResponse(null, exampleJson)
+        val response = AuthenticatorAttestationResponse(null, exampleJson)
 
         it("authenticatorExtensions") {
           response.collectedClientData.authenticatorExtensions.get.get("boo").asText should equal (booExtension)
