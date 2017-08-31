@@ -8,4 +8,7 @@ package object data {
   /** Container for extension values in [[PublicKeyCredential]]. */
   type AuthenticationExtensions = Map[String, Any]
 
+  /** A URL-safe base64 encoded array of bytes. */
+  type Base64UrlString = String
+
 }

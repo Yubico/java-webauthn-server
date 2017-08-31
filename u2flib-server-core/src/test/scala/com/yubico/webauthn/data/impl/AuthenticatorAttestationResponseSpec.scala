@@ -25,6 +25,10 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
         clientData.asInstanceOf[JsonNode].get("challenge").asText should equal (challenge)
       }
 
+      it("defines the challenge attribute of the AuthenticatorAttestationResponse.") {
+        new AuthenticatorAttestationResponse(null, exampleJson).challenge should equal (challenge)
+      }
+
     }
 
   }
