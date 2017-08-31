@@ -1,5 +1,7 @@
 package com.yubico.webauthn.util
 
+import com.yubico.webauthn.data.HexString
+
 import scala.util.Try
 
 object BinaryUtil {
@@ -8,7 +10,7 @@ object BinaryUtil {
     * @param bytes Bytes to encode
     * @return The `bytes` encoded as lowercase hexadecimal digits
     */
-  def toHex(bytes: Seq[Byte]): String = bytes map (_.toInt.toHexString) mkString ""
+  def toHex(bytes: Seq[Byte]): HexString = bytes map (_.toInt.toHexString) mkString ""
 
   /**
     * @param hex String of hexadecimal digits to decode as bytes.
@@ -17,7 +19,7 @@ object BinaryUtil {
     *         - [[NumberFormatException]] if `hex` contains characters that are not hexadecimal digits.
     *         - The decoded bytes otherwise.
     */
-  def fromHex(hex: String): Try[Vector[Byte]] = Try(
+  def fromHex(hex: HexString): Try[Vector[Byte]] = Try(
     hex.length % 2 match {
       case 0 =>
         hex

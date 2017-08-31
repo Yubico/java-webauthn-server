@@ -13,4 +13,7 @@ package object data {
   /** A URL-safe base64 encoded array of bytes. */
   type Base64UrlString = String
 
+  /** A hexadecimal-encoded array of bytes. */
+  type HexString = String
+
 }
