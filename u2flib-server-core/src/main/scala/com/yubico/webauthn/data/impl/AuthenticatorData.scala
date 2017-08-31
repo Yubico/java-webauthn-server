@@ -1,8 +1,7 @@
 package com.yubico.webauthn.data.impl
 
-import java.nio.ByteBuffer
-
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.util.BinaryUtil
 
 
 case class AuthenticatorData(
@@ -22,8 +21,11 @@ case class AuthenticatorData(
   /**
     * The 32-bit unsigned signature counter.
     */
-  val signatureCounter: Long =
-    // Prepend zeroes so we can parse it as a signed int64 instead of a signed int32
-    ByteBuffer.wrap((Vector[Byte](0, 0, 0, 0) ++ authData.slice(33, 37)).toArray).getLong
+  val signatureCounter: Long = {
+    val bytes = authData.slice(33, 37)
+    BinaryUtil.getUint32(bytes) getOrElse {
+      throw new IllegalArgumentException(s"Invalid signature counter bytes: ${bytes}")
+    }
+  }
 
 }
