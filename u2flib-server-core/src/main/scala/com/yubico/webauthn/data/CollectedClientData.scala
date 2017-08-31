@@ -21,6 +21,13 @@ case class CollectedClientData(
   def challenge: Base64UrlString = clientData.get("challenge").asText
 
   /**
+    * The name of the algorithm the client used to compute the hash of the serialized client data.
+    *
+    * This SHOULD be a ''recognized algorithm name'', but [[CollectedClientData]] does not inforce it.
+    */
+  def hashAlgorithm: String = clientData.get("hashAlgorithm").asText
+
+  /**
     * The fully qualified origin of the requester, as identified by the client.
     */
   def origin: String = clientData.get("origin").asText
