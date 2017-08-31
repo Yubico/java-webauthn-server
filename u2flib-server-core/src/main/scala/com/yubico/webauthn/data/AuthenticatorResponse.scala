@@ -12,4 +12,10 @@ trait AuthenticatorResponse {
     */
   def clientData: JsonNode
 
+  def clientDataHash: ArrayBuffer = {
+    val hashAlgorithm = CollectedClientData(clientData).hashAlgorithm
+    val dig = MessageDigest.getInstance(hashAlgorithm)
+    Vector(dig.digest(clientDataJSON.toArray) :_*)
+  }
+
 }
