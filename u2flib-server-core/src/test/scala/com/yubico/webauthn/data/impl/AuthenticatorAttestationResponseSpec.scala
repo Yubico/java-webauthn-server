@@ -17,7 +17,8 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
 
       val challenge = "HfpNmDkOp66Edjd5-uvwlg"
       val origin = "localhost"
-      val exampleJson: ArrayBuffer = Vector(s"""{"challenge":"${challenge}","hashAlg":"SHA-256","origin":"${origin}"}""".getBytes("UTF-8") :_*)
+      val tokenBindingId = "IgqNmDkOp68Edjd8-uwxmh"
+      val exampleJson: ArrayBuffer = Vector(s"""{"challenge":"${challenge}","hashAlg":"SHA-256","origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8") :_*)
 
       it("can be parsed as JSON.") {
         val clientData: JsonNode = new AuthenticatorAttestationResponse(null, exampleJson).clientData
@@ -32,6 +33,10 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
 
       it("defines the origin attribute of the AuthenticatorAttestationResponse.") {
         new AuthenticatorAttestationResponse(null, exampleJson).origin should equal (origin)
+      }
+
+      it("defines the tokenBindingId attribute of the AuthenticatorAttestationResponse.") {
+        new AuthenticatorAttestationResponse(null, exampleJson).tokenBindingId.get should equal (tokenBindingId)
       }
 
     }

@@ -1,6 +1,7 @@
 package com.yubico.webauthn.data.impl
 
 import java.io.ByteArrayInputStream
+import java.util.Optional
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
@@ -20,5 +21,8 @@ case class AuthenticatorAttestationResponse (
     new ObjectMapper().readTree(new ByteArrayInputStream(clientDataJSON.toArray))
 
   override lazy val origin: String = clientData.get("origin").asText
+
+  override lazy val tokenBindingId: Optional[Base64UrlString] =
+    Optional.ofNullable(clientData.get("tokenBindingId").asText)
 
 }

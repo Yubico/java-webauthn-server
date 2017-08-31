@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data
 
+import java.util.Optional
+
 import com.fasterxml.jackson.databind.JsonNode
 
 trait AuthenticatorAttestationResponse extends AuthenticatorResponse {
@@ -19,5 +21,10 @@ trait AuthenticatorAttestationResponse extends AuthenticatorResponse {
     * The fully qualified origin of the requester, as identified by the client
     */
   def origin: String
+
+  /**
+    * The URL-safe Base64 encoded TLS token binding ID the client has negotiated with the RP
+    */
+  def tokenBindingId: Optional[Base64UrlString]
 
 }
