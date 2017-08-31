@@ -9,3 +9,4 @@ case class AuthenticatorAssertionResponse(
   override val signature: ArrayBuffer,
 
 ) extends com.yubico.webauthn.data.AuthenticatorAssertionResponse
+  with JacksonAuthenticatorResponse
