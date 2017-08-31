@@ -27,16 +27,21 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
         clientData.asInstanceOf[JsonNode].get("challenge").asText should equal (challenge)
       }
 
-      it("defines the challenge attribute of the AuthenticatorAttestationResponse.") {
-        new AuthenticatorAttestationResponse(null, exampleJson).challenge should equal (challenge)
-      }
+      describe("defines attributes on the contained CollectedClientData:") {
+        val response = new AuthenticatorAttestationResponse(null, exampleJson)
 
-      it("defines the origin attribute of the AuthenticatorAttestationResponse.") {
-        new AuthenticatorAttestationResponse(null, exampleJson).origin should equal (origin)
-      }
+        it("challenge") {
+          response.collectedClientData.challenge should equal (challenge)
+        }
 
-      it("defines the tokenBindingId attribute of the AuthenticatorAttestationResponse.") {
-        new AuthenticatorAttestationResponse(null, exampleJson).tokenBindingId.get should equal (tokenBindingId)
+        it("origin") {
+          response.collectedClientData.origin should equal (origin)
+        }
+
+        it("tokenBindingId") {
+          response.collectedClientData.tokenBindingId.get should equal (tokenBindingId)
+        }
+
       }
 
     }

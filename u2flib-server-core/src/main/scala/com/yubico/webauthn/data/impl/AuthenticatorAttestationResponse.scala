@@ -1,12 +1,10 @@
 package com.yubico.webauthn.data.impl
 
 import java.io.ByteArrayInputStream
-import java.util.Optional
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.webauthn.data.ArrayBuffer
-import com.yubico.webauthn.data.Base64UrlString
 
 case class AuthenticatorAttestationResponse (
 
@@ -15,14 +13,7 @@ case class AuthenticatorAttestationResponse (
 
 ) extends com.yubico.webauthn.data.AuthenticatorAttestationResponse {
 
-  override lazy val challenge: Base64UrlString = clientData.get("challenge").asText
-
   override lazy val clientData: JsonNode =
     new ObjectMapper().readTree(new ByteArrayInputStream(clientDataJSON.toArray))
-
-  override lazy val origin: String = clientData.get("origin").asText
-
-  override lazy val tokenBindingId: Optional[Base64UrlString] =
-    Optional.ofNullable(clientData.get("tokenBindingId").asText)
 
 }
