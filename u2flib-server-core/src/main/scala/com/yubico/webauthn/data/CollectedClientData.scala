@@ -18,17 +18,17 @@ case class CollectedClientData(
   /**
     * The URL-safe Base64 encoded challenge as provided by the RP.
     */
-  lazy val challenge: Base64UrlString = clientData.get("challenge").asText
+  def challenge: Base64UrlString = clientData.get("challenge").asText
 
   /**
     * The fully qualified origin of the requester, as identified by the client.
     */
-  lazy val origin: String = clientData.get("origin").asText
+  def origin: String = clientData.get("origin").asText
 
   /**
     * The URL-safe Base64 encoded TLS token binding ID the client has negotiated with the RP.
     */
-  lazy val tokenBindingId: Optional[Base64UrlString] =
+  def tokenBindingId: Optional[Base64UrlString] =
     Optional.ofNullable(clientData.get("tokenBindingId").asText)
 
 }
