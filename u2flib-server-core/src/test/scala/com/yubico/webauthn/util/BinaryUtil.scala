@@ -1,6 +1,10 @@
 package com.yubico.webauthn.util
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+
 import com.yubico.webauthn.data.HexString
+import com.yubico.webauthn.data.ArrayBuffer
 
 import scala.util.Try
 
@@ -30,6 +34,61 @@ object BinaryUtil {
       case _ =>
         throw new IllegalArgumentException(s"Hex string must be of even length, was: ${hex.length}")
     }
+  )
+
+  /**
+    * Read one byte as an unsigned 8-bit integer.
+    *
+    * Result is of type Short because Scala/Java don't have unsigned types.
+    *
+    * @return A value between 0 and 255, inclusive.
+    */
+  def getUint8(byte: Byte): Short =
+  // Prepend a zero so we can parse it as a signed int16 instead of a signed int8
+    ByteBuffer.wrap(Array[Byte](0, byte)).getShort
+
+  /**
+    * Read one byte as an unsigned 8-bit integer.
+    *
+    * Result is of type Long because Scala/Java don't have unsigned types.
+    *
+    * @return A value between 0 and 255, inclusive.
+    */
+  def getUint8(bytes: ArrayBuffer): Try[Short] = Try(
+    if (bytes.length == 1)
+      getUint8(bytes(0))
+    else
+      throw new IllegalArgumentException(s"Argument must be 1 byte, was: ${bytes.length}")
+  )
+
+  /**
+    * Read 2 bytes as a big endian unsigned 16-bit integer.
+    *
+    * Result is of type Int because Scala/Java don't have unsigned types.
+    *
+    * @return A value between 0 and 2^16- 1, inclusive.
+    */
+  def getUint16(bytes: ArrayBuffer): Try[Int] = Try(
+    if (bytes.length == 2)
+    // Prepend zeroes so we can parse it as a signed int32 instead of a signed int16
+      ByteBuffer.wrap((Vector[Byte](0, 0) ++ bytes).toArray).order(ByteOrder.BIG_ENDIAN).getInt
+    else
+      throw new IllegalArgumentException(s"Argument must be 2 bytes, was: ${bytes.length}")
+  )
+
+  /**
+    * Read 4 bytes as a big endian unsigned 32-bit integer.
+    *
+    * Result is of type Long because Scala/Java don't have unsigned types.
+    * @param bytes
+    * @return A value between 0 and 2^32 - 1, inclusive.
+    */
+  def getUint32(bytes: ArrayBuffer): Try[Long] = Try(
+    if (bytes.length == 4)
+    // Prepend zeroes so we can parse it as a signed int64 instead of a signed int32
+      ByteBuffer.wrap((Vector[Byte](0, 0, 0, 0) ++ bytes).toArray).order(ByteOrder.BIG_ENDIAN).getLong
+    else
+      throw new IllegalArgumentException(s"Argument must be 4 bytes, was: ${bytes.length}")
   )
 
 }
