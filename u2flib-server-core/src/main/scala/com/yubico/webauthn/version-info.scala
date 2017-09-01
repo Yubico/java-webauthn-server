@@ -23,6 +23,8 @@ case class Specification(
 
 /**
   * Contains version information for the com.yubico.webauthn package.
+  *
+  * @see [[Specification]]
   */
 object VersionInfo {
 
