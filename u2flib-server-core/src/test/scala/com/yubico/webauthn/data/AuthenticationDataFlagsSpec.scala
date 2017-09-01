@@ -1,9 +1,9 @@
-package com.yubico.webauthn.data.impl
+package com.yubico.webauthn.data
 
-import com.yubico.webauthn.data.HexString
 import com.yubico.webauthn.util.BinaryUtil
 import org.junit.runner.RunWith
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.FunSpec
+import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
 
 

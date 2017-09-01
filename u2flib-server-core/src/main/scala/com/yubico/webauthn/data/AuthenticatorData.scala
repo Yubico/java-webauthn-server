@@ -1,6 +1,5 @@
-package com.yubico.webauthn.data.impl
+package com.yubico.webauthn.data
 
-import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.util.BinaryUtil
 
 

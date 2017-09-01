@@ -1,4 +1,4 @@
-package com.yubico.webauthn.data.impl
+package com.yubico.webauthn.data
 
 case class AuthenticationDataFlags(value: Byte) {
   /** User present */

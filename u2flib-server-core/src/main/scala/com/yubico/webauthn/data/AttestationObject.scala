@@ -1,9 +1,8 @@
-package com.yubico.webauthn.data.impl
+package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
-import com.yubico.webauthn.data.ArrayBuffer
 
 
 case class AttestationObject(
