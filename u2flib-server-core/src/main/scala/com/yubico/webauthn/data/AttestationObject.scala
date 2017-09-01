@@ -1,8 +1,7 @@
 package com.yubico.webauthn.data
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.webauthn.util.WebAuthnCodecs
 
 
 case class AttestationObject(
@@ -12,7 +11,7 @@ case class AttestationObject(
 ) {
 
   private val decoded =
-    new ObjectMapper(new CBORFactory()).readTree(attestationObject.toArray)
+    WebAuthnCodecs.cbor.readTree(attestationObject.toArray)
 
   def authenticatorData: AuthenticatorData =
     AuthenticatorData(Vector(U2fB64Encoding.decode(decoded.get("authData").asText) :_*))

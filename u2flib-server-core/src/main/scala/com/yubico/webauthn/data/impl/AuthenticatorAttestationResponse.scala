@@ -1,9 +1,9 @@
 package com.yubico.webauthn.data.impl
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.util.WebAuthnCodecs
+
 
 case class AuthenticatorAttestationResponse (
 
@@ -14,6 +14,6 @@ case class AuthenticatorAttestationResponse (
   with JacksonAuthenticatorResponse {
 
   lazy val attestation: JsonNode =
-    new ObjectMapper(new CBORFactory()).readTree(attestationObject.toArray)
+    WebAuthnCodecs.cbor.readTree(attestationObject.toArray)
 
 }

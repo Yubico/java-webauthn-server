@@ -2,10 +2,9 @@ package com.yubico.webauthn.data
 
 import java.util.Optional
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.webauthn.util.BinaryUtil
+import com.yubico.webauthn.util.WebAuthnCodecs
 
 import scala.collection.JavaConverters
 
@@ -54,13 +53,11 @@ case class AuthenticatorData(
   val extensions: Optional[JsonNode] =
     com.yubico.scala.util.JavaConverters.asJavaOptional(optionalParts._2)
 
-  private def objectMapper: ObjectMapper = new ObjectMapper(new CBORFactory)
-
   private lazy val optionalParts: (Option[AttestationData], Option[JsonNode]) =
     if (flags.AT)
       parseAttestationData(authData drop FixedLengthPartEndIndex)
     else if (flags.ED)
-      (None, Some(objectMapper.readTree(authData.drop(FixedLengthPartEndIndex).toArray)))
+      (None, Some(WebAuthnCodecs.cbor.readTree(authData.drop(FixedLengthPartEndIndex).toArray)))
     else
       (None, None)
 
@@ -75,7 +72,7 @@ case class AuthenticatorData(
 
     val allRemainingCbor: List[JsonNode] = (
       for { item <- JavaConverters.asScalaIterator(
-                      objectMapper
+                      WebAuthnCodecs.cbor
                         .reader
                         .forType(classOf[JsonNode])
                         .readValues[JsonNode](optionalBytes.toArray)

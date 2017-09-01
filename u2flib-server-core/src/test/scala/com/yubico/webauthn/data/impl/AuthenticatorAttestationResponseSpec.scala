@@ -1,10 +1,7 @@
 package com.yubico.webauthn.data.impl
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.webauthn.data.ArrayBuffer
-import com.yubico.webauthn.data.HexString
 import com.yubico.webauthn.util.BinaryUtil
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
