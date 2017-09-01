@@ -7,12 +7,12 @@ sealed trait DocumentStatus
 case object WorkingDraft extends DocumentStatus
 
 /**
-  * Reference to a particular version of a specification document
+  * Reference to a particular version of a specification document.
   *
-  * @param url Address to this version of the specification
-  * @param latestVersionUrl Address to the latest version of this specification
-  * @param status An object indicating the status of the specification document
-  * @param releaseDate The release date of the specification document
+  * @param url Address to this version of the specification.
+  * @param latestVersionUrl Address to the latest version of this specification.
+  * @param status An object indicating the status of the specification document.
+  * @param releaseDate The release date of the specification document.
   */
 case class Specification(
   url: URL,
@@ -22,7 +22,7 @@ case class Specification(
 )
 
 /**
-  * Contains version information for the com.yubico.webauthn package
+  * Contains version information for the com.yubico.webauthn package.
   */
 object VersionInfo {
 
