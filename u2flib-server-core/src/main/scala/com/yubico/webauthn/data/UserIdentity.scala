@@ -3,6 +3,8 @@ package com.yubico.webauthn.data
 import java.net.URL
 import java.util.Optional
 
+import com.yubico.scala.util.JavaConverters._
+
 
 /**
   * Describes a user account, with which a public key credential is to be associated.
@@ -36,6 +38,6 @@ case class UserIdentity (
     *
     * For example, this could be the user's avatar.
     */
-  icon: Optional[URL],
+  icon: Optional[URL] = None.asJava,
 
 )

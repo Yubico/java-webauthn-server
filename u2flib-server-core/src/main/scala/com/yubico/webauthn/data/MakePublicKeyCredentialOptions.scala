@@ -2,6 +2,8 @@ package com.yubico.webauthn.data
 
 import java.util.Optional
 
+import com.yubico.scala.util.JavaConverters._
+
 
 case class MakePublicKeyCredentialOptions(
 
@@ -38,13 +40,13 @@ case class MakePublicKeyCredentialOptions(
     * created on an authenticator that also contains one of the credentials
     * enumerated in this parameter.
     */
-  excludeCredentials: Optional[Vector[PublicKeyCredentialDescriptor]],
+  excludeCredentials: Optional[Vector[PublicKeyCredentialDescriptor]] = None.asJava,
 
   /**
     * Intended for use by Relying Parties that wish to select the appropriate
     * authenticators to participate in the create() or get() operation.
     */
-  authenticatorSelection: Optional[AuthenticatorSelectionCriteria],
+  authenticatorSelection: Optional[AuthenticatorSelectionCriteria] = None.asJava,
 
   /**
     * Additional parameters requesting additional processing by the client and
@@ -57,5 +59,5 @@ case class MakePublicKeyCredentialOptions(
     * Identifier" registry  for an up-to-date list of registered WebAuthn
     * Extensions.
     */
-  extensions: Optional[AuthenticationExtensions],
+  extensions: Optional[AuthenticationExtensions] = None.asJava,
 )

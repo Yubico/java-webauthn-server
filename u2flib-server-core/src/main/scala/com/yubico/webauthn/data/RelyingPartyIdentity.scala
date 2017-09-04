@@ -3,6 +3,8 @@ package com.yubico.webauthn.data
 import java.net.URL
 import java.util.Optional
 
+import com.yubico.scala.util.JavaConverters._
+
 
 /**
   * Describes a Relying Party with which a public key credential is associated.
@@ -26,6 +28,6 @@ case class RelyingPartyIdentity (
     *
     * For example, this could be the RP's logo.
     */
-  icon: Optional[URL],
+  icon: Optional[URL] = None.asJava,
 
 )
