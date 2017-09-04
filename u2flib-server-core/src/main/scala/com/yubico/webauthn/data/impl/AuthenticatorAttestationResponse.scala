@@ -13,7 +13,4 @@ case class AuthenticatorAttestationResponse (
 ) extends com.yubico.webauthn.data.AuthenticatorAttestationResponse
   with JacksonAuthenticatorResponse {
 
-  lazy val attestation: JsonNode =
-    WebAuthnCodecs.cbor.readTree(attestationObject.toArray)
-
 }
