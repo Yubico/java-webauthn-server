@@ -3,7 +3,6 @@ package com.yubico.webauthn.data
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.scala.util.JavaConverters.asScalaOption
-import com.yubico.u2f.data.messages.key.util
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
 import org.junit.runner.RunWith
