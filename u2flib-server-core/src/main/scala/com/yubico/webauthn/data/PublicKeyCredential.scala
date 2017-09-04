@@ -1,6 +1,16 @@
 package com.yubico.webauthn.data
 
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+
+
 trait PublicKeyCredential[A <: AuthenticatorResponse] extends Credential {
+
+  /**
+    * This attribute is inherited from `Credential`, though PublicKeyCredential
+    * overrides `Credential`'s getter, instead returning the base64url encoding
+    * of the [[rawId]].
+    */
+  override val id: String = U2fB64Encoding.encode(rawId.toArray)
 
   /**
     * An identifier for the credential, chosen by the client.
@@ -32,5 +42,10 @@ trait PublicKeyCredential[A <: AuthenticatorResponse] extends Credential {
     * produced by the extension’s client extension processing.
     */
   val clientExtensionResults: AuthenticationExtensions
+
+  /**
+    * The PublicKeyCredential's type value is the string "public-key".
+    */
+  override val `type` = "public-key"
 
 }
