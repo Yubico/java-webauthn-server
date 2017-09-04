@@ -4,14 +4,14 @@ import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorResponse
 import com.yubico.webauthn.data.AuthenticationExtensions
 
-case class PublicKeyCredential(
+case class PublicKeyCredential[A <: AuthenticatorResponse] (
 
   override val id: String,
   override val rawId: ArrayBuffer,
-  override val response: AuthenticatorResponse,
+  override val response: A,
   override val clientExtensionResults: AuthenticationExtensions,
 
-) extends com.yubico.webauthn.data.PublicKeyCredential {
+) extends com.yubico.webauthn.data.PublicKeyCredential[A] {
 
   override val `type` = "public-key"
 

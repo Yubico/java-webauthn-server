@@ -1,7 +1,7 @@
 package com.yubico.webauthn.data
 
-trait PublicKeyCredential extends Credential {
+trait PublicKeyCredential[A <: AuthenticatorResponse] extends Credential {
   val rawId: ArrayBuffer
-  val response: AuthenticatorResponse
+  val response: A
   val clientExtensionResults: AuthenticationExtensions
 }
