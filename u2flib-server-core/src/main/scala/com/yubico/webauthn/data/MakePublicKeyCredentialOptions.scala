@@ -8,7 +8,7 @@ case class MakePublicKeyCredentialOptions(
   /**
     * Contains data about the Relying Party responsible for the request.
     */
-  rp: PublicKeyCredentialEntity,
+  rp: RelyingPartyIdentity,
 
   /**
     * Contains data about the user account for which the Relying Party is

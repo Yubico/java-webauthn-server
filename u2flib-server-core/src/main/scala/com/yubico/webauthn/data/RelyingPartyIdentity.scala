@@ -7,7 +7,7 @@ import java.util.Optional
 /**
   * Describes a Relying Party with which a public key credential is associated.
   */
-case class PublicKeyCredentialEntity(
+case class RelyingPartyIdentity (
 
   /**
     * The human-friendly name of the Relaying Party.
