@@ -7,7 +7,7 @@ import java.util.Optional
 /**
   * Describes a user account, with which a public key credential is to be associated.
   */
-case class PublicKeyCredentialUserEntity(
+case class UserIdentity (
 
   /**
     * A name for the user account.

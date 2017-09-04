@@ -14,7 +14,7 @@ case class MakePublicKeyCredentialOptions(
     * Contains data about the user account for which the Relying Party is
     * requesting attestation.
     */
-  user: PublicKeyCredentialUserEntity,
+  user: UserIdentity,
 
   /**
     * A challenge intended to be used for generating the newly created
