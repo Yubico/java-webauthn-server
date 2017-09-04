@@ -1,5 +1,6 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.WebAuthnCodecs
 
@@ -15,6 +16,8 @@ case class AttestationObject(
 
   def authenticatorData: AuthenticatorData =
     AuthenticatorData(Vector(U2fB64Encoding.decode(decoded.get("authData").asText) :_*))
+
+  def attestationStatement: JsonNode = decoded.get("attStmt")
 
   /**
     * The ''attestation statement format'' of this attestation object.
