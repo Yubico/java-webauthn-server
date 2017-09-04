@@ -15,7 +15,7 @@ import com.yubico.scala.util.JavaConverters._
   * define that mechanism.
   */
 object AuthenticatorTransport {
-  def apply(id: String): Optional[AuthenticatorTransport] = List(USB, NFC, BLE).find(_.id == id)
+  def apply(id: String): Optional[AuthenticatorTransport] = List(USB, NFC, BLE).find(_.id == id).asJava
 }
 
 sealed trait AuthenticatorTransport {

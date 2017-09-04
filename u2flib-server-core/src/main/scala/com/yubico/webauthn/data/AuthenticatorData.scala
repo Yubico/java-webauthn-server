@@ -3,10 +3,11 @@ package com.yubico.webauthn.data
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 
-import scala.collection.JavaConverters
+import scala.collection.JavaConverters._
 
 
 case class AuthenticatorData(
@@ -42,16 +43,14 @@ case class AuthenticatorData(
     *
     * See ''§5.3.1 Attestation data'' of [[com.yubico.webauthn.VersionInfo]] for details.
     */
-  val attestationData: Optional[AttestationData] =
-    com.yubico.scala.util.JavaConverters.asJavaOptional(optionalParts._1)
+  val attestationData: Optional[AttestationData] = optionalParts._1.asJava
 
   /**
     * Extension-defined authenticator data, if present.
     *
     * See ''§8 WebAuthn Extensions'' of [[com.yubico.webauthn.VersionInfo]] for details.
     */
-  val extensions: Optional[JsonNode] =
-    com.yubico.scala.util.JavaConverters.asJavaOptional(optionalParts._2)
+  val extensions: Optional[JsonNode] = optionalParts._2.asJava
 
   private lazy val optionalParts: (Option[AttestationData], Option[JsonNode]) =
     if (flags.AT)
@@ -71,12 +70,11 @@ case class AuthenticatorData(
     val optionalBytes: ArrayBuffer = bytes.drop(16 + 2 + L)
 
     val allRemainingCbor: List[JsonNode] = (
-      for { item <- JavaConverters.asScalaIterator(
-                      WebAuthnCodecs.cbor
-                        .reader
-                        .forType(classOf[JsonNode])
-                        .readValues[JsonNode](optionalBytes.toArray)
-                    )
+      for { item <- WebAuthnCodecs.cbor
+                      .reader
+                      .forType(classOf[JsonNode])
+                      .readValues[JsonNode](optionalBytes.toArray)
+                      .asScala
       } yield item
     ).toList
 

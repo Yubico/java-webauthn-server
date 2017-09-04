@@ -17,7 +17,7 @@ import com.yubico.scala.util.JavaConverters._
   */
 object PublicKeyCredentialType {
 
-  def apply(id: String): Optional[PublicKeyCredentialType] = List(PublicKey).find(_.id == id)
+  def apply(id: String): Optional[PublicKeyCredentialType] = List(PublicKey).find(_.id == id).asJava
 
 }
 

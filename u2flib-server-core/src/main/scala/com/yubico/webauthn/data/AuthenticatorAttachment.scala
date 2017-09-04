@@ -31,7 +31,7 @@ import com.yubico.scala.util.JavaConverters._
   * originally registered with the Relying Party using a different client.
   */
 object AuthenticatorAttachment {
-  def apply(id: String): Optional[AuthenticatorAttachment] = List(Platform, CrossPlatform).find(_.id == id)
+  def apply(id: String): Optional[AuthenticatorAttachment] = List(Platform, CrossPlatform).find(_.id == id).asJava
 }
 
 sealed trait AuthenticatorAttachment {
