@@ -3,7 +3,7 @@ package com.yubico.webauthn.data
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
-trait PublicKeyCredential[A <: AuthenticatorResponse] extends Credential {
+trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
 
   /**
     * This attribute is inherited from `Credential`, though PublicKeyCredential

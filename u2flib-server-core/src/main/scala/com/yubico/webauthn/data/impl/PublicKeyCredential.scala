@@ -4,7 +4,7 @@ import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorResponse
 import com.yubico.webauthn.data.AuthenticationExtensions
 
-case class PublicKeyCredential[A <: AuthenticatorResponse] (
+case class PublicKeyCredential[+A <: AuthenticatorResponse] (
 
   override val rawId: ArrayBuffer,
   override val response: A,
