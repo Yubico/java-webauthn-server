@@ -1,5 +1,6 @@
 package com.yubico.webauthn
 
-class RpOperations {
+
+class RelyingParty {
 
 }

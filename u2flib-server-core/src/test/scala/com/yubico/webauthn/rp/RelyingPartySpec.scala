@@ -7,7 +7,7 @@ import org.scalatest.junit.JUnitRunner
 
 
 @RunWith(classOf[JUnitRunner])
-class RpOperationsSpec extends FunSpec with Matchers {
+class RelyingPartySpec extends FunSpec with Matchers {
 
   describe("§6. Relying Party Operations") {
 
