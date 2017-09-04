@@ -32,14 +32,6 @@ case class MakePublicKeyCredentialOptions(
   pubKeyCredParams: Vector[PublicKeyCredentialParameters],
 
   /**
-    * A time, in milliseconds, that the caller is willing to wait for the call
-    * to complete.
-    *
-    * This is treated as a hint, and may be overridden by the client.
-    */
-  timeout: Optional[Long],
-
-  /**
     * Intended for use by Relying Parties that wish to limit the creation of
     * multiple credentials for the same account on a single authenticator. The
     * client is requested to return an error if the new credential would be
