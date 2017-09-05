@@ -140,7 +140,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
             step4.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fils if attestation specifies token binding ID but caller does not.") {
+          it("Verification fails if attestation specifies token binding ID but caller does not.") {
             val steps = finishRegistration(???)
             val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
@@ -149,7 +149,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
             step4.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fils if attestation and caller specify different token binding IDs.") {
+          it("Verification fails if attestation and caller specify different token binding IDs.") {
             val steps = finishRegistration(???, callerTokenBindingId = Some(tokenB))
             val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
