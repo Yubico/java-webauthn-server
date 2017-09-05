@@ -1,7 +1,8 @@
 package com.yubico.webauthn.rp
 
+import java.security.MessageDigest
+
 import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
@@ -26,7 +27,6 @@ import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
 
-import scala.collection.JavaConverters._
 import scala.util.Failure
 import scala.util.Success
 
@@ -42,7 +42,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
       val challengeBase64 = "s1lKsm0KoJpzXM2YsHpOLQ"
       val attestationObject: ArrayBuffer = BinaryUtil.fromHex("a368617574684461746159012c49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976341000000000000000000000000000000000000000000a20008a6c78eaa5777597eca3d84575e107e1866a865062c49fb73f462d5a5d6ca39165024be6b611c2a19ca865ccfa01cc12c9944233389cd8229daba3f0c41383f18e745f248ca7fb54f47802e42125f136c1d22615d64ccb9c8cdbdc70fed396a4db693300d608ce878951852e7a9e0cb4fdee93ec9d5901512181c4a6999fafe775afd0813c5bb5f151c8d1bde2a90dd88df9b2d5a60ec51b477fdf0748c7bc00ca363616c6765455332353661785820399b6270c8ba53708a4806b08f48f1b790f3b3c990fcdf108a89651eaf0aefa561795820e448eab4cce5a8dabf73a37a6bea31e4e796ca545b93443c72fbfc09417e522f63666d74686669646f2d7532666761747453746d74a26378356381590135308201313081d8a00302010202045aeaf239300a06082a8648ce3d0403023021311f301d0603550403131646697265666f782055324620536f667420546f6b656e301e170d3137303930333135333430345a170d3137303930353135333430345a3021311f301d0603550403131646697265666f782055324620536f667420546f6b656e3059301306072a8648ce3d020106082a8648ce3d030107034200045e8336fc54facfab94778b7a904a1d5083782875c147844c5ae3fbd69e882a9368579b9a5bb51db981aab66e8267c914a100cd3b05794c206bb95aca5543691c300a06082a8648ce3d040302034800304502210082a6d219be7d0b0c61f68acef9e7045bdd05ec70a16d93e411ff462068df5b9d0220487de014bad0633185c29ac3110563e40cec02c2225bed51ffb56bda75bd08bb6373696758473045022100cbb9597de6317b8da61811c8fe6ea94c2f40afe1acba217656c8d7872f159c3b022029e484160cce0a6f7faf3d9ed0fc3c9aff9fd237acb4adb1b3bcf8c2057bd1b6").get
       val requestedExtensions: AuthenticationExtensions = jsonFactory.objectNode()
-      val clientDataJson: String = s"""{"challenge":"${challengeBase64}","hashAlg":"SHA-256","origin":"localhost"}"""
+      val clientDataJson: String = s"""{"challenge":"${challengeBase64}","hashAlgorithm":"SHA-256","origin":"localhost"}"""
       val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
       val clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode()
       val credentialId: ArrayBuffer = BinaryUtil.fromHex("00085b9bfacca2df2ad6efef962dd05190249b429cc35091785bd6f80e68cb2fee69a5c0796c2c20ca8e634a521481995cc6c6989d4f91f43151392bcaa486d8072e399094e9d2e14a7065a79b8f4bc9610043ab0bd3383c9c041a460c741db5b36e5c85e9727ee8b1803f335666abee049af72ee1bc18a9ee782404ad31f59eb332db488a2a779a3b4a17798cb1b4790e92edc99cde9edbb617e35f6135c7026ca5").get
@@ -217,8 +217,34 @@ class RelyingPartySpec extends FunSpec with Matchers {
           }
         }
 
-        it("6. Compute the hash of clientDataJSON using the algorithm identified by C.hashAlgorithm.") {
-          fail("Not implemented.")
+        describe("6. Compute the hash of clientDataJSON using the algorithm identified by C.hashAlgorithm.") {
+          it("SHA-256 is allowed.") {
+            val steps = finishRegistration()
+            val step6: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+            step6.validations shouldBe a [Success[_]]
+            step6.next shouldBe a [Success[_]]
+            step6.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
+          }
+
+          def checkForbidden(algorithm: String): Unit = {
+            it(s"${algorithm} is forbidden.") {
+              val steps = finishRegistration(
+                clientDataJsonBytes =
+                  WebAuthnCodecs.json.writeValueAsBytes(
+                    WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                      .set("hashAlgorithm", jsonFactory.textNode(algorithm))
+                  ).toVector,
+              )
+              val step6: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+              step6.validations shouldBe a [Failure[_]]
+              step6.validations.failed.get shouldBe an [AssertionError]
+              step6.next shouldBe a [Failure[_]]
+            }
+          }
+          checkForbidden("MD5")
+          checkForbidden("SHA1")
         }
 
         it("7. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {

@@ -124,8 +124,21 @@ case class FinishRegistrationSteps(
     override def nextStep = Step6()
   }
 
-  case class Step6 private () extends Step[Step7] { override def nextStep = Step7() }
-  case class Step7 private () extends Step[Step8] { override def nextStep = Step8() }
+  case class Step6 private () extends Step[Step7] {
+    val supportedHashAlgorithms: List[String] = List("SHA-256")
+
+    override def validate() {
+      val hashAlgorithm: String = response.response.collectedClientData.hashAlgorithm.toLowerCase
+      assert(
+        supportedHashAlgorithms map { _.toLowerCase } contains hashAlgorithm,
+        s"Forbidden hash algorithm: ${hashAlgorithm}"
+      )
+    }
+    override def nextStep = Step7(clientDataJsonHash)
+
+    def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
+  }
+  case class Step7 private (clientDataJsonHash: ArrayBuffer) extends Step[Step8] { override def nextStep = Step8() }
 
   case class Step8 private () extends Step[Step9] {
     override def validate() {
