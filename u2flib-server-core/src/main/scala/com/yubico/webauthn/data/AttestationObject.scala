@@ -15,7 +15,7 @@ case class AttestationObject(
     WebAuthnCodecs.cbor.readTree(attestationObject.toArray)
 
   def authenticatorData: AuthenticatorData =
-    AuthenticatorData(Vector(U2fB64Encoding.decode(decoded.get("authData").asText) :_*))
+    AuthenticatorData(U2fB64Encoding.decode(decoded.get("authData").asText).toVector)
 
   def attestationStatement: JsonNode = decoded.get("attStmt")
 

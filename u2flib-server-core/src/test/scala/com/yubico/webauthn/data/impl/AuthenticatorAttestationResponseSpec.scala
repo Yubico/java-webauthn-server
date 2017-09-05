@@ -22,7 +22,7 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
       val hashAlgorithm = "SHA-256"
       val origin = "localhost"
       val tokenBindingId = "IgqNmDkOp68Edjd8-uwxmh"
-      val exampleJson: ArrayBuffer = Vector(s"""{"authenticatorExtensions":{"boo":"${booExtension}"},"challenge":"${challenge}","clientExtensions":{"foo":"${fooExtension}"},"hashAlgorithm":"${hashAlgorithm}","origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8") :_*)
+      val exampleJson: ArrayBuffer = s"""{"authenticatorExtensions":{"boo":"${booExtension}"},"challenge":"${challenge}","clientExtensions":{"foo":"${fooExtension}"},"hashAlgorithm":"${hashAlgorithm}","origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8").toVector
 
       it("can be parsed as JSON.") {
         val clientData: JsonNode = AuthenticatorAttestationResponse(null, exampleJson).clientData
@@ -64,7 +64,7 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
 
     describe("can compute the hash of its clientDataJSON if the named hashAlgorithm is") {
       def response(hashAlgorithm: String): AuthenticatorAttestationResponse = {
-        val exampleJson: ArrayBuffer = Vector(s"""{"challenge":"HfpNmDkOp66Edjd5-uvwlg","hashAlgorithm":"${hashAlgorithm}","origin":"localhost"}""".getBytes("UTF-8"): _*)
+        val exampleJson: ArrayBuffer = s"""{"challenge":"HfpNmDkOp66Edjd5-uvwlg","hashAlgorithm":"${hashAlgorithm}","origin":"localhost"}""".getBytes("UTF-8").toVector
         AuthenticatorAttestationResponse(null, exampleJson)
       }
 
