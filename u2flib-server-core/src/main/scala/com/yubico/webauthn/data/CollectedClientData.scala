@@ -44,6 +44,6 @@ case class CollectedClientData(
     * The URL-safe Base64 encoded TLS token binding ID the client has negotiated with the RP.
     */
   def tokenBindingId: Optional[Base64UrlString] =
-    Optional.ofNullable(clientData.get("tokenBindingId").asText)
+    Optional.ofNullable(clientData.get("tokenBindingId")).map(_.asText)
 
 }
