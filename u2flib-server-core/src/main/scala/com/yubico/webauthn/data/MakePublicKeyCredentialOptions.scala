@@ -31,7 +31,7 @@ case class MakePublicKeyCredentialOptions(
     * client will make a best-effort to create the most preferred credential
     * that it can.
     */
-  pubKeyCredParams: Vector[PublicKeyCredentialParameters],
+  pubKeyCredParams: Seq[PublicKeyCredentialParameters],
 
   /**
     * Intended for use by Relying Parties that wish to limit the creation of
@@ -40,7 +40,7 @@ case class MakePublicKeyCredentialOptions(
     * created on an authenticator that also contains one of the credentials
     * enumerated in this parameter.
     */
-  excludeCredentials: Optional[Vector[PublicKeyCredentialDescriptor]] = None.asJava,
+  excludeCredentials: Optional[Seq[PublicKeyCredentialDescriptor]] = None.asJava,
 
   /**
     * Intended for use by Relying Parties that wish to select the appropriate
