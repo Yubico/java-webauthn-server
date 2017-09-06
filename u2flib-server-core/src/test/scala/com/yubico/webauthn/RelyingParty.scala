@@ -148,7 +148,7 @@ case class FinishRegistrationSteps(
   case class Step8 private (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step9] {
     override def validate() {
       assert(
-        response.response.attestation.authenticatorData.rpIdHash == crypto.hash(rp.id),
+        response.response.attestation.authenticatorData.rpIdHash == crypto.hash(rp.id).toVector,
         "Wrong RP ID hash."
       )
     }

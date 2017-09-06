@@ -258,8 +258,23 @@ class RelyingPartySpec extends FunSpec with Matchers {
           step7.attestation.attestationStatement should not be null
         }
 
-        it("8. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
-          fail("Not implemented.")
+        describe("8. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
+          it("Fails if RP ID is different.") {
+            val steps = finishRegistration(rpId = Defaults.rpId.copy(id = "root.evil"))
+            val step8: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step8.validations shouldBe a [Failure[_]]
+            step8.validations.failed.get shouldBe an [AssertionError]
+            step8.next shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if RP ID is the same.") {
+            val steps = finishRegistration()
+            val step8: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step8.validations shouldBe a [Success[_]]
+            step8.next shouldBe a [Success[_]]
+          }
         }
 
         it("9. Determine the attestation statement format by performing an USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
