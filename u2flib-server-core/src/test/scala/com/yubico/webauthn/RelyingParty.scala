@@ -37,8 +37,8 @@ sealed trait Step[A <: Step[_]] {
   protected def result: Option[PublicKeyCredentialDescriptor] = None
   protected def validate(): Unit = {}
 
-  private[webauthn] def next: Try[A] = Try { validations } map { _ => nextStep }
-  private[webauthn] def validations: Try[Unit] = Try { validate }
+  private[webauthn] def next: Try[A] = validations map { _ => nextStep }
+  private[webauthn] def validations: Try[Unit] = Try { validate() }
 
   def run: Try[PublicKeyCredentialDescriptor] =
     if (isFinished) Try(result.get)
