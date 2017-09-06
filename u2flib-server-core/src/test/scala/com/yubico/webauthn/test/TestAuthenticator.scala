@@ -1,10 +1,29 @@
 package com.yubico.webauthn.test
 
+import java.math.BigInteger
 import java.security.MessageDigest
+import java.security.KeyFactory
+import java.security.KeyPairGenerator
+import java.security.SecureRandom
+import java.security.KeyPair
+import java.security.PublicKey
+import java.security.Signature
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
+import java.security.spec.ECPublicKeySpec
+import java.security.spec.ECPoint
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.Instant
+import java.util.Date
+import javax.security.auth.x500.X500Principal
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.yubico.u2f.crypto.BouncyCastleCrypto
+import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.data
 import com.yubico.webauthn.util
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -12,11 +31,25 @@ import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
+import org.bouncycastle.asn1.x500.X500NameBuilder
+import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier
+import org.bouncycastle.cert.X509v3CertificateBuilder
+import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory
+import org.bouncycastle.jce.ECNamedCurveTable
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jce.spec.ECNamedCurveSpec
+import org.bouncycastle.operator.ContentSigner
+import org.bouncycastle.operator.bc.BcECContentSignerBuilder
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
 
 object TestAuthenticator {
 
+  private val BcProvider = new BouncyCastleProvider()
   private val DefaultRpId = "localhost"
 
   private def toBytes(s: String): Vector[Byte] = s.getBytes("UTF-8").toVector
@@ -118,5 +151,34 @@ object TestAuthenticator {
     )
   }
 
+  def generateEcKeypair(): KeyPair = {
+    val factory = KeyFactory.getInstance("ECDSA", BcProvider)
+    val ecSpec  = ECNamedCurveTable.getParameterSpec("P-256")
+    val g: KeyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
+    g.initialize(ecSpec, new SecureRandom())
+
+    g.generateKeyPair()
+  }
+
+  def generateAttestationCertificate(): (X509Certificate, PrivateKey) = {
+    val name = new X500Name("CN=Yubico WebAuthn unit tests")
+    val keypair: KeyPair = generateEcKeypair()
+
+    (
+      CertificateParser.parseDer(
+        new X509v3CertificateBuilder(
+          name,
+          new BigInteger("1337"),
+          Date.from(Instant.parse("2018-09-06T17:42:00Z")),
+          Date.from(Instant.parse("2018-09-06T17:42:00Z")),
+          name,
+          SubjectPublicKeyInfo.getInstance(keypair.getPublic.getEncoded)
+        )
+        .build(new JcaContentSignerBuilder("SHA256withECDSA").build(keypair.getPrivate))
+        .getEncoded
+      ),
+      keypair.getPrivate
+    )
+  }
 
 }
