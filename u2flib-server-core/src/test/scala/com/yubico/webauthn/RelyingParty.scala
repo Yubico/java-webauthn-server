@@ -152,10 +152,18 @@ case class FinishRegistrationSteps(
         "Wrong RP ID hash."
       )
     }
-    override def nextStep = Step9()
+    override def nextStep = Step9(clientDataJsonHash, attestation)
   }
 
-  case class Step9 private () extends Step[Step10] { override def nextStep = Step10() }
+  case class Step9 private (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step10] {
+    override def validate(): Unit = {
+      assert(formatSupported, s"Unsupported attestation statement format: ${format}")
+    }
+    override def nextStep = Step10()
+
+    def format: String = attestation.format
+    def formatSupported: Boolean = format == "fido-u2f"
+  }
 
   case class Step10 private () extends Step[Step11] {
     override def validate() {

@@ -53,6 +53,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
 
     def finishRegistration(
       allowSelfAttestation: Boolean = false,
+      attestationObject: ArrayBuffer = Defaults.attestationObject,
       authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
       callerTokenBindingId: Option[String] = None,
       challenge: ArrayBuffer = U2fB64Encoding.decode(Defaults.challengeBase64).toVector,
@@ -73,7 +74,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
 
       val response = PublicKeyCredential(
         Defaults.credentialId,
-        AuthenticatorAttestationResponse(Defaults.attestationObject, clientDataJsonBytes),
+        AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
         clientExtensionResults,
       )
 
@@ -277,8 +278,49 @@ class RelyingPartySpec extends FunSpec with Matchers {
           }
         }
 
-        it("9. Determine the attestation statement format by performing an USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
-          fail("Not implemented.")
+        describe("9. Determine the attestation statement format by performing an USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
+          def setup(format: String): FinishRegistrationSteps = {
+            val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
+              WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray)
+                .asInstanceOf[ObjectNode]
+                .set("fmt", jsonFactory.textNode(format))
+            ).toVector
+
+            finishRegistration(attestationObject = attestationObject)
+          }
+
+          def checkFailure(format: String): Unit = {
+            it(s"""Fails if fmt is "${format}".""") {
+              val steps = setup(format)
+              val step9: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+              step9.validations shouldBe a [Failure[_]]
+              step9.validations.failed.get shouldBe an [AssertionError]
+              step9.next shouldBe a [Failure[_]]
+            }
+          }
+
+          def checkSuccess(format: String): Unit = {
+            it(s"""Succeeds if fmt is "${format}".""") {
+              val steps = setup(format)
+              val step9: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+              step9.validations shouldBe a [Success[_]]
+              step9.next shouldBe a [Success[_]]
+              step9.format should equal (format)
+              step9.formatSupported should be(true)
+            }
+          }
+
+          checkSuccess("android-key")
+          checkSuccess("android-safetynet")
+          checkSuccess("fido-u2f")
+          checkSuccess("packed")
+          checkSuccess("tpm")
+
+          checkFailure("FIDO-U2F")
+          checkFailure("Fido-U2F")
+          checkFailure("bleurgh")
         }
 
         it("10. Verify that attStmt is a correct, validly-signed attestation statement, using the attestation statement format fmt’s verification procedure given authenticator data authData and the hash of the serialized client data computed in step 6.") {
