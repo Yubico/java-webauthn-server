@@ -75,8 +75,9 @@ subprojects {
 
   dependencies {
 
+    compileOnly 'org.projectlombok:lombok:1.16.18'
+
     compile(
-      [group: 'org.projectlombok', name: 'lombok', version:'1.16.18'],
       'org.slf4j:slf4j-api:1.7.25',
     )
 
