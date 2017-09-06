@@ -4,21 +4,33 @@ image:https://travis-ci.org/Yubico/java-u2flib-server.svg?branch=master["Build S
 image:https://coveralls.io/repos/github/Yubico/java-u2flib-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-u2flib-server"]
 
 Server-side https://developers.yubico.com/U2F[U2F] library for Java. Provides functionality for registering
-U2F devices and authenticate with said devices.
+U2F devices and authenticating with said devices.
 
 === Dependency
+
+Maven:
 [source, xml]
  <dependency>
    <groupId>com.yubico</groupId>
    <artifactId>u2flib-server-core</artifactId>
-   <version>0.16.0</version>
+   <version>0.18.1</version>
  </dependency>
+
+Gradle:
+[source, groovy]
+ repositories{ mavenCentral() }
+ dependencies {
+   compile 'com.yubico:u2flib-server-core:0.18.1'
+ }
 
 === Example Usage
 NOTE: Make sure that you have read https://developers.yubico.com/U2F/Libraries/Using_a_library.html[Using a U2F library] before continuing.
 
 [source, java]
 ----
+
+private abstract Iterable<DeviceRegistration> getRegistrations(String username);
+
 @GET
 public View startAuthentication(String username) throws NoEligibleDevicesException {
 
@@ -50,7 +62,7 @@ public String finishAuthentication(SignResponse response, String username) throw
 }
 ----
 
-In the above example `getRegistrations()` returns the U2F devices currently associated with a given user.
+In the above example `getRegistrations()` will return the U2F devices currently associated with a given user.
 This is most likely stored in a database. 
 See link:u2flib-server-demo[`u2flib-server-demo`] for a complete demo server (including registration and storage of U2F devices).
 
@@ -62,5 +74,5 @@ JavaDoc can be found at https://developers.yubico.com/java-u2flib-server[develop
 The attestation module (`u2flib-server-attestation`) enables you to restrict registrations to certain U2F devices (e.g. devices made by a specific vendor). It can also provide metadata for devices.
 
 === Serialization
-All relevant classes implements `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
+All relevant classes implement `Serializable`, so instead of using `toJson()`, you can use Java's built in serialization mechanism.
 Internally the classes use Jackson to serialize to and from JSON, and the ObjectMapper from Jackson can be used.

@@ -33,6 +33,7 @@ allprojects  {
     signing {
       sign configurations.archives
     }
+    signArchives.dependsOn check
   }
 
   task wrapper(type: Wrapper) {
@@ -40,7 +41,7 @@ allprojects  {
   }
 
   group = 'com.yubico'
-  version = '0.18.0'
+  version = '0.18.1'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
@@ -55,6 +56,8 @@ allprojects  {
     maven { url "http://repo.maven.apache.org/maven2" }
   }
 }
+
+evaluationDependsOnChildren()
 
 subprojects {
   task packageSources(type: Jar) {
@@ -72,8 +75,9 @@ subprojects {
 
   dependencies {
 
+    compileOnly 'org.projectlombok:lombok:1.16.18'
+
     compile(
-      [group: 'org.projectlombok', name: 'lombok', version:'1.16.18'],
       'org.slf4j:slf4j-api:1.7.25',
     )
 
@@ -100,6 +104,39 @@ subprojects {
 
           snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
             authentication(userName: ossrhUsername, password: ossrhPassword)
+          }
+
+          pom.project {
+            name project.description
+            description 'Java server-side library for U2F'
+            url 'https://developers.yubico.com/'
+
+            developers {
+              developer {
+                id 'dain'
+                name 'Dain Nilsson'
+                email 'dain@yubico.com'
+              }
+              developer {
+                id 'emil'
+                name 'Emil Lundberg'
+                email 'emil@yubico.com'
+              }
+            }
+
+            licenses {
+              license {
+                name 'BSD-license'
+                comments 'Revised 2-clause BSD license'
+              }
+            }
+
+            scm {
+              url 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
+              connection 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
+              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-u2flib-server.git'
+              tag 'HEAD'
+            }
           }
         }
       }

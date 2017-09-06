@@ -6,20 +6,16 @@ class.
 === 1. Clone
  git clone https://github.com/Yubico/java-u2flib-server.git
 
-=== 2. Compile
-Go to the demo server directory:
- 
- cd java-u2flib-server/u2flib-server-demo
+=== 2. Run
+ ./gradlew run
 
-Compile using `mvn clean install` and then run using
-`java -jar target/u2flib-server-demo.jar server config.yml`.
-
-=== 3. Run
-Then point a U2F-compatible web browser (e.g. Chrome) to
-link:https://localhost:8443/assets/registerIndex.html[https://localhost:8443/assets/registerIndex.html].
+=== 3. Try it out
+Then point a
+https://www.yubico.com/support/knowledge-base/categories/articles/browsers-support-u2f/[U2F compatible web browser]
+to link:https://localhost:8443/assets/registerIndex.html[https://localhost:8443/assets/registerIndex.html].
 
 NOTE: Since U2F requires a HTTPS connection, this demo server uses a dummy certificate.
-This will cause Chrome to show a warning, which it is safe to bypass.
+This will cause your browser to show a warning, which it is safe to bypass.
 
 === Troubleshooting
 [qanda]
