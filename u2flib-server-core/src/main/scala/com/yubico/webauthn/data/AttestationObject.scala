@@ -14,8 +14,13 @@ case class AttestationObject(
   private val decoded =
     WebAuthnCodecs.cbor.readTree(attestationObject.toArray)
 
-  def authenticatorData: AuthenticatorData =
-    AuthenticatorData(U2fB64Encoding.decode(decoded.get("authData").asText).toVector)
+  def authenticatorData: AuthenticatorData = {
+    val authData = decoded.get("authData")
+    if (authData.isBinary)
+      AuthenticatorData(authData.binaryValue.toVector)
+    else
+      AuthenticatorData(U2fB64Encoding.decode(authData.textValue).toVector)
+  }
 
   def attestationStatement: JsonNode = decoded.get("attStmt")
 

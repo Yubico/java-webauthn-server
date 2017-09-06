@@ -25,6 +25,7 @@ import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.PublicKeyCredentialType
 import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.AuthenticatorData
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -138,9 +139,13 @@ case class FinishRegistrationSteps(
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
   }
-  case class Step7 private (clientDataJsonHash: ArrayBuffer) extends Step[Step8] { override def nextStep = Step8() }
+  case class Step7 private (clientDataJsonHash: ArrayBuffer) extends Step[Step8] {
+    override def nextStep = Step8(clientDataJsonHash, attestation)
 
-  case class Step8 private () extends Step[Step9] {
+    def attestation: AttestationObject = response.response.attestation
+  }
+
+  case class Step8 private (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step9] {
     override def validate() {
       assert(
         response.response.attestation.authenticatorData.rpIdHash == crypto.hash(rp.id),

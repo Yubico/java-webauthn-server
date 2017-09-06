@@ -248,7 +248,14 @@ class RelyingPartySpec extends FunSpec with Matchers {
         }
 
         it("7. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
-          fail("Not implemented.")
+          val steps = finishRegistration()
+          val step7: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step7.validations shouldBe a [Success[_]]
+          step7.next shouldBe a [Success[_]]
+          step7.attestation.format should equal ("fido-u2f")
+          step7.attestation.authenticatorData should not be null
+          step7.attestation.attestationStatement should not be null
         }
 
         it("8. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
