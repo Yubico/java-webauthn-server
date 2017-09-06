@@ -35,7 +35,7 @@ sealed trait Step[A <: Step[_]] {
   protected def isFinished: Boolean = false
   protected def nextStep: A
   protected def result: Option[PublicKeyCredentialDescriptor] = None
-  protected def validate(): Unit = {}
+  protected def validate(): Unit
 
   private[webauthn] def next: Try[A] = validations map { _ => nextStep }
   private[webauthn] def validations: Try[Unit] = Try { validate() }
@@ -140,6 +140,9 @@ case class FinishRegistrationSteps(
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
   }
   case class Step7 private (clientDataJsonHash: ArrayBuffer) extends Step[Step8] {
+    override def validate() {
+      assert(attestation != null, "Malformed attestation object.")
+    }
     override def nextStep = Step8(clientDataJsonHash, attestation)
 
     def attestation: AttestationObject = response.response.attestation
@@ -184,12 +187,14 @@ case class FinishRegistrationSteps(
   }
 
   case class Step12 private () extends Step[Step13] {
+    override def validate() { ??? }
     override def nextStep = Step13(verifyAttestationTrustworthiness())
 
     def verifyAttestationTrustworthiness(): Boolean = ???
   }
 
   case class Step13 private (attestationSignatureTrusted: Boolean) extends Step[Step14] {
+    override def validate() { ??? }
     override def nextStep = Step14(attestationSignatureTrusted)
   }
 
@@ -211,6 +216,7 @@ case class FinishRegistrationSteps(
   }
 
   case class Finished private () extends Step[Finished] {
+    override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
 
