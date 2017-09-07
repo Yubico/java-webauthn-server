@@ -1,6 +1,7 @@
 package com.yubico.webauthn.rp
 
 import java.security.MessageDigest
+import java.security.KeyPair
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -18,7 +19,6 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKey
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.CollectedClientData
@@ -35,6 +35,7 @@ import org.scalatest.junit.JUnitRunner
 
 import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 
 
 @RunWith(classOf[JUnitRunner])
@@ -437,8 +438,72 @@ class RelyingPartySpec extends FunSpec with Matchers {
               step10.next shouldBe a [Failure[_]]
             }
 
-            it("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
-              fail("Test not implemented.")
+            describe("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
+              val testAuthenticator = new TestAuthenticator()
+
+              def checkRejected(keypair: KeyPair): Unit = {
+                val credential = testAuthenticator.createCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+
+                val steps = finishRegistration(
+                  attestationObject = credential.response.attestationObject,
+                  credentialId = Some(credential.rawId),
+                  clientDataJsonBytes = credential.response.clientDataJSON,
+                )
+                val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                val standaloneVerification = Try {
+                  FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
+                    credential.response.attestation,
+                    new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector,
+                  )
+                }
+
+                step10.validations shouldBe a [Failure[_]]
+                step10.validations.failed.get shouldBe an [AssertionError]
+                step10.next shouldBe a [Failure[_]]
+
+                standaloneVerification shouldBe a [Failure[_]]
+                standaloneVerification.failed.get shouldBe an [AssertionError]
+              }
+
+              def checkAccepted(keypair: KeyPair): Unit = {
+                val credential = testAuthenticator.createCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+
+                val steps = finishRegistration(
+                  attestationObject = credential.response.attestationObject,
+                  credentialId = Some(credential.rawId),
+                  clientDataJsonBytes = credential.response.clientDataJSON,
+                )
+                val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                val standaloneVerification = Try {
+                  FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
+                    credential.response.attestation,
+                    new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector,
+                  )
+                }
+
+                step10.validations shouldBe a [Success[_]]
+                step10.next shouldBe a [Success[_]]
+
+                standaloneVerification should equal (Success(true))
+              }
+
+              it("An RSA attestation certificate is rejected.") {
+                checkRejected(testAuthenticator.generateRsaKeypair())
+              }
+
+              it("A secp256r1 attestation certificate is accepted.") {
+                checkAccepted(testAuthenticator.generateEcKeypair(curve = "secp256r1"))
+              }
+
+              it("A secp256k1 attestation certificate is rejected.") {
+                checkRejected(testAuthenticator.generateEcKeypair(curve = "secp256k1"))
+              }
+
+              it("A P-256 attestation certificate is accepted.") {
+                checkAccepted(testAuthenticator.generateEcKeypair(curve = "P-256"))
+              }
             }
           }
 

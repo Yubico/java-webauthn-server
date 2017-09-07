@@ -91,6 +91,7 @@ class TestAuthenticator (
     """.stripMargin
 
   def createCredential(
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     authenticatorExtensions: Option[JsonNode] = None,
     challenge: ArrayBuffer = Vector[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91),
     clientData: Option[JsonNode] = None,
@@ -131,14 +132,14 @@ class TestAuthenticator (
     val authDataBytes: ArrayBuffer = makeAuthDataBytes(
       rpId = DefaultRpId,
       attestationDataBytes = Some(makeAttestationDataBytes(
-        ecPublicKeyToCose(generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]),
+        publicKeyCose = ecPublicKeyToCose(generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]),
         rpId = DefaultRpId,
       ))
     )
 
     val attestationObjectBytes = makeAttestationObjectBytes(
       authDataBytes,
-      clientDataJson,
+      makeU2fAttestationStatement(authDataBytes, clientDataJson, attestationCertAndKey),
     )
 
     val response = data.impl.AuthenticatorAttestationResponse(
@@ -161,20 +162,24 @@ class TestAuthenticator (
     ).asJava)
   }
 
-  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, clientDataJson: String): ArrayBuffer = {
+  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, attStmt: JsonNode): ArrayBuffer = {
     val format = "fido-u2f"
     val f = JsonNodeFactory.instance
     val attObj = f.objectNode().setAll(Map(
       "authData" -> f.binaryNode(authDataBytes.toArray),
       "fmt" -> f.textNode(format),
-      "attStmt" -> makeU2fAttestationStatement(authDataBytes, clientDataJson),
+      "attStmt" -> attStmt,
     ).asJava)
 
     WebAuthnCodecs.cbor.writeValueAsBytes(attObj).toVector
   }
 
-  def makeU2fAttestationStatement(authDataBytes: ArrayBuffer, clientDataJson: String): JsonNode = {
-    val (cert, key) = generateAttestationCertificate()
+  def makeU2fAttestationStatement(
+    authDataBytes: ArrayBuffer,
+    clientDataJson: String,
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+  ): JsonNode = {
+    val (cert, key) = attestationCertAndKey getOrElse generateAttestationCertificate()
     val authData = AuthenticatorData(authDataBytes)
     val signedData = makeU2fSignedData(
       authData.rpIdHash,
@@ -244,14 +249,14 @@ class TestAuthenticator (
     sign(authenticatorData ++ clientDataHash, key)
 
   def sign(data: ArrayBuffer, key: PrivateKey): ArrayBuffer = {
-    val sig = Signature.getInstance("SHA256withECDSA", javaCryptoProvider)
+    val sig = Signature.getInstance("SHA256with" + key.getAlgorithm, javaCryptoProvider)
     sig.initSign(key)
     sig.update(data.toArray)
     sig.sign().toVector
   }
 
-  def generateEcKeypair(): KeyPair = {
-    val ecSpec  = ECNamedCurveTable.getParameterSpec("P-256")
+  def generateEcKeypair(curve: String = "P-256"): KeyPair = {
+    val ecSpec  = ECNamedCurveTable.getParameterSpec(curve)
     val g: KeyPairGenerator = KeyPairGenerator.getInstance("ECDSA", javaCryptoProvider)
     g.initialize(ecSpec, new SecureRandom())
 
@@ -301,9 +306,8 @@ class TestAuthenticator (
     verifySignature(pubKey, signedDataBytes, signatureBytes)
   }
 
-  def generateAttestationCertificate(): (X509Certificate, PrivateKey) = {
+  def generateAttestationCertificate(keypair: KeyPair = generateEcKeypair()): (X509Certificate, PrivateKey) = {
     val name = new X500Name("CN=Yubico WebAuthn unit tests")
-    val keypair: KeyPair = generateEcKeypair()
 
     (
       CertificateParser.parseDer(
@@ -315,11 +319,14 @@ class TestAuthenticator (
           name,
           SubjectPublicKeyInfo.getInstance(keypair.getPublic.getEncoded)
         )
-        .build(new JcaContentSignerBuilder("SHA256withECDSA").build(keypair.getPrivate))
+        .build(new JcaContentSignerBuilder("SHA256with" + keypair.getPrivate.getAlgorithm).build(keypair.getPrivate))
         .getEncoded
       ),
       keypair.getPrivate
     )
   }
+
+  def generateRsaCertificate(): (X509Certificate, PrivateKey) =
+    generateAttestationCertificate(keypair = generateRsaKeypair())
 
 }

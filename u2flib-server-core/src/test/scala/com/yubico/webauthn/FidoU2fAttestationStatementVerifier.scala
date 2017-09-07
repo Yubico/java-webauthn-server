@@ -1,5 +1,9 @@
 package com.yubico.webauthn
 
+import java.math.BigInteger
+import java.security.interfaces.ECPublicKey
+import java.security.spec.ECParameterSpec
+
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.RawRegisterResponse
@@ -7,11 +11,22 @@ import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.util.WebAuthnCodecs
+import org.bouncycastle.jce.ECNamedCurveTable
 
 import scala.util.Try
 
 
 object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier {
+
+  private def isP256(params: ECParameterSpec): Boolean = {
+    val p256 = ECNamedCurveTable.getParameterSpec("P-256")
+
+    (p256.getN == params.getOrder
+      && p256.getG.getAffineXCoord.toBigInteger == params.getGenerator.getAffineX
+      && p256.getG.getAffineYCoord.toBigInteger == params.getGenerator.getAffineY
+      && p256.getH == BigInteger.valueOf(params.getCofactor)
+    )
+  }
 
   override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean =
 
@@ -27,6 +42,12 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
                 val userPublicKey = WebAuthnCodecs.coseKeyToRaw(attestationData.credentialPublicKey)
                 val keyHandle = attestationData.credentialId
                 val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
+
+                assert(
+                  attestationCertificate.getPublicKey.getAlgorithm == "EC"
+                    && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
+                  "Attestation certificate for fido-u2f must have an ECDSA P-256 public key."
+                )
 
                 val u2fRegisterResponse = new RawRegisterResponse(userPublicKey.toArray,
                   keyHandle.toArray,
