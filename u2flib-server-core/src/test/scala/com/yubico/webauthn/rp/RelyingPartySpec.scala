@@ -18,6 +18,8 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.data.AttestationObject
+import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.util.BinaryUtil
@@ -39,16 +41,27 @@ class RelyingPartySpec extends FunSpec with Matchers {
   describe("§6. Relying Party Operations") {
 
     object Defaults {
-      val challengeBase64 = "s1lKsm0KoJpzXM2YsHpOLQ"
-      val attestationObject: ArrayBuffer = BinaryUtil.fromHex("a368617574684461746159012c49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976341000000000000000000000000000000000000000000a20008a6c78eaa5777597eca3d84575e107e1866a865062c49fb73f462d5a5d6ca39165024be6b611c2a19ca865ccfa01cc12c9944233389cd8229daba3f0c41383f18e745f248ca7fb54f47802e42125f136c1d22615d64ccb9c8cdbdc70fed396a4db693300d608ce878951852e7a9e0cb4fdee93ec9d5901512181c4a6999fafe775afd0813c5bb5f151c8d1bde2a90dd88df9b2d5a60ec51b477fdf0748c7bc00ca363616c6765455332353661785820399b6270c8ba53708a4806b08f48f1b790f3b3c990fcdf108a89651eaf0aefa561795820e448eab4cce5a8dabf73a37a6bea31e4e796ca545b93443c72fbfc09417e522f63666d74686669646f2d7532666761747453746d74a26378356381590135308201313081d8a00302010202045aeaf239300a06082a8648ce3d0403023021311f301d0603550403131646697265666f782055324620536f667420546f6b656e301e170d3137303930333135333430345a170d3137303930353135333430345a3021311f301d0603550403131646697265666f782055324620536f667420546f6b656e3059301306072a8648ce3d020106082a8648ce3d030107034200045e8336fc54facfab94778b7a904a1d5083782875c147844c5ae3fbd69e882a9368579b9a5bb51db981aab66e8267c914a100cd3b05794c206bb95aca5543691c300a06082a8648ce3d040302034800304502210082a6d219be7d0b0c61f68acef9e7045bdd05ec70a16d93e411ff462068df5b9d0220487de014bad0633185c29ac3110563e40cec02c2225bed51ffb56bda75bd08bb6373696758473045022100cbb9597de6317b8da61811c8fe6ea94c2f40afe1acba217656c8d7872f159c3b022029e484160cce0a6f7faf3d9ed0fc3c9aff9fd237acb4adb1b3bcf8c2057bd1b6").get
-      val requestedExtensions: AuthenticationExtensions = jsonFactory.objectNode()
-      val clientDataJson: String = s"""{"challenge":"${challengeBase64}","hashAlgorithm":"SHA-256","origin":"localhost"}"""
+      // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
+      val attestationObject: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158ad49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020a72294c582329187c69277030278e8e72dfde6e1e1a1bba035adde89beb0ac94bf63616c676545533235366178582100ec668b91afff289c1e1afaa85604540b053a0271107fd2d6f4d255a40133848a6179582100e611aff8789f14b415ef89e50b3be3b04e304ecac414f45cb70d0a9510ee33d4ff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d03010703420004357e1a3a0505da66d4f5940416af66634df18b3c78753888a438fc09dd45b3de20240772ca1c2b96bc082fe8841d887e828b5bdd7cb3721c023d9a871321c361300a06082a8648ce3d0403020348003045022100b4f90fcc70ba481c93b64d3e6e5d8906832ac8c7bdd520ad68481c784d3573b802204eebe8ff9a97faa834db98906c3b68b1dca03dc090cc31c139b0d561c44b8900ff637369675847304502210092ce43c314b4f2b94d15c5239c7c14c19907780901f4ef91a5648e99eb450c3a02200a9643e78d63b07469bd5426978e38d8ada153ffd81d0de276473a7322e0bcbcffff").get
+      val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256"}"""
+
+      // These values are defined by the attestationObject and clientDataJson above
+      val clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
       val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
+      val challenge: ArrayBuffer = U2fB64Encoding.decode(clientData.challenge).toVector
+      val requestedExtensions: Option[AuthenticationExtensions] = None
       val clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode()
-      val credentialId: ArrayBuffer = BinaryUtil.fromHex("00085b9bfacca2df2ad6efef962dd05190249b429cc35091785bd6f80e68cb2fee69a5c0796c2c20ca8e634a521481995cc6c6989d4f91f43151392bcaa486d8072e399094e9d2e14a7065a79b8f4bc9610043ab0bd3383c9c041a460c741db5b36e5c85e9727ee8b1803f335666abee049af72ee1bc18a9ee782404ad31f59eb332db488a2a779a3b4a17798cb1b4790e92edc99cde9edbb617e35f6135c7026ca5").get
 
       val rpId = RelyingPartyIdentity(name = "Test party", id = "localhost")
-      val userId = UserIdentity(null, null, null)
+      val userId = UserIdentity(name = "test@test.org", displayName = "Test user", id = "test")
+
+      val createCredentialOptions = MakePublicKeyCredentialOptions(
+        rp = rpId,
+        user = userId,
+        challenge = challenge,
+        pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7)),
+      )
+
     }
 
     def finishRegistration(
@@ -56,24 +69,25 @@ class RelyingPartySpec extends FunSpec with Matchers {
       attestationObject: ArrayBuffer = Defaults.attestationObject,
       authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
       callerTokenBindingId: Option[String] = None,
-      challenge: ArrayBuffer = U2fB64Encoding.decode(Defaults.challengeBase64).toVector,
+      challenge: ArrayBuffer = Defaults.challenge,
       clientDataJsonBytes: ArrayBuffer = Defaults.clientDataJsonBytes,
-      requestedExtensions: Option[AuthenticationExtensions] = None,
       clientExtensionResults: AuthenticationExtensions = Defaults.clientExtensionResults,
       origin: String = Defaults.rpId.id,
+      requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
       rpId: RelyingPartyIdentity = Defaults.rpId,
+      userId: UserIdentity = Defaults.userId,
     ): FinishRegistrationSteps = {
 
       val request = MakePublicKeyCredentialOptions(
         rp = rpId,
-        user = Defaults.userId,
+        user = userId,
         challenge = challenge,
         pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)),
         extensions = requestedExtensions.asJava,
       )
 
       val response = PublicKeyCredential(
-        Defaults.credentialId,
+        AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialId,
         AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
         clientExtensionResults,
       )
