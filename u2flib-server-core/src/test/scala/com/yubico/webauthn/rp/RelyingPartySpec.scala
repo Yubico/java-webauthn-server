@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
@@ -20,6 +21,7 @@ import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.util.BinaryUtil
@@ -72,6 +74,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
       challenge: ArrayBuffer = Defaults.challenge,
       clientDataJsonBytes: ArrayBuffer = Defaults.clientDataJsonBytes,
       clientExtensionResults: AuthenticationExtensions = Defaults.clientExtensionResults,
+      credentialId: Option[ArrayBuffer] = None,
       origin: String = Defaults.rpId.id,
       requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
       rpId: RelyingPartyIdentity = Defaults.rpId,
@@ -87,7 +90,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
       )
 
       val response = PublicKeyCredential(
-        AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialId,
+        credentialId getOrElse AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialId,
         AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
         clientExtensionResults,
       )
@@ -337,8 +340,95 @@ class RelyingPartySpec extends FunSpec with Matchers {
           checkFailure("bleurgh")
         }
 
-        it("10. Verify that attStmt is a correct, validly-signed attestation statement, using the attestation statement format fmt’s verification procedure given authenticator data authData and the hash of the serialized client data computed in step 6.") {
-          fail("Not implemented.")
+        describe("10. Verify that attStmt is a correct, validly-signed attestation statement, using the attestation statement format fmt’s verification procedure given authenticator data authData and the hash of the serialized client data computed in step 6.") {
+
+          describe("For the fido-u2f statement format,") {
+            it("the default test case is valid.") {
+              val steps = finishRegistration()
+              val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+              step10.validations shouldBe a [Success[_]]
+              step10.next shouldBe a [Success[_]]
+            }
+
+            def flipByte(index: Int, bytes: ArrayBuffer): ArrayBuffer = bytes.updated(index, (0xff ^ bytes(index)).toByte)
+
+            it("a test case with different signed client data is not valid.") {
+              val steps = finishRegistration()
+              val step10: steps.Step10 = new steps.Step10(
+                attestation = AttestationObject(Defaults.attestationObject),
+                clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.updated(20, (Defaults.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
+              )
+
+              step10.validations shouldBe a [Failure[_]]
+              step10.validations.failed.get shouldBe an [AssertionError]
+              step10.next shouldBe a [Failure[_]]
+            }
+
+            def mutateAuthenticatorData(attestationObject: ArrayBuffer)(mutator: ArrayBuffer => ArrayBuffer): ArrayBuffer = {
+              val decodedCbor: ObjectNode = WebAuthnCodecs.cbor.readTree(attestationObject.toArray).asInstanceOf[ObjectNode]
+              decodedCbor.set("authData", jsonFactory.binaryNode(mutator(decodedCbor.get("authData").binaryValue().toVector).toArray))
+
+              WebAuthnCodecs.cbor.writeValueAsBytes(decodedCbor).toVector
+            }
+
+            def checkByteFlipFails(index: Int): Unit = {
+              val attestationObject = mutateAuthenticatorData(Defaults.attestationObject) {
+                flipByte(index, _)
+              }
+              val steps = finishRegistration(
+                attestationObject = attestationObject,
+                credentialId = Some(Vector.fill[Byte](16)(0))
+              )
+              val step10: steps.Step10 = new steps.Step10(
+                attestation = AttestationObject(attestationObject),
+                clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
+              )
+
+              step10.validations shouldBe a [Failure[_]]
+              step10.validations.failed.get shouldBe an [AssertionError]
+              step10.next shouldBe a [Failure[_]]
+            }
+
+            it("a test case with a different signed RP ID hash is not valid.") {
+              checkByteFlipFails(0)
+            }
+
+            it("a test case with a different signed credential ID is not valid.") {
+              checkByteFlipFails(32 + 1 + 4 + 16 + 2 + 1)
+            }
+
+            it("a test case with a different signed credential public key is not valid.") {
+              val attestationObject = mutateAuthenticatorData(Defaults.attestationObject) { authenticatorData =>
+                val decoded = AuthenticatorData(authenticatorData)
+                val L = decoded.attestationData.get.credentialId.length
+                val evilPublicKey = decoded.attestationData.get.credentialPublicKey.asInstanceOf[ObjectNode]
+                  .set("x", jsonFactory.binaryNode(Array.fill[Byte](32)(0)))
+
+                authenticatorData.take(32 + 1 + 4 + 16 + 2 + L) ++ WebAuthnCodecs.cbor.writeValueAsBytes(evilPublicKey)
+              }
+              val steps = finishRegistration(
+                attestationObject = attestationObject,
+                credentialId = Some(Vector.fill[Byte](16)(0))
+              )
+              val step10: steps.Step10 = new steps.Step10(
+                attestation = AttestationObject(attestationObject),
+                clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
+              )
+
+              step10.validations shouldBe a [Failure[_]]
+              step10.validations.failed.get shouldBe an [AssertionError]
+              step10.next shouldBe a [Failure[_]]
+            }
+
+            it("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
+              fail("Test not implemented.")
+            }
+          }
+
+          it("Other statement formats are not yet tested.") {
+            fail("Test not implemented.")
+          }
         }
 
         it("11. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the AAGUID in the attestation data contained in authData.") {
