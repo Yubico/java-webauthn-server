@@ -161,13 +161,6 @@ class TestAuthenticator (
     ).asJava)
   }
 
-  def coseKeyToRaw(key: JsonNode): ArrayBuffer = {
-    val xBytes = key.get("x").binaryValue()
-    val yBytes = key.get("y").binaryValue()
-
-    Vector[Byte](0x04) ++ (xBytes takeRight 32) ++ (yBytes takeRight 32)
-  }
-
   def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, clientDataJson: String): ArrayBuffer = {
     val format = "fido-u2f"
     val f = JsonNodeFactory.instance
@@ -187,7 +180,7 @@ class TestAuthenticator (
       authData.rpIdHash,
       clientDataJson,
       authData.attestationData.get.credentialId,
-      coseKeyToRaw(authData.attestationData.get.credentialPublicKey)
+      WebAuthnCodecs.coseKeyToRaw(authData.attestationData.get.credentialPublicKey)
     )
 
     val f = JsonNodeFactory.instance
