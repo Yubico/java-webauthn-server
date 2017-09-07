@@ -228,36 +228,14 @@ case class FinishRegistrationSteps(
     private def verifyAttestationTrust(): Unit = ???
   }
 
-  case class Step12 private () extends Step[Step13] {
+  case class Step12 private () extends Step[Finished] {
     override def validate() { ??? }
-    override def nextStep = Step13(verifyAttestationTrustworthiness())
+    override def nextStep = Finished(attestationTrusted = verifyAttestationTrustworthiness())
 
     def verifyAttestationTrustworthiness(): Boolean = ???
   }
 
-  case class Step13 private (attestationSignatureTrusted: Boolean) extends Step[Step14] {
-    override def validate() { ??? }
-    override def nextStep = Step14(attestationSignatureTrusted)
-  }
-
-  case class Step14 private (attestationSignatureTrusted: Boolean) extends Step[Finished] {
-    override def validate() {
-      if (attestationSignatureTrusted) {
-        registerNewCredential()
-      } else if (allowSelfAttestation) {
-        registerNewSelfAttestedCredential()
-      } else {
-        throw new AssertionError("Attestation signature is not trusted.")
-      }
-    }
-
-    override def nextStep = Finished()
-
-    def registerNewCredential(): Boolean = ???
-    def registerNewSelfAttestedCredential(): Boolean = ???
-  }
-
-  case class Finished private () extends Step[Finished] {
+  case class Finished private (attestationTrusted: Boolean) extends Step[Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
