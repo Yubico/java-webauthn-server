@@ -31,6 +31,7 @@ allprojects  {
   apply plugin: 'java'
   apply plugin: 'scala'
   apply plugin: 'maven'
+  apply plugin: 'idea'
 
   if (publishEnabled) {
     apply plugin: GpgSigningPlugin
@@ -86,6 +87,8 @@ allprojects  {
     mainClassName = "scala.tools.nsc.MainGenericRunner"
     outputDir = file(Paths.get(scalaReplDistDir.path, 'bin'))
   }
+
+  idea.module { downloadJavadoc = true }
 }
 
 evaluationDependsOnChildren()
