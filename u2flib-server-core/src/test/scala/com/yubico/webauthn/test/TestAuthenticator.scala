@@ -258,6 +258,12 @@ class TestAuthenticator (
     g.generateKeyPair()
   }
 
+  def generateRsaKeypair(): KeyPair = {
+    val g: KeyPairGenerator = KeyPairGenerator.getInstance("RSA", javaCryptoProvider)
+    g.initialize(2048, new SecureRandom())
+    g.generateKeyPair()
+  }
+
   def verifySignature(
     pubKey: PublicKey,
     signedDataBytes: ArrayBuffer,
