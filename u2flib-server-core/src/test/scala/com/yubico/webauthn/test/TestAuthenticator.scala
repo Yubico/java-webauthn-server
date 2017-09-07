@@ -251,7 +251,6 @@ class TestAuthenticator (
   }
 
   def generateEcKeypair(): KeyPair = {
-    val factory = KeyFactory.getInstance("ECDSA", javaCryptoProvider)
     val ecSpec  = ECNamedCurveTable.getParameterSpec("P-256")
     val g: KeyPairGenerator = KeyPairGenerator.getInstance("ECDSA", "BC")
     g.initialize(ecSpec, new SecureRandom())
