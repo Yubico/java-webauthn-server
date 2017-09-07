@@ -89,8 +89,8 @@ case class FinishRegistrationSteps(
     override def validate() =
       (callerTokenBindingId.asScala, response.response.collectedClientData.tokenBindingId.asScala) match {
         case (None, None) =>
-        case (_, None) => Failure(new AssertionError("Token binding ID set by caller but not in attestation message."))
-        case (None, _) => Failure(throw new AssertionError("Token binding ID set in attestation message but not by caller."))
+        case (_, None) => throw new AssertionError("Token binding ID set by caller but not in attestation message.")
+        case (None, _) => throw new AssertionError("Token binding ID set in attestation message but not by caller.")
         case (Some(callerToken), Some(responseToken)) =>
           assert(callerToken == responseToken, "Incorrect token binding ID.")
       }

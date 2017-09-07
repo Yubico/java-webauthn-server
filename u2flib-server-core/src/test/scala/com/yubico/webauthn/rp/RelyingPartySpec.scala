@@ -24,6 +24,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
+import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.junit.runner.RunWith
@@ -138,9 +139,6 @@ class RelyingPartySpec extends FunSpec with Matchers {
         }
 
         describe("4. Verify that the tokenBindingId in C matches the Token Binding ID for the TLS connection over which the attestation was obtained.") {
-          val tokenA: Base64UrlString = U2fB64Encoding.encode("foo".getBytes("UTF-8"))
-          val tokenB: Base64UrlString = U2fB64Encoding.encode("bar".getBytes("UTF-8"))
-
           it("Verification succeeds if neither side specifies token binding ID.") {
             val steps = finishRegistration()
             val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
@@ -150,7 +148,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
           }
 
           it("Verification fails if caller specifies token binding ID but attestation does not.") {
-            val steps = finishRegistration(callerTokenBindingId = Some(tokenA))
+            val steps = finishRegistration(callerTokenBindingId = Some("YELLOWSUBMARINE"))
             val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
             step4.validations shouldBe a [Failure[_]]
@@ -159,7 +157,14 @@ class RelyingPartySpec extends FunSpec with Matchers {
           }
 
           it("Verification fails if attestation specifies token binding ID but caller does not.") {
-            val steps = finishRegistration(???)
+            val attestationObjectBytes: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002067d2e4a43d68158d5be9786d7a708c94782669deda891bda4a586c1331e1d7bebf63616c67654553323536617858201f228113a2cc82ad4633ff58dffe09c8d28177f11590b737d1a13f628db33721617958207721f99e5ff74631df92d1c3ebc758e821cd1c7b323946d97f4ff43083cf0b2fff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d0301070342000485a43c1f4e2e625cc3ce85f0a7b827b1358be9c1be9d45fba1632e5e7f4d1db5488bd7a6101ae16457cb12a3d3408b989993e017c027e1af43624bdec1402e6e300a06082a8648ce3d040302034800304502205298725d18bd9645a8118f42f4a9a9fa49396851305c1bff3da01f29fc704656022100d93a584a1273b695f0c7497bf6fcc1a9ecbe29376c00a4abb25ff7af48a92ccfff63736967584630440220188eb445f56aa23f3be2f7b327cca187a34fd300af3d3c985fda6a8829f770440220340f2029d42d48bc021341d7054ee708a5d9223580faac6530990de8a5775a53ffff").get
+            val clientDataJsonBytes: ArrayBuffer = BinaryUtil.fromHex("7b226368616c6c656e6765223a224141454241674d4643413056496a645a45476c35596c73222c226f726967696e223a226c6f63616c686f7374222c2268617368416c676f726974686d223a225348412d323536222c22746f6b656e42696e64696e674964223a2259454c4c4f575355424d4152494e45227d").get
+
+            val steps = finishRegistration(
+              callerTokenBindingId = None,
+              attestationObject = attestationObjectBytes,
+              clientDataJsonBytes = clientDataJsonBytes,
+            )
             val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
             step4.validations shouldBe a [Failure[_]]
@@ -168,7 +173,14 @@ class RelyingPartySpec extends FunSpec with Matchers {
           }
 
           it("Verification fails if attestation and caller specify different token binding IDs.") {
-            val steps = finishRegistration(???, callerTokenBindingId = Some(tokenB))
+            val attestationObjectBytes: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002067d2e4a43d68158d5be9786d7a708c94782669deda891bda4a586c1331e1d7bebf63616c67654553323536617858201f228113a2cc82ad4633ff58dffe09c8d28177f11590b737d1a13f628db33721617958207721f99e5ff74631df92d1c3ebc758e821cd1c7b323946d97f4ff43083cf0b2fff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d0301070342000485a43c1f4e2e625cc3ce85f0a7b827b1358be9c1be9d45fba1632e5e7f4d1db5488bd7a6101ae16457cb12a3d3408b989993e017c027e1af43624bdec1402e6e300a06082a8648ce3d040302034800304502205298725d18bd9645a8118f42f4a9a9fa49396851305c1bff3da01f29fc704656022100d93a584a1273b695f0c7497bf6fcc1a9ecbe29376c00a4abb25ff7af48a92ccfff63736967584630440220188eb445f56aa23f3be2f7b327cca187a34fd300af3d3c985fda6a8829f770440220340f2029d42d48bc021341d7054ee708a5d9223580faac6530990de8a5775a53ffff").get
+            val clientDataJsonBytes: ArrayBuffer = BinaryUtil.fromHex("7b226368616c6c656e6765223a224141454241674d4643413056496a645a45476c35596c73222c226f726967696e223a226c6f63616c686f7374222c2268617368416c676f726974686d223a225348412d323536222c22746f6b656e42696e64696e674964223a2259454c4c4f575355424d4152494e45227d").get
+
+            val steps = finishRegistration(
+              callerTokenBindingId = Some("ORANGESUBMARINE"),
+              attestationObject = attestationObjectBytes,
+              clientDataJsonBytes = clientDataJsonBytes,
+            )
             val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
             step4.validations shouldBe a [Failure[_]]
