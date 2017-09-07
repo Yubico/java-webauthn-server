@@ -163,60 +163,23 @@ case class FinishRegistrationSteps(
     override def validate(): Unit = {
       assert(formatSupported, s"Unsupported attestation statement format: ${format}")
     }
-    override def nextStep = Step10(clientDataJsonHash, attestation)
+    override def nextStep = Step10(clientDataJsonHash, attestation, attestationStatementVerifier)
 
     def format: String = attestation.format
     def formatSupported: Boolean = format == "fido-u2f"
+    def attestationStatementVerifier: AttestationStatementVerifier = format match {
+      case "fido-u2f" => FidoU2fAttestationStatementVerifier
+    }
   }
 
-  case class Step10 (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step11] {
+  case class Step10 (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject, attestationStatementVerifier: AttestationStatementVerifier) extends Step[Step11] {
     override def validate() {
       assert(
-        verifyAttestationSignature(attestation),
+        attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash),
         "Invalid attestation signature."
       )
     }
     override def nextStep = Step11()
-
-    private def verifyAttestationSignature(attestationObject: AttestationObject): Boolean = attestationObject.format match {
-      case "fido-u2f" => verifyU2fSignature(attestationObject)
-      case _ => throw new IllegalArgumentException(s"Unsupported attestation statement format: ${attestationObject.format}")
-    }
-
-    private def verifyU2fSignature(attestationObject: AttestationObject): Boolean =
-      attestationObject.authenticatorData.attestationData.asScala match {
-        case None => throw new IllegalArgumentException("Attestation object for credential creation must have attestation data.")
-
-        case Some(attestationData) =>
-          attestationObject.attestationStatement.get("sig") match {
-            case signature if signature.isBinary =>
-              attestationObject.attestationStatement.get("x5c") match {
-                case certs: ArrayNode if certs.size > 0 && certs.get(0).isBinary => {
-
-                  val userPublicKey = WebAuthnCodecs.coseKeyToRaw(attestationData.credentialPublicKey)
-                  val keyHandle = attestationData.credentialId
-                  val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
-
-                  val u2fRegisterResponse = new RawRegisterResponse(userPublicKey.toArray,
-                    keyHandle.toArray,
-                    attestationCertificate,
-                    signature.binaryValue
-                  )
-
-                  Try { u2fRegisterResponse.checkSignature(attestationObject.authenticatorData.rpIdHash.toArray, clientDataJsonHash.toArray) }
-                    .isSuccess
-                }
-
-                case _ => throw new IllegalArgumentException(
-                  """fido-u2f attestation statement must have an "x5c" property set to an array of at least one DER encoded X.509 certificate."""
-                )
-              }
-            case _ => throw new IllegalArgumentException(
-              """fido-u2f attestation statement must have a "sig" property set to a DER encoded signature."""
-            )
-          }
-      }
-
   }
 
   case class Step11 private () extends Step[Step12] {

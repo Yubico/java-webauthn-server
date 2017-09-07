@@ -10,6 +10,7 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
+import com.yubico.webauthn.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -370,6 +371,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
               val step10: steps.Step10 = new steps.Step10(
                 attestation = AttestationObject(Defaults.attestationObject),
                 clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.updated(20, (Defaults.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
+                attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
               )
 
               step10.validations shouldBe a [Failure[_]]
@@ -395,6 +397,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
               val step10: steps.Step10 = new steps.Step10(
                 attestation = AttestationObject(attestationObject),
                 clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
+                attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
               )
 
               step10.validations shouldBe a [Failure[_]]
@@ -426,6 +429,7 @@ class RelyingPartySpec extends FunSpec with Matchers {
               val step10: steps.Step10 = new steps.Step10(
                 attestation = AttestationObject(attestationObject),
                 clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
+                attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
               )
 
               step10.validations shouldBe a [Failure[_]]
