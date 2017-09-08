@@ -62,7 +62,7 @@ class RelyingParty (
       response = response,
       callerTokenBindingId = callerTokenBindingId,
       origin = origin,
-      rp = rp,
+      rpId = rp.id,
       crypto = crypto,
       allowSelfAttestation = allowSelfAttestation,
     )

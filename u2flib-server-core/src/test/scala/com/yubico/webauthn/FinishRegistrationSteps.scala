@@ -38,7 +38,7 @@ case class FinishRegistrationSteps(
   response: PublicKeyCredential[AuthenticatorAttestationResponse],
   callerTokenBindingId: Optional[Base64UrlString],
   origin: String,
-  rp: RelyingPartyIdentity,
+  rpId: String,
   crypto: Crypto,
   allowSelfAttestation: Boolean,
 ) {
@@ -139,7 +139,7 @@ case class FinishRegistrationSteps(
   case class Step8 private (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step9] {
     override def validate() {
       assert(
-        response.response.attestation.authenticatorData.rpIdHash == crypto.hash(rp.id).toVector,
+        response.response.attestation.authenticatorData.rpIdHash == crypto.hash(rpId).toVector,
         "Wrong RP ID hash."
       )
     }
