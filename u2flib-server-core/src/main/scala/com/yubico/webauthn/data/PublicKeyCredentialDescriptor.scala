@@ -15,7 +15,7 @@ case class PublicKeyCredentialDescriptor(
   /**
     * The type of the credential the caller is referring to.
     */
-  `type`: PublicKeyCredentialType,
+  `type`: PublicKeyCredentialType = PublicKey,
 
   /**
     * The identifier of the credential that the caller is referring to.
