@@ -10,4 +10,9 @@ trait AuthenticatorResponse {
     */
   def clientData: JsonNode
 
+  /**
+    * The `clientData` parsed as a domain object.
+    */
+  lazy val collectedClientData: CollectedClientData = CollectedClientData(clientData)
+
 }

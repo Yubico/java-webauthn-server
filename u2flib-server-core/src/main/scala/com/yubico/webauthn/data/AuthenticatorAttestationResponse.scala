@@ -4,6 +4,5 @@ trait AuthenticatorAttestationResponse extends AuthenticatorResponse {
   val attestationObject: ArrayBuffer
 
   lazy val attestation: AttestationObject = AttestationObject(attestationObject)
-  lazy val collectedClientData: CollectedClientData = CollectedClientData(clientData)
 
 }

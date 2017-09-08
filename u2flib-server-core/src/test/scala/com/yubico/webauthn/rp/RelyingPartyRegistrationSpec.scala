@@ -103,6 +103,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       origin = origin,
       preferredPubkeyParams = request.pubKeyCredParams,
       rp = rpId,
+      credentialRepository = null,
     )._finishRegistration(request, response, callerTokenBindingId.asJava)
   }
 

@@ -13,6 +13,8 @@ import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.spec.ECPublicKeySpec
 import java.security.spec.ECPoint
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Date
 
@@ -20,12 +22,14 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util
 import com.yubico.webauthn.data
+import com.yubico.webauthn.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorData
@@ -34,6 +38,7 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.x500.X500Name
@@ -70,6 +75,15 @@ object TestAuthenticator extends App {
 
   println("Javascript:")
   println(s"""parseCreateCredentialResponse({ response: { attestationObject: new Buffer("${BinaryUtil.toHex(credential.response.attestationObject)}", 'hex'), clientDataJSON: new Buffer("${BinaryUtil.toHex(credential.response.clientDataJSON)}", 'hex') } })""")
+
+  println(s"Public key: ${BinaryUtil.toHex(a.Defaults.credentialKey.getPublic.getEncoded.toVector)}")
+  println(s"Private key: ${BinaryUtil.toHex(a.Defaults.credentialKey.getPrivate.getEncoded.toVector)}")
+
+  val assertion = a.createAssertion()
+  println(s"Assertion signature: ${BinaryUtil.toHex(assertion.response.signature)}")
+  println(s"Authenticator data: ${BinaryUtil.toHex(assertion.response.authenticatorData)}")
+  println(s"Client data: ${BinaryUtil.toHex(assertion.response.clientDataJSON)}")
+  println(s"Client data: ${new String(assertion.response.clientDataJSON.toArray, "UTF-8")}")
 }
 
 class TestAuthenticator (
@@ -77,7 +91,13 @@ class TestAuthenticator (
   val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider,
 ) {
 
-  private val DefaultRpId = "localhost"
+  object Defaults {
+    val challenge: ArrayBuffer = Vector[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91)
+    val credentialId: ArrayBuffer = (0 to 31).toVector map { _.toByte }
+    val rpId = "localhost"
+
+    val credentialKey: KeyPair = generateEcKeypair()
+  }
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private def toBytes(s: String): Vector[Byte] = s.getBytes("UTF-8").toVector
@@ -93,11 +113,11 @@ class TestAuthenticator (
   def createCredential(
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     authenticatorExtensions: Option[JsonNode] = None,
-    challenge: ArrayBuffer = Vector[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91),
+    challenge: ArrayBuffer = Defaults.challenge,
     clientData: Option[JsonNode] = None,
     clientExtensions: Option[JsonNode] = None,
-    origin: String = DefaultRpId,
-    rpId: String = DefaultRpId,
+    origin: String = Defaults.rpId,
+    rpId: String = Defaults.rpId,
     tokenBindingId: Option[String] = None,
     userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = "test"),
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
@@ -130,10 +150,10 @@ class TestAuthenticator (
     val clientDataJsonBytes = toBytes(clientDataJson)
 
     val authDataBytes: ArrayBuffer = makeAuthDataBytes(
-      rpId = DefaultRpId,
+      rpId = Defaults.rpId,
       attestationDataBytes = Some(makeAttestationDataBytes(
         publicKeyCose = ecPublicKeyToCose(generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]),
-        rpId = DefaultRpId,
+        rpId = Defaults.rpId,
       ))
     )
 
@@ -152,6 +172,65 @@ class TestAuthenticator (
       response = response,
       clientExtensionResults = WebAuthnCodecs.json.readTree("{}")
     )
+  }
+
+  def createAssertion(
+    allowCredentials: List[PublicKeyCredentialDescriptor] = List(PublicKeyCredentialDescriptor(id = Defaults.credentialId)),
+    authenticatorExtensions: Option[JsonNode] = None,
+    challenge: ArrayBuffer = Defaults.challenge,
+    clientData: Option[JsonNode] = None,
+    clientExtensions: Option[JsonNode] = None,
+    credentialId: ArrayBuffer = Defaults.credentialId,
+    credentialKey: KeyPair = Defaults.credentialKey,
+    origin: String = Defaults.rpId,
+    rpId: String = Defaults.rpId,
+    tokenBindingId: Option[String] = None,
+  ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse] = {
+
+    val options = PublicKeyCredentialRequestOptions(
+      rpId = Some(rpId).asJava,
+      challenge = challenge,
+      allowCredentials = Some(allowCredentials).asJava,
+    )
+
+    val challengeBase64 = U2fB64Encoding.encode(options.challenge.toArray)
+
+    val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
+      val json: ObjectNode = jsonFactory.objectNode()
+
+      json.setAll(Map(
+        "challenge" -> jsonFactory.textNode(challengeBase64),
+        "origin" -> jsonFactory.textNode(origin),
+        "hashAlgorithm" -> jsonFactory.textNode("SHA-256"),
+      ).asJava)
+
+      tokenBindingId foreach { id => json.set("tokenBindingId", jsonFactory.textNode(id)) }
+
+      clientExtensions foreach { extensions => json.set("clientExtensions", extensions) }
+      authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
+
+      json
+    })
+    val clientDataJsonBytes = toBytes(clientDataJson)
+
+    val authDataBytes: ArrayBuffer = makeAuthDataBytes(rpId = Defaults.rpId)
+
+    val response = data.impl.AuthenticatorAssertionResponse(
+      clientDataJSON = clientDataJsonBytes,
+      authenticatorData = authDataBytes,
+      signature = makeAssertionSignature(
+        authDataBytes,
+        crypto.hash(clientDataJsonBytes.toArray).toVector,
+        credentialKey.getPrivate
+      ),
+    )
+
+    data.impl.PublicKeyCredential(
+      rawId = credentialId,
+      response = response,
+      clientExtensionResults = jsonFactory.objectNode()
+    )
+
   }
 
   def ecPublicKeyToCose(key: ECPublicKey): JsonNode = {
@@ -215,7 +294,7 @@ class TestAuthenticator (
   }
 
   def makeAuthDataBytes(
-    rpId: String = DefaultRpId,
+    rpId: String = Defaults.rpId,
     counterBytes: ArrayBuffer = BinaryUtil.fromHex("00000539").get,
     attestationDataBytes: Option[ArrayBuffer] = None,
     extensionsCborBytes: Option[ArrayBuffer] = None
@@ -230,7 +309,7 @@ class TestAuthenticator (
 
   def makeAttestationDataBytes(
     publicKeyCose: JsonNode,
-    rpId: String = DefaultRpId,
+    rpId: String = Defaults.rpId,
     counterBytes: ArrayBuffer = BinaryUtil.fromHex("0539").get,
     aaguid: ArrayBuffer = Vector[Byte](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
   ): ArrayBuffer = {
@@ -261,6 +340,14 @@ class TestAuthenticator (
     g.initialize(ecSpec, new SecureRandom())
 
     g.generateKeyPair()
+  }
+
+  def importEcKeypair(privateBytes: ArrayBuffer, publicBytes: ArrayBuffer): KeyPair = {
+    val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", javaCryptoProvider)
+    new KeyPair(
+      keyFactory.generatePublic(new X509EncodedKeySpec(publicBytes.toArray)),
+      keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes.toArray)),
+    )
   }
 
   def generateRsaKeypair(): KeyPair = {
