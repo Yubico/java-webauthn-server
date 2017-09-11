@@ -82,6 +82,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       rpId = Some(rpId.id).asJava,
       challenge = challenge,
       allowCredentials = Some(List(PublicKeyCredentialDescriptor(id = credentialId))).asJava,
+      extensions = requestedExtensions.asJava,
     )
 
     val response = PublicKeyCredential(
