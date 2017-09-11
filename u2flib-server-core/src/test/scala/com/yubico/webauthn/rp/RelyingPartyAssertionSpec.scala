@@ -171,14 +171,26 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      it("3. Perform JSON deserialization on cData to extract the client data C used for the signature.") {
-        val malformedClientData = Vector[Byte]('{'.toByte)
-        val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
-        val step3: steps.Step3 = steps.begin.next.get.next.get
+      describe("3. Perform JSON deserialization on cData to extract the client data C used for the signature.") {
+        it("Fails if cData is not valid JSON.") {
+          val malformedClientData = Vector[Byte]('{'.toByte)
+          val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
+          val step3: steps.Step3 = steps.begin.next.get.next.get
 
-        step3.validations shouldBe a [Failure[_]]
-        step3.validations.failed.get shouldBe a [JsonParseException]
-        step3.next shouldBe a [Failure[_]]
+          step3.validations shouldBe a [Failure[_]]
+          step3.validations.failed.get shouldBe a [JsonParseException]
+          step3.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if cData is valid JSON.") {
+          val malformedClientData = "{}".getBytes("UTF-8").toVector
+          val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
+          val step3: steps.Step3 = steps.begin.next.get.next.get
+
+          step3.validations shouldBe a [Success[_]]
+          step3.clientData should not be null
+          step3.next shouldBe a [Success[_]]
+        }
       }
 
       it("4. Verify that the challenge member of C matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
