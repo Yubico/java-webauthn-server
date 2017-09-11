@@ -355,7 +355,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                     .set("hashAlgorithm", jsonFactory.textNode(algorithm))
                 ).toVector,
             )
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [AssertionError]
