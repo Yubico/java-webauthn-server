@@ -1,5 +1,8 @@
 package com.yubico.webauthn.test
 
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.InputStream
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.KeyFactory
@@ -44,9 +47,13 @@ import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
+import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
+import org.bouncycastle.openssl.PEMParser
+import org.bouncycastle.openssl.PEMKeyPair
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
@@ -415,5 +422,29 @@ class TestAuthenticator (
 
   def generateRsaCertificate(): (X509Certificate, PrivateKey) =
     generateAttestationCertificate(keypair = generateRsaKeypair())
+
+  def importCertFromPem(certPem: InputStream): X509Certificate =
+    CertificateParser.parseDer(
+      new PEMParser(new BufferedReader(new InputStreamReader(certPem)))
+        .readObject()
+        .asInstanceOf[X509CertificateHolder]
+        .getEncoded
+    )
+
+  def importCertAndKeyFromPem(certPem: InputStream, keyPem: InputStream): (X509Certificate, PrivateKey) = {
+    val cert: X509Certificate = importCertFromPem(certPem)
+
+    val priKeyParser = new PEMParser(new BufferedReader(new InputStreamReader(keyPem)))
+    priKeyParser.readObject() // Throw away the EC params part
+
+    val key: PrivateKey = new JcaPEMKeyConverter().setProvider(new BouncyCastleProvider)
+      .getKeyPair(
+        priKeyParser.readObject()
+          .asInstanceOf[PEMKeyPair]
+      )
+      .getPrivate
+
+    (cert, key)
+  }
 
 }

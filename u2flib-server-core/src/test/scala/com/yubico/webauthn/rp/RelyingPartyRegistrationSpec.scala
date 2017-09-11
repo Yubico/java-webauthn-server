@@ -13,6 +13,7 @@ import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.SelfAttestation
+import com.yubico.webauthn.Basic
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -379,6 +380,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             step10.next shouldBe a [Success[_]]
           }
 
+          it("a test case with basic attestation is valid.") {
+            val attestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00207af6b58c00d12cec27619e2beade69546ba949eb3759162f1f9438869ccd0351bf63616c676545533235366178582100f63a3a79039349a09e6db0e1c061609e895078f44e3174b7f7589a0e86ea326c61795820793e1c91b9c54f97e5e633651b66d747cf2d377e677010888237a5bb2cfe9ca0ff63666d74686669646f2d7532666761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff637369675847304502203e7e3f38d3bd1344b8c03c3fb71dca43840737f40c8c9261ba90e48d6e1c4b25022100a2486854058af9124b207e0894a17f15930b99716045d649d6719d2bd49b1af6ffff").get
+
+            val steps = finishRegistration(attestationObject = attestationObject)
+            val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step10.validations shouldBe a [Success[_]]
+            step10.attestationType should equal (Basic)
+            step10.next shouldBe a [Success[_]]
+          }
+
           def flipByte(index: Int, bytes: ArrayBuffer): ArrayBuffer = bytes.updated(index, (0xff ^ bytes(index)).toByte)
 
           it("a test case with different signed client data is not valid.") {
@@ -386,7 +398,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             val step10: steps.Step10 = new steps.Step10(
               attestation = AttestationObject(Defaults.attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.updated(20, (Defaults.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
-              attestationStatementVerifier = verifier,
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
             )
 
             step10.validations shouldBe a [Failure[_]]
