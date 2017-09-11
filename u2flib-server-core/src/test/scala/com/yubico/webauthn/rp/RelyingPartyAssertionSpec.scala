@@ -442,7 +442,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       }
 
       it("11. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
-        fail("Test not implemented.")
+        val steps = finishAssertion()
+        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+        step.validations shouldBe a [Success[_]]
+        steps.run shouldBe a [Success[_]]
+        step.success should be (true)
+        steps.run.get should be (true)
       }
 
     }

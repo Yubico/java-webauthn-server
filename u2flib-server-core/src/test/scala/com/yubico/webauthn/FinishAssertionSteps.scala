@@ -187,6 +187,7 @@ case class FinishAssertionSteps(
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
+    override def result: Option[Boolean] = Some(success)
 
     val success: Boolean = true
   }
