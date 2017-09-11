@@ -58,11 +58,15 @@ case class FinishAssertionSteps(
 
   case class Step2 private (override val prev: Step1) extends Step[Step1, Step3] {
     override def validate() = {
-      assert(response.response.clientData != null, "Missing client data.")
-      assert(response.response.authenticatorData != null, "Missing authenticator data.")
-      assert(response.response.signature != null, "Missing signature.")
+      assert(clientData != null, "Missing client data.")
+      assert(authenticatorData != null, "Missing authenticator data.")
+      assert(signature != null, "Missing signature.")
     }
     override def nextStep = Step3(this)
+
+    def authenticatorData: ArrayBuffer = response.response.authenticatorData
+    def clientData: ArrayBuffer = response.response.clientDataJSON
+    def signature: ArrayBuffer = response.response.signature
   }
 
   case class Step3 private (override val prev: Step2) extends Step[Step2, Step4] {

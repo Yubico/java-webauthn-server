@@ -131,7 +131,44 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      it("2. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
+      describe("2. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
+        it("Succeeds if all three are present.") {
+          val steps = finishAssertion()
+          val step2: steps.Step2 = steps.begin.next.get
+
+          step2.validations shouldBe a [Success[_]]
+          step2.clientData should not be null
+          step2.authenticatorData should not be null
+          step2.signature should not be null
+          step2.next shouldBe a [Success[_]]
+        }
+
+        it("Fails if clientDataJSON is missing.") {
+          val steps = finishAssertion(clientDataJsonBytes = null)
+          val step2: steps.Step2 = steps.begin.next.get
+
+          step2.validations shouldBe a [Failure[_]]
+          step2.validations.failed.get shouldBe an [AssertionError]
+          step2.next shouldBe a [Failure[_]]
+        }
+
+        it("Fails if authenticatorData is missing.") {
+          val steps = finishAssertion(authenticatorData = null)
+          val step2: steps.Step2 = steps.begin.next.get
+
+          step2.validations shouldBe a [Failure[_]]
+          step2.validations.failed.get shouldBe an [AssertionError]
+          step2.next shouldBe a [Failure[_]]
+        }
+
+        it("Fails if signature is missing.") {
+          val steps = finishAssertion(signature = null)
+          val step2: steps.Step2 = steps.begin.next.get
+
+          step2.validations shouldBe a [Failure[_]]
+          step2.validations.failed.get shouldBe an [AssertionError]
+          step2.next shouldBe a [Failure[_]]
+        }
       }
 
       it("3. Perform JSON deserialization on cData to extract the client data C used for the signature.") {
