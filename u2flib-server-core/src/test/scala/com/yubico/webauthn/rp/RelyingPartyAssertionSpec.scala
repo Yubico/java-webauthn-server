@@ -11,7 +11,6 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
-import com.yubico.webauthn.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.FinishAssertionSteps
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.data.ArrayBuffer
@@ -20,6 +19,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.Base64UrlString
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse
 import com.yubico.webauthn.test.TestAuthenticator

@@ -1,4 +1,5 @@
-package com.yubico.webauthn
+package com.yubico.webauthn.data
+
 
 /**
   * 5.3.3. Attestation Types

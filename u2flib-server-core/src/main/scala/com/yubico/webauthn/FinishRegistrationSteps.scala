@@ -10,11 +10,11 @@ import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.Base64UrlString
-import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialType
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.data.AttestationType
 
 import scala.collection.JavaConverters._
 import scala.util.Try

@@ -17,6 +17,7 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 
 import scala.util.Try
 

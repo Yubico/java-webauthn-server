@@ -1,11 +1,8 @@
-package com.yubico.webauthn
+package com.yubico.webauthn.data
 
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.data.ArrayBuffer
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.AuthenticationExtensions
 
 
 /**

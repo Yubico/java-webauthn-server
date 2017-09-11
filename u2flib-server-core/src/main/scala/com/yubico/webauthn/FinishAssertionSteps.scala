@@ -12,6 +12,7 @@ import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 
 import scala.collection.JavaConverters._
 import scala.util.Try

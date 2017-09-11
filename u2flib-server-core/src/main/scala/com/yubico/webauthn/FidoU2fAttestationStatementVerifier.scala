@@ -11,6 +11,9 @@ import com.yubico.u2f.data.messages.key.RawRegisterResponse
 import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.data.AttestationType
+import com.yubico.webauthn.data.Basic
+import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.bouncycastle.jce.ECNamedCurveTable
 

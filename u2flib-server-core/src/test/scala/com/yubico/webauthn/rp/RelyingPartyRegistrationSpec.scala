@@ -12,8 +12,6 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.FidoU2fAttestationStatementVerifier
-import com.yubico.webauthn.SelfAttestation
-import com.yubico.webauthn.Basic
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -25,6 +23,8 @@ import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.Basic
+import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.test.TestAuthenticator

@@ -32,7 +32,6 @@ import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util
 import com.yubico.webauthn.data
-import com.yubico.webauthn.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorData
@@ -42,6 +41,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.x500.X500Name
