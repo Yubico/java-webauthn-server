@@ -71,6 +71,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
     clientExtensionResults: AuthenticationExtensions = Defaults.clientExtensionResults,
     credentialId: ArrayBuffer = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
+    credentialRepository: Option[CredentialRepository] = None,
     origin: String = Defaults.rpId.id,
     requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
@@ -100,13 +101,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       origin = origin,
       preferredPubkeyParams = Nil,
       rp = rpId,
-      credentialRepository = new CredentialRepository {
-        override def lookup(credentialId: ArrayBuffer): Optional[PublicKey] = lookup(U2fB64Encoding.encode(credentialId.toArray))
-        override def lookup(credId: Base64UrlString): Optional[PublicKey] =
-          if (credId == U2fB64Encoding.encode(credentialId.toArray))
-            Some(credentialKey.getPublic).asJava
-          else None.asJava
-      },
+      credentialRepository = credentialRepository getOrElse (
+        (credId: Base64UrlString) => (if (credId == U2fB64Encoding.encode(credentialId.toArray)) Some(credentialKey.getPublic) else None).asJava
+      ),
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
@@ -114,7 +111,24 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
     describe("When verifying a given PublicKeyCredential structure (credential) as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
 
-      it("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
+      describe("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
+        it("Fails if the credential ID is unknown.") {
+          val steps = finishAssertion(credentialRepository = Some((_) => None.asJava))
+          val step1: steps.Step1 = steps.begin
+
+          step1.validations shouldBe a [Failure[_]]
+          step1.validations.failed.get shouldBe an [AssertionError]
+          step1.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if the credential ID is known.") {
+          val steps = finishAssertion(credentialRepository = Some((_) => Some(Defaults.credentialKey.getPublic).asJava))
+          val step1: steps.Step1 = steps.begin
+
+          step1.validations shouldBe a [Success[_]]
+          step1.pubkey should equal (Defaults.credentialKey.getPublic)
+          step1.next shouldBe a [Success[_]]
+        }
       }
 
       it("2. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
