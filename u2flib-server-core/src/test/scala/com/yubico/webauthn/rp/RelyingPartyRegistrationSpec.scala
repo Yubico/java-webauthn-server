@@ -148,6 +148,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
           step4.next shouldBe a [Success[_]]
         }
 
+        it("Verification succeeds if both sides specify the same token binding ID.") {
+          val clientDataJsonBytes: ArrayBuffer = BinaryUtil.fromHex("7b226368616c6c656e6765223a224141454241674d4643413056496a645a45476c35596c73222c226f726967696e223a226c6f63616c686f7374222c2268617368416c676f726974686d223a225348412d323536222c22746f6b656e42696e64696e674964223a2259454c4c4f575355424d4152494e45227d").get
+
+          val steps = finishRegistration(
+            callerTokenBindingId = Some("YELLOWSUBMARINE"),
+            clientDataJsonBytes = clientDataJsonBytes,
+          )
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
         it("Verification fails if caller specifies token binding ID but attestation does not.") {
           val steps = finishRegistration(callerTokenBindingId = Some("YELLOWSUBMARINE"))
           val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
