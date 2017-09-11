@@ -519,8 +519,60 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
           }
         }
 
-        it("Other statement formats are not yet tested.") {
-          fail("Test not implemented.")
+        it("The packed statement format is supported.") {
+          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
+            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
+              .set("fmt", jsonFactory.textNode("packed"))
+          ).toVector
+          val steps = finishRegistration(
+            attestationObject = attestationObject,
+          )
+          val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step10.validations shouldBe a [Success[_]]
+          step10.next shouldBe a [Success[_]]
+        }
+
+        it("The tpm statement format is supported.") {
+          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
+            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
+              .set("fmt", jsonFactory.textNode("tpm"))
+          ).toVector
+          val steps = finishRegistration(
+            attestationObject = attestationObject,
+          )
+          val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step10.validations shouldBe a [Success[_]]
+          step10.next shouldBe a [Success[_]]
+        }
+
+        it("The android-key statement format is supported.") {
+          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
+            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
+              .set("fmt", jsonFactory.textNode("android-key"))
+          ).toVector
+          val steps = finishRegistration(
+            attestationObject = attestationObject,
+          )
+          val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step10.validations shouldBe a [Success[_]]
+          step10.next shouldBe a [Success[_]]
+        }
+
+        it("The android-safetynet statement format is supported.") {
+          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
+            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
+              .set("fmt", jsonFactory.textNode("android-safetynet"))
+          ).toVector
+          val steps = finishRegistration(
+            attestationObject = attestationObject,
+          )
+          val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step10.validations shouldBe a [Success[_]]
+          step10.next shouldBe a [Success[_]]
         }
       }
 
