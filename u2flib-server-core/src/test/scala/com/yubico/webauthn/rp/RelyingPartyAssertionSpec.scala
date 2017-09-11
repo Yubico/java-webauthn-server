@@ -204,7 +204,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
       it("5. Verify that the origin member of C matches the Relying Party's origin.") {
         val steps = finishAssertion(origin = "root.evil")
-        val step: steps.Step3 = steps.begin.next.get.next.get
+        val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
         step.validations shouldBe a [Failure[_]]
         step.validations.failed.get shouldBe an [AssertionError]
