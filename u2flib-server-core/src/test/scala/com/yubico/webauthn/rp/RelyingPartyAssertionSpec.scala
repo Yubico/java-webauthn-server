@@ -271,7 +271,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val failStep: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
+          val failStep: failSteps.Step7 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           failStep.validations shouldBe a [Failure[_]]
           failStep.validations.failed.get shouldBe an[AssertionError]
@@ -285,7 +285,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val successStep: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
+          val successStep: successSteps.Step7 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           successStep.validations shouldBe a [Success[_]]
           successStep.next shouldBe a [Success[_]]
@@ -299,7 +299,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val failStep: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
+          val failStep: failSteps.Step7 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           failStep.validations shouldBe a [Failure[_]]
           failStep.validations.failed.get shouldBe an[AssertionError]
@@ -313,7 +313,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val successStep: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
+          val successStep: successSteps.Step7 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           successStep.validations shouldBe a [Success[_]]
           successStep.next shouldBe a [Success[_]]
