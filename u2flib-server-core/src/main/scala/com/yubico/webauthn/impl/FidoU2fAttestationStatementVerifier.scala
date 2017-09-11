@@ -1,4 +1,4 @@
-package com.yubico.webauthn
+package com.yubico.webauthn.impl
 
 import java.math.BigInteger
 import java.security.cert.X509Certificate
@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.RawRegisterResponse
 import com.yubico.u2f.data.messages.key.util.CertificateParser
+import com.yubico.webauthn.AttestationStatementVerifier
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationType

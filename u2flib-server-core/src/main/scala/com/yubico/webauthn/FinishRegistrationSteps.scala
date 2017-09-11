@@ -15,6 +15,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialType
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationType
+import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 
 import scala.collection.JavaConverters._
 import scala.util.Try
