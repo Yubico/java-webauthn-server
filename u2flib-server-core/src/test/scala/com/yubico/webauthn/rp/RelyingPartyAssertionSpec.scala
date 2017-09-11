@@ -2,13 +2,13 @@ package com.yubico.webauthn.rp
 
 import java.security.MessageDigest
 import java.security.KeyPair
-import java.security.PublicKey
-import java.util.Optional
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.crypto.BouncyCastleCrypto
+import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.PublicKeyCredentialRequestOptions
@@ -38,6 +38,7 @@ import scala.util.Success
 class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
   def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+  val crypto: Crypto = new BouncyCastleCrypto()
 
   object Defaults {
 
@@ -379,8 +380,65 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         checkForbidden("SHA1")
       }
 
-      it("10. Using the credential public key looked up in step 1, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
-        fail("Test not implemented.")
+      describe("10. Using the credential public key looked up in step 1, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
+        it("The default test case succeeds.") {
+          val steps = finishAssertion()
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+          step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
+        }
+
+        it("A mutated clientDataJSON fails verification.") {
+          val steps = finishAssertion(
+            clientDataJsonBytes = WebAuthnCodecs.json.writeValueAsBytes(
+              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                .set("foo", jsonFactory.textNode("bar"))
+            ).toVector
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("A test case with a different signed RP ID hash fails.") {
+          val rpId = "ARGHABLARGHLER"
+          val rpIdHash: ArrayBuffer = crypto.hash(rpId).toVector
+          val steps = finishAssertion(
+            authenticatorData = rpIdHash ++ Defaults.authenticatorData.drop(32),
+            rpId = Defaults.rpId.copy(id = rpId),
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("A test case with a different signed flags field fails.") {
+          val steps = finishAssertion(
+            authenticatorData = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) | 0x02).toByte),
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("A test case with a different signed signature counter fails.") {
+          val steps = finishAssertion(
+            authenticatorData = Defaults.authenticatorData.updated(33, 42.toByte),
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
       }
 
       it("11. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
