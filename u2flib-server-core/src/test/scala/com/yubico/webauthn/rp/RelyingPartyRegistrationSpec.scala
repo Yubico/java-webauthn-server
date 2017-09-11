@@ -12,6 +12,7 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.FidoU2fAttestationStatementVerifier
+import com.yubico.webauthn.SelfAttestation
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -369,11 +370,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       describe("10. Verify that attStmt is a correct, validly-signed attestation statement, using the attestation statement format fmt’s verification procedure given authenticator data authData and the hash of the serialized client data computed in step 6.") {
 
         describe("For the fido-u2f statement format,") {
-          it("the default test case is valid.") {
+          it("the default test case is a valid self attestation.") {
             val steps = finishRegistration()
             val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step10.validations shouldBe a [Success[_]]
+            step10.attestationType should equal (SelfAttestation)
             step10.next shouldBe a [Success[_]]
           }
 
@@ -384,7 +386,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             val step10: steps.Step10 = new steps.Step10(
               attestation = AttestationObject(Defaults.attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.updated(20, (Defaults.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = verifier,
             )
 
             step10.validations shouldBe a [Failure[_]]

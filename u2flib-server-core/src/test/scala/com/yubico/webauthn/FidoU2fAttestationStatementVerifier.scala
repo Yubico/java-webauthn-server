@@ -1,6 +1,7 @@
 package com.yubico.webauthn
 
 import java.math.BigInteger
+import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.spec.ECParameterSpec
 
@@ -25,10 +26,51 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
       && p256.getG.getAffineXCoord.toBigInteger == params.getGenerator.getAffineX
       && p256.getG.getAffineYCoord.toBigInteger == params.getGenerator.getAffineY
       && p256.getH == BigInteger.valueOf(params.getCofactor)
-    )
+      )
   }
 
-  override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean =
+  private def getAttestationCertificate(attestationObject: AttestationObject): X509Certificate =
+    attestationObject.attestationStatement.get("x5c") match {
+      case certs: ArrayNode if certs.size > 0 && certs.get(0).isBinary => {
+
+        val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
+
+        assert(
+          attestationCertificate.getPublicKey.getAlgorithm == "EC"
+            && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
+          "Attestation certificate for fido-u2f must have an ECDSA P-256 public key."
+        )
+
+        attestationCertificate
+      }
+
+      case _ => throw new IllegalArgumentException(
+        """fido-u2f attestation statement must have an "x5c" property set to an array of at least one DER encoded X.509 certificate."""
+      )
+    }
+
+  private def validSelfSignature(cert: X509Certificate): Boolean =
+    Try(cert.verify(cert.getPublicKey)).isSuccess
+
+  override def getAttestationType(attestationObject: AttestationObject): AttestationType = {
+    val attestationCertificate = getAttestationCertificate(attestationObject)
+
+    if (attestationCertificate.getSubjectDN == attestationCertificate.getIssuerDN
+      && validSelfSignature(attestationCertificate)
+    )
+      SelfAttestation
+    else
+      Basic
+  }
+
+  override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
+    val attestationCertificate = getAttestationCertificate(attestationObject)
+
+    assert(
+      attestationCertificate.getPublicKey.getAlgorithm == "EC"
+        && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
+      "Attestation certificate for fido-u2f must have an ECDSA P-256 public key."
+    )
 
     attestationObject.authenticatorData.attestationData.asScala match {
       case None => throw new IllegalArgumentException("Attestation object for credential creation must have attestation data.")
@@ -36,38 +78,26 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
       case Some(attestationData) =>
         attestationObject.attestationStatement.get("sig") match {
           case signature if signature.isBinary =>
-            attestationObject.attestationStatement.get("x5c") match {
-              case certs: ArrayNode if certs.size > 0 && certs.get(0).isBinary => {
 
-                val userPublicKey = WebAuthnCodecs.coseKeyToRaw(attestationData.credentialPublicKey)
-                val keyHandle = attestationData.credentialId
-                val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
+            val userPublicKey = WebAuthnCodecs.coseKeyToRaw(attestationData.credentialPublicKey)
+            val keyHandle = attestationData.credentialId
+            val u2fRegisterResponse = new RawRegisterResponse(userPublicKey.toArray,
+              keyHandle.toArray,
+              attestationCertificate,
+              signature.binaryValue
+            )
 
-                assert(
-                  attestationCertificate.getPublicKey.getAlgorithm == "EC"
-                    && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
-                  "Attestation certificate for fido-u2f must have an ECDSA P-256 public key."
-                )
-
-                val u2fRegisterResponse = new RawRegisterResponse(userPublicKey.toArray,
-                  keyHandle.toArray,
-                  attestationCertificate,
-                  signature.binaryValue
-                )
-
-                Try { u2fRegisterResponse.checkSignature(attestationObject.authenticatorData.rpIdHash.toArray, clientDataJsonHash.toArray) }
-                  .isSuccess
-              }
-
-              case _ => throw new IllegalArgumentException(
-                """fido-u2f attestation statement must have an "x5c" property set to an array of at least one DER encoded X.509 certificate."""
-              )
+            Try {
+              u2fRegisterResponse.checkSignature(attestationObject.authenticatorData.rpIdHash.toArray, clientDataJsonHash.toArray)
             }
-          case _ => throw new IllegalArgumentException(
-            """fido-u2f attestation statement must have a "sig" property set to a DER encoded signature."""
-          )
+              .isSuccess
         }
-    }
 
+      case _ =>
+        throw new IllegalArgumentException(
+          """fido-u2f attestation statement must have a "sig" property set to a DER encoded signature."""
+        )
+    }
+  }
 
 }

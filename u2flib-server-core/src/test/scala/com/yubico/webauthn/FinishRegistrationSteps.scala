@@ -167,6 +167,8 @@ case class FinishRegistrationSteps(
       )
     }
     override def nextStep = Step11()
+
+    def attestationType: AttestationType = attestationStatementVerifier.getAttestationType(attestation)
   }
 
   case class Step11 private () extends Step[Step12] {
