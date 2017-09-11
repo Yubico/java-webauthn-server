@@ -291,7 +291,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
           successStep.next shouldBe a [Success[_]]
         }
 
-        it("authenticatorExtensions member of C C is also a subset of the extensions requested by the Relying Party.") {
+        it("authenticatorExtensions member of C is also a subset of the extensions requested by the Relying Party.") {
           val failSteps = finishAssertion(
             clientDataJsonBytes =
               WebAuthnCodecs.json.writeValueAsBytes(
