@@ -214,7 +214,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       describe("6. Verify that the tokenBindingId member of C (if present) matches the Token Binding ID for the TLS connection over which the signature was obtained.") {
         it("Verification succeeds if neither side specifies token binding ID.") {
           val steps = finishAssertion()
-          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
@@ -222,7 +222,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
         it("Verification fails if caller specifies token binding ID but attestation does not.") {
           val steps = finishAssertion(callerTokenBindingId = Some("YELLOWSUBMARINE"))
-          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -238,7 +238,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
             authenticatorData = ???,
             clientDataJsonBytes = clientDataJsonBytes,
           )
-          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -254,7 +254,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
             authenticatorData = ???,
             clientDataJsonBytes = clientDataJsonBytes,
           )
-          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
