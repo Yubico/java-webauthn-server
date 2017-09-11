@@ -114,60 +114,60 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       describe("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
           val steps = finishAssertion(credentialRepository = Some((_) => None.asJava))
-          val step1: steps.Step1 = steps.begin
+          val step: steps.Step1 = steps.begin
 
-          step1.validations shouldBe a [Failure[_]]
-          step1.validations.failed.get shouldBe an [AssertionError]
-          step1.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Succeeds if the credential ID is known.") {
           val steps = finishAssertion(credentialRepository = Some((_) => Some(Defaults.credentialKey.getPublic).asJava))
-          val step1: steps.Step1 = steps.begin
+          val step: steps.Step1 = steps.begin
 
-          step1.validations shouldBe a [Success[_]]
-          step1.pubkey should equal (Defaults.credentialKey.getPublic)
-          step1.next shouldBe a [Success[_]]
+          step.validations shouldBe a [Success[_]]
+          step.pubkey should equal (Defaults.credentialKey.getPublic)
+          step.next shouldBe a [Success[_]]
         }
       }
 
       describe("2. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
         it("Succeeds if all three are present.") {
           val steps = finishAssertion()
-          val step2: steps.Step2 = steps.begin.next.get
+          val step: steps.Step2 = steps.begin.next.get
 
-          step2.validations shouldBe a [Success[_]]
-          step2.clientData should not be null
-          step2.authenticatorData should not be null
-          step2.signature should not be null
-          step2.next shouldBe a [Success[_]]
+          step.validations shouldBe a [Success[_]]
+          step.clientData should not be null
+          step.authenticatorData should not be null
+          step.signature should not be null
+          step.next shouldBe a [Success[_]]
         }
 
         it("Fails if clientDataJSON is missing.") {
           val steps = finishAssertion(clientDataJsonBytes = null)
-          val step2: steps.Step2 = steps.begin.next.get
+          val step: steps.Step2 = steps.begin.next.get
 
-          step2.validations shouldBe a [Failure[_]]
-          step2.validations.failed.get shouldBe an [AssertionError]
-          step2.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Fails if authenticatorData is missing.") {
           val steps = finishAssertion(authenticatorData = null)
-          val step2: steps.Step2 = steps.begin.next.get
+          val step: steps.Step2 = steps.begin.next.get
 
-          step2.validations shouldBe a [Failure[_]]
-          step2.validations.failed.get shouldBe an [AssertionError]
-          step2.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Fails if signature is missing.") {
           val steps = finishAssertion(signature = null)
-          val step2: steps.Step2 = steps.begin.next.get
+          val step: steps.Step2 = steps.begin.next.get
 
-          step2.validations shouldBe a [Failure[_]]
-          step2.validations.failed.get shouldBe an [AssertionError]
-          step2.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
       }
 
@@ -175,58 +175,58 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         it("Fails if cData is not valid JSON.") {
           val malformedClientData = Vector[Byte]('{'.toByte)
           val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
-          val step3: steps.Step3 = steps.begin.next.get.next.get
+          val step: steps.Step3 = steps.begin.next.get.next.get
 
-          step3.validations shouldBe a [Failure[_]]
-          step3.validations.failed.get shouldBe a [JsonParseException]
-          step3.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe a [JsonParseException]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Succeeds if cData is valid JSON.") {
           val malformedClientData = "{}".getBytes("UTF-8").toVector
           val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
-          val step3: steps.Step3 = steps.begin.next.get.next.get
+          val step: steps.Step3 = steps.begin.next.get.next.get
 
-          step3.validations shouldBe a [Success[_]]
-          step3.clientData should not be null
-          step3.next shouldBe a [Success[_]]
+          step.validations shouldBe a [Success[_]]
+          step.clientData should not be null
+          step.next shouldBe a [Success[_]]
         }
       }
 
       it("4. Verify that the challenge member of C matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
         val steps = finishAssertion(challenge = Vector.fill(16)(0: Byte))
-        val step2: steps.Step2 = steps.begin.next.get
+        val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
-        step2.validations shouldBe a [Failure[_]]
-        step2.validations.failed.get shouldBe an [AssertionError]
-        step2.next shouldBe a [Failure[_]]
+        step.validations shouldBe a [Failure[_]]
+        step.validations.failed.get shouldBe an [AssertionError]
+        step.next shouldBe a [Failure[_]]
       }
 
       it("5. Verify that the origin member of C matches the Relying Party's origin.") {
         val steps = finishAssertion(origin = "root.evil")
-        val step3: steps.Step3 = steps.begin.next.get.next.get
+        val step: steps.Step3 = steps.begin.next.get.next.get
 
-        step3.validations shouldBe a [Failure[_]]
-        step3.validations.failed.get shouldBe an [AssertionError]
-        step3.next shouldBe a [Failure[_]]
+        step.validations shouldBe a [Failure[_]]
+        step.validations.failed.get shouldBe an [AssertionError]
+        step.next shouldBe a [Failure[_]]
       }
 
       describe("6. Verify that the tokenBindingId member of C (if present) matches the Token Binding ID for the TLS connection over which the signature was obtained.") {
         it("Verification succeeds if neither side specifies token binding ID.") {
           val steps = finishAssertion()
-          val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
-          step4.validations shouldBe a [Success[_]]
-          step4.next shouldBe a [Success[_]]
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
         }
 
         it("Verification fails if caller specifies token binding ID but attestation does not.") {
           val steps = finishAssertion(callerTokenBindingId = Some("YELLOWSUBMARINE"))
-          val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
-          step4.validations shouldBe a [Failure[_]]
-          step4.validations.failed.get shouldBe an [AssertionError]
-          step4.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Verification fails if attestation specifies token binding ID but caller does not.") {
@@ -238,11 +238,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
             authenticatorData = ???,
             clientDataJsonBytes = clientDataJsonBytes,
           )
-          val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
-          step4.validations shouldBe a [Failure[_]]
-          step4.validations.failed.get shouldBe an [AssertionError]
-          step4.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Verification fails if attestation and caller specify different token binding IDs.") {
@@ -254,11 +254,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
             authenticatorData = ???,
             clientDataJsonBytes = clientDataJsonBytes,
           )
-          val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
-          step4.validations shouldBe a [Failure[_]]
-          step4.validations.failed.get shouldBe an [AssertionError]
-          step4.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
       }
 
@@ -271,11 +271,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val failStep5: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
+          val failStep: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
 
-          failStep5.validations shouldBe a [Failure[_]]
-          failStep5.validations.failed.get shouldBe an[AssertionError]
-          failStep5.next shouldBe a [Failure[_]]
+          failStep.validations shouldBe a [Failure[_]]
+          failStep.validations.failed.get shouldBe an[AssertionError]
+          failStep.next shouldBe a [Failure[_]]
 
           val successSteps = finishAssertion(
             requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
@@ -285,10 +285,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val successStep5: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
+          val successStep: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
 
-          successStep5.validations shouldBe a [Success[_]]
-          successStep5.next shouldBe a [Success[_]]
+          successStep.validations shouldBe a [Success[_]]
+          successStep.next shouldBe a [Success[_]]
         }
 
         it("authenticatorExtensions member of C C is also a subset of the extensions requested by the Relying Party.") {
@@ -299,11 +299,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val failStep5: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
+          val failStep: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
 
-          failStep5.validations shouldBe a [Failure[_]]
-          failStep5.validations.failed.get shouldBe an[AssertionError]
-          failStep5.next shouldBe a [Failure[_]]
+          failStep.validations shouldBe a [Failure[_]]
+          failStep.validations.failed.get shouldBe an[AssertionError]
+          failStep.next shouldBe a [Failure[_]]
 
           val successSteps = finishAssertion(
             requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
@@ -313,40 +313,40 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               ).toVector,
           )
-          val successStep5: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
+          val successStep: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
 
-          successStep5.validations shouldBe a [Success[_]]
-          successStep5.next shouldBe a [Success[_]]
+          successStep.validations shouldBe a [Success[_]]
+          successStep.next shouldBe a [Success[_]]
         }
       }
 
       describe("8. Verify that the RP ID hash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
         it("Fails if RP ID is different.") {
           val steps = finishAssertion(rpId = Defaults.rpId.copy(id = "root.evil"))
-          val step8: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-          step8.validations shouldBe a [Failure[_]]
-          step8.validations.failed.get shouldBe an [AssertionError]
-          step8.next shouldBe a [Failure[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
         }
 
         it("Succeeds if RP ID is the same.") {
           val steps = finishAssertion()
-          val step8: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-          step8.validations shouldBe a [Success[_]]
-          step8.next shouldBe a [Success[_]]
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
         }
       }
 
       describe("9. Let hash be the result of computing a hash over the cData using the algorithm represented by the hashAlgorithm member of C.") {
         it("SHA-256 is allowed.") {
           val steps = finishAssertion()
-          val step6: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
-          step6.validations shouldBe a [Success[_]]
-          step6.next shouldBe a [Success[_]]
-          step6.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+          step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
         }
 
         def checkForbidden(algorithm: String): Unit = {
@@ -358,11 +358,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                     .set("hashAlgorithm", jsonFactory.textNode(algorithm))
                 ).toVector,
             )
-            val step6: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
-            step6.validations shouldBe a [Failure[_]]
-            step6.validations.failed.get shouldBe an [AssertionError]
-            step6.next shouldBe a [Failure[_]]
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [AssertionError]
+            step.next shouldBe a [Failure[_]]
           }
         }
         checkForbidden("MD5")
