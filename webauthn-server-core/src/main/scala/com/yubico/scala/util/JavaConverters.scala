@@ -2,6 +2,7 @@ package com.yubico.scala.util
 
 import java.util.Optional
 
+
 case class AsJavaOptional[A](a: Option[A]) {
   def asJava[B >: A]: Optional[B] = a match {
     case Some(value) => Optional.of(value)
