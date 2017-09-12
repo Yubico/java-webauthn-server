@@ -11,6 +11,7 @@ configurations {
 dependencies {
 
   compile(
+    project(':u2flib-server-attestation'),
     project(':u2flib-server-core'),
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
@@ -21,6 +22,7 @@ dependencies {
 
   testCompile(
     'org.scalatest:scalatest_2.12:3.0.4',
+    'commons-io:commons-io:2.5',
   )
 
   scalaRepl(

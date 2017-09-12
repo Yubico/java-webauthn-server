@@ -3,6 +3,8 @@ package com.yubico.webauthn
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.attestation.MetadataResolver
+import com.yubico.u2f.attestation.MetadataObject
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -15,7 +17,11 @@ import com.yubico.webauthn.data.PublicKeyCredentialType
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationType
+import com.yubico.webauthn.data.Basic
+import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
+import com.yubico.webauthn.impl.AttestationTrustResolver
+import com.yubico.webauthn.impl.FidoU2fAttestationTrustResolver
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -23,13 +29,13 @@ import scala.util.Try
 sealed trait Step[A <: Step[_]] {
   protected def isFinished: Boolean = false
   protected def nextStep: A
-  protected def result: Option[PublicKeyCredentialDescriptor] = None
+  protected def result: Option[RegistrationResult] = None
   protected def validate(): Unit
 
   private[webauthn] def next: Try[A] = validations map { _ => nextStep }
   private[webauthn] def validations: Try[Unit] = Try { validate() }
 
-  def run: Try[PublicKeyCredentialDescriptor] =
+  def run: Try[RegistrationResult] =
     if (isFinished) Try(result.get)
     else next flatMap { _.run }
 }
@@ -42,10 +48,11 @@ case class FinishRegistrationSteps(
   rpId: String,
   crypto: Crypto,
   allowSelfAttestation: Boolean,
+  metadataResolver: Optional[MetadataResolver],
 ) {
 
   private[webauthn] def begin: Step1 = Step1()
-  def run: Try[PublicKeyCredentialDescriptor] = begin.run
+  def run: Try[RegistrationResult] = begin.run
 
   case class Step1 private () extends Step[Step2] {
     override def validate() = assert(clientData != null, "Client data must not be null.")
@@ -167,31 +174,83 @@ case class FinishRegistrationSteps(
         "Invalid attestation signature."
       )
     }
-    override def nextStep = Step11()
+    override def nextStep = Step11(
+      attestation = attestation,
+      attestationType = attestationType,
+      attestationStatementVerifier = attestationStatementVerifier,
+    )
 
     def attestationType: AttestationType = attestationStatementVerifier.getAttestationType(attestation)
   }
 
-  case class Step11 private () extends Step[Step12] {
+  case class Step11 private (
+    private val attestation: AttestationObject,
+    private val attestationType: AttestationType,
+    private val attestationStatementVerifier: AttestationStatementVerifier,
+  ) extends Step[Step12] {
     override def validate() {
-      verifyAttestationTrust()
+      assert(attestationType == SelfAttestation || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
     }
-    override def nextStep = Step12()
+    override def nextStep = Step12(
+      attestation = attestation,
+      attestationType = attestationType,
+      trustResolver = trustResolver,
+    )
 
-    private def verifyAttestationTrust(): Unit = ???
+    def trustResolver: Optional[AttestationTrustResolver] = (attestationType match {
+      case SelfAttestation => None
+      case Basic =>
+        attestation.format match {
+          case "fido-u2f" => Try(new FidoU2fAttestationTrustResolver(metadataResolver.get)).toOption
+        }
+      case _ => ???
+    }).asJava
   }
 
-  case class Step12 private () extends Step[Finished] {
-    override def validate() { ??? }
-    override def nextStep = Finished(attestationTrusted = verifyAttestationTrustworthiness())
+  case class Step12 private (
+    attestation: AttestationObject,
+    attestationType: AttestationType,
+    trustResolver: Optional[AttestationTrustResolver],
+  ) extends Step[Finished] {
+    override def validate() {
+      attestationType match {
+        case SelfAttestation =>
+          assert(allowSelfAttestation, "Self attestation is not allowed.")
 
-    def verifyAttestationTrustworthiness(): Boolean = ???
+        case Basic =>
+          assert(attestationMetadata.isPresent, "Failed to derive trust for attestation key.")
+
+        case _ => ???
+      }
+    }
+    override def nextStep = Finished(
+      attestationTrusted = attestationTrusted,
+      attestationMetadata = attestationMetadata,
+    )
+
+    def attestationTrusted: Boolean = {
+      attestationType match {
+        case SelfAttestation => allowSelfAttestation
+        case Basic => attestationMetadata.isPresent
+        case _ => ???
+      }
+    }
+    def attestationMetadata: Optional[MetadataObject] = trustResolver.asScala.flatMap(_.resolveTrustAnchor(attestation).asScala).asJava
   }
 
-  case class Finished private (attestationTrusted: Boolean) extends Step[Finished] {
+  case class Finished private (
+    attestationMetadata: Optional[MetadataObject],
+    attestationTrusted: Boolean,
+  ) extends Step[Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
+
+    override def result: Option[RegistrationResult] = Some(RegistrationResult(
+      keyId = keyId,
+      attestationTrusted = attestationTrusted,
+      attestationMetadata = attestationMetadata,
+    ))
 
     def keyId: PublicKeyCredentialDescriptor = PublicKeyCredentialDescriptor(
       `type` = PublicKeyCredentialType(response.`type`).get,
