@@ -1,4 +1,4 @@
-package demo.view;
+package demo.u2f.view;
 
 import io.dropwizard.views.View;
 

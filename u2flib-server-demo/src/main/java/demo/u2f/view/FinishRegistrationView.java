@@ -1,4 +1,4 @@
-package demo.view;
+package demo.u2f.view;
 
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.data.DeviceRegistration;

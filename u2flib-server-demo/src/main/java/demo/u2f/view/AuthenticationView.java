@@ -1,4 +1,4 @@
-package demo.view;
+package demo.u2f.view;
 
 import com.yubico.u2f.data.messages.SignRequestData;
 import io.dropwizard.views.View;

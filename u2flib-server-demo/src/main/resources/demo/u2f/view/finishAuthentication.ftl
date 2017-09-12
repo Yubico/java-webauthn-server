@@ -14,7 +14,7 @@
       <p>${message}</p>
     </#list>
 
-    <#include "navigation.ftl">
+    <#include "/demo/view/navigation.ftl">
 
 </body>
 </html>

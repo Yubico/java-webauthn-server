@@ -2,7 +2,7 @@
 <head>
 <title>Java U2F Demo</title>
 
-<script src="/u2f-api-1.1.js"></script>
+<script src="/lib/u2f-api-1.1.js"></script>
 
 <script>
 var request = ${data};
@@ -41,5 +41,5 @@ setTimeout(function() {
         </form>
     </body>
 
-    <#include "navigation.ftl">
+    <#include "/demo/view/navigation.ftl">
 </html>

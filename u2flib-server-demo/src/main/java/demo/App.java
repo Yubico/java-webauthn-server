@@ -1,5 +1,6 @@
 package demo;
 
+import demo.u2f.Resource;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.jersey.setup.JerseyEnvironment;

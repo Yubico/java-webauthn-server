@@ -39,7 +39,7 @@
     <p>Registration data</p>
     <pre> ${registration} </pre>
 
-    <#include "navigation.ftl">
+    <#include "/demo/view/navigation.ftl">
 
 </body>
 </html>
