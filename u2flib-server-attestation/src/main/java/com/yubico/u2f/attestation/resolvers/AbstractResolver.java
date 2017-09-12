@@ -21,28 +21,33 @@ public abstract class AbstractResolver implements MetadataResolver {
         }
 
         X509Certificate cert = it.next();
+        MetadataObject resolvedInitial = resolve(cert);
 
-        while (it.hasNext()) {
-            MetadataObject resolved = resolve(cert);
+        if (resolvedInitial != null) {
+            return resolvedInitial;
+        } else {
+            while (it.hasNext()) {
+                MetadataObject resolved = resolve(cert);
 
-            if (resolved != null) {
-                return resolved;
-            } else {
-                logger.trace("Could not resolve certificate [{}] - trying next element in certificate chain.", cert);
+                if (resolved != null) {
+                    return resolved;
+                } else {
+                    logger.trace("Could not resolve certificate [{}] - trying next element in certificate chain.", cert);
 
-                X509Certificate signingCert = it.next();
+                    X509Certificate signingCert = it.next();
 
-                try {
-                    cert.verify(signingCert.getPublicKey());
-                } catch (Exception e) {
-                    logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
-                    return null;
+                    try {
+                        cert.verify(signingCert.getPublicKey());
+                    } catch (Exception e) {
+                        logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
+                        return null;
+                    }
                 }
+
             }
 
+            return null;
         }
-
-        return null;
     }
 
 }
