@@ -59,5 +59,5 @@ case class MakePublicKeyCredentialOptions(
     * Identifier" registry  for an up-to-date list of registered WebAuthn
     * Extensions.
     */
-  extensions: Optional[AuthenticationExtensions] = None.asJava,
+  extensions: Optional[AuthenticationExtensions] = None.asJava
 )

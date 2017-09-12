@@ -7,7 +7,7 @@ import com.yubico.webauthn.util.WebAuthnCodecs
 
 case class AttestationObject(
 
-  private val attestationObject: ArrayBuffer,
+  private val attestationObject: ArrayBuffer
 
 ) {
 

@@ -27,13 +27,13 @@ case class PublicKeyCredentialRequestOptions(
   /**
     * A list of public key credentials acceptable to the caller, in descending order of the caller’s preference.
     */
-  allowCredentials: Optional[List[PublicKeyCredentialDescriptor]] = None.asJava,
+  allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
 
   /**
     * Additional parameters requesting additional processing by the client and authenticator.
     *
     * For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
     */
-  extensions: Optional[AuthenticationExtensions] = None.asJava,
+  extensions: Optional[AuthenticationExtensions] = None.asJava
 
 )

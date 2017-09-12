@@ -19,6 +19,6 @@ case class AttestationData private[data] (
     *
     * @todo verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
     */
-  credentialPublicKey: JsonNode,
+  credentialPublicKey: JsonNode
 
 )

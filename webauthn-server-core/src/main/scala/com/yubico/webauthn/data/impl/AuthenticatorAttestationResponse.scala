@@ -8,7 +8,7 @@ import com.yubico.webauthn.util.WebAuthnCodecs
 case class AuthenticatorAttestationResponse (
 
   override val attestationObject: ArrayBuffer,
-  override val clientDataJSON: ArrayBuffer,
+  override val clientDataJSON: ArrayBuffer
 
 ) extends com.yubico.webauthn.data.AuthenticatorAttestationResponse
   with JacksonAuthenticatorResponse {

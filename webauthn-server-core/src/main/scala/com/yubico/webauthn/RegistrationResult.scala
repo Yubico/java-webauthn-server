@@ -9,5 +9,5 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 case class RegistrationResult(
   keyId: PublicKeyCredentialDescriptor,
   attestationTrusted: Boolean,
-  attestationMetadata: Optional[MetadataObject],
+  attestationMetadata: Optional[MetadataObject]
 )

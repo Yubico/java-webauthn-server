@@ -69,7 +69,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       rp = rpId,
       user = userId,
       challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7)),
+      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7))
     )
 
   }
@@ -87,7 +87,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
     origin: String = Defaults.rpId.id,
     requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
-    userId: UserIdentity = Defaults.userId,
+    userId: UserIdentity = Defaults.userId
   ): FinishRegistrationSteps = {
 
     val request = MakePublicKeyCredentialOptions(
@@ -95,13 +95,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       user = userId,
       challenge = challenge,
       pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)),
-      extensions = requestedExtensions.asJava,
+      extensions = requestedExtensions.asJava
     )
 
     val response = PublicKeyCredential(
       credentialId getOrElse AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialId,
       AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
-      clientExtensionResults,
+      clientExtensionResults
     )
 
     new RelyingParty(
@@ -112,7 +112,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       preferredPubkeyParams = request.pubKeyCredParams,
       rp = rpId,
       credentialRepository = null,
-      metadataResolver = metadataResolver.asJava,
+      metadataResolver = metadataResolver.asJava
     )._finishRegistration(request, response, callerTokenBindingId.asJava)
   }
 
@@ -162,7 +162,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
 
           val steps = finishRegistration(
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
-            clientDataJsonBytes = clientDataJsonBytes,
+            clientDataJsonBytes = clientDataJsonBytes
           )
           val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
@@ -186,7 +186,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
           val steps = finishRegistration(
             callerTokenBindingId = None,
             attestationObject = attestationObjectBytes,
-            clientDataJsonBytes = clientDataJsonBytes,
+            clientDataJsonBytes = clientDataJsonBytes
           )
           val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
@@ -202,7 +202,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
           val steps = finishRegistration(
             callerTokenBindingId = Some("ORANGESUBMARINE"),
             attestationObject = attestationObjectBytes,
-            clientDataJsonBytes = clientDataJsonBytes,
+            clientDataJsonBytes = clientDataJsonBytes
           )
           val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
 
@@ -219,7 +219,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val failStep5: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
 
@@ -233,7 +233,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val successStep5: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
 
@@ -247,7 +247,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val failStep5: failSteps.Step5 = failSteps.begin.next.get.next.get.next.get.next.get
 
@@ -261,7 +261,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val successStep5: successSteps.Step5 = successSteps.begin.next.get.next.get.next.get.next.get
 
@@ -287,7 +287,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
                 WebAuthnCodecs.json.writeValueAsBytes(
                   WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                     .set("hashAlgorithm", jsonFactory.textNode(algorithm))
-                ).toVector,
+                ).toVector
             )
             val step6: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -405,7 +405,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             val step10: steps.Step10 = new steps.Step10(
               attestation = AttestationObject(Defaults.attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.updated(20, (Defaults.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier
             )
 
             step10.validations shouldBe a [Failure[_]]
@@ -431,7 +431,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             val step10: steps.Step10 = new steps.Step10(
               attestation = AttestationObject(attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier
             )
 
             step10.validations shouldBe a [Failure[_]]
@@ -463,7 +463,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             val step10: steps.Step10 = new steps.Step10(
               attestation = AttestationObject(attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier
             )
 
             step10.validations shouldBe a [Failure[_]]
@@ -480,14 +480,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
               val steps = finishRegistration(
                 attestationObject = credential.response.attestationObject,
                 credentialId = Some(credential.rawId),
-                clientDataJsonBytes = credential.response.clientDataJSON,
+                clientDataJsonBytes = credential.response.clientDataJSON
               )
               val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               val standaloneVerification = Try {
                 FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
                   credential.response.attestation,
-                  new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector,
+                  new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector
                 )
               }
 
@@ -505,14 +505,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
               val steps = finishRegistration(
                 attestationObject = credential.response.attestationObject,
                 credentialId = Some(credential.rawId),
-                clientDataJsonBytes = credential.response.clientDataJSON,
+                clientDataJsonBytes = credential.response.clientDataJSON
               )
               val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               val standaloneVerification = Try {
                 FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
                   credential.response.attestation,
-                  new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector,
+                  new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector
                 )
               }
 
@@ -545,9 +545,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
               .set("fmt", jsonFactory.textNode("packed"))
           ).toVector
-          val steps = finishRegistration(
-            attestationObject = attestationObject,
-          )
+          val steps = finishRegistration(attestationObject = attestationObject)
           val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step10.validations shouldBe a [Success[_]]
@@ -559,9 +557,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
               .set("fmt", jsonFactory.textNode("tpm"))
           ).toVector
-          val steps = finishRegistration(
-            attestationObject = attestationObject,
-          )
+          val steps = finishRegistration(attestationObject = attestationObject)
           val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step10.validations shouldBe a [Success[_]]
@@ -573,9 +569,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
               .set("fmt", jsonFactory.textNode("android-key"))
           ).toVector
-          val steps = finishRegistration(
-            attestationObject = attestationObject,
-          )
+          val steps = finishRegistration(attestationObject = attestationObject)
           val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step10.validations shouldBe a [Success[_]]
@@ -587,9 +581,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
               .set("fmt", jsonFactory.textNode("android-safetynet"))
           ).toVector
-          val steps = finishRegistration(
-            attestationObject = attestationObject,
-          )
+          val steps = finishRegistration(attestationObject = attestationObject)
           val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step10.validations shouldBe a [Success[_]]
@@ -616,7 +608,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
 
             val steps = finishRegistration(
               attestationObject = attestationObject,
-              metadataResolver = Some(metadataResolver),
+              metadataResolver = Some(metadataResolver)
             )
             val step11: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -668,7 +660,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
             it("is rejected if trust cannot be derived from the trust anchors.") {
               val steps = finishRegistration(
                 attestationObject = attestationObject,
-                metadataResolver = Some(metadataResolver),
+                metadataResolver = Some(metadataResolver)
               )
               val step12: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -688,14 +680,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
                     "trustedCertificates" -> jsonFactory.arrayNode().add(jsonFactory.textNode(attestationCaCertPem)),
                     "devices" -> jsonFactory.arrayNode(),
                     "identifier" -> jsonFactory.textNode("Test attestation CA"),
-                    "version" -> jsonFactory.numberNode(42),
+                    "version" -> jsonFactory.numberNode(42)
                   ).asJava)
                 )
               )
 
               val steps = finishRegistration(
                 attestationObject = attestationObject,
-                metadataResolver = Some(metadataResolver),
+                metadataResolver = Some(metadataResolver)
               )
               val step12: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 

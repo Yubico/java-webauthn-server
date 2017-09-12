@@ -8,7 +8,7 @@ case class PublicKeyCredential[+A <: AuthenticatorResponse] (
 
   override val rawId: ArrayBuffer,
   override val response: A,
-  override val clientExtensionResults: AuthenticationExtensions,
+  override val clientExtensionResults: AuthenticationExtensions
 
 ) extends com.yubico.webauthn.data.PublicKeyCredential[A] {
 

@@ -32,13 +32,13 @@ class RelyingParty (
   val crypto: Crypto = new BouncyCastleCrypto,
   val allowSelfAttestation: Boolean = false,
   val credentialRepository: CredentialRepository,
-  val metadataResolver: Optional[MetadataResolver] = None.asJava,
+  val metadataResolver: Optional[MetadataResolver] = None.asJava
 ) {
 
   def startRegistration(
     user: UserIdentity,
     excludeCredentials: Optional[Seq[PublicKeyCredentialDescriptor]] = None.asJava,
-    extensions: Optional[AuthenticationExtensions] = None.asJava,
+    extensions: Optional[AuthenticationExtensions] = None.asJava
   ): MakePublicKeyCredentialOptions =
     MakePublicKeyCredentialOptions(
       rp = rp,
@@ -53,14 +53,14 @@ class RelyingParty (
   def finishRegistration(
     request: MakePublicKeyCredentialOptions,
     response: PublicKeyCredential[AuthenticatorAttestationResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): Try[RegistrationResult] =
     _finishRegistration(request, response, callerTokenBindingId).run
 
   private[webauthn] def _finishRegistration(
     request: MakePublicKeyCredentialOptions,
     response: PublicKeyCredential[AuthenticatorAttestationResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): FinishRegistrationSteps =
     FinishRegistrationSteps(
       request = request,
@@ -70,31 +70,31 @@ class RelyingParty (
       rpId = rp.id,
       crypto = crypto,
       allowSelfAttestation = allowSelfAttestation,
-      metadataResolver = metadataResolver,
+      metadataResolver = metadataResolver
     )
 
   def startAssertion(
-    allowCredentials: Optional[List[PublicKeyCredentialDescriptor]] = None.asJava,
-    extensions: Optional[AuthenticationExtensions] = None.asJava,
+    allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
+    extensions: Optional[AuthenticationExtensions] = None.asJava
   ): PublicKeyCredentialRequestOptions =
     PublicKeyCredentialRequestOptions(
       rpId = Some(rp.id).asJava,
       challenge = challengeGenerator.generateChallenge().toVector,
       allowCredentials = allowCredentials,
-      extensions = extensions,
+      extensions = extensions
     )
 
   def finishAssertion(
     request: PublicKeyCredentialRequestOptions,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): Try[Boolean] =
     _finishAssertion(request, response, callerTokenBindingId).run
 
   private[webauthn] def _finishAssertion(
     request: PublicKeyCredentialRequestOptions,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): FinishAssertionSteps =
     FinishAssertionSteps(
       request = request,
@@ -103,7 +103,7 @@ class RelyingParty (
       origin = origin,
       rpId = rp.id,
       crypto = crypto,
-      credentialRepository = credentialRepository,
+      credentialRepository = credentialRepository
     )
 
 }

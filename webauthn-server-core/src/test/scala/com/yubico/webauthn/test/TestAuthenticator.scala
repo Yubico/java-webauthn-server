@@ -95,7 +95,7 @@ object TestAuthenticator extends App {
 
 class TestAuthenticator (
   val crypto: Crypto = new BouncyCastleCrypto,
-  val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider,
+  val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider
 ) {
 
   object Defaults {
@@ -126,14 +126,14 @@ class TestAuthenticator (
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
     tokenBindingId: Option[String] = None,
-    userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = "test"),
+    userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = "test")
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
 
     val options = MakePublicKeyCredentialOptions(
       rp = RelyingPartyIdentity(name = "Test party", id = rpId),
       user = userId ,
       challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7)),
+      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7))
     )
 
     val challengeBase64 = U2fB64Encoding.encode(options.challenge.toArray)
@@ -144,7 +144,7 @@ class TestAuthenticator (
       json.setAll(Map(
         "challenge" -> jsonFactory.textNode(challengeBase64),
         "origin" -> jsonFactory.textNode(origin),
-        "hashAlgorithm" -> jsonFactory.textNode("SHA-256"),
+        "hashAlgorithm" -> jsonFactory.textNode("SHA-256")
       ).asJava)
 
       tokenBindingId foreach { id => json.set("tokenBindingId", jsonFactory.textNode(id)) }
@@ -160,18 +160,18 @@ class TestAuthenticator (
       rpId = Defaults.rpId,
       attestationDataBytes = Some(makeAttestationDataBytes(
         publicKeyCose = ecPublicKeyToCose(generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]),
-        rpId = Defaults.rpId,
+        rpId = Defaults.rpId
       ))
     )
 
     val attestationObjectBytes = makeAttestationObjectBytes(
       authDataBytes,
-      makeU2fAttestationStatement(authDataBytes, clientDataJson, attestationCertAndKey),
+      makeU2fAttestationStatement(authDataBytes, clientDataJson, attestationCertAndKey)
     )
 
     val response = data.impl.AuthenticatorAttestationResponse(
       attestationObject = attestationObjectBytes,
-      clientDataJSON = clientDataJsonBytes,
+      clientDataJSON = clientDataJsonBytes
     )
 
     data.impl.PublicKeyCredential(
@@ -191,13 +191,13 @@ class TestAuthenticator (
     credentialKey: KeyPair = Defaults.credentialKey,
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
-    tokenBindingId: Option[String] = None,
+    tokenBindingId: Option[String] = None
   ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse] = {
 
     val options = PublicKeyCredentialRequestOptions(
       rpId = Some(rpId).asJava,
       challenge = challenge,
-      allowCredentials = Some(allowCredentials).asJava,
+      allowCredentials = Some(allowCredentials.asJava).asJava
     )
 
     val challengeBase64 = U2fB64Encoding.encode(options.challenge.toArray)
@@ -208,7 +208,7 @@ class TestAuthenticator (
       json.setAll(Map(
         "challenge" -> jsonFactory.textNode(challengeBase64),
         "origin" -> jsonFactory.textNode(origin),
-        "hashAlgorithm" -> jsonFactory.textNode("SHA-256"),
+        "hashAlgorithm" -> jsonFactory.textNode("SHA-256")
       ).asJava)
 
       tokenBindingId foreach { id => json.set("tokenBindingId", jsonFactory.textNode(id)) }
@@ -229,7 +229,7 @@ class TestAuthenticator (
         authDataBytes,
         crypto.hash(clientDataJsonBytes.toArray).toVector,
         credentialKey.getPrivate
-      ),
+      )
     )
 
     data.impl.PublicKeyCredential(
@@ -244,7 +244,7 @@ class TestAuthenticator (
     jsonFactory.objectNode().setAll(Map(
       "alg" -> jsonFactory.textNode("ES256"),
       "x" -> jsonFactory.binaryNode(key.getW.getAffineX.toByteArray),
-      "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray),
+      "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
     ).asJava)
   }
 
@@ -254,7 +254,7 @@ class TestAuthenticator (
     val attObj = f.objectNode().setAll(Map(
       "authData" -> f.binaryNode(authDataBytes.toArray),
       "fmt" -> f.textNode(format),
-      "attStmt" -> attStmt,
+      "attStmt" -> attStmt
     ).asJava)
 
     WebAuthnCodecs.cbor.writeValueAsBytes(attObj).toVector
@@ -263,7 +263,7 @@ class TestAuthenticator (
   def makeU2fAttestationStatement(
     authDataBytes: ArrayBuffer,
     clientDataJson: String,
-    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None
   ): JsonNode = {
     val (cert, key) = attestationCertAndKey getOrElse generateAttestationCertificate()
     val authData = AuthenticatorData(authDataBytes)
@@ -282,7 +282,7 @@ class TestAuthenticator (
           signedData,
           key
         ).toArray
-      ),
+      )
     ).asJava)
   }
 
@@ -290,7 +290,7 @@ class TestAuthenticator (
     rpIdHash: ArrayBuffer,
     clientDataJson: String,
     credentialId: ArrayBuffer,
-    credentialPublicKeyRawBytes: ArrayBuffer,
+    credentialPublicKeyRawBytes: ArrayBuffer
   ): ArrayBuffer = {
     (Vector[Byte](0)
       ++ rpIdHash
@@ -353,7 +353,7 @@ class TestAuthenticator (
     val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", javaCryptoProvider)
     new KeyPair(
       keyFactory.generatePublic(new X509EncodedKeySpec(publicBytes.toArray)),
-      keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes.toArray)),
+      keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes.toArray))
     )
   }
 
@@ -366,7 +366,7 @@ class TestAuthenticator (
   def verifySignature(
     pubKey: PublicKey,
     signedDataBytes: ArrayBuffer,
-    signatureBytes: ArrayBuffer,
+    signatureBytes: ArrayBuffer
   ): Boolean = {
     val sig: Signature = Signature.getInstance("SHA256withECDSA", javaCryptoProvider)
     sig.initVerify(pubKey)
@@ -380,7 +380,7 @@ class TestAuthenticator (
   def verifyU2fExampleWithCert(
     attestationCertBytes: ArrayBuffer,
     signedDataBytes: ArrayBuffer,
-    signatureBytes: ArrayBuffer,
+    signatureBytes: ArrayBuffer
   ): Unit = {
     val attestationCert: X509Certificate  = CertificateParser.parseDer(attestationCertBytes.toArray)
     val pubKey: PublicKey = attestationCert.getPublicKey
@@ -390,7 +390,7 @@ class TestAuthenticator (
   def verifyU2fExampleWithExplicitParams(
     publicKeyHex: String,
     signedDataBytes: ArrayBuffer,
-    signatureBytes: ArrayBuffer,
+    signatureBytes: ArrayBuffer
   ): Unit = {
     val pubKeyPoint = new ECPoint(new BigInteger(publicKeyHex drop 2 take 64, 16), new BigInteger(publicKeyHex drop 2 drop 64, 16))
     val namedSpec = ECNamedCurveTable.getParameterSpec("P-256")

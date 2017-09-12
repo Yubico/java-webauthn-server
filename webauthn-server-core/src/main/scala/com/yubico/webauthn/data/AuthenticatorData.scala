@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 
 
 case class AuthenticatorData(
-  private val authData: ArrayBuffer,
+  private val authData: ArrayBuffer
 ) {
   private val RpIdHashLength = 32
   private val FlagsLength = 1
@@ -87,7 +87,7 @@ case class AuthenticatorData(
       Some(AttestationData(
         aaguid = bytes.slice(0, 16),
         credentialId = bytes.slice(16 + 2, 16 + 2 + L),
-        credentialPublicKey = credentialPublicKey,
+        credentialPublicKey = credentialPublicKey
       )),
       extensions
     )

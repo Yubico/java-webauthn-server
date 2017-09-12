@@ -39,6 +39,6 @@ case class AuthenticatorSelectionCriteria(
     * \[\[DiscoverFromExternalSource]](options) method operations when it is
     * requested to verify the credential.
     */
-  uv: Boolean = false,
+  uv: Boolean = false
 
 )

@@ -15,5 +15,5 @@ package com.yubico.webauthn.data
   */
 case class PublicKeyCredentialParameters(
   alg: COSEAlgorithmIdentifier,
-  `type`: PublicKeyCredentialType = PublicKey,
+  `type`: PublicKeyCredentialType = PublicKey
 )

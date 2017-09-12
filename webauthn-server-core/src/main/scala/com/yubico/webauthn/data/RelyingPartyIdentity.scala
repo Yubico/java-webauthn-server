@@ -28,6 +28,6 @@ case class RelyingPartyIdentity (
     *
     * For example, this could be the RP's logo.
     */
-  icon: Optional[URL] = None.asJava,
+  icon: Optional[URL] = None.asJava
 
 )

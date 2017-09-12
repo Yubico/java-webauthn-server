@@ -30,6 +30,7 @@ import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
 
+import scala.collection.JavaConverters._
 import scala.util.Failure
 import scala.util.Success
 
@@ -50,7 +51,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
     val credentialId: ArrayBuffer = BinaryUtil.fromHex("").get
     val credentialKey: KeyPair = new TestAuthenticator().importEcKeypair(
       privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dd17580fe3c2e374c79fb30fbef657e326119d18ae538160c831851b92df19d7a00a06082a8648ce3d030107a144034200049613906235a63e87c085d52901bde35dcd9ca424526a4de551abe7ef4e3157aee6d01e1f4f805ee323ebf5ee7a54d4008d6bb97d9281a97f83e0be31dc3b8ef6").get,
-      publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d030107034200049613906235a63e87c085d52901bde35dcd9ca424526a4de551abe7ef4e3157aee6d01e1f4f805ee323ebf5ee7a54d4008d6bb97d9281a97f83e0be31dc3b8ef6").get,
+      publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d030107034200049613906235a63e87c085d52901bde35dcd9ca424526a4de551abe7ef4e3157aee6d01e1f4f805ee323ebf5ee7a54d4008d6bb97d9281a97f83e0be31dc3b8ef6").get
     )
     val signature: ArrayBuffer = BinaryUtil.fromHex("3046022100e6f0c87a54aa16f2e0862035746f2732f3a8b27a404a29681f77d4a5c023861702210093b8b8da66ebce71c5bc467b61bc18277606ab895d25c226b066d5054345749a").get
 
@@ -76,14 +77,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
     origin: String = Defaults.rpId.id,
     requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
-    signature: ArrayBuffer = Defaults.signature,
+    signature: ArrayBuffer = Defaults.signature
   ): FinishAssertionSteps = {
 
     val request = PublicKeyCredentialRequestOptions(
       rpId = Some(rpId.id).asJava,
       challenge = challenge,
-      allowCredentials = Some(List(PublicKeyCredentialDescriptor(id = credentialId))).asJava,
-      extensions = requestedExtensions.asJava,
+      allowCredentials = Some(List(PublicKeyCredentialDescriptor(id = credentialId)).asJava).asJava,
+      extensions = requestedExtensions.asJava
     )
 
     val response = PublicKeyCredential(
@@ -91,9 +92,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       AuthenticatorAssertionResponse(
         clientDataJSON = clientDataJsonBytes,
         authenticatorData = authenticatorData,
-        signature = signature,
+        signature = signature
       ),
-      clientExtensionResults,
+      clientExtensionResults
     )
 
     new RelyingParty(
@@ -104,8 +105,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       preferredPubkeyParams = Nil,
       rp = rpId,
       credentialRepository = credentialRepository getOrElse (
-        (credId: Base64UrlString) => (if (credId == U2fB64Encoding.encode(credentialId.toArray)) Some(credentialKey.getPublic) else None).asJava
-      ),
+        new CredentialRepository {
+          override def lookup(credId: Base64UrlString) = (if (credId == U2fB64Encoding.encode(credentialId.toArray)) Some(credentialKey.getPublic) else None).asJava
+        }
+      )
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
@@ -115,7 +118,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
       describe("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
-          val steps = finishAssertion(credentialRepository = Some((_) => None.asJava))
+          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString) = None.asJava }))
           val step: steps.Step1 = steps.begin
 
           step.validations shouldBe a [Failure[_]]
@@ -124,7 +127,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
 
         it("Succeeds if the credential ID is known.") {
-          val steps = finishAssertion(credentialRepository = Some((_) => Some(Defaults.credentialKey.getPublic).asJava))
+          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString) = Some(Defaults.credentialKey.getPublic).asJava }))
           val step: steps.Step1 = steps.begin
 
           step.validations shouldBe a [Success[_]]
@@ -227,7 +230,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
           val steps = finishAssertion(
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
-            clientDataJsonBytes = clientDataJsonBytes,
+            clientDataJsonBytes = clientDataJsonBytes
           )
           val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -249,7 +252,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
           val steps = finishAssertion(
             callerTokenBindingId = None,
-            clientDataJsonBytes = clientDataJsonBytes,
+            clientDataJsonBytes = clientDataJsonBytes
           )
           val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -263,7 +266,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
           val steps = finishAssertion(
             callerTokenBindingId = Some("ORANGESUBMARINE"),
-            clientDataJsonBytes = clientDataJsonBytes,
+            clientDataJsonBytes = clientDataJsonBytes
           )
           val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -280,7 +283,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val failStep: failSteps.Step7 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -294,7 +297,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val successStep: successSteps.Step7 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -308,7 +311,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val failStep: failSteps.Step7 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -322,7 +325,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
               WebAuthnCodecs.json.writeValueAsBytes(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector,
+              ).toVector
           )
           val successStep: successSteps.Step7 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -367,7 +370,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
                 WebAuthnCodecs.json.writeValueAsBytes(
                   WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                     .set("hashAlgorithm", jsonFactory.textNode(algorithm))
-                ).toVector,
+                ).toVector
             )
             val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -409,7 +412,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
           val rpIdHash: ArrayBuffer = crypto.hash(rpId).toVector
           val steps = finishAssertion(
             authenticatorData = rpIdHash ++ Defaults.authenticatorData.drop(32),
-            rpId = Defaults.rpId.copy(id = rpId),
+            rpId = Defaults.rpId.copy(id = rpId)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -420,7 +423,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
         it("A test case with a different signed flags field fails.") {
           val steps = finishAssertion(
-            authenticatorData = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) | 0x02).toByte),
+            authenticatorData = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) | 0x02).toByte)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -431,7 +434,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
         it("A test case with a different signed signature counter fails.") {
           val steps = finishAssertion(
-            authenticatorData = Defaults.authenticatorData.updated(33, 42.toByte),
+            authenticatorData = Defaults.authenticatorData.updated(33, 42.toByte)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 

@@ -12,7 +12,7 @@ import scala.collection.JavaConverters._
 
 
 class FidoU2fAttestationTrustResolver(
-  private val resolver: MetadataResolver,
+  private val resolver: MetadataResolver
 ) extends AttestationTrustResolver {
 
   override def resolveTrustAnchor(attestationObject: AttestationObject): Optional[MetadataObject] =

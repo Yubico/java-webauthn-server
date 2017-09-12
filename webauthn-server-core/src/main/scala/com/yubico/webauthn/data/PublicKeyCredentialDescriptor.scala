@@ -22,6 +22,6 @@ case class PublicKeyCredentialDescriptor(
     */
   id: ArrayBuffer,
 
-  transports: Optional[Vector[AuthenticatorTransport]] = None.asJava,
+  transports: Optional[Vector[AuthenticatorTransport]] = None.asJava
 
 )

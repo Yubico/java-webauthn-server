@@ -24,7 +24,7 @@ case class FinishAssertionSteps(
   origin: String,
   rpId: String,
   crypto: Crypto,
-  credentialRepository: CredentialRepository,
+  credentialRepository: CredentialRepository
 ) {
 
   sealed trait Step[A <: Step[_, _], B <: Step[_, _]] {
@@ -45,7 +45,7 @@ case class FinishAssertionSteps(
   private[webauthn] def begin: Step1 = Step1()
   def run: Try[Boolean] = begin.run
 
-  case class Step1 private () extends Step[Step1, Step2] {
+  case class Step1 private[webauthn] () extends Step[Step1, Step2] {
     override def prev = this
     override def nextStep = Step2(this)
     override def validate() = assert(_pubkey.isPresent, "Unknown credential ID.")
@@ -57,7 +57,7 @@ case class FinishAssertionSteps(
     def pubkey: PublicKey = _pubkey.get
   }
 
-  case class Step2 private (override val prev: Step1) extends Step[Step1, Step3] {
+  case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
     override def validate() = {
       assert(clientData != null, "Missing client data.")
       assert(authenticatorData != null, "Missing authenticator data.")
@@ -70,7 +70,7 @@ case class FinishAssertionSteps(
     def signature: ArrayBuffer = response.response.signature
   }
 
-  case class Step3 private (override val prev: Step2) extends Step[Step2, Step4] {
+  case class Step3 private[webauthn] (override val prev: Step2) extends Step[Step2, Step4] {
     override def validate(): Unit = {
       assert(clientData != null, "Missing client data.")
     }
@@ -78,7 +78,7 @@ case class FinishAssertionSteps(
     def clientData: CollectedClientData = response.response.collectedClientData
   }
 
-  case class Step4 private (override val prev: Step3) extends Step[Step3, Step5] {
+  case class Step4 private[webauthn] (override val prev: Step3) extends Step[Step3, Step5] {
     override def validate() {
       assert(
         U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.challenge,
@@ -88,7 +88,7 @@ case class FinishAssertionSteps(
     def nextStep = Step5(this)
   }
 
-  case class Step5 private (override val prev: Step4) extends Step[Step4, Step6] {
+  case class Step5 private[webauthn] (override val prev: Step4) extends Step[Step4, Step6] {
     override def validate() {
       assert(
         response.response.collectedClientData.origin == origin,
@@ -98,7 +98,7 @@ case class FinishAssertionSteps(
     override def nextStep = Step6(this)
   }
 
-  case class Step6 private (override val prev: Step5) extends Step[Step5, Step7] {
+  case class Step6 private[webauthn] (override val prev: Step5) extends Step[Step5, Step7] {
     override def validate() {
       (callerTokenBindingId.asScala, response.response.collectedClientData.tokenBindingId.asScala) match {
         case (None, None) =>
@@ -112,7 +112,7 @@ case class FinishAssertionSteps(
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
   }
-  case class Step7 private (override val prev: Step6) extends Step[Step6, Step8] {
+  case class Step7 private[webauthn] (override val prev: Step6) extends Step[Step6, Step8] {
     override def validate() {
       response.response.collectedClientData.clientExtensions.asScala foreach { extensions =>
         assert(
@@ -141,7 +141,7 @@ case class FinishAssertionSteps(
     override def nextStep = Step8(this)
   }
 
-  case class Step8 private (override val prev: Step7) extends Step[Step7, Step9] {
+  case class Step8 private[webauthn] (override val prev: Step7) extends Step[Step7, Step9] {
     override def validate() {
       assert(
         response.response.parsedAuthenticatorData.rpIdHash == crypto.hash(rpId).toVector,
@@ -151,7 +151,7 @@ case class FinishAssertionSteps(
     override def nextStep = Step9(this)
   }
 
-  case class Step9 private (override val prev: Step8) extends Step[Step8, Step10] {
+  case class Step9 private[webauthn] (override val prev: Step8) extends Step[Step8, Step10] {
     override def validate(): Unit = {
       val hashAlgorithm: String = response.response.collectedClientData.hashAlgorithm.toLowerCase
       assert(
@@ -172,7 +172,7 @@ case class FinishAssertionSteps(
           crypto.checkSignature(
             prev.prev.prev.prev.prev.prev.prev.prev.prev.pubkey,
             signedBytes.toArray,
-            response.response.signature.toArray,
+            response.response.signature.toArray
           )
         ).isSuccess,
 
@@ -184,7 +184,7 @@ case class FinishAssertionSteps(
     val signedBytes: ArrayBuffer = response.response.authenticatorData ++ prev.clientDataJsonHash
   }
 
-  case class Finished private (override val prev: Step10) extends Step[Step10, Finished] {
+  case class Finished private[webauthn] (override val prev: Step10) extends Step[Step10, Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this

@@ -6,7 +6,7 @@ case class AuthenticatorAssertionResponse(
 
   override val clientDataJSON: ArrayBuffer,
   override val authenticatorData: ArrayBuffer,
-  override val signature: ArrayBuffer,
+  override val signature: ArrayBuffer
 
 ) extends com.yubico.webauthn.data.AuthenticatorAssertionResponse
   with JacksonAuthenticatorResponse

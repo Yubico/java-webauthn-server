@@ -38,6 +38,6 @@ case class UserIdentity (
     *
     * For example, this could be the user's avatar.
     */
-  icon: Optional[URL] = None.asJava,
+  icon: Optional[URL] = None.asJava
 
 )
