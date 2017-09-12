@@ -8,6 +8,7 @@ server:
   adminConnectors:
       - type: http
         port: 8081
+  rootPath: '/api/'
 
 logging:
   level: INFO

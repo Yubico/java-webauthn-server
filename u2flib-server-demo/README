@@ -12,7 +12,7 @@ class.
 === 3. Try it out
 Then point a
 https://www.yubico.com/support/knowledge-base/categories/articles/browsers-support-u2f/[U2F compatible web browser]
-to link:https://localhost:8443/assets/registerIndex.html[https://localhost:8443/assets/registerIndex.html].
+to link:https://localhost:8443/[https://localhost:8443/].
 
 NOTE: Since U2F requires a HTTPS connection, this demo server uses a dummy certificate.
 This will cause your browser to show a warning, which it is safe to bypass.

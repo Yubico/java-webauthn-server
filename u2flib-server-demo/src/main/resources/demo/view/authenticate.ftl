@@ -2,7 +2,7 @@
 <head>
 <title>Java U2F Demo</title>
 
-<script src="/assets/u2f-api-1.1.js"></script>
+<script src="/u2f-api-1.1.js"></script>
 
 <script>
 var request = ${dataJson};

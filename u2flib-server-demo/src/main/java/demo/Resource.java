@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Path("/")
+@Path("/u2f")
 @Produces(MediaType.TEXT_HTML)
 public class Resource {
 
