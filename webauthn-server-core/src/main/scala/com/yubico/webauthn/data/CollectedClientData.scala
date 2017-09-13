@@ -34,7 +34,10 @@ case class CollectedClientData(
     *
     * This SHOULD be a ''recognized algorithm name'', but [[CollectedClientData]] does not inforce it.
     */
-  def hashAlgorithm: String = clientData.get("hashAlgorithm").asText
+  def hashAlgorithm: String =
+    Optional.ofNullable(clientData.get("hashAlgorithm"))
+      .orElse(clientData.get("hashAlg")) // TODO Remove this when Firefox updates attribute name to agree with spec
+      .asText
 
   /**
     * The fully qualified origin of the requester, as identified by the client.
