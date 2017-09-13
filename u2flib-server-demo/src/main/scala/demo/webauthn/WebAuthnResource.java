@@ -119,7 +119,7 @@ public class WebAuthnResource {
             if (registrationTry.isSuccess()) {
                 RegistrationResult registration = registrationTry.get();
 
-                return new FinishRegistrationView(addRegistration(request.getUsername(), registration), jsonMapper.writeValueAsString(request), response);
+                return new FinishRegistrationView(addRegistration(request.getUsername(), registration), jsonMapper.writeValueAsString(request), response, jsonMapper.writeValueAsString(response));
             } else {
                 return new RegistrationFailedView(registrationTry.failed().get());
             }

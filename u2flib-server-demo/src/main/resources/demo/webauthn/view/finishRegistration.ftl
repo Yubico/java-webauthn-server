@@ -5,8 +5,13 @@
 
 <script>
 
+function base64EncodeParts(response) {
+  return response;
+}
+
 window.onload = function() {
   document.getElementById("request").innerHTML = JSON.stringify(${requestJson}, false, 2);
+  document.getElementById("response").innerHTML = JSON.stringify(base64EncodeParts(${responseJson}), false, 2);
 }
 </script>
 
@@ -67,6 +72,9 @@ window.onload = function() {
 
     <h3> Authenticator request </h3>
     <pre id="request">${requestJson}</pre>
+
+    <h3> Authenticator response </h3>
+    <pre id="response">${responseJson}</pre>
 
     <#include "/demo/view/navigation.ftl">
 
