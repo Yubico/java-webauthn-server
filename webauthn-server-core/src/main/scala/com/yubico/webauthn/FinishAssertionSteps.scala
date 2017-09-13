@@ -94,7 +94,7 @@ case class FinishAssertionSteps(
     override def validate() {
       assert(
         response.response.collectedClientData.origin == origin,
-        "Incorrect origin."
+        "Incorrect origin: " + response.response.collectedClientData.origin
       )
     }
     override def nextStep = Step6(this)
