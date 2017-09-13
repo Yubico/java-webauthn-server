@@ -46,7 +46,7 @@ case class MakePublicKeyCredentialOptions(
     * created on an authenticator that also contains one of the credentials
     * enumerated in this parameter.
     */
-  excludeCredentials: Optional[Seq[PublicKeyCredentialDescriptor]] = None.asJava,
+  excludeCredentials: Optional[java.util.Collection[PublicKeyCredentialDescriptor]] = None.asJava,
 
   /**
     * Intended for use by Relying Parties that wish to select the appropriate

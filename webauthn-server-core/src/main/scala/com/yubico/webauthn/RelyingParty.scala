@@ -37,7 +37,7 @@ class RelyingParty (
 
   def startRegistration(
     user: UserIdentity,
-    excludeCredentials: Optional[Seq[PublicKeyCredentialDescriptor]] = None.asJava,
+    excludeCredentials: Optional[java.util.Collection[PublicKeyCredentialDescriptor]] = None.asJava,
     extensions: Optional[AuthenticationExtensions] = None.asJava
   ): MakePublicKeyCredentialOptions =
     MakePublicKeyCredentialOptions(
