@@ -3,6 +3,7 @@ package com.yubico.webauthn.data
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
 /**
@@ -24,4 +25,8 @@ case class PublicKeyCredentialDescriptor(
 
   transports: Optional[Vector[AuthenticatorTransport]] = None.asJava
 
-)
+) {
+
+  def idBase64: String = U2fB64Encoding.encode(id.toArray)
+
+}

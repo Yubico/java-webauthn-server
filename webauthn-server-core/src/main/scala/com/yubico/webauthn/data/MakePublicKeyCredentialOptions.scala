@@ -2,7 +2,11 @@ package com.yubico.webauthn.data
 
 import java.util.Optional
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.data.messages.json.JsonSerializable
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
 case class MakePublicKeyCredentialOptions(
@@ -22,6 +26,7 @@ case class MakePublicKeyCredentialOptions(
     * A challenge intended to be used for generating the newly created
     * credential’s attestation object.
     */
+  @JsonIgnore
   challenge: ArrayBuffer,
 
   /**
@@ -31,6 +36,7 @@ case class MakePublicKeyCredentialOptions(
     * client will make a best-effort to create the most preferred credential
     * that it can.
     */
+  @JsonProperty("parameters")
   pubKeyCredParams: java.util.List[PublicKeyCredentialParameters],
 
   /**
@@ -60,4 +66,9 @@ case class MakePublicKeyCredentialOptions(
     * Extensions.
     */
   extensions: Optional[AuthenticationExtensions] = None.asJava
-)
+) extends JsonSerializable {
+
+  @JsonProperty("challenge")
+  def challengeBase64: String = U2fB64Encoding.encode(challenge.toArray)
+
+}

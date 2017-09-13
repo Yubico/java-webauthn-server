@@ -1,8 +1,16 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
+@JsonTypeInfo(use = Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@jackson_type")
+@JsonSubTypes(Array(
+  new Type(classOf[impl.PublicKeyCredential[_]])
+))
 trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
 
   /**
