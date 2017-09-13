@@ -6,7 +6,9 @@ package com.yubico.webauthn.data
   *
   * WebAuthn supports multiple attestation types:
   */
-sealed trait AttestationType
+sealed trait AttestationType {
+  def name: String
+}
 
 /**
   * Basic Attestation
@@ -16,7 +18,7 @@ sealed trait AttestationType
   * model often share the same attestation key pair. See §5.3.5.1 Privacy for
   * futher information.
   */
-case object Basic extends AttestationType
+case object Basic extends AttestationType { override val name = "Basic" }
 
 /**
   * Self Attestation
@@ -27,7 +29,7 @@ case object Basic extends AttestationType
   * Authenticators without meaningful protection measures for an attestation
   * private key typically use this attestation type.
   */
-case object SelfAttestation extends AttestationType
+case object SelfAttestation extends AttestationType { override val name = "Self attestation" }
 
 /**
   * Privacy CA
@@ -45,7 +47,7 @@ case object SelfAttestation extends AttestationType
   * Note: This concept typically leads to multiple attestation certificates.
   * The attestation certificate requested most recently is called "active".
   */
-case object PrivacyCa extends AttestationType
+case object PrivacyCa extends AttestationType { override val name = "Privacy CA" }
 
 /**
   * Elliptic Curve based Direct Anonymous Attestation (ECDAA)
@@ -58,4 +60,4 @@ case object PrivacyCa extends AttestationType
   * called ECDAA in this specification. Consequently we denote the DAA-Issuer
   * as ECDAA-Issuer.
   */
-case object Ecdaa extends AttestationType
+case object Ecdaa extends AttestationType { override val name = "ECDAA" }
