@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import scala.collection.immutable.Vector;
 import scala.util.Try;
 
@@ -82,7 +83,11 @@ public class WebAuthnResource {
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
             rp.startRegistration(
                 new UserIdentity(username, username, username, Optional.empty()),
-                Optional.empty(),
+                Optional.of(
+                    userStorage.get(username).stream()
+                        .map(registration -> registration.getRegistration().keyId())
+                        .collect(Collectors.toList())
+                ),
                 Optional.empty()
             )
         );

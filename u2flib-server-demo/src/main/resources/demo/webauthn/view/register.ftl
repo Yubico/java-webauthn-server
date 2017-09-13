@@ -52,9 +52,16 @@ function createCredential(request) {
     request,
     {
       challenge: challengeBytes,
+      excludeCredentials: request.excludeCredentials.map(function(credential) {
+        return Object.assign({}, credential, {
+          id: base64Decode(credential.id),
+        });
+      }),
       timeout: 10000,
     }
   );
+
+  console.log('makePublicKeyCredentialOptions', makePublicKeyCredentialOptions);
 
   return navigator.credentials.create({
     publicKey: translateForFirefoxNightly57_0a1(makePublicKeyCredentialOptions),
