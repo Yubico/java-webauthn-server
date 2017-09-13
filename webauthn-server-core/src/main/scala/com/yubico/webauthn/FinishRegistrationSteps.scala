@@ -74,7 +74,7 @@ case class FinishRegistrationSteps(
     override def validate() {
       assert(
         response.response.collectedClientData.origin == origin,
-        "Incorrect origin."
+        "Incorrect origin: " + response.response.collectedClientData.origin
       )
     }
     override def nextStep = Step4()
