@@ -225,6 +225,7 @@ case class FinishRegistrationSteps(
     }
     override def nextStep = Finished(
       attestationTrusted = attestationTrusted,
+      attestationType = attestationType,
       attestationMetadata = attestationMetadata
     )
 
@@ -240,7 +241,8 @@ case class FinishRegistrationSteps(
 
   case class Finished private[webauthn] (
     attestationMetadata: Optional[MetadataObject],
-    attestationTrusted: Boolean
+    attestationTrusted: Boolean,
+    attestationType: AttestationType
   ) extends Step[Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
@@ -249,6 +251,7 @@ case class FinishRegistrationSteps(
     override def result: Option[RegistrationResult] = Some(RegistrationResult(
       keyId = keyId,
       attestationTrusted = attestationTrusted,
+      attestationType = attestationType,
       attestationMetadata = attestationMetadata
     ))
 
