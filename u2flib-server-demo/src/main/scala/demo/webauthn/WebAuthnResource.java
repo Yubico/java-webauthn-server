@@ -92,7 +92,7 @@ public class WebAuthnResource {
 
     @Path("finishRegistration")
     @POST
-    public View finishRegistration(@FormParam("response") String responseJson) throws CertificateException, NoSuchFieldException {
+    public View finishRegistration(@FormParam("response") String responseJson) throws CertificateException, NoSuchFieldException, JsonProcessingException {
         RegistrationResponse response = null;
         try {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
@@ -114,7 +114,7 @@ public class WebAuthnResource {
             if (registrationTry.isSuccess()) {
                 RegistrationResult registration = registrationTry.get();
 
-                return new FinishRegistrationView(addRegistration(request.getUsername(), registration), response);
+                return new FinishRegistrationView(addRegistration(request.getUsername(), registration), jsonMapper.writeValueAsString(request), response);
             } else {
                 return new RegistrationFailedView(registrationTry.failed().get());
             }

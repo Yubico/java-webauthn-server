@@ -2,6 +2,14 @@
 <head>
 <meta charset="utf-8"/>
 <title>Java WebAuthn Demo</title>
+
+<script>
+
+window.onload = function() {
+  document.getElementById("request").innerHTML = JSON.stringify(${requestJson}, false, 2);
+}
+</script>
+
 </head>
 <body>
 
@@ -56,6 +64,9 @@
     <#else>
       <p>No attestation metadata found.</p>
     </#if>
+
+    <h3> Authenticator request </h3>
+    <pre id="request">${requestJson}</pre>
 
     <#include "/demo/view/navigation.ftl">
 
