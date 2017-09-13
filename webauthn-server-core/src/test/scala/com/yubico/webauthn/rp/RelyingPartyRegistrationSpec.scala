@@ -69,7 +69,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       rp = rpId,
       user = userId,
       challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7))
+      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7)).asJava
     )
 
   }
@@ -94,7 +94,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       rp = rpId,
       user = userId,
       challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)),
+      pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)).asJava,
       extensions = requestedExtensions.asJava
     )
 

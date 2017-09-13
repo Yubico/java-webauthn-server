@@ -133,7 +133,7 @@ class TestAuthenticator (
       rp = RelyingPartyIdentity(name = "Test party", id = rpId),
       user = userId ,
       challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7))
+      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7)).asJava
     )
 
     val challengeBase64 = U2fB64Encoding.encode(options.challenge.toArray)

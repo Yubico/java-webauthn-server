@@ -26,7 +26,7 @@ import scala.util.Try
 class RelyingParty (
   val rp: RelyingPartyIdentity,
   val challengeGenerator: ChallengeGenerator,
-  val preferredPubkeyParams: Seq[PublicKeyCredentialParameters],
+  val preferredPubkeyParams: java.util.List[PublicKeyCredentialParameters],
   val origin: String,
   val authenticatorRequirements: Optional[AuthenticatorSelectionCriteria] = None.asJava,
   val crypto: Crypto = new BouncyCastleCrypto,

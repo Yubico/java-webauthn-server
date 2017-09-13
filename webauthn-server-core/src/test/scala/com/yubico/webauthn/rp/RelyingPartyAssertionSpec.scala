@@ -102,7 +102,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       authenticatorRequirements = None.asJava,
       challengeGenerator = null,
       origin = origin,
-      preferredPubkeyParams = Nil,
+      preferredPubkeyParams = Nil.asJava,
       rp = rpId,
       credentialRepository = credentialRepository getOrElse (
         new CredentialRepository {

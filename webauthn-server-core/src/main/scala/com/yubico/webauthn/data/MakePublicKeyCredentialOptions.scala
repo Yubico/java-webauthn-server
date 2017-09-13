@@ -31,7 +31,7 @@ case class MakePublicKeyCredentialOptions(
     * client will make a best-effort to create the most preferred credential
     * that it can.
     */
-  pubKeyCredParams: Seq[PublicKeyCredentialParameters],
+  pubKeyCredParams: java.util.List[PublicKeyCredentialParameters],
 
   /**
     * Intended for use by Relying Parties that wish to limit the creation of
