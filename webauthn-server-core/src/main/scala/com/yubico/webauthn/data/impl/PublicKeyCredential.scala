@@ -17,10 +17,10 @@ case class PublicKeyCredential[+A <: AuthenticatorResponse] (
 
   @JsonCreator
   def this(
-    @JsonProperty("rawId") rawIdBase64: String,
+    @JsonProperty("id") idBase64: String,
     @JsonProperty response: A,
     @JsonProperty clientExtensionResults: AuthenticationExtensions
   ) =
-    this(U2fB64Encoding.decode(rawIdBase64).toVector, response, clientExtensionResults)
+    this(U2fB64Encoding.decode(idBase64).toVector, response, clientExtensionResults)
 
 }

@@ -42,7 +42,6 @@
       if (response.response instanceof AuthenticatorAttestationResponse) {
         return {
           id: response.id,
-          rawId: base64url.fromByteArray(response.rawId),
           response: {
             attestationObject: base64url.fromByteArray(response.response.attestationObject),
             clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
