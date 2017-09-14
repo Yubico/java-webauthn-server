@@ -6,6 +6,7 @@
 
 <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
 <script src="/js/base64url.js"></script>
+<script src="/js/webauthn.js"></script>
 
 <script>
 
@@ -66,33 +67,12 @@ function addJacksonDeserializationHints(response) {
   }
 }
 
-function responseToObject(response) {
-  if (response instanceof PublicKeyCredential) {
-    if (response.response instanceof AuthenticatorAttestationResponse) {
-      return {
-        id: response.id,
-        rawId: base64url.fromByteArray(response.rawId),
-        response: {
-          attestationObject: base64url.fromByteArray(response.response.attestationObject),
-          clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
-        },
-      };
-    } else if (response.response instanceof AuthenticatorAssertionResponse) {
-      throw new Error("Not implemented.");
-    } else {
-      throw new Error("Argument.response must be an AuthenticatorAttestationResponse or AuthenticatorAssertionResponse, was: " + (typeof response.response));
-    }
-  } else {
-    throw new Error("Argument must be a PublicKeyCredential, was: " + (typeof response));
-  }
-}
-
 function submitResponse(requestId, response) {
   var form = document.getElementById('form');
   var responseField = document.getElementById('response');
   responseField.value = JSON.stringify({
     requestId: requestId,
-    credential: addJacksonDeserializationHints(responseToObject(response)),
+    credential: addJacksonDeserializationHints(webauthn.responseToObject(response)),
   });
   form.submit();
 }
@@ -105,7 +85,7 @@ window.onload = function() {
   createCredential(request.makePublicKeyCredentialOptions)
     .then(function(response) {
       console.log('Response:', response);
-      console.log('Response:', JSON.stringify(responseToObject(response)));
+      console.log('Response:', JSON.stringify(webauthn.responseToObject(response)));
       window.result = response;
       return response;
     }).then(function(response) {
