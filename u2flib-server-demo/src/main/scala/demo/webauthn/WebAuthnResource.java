@@ -32,6 +32,7 @@ import demo.webauthn.view.RegistrationView;
 import io.dropwizard.views.View;
 import java.io.IOException;
 import java.security.cert.CertificateException;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,6 +54,8 @@ public class WebAuthnResource {
 
     private final MetadataService metadataService = new MetadataService();
     private final MetadataResolver metadataResolver = new SimpleResolver();
+
+    private final Clock clock = Clock.systemDefaultZone();
 
     private final RelyingParty rp = new RelyingParty(
         new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty()),
@@ -77,9 +80,10 @@ public class WebAuthnResource {
 
     @Path("startRegistration")
     @GET
-    public View startRegistration(@QueryParam("username") String username) throws JsonProcessingException {
+    public View startRegistration(@QueryParam("username") String username, @QueryParam("credentialNickname") String credentialNickname) throws JsonProcessingException {
         RegistrationRequest request = new RegistrationRequest(
             username,
+            credentialNickname,
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
             rp.startRegistration(
                 new UserIdentity(username, username, username, Optional.empty()),
@@ -105,7 +109,7 @@ public class WebAuthnResource {
             return new RegistrationFailedView("Failed to decode response object.");
         }
 
-        RegistrationRequest request = requestStorage.remove(response.getRequestId());
+        RegistrationRequest request = eequestStorage.remove(response.getRequestId());
 
         if (request == null) {
             return new RegistrationFailedView("No such registration in progress.");
@@ -119,7 +123,16 @@ public class WebAuthnResource {
             if (registrationTry.isSuccess()) {
                 RegistrationResult registration = registrationTry.get();
 
-                return new FinishRegistrationView(addRegistration(request.getUsername(), registration), jsonMapper.writeValueAsString(request), response, jsonMapper.writeValueAsString(response));
+                return new FinishRegistrationView(
+                    addRegistration(
+                        request.getUsername(),
+                        request.getCredentialNickname(),
+                        registration
+                    ),
+                    jsonMapper.writeValueAsString(request),
+                    response,
+                    jsonMapper.writeValueAsString(response)
+                );
             } else {
                 return new RegistrationFailedView(registrationTry.failed().get());
             }
@@ -159,8 +172,8 @@ public class WebAuthnResource {
         return null;
     }
 
-    private CredentialRegistration addRegistration(String username, RegistrationResult registration) {
-        CredentialRegistration reg = new CredentialRegistration(username, registration);
+    private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {
+        CredentialRegistration reg = new CredentialRegistration(username, nickname, clock.instant(), registration);
         userStorage.put(username, reg);
         return reg;
     }

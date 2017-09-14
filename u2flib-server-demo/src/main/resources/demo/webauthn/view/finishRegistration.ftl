@@ -20,11 +20,17 @@ window.onload = function() {
 
     <p>Successfully registered credential:</p>
 
-    <p>Username: ${registration.getUsername()}</p>
-    <p>Key ID: <pre>${registration.getRegistration().keyId().idBase64()}</pre></p>
-    <p>Public key: <pre>${response.getCredential().response().attestation().authenticatorData().attestationData().get().credentialPublicKey().toString()}</pre></p>
-    <p>Attestation type: <b>${registration.getRegistration().attestationType().name()}</b></p>
-    <p>Attestation trusted: <b>${registration.getRegistration().attestationTrusted() ?c}</b></p>
+    <table>
+      <tbody>
+        <tr><th>Username:</th> <td> ${registration.getUsername()}</td></tr>
+        <tr><th>Registration time:</th> <td> <pre>${registration.getRegistrationTime()}</pre></td></tr>
+        <tr><th>Credential nickname:</th> <td> <pre>${registration.getCredentialNickname()}</pre></td></tr>
+        <tr><th>Key ID:</th> <td> <pre>${registration.getRegistration().keyId().idBase64()}</pre></td></tr>
+        <tr><th>Public key:</th> <td> <pre>${response.getCredential().response().attestation().authenticatorData().attestationData().get().credentialPublicKey().toString()}</pre></td></tr>
+        <tr><th>Attestation type:</th> <td> <b>${registration.getRegistration().attestationType().name()}</b></td></tr>
+        <tr><th>Attestation trusted:</th> <td> <b>${registration.getRegistration().attestationTrusted() ?c}</b></td></tr>
+      </tbody>
+    </table>
 
     <#if registration.getRegistration().attestationMetadata().isPresent()>
       <h3>Attestation metadata:</h3>

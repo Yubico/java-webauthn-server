@@ -9,6 +9,7 @@ import lombok.Value;
 public class RegistrationRequest {
 
     String username;
+    String credentialNickname;
     String requestId;
     MakePublicKeyCredentialOptions makePublicKeyCredentialOptions;
 

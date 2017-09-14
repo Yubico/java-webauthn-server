@@ -3,8 +3,12 @@
 <h2>Register</h2>
 
 <form method="GET" action="/api/webauthn/startRegistration" id="form">
-    <label for="username">Username</label>
+    <label for="username">Username:</label>
     <input name="username" id="username" autofocus/>
+
+    <label for="credentialNickname">Credential nickname:</label>
+    <input name="credentialNickname" id="credentialNickname" value="Key A"/>
+
     <button type="Submit">Register</button>
 </form>
 
