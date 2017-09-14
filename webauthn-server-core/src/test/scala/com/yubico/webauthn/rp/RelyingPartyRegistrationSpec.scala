@@ -649,7 +649,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
           }
         }
 
-        it("If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 11.") {
+        ignore("If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 11.") {
           fail("Not implemented.")
         }
 
