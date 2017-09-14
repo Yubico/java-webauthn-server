@@ -9,7 +9,7 @@
 })(this, function(base64js) {
 
   function base64UrlToMime(code) {
-    return code.replace(/-/g, '+').replace(/_/g, '/') + '===='.substring(0, 4 - (code.length % 4));
+    return code.replace(/-/g, '+').replace(/_/g, '/') + '===='.substring(0, (4 - (code.length % 4)) % 4);
   }
 
   function mimeBase64ToUrl(code) {
