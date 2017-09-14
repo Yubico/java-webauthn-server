@@ -8,8 +8,6 @@
 <script src="/js/base64url.js"></script>
 
 <script>
-setTimeout(function() {
-}, 1000);
 
 function translateForFirefoxNightly57_0a1(request) {
   return Object.assign({}, request, {
