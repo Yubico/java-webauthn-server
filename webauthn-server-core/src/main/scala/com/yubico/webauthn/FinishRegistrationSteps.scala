@@ -252,7 +252,8 @@ case class FinishRegistrationSteps(
       keyId = keyId,
       attestationTrusted = attestationTrusted,
       attestationType = attestationType,
-      attestationMetadata = attestationMetadata
+      attestationMetadata = attestationMetadata,
+      publicKeyCose = response.response.attestation.authenticatorData.attestationData.get.credentialPublicKey
     ))
 
     def keyId: PublicKeyCredentialDescriptor = PublicKeyCredentialDescriptor(

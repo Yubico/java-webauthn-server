@@ -2,7 +2,10 @@ package com.yubico.webauthn.data
 
 import java.util.Optional
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
 /**
@@ -15,6 +18,7 @@ case class PublicKeyCredentialRequestOptions(
   /**
     * A challenge that the selected authenticator signs, along with other data, when producing an authentication assertion.
     */
+  @JsonIgnore
   challenge: ArrayBuffer,
 
   /**
@@ -36,4 +40,9 @@ case class PublicKeyCredentialRequestOptions(
     */
   extensions: Optional[AuthenticationExtensions] = None.asJava
 
-)
+) {
+
+  @JsonProperty("challenge")
+  def challengeBase64: String = U2fB64Encoding.encode(challenge.toArray)
+
+}

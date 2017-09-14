@@ -48,7 +48,9 @@ case class FinishAssertionSteps(
   case class Step1 private[webauthn] () extends Step[Step1, Step2] {
     override def prev = this
     override def nextStep = Step2(this)
-    override def validate() = assert(_pubkey.isPresent, "Unknown credential ID.")
+    override def validate() = {
+      assert(_pubkey.isPresent, "Unknown credential ID.")
+    }
 
     private lazy val _pubkey: Optional[PublicKey] = (
       credentialRepository.lookup(response.id).asScala

@@ -9,6 +9,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -26,11 +27,15 @@ import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.util.WebAuthnCodecs;
+import demo.webauthn.view.AssertionView;
+import demo.webauthn.view.FailureView;
+import demo.webauthn.view.FinishAssertionView;
 import demo.webauthn.view.FinishRegistrationView;
-import demo.webauthn.view.RegistrationFailedView;
 import demo.webauthn.view.RegistrationView;
 import io.dropwizard.views.View;
 import java.io.IOException;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.time.Clock;
 import java.util.Arrays;
@@ -38,6 +43,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.immutable.Vector;
 import scala.util.Try;
 
@@ -45,10 +52,14 @@ import scala.util.Try;
 @Produces(MediaType.TEXT_HTML)
 public class WebAuthnResource {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebAuthnResource.class);
+
     public static final String ORIGIN = "localhost";
 
-    private final Map<String, RegistrationRequest> requestStorage = new HashMap<String, RegistrationRequest>();
+    private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
+    private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
     private final Multimap<String, CredentialRegistration> userStorage = HashMultimap.create();
+    private final Map<String, JsonNode> keyStorage = new HashMap<>();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
@@ -68,10 +79,22 @@ public class WebAuthnResource {
         new CredentialRepository() {
             @Override
             public Optional<java.security.PublicKey> lookup(String credentialId) {
-                return null;
+                JsonNode cose = keyStorage.get(credentialId);
+                if (cose == null) {
+                    return Optional.empty();
+                } else {
+                    PublicKey key = WebAuthnCodecs.importCoseP256PublicKey(cose);
+                    if (key == null) {
+                        logger.error("Failed to decode public key in storage: {}", credentialId);
+                    }
+                    return Optional.ofNullable(key);
+                }
             }
+
             @Override
-            public Optional<java.security.PublicKey> lookup(Vector<Object> credentialId) { return null; }
+            public Optional<java.security.PublicKey> lookup(Vector<Object> credentialId) {
+                return Optional.empty();
+            }
         },
         Optional.of(metadataResolver)
     );
@@ -95,7 +118,7 @@ public class WebAuthnResource {
                 Optional.empty()
             )
         );
-        requestStorage.put(request.getRequestId(), request);
+        registerRequestStorage.put(request.getRequestId(), request);
         return new RegistrationView(username, request.getRequestId(), jsonMapper.writeValueAsString(request));
     }
 
@@ -106,13 +129,13 @@ public class WebAuthnResource {
         try {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
         } catch (IOException e) {
-            return new RegistrationFailedView("Failed to decode response object.");
+            return new FailureView("Credential creation failed!", "Failed to decode response object.", e.getMessage());
         }
 
-        RegistrationRequest request = eequestStorage.remove(response.getRequestId());
+        RegistrationRequest request = registerRequestStorage.remove(response.getRequestId());
 
         if (request == null) {
-            return new RegistrationFailedView("No such registration in progress.");
+            return new FailureView("Credential creation failed!", "No such registration in progress.");
         } else {
             Try<RegistrationResult> registrationTry = rp.finishRegistration(
                 request.getMakePublicKeyCredentialOptions(),
@@ -134,7 +157,7 @@ public class WebAuthnResource {
                     jsonMapper.writeValueAsString(response)
                 );
             } else {
-                return new RegistrationFailedView(registrationTry.failed().get());
+                return new FailureView("Credential creation failed!", registrationTry.failed().get().getMessage());
             }
 
         }
@@ -142,39 +165,69 @@ public class WebAuthnResource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) {
-        // try {
-            // SignRequestData signRequestData = u2f.startSignature(APP_ID, getRegistrations(username));
-            // requestStorage.put(signRequestData.getRequestId(), signRequestData.toJson());
-            // return new AuthenticationView(signRequestData, username);
-        // } catch (NoEligibleDevicesException e) {
-            // return new AuthenticationView(new SignRequestData(APP_ID, "", Collections.<SignRequest>emptyList()), username);
-        // }
-        return null;
+    public View startAuthentication(@QueryParam("username") String username) throws JsonProcessingException {
+        AssertionRequest request = new AssertionRequest(
+            username,
+            U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+            rp.startAssertion(
+                Optional.of(
+                    userStorage.get(username).stream()
+                        .map(credentialRegistration -> credentialRegistration.getRegistration().keyId())
+                        .collect(Collectors.toList())
+                ),
+                Optional.empty()
+            )
+        );
+
+        assertRequestStorage.put(request.getRequestId(), request);
+
+        return new AssertionView(username, request.getRequestId(), jsonMapper.writeValueAsString(request));
     }
 
     @Path("finishAuthentication")
     @POST
-    public View finishAuthentication(@FormParam("tokenResponse") String response,
-                                     @FormParam("username") String username) {
-        // SignResponse signResponse = SignResponse.fromJson(response);
-        // SignRequestData authenticateRequest = SignRequestData.fromJson(requestStorage.remove(signResponse.getRequestId()));
-        // DeviceRegistration registration = null;
-        // try {
-            // registration = u2f.finishSignature(authenticateRequest, signResponse, getRegistrations(username));
-        // } catch (DeviceCompromisedException e) {
-            // registration = e.getDeviceRegistration();
-            // return new FinishAuthenticationView(false, "Device possibly compromised and therefore blocked: " + e.getMessage());
-        // } finally {
-            // userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
-        // }
-        // return new FinishAuthenticationView(true);
-        return null;
+    public View finishAuthentication(@FormParam("response") String responseJson) throws JsonProcessingException {
+        AssertionResponse response = null;
+        try {
+            response = jsonMapper.readValue(responseJson, AssertionResponse.class);
+        } catch (IOException e) {
+            logger.debug("Failed to decode response object", e);
+            return new FailureView("Assertion failed!", "Failed to decode response object.", e.getMessage());
+        }
+
+        AssertionRequest request = assertRequestStorage.remove(response.getRequestId());
+
+        if (request == null) {
+            return new FailureView("Credential creation failed!", "No such registration in progress.");
+        } else {
+            Try<Object> assertionTry = rp.finishAssertion(
+                request.getPublicKeyCredentialRequestOptions(),
+                response.getCredential(),
+                Optional.empty()
+            );
+
+            if (assertionTry.isSuccess()) {
+                if ((boolean) assertionTry.get()) {
+                    return new FinishAssertionView(
+                        jsonMapper.writeValueAsString(request),
+                        jsonMapper.writeValueAsString(response)
+                    );
+                } else {
+                    return new FailureView("Assertion failed: Invalid assertion.");
+                }
+
+            } else {
+                logger.debug("Assertion failed", assertionTry.failed().get());
+                return new FailureView("Assertion failed!", assertionTry.failed().get().getMessage());
+            }
+
+        }
     }
 
     private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {
         CredentialRegistration reg = new CredentialRegistration(username, nickname, clock.instant(), registration);
         userStorage.put(username, reg);
+        keyStorage.put(registration.keyId().idBase64(), registration.publicKeyCose());
         return reg;
     }
 }

@@ -5,9 +5,6 @@
 </head>
 <body>
 
-    <p>Credential registration failed!</p>
-
-    <p>Reason:</p>
     <#list messages>
       <#items as item>
         <p>${item}</p>
