@@ -76,10 +76,10 @@ window.onload = function() {
       <p>No attestation metadata found.</p>
     </#if>
 
-    <h3> Authenticator request </h3>
+    <h3> Request </h3>
     <pre id="request">${requestJson}</pre>
 
-    <h3> Authenticator response </h3>
+    <h3> Response </h3>
     <pre id="response">${responseJson}</pre>
 
     <#include "/demo/view/navigation.ftl">
