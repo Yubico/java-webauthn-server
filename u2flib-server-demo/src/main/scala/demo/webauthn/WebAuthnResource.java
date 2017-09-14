@@ -184,7 +184,8 @@ public class WebAuthnResource {
                 if ((boolean) assertionTry.get()) {
                     return new FinishAssertionView(
                         jsonMapper.writeValueAsString(request),
-                        jsonMapper.writeValueAsString(response)
+                        jsonMapper.writeValueAsString(response),
+                        jsonMapper.writeValueAsString(userStorage.get(request.getUsername()))
                     );
                 } else {
                     return new FailureView("Assertion failed: Invalid assertion.");

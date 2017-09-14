@@ -6,6 +6,7 @@
 <script>
 
 window.onload = function() {
+  document.getElementById("registrations").innerHTML = JSON.stringify(${registrationsJson}, false, 2);
   document.getElementById("request").innerHTML = JSON.stringify(${requestJson}, false, 2);
   document.getElementById("response").innerHTML = JSON.stringify(${responseJson}, false, 2);
 }
@@ -15,6 +16,9 @@ window.onload = function() {
 <body>
 
     <p>Successfully authenticated!</p>
+
+    <h3> Your registered credentials: </h3>
+    <pre id="registrations">${registrationsJson}</pre>
 
     <h3> Request </h3>
     <pre id="request">${requestJson}</pre>
