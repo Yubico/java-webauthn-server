@@ -21,16 +21,18 @@ function translateForFirefoxNightly57_0a1(request) {
 }
 
 function addJacksonDeserializationHints(response) {
+  var root = Object.assign({}, response, {
+    '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
+  });
+
   if (response.response.attestationObject) {
-    return Object.assign({}, response, {
-      '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
+    return Object.assign({}, root, {
       response: Object.assign({}, response.response, {
         '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse',
       }),
     });
   } else {
-    return Object.assign({}, response, {
-      '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
+    return Object.assign({}, root, {
       response: Object.assign({}, response.response, {
         '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse',
       }),
