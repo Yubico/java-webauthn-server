@@ -5,26 +5,11 @@
 <title>Java WebAuthn Demo</title>
 
 <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
+<script src="/js/base64url.js"></script>
 
 <script>
 setTimeout(function() {
 }, 1000);
-
-function base64UrlToMime(code) {
-  return code.replace(/-/g, '+').replace(/_/g, '/') + '===='.substring(0, 4 - (code.length % 4));
-}
-
-function mimeBase64ToUrl(code) {
-  return code.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-function base64Encode(bytes) {
-  return mimeBase64ToUrl(base64js.fromByteArray(bytes));
-}
-
-function base64Decode(code) {
-  return base64js.toByteArray(base64UrlToMime(code));
-}
 
 function translateForFirefoxNightly57_0a1(request) {
   return Object.assign({}, request, {
@@ -38,10 +23,7 @@ function translateForFirefoxNightly57_0a1(request) {
 
 function createCredential(request) {
   console.log('createCredential', request);
-  console.log('challenge', request.challenge);
-  console.log('challenge', base64UrlToMime(request.challenge));
-
-  var challengeBytes = base64Decode(request.challenge);
+  var challengeBytes = base64url.toByteArray(request.challenge);
 
   console.log('challenge', challengeBytes);
 
@@ -54,7 +36,7 @@ function createCredential(request) {
       challenge: challengeBytes,
       excludeCredentials: request.excludeCredentials.map(function(credential) {
         return Object.assign({}, credential, {
-          id: base64Decode(credential.id),
+          id: base64url.toByteArray(credential.id),
         });
       }),
       timeout: 10000,
@@ -91,10 +73,10 @@ function responseToObject(response) {
     if (response.response instanceof AuthenticatorAttestationResponse) {
       return {
         id: response.id,
-        rawId: base64Encode(response.rawId),
+        rawId: base64url.fromByteArray(response.rawId),
         response: {
-          attestationObject: base64Encode(response.response.attestationObject),
-          clientDataJSON: base64Encode(response.response.clientDataJSON),
+          attestationObject: base64url.fromByteArray(response.response.attestationObject),
+          clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
         },
       };
     } else if (response.response instanceof AuthenticatorAssertionResponse) {
