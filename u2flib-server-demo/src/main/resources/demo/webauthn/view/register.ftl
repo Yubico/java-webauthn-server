@@ -65,6 +65,15 @@ window.onload = function() {
       submitResponse("${requestId}", response);
     }).catch(function(err) {
       console.error('Failed:', err.name, err.message, err);
+
+      if (err.name === 'NotAllowedError'
+        && request.makePublicKeyCredentialOptions.excludeCredentials
+        && request.makePublicKeyCredentialOptions.excludeCredentials.length > 0
+      ) {
+        document.getElementById('messages').innerHTML += '<p>Credential creation failed, probably because an already registered credential is avaiable.</p>';
+      } else {
+        document.getElementById('messages').innerHTML += '<p>Credential creation failed for an unknown reason.</p>';
+      }
     })
   ;
 
@@ -81,6 +90,9 @@ window.onload = function() {
   <form method="POST" action="finishRegistration" id="form" onsubmit="return false">
     <input type="hidden" name="response" id="response"/>
   </form>
+
+  <div id="messages">
+  </div>
 
   <p> Request ID: <pre>${requestId}</pre></p>
 

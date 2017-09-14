@@ -17,16 +17,20 @@
    * @return the Promise returned by `navigator.credentials.create`
    */
   function createCredential(request) {
+    var excludeCredentials = request.excludeCredentials.map(function(credential) {
+      return Object.assign({}, credential, {
+        id: base64url.toByteArray(credential.id),
+        transports: credential.transports || [],
+      });
+    });
+
     var makePublicKeyCredentialOptions = Object.assign(
       {},
       request,
       {
         challenge: base64url.toByteArray(request.challenge),
-        excludeCredentials: request.excludeCredentials.map(function(credential) {
-          return Object.assign({}, credential, {
-            id: base64url.toByteArray(credential.id),
-          });
-        }),
+        excludeCredentials: excludeCredentials,
+        excludeList: excludeCredentials, // For Firefox Nightly 57.0a1
         timeout: 10000,
       }
     );
