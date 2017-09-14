@@ -20,35 +20,6 @@ function translateForFirefoxNightly57_0a1(request) {
   });
 }
 
-function createCredential(request) {
-  console.log('createCredential', request);
-  var challengeBytes = base64url.toByteArray(request.challenge);
-
-  console.log('challenge', challengeBytes);
-
-  console.log('request', translateForFirefoxNightly57_0a1(request));
-
-  var makePublicKeyCredentialOptions = Object.assign(
-    {},
-    request,
-    {
-      challenge: challengeBytes,
-      excludeCredentials: request.excludeCredentials.map(function(credential) {
-        return Object.assign({}, credential, {
-          id: base64url.toByteArray(credential.id),
-        });
-      }),
-      timeout: 10000,
-    }
-  );
-
-  console.log('makePublicKeyCredentialOptions', makePublicKeyCredentialOptions);
-
-  return navigator.credentials.create({
-    publicKey: translateForFirefoxNightly57_0a1(makePublicKeyCredentialOptions),
-  });
-}
-
 function addJacksonDeserializationHints(response) {
   if (response.response.attestationObject) {
     return Object.assign({}, response, {
@@ -82,7 +53,7 @@ window.onload = function() {
   console.log('onload', request);
   document.getElementById("request").innerHTML = JSON.stringify(request, false, 2);
 
-  createCredential(request.makePublicKeyCredentialOptions)
+  webauthn.createCredential(translateForFirefoxNightly57_0a1(request.makePublicKeyCredentialOptions))
     .then(function(response) {
       console.log('Response:', response);
       console.log('Response:', JSON.stringify(webauthn.responseToObject(response)));
