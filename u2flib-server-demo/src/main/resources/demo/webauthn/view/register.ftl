@@ -89,23 +89,12 @@ function responseToObject(response) {
 
 function submitResponse(requestId, response) {
   var form = document.getElementById('form');
-  var reg = document.getElementById('response');
-  // if (data.errorCode) {
-    // switch (data.errorCode) {
-      // case 4:
-        // alert("This device is already registered.");
-        // break;
-
-      // default:
-        // alert("U2F failed with error: " + data.errorCode);
-    // }
-  // } else {
-  reg.value = JSON.stringify({
+  var responseField = document.getElementById('response');
+  responseField.value = JSON.stringify({
     requestId: requestId,
     credential: addJacksonDeserializationHints(responseToObject(response)),
   });
   form.submit();
-  // }
 }
 
 window.onload = function() {
@@ -125,26 +114,27 @@ window.onload = function() {
       console.error('Failed:', err.name, err.message, err);
     })
   ;
-};
 
-console.log(base64js);
+  return false;
+}
 
 </script>
 
 </head>
-    <body>
-    <p>Please wait...</p>
-        <form method="POST" action="finishRegistration" id="form" onsubmit="return false;">
-            <input type="hidden" name="response" id="response"/>
-        </form>
+<body>
 
-        <p> Request ID: <pre>${requestId}</pre></p>
+  <p>Please wait...</p>
 
-        <p> Request: </p>
-        <pre id="request">
-        ${requestJson}
-        </pre>
-    </body>
+  <form method="POST" action="finishRegistration" id="form" onsubmit="return false">
+    <input type="hidden" name="response" id="response"/>
+  </form>
 
-    <#include "/demo/view/navigation.ftl">
+  <p> Request ID: <pre>${requestId}</pre></p>
+
+  <p> Request: </p>
+  <pre id="request">${requestJson}</pre>
+
+  <#include "/demo/view/navigation.ftl">
+
+</body>
 </html>
