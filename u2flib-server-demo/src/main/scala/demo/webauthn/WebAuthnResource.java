@@ -65,6 +65,8 @@ public class WebAuthnResource {
     private final MetadataResolver metadataResolver = new SimpleResolver();
 
     private final Clock clock = Clock.systemDefaultZone();
+    private final ObjectMapper jsonMapper = new ScalaJackson().get();
+
 
     private final RelyingParty rp = new RelyingParty(
         new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty()),
@@ -96,8 +98,6 @@ public class WebAuthnResource {
         },
         Optional.of(metadataResolver)
     );
-
-    private final ObjectMapper jsonMapper = new ScalaJackson().get();
 
     @Path("startRegistration")
     @GET
