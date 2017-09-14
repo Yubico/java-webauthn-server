@@ -9,7 +9,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -19,14 +18,12 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.view.AssertionView;
 import demo.webauthn.view.FailureView;
 import demo.webauthn.view.FinishAssertionView;
@@ -34,7 +31,6 @@ import demo.webauthn.view.FinishRegistrationView;
 import demo.webauthn.view.RegistrationView;
 import io.dropwizard.views.View;
 import java.io.IOException;
-import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.time.Clock;
 import java.util.Arrays;
@@ -44,7 +40,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.immutable.Vector;
 import scala.util.Try;
 
 @Path("/webauthn")
@@ -58,7 +53,7 @@ public class WebAuthnResource {
     private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
     private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
     private final Multimap<String, CredentialRegistration> userStorage = HashMultimap.create();
-    private final Map<String, JsonNode> keyStorage = new HashMap<>();
+    private final InMemoryCredentialRepository credentialRepository = new InMemoryCredentialRepository();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
@@ -76,26 +71,7 @@ public class WebAuthnResource {
         Optional.empty(),
         new BouncyCastleCrypto(),
         true,
-        new CredentialRepository() {
-            @Override
-            public Optional<java.security.PublicKey> lookup(String credentialId) {
-                JsonNode cose = keyStorage.get(credentialId);
-                if (cose == null) {
-                    return Optional.empty();
-                } else {
-                    PublicKey key = WebAuthnCodecs.importCoseP256PublicKey(cose);
-                    if (key == null) {
-                        logger.error("Failed to decode public key in storage: {}", credentialId);
-                    }
-                    return Optional.ofNullable(key);
-                }
-            }
-
-            @Override
-            public Optional<java.security.PublicKey> lookup(Vector<Object> credentialId) {
-                return Optional.empty();
-            }
-        },
+        credentialRepository,
         Optional.of(metadataResolver)
     );
 
@@ -225,7 +201,7 @@ public class WebAuthnResource {
     private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {
         CredentialRegistration reg = new CredentialRegistration(username, nickname, clock.instant(), registration);
         userStorage.put(username, reg);
-        keyStorage.put(registration.keyId().idBase64(), registration.publicKeyCose());
+        credentialRepository.add(registration.keyId().idBase64(), registration.publicKeyCose());
         return reg;
     }
 }
