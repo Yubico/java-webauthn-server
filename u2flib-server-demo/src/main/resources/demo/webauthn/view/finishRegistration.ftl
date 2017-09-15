@@ -35,41 +35,36 @@ window.onload = function() {
     <#if registration.getRegistration().attestationMetadata().isPresent()>
       <h3>Attestation metadata:</h3>
 
-      <p> Identifier: ${registration.getRegistration().attestationMetadata().getIdentifier()} </p>
-      <p> Version: ${registration.getRegistration().attestationMetadata().getVersion()} </p>
+      <p> Identifier: ${registration.getRegistration().attestationMetadata().get().getMetadataIdentifier()} </p>
 
-      <#list registration.getRegistration().attestationMetadata().get().getVendorInfo()>
+      <#list registration.getRegistration().attestationMetadata().get().getVendorProperties()>
         <p>Vendor metadata</p>
 
         <#items as key, value>
-            <pre>
-                ${key}: ${value}
-            </pre>
+            <pre>${key}: ${value}</pre>
         </#items>
       <#else>
           <p>No vendor metadata present!</p>
       </#list>
 
-      <#list registration.getRegistration().attestationMetadata().get().getDevices()>
+      <#list registration.getRegistration().attestationMetadata().get().getDeviceProperties()>
           <p>Device metadata</p>
 
           <#items as key, value>
-              <pre>
-                  ${key}: ${value}
-              </pre>
+              <pre>${key}: ${value}</pre>
           </#items>
       <#else>
           <p>No device metadata present!</p>
       </#list>
 
-      <#list registration.getRegistration().attestationMetadata().get().getTrustedCertificates()>
-          <p>Trusted certificates:</p>
+      <#list registration.getRegistration().attestationMetadata().get().getTransports()>
+          <p>Transports:</p>
 
           <#items as item>
             <pre>${item}</pre>
           </#items>
       <#else>
-          <p>No trusted certificates given!</p>
+          <p>No transports metadata present!</p>
       </#list>
 
     <#else>

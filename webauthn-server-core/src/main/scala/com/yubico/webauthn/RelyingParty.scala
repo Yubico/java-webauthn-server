@@ -3,7 +3,7 @@ package com.yubico.webauthn
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.attestation.MetadataResolver
+import com.yubico.u2f.attestation.MetadataService
 import com.yubico.u2f.crypto.ChallengeGenerator
 import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
@@ -32,7 +32,7 @@ class RelyingParty (
   val crypto: Crypto = new BouncyCastleCrypto,
   val allowSelfAttestation: Boolean = false,
   val credentialRepository: CredentialRepository,
-  val metadataResolver: Optional[MetadataResolver] = None.asJava
+  val metadataService: Optional[MetadataService] = None.asJava
 ) {
 
   def startRegistration(
@@ -70,7 +70,7 @@ class RelyingParty (
       rpId = rp.id,
       crypto = crypto,
       allowSelfAttestation = allowSelfAttestation,
-      metadataResolver = metadataResolver
+      metadataService = metadataService
     )
 
   def startAssertion(

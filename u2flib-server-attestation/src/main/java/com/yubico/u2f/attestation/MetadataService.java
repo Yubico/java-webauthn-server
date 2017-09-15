@@ -24,6 +24,8 @@ import java.io.InputStreamReader;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
@@ -123,6 +125,61 @@ public class MetadataService {
                 }
             });
         } catch (Exception e) {
+            return unknownAttestation;
+        }
+    }
+
+    /**
+     * Attempt to look up attestation for a chain of certificates
+     *
+     * <p>
+     * This method will return the first non-unknown result, if any, of calling
+     * {@link #getAttestation(X509Certificate)} with each of the certificates
+     * in <code>attestationCertificateChain</code> in order, while also
+     * verifying that the next attempted certificate has signed the previous
+     * certificate.
+     * </p>
+     *
+     * @param attestationCertificateChain a certificate chain, where each
+     *          certificate in the list should be signed by the following certificate.
+     * @return The first non-unknown result, if any, of calling {@link
+     *           #getAttestation(X509Certificate)} for each of the certificates
+     *           in the <code>attestationCertificateChain</code>. If the chain
+     *           of signatures is broken before finding such a result, an
+     *           unknown attestation is returned.
+     */
+    public Attestation getAttestation(List<X509Certificate> attestationCertificateChain) {
+
+        Iterator<X509Certificate> it = attestationCertificateChain.iterator();
+        if (it.hasNext() == false) {
+            return unknownAttestation;
+        }
+
+        X509Certificate cert = it.next();
+        Attestation resolvedInitial = getAttestation(cert);
+
+        if (resolvedInitial.isTrusted()) {
+            return resolvedInitial;
+        } else {
+            while (it.hasNext()) {
+                Attestation resolved = getAttestation(cert);
+
+                if (resolved != null) {
+                    return resolved;
+                } else {
+                    logger.trace("Could not look up attestation for certificate [{}] - trying next element in certificate chain.", cert);
+
+                    X509Certificate signingCert = it.next();
+
+                    try {
+                        cert.verify(signingCert.getPublicKey());
+                    } catch (Exception e) {
+                        logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
+                        return unknownAttestation;
+                    }
+                }
+            }
+
             return unknownAttestation;
         }
     }

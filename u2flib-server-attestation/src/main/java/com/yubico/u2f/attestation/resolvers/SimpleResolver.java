@@ -20,7 +20,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SimpleResolver extends AbstractResolver implements MetadataResolver {
+public class SimpleResolver implements MetadataResolver {
     private static final Logger logger = LoggerFactory.getLogger(SimpleResolver.class);
 
     private final Multimap<String, X509Certificate> certs = ArrayListMultimap.create();

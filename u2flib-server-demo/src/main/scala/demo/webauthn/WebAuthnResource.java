@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.yubico.u2f.attestation.MetadataResolver;
+import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
@@ -57,7 +58,7 @@ public class WebAuthnResource {
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
-    private final MetadataResolver metadataResolver = new SimpleResolver();
+    private final MetadataService metadataService = new MetadataService();
 
     private final Clock clock = Clock.systemDefaultZone();
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
@@ -72,7 +73,7 @@ public class WebAuthnResource {
         new BouncyCastleCrypto(),
         true,
         credentialRepository,
-        Optional.of(metadataResolver)
+        Optional.of(metadataService)
     );
 
     @Path("startRegistration")

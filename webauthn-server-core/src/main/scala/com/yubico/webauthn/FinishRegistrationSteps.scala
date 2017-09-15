@@ -3,8 +3,9 @@ package com.yubico.webauthn
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.attestation.MetadataResolver
 import com.yubico.u2f.attestation.MetadataObject
+import com.yubico.u2f.attestation.MetadataService
+import com.yubico.u2f.attestation.Attestation
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -48,7 +49,7 @@ case class FinishRegistrationSteps(
   rpId: String,
   crypto: Crypto,
   allowSelfAttestation: Boolean,
-  metadataResolver: Optional[MetadataResolver]
+  metadataService: Optional[MetadataService]
 ) {
 
   private[webauthn] def begin: Step1 = Step1()
@@ -201,7 +202,7 @@ case class FinishRegistrationSteps(
       case SelfAttestation => None
       case Basic =>
         attestation.format match {
-          case "fido-u2f" => Try(new FidoU2fAttestationTrustResolver(metadataResolver.get)).toOption
+          case "fido-u2f" => Try(new FidoU2fAttestationTrustResolver(metadataService.get)).toOption
         }
       case _ => ???
     }).asJava
@@ -218,7 +219,7 @@ case class FinishRegistrationSteps(
           assert(allowSelfAttestation, "Self attestation is not allowed.")
 
         case Basic =>
-          assert(attestationMetadata.isPresent, "Failed to derive trust for attestation key.")
+          assert(attestationTrusted, "Failed to derive trust for attestation key.")
 
         case _ => ???
       }
@@ -232,15 +233,15 @@ case class FinishRegistrationSteps(
     def attestationTrusted: Boolean = {
       attestationType match {
         case SelfAttestation => allowSelfAttestation
-        case Basic => attestationMetadata.isPresent
+        case Basic => attestationMetadata.asScala map { _.isTrusted } getOrElse false
         case _ => ???
       }
     }
-    def attestationMetadata: Optional[MetadataObject] = trustResolver.asScala.flatMap(_.resolveTrustAnchor(attestation).asScala).asJava
+    def attestationMetadata: Optional[Attestation] = trustResolver.asScala.flatMap(_.resolveTrustAnchor(attestation).asScala).asJava
   }
 
   case class Finished private[webauthn] (
-    attestationMetadata: Optional[MetadataObject],
+    attestationMetadata: Optional[Attestation],
     attestationTrusted: Boolean,
     attestationType: AttestationType
   ) extends Step[Finished] {
