@@ -48,7 +48,7 @@ public class WebAuthnResource {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnResource.class);
 
-    public static final String ORIGIN = "localhost";
+    public static final String ORIGIN = "https://localhost:8443";
 
     private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
     private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
