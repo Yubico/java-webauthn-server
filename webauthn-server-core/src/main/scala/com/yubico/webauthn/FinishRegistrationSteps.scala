@@ -44,7 +44,7 @@ case class FinishRegistrationSteps(
   request: MakePublicKeyCredentialOptions,
   response: PublicKeyCredential[AuthenticatorAttestationResponse],
   callerTokenBindingId: Optional[Base64UrlString],
-  origin: String,
+  origins: java.util.List[String],
   rpId: String,
   crypto: Crypto,
   allowSelfAttestation: Boolean,
@@ -73,7 +73,7 @@ case class FinishRegistrationSteps(
   case class Step3 private[webauthn] () extends Step[Step4] {
     override def validate() {
       assert(
-        response.response.collectedClientData.origin == origin,
+        origins contains response.response.collectedClientData.origin,
         "Incorrect origin: " + response.response.collectedClientData.origin
       )
     }

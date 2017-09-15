@@ -101,7 +101,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       allowSelfAttestation = false,
       authenticatorRequirements = None.asJava,
       challengeGenerator = null,
-      origin = origin,
+      origins = List(origin).asJava,
       preferredPubkeyParams = Nil.asJava,
       rp = rpId,
       credentialRepository = credentialRepository getOrElse (

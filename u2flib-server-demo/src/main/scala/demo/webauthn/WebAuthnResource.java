@@ -67,7 +67,7 @@ public class WebAuthnResource {
         new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty()),
         challengeGenerator,
         Arrays.asList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
-        ORIGIN,
+        Arrays.asList(ORIGIN),
         Optional.empty(),
         new BouncyCastleCrypto(),
         true,

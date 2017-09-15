@@ -108,7 +108,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
       allowSelfAttestation = allowSelfAttestation,
       authenticatorRequirements = authenticatorRequirements.asJava,
       challengeGenerator = null,
-      origin = origin,
+      origins = List(origin).asJava,
       preferredPubkeyParams = request.pubKeyCredParams,
       rp = rpId,
       credentialRepository = null,
