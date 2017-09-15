@@ -49,7 +49,8 @@ window.onload = function() {
 </head>
 <body>
 
-  <p>Please wait...</p>
+  <p>Requesting credential assertion!</p>
+  <p>Your browser or authenticator may prompt you for confirmation. If your authenticator is blinking, touch it now.</p>
 
   <form method="POST" action="finishAuthentication" id="form">
     <input type="hidden" name="response" id="response"/>

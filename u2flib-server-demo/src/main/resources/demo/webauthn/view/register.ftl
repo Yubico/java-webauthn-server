@@ -65,7 +65,8 @@ window.onload = function() {
 </head>
 <body>
 
-  <p>Please wait...</p>
+  <p>Requesting credential creation!</p>
+  <p>Your browser or authenticator may prompt you for confirmation. If your authenticator is blinking, touch it now.</p>
 
   <form method="POST" action="finishRegistration" id="form" onsubmit="return false">
     <input type="hidden" name="response" id="response"/>
