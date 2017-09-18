@@ -24,7 +24,7 @@ The following combinations of user agent and authenticator are known to work:
   - YubiKey 4 Nano
   - YubiKey Neo - although with random failures in `credentials.get()` (login)
   - YubiKey 4C - although with random failures in `credentials.get()` (login)
-  - U2F security key by Yubico
+  - FIDO U2F Security Key by Yubico
 
 Test results generated from commit 8120cf1.
 
