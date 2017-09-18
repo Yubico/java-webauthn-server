@@ -44,7 +44,6 @@
     var excludeCredentials = request.excludeCredentials.map(function(credential) {
       return Object.assign({}, credential, {
         id: base64url.toByteArray(credential.id),
-        transports: credential.transports || [],
       });
     });
 
@@ -78,7 +77,6 @@
     var allowCredentials = request.allowCredentials.map(function(credential) {
       return Object.assign({}, credential, {
         id: base64url.toByteArray(credential.id),
-        transports: credential.transports || [],
       });
     });
 
