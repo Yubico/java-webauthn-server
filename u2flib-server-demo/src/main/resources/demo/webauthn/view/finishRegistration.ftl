@@ -5,13 +5,9 @@
 
 <script>
 
-function base64EncodeParts(response) {
-  return response;
-}
-
 window.onload = function() {
   document.getElementById("request").innerHTML = JSON.stringify(${requestJson}, false, 2);
-  document.getElementById("response").innerHTML = JSON.stringify(base64EncodeParts(${responseJson}), false, 2);
+  document.getElementById("response").innerHTML = JSON.stringify(${responseJson}, false, 2);
 }
 </script>
 
