@@ -2,8 +2,11 @@ package com.yubico.webauthn.data
 
 import java.util.Optional
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 
@@ -21,7 +24,9 @@ case class AuthenticatorData(
   /**
     * The SHA-256 hash of the RP ID associated with the credential.
     */
+  @JsonIgnore
   val rpIdHash: ArrayBuffer = authData.take(RpIdHashLength)
+  @JsonProperty("rpIdHash") def rpIdHashBase64: String = U2fB64Encoding.encode(rpIdHash.toArray)
 
   /**
     * The flags byte.

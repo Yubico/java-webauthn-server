@@ -2,6 +2,7 @@ package com.yubico.webauthn.data.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorResponse
@@ -9,6 +10,7 @@ import com.yubico.webauthn.data.AuthenticationExtensions
 
 case class PublicKeyCredential[+A <: AuthenticatorResponse] (
 
+  @JsonIgnore
   override val rawId: ArrayBuffer,
   override val response: A,
   override val clientExtensionResults: AuthenticationExtensions

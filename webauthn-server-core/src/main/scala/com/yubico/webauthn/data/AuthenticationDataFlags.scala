@@ -1,16 +1,23 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
+
 case class AuthenticationDataFlags(value: Byte) {
   /** User present */
+  @JsonProperty
   def UP: Boolean = (value & 0x01) > 0
 
   /** User verified */
+  @JsonProperty
   def UV: Boolean = (value & 0x04) > 0
 
   /** Attestation data present */
+  @JsonProperty
   def AT: Boolean = (value & 0x40) > 0
 
   /** Extension data present */
+  @JsonProperty
   def ED: Boolean = (value & 0x80) > 0
 
   /* Reserved bits */

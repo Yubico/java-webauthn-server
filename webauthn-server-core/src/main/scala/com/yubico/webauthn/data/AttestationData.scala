@@ -1,17 +1,22 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 case class AttestationData private[data] (
 
   /**
     * The AAGUID of the authenticator.
     */
+  @JsonIgnore
   aaguid: ArrayBuffer,
 
   /**
     * The ID of the attested credential.
     */
+  @JsonIgnore
   credentialId: ArrayBuffer,
 
   /**
@@ -21,4 +26,12 @@ case class AttestationData private[data] (
     */
   credentialPublicKey: JsonNode
 
-)
+) {
+
+  @JsonProperty("aaguid")
+  def aaguidBase64: String = U2fB64Encoding.encode(aaguid.toArray)
+
+  @JsonProperty("credentialId")
+  def credentialIdBase64: String = U2fB64Encoding.encode(credentialId.toArray)
+
+}

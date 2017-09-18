@@ -71,6 +71,8 @@ window.onload = function() {
     <pre id="request">${requestJson}</pre>
 
     <h3> Response </h3>
+    <p>Properties prefixed with <code>_</code> are parsed versions of the corresponding Base64 encoded binary blob.
+    Properties prefixed with <code>@</code> are implementation-specific deserialization hints.</p>
     <pre id="response">${responseJson}</pre>
 
     <#include "/demo/view/navigation.ftl">

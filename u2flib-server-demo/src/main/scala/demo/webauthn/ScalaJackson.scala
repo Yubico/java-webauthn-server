@@ -1,6 +1,7 @@
 package demo.webauthn
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include
+import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
@@ -17,6 +18,7 @@ class ScalaJackson {
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
     mapper.setSerializationInclusion(Include.NON_ABSENT)
     mapper.registerModule(new Jdk8Module)
+    mapper.setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
 
     mapper
   }
