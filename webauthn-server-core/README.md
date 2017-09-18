@@ -28,5 +28,8 @@ The following combinations of user agent and authenticator are known to work:
 
 Test results generated from commit 8120cf1.
 
+### Registration
 ![Implementation status: Registration](test-registration.png)
+
+### Authentication
 ![Implementation status: Authentication](test-assertion.png)
