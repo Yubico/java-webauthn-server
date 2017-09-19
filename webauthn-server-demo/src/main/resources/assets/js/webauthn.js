@@ -17,7 +17,7 @@
       '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
     });
 
-    if (response.response.attestationObject) {
+    if ('attestationObject' in response.response) {
       return Object.assign({}, root, {
         response: Object.assign({}, response.response, {
           '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse',
@@ -101,7 +101,7 @@
   /** Turn a PublicKeyCredential object into a plain object with base64url encoded binary values */
   function responseToObject(response) {
     if (response instanceof PublicKeyCredential) {
-      if (response.response instanceof AuthenticatorAttestationResponse) {
+      if ('attestationObject' in response.response) {
         return {
           id: response.id,
           response: {
@@ -109,7 +109,7 @@
             clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
           },
         };
-      } else if (response.response instanceof AuthenticatorAssertionResponse) {
+      } else if ('signature' in response.response) {
         return {
           id: response.id,
           response: {
