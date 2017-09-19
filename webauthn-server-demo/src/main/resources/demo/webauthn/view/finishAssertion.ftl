@@ -1,7 +1,11 @@
 <html>
 <head>
 <meta charset="utf-8"/>
-<title>Java WebAuthn Demo</title>
+<title>WebAuthn Demo</title>
+<link href="/css/fonts.css" rel="stylesheet" />
+<link href="/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
+<link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
+<link href="/css/bootstrap-yubico.css" rel="stylesheet"/>
 
 <script>
 
@@ -15,6 +19,17 @@ window.onload = function() {
 
 </head>
 <body>
+
+<div class="base">
+  <div class="content">
+
+    <div class="header-logo visible-desktop">
+      <a href="https://www.yubico.com/" title="Yubico">
+        <img src="/img/yubico-logo.png"/>
+      </a>
+    </div>
+
+    <h1> Test your WebAuthn device </h1>
 
     <p>Successfully authenticated!</p>
 
@@ -66,6 +81,9 @@ window.onload = function() {
     <pre id="response">${responseJson}</pre>
 
     <#include "/demo/view/navigation.ftl">
+
+  </div>
+</div>
 
 </body>
 </html>

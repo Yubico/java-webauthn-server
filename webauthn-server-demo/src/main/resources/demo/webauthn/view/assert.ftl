@@ -1,7 +1,11 @@
 <html>
 <head>
 <meta charset="utf-8"/>
-<title>Java WebAuthn Demo</title>
+<title>WebAuthn Demo</title>
+<link href="/css/fonts.css" rel="stylesheet" />
+<link href="/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
+<link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
+<link href="/css/bootstrap-yubico.css" rel="stylesheet"/>
 
 <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
 <script src="/js/base64url.js"></script>
@@ -49,19 +53,34 @@ window.onload = function() {
 </head>
 <body>
 
-  <p>Requesting credential assertion!</p>
-  <p>Your browser or authenticator may prompt you for confirmation. If your authenticator is blinking, touch it now.</p>
+<div class="base">
+  <div class="content">
 
-  <form method="POST" action="finishAuthentication" id="form">
-    <input type="hidden" name="response" id="response"/>
-  </form>
+    <div class="header-logo visible-desktop">
+      <a href="https://www.yubico.com/" title="Yubico">
+        <img src="/img/yubico-logo.png"/>
+      </a>
+    </div>
 
-  <div id="messages">
+    <h1> Test your WebAuthn device </h1>
+
+    <p>Requesting credential assertion!</p>
+    <p>Your browser or authenticator may prompt you for confirmation. If your authenticator is blinking, touch it now.</p>
+
+    <form method="POST" action="finishAuthentication" id="form">
+      <input type="hidden" name="response" id="response"/>
+    </form>
+
+    <div id="messages">
+    </div>
+
+    <p> Request: </p>
+    <pre id="request">${requestJson}</pre>
+
+    <#include "/demo/view/navigation.ftl">
+
   </div>
+</div>
 
-  <p> Request: </p>
-  <pre id="request">${requestJson}</pre>
-
-  <#include "/demo/view/navigation.ftl">
 </body>
 </html>
