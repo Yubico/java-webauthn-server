@@ -35,22 +35,30 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
 
   private def getAttestationCertificate(attestationObject: AttestationObject): X509Certificate =
     attestationObject.attestationStatement.get("x5c") match {
-      case certs: ArrayNode if certs.size > 0 && certs.get(0).isBinary => {
+      case null => throw new IllegalArgumentException("attStmt.x5c must be present.")
+      case certs => {
+        if (certs.isArray) {
+          if (certs.size > 0) {
+            if (certs.get(0).isBinary) {
+              val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
 
-        val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
+              assert(
+                attestationCertificate.getPublicKey.getAlgorithm == "EC"
+                  && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
+                "Attestation certificate for fido-u2f must have an ECDSA P-256 public key."
+              )
 
-        assert(
-          attestationCertificate.getPublicKey.getAlgorithm == "EC"
-            && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
-          "Attestation certificate for fido-u2f must have an ECDSA P-256 public key."
-        )
-
-        attestationCertificate
+              attestationCertificate
+            } else {
+              throw new IllegalArgumentException("attStmt.x5c[0] must be a binary value.")
+            }
+          } else {
+            throw new IllegalArgumentException("attStmt.x5c must have at least one element.")
+          }
+        } else {
+          throw new IllegalArgumentException("attStmt.x5c must be an array.")
+        }
       }
-
-      case _ => throw new IllegalArgumentException(
-        """fido-u2f attestation statement must have an "x5c" property set to an array of at least one DER encoded X.509 certificate."""
-      )
     }
 
   private def validSelfSignature(cert: X509Certificate): Boolean =
