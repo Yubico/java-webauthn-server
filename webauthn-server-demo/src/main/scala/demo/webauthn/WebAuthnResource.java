@@ -106,12 +106,14 @@ public class WebAuthnResource {
         try {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
         } catch (IOException e) {
+            logger.info("fail finishRegistration responseJson: {}", responseJson, e);
             return new MessageView("Credential creation failed!", "Failed to decode response object.", e.getMessage());
         }
 
         RegistrationRequest request = registerRequestStorage.remove(response.getRequestId());
 
         if (request == null) {
+            logger.info("fail finishRegistration responseJson: {}", responseJson);
             return new MessageView("Credential creation failed!", "No such registration in progress.");
         } else {
             Try<RegistrationResult> registrationTry = rp.finishRegistration(
@@ -134,6 +136,7 @@ public class WebAuthnResource {
                     jsonMapper.writeValueAsString(response)
                 );
             } else {
+                logger.info("fail finishRegistration responseJson: {}", responseJson, registrationTry.failed().get());
                 return new MessageView("Credential creation failed!", registrationTry.failed().get().getMessage());
             }
 
