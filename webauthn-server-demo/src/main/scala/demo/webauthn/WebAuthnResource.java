@@ -79,6 +79,7 @@ public class WebAuthnResource {
     @Path("startRegistration")
     @GET
     public View startRegistration(@QueryParam("username") String username, @QueryParam("credentialNickname") String credentialNickname) throws JsonProcessingException {
+        logger.info("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
         RegistrationRequest request = new RegistrationRequest(
             username,
             credentialNickname,
@@ -100,6 +101,7 @@ public class WebAuthnResource {
     @Path("finishRegistration")
     @POST
     public View finishRegistration(@FormParam("response") String responseJson) throws CertificateException, NoSuchFieldException, JsonProcessingException {
+        logger.info("finishRegistration responseJson: {}", responseJson);
         RegistrationResponse response = null;
         try {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
@@ -141,6 +143,7 @@ public class WebAuthnResource {
     @Path("startAuthentication")
     @GET
     public View startAuthentication(@QueryParam("username") String username) throws JsonProcessingException {
+        logger.info("startAuthentication username: {}", username);
         AssertionRequest request = new AssertionRequest(
             username,
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
@@ -162,6 +165,8 @@ public class WebAuthnResource {
     @Path("finishAuthentication")
     @POST
     public View finishAuthentication(@FormParam("response") String responseJson) throws JsonProcessingException {
+        logger.info("finishAuthentication responseJson: {}", responseJson);
+
         AssertionResponse response = null;
         try {
             response = jsonMapper.readValue(responseJson, AssertionResponse.class);
@@ -204,6 +209,8 @@ public class WebAuthnResource {
     @Path("deregister")
     @POST
     public View deregisterCredential(@FormParam("username") String username, @FormParam("credentialId") String credentialId) {
+        logger.info("deregisterCredential username: {}, credentialId: {}", username, credentialId);
+
         if (username == null || username.isEmpty()) {
             return new MessageView("Username must not be empty.");
         }
