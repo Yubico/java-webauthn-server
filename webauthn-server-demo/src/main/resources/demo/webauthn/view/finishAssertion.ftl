@@ -6,9 +6,10 @@
 <script>
 
 window.onload = function() {
-  document.getElementById("registrations").innerHTML = JSON.stringify(${registrationsJson}, false, 2);
-  document.getElementById("request").innerHTML = JSON.stringify(${requestJson}, false, 2);
-  document.getElementById("response").innerHTML = JSON.stringify(${responseJson}, false, 2);
+  const preElements = document.getElementsByTagName("pre");
+  for (var i = 0; i < preElements.length; ++i) {
+    preElements[i].innerHTML = JSON.stringify(JSON.parse(preElements[i].innerHTML), false, 2);
+  }
 }
 </script>
 
