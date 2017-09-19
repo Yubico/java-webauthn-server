@@ -17,7 +17,11 @@
   }
 
   function fromByteArray(bytes) {
-    return mimeBase64ToUrl(base64js.fromByteArray(bytes));
+    if (bytes instanceof ArrayBuffer) {
+      return fromByteArray(new Uint8Array(bytes));
+    } else {
+      return mimeBase64ToUrl(base64js.fromByteArray(bytes));
+    }
   }
 
   function toByteArray(code) {
