@@ -103,7 +103,7 @@
     if (response instanceof PublicKeyCredential) {
       if ('attestationObject' in response.response) {
         return {
-          id: response.id,
+          id: base64url.fromByteArray(response.rawId),
           response: {
             attestationObject: base64url.fromByteArray(response.response.attestationObject),
             clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
@@ -111,7 +111,7 @@
         };
       } else if ('signature' in response.response) {
         return {
-          id: response.id,
+          id: base64url.fromByteArray(response.rawId),
           response: {
             authenticatorData: base64url.fromByteArray(response.response.authenticatorData),
             clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
