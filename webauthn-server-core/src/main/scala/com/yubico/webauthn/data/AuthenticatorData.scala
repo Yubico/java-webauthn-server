@@ -5,12 +5,16 @@ import java.util.Optional
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 
 import scala.collection.JavaConverters._
+import scala.util.Success
+import scala.util.Failure
+import scala.util.Try
 
 
 case class AuthenticatorData(
@@ -74,14 +78,26 @@ case class AuthenticatorData(
 
     val optionalBytes: ArrayBuffer = bytes.drop(16 + 2 + L)
 
-    val allRemainingCbor: List[JsonNode] = (
-      for { item <- WebAuthnCodecs.cbor
-                      .reader
-                      .forType(classOf[JsonNode])
-                      .readValues[JsonNode](optionalBytes.toArray)
-                      .asScala
-      } yield item
-    ).toList
+    val allRemainingCbor: List[JsonNode] = Try {
+      (
+        for { item <- WebAuthnCodecs.cbor
+          .reader
+          .forType(classOf[JsonNode])
+          .readValues[JsonNode](optionalBytes.toArray)
+          .asScala
+        } yield item
+      ).toList
+    } match {
+      case Success(jsonNodes) => jsonNodes
+      case Failure(e: RuntimeException) => {
+        def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+        List(jsonFactory.objectNode().setAll(Map(
+          "alg" -> jsonFactory.textNode("ES256"),
+          "x" -> jsonFactory.textNode(U2fB64Encoding.encode(optionalBytes.slice(1, 33).toArray)),
+          "y" -> jsonFactory.textNode(U2fB64Encoding.encode(optionalBytes.drop(33).toArray))
+        ).asJava))
+      }
+    }
 
     val credentialPublicKey = allRemainingCbor.head
     val extensions: Option[JsonNode] =
