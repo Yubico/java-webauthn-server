@@ -26,7 +26,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import demo.webauthn.view.AssertionView;
-import demo.webauthn.view.FailureView;
+import demo.webauthn.view.MessageView;
 import demo.webauthn.view.FinishAssertionView;
 import demo.webauthn.view.FinishRegistrationView;
 import demo.webauthn.view.RegistrationView;
@@ -104,13 +104,13 @@ public class WebAuthnResource {
         try {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
         } catch (IOException e) {
-            return new FailureView("Credential creation failed!", "Failed to decode response object.", e.getMessage());
+            return new MessageView("Credential creation failed!", "Failed to decode response object.", e.getMessage());
         }
 
         RegistrationRequest request = registerRequestStorage.remove(response.getRequestId());
 
         if (request == null) {
-            return new FailureView("Credential creation failed!", "No such registration in progress.");
+            return new MessageView("Credential creation failed!", "No such registration in progress.");
         } else {
             Try<RegistrationResult> registrationTry = rp.finishRegistration(
                 request.getMakePublicKeyCredentialOptions(),
@@ -132,7 +132,7 @@ public class WebAuthnResource {
                     jsonMapper.writeValueAsString(response)
                 );
             } else {
-                return new FailureView("Credential creation failed!", registrationTry.failed().get().getMessage());
+                return new MessageView("Credential creation failed!", registrationTry.failed().get().getMessage());
             }
 
         }
@@ -167,13 +167,13 @@ public class WebAuthnResource {
             response = jsonMapper.readValue(responseJson, AssertionResponse.class);
         } catch (IOException e) {
             logger.debug("Failed to decode response object", e);
-            return new FailureView("Assertion failed!", "Failed to decode response object.", e.getMessage());
+            return new MessageView("Assertion failed!", "Failed to decode response object.", e.getMessage());
         }
 
         AssertionRequest request = assertRequestStorage.remove(response.getRequestId());
 
         if (request == null) {
-            return new FailureView("Credential creation failed!", "No such registration in progress.");
+            return new MessageView("Credential creation failed!", "No such registration in progress.");
         } else {
             Try<Object> assertionTry = rp.finishAssertion(
                 request.getPublicKeyCredentialRequestOptions(),
@@ -189,12 +189,12 @@ public class WebAuthnResource {
                         jsonMapper.writeValueAsString(userStorage.get(request.getUsername()))
                     );
                 } else {
-                    return new FailureView("Assertion failed: Invalid assertion.");
+                    return new MessageView("Assertion failed: Invalid assertion.");
                 }
 
             } else {
                 logger.debug("Assertion failed", assertionTry.failed().get());
-                return new FailureView("Assertion failed!", assertionTry.failed().get().getMessage());
+                return new MessageView("Assertion failed!", assertionTry.failed().get().getMessage());
             }
 
         }

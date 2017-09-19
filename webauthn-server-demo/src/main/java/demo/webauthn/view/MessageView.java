@@ -6,25 +6,25 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public class FailureView extends View {
+public class MessageView extends View {
 
     private final List<String> messages;
 
-    public FailureView(List<String> messages) {
-        super("failure.ftl");
+    public MessageView(List<String> messages) {
+        super("message.ftl");
 
         this.messages = messages;
     }
 
-    public FailureView(String... messages) {
+    public MessageView(String... messages) {
         this(Arrays.asList(messages));
     }
 
-    public FailureView(String message) {
+    public MessageView(String message) {
         this(Arrays.asList(message));
     }
 
-    public FailureView(Throwable cause) {
+    public MessageView(Throwable cause) {
         this(cause.getMessage());
     }
 
