@@ -123,7 +123,7 @@ case class FinishRegistrationSteps(
   }
 
   case class Step6 private[webauthn] () extends Step[Step7] {
-    val supportedHashAlgorithms: List[String] = List("SHA-256")
+    val supportedHashAlgorithms: List[String] = List("SHA-256", "s256") // TODO: Remove s256
 
     override def validate() {
       val hashAlgorithm: String = response.response.collectedClientData.hashAlgorithm.toLowerCase
