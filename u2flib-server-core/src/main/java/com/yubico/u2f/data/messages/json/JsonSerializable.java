@@ -20,6 +20,15 @@ public abstract class JsonSerializable {
         }
     }
 
+    @JsonIgnore
+    public String toJson(ObjectMapper mapper) {
+        try {
+            return mapper.writeValueAsString(this);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
     @Override
     public String toString() {
         return toJson();
