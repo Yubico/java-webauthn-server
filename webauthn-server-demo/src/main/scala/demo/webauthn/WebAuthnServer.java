@@ -52,7 +52,10 @@ public class WebAuthnServer {
     private final RelyingParty rp = new RelyingParty(
         new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty()),
         challengeGenerator,
-        Arrays.asList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
+        Arrays.asList(
+            new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$),
+            new PublicKeyCredentialParameters("ES256", PublicKey$.MODULE$) // TODO remove ES256
+        ),
         Arrays.asList(ORIGIN),
         Optional.empty(),
         new BouncyCastleCrypto(),

@@ -17,10 +17,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
   *       authenticator, which may be sent over a low-bandwidth link.
   */
 case class PublicKeyCredentialParameters(
-  alg: COSEAlgorithmIdentifier,
+  alg: Any,
   @JsonIgnore
   `type`: PublicKeyCredentialType = PublicKey
 ) {
+
+  @JsonProperty
+  def algorithm: Any = alg // TODO remove algorithm
 
   @JsonProperty("type")
   def typeJson: String = `type`.id
