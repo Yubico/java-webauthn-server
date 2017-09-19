@@ -18,8 +18,7 @@ class FidoU2fAttestationTrustResolver(
   override def resolveTrustAnchor(attestationObject: AttestationObject): Optional[Attestation] =
     Optional.ofNullable(
       metadataService.getAttestation(
-        attestationObject
-          .attestationStatement
+        FidoU2fAttestationStatementVerifier.getAttestationStatement(attestationObject)
           .get("x5c")
           .asInstanceOf[ArrayNode]
           .iterator

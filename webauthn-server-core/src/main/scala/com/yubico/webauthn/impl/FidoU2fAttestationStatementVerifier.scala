@@ -6,6 +6,8 @@ import java.security.interfaces.ECPublicKey
 import java.security.spec.ECParameterSpec
 
 import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.BinaryNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.RawRegisterResponse
 import com.yubico.u2f.data.messages.key.util.CertificateParser
@@ -33,8 +35,14 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
       )
   }
 
+  def getAttestationStatement(attestationObject: AttestationObject): ObjectNode =
+    attestationObject.attestationStatement match {
+      case bytes: BinaryNode => WebAuthnCodecs.cbor.readTree(bytes.binaryValue).asInstanceOf[ObjectNode]
+      case map: ObjectNode => map
+    }
+
   private def getAttestationCertificate(attestationObject: AttestationObject): X509Certificate =
-    attestationObject.attestationStatement.get("x5c") match {
+    getAttestationStatement(attestationObject).get("x5c") match {
       case null => throw new IllegalArgumentException("attStmt.x5c must be present.")
       case certs => {
         if (certs.isArray) {
@@ -88,7 +96,7 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
       case None => throw new IllegalArgumentException("Attestation object for credential creation must have attestation data.")
 
       case Some(attestationData) =>
-        attestationObject.attestationStatement.get("sig") match {
+        getAttestationStatement(attestationObject).get("sig") match {
           case signature if signature.isBinary =>
 
             val userPublicKey = WebAuthnCodecs.coseKeyToRaw(attestationData.credentialPublicKey)
