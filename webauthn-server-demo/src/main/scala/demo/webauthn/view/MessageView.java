@@ -3,6 +3,8 @@ package demo.webauthn.view;
 import io.dropwizard.views.View;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.Getter;
 
 @Getter
@@ -13,7 +15,7 @@ public class MessageView extends View {
     public MessageView(List<String> messages) {
         super("message.ftl");
 
-        this.messages = messages;
+        this.messages = messages.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public MessageView(String... messages) {
