@@ -186,7 +186,8 @@ public class WebAuthnResource {
                     return new FinishAssertionView(
                         jsonMapper.writeValueAsString(request),
                         jsonMapper.writeValueAsString(response),
-                        jsonMapper.writeValueAsString(userStorage.get(request.getUsername()))
+                        jsonMapper.writeValueAsString(userStorage.get(request.getUsername())),
+                        userStorage.get(request.getUsername())
                     );
                 } else {
                     return new MessageView("Assertion failed: Invalid assertion.");
@@ -197,6 +198,30 @@ public class WebAuthnResource {
                 return new MessageView("Assertion failed!", assertionTry.failed().get().getMessage());
             }
 
+        }
+    }
+
+    @Path("deregister")
+    @POST
+    public View deregisterCredential(@FormParam("username") String username, @FormParam("credentialId") String credentialId) {
+        if (username == null || username.isEmpty()) {
+            return new MessageView("Username must not be empty.");
+        }
+
+        if (credentialId == null || credentialId.isEmpty()) {
+            return new MessageView("Credential ID must not be empty.");
+        }
+
+        Optional<CredentialRegistration> credReg = userStorage.get(username).stream()
+            .filter(credentialRegistration -> credentialRegistration.getRegistration().keyId().idBase64().equals(credentialId))
+            .findAny();
+
+        if (credReg.isPresent()) {
+            userStorage.remove(username, credReg.get());
+            credentialRepository.remove(credentialId);
+            return new MessageView("Deregistered credential " + credentialId + " from user " + username + ".");
+        } else {
+            return new MessageView("Credential ID not registered:" + credentialId);
         }
     }
 

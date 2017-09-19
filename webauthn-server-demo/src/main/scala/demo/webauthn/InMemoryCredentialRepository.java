@@ -40,4 +40,8 @@ public class InMemoryCredentialRepository implements CredentialRepository {
         keyStorage.put(keyId, key);
     }
 
+    public JsonNode remove(String keyId) {
+        return keyStorage.remove(keyId);
+    }
+
 }

@@ -19,7 +19,43 @@ window.onload = function() {
     <p>Successfully authenticated!</p>
 
     <h3> Your registered credentials: </h3>
-    <pre id="registrations">${registrationsJson}</pre>
+
+    <#list registrations>
+      <table>
+
+        <thead>
+          <tr>
+            <th> Nickname </th>
+            <th> Registered </th>
+            <th> Actions </th>
+            <th> Details </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <#items as registration>
+            <tr>
+              <td> ${registration.getCredentialNickname()} </td>
+              <td> ${registration.getRegistrationTime()} </td>
+              <td>
+
+                <form action="deregister" method="post">
+                  <input type="hidden" name="username" value="${registration.getUsername()}"/>
+                  <input type="hidden" name="credentialId" value="${registration.getRegistration().keyId().idBase64()}"/>
+                  <button type="submit"> Deregister </button>
+                </form>
+
+              </td>
+
+              <td>
+                <pre>${registration.toJson()}</pre>
+              </td>
+            </tr>
+          </#items>
+        </tbody>
+      </table>
+    </#list>
+
 
     <h3> Request </h3>
     <pre id="request">${requestJson}</pre>

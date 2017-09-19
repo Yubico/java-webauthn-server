@@ -1,7 +1,6 @@
 package demo.webauthn.view;
 
 import demo.webauthn.CredentialRegistration;
-import demo.webauthn.RegistrationRequest;
 import demo.webauthn.RegistrationResponse;
 import io.dropwizard.views.View;
 import lombok.Getter;
