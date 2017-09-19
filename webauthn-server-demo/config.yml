@@ -9,6 +9,8 @@ server:
       - type: http
         port: 8081
   rootPath: '/api/'
+  requestLog:
+    appenders: []
 
 logging:
   level: INFO
