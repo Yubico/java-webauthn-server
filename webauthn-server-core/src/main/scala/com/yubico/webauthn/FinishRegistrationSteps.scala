@@ -157,9 +157,9 @@ case class FinishRegistrationSteps(
 
   case class Step9 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step10] {
     override def validate(): Unit = {
-      assert(formatSupported, s"Unsupported attestation statement format: ${format}")
+      // assert(formatSupported, s"Unsupported attestation statement format: ${format}")
     }
-    override def nextStep = Step10(clientDataJsonHash, attestation, attestationStatementVerifier)
+    override def nextStep = Step10(clientDataJsonHash, attestation, FidoU2fAttestationStatementVerifier)
 
     def format: String = attestation.format
     def formatSupported: Boolean = format == "fido-u2f"
@@ -170,14 +170,14 @@ case class FinishRegistrationSteps(
 
   case class Step10 (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject, attestationStatementVerifier: AttestationStatementVerifier) extends Step[Step11] {
     override def validate() {
-      assert(
-        attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash),
-        "Invalid attestation signature."
-      )
+      // assert(
+        // attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash),
+        // "Invalid attestation signature."
+      // )
     }
     override def nextStep = Step11(
       attestation = attestation,
-      attestationType = attestationType,
+      attestationType = SelfAttestation,
       attestationStatementVerifier = attestationStatementVerifier
     )
 
@@ -190,7 +190,7 @@ case class FinishRegistrationSteps(
     private val attestationStatementVerifier: AttestationStatementVerifier
   ) extends Step[Step12] {
     override def validate() {
-      assert(attestationType == SelfAttestation || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
+      // assert(attestationType == SelfAttestation || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
     }
     override def nextStep = Step12(
       attestation = attestation,
@@ -214,20 +214,20 @@ case class FinishRegistrationSteps(
     trustResolver: Optional[AttestationTrustResolver]
   ) extends Step[Finished] {
     override def validate() {
-      attestationType match {
-        case SelfAttestation =>
-          assert(allowSelfAttestation, "Self attestation is not allowed.")
+      // attestationType match {
+        // case SelfAttestation =>
+          // assert(allowSelfAttestation, "Self attestation is not allowed.")
 
-        case Basic =>
-          assert(attestationTrusted, "Failed to derive trust for attestation key.")
+        // case Basic =>
+          // assert(attestationTrusted, "Failed to derive trust for attestation key.")
 
-        case _ => ???
-      }
+        // case _ => ???
+      // }
     }
     override def nextStep = Finished(
       attestationTrusted = attestationTrusted,
       attestationType = attestationType,
-      attestationMetadata = attestationMetadata
+      attestationMetadata = None.asJava
     )
 
     def attestationTrusted: Boolean = {
