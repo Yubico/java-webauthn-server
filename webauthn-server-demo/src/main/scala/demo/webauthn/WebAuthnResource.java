@@ -237,6 +237,14 @@ public class WebAuthnResource {
 
     private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {
         CredentialRegistration reg = new CredentialRegistration(username, nickname, clock.instant(), registration);
+        logger.info(
+            "Adding registration: username: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
+            username,
+            nickname,
+            registration,
+            registration.keyId().idBase64(),
+            registration.publicKeyCose()
+        );
         userStorage.put(username, reg);
         credentialRepository.add(registration.keyId().idBase64(), registration.publicKeyCose());
         return reg;
