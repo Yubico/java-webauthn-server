@@ -1,0 +1,20 @@
+== webauthn-server-demo
+
+A simple self-contained demo server supporting multiple devices per user. The
+central part is the
+https://github.com/Yubico/java-u2flib-server/blob/master/webauthn-server-demo/src/main/java/demo/WebAuthnResource.java[WebAuthnResource]
+class.
+
+=== 1. Clone
+ git clone https://github.com/Yubico/java-u2flib-server.git
+
+=== 2. Run
+ ./gradlew :webauthn-server-demo:run
+
+=== 3. Try it out
+Then point a WebAuthn compatible web browser to
+link:https://localhost:8443/[https://localhost:8443/].
+
+NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
+certificate. This will cause your browser to show a warning, which is safe to
+bypass.

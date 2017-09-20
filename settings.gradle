@@ -3,6 +3,7 @@ include ':u2flib-server-core'
 include ':u2flib-server-demo'
 include ':u2flib-server-attestation'
 include ':webauthn-server-core'
+include ':webauthn-server-demo'
 
 project(':u2flib-server-core').projectDir = "$rootDir/u2flib-server-core" as File
 project(':u2flib-server-demo').projectDir = "$rootDir/u2flib-server-demo" as File
