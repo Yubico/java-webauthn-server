@@ -74,28 +74,44 @@ case class AuthenticatorData(
 
     val optionalBytes: ArrayBuffer = bytes.drop(16 + 2 + L)
 
-    val allRemainingCbor: List[JsonNode] = (
-      for { item <- WebAuthnCodecs.cbor
-                      .reader
-                      .forType(classOf[JsonNode])
-                      .readValues[JsonNode](optionalBytes.toArray)
-                      .asScala
-      } yield item
-    ).toList
+    if (optionalBytes.head == 0x04 && optionalBytes.length == 65) {
+      // This is probably a raw ECDSA key
+      // TODO remove this when Edge sends public key as COSE instead of raw
+      val credentialPublicKey = WebAuthnCodecs.rawEcdaKeyToCose(optionalBytes)
 
-    val credentialPublicKey = allRemainingCbor.head
-    val extensions: Option[JsonNode] =
-      if (flags.ED) Some(allRemainingCbor(1))
-      else None
+      (
+        Some(AttestationData(
+          aaguid = bytes.slice(0, 16),
+          credentialId = bytes.slice(16 + 2, 16 + 2 + L),
+          credentialPublicKey = credentialPublicKey
+        )),
+        None
+      )
 
-    (
-      Some(AttestationData(
-        aaguid = bytes.slice(0, 16),
-        credentialId = bytes.slice(16 + 2, 16 + 2 + L),
-        credentialPublicKey = credentialPublicKey
-      )),
-      extensions
-    )
+    } else {
+      val allRemainingCbor: List[JsonNode] = (
+        for { item <- WebAuthnCodecs.cbor
+                        .reader
+                        .forType(classOf[JsonNode])
+                        .readValues[JsonNode](optionalBytes.toArray)
+                        .asScala
+        } yield item
+      ).toList
+
+      val credentialPublicKey = allRemainingCbor.head
+      val extensions: Option[JsonNode] =
+        if (flags.ED) Some(allRemainingCbor(1))
+        else None
+
+      (
+        Some(AttestationData(
+          aaguid = bytes.slice(0, 16),
+          credentialId = bytes.slice(16 + 2, 16 + 2 + L),
+          credentialPublicKey = credentialPublicKey
+        )),
+        extensions
+      )
+    }
   }
 
 }
