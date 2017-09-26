@@ -32,7 +32,7 @@ case class CollectedClientData(
   /**
     * The name of the algorithm the client used to compute the hash of the serialized client data.
     *
-    * This SHOULD be a ''recognized algorithm name'', but [[CollectedClientData]] does not inforce it.
+    * This SHOULD be a ''recognized algorithm name'', but [[CollectedClientData]] does not enforce it.
     */
   def hashAlgorithm: String =
     Optional.ofNullable(clientData.get("hashAlgorithm"))
