@@ -5,10 +5,8 @@ import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.spec.ECParameterSpec
 
-import com.fasterxml.jackson.databind.node.ArrayNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.RawRegisterResponse
-import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.AttestationStatementVerifier
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
@@ -21,7 +19,7 @@ import org.bouncycastle.jce.ECNamedCurveTable
 import scala.util.Try
 
 
-object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier {
+object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier with X5cAttestationStatementVerifier {
 
   private def isP256(params: ECParameterSpec): Boolean = {
     val p256 = ECNamedCurveTable.getParameterSpec("P-256")
@@ -34,11 +32,8 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
   }
 
   private def getAttestationCertificate(attestationObject: AttestationObject): X509Certificate =
-    attestationObject.attestationStatement.get("x5c") match {
-      case certs: ArrayNode if certs.size > 0 && certs.get(0).isBinary => {
-
-        val attestationCertificate = CertificateParser.parseDer(certs.get(0).binaryValue)
-
+    getX5cAttestationCertificate(attestationObject) match {
+      case Some(attestationCertificate) => {
         assert(
           attestationCertificate.getPublicKey.getAlgorithm == "EC"
             && isP256(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey].getParams),
