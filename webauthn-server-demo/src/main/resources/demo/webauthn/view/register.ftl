@@ -13,16 +13,6 @@
 
 <script>
 
-function translateForFirefoxNightly57_0a1(request) {
-  return Object.assign({}, request, {
-    parameters: request.parameters.map(function(item) {
-      return Object.assign({}, item, {
-        algorithm: item.alg === -7 ? 'ES256' : item.alg,
-      });
-    }),
-  });
-}
-
 function submitResponse(requestId, response) {
   var form = document.getElementById('form');
   var responseField = document.getElementById('response');
@@ -38,7 +28,7 @@ window.onload = function() {
   console.log('onload', request);
   document.getElementById("request").innerHTML = JSON.stringify(request, false, 2);
 
-  webauthn.createCredential(translateForFirefoxNightly57_0a1(request.makePublicKeyCredentialOptions))
+  webauthn.createCredential(request.makePublicKeyCredentialOptions)
     .then(function(response) {
       console.log('Response:', response);
       console.log('Response:', JSON.stringify(webauthn.responseToObject(response)));
