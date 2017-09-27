@@ -1,0 +1,269 @@
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>WebAuthn Demo</title>
+  <link href="/css/fonts.css" rel="stylesheet" />
+  <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
+  <link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
+  <link href="/css/bootstrap-yubico.css" rel="stylesheet"/>
+
+  <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
+  <script src="/js/base64url.js"></script>
+  <script src="/js/webauthn.js"></script>
+
+  <script>
+
+function setStatus(statusText) {
+  document.getElementById('status').textContent = statusText;
+}
+
+function addMessage(message) {
+  const el = document.getElementById('messages');
+  const p = document.createElement('p');
+  p.appendChild(document.createTextNode(message));
+  el.appendChild(p);
+}
+
+function clearMessages() {
+  const el = document.getElementById('messages');
+  while (el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
+}
+
+function showJson(name, data) {
+  const el = document.getElementById(name)
+    .textContent = JSON.stringify(data, false, 2);
+}
+function showRequest(data) { return showJson('request', data); }
+function showAuthenticatorResponse(data) { return showJson('authenticator-response', data); }
+function showServerResponse(data) { return showJson('server-response', data); }
+
+function resetDisplays() {
+  clearMessages();
+  showRequest(null);
+  showAuthenticatorResponse(null);
+  showServerResponse(null);
+}
+
+function getIndexActions() {
+  return fetch('/api/webauthn/rest/')
+    .then(response => response.json());
+}
+
+function getRegisterRequest(url, username) {
+  return fetch(`${url}?username=${username}`, { method: 'POST' })
+    .then(response => response.json());
+}
+
+function executeRegisterRequest(request) {
+  console.log('executeRegisterRequest', request);
+
+  return webauthn.createCredential(request.makePublicKeyCredentialOptions);
+}
+
+function submitRegisterResponse(url, requestId, response) {
+  console.log('submitRegisterResponse', url, requestId, response);
+
+  const body = {
+    requestId,
+    credential: webauthn.addJacksonDeserializationHints(response),
+  };
+
+  return fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }).then(response => response.json());
+  ;
+}
+
+function register() {
+  const username = document.getElementById('username').value;
+
+  setStatus('Looking up API paths...');
+  resetDisplays();
+
+  return getIndexActions()
+    .then(data => data.actions)
+
+    .then(urls => {
+      setStatus('Initiating registration ceremony with server...');
+      return getRegisterRequest(urls.register, username);
+    })
+
+    .then(({ request, actions: urls }) => {
+      setStatus('Asking authenticators to create credential...');
+      showRequest(request);
+      return executeRegisterRequest(request)
+        .then(webauthn.responseToObject)
+        .then(response => ({
+          request,
+          urls,
+          response,
+        }));
+    })
+
+    .then(({ urls, request, response }) => {
+      setStatus('Sending response to server...');
+      showAuthenticatorResponse(response);
+      return submitRegisterResponse(urls.finish, request.requestId, response);
+    })
+
+    .then(data => {
+      setStatus('Registration successful!');
+      showServerResponse(data);
+      return data;
+    })
+
+    .catch((err) => {
+      setStatus('Registration failed.');
+      console.error('Registration failed', err);
+
+      if (err.name === 'NotAllowedError') {
+        if (request.makePublicKeyCredentialOptions.excludeCredentials
+            && request.makePublicKeyCredentialOptions.excludeCredentials.length > 0
+        ) {
+          addMessage('Credential creation failed, probably because an already registered credential is avaiable.');
+        } else {
+          addMessage('Credential creation failed for an unknown reason.');
+        }
+      } else if (err.message) {
+        addMessage(`${err.name}: ${err.message}`);
+      }
+    })
+  ;
+}
+
+function getAuthenticateRequest(url, username) {
+  return fetch(`${url}?username=${username}`, { method: 'POST' })
+    .then(response => response.json());
+}
+
+function executeAuthenticateRequest(request) {
+  console.log('executeAuthenticateRequest', request);
+
+  return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
+}
+
+function submitAuthenticateResponse(url, requestId, response) {
+  console.log('submitAuthenticateResponse', url, requestId, response);
+
+  const body = {
+    requestId,
+    credential: webauthn.addJacksonDeserializationHints(response),
+  };
+
+  return fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }).then(response => response.json());
+  ;
+}
+
+function authenticate() {
+  const username = document.getElementById('username').value;
+
+  setStatus('Looking up API paths...');
+  resetDisplays();
+
+  return getIndexActions()
+    .then(data => data.actions)
+
+    .then(urls => {
+      setStatus('Initiating authentication ceremony with server...');
+      return getAuthenticateRequest(urls.authenticate, username);
+    })
+
+    .then(({ request, actions: urls }) => {
+      setStatus('Asking authenticators to perform assertion...');
+      showRequest(request);
+      return executeAuthenticateRequest(request)
+        .then(webauthn.responseToObject)
+        .then(response => ({
+          request,
+          urls,
+          response,
+        }));
+    })
+
+    .then(({ urls, request, response }) => {
+      setStatus('Sending response to server...');
+      showAuthenticatorResponse(response);
+      return submitAuthenticateResponse(urls.finish, request.requestId, response);
+    })
+
+    .then(data => {
+      setStatus('Authentication successful!');
+      showServerResponse(data);
+      return data;
+    })
+
+    .catch((err) => {
+      setStatus('Authentication failed.');
+      addMessage(`${err.name}: ${err.message}`);
+      console.error('Authentication failed', err);
+    })
+  ;
+}
+
+function init() {
+  return false;
+}
+
+window.onload = init;
+
+</script>
+
+</head>
+<body>
+
+<div class="base">
+  <div class="content">
+
+    <div class="header-logo visible-desktop">
+      <a href="https://www.yubico.com/" title="Yubico">
+        <img src="/img/yubico-logo.png"/>
+      </a>
+    </div>
+
+    <h1> Test your WebAuthn device </h1>
+
+    <form class="horizontal">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username"/>
+      </div>
+
+      <div>
+        <button type="button" onClick="javascript:register()">
+          Register new credential
+        </button>
+      </div>
+      <div>
+        <button type="button" onClick="javascript:authenticate()">
+          Authenticate
+        </button>
+      </div>
+    </form>
+
+
+    <p id="status"></p>
+    <div id="messages"></div>
+
+    Request: <pre id="request"></pre>
+    Authenticator response: <pre id="authenticator-response"></pre>
+    Server response: <pre id="server-response"></pre>
+
+    <h3>Navigation</h3>
+
+    <ul>
+        <li><a href='/webauthn/spa.html'>Single-page</a></li>
+        <li><a href='/webauthn/registerIndex.html'>Register</a></li>
+        <li><a href='/webauthn/loginIndex.html'>Login</a></li>
+    </ul>
+
+  </div>
+</div>
+
+</body>
+</html>
