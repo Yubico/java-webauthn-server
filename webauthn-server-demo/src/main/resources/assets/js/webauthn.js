@@ -43,9 +43,10 @@
    * @param request: object - A MakePublicKeyCredentialOptions object, except
    *   where binary values are base64url encoded strings instead of byte arrays
    *
-   * @return the Promise returned by `navigator.credentials.create`
+   * @return a MakePublicKeyCredentialOptions suitable for passing as the
+   *   `publicKey` parameter to `navigator.credentials.create()`
    */
-  function createCredential(request) {
+  function decodeMakePublicKeyCredentialOptions(request) {
     const excludeCredentials = request.excludeCredentials.map(credential => ({
       ...credential,
       id: base64url.toByteArray(credential.id),
@@ -59,8 +60,20 @@
       timeout: 10000,
     };
 
+    return makePublicKeyCredentialOptions;
+  }
+
+  /**
+   * Create a WebAuthn credential.
+   *
+   * @param request: object - A MakePublicKeyCredentialOptions object, except
+   *   where binary values are base64url encoded strings instead of byte arrays
+   *
+   * @return the Promise returned by `navigator.credentials.create`
+   */
+  function createCredential(request) {
     return navigator.credentials.create({
-      publicKey: request,
+      publicKey: decodeMakePublicKeyCredentialOptions(request),
     });
   }
 
@@ -125,6 +138,7 @@
 
   return {
     addJacksonDeserializationHints,
+    decodeMakePublicKeyCredentialOptions,
     createCredential,
     getAssertion,
     responseToObject,
