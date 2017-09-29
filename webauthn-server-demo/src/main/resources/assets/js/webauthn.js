@@ -13,22 +13,27 @@
    * plain object structure.
    */
   function addJacksonDeserializationHints(response) {
-    var root = Object.assign({}, response, {
+    const root = {
+      ...response,
       '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
-    });
+    };
 
     if (response.response.attestationObject) {
-      return Object.assign({}, root, {
-        response: Object.assign({}, response.response, {
+      return {
+        ...root,
+        response: {
+          ...response.response,
           '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse',
-        }),
-      });
+        },
+      };
     } else {
-      return Object.assign({}, root, {
-        response: Object.assign({}, response.response, {
+      return {
+        ...root,
+        response: {
+          ...response.response,
           '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse',
-        }),
-      });
+        },
+      };
     }
   }
 
@@ -41,25 +46,21 @@
    * @return the Promise returned by `navigator.credentials.create`
    */
   function createCredential(request) {
-    var excludeCredentials = request.excludeCredentials.map(function(credential) {
-      return Object.assign({}, credential, {
-        id: base64url.toByteArray(credential.id),
-      });
-    });
+    const excludeCredentials = request.excludeCredentials.map(credential => ({
+      ...credential,
+      id: base64url.toByteArray(credential.id),
+    }));
 
-    var makePublicKeyCredentialOptions = Object.assign(
-      {},
-      request,
-      {
-        challenge: base64url.toByteArray(request.challenge),
-        excludeCredentials: excludeCredentials,
-        excludeList: excludeCredentials, // For Firefox Nightly 57.0a1
-        timeout: 10000,
-      }
-    );
+    const makePublicKeyCredentialOptions = {
+      ...request,
+      challenge: base64url.toByteArray(request.challenge),
+      excludeCredentials: excludeCredentials,
+      excludeList: excludeCredentials, // For Firefox Nightly 57.0a1
+      timeout: 10000,
+    };
 
     return navigator.credentials.create({
-      publicKey: makePublicKeyCredentialOptions,
+      publicKey: request,
     });
   }
 
@@ -74,22 +75,18 @@
    */
   function getAssertion(request) {
     console.log('Get assertion', request);
-    var allowCredentials = request.allowCredentials.map(function(credential) {
-      return Object.assign({}, credential, {
-        id: base64url.toByteArray(credential.id),
-      });
-    });
+    const allowCredentials = request.allowCredentials.map(credential => ({
+      ...credential,
+      id: base64url.toByteArray(credential.id),
+    }));
 
-    var publicKeyCredentialRequestOptions = Object.assign(
-      {},
-      request,
-      {
-        allowCredentials: allowCredentials,
-        allowList: allowCredentials,
-        challenge: base64url.toByteArray(request.challenge),
-        timeout: 10000,
-      }
-    );
+    const publicKeyCredentialRequestOptions = {
+      ...request,
+      allowCredentials: allowCredentials,
+      allowList: allowCredentials,
+      challenge: base64url.toByteArray(request.challenge),
+      timeout: 10000,
+    };
 
     console.log('publicKeyCredentialRequestOptions', publicKeyCredentialRequestOptions);
 
@@ -127,10 +124,10 @@
   }
 
   return {
-    addJacksonDeserializationHints: addJacksonDeserializationHints,
-    createCredential: createCredential,
-    getAssertion: getAssertion,
-    responseToObject: responseToObject,
+    addJacksonDeserializationHints,
+    createCredential,
+    getAssertion,
+    responseToObject,
   };
 
 });
