@@ -84,10 +84,10 @@
    *   except where binary values are base64url encoded strings instead of byte
    *   arrays
    *
-   * @return the Promise returned by `navigator.credentials.get`
+   * @return a PublicKeyCredentialRequestOptions suitable for passing as the
+   *   `publicKey` parameter to `navigator.credentials.get()`
    */
-  function getAssertion(request) {
-    console.log('Get assertion', request);
+  function decodePublicKeyCredentialRequestOptions(request) {
     const allowCredentials = request.allowCredentials.map(credential => ({
       ...credential,
       id: base64url.toByteArray(credential.id),
@@ -101,12 +101,25 @@
       timeout: 10000,
     };
 
-    console.log('publicKeyCredentialRequestOptions', publicKeyCredentialRequestOptions);
+    return publicKeyCredentialRequestOptions;
+  }
 
+  /**
+   * Perform a WebAuthn assertion.
+   *
+   * @param request: object - A PublicKeyCredentialRequestOptions object,
+   *   except where binary values are base64url encoded strings instead of byte
+   *   arrays
+   *
+   * @return the Promise returned by `navigator.credentials.get`
+   */
+  function getAssertion(request) {
+    console.log('Get assertion', request);
     return navigator.credentials.get({
-      publicKey: publicKeyCredentialRequestOptions,
+      publicKey: decodePublicKeyCredentialRequestOptions(request),
     });
   }
+
 
   /** Turn a PublicKeyCredential object into a plain object with base64url encoded binary values */
   function responseToObject(response) {
@@ -139,6 +152,7 @@
   return {
     addJacksonDeserializationHints,
     decodeMakePublicKeyCredentialOptions,
+    decodePublicKeyCredentialRequestOptions,
     createCredential,
     getAssertion,
     responseToObject,
