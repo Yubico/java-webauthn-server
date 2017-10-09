@@ -66,8 +66,8 @@ function executeRegisterRequest(request) {
   return webauthn.createCredential(request.makePublicKeyCredentialOptions);
 }
 
-function submitRegisterResponse(url, requestId, response) {
-  console.log('submitRegisterResponse', url, requestId, response);
+function submitResponse(url, requestId, response) {
+  console.log('submitResponse', url, requestId, response);
 
   const body = {
     requestId,
@@ -86,7 +86,6 @@ function performCeremony({
   getRequest, /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
   statusStrings, /* { init, authenticatorRequest, serverRequest, success, } */
   executeRequest, /* function({ makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
-  submitResponse, /* function(url: String, requestId: String, response: PublicKeyCredential): object */
   handleError, /* function(err): ? */
 }) {
   setStatus('Looking up API paths...');
@@ -139,7 +138,6 @@ function register() {
       success: 'Registration successful!',
     },
     executeRequest: executeRegisterRequest,
-    submitResponse: submitRegisterResponse,
   }).catch((err) => {
     setStatus('Registration failed.');
     console.error('Registration failed', err);
@@ -174,21 +172,6 @@ function executeAuthenticateRequest(request) {
   return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
 }
 
-function submitAuthenticateResponse(url, requestId, response) {
-  console.log('submitAuthenticateResponse', url, requestId, response);
-
-  const body = {
-    requestId,
-    credential: webauthn.addJacksonDeserializationHints(response),
-  };
-
-  return fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(body),
-  }).then(response => response.json());
-  ;
-}
-
 function authenticate() {
   const username = document.getElementById('username').value;
 
@@ -201,7 +184,6 @@ function authenticate() {
       success: 'Authentication successful!',
     },
     executeRequest: executeAuthenticateRequest,
-    submitResponse: submitAuthenticateResponse,
   }).catch((err) => {
     setStatus('Authentication failed.');
     addMessage(`${err.name}: ${err.message}`);
@@ -222,7 +204,6 @@ function deregister() {
       success: 'Authentication successful!',
     },
     executeRequest: executeAuthenticateRequest,
-    submitResponse: submitAuthenticateResponse,
   })
     .then(data => {
       if (data.success) {
