@@ -3,11 +3,13 @@ package demo.webauthn;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
@@ -18,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -57,7 +60,7 @@ public class WebAuthnRestResource {
         public Index() throws NoSuchMethodException, MalformedURLException {
             register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
-            deregister = uriInfo.getAbsolutePathBuilder().path("deregisterCredential").build().toURL();
+            deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
         }
     }
 
@@ -116,7 +119,7 @@ public class WebAuthnRestResource {
     }
     @Path("authenticate")
     @POST
-    public Response startAuthentication(@QueryParam("username") String username) throws JsonProcessingException, MalformedURLException {
+    public Response startAuthentication(@QueryParam("username") String username) throws MalformedURLException {
         logger.info("startAuthentication username: {}", username);
         AssertionRequest request = server.startAuthentication(username);
         return startResponse(new StartAuthenticationResponse(request));
@@ -137,29 +140,64 @@ public class WebAuthnRestResource {
         );
     }
 
-    @Path("deregister")
+    @Path("action/{action}/finish")
     @POST
-    public Response deregisterCredential(@QueryParam("username") String username, @QueryParam("credentialId") String credentialId) {
+    public Response finishAuthenticatedAction(@PathParam("action") String action, String responseJson) {
+        logger.info("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
+
+        Either<List<String>, WebAuthnServer.SuccessfulAuthenticationResult> result = server.finishAuthentication(responseJson);
+
+        Either<List<String>, ?> mappedResult = com.yubico.util.Either.fromScala(result)
+            .flatMap(res -> {
+                Either<List<String>, ?> actionResult = server.finishAuthenticatedAction(res);
+                return com.yubico.util.Either.fromScala(actionResult);
+            })
+            .toScala();
+
+        return finishResponse(
+            mappedResult,
+            "Action succeeded; further error message(s) were unfortunately lost to an internal server error.",
+            "finishAuthenticatedAction",
+            responseJson
+        );
+    }
+
+    private final class StartAuthenticatedActionResponse {
+        public final AssertionRequest request;
+        public final StartAuthenticatedActionActions actions = new StartAuthenticatedActionActions();
+        private StartAuthenticatedActionResponse(AssertionRequest request) throws MalformedURLException {
+            this.request = request;
+        }
+    }
+    private final class StartAuthenticatedActionActions {
+        public final URL finish = uriInfo.getAbsolutePathBuilder().path("finish").build().toURL();
+        private StartAuthenticatedActionActions() throws MalformedURLException {
+        }
+    }
+    @Path("action/deregister")
+    @POST
+    public Response deregisterCredential(@QueryParam("username") String username, @QueryParam("credentialId") String credentialId) throws MalformedURLException {
         logger.info("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
-        Either<List<String>, CredentialRegistration> result = server.deregisterCredential(username, credentialId);
+        Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
+            try {
+                return ((ObjectNode) jsonFactory.objectNode()
+                        .set("success", jsonFactory.booleanNode(true)))
+                        .set("droppedRegistration", jsonMapper.readTree(jsonMapper.writeValueAsString(credentialRegistration)))
+                ;
+            } catch (IOException e) {
+                logger.error("Failed to write response as JSON", e);
+                throw new RuntimeException(e);
+            }
+        }));
 
         if (result.isRight()) {
-            try {
-                return Response.ok(
-                    jsonMapper.writeValueAsString(
-                        ((ObjectNode) jsonFactory.objectNode()
-                            .set("success", jsonFactory.booleanNode(true)))
-                            .set("droppedRegistration", jsonMapper.readTree(jsonMapper.writeValueAsString(result.right().get())))
-                    )
-                ).build();
-            } catch (IOException e) {
-                return jsonFail();
-            }
+            return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
         } else {
-            return Response.status(Status.NOT_FOUND)
-                .entity("{\"messages\":[\"No such credential registration found.\"]}")
-                .build();
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                result.left().get()
+            );
         }
     }
 
@@ -171,35 +209,25 @@ public class WebAuthnRestResource {
         }
     }
 
-    private Response finishResponse(Either<List<String>, ?> result, String failFailMessage, String methodName, String responseJson) {
+    private Response finishResponse(Either<List<String>, ?> result, String jsonFailMessage, String methodName, String responseJson) {
         if (result.isRight()) {
             try {
                 return Response.ok(
                     jsonMapper.writeValueAsString(result.right().get())
                 ).build();
             } catch (JsonProcessingException e) {
-                return Response.status(Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"messages\";[\"Failed to encode response as JSON\"]}")
-                    .build();
+                logger.error("Failed to encode response as JSON: {}", result.right().get(), e);
+                return messagesJson(
+                    Response.ok(),
+                    jsonFailMessage
+                );
             }
         } else {
             logger.info("fail {} responseJson: {}", methodName, responseJson);
-            try {
-                return Response.status(Status.BAD_REQUEST)
-                    .entity(
-                        jsonMapper.writeValueAsString(
-                            jsonFactory.objectNode()
-                                .set("messages", jsonFactory.arrayNode()
-                                    .addAll(result.left().get().stream().map(jsonFactory::textNode).collect(Collectors.toList()))
-                                )
-                        )
-                    )
-                    .build();
-            } catch (JsonProcessingException e) {
-                return Response.status(Status.BAD_REQUEST)
-                    .entity("{\"messages\":[\"" + failFailMessage + "\"]}")
-                    .build();
-            }
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                result.left().get()
+            );
         }
     }
 
@@ -207,6 +235,26 @@ public class WebAuthnRestResource {
         return Response.status(Status.INTERNAL_SERVER_ERROR)
             .entity("{\"messages\";[\"Failed to encode response as JSON\"]}")
             .build();
+    }
+
+    private Response messagesJson(ResponseBuilder response, String message) {
+        return messagesJson(response, Arrays.asList(message));
+    }
+
+    private Response messagesJson(ResponseBuilder response, List<String> messages) {
+        try {
+            return response.entity(
+                jsonMapper.writeValueAsString(
+                    jsonFactory.objectNode()
+                        .set("messages", jsonFactory.arrayNode()
+                            .addAll(messages.stream().map(jsonFactory::textNode).collect(Collectors.toList()))
+                        )
+                )
+            ).build();
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to encode messages as JSON: {}", messages, e);
+            return jsonFail();
+        }
     }
 
 }

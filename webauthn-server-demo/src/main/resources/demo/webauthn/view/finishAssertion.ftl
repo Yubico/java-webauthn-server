@@ -42,7 +42,6 @@ window.onload = function() {
           <tr>
             <th> Nickname </th>
             <th> Registered </th>
-            <th> Actions </th>
             <th> Details </th>
           </tr>
         </thead>
@@ -52,16 +51,6 @@ window.onload = function() {
             <tr>
               <td> ${registration.getCredentialNickname()} </td>
               <td> ${registration.getRegistrationTime()} </td>
-              <td>
-
-                <form action="deregister" method="post">
-                  <input type="hidden" name="username" value="${registration.getUsername()}"/>
-                  <input type="hidden" name="credentialId" value="${registration.getRegistration().keyId().idBase64()}"/>
-                  <button type="submit"> Deregister </button>
-                </form>
-
-              </td>
-
               <td>
                 <pre>${registration.toJson()}</pre>
               </td>

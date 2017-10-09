@@ -24,6 +24,10 @@ function addMessage(message) {
   el.appendChild(p);
 }
 
+function addMessages(messages) {
+  messages.forEach(addMessage);
+}
+
 function clearMessages() {
   const el = document.getElementById('messages');
   while (el.firstChild) {
@@ -159,6 +163,11 @@ function getAuthenticateRequest(url, username) {
     .then(response => response.json());
 }
 
+function getDeregisterRequest(url, username, credentialId) {
+  return fetch(`${url}?username=${username}&credentialId=${credentialId}`, { method: 'POST' })
+    .then(response => response.json());
+}
+
 function executeAuthenticateRequest(request) {
   console.log('executeAuthenticateRequest', request);
 
@@ -198,6 +207,43 @@ function authenticate() {
     addMessage(`${err.name}: ${err.message}`);
     console.error('Authentication failed', err);
   });
+}
+
+function deregister() {
+  const username = document.getElementById('username').value;
+  const credentialId = document.getElementById('deregisterCredentialId').value;
+
+  return performCeremony({
+    getIndexActions,
+    getRequest: urls => getDeregisterRequest(urls.deregister, username, credentialId),
+    statusStrings: {
+      init: 'Initiating authentication ceremony with server...',
+      authenticatorRequest: 'Asking authenticators to perform assertion...',
+      success: 'Authentication successful!',
+    },
+    executeRequest: executeAuthenticateRequest,
+    submitResponse: submitAuthenticateResponse,
+  })
+    .then(data => {
+      if (data.success) {
+        if (data.droppedRegistration) {
+          addMessage(`Successfully deregistered credential: ${data.droppedRegistration.credentialNickname || credentialId}`);
+        } else {
+          addMessage(`Successfully deregistered credential: ${credentialId}`);
+        }
+      } else {
+        addMessage('Credential deregistration failed.');
+      }
+
+      if (data.messages) {
+        addMessages(data.messages);
+      }
+    })
+    .catch((err) => {
+      setStatus('Credential deregistration failed.');
+      addMessage(`${err.name}: ${err.message}`);
+      console.error('Authentication failed', err);
+    });
 }
 
 function init() {
@@ -241,6 +287,13 @@ window.onload = init;
       <div>
         <button type="button" onClick="javascript:authenticate()">
           Authenticate
+        </button>
+      </div>
+
+      <div>
+        <input type="text" id="deregisterCredentialId"/>
+        <button type="button" onClick="javascript:deregister()">
+          Deregister
         </button>
       </div>
     </form>

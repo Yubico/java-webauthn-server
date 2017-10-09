@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Value;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ public class WebAuthnServer {
     private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
     private final Multimap<String, CredentialRegistration> userStorage = HashMultimap.create();
     private final InMemoryCredentialRepository credentialRepository = new InMemoryCredentialRepository();
+    private final Map<AssertionRequest, AuthenticatedAction> authenticatedActions = new HashMap<>();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
@@ -203,7 +205,24 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, CredentialRegistration> deregisterCredential(String username, String credentialId) {
+    public AssertionRequest startAuthenticatedAction(String username, AuthenticatedAction<?> action) {
+        final AssertionRequest request = startAuthentication(username);
+        synchronized (authenticatedActions) {
+            authenticatedActions.put(request, action);
+        }
+        return request;
+    }
+
+    public Either<List<String>, ?> finishAuthenticatedAction(SuccessfulAuthenticationResult result) {
+        AuthenticatedAction<?> action = authenticatedActions.remove(result.request);
+        if (action == null) {
+            return Left.apply(Arrays.asList("No action was associated with assertion request ID: " + result.getRequest().getRequestId()));
+        } else {
+            return action.apply(result);
+        }
+    }
+
+    public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, String credentialId, Function<CredentialRegistration, T> resultMapper) {
         logger.info("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
@@ -214,17 +233,21 @@ public class WebAuthnServer {
             return Left.apply(Arrays.asList("Credential ID must not be empty."));
         }
 
-        Optional<CredentialRegistration> credReg = userStorage.get(username).stream()
-            .filter(credentialRegistration -> credentialRegistration.getRegistration().keyId().idBase64().equals(credentialId))
-            .findAny();
+        AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
+            Optional<CredentialRegistration> credReg = userStorage.get(username).stream()
+                .filter(credentialRegistration -> credentialRegistration.getRegistration().keyId().idBase64().equals(credentialId))
+                .findAny();
 
-        if (credReg.isPresent()) {
-            userStorage.remove(username, credReg.get());
-            credentialRepository.remove(credentialId);
-            return Right.apply(credReg.get());
-        } else {
-            return Left.apply(Arrays.asList("Credential ID not registered:" + credentialId));
-        }
+            if (credReg.isPresent()) {
+                userStorage.remove(username, credReg.get());
+                credentialRepository.remove(credentialId);
+                return Right.apply(resultMapper.apply(credReg.get()));
+            } else {
+                return Left.apply(Arrays.asList("Credential ID not registered:" + credentialId));
+            }
+        };
+
+        return Right.apply(startAuthenticatedAction(username, action));
     }
 
     private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {

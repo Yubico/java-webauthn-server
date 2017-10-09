@@ -93,23 +93,4 @@ public class WebAuthnResource {
         }
     }
 
-    @Path("deregister")
-    @POST
-    public View deregisterCredential(@FormParam("username") String username, @FormParam("credentialId") String credentialId) {
-        logger.info("deregisterCredential username: {}, credentialId: {}", username, credentialId);
-
-        Either<List<String>, CredentialRegistration> result = server.deregisterCredential(username, credentialId);
-
-        if (result.isRight()) {
-            return new MessageView(String.format(
-                "Deregistered credential %s (%s) from user %s",
-                result.right().get().getCredentialNickname(),
-                result.right().get().getRegistration().keyId().idBase64(),
-                result.right().get().getUsername()
-            ));
-        } else {
-            return new MessageView(result.left().get());
-        }
-    }
-
 }
