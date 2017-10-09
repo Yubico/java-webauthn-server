@@ -77,9 +77,14 @@ function submitRegisterResponse(url, requestId, response) {
   ;
 }
 
-function register() {
-  const username = document.getElementById('username').value;
-
+function performCeremony({
+  getIndexActions, /* function(): object */
+  getRequest, /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
+  statusStrings, /* { init, authenticatorRequest, serverRequest, success, } */
+  executeRequest, /* function({ makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
+  submitResponse, /* function(url: String, requestId: String, response: PublicKeyCredential): object */
+  handleError, /* function(err): ? */
+}) {
   setStatus('Looking up API paths...');
   resetDisplays();
 
@@ -87,14 +92,14 @@ function register() {
     .then(data => data.actions)
 
     .then(urls => {
-      setStatus('Initiating registration ceremony with server...');
-      return getRegisterRequest(urls.register, username);
+      setStatus(statusStrings.int);
+      return getRequest(urls);
     })
 
     .then(({ request, actions: urls }) => {
-      setStatus('Asking authenticators to create credential...');
+      setStatus(statusStrings.authenticatorRequest);
       showRequest(request);
-      return executeRegisterRequest(request)
+      return executeRequest(request)
         .then(webauthn.responseToObject)
         .then(response => ({
           request,
@@ -104,34 +109,48 @@ function register() {
     })
 
     .then(({ urls, request, response }) => {
-      setStatus('Sending response to server...');
+      setStatus(statusStrings.serverRequest || 'Sending response to server...');
       showAuthenticatorResponse(response);
-      return submitRegisterResponse(urls.finish, request.requestId, response);
+      return submitResponse(urls.finish, request.requestId, response);
     })
 
     .then(data => {
-      setStatus('Registration successful!');
+      setStatus(statusStrings.success);
       showServerResponse(data);
       return data;
     })
-
-    .catch((err) => {
-      setStatus('Registration failed.');
-      console.error('Registration failed', err);
-
-      if (err.name === 'NotAllowedError') {
-        if (request.makePublicKeyCredentialOptions.excludeCredentials
-            && request.makePublicKeyCredentialOptions.excludeCredentials.length > 0
-        ) {
-          addMessage('Credential creation failed, probably because an already registered credential is avaiable.');
-        } else {
-          addMessage('Credential creation failed for an unknown reason.');
-        }
-      } else if (err.message) {
-        addMessage(`${err.name}: ${err.message}`);
-      }
-    })
   ;
+}
+
+function register() {
+  const username = document.getElementById('username').value;
+
+  return performCeremony({
+    getIndexActions,
+    getRequest: urls => getRegisterRequest(urls.register, username),
+    statusStrings: {
+      init: 'Initiating registration ceremony with server...',
+      authenticatorRequest: 'Asking authenticators to create credential...',
+      success: 'Registration successful!',
+    },
+    executeRequest: executeRegisterRequest,
+    submitResponse: submitRegisterResponse,
+  }).catch((err) => {
+    setStatus('Registration failed.');
+    console.error('Registration failed', err);
+
+    if (err.name === 'NotAllowedError') {
+      if (request.makePublicKeyCredentialOptions.excludeCredentials
+          && request.makePublicKeyCredentialOptions.excludeCredentials.length > 0
+      ) {
+        addMessage('Credential creation failed, probably because an already registered credential is avaiable.');
+      } else {
+        addMessage('Credential creation failed for an unknown reason.');
+      }
+    } else if (err.message) {
+      addMessage(`${err.name}: ${err.message}`);
+    }
+  });
 }
 
 function getAuthenticateRequest(url, username) {
@@ -163,47 +182,21 @@ function submitAuthenticateResponse(url, requestId, response) {
 function authenticate() {
   const username = document.getElementById('username').value;
 
-  setStatus('Looking up API paths...');
-  resetDisplays();
-
-  return getIndexActions()
-    .then(data => data.actions)
-
-    .then(urls => {
-      setStatus('Initiating authentication ceremony with server...');
-      return getAuthenticateRequest(urls.authenticate, username);
-    })
-
-    .then(({ request, actions: urls }) => {
-      setStatus('Asking authenticators to perform assertion...');
-      showRequest(request);
-      return executeAuthenticateRequest(request)
-        .then(webauthn.responseToObject)
-        .then(response => ({
-          request,
-          urls,
-          response,
-        }));
-    })
-
-    .then(({ urls, request, response }) => {
-      setStatus('Sending response to server...');
-      showAuthenticatorResponse(response);
-      return submitAuthenticateResponse(urls.finish, request.requestId, response);
-    })
-
-    .then(data => {
-      setStatus('Authentication successful!');
-      showServerResponse(data);
-      return data;
-    })
-
-    .catch((err) => {
-      setStatus('Authentication failed.');
-      addMessage(`${err.name}: ${err.message}`);
-      console.error('Authentication failed', err);
-    })
-  ;
+  return performCeremony({
+    getIndexActions,
+    getRequest: urls => getAuthenticateRequest(urls.authenticate, username),
+    statusStrings: {
+      init: 'Initiating authentication ceremony with server...',
+      authenticatorRequest: 'Asking authenticators to perform assertion...',
+      success: 'Authentication successful!',
+    },
+    executeRequest: executeAuthenticateRequest,
+    submitResponse: submitAuthenticateResponse,
+  }).catch((err) => {
+    setStatus('Authentication failed.');
+    addMessage(`${err.name}: ${err.message}`);
+    console.error('Authentication failed', err);
+  });
 }
 
 function init() {
