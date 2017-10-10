@@ -6,6 +6,22 @@
   <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
   <link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
   <link href="/css/bootstrap-yubico.css" rel="stylesheet"/>
+  <style type="text/css">
+
+.row {
+  display: table-row;
+}
+.row > * {
+  display: table-cell;
+  padding: 0.2em;
+}
+
+input[type="text"] {
+  height: 2em;
+  margin: 0;
+}
+
+  </style>
 
   <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
   <script src="/js/base64url.js"></script>
@@ -283,33 +299,39 @@ window.onload = init;
     <h1> Test your WebAuthn device </h1>
 
     <form class="horizontal">
-      <div>
+      <div class="row">
         <label for="username">Username:</label>
-        <input type="text" id="username"/>
+        <div><input type="text" id="username"/></div>
       </div>
 
-      <div>
+      <div class="row">
         <label for="credentialNickname">Credential nickname:</label>
-        <input type="text" id="credentialNickname"/>
+        <div><input type="text" id="credentialNickname"/></div>
+        <div>
+          <button type="button" onClick="javascript:register()">
+            Register new credential
+          </button>
+        </div>
       </div>
 
-      <div>
-        <button type="button" onClick="javascript:register()">
-          Register new credential
-        </button>
-      </div>
-      <div>
-        <button type="button" onClick="javascript:authenticate()">
-          Authenticate
-        </button>
+      <div class="row">
+        <div></div>
+        <div></div>
+        <div>
+          <button type="button" onClick="javascript:authenticate()">
+            Authenticate
+          </button>
+        </div>
       </div>
 
-      <div>
+      <div class="row">
         <label for="deregisterCredentialId">Credential ID:</label>
-        <input type="text" id="deregisterCredentialId"/>
-        <button type="button" onClick="javascript:deregister()">
-          Deregister
-        </button>
+        <div><input type="text" id="deregisterCredentialId"/></div>
+        <div>
+          <button type="button" onClick="javascript:deregister()">
+            Deregister
+          </button>
+        </div>
       </div>
     </form>
 
