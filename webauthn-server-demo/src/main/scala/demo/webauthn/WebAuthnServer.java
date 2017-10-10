@@ -67,7 +67,7 @@ public class WebAuthnServer {
     );
 
     public RegistrationRequest startRegistration(String username, String credentialNickname) {
-        logger.info("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
+        logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
         RegistrationRequest request = new RegistrationRequest(
             username,
             credentialNickname,
@@ -94,20 +94,20 @@ public class WebAuthnServer {
     }
 
     public Either<List<String>, SuccessfulRegistrationResult> finishRegistration(String responseJson) {
-        logger.info("finishRegistration responseJson: {}", responseJson);
+        logger.trace("finishRegistration responseJson: {}", responseJson);
         RegistrationResponse response = null;
         try {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
         } catch (IOException e) {
-            logger.info("fail finishRegistration responseJson: {}", responseJson, e);
-            return Left.apply(Arrays.asList("Credential creation failed!", "Failed to decode response object.", e.getMessage()));
+            logger.error("JSON error in finishRegistration; responseJson: {}", responseJson, e);
+            return Left.apply(Arrays.asList("Registration failed!", "Failed to decode response object.", e.getMessage()));
         }
 
         RegistrationRequest request = registerRequestStorage.remove(response.getRequestId());
 
         if (request == null) {
-            logger.info("fail finishRegistration responseJson: {}", responseJson);
-            return Left.apply(Arrays.asList("Credential creation failed!", "No such registration in progress."));
+            logger.debug("fail finishRegistration responseJson: {}", responseJson);
+            return Left.apply(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
             Try<RegistrationResult> registrationTry = rp.finishRegistration(
                 request.getMakePublicKeyCredentialOptions(),
@@ -128,15 +128,15 @@ public class WebAuthnServer {
                     )
                 );
             } else {
-                logger.info("fail finishRegistration responseJson: {}", responseJson, registrationTry.failed().get());
-                return Left.apply(Arrays.asList("Credential creation failed!", registrationTry.failed().get().getMessage()));
+                logger.debug("fail finishRegistration responseJson: {}", responseJson, registrationTry.failed().get());
+                return Left.apply(Arrays.asList("Registration failed!", registrationTry.failed().get().getMessage()));
             }
 
         }
     }
 
     public AssertionRequest startAuthentication(String username) {
-        logger.info("startAuthentication username: {}", username);
+        logger.trace("startAuthentication username: {}", username);
         AssertionRequest request = new AssertionRequest(
             username,
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
@@ -163,7 +163,7 @@ public class WebAuthnServer {
     }
 
     public Either<List<String>, SuccessfulAuthenticationResult> finishAuthentication(String responseJson) {
-        logger.info("finishAuthentication responseJson: {}", responseJson);
+        logger.trace("finishAuthentication responseJson: {}", responseJson);
 
         AssertionResponse response = null;
         try {
@@ -176,7 +176,7 @@ public class WebAuthnServer {
         AssertionRequest request = assertRequestStorage.remove(response.getRequestId());
 
         if (request == null) {
-            return Left.apply(Arrays.asList("Credential creation failed!", "No such registration in progress."));
+            return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
             Try<Object> assertionTry = rp.finishAssertion(
                 request.getPublicKeyCredentialRequestOptions(),
@@ -223,7 +223,7 @@ public class WebAuthnServer {
     }
 
     public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, String credentialId, Function<CredentialRegistration, T> resultMapper) {
-        logger.info("deregisterCredential username: {}, credentialId: {}", username, credentialId);
+        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
             return Left.apply(Arrays.asList("Username must not be empty."));
@@ -252,7 +252,7 @@ public class WebAuthnServer {
 
     private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {
         CredentialRegistration reg = new CredentialRegistration(username, nickname, clock.instant(), registration);
-        logger.info(
+        logger.debug(
             "Adding registration: username: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
             username,
             nickname,
