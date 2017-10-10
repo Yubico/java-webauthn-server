@@ -43,11 +43,26 @@ function showRequest(data) { return showJson('request', data); }
 function showAuthenticatorResponse(data) { return showJson('authenticator-response', data); }
 function showServerResponse(data) { return showJson('server-response', data); }
 
+function hideDeviceInfo() {
+  document.getElementById("device-info").style = "display: none";
+}
+function showDeviceInfo({
+  displayName,
+  imageUrl,
+  nickname,
+}) {
+  document.getElementById("device-info").style = undefined;
+  document.getElementById("device-name").textContent = displayName;
+  document.getElementById("device-nickname").textContent = nickname;
+  document.getElementById("device-icon").src = imageUrl;
+}
+
 function resetDisplays() {
   clearMessages();
   showRequest(null);
   showAuthenticatorResponse(null);
   showServerResponse(null);
+  hideDeviceInfo();
 }
 
 function getIndexActions() {
@@ -138,7 +153,24 @@ function register() {
       success: 'Registration successful!',
     },
     executeRequest: executeRegisterRequest,
-  }).catch((err) => {
+  })
+  .then(data => {
+    if (data.registration) {
+      const nicknameInfo = {
+        nickname: data.registration.credentialNickname,
+      };
+
+      if (data.registration.registration && data.registration.registration.attestationMetadata) {
+        showDeviceInfo({
+          ...data.registration.registration.attestationMetadata.deviceProperties,
+          ...nicknameInfo,
+        });
+      } else {
+        showDeviceInfo(nicknameInfo);
+      }
+    }
+  })
+  .catch((err) => {
     setStatus('Registration failed.');
     console.error('Registration failed', err);
 
@@ -228,6 +260,7 @@ function deregister() {
 }
 
 function init() {
+  hideDeviceInfo();
   return false;
 }
 
@@ -282,6 +315,12 @@ window.onload = init;
 
     <p id="status"></p>
     <div id="messages"></div>
+
+    <div id="device-info">
+      <img id="device-icon"/>
+      <b>Device: </b><span id="device-name"></span>
+      <b>Nickname: </b><span id="device-nickname"></span>
+    </div>
 
     Request: <pre id="request"></pre>
     Authenticator response: <pre id="authenticator-response"></pre>
