@@ -120,6 +120,7 @@ class TestAuthenticator (
 
   def createCredential(
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+    attestationStatementFormat: String = "fido-u2f",
     authenticatorExtensions: Option[JsonNode] = None,
     challenge: ArrayBuffer = Defaults.challenge,
     clientData: Option[JsonNode] = None,
@@ -169,7 +170,8 @@ class TestAuthenticator (
 
     val attestationObjectBytes = makeAttestationObjectBytes(
       authDataBytes,
-      makeU2fAttestationStatement(authDataBytes, clientDataJson, attestationCertAndKey)
+      attestationStatementFormat,
+      (authDataBytes, clientDataJson, attestationCertAndKey)
     )
 
     val response = data.impl.AuthenticatorAttestationResponse(
@@ -269,13 +271,17 @@ class TestAuthenticator (
     ).asJava)
   }
 
-  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, attStmt: JsonNode): ArrayBuffer = {
-    val format = "fido-u2f"
+  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, format: String, attStmtArgs: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)])): ArrayBuffer = {
+    val makeAttestationStatement: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)]) => JsonNode = format match {
+      case "fido-u2f" => makeU2fAttestationStatement _
+      case "packed" => makePackedAttestationStatement _
+    }
+
     val f = JsonNodeFactory.instance
     val attObj = f.objectNode().setAll(Map(
       "authData" -> f.binaryNode(authDataBytes.toArray),
       "fmt" -> f.textNode(format),
-      "attStmt" -> attStmt
+      "attStmt" -> makeAttestationStatement.tupled(attStmtArgs)
     ).asJava)
 
     WebAuthnCodecs.cbor.writeValueAsBytes(attObj).toVector
@@ -319,6 +325,23 @@ class TestAuthenticator (
       ++ credentialId
       ++ credentialPublicKeyRawBytes
     )
+  }
+
+  def makePackedAttestationStatement(
+    authDataBytes: ArrayBuffer,
+    clientDataJson: String,
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None
+  ): JsonNode = {
+    val (cert, key) = attestationCertAndKey getOrElse generateAttestationCertificate()
+
+    val signedData = authDataBytes ++ crypto.hash(clientDataJson)
+    val signature = sign(signedData, key)
+
+    val f = JsonNodeFactory.instance
+    f.objectNode().setAll(Map(
+      "x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)),
+      "sig" -> f.binaryNode(signature.toArray)
+    ).asJava)
   }
 
   def makeAuthDataBytes(
