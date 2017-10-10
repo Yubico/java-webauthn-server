@@ -6,6 +6,268 @@
   <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
   <link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
   <link href="/css/bootstrap-yubico.css" rel="stylesheet"/>
+
+  <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
+  <script src="/js/base64url.js"></script>
+  <script src="/js/webauthn.js"></script>
+
+  <script>
+
+function setStatus(statusText) {
+  document.getElementById('status').textContent = statusText;
+}
+
+function addMessage(message) {
+  const el = document.getElementById('messages');
+  const p = document.createElement('p');
+  p.appendChild(document.createTextNode(message));
+  el.appendChild(p);
+}
+
+function addMessages(messages) {
+  messages.forEach(addMessage);
+}
+
+function clearMessages() {
+  const el = document.getElementById('messages');
+  while (el.firstChild) {
+    el.removeChild(el.firstChild);
+  }
+}
+
+function showJson(name, data) {
+  const el = document.getElementById(name)
+    .textContent = JSON.stringify(data, false, 2);
+}
+function showRequest(data) { return showJson('request', data); }
+function showAuthenticatorResponse(data) { return showJson('authenticator-response', data); }
+function showServerResponse(data) { return showJson('server-response', data); }
+
+function hideDeviceInfo() {
+  document.getElementById("device-info").style = "display: none";
+}
+function showDeviceInfo({
+  displayName,
+  imageUrl,
+  nickname,
+}) {
+  document.getElementById("device-info").style = undefined;
+  document.getElementById("device-name").textContent = displayName;
+  document.getElementById("device-nickname").textContent = nickname;
+  document.getElementById("device-icon").src = imageUrl;
+}
+
+function resetDisplays() {
+  clearMessages();
+  showRequest(null);
+  showAuthenticatorResponse(null);
+  showServerResponse(null);
+  hideDeviceInfo();
+}
+
+function getIndexActions() {
+  return fetch('/api/webauthn/')
+    .then(response => response.json());
+}
+
+function getRegisterRequest(url, username, credentialNickname) {
+  return fetch(`${url}?username=${username}&credentialNickname=${credentialNickname}`, { method: 'POST' })
+    .then(response => response.json());
+}
+
+function executeRegisterRequest(request) {
+  console.log('executeRegisterRequest', request);
+
+  return webauthn.createCredential(request.makePublicKeyCredentialOptions);
+}
+
+function submitResponse(url, requestId, response) {
+  console.log('submitResponse', url, requestId, response);
+
+  const body = {
+    requestId,
+    credential: webauthn.addJacksonDeserializationHints(response),
+  };
+
+  return fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }).then(response => response.json());
+  ;
+}
+
+function performCeremony({
+  getIndexActions, /* function(): object */
+  getRequest, /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
+  statusStrings, /* { init, authenticatorRequest, serverRequest, success, } */
+  executeRequest, /* function({ makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
+  handleError, /* function(err): ? */
+}) {
+  setStatus('Looking up API paths...');
+  resetDisplays();
+
+  return getIndexActions()
+    .then(data => data.actions)
+
+    .then(urls => {
+      setStatus(statusStrings.int);
+      return getRequest(urls);
+    })
+
+    .then(({ request, actions: urls }) => {
+      setStatus(statusStrings.authenticatorRequest);
+      showRequest(request);
+      return executeRequest(request)
+        .then(webauthn.responseToObject)
+        .then(response => ({
+          request,
+          urls,
+          response,
+        }));
+    })
+
+    .then(({ urls, request, response }) => {
+      setStatus(statusStrings.serverRequest || 'Sending response to server...');
+      showAuthenticatorResponse(response);
+      return submitResponse(urls.finish, request.requestId, response);
+    })
+
+    .then(data => {
+      setStatus(statusStrings.success);
+      showServerResponse(data);
+      return data;
+    })
+  ;
+}
+
+function register() {
+  const username = document.getElementById('username').value;
+  const credentialNickname = document.getElementById('credentialNickname').value;
+
+  return performCeremony({
+    getIndexActions,
+    getRequest: urls => getRegisterRequest(urls.register, username, credentialNickname),
+    statusStrings: {
+      init: 'Initiating registration ceremony with server...',
+      authenticatorRequest: 'Asking authenticators to create credential...',
+      success: 'Registration successful!',
+    },
+    executeRequest: executeRegisterRequest,
+  })
+  .then(data => {
+    if (data.registration) {
+      const nicknameInfo = {
+        nickname: data.registration.credentialNickname,
+      };
+
+      if (data.registration.registration && data.registration.registration.attestationMetadata) {
+        showDeviceInfo({
+          ...data.registration.registration.attestationMetadata.deviceProperties,
+          ...nicknameInfo,
+        });
+      } else {
+        showDeviceInfo(nicknameInfo);
+      }
+    }
+  })
+  .catch((err) => {
+    setStatus('Registration failed.');
+    console.error('Registration failed', err);
+
+    if (err.name === 'NotAllowedError') {
+      if (request.makePublicKeyCredentialOptions.excludeCredentials
+          && request.makePublicKeyCredentialOptions.excludeCredentials.length > 0
+      ) {
+        addMessage('Credential creation failed, probably because an already registered credential is avaiable.');
+      } else {
+        addMessage('Credential creation failed for an unknown reason.');
+      }
+    } else if (err.message) {
+      addMessage(`${err.name}: ${err.message}`);
+    }
+  });
+}
+
+function getAuthenticateRequest(url, username) {
+  return fetch(`${url}?username=${username}`, { method: 'POST' })
+    .then(response => response.json());
+}
+
+function getDeregisterRequest(url, username, credentialId) {
+  return fetch(`${url}?username=${username}&credentialId=${credentialId}`, { method: 'POST' })
+    .then(response => response.json());
+}
+
+function executeAuthenticateRequest(request) {
+  console.log('executeAuthenticateRequest', request);
+
+  return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
+}
+
+function authenticate() {
+  const username = document.getElementById('username').value;
+
+  return performCeremony({
+    getIndexActions,
+    getRequest: urls => getAuthenticateRequest(urls.authenticate, username),
+    statusStrings: {
+      init: 'Initiating authentication ceremony with server...',
+      authenticatorRequest: 'Asking authenticators to perform assertion...',
+      success: 'Authentication successful!',
+    },
+    executeRequest: executeAuthenticateRequest,
+  }).catch((err) => {
+    setStatus('Authentication failed.');
+    addMessage(`${err.name}: ${err.message}`);
+    console.error('Authentication failed', err);
+  });
+}
+
+function deregister() {
+  const username = document.getElementById('username').value;
+  const credentialId = document.getElementById('deregisterCredentialId').value;
+
+  return performCeremony({
+    getIndexActions,
+    getRequest: urls => getDeregisterRequest(urls.deregister, username, credentialId),
+    statusStrings: {
+      init: 'Initiating authentication ceremony with server...',
+      authenticatorRequest: 'Asking authenticators to perform assertion...',
+      success: 'Authentication successful!',
+    },
+    executeRequest: executeAuthenticateRequest,
+  })
+    .then(data => {
+      if (data.success) {
+        if (data.droppedRegistration) {
+          addMessage(`Successfully deregistered credential: ${data.droppedRegistration.credentialNickname || credentialId}`);
+        } else {
+          addMessage(`Successfully deregistered credential: ${credentialId}`);
+        }
+      } else {
+        addMessage('Credential deregistration failed.');
+      }
+
+      if (data.messages) {
+        addMessages(data.messages);
+      }
+    })
+    .catch((err) => {
+      setStatus('Credential deregistration failed.');
+      addMessage(`${err.name}: ${err.message}`);
+      console.error('Authentication failed', err);
+    });
+}
+
+function init() {
+  hideDeviceInfo();
+  return false;
+}
+
+window.onload = init;
+
+</script>
+
 </head>
 <body>
 
@@ -20,16 +282,49 @@
 
     <h1> Test your WebAuthn device </h1>
 
-    <p>
-      Welcome! Use this service to try out Web Authentication.
-    </p>
+    <form class="horizontal">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username"/>
+      </div>
 
-    <h3>Navigation</h3>
+      <div>
+        <label for="credentialNickname">Credential nickname:</label>
+        <input type="text" id="credentialNickname"/>
+      </div>
 
-    <ul>
-        <li><a href='/webauthn/registerIndex.html'>Register</a></li>
-        <li><a href='/webauthn/loginIndex.html'>Login</a></li>
-    </ul>
+      <div>
+        <button type="button" onClick="javascript:register()">
+          Register new credential
+        </button>
+      </div>
+      <div>
+        <button type="button" onClick="javascript:authenticate()">
+          Authenticate
+        </button>
+      </div>
+
+      <div>
+        <input type="text" id="deregisterCredentialId"/>
+        <button type="button" onClick="javascript:deregister()">
+          Deregister
+        </button>
+      </div>
+    </form>
+
+
+    <p id="status"></p>
+    <div id="messages"></div>
+
+    <div id="device-info">
+      <img id="device-icon"/>
+      <b>Device: </b><span id="device-name"></span>
+      <b>Nickname: </b><span id="device-nickname"></span>
+    </div>
+
+    Request: <pre id="request"></pre>
+    Authenticator response: <pre id="authenticator-response"></pre>
+    Server response: <pre id="server-response"></pre>
 
   </div>
 </div>

@@ -1,6 +1,5 @@
 package demo;
 
-import demo.webauthn.WebAuthnResource;
 import demo.webauthn.WebAuthnRestResource;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -20,7 +19,6 @@ public class App extends Application<Config> {
     public void run(Config config, Environment environment) throws Exception {
         JerseyEnvironment jersey = environment.jersey();
         jersey.setUrlPattern("/api/*");
-        jersey.register(new WebAuthnResource());
         jersey.register(new WebAuthnRestResource());
     }
 
