@@ -87,7 +87,7 @@ public class WebAuthnRestResource {
     @Path("register")
     @POST
     public Response startRegistration(@QueryParam("username") String username, @QueryParam("credentialNickname") String credentialNickname) throws MalformedURLException {
-        logger.info("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
+        logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
         RegistrationRequest request = server.startRegistration(username, credentialNickname);
         return startResponse(new StartRegistrationResponse(request));
     }
@@ -95,7 +95,7 @@ public class WebAuthnRestResource {
     @Path("register/finish")
     @POST
     public Response finishRegistration(String responseJson) {
-        logger.info("finishRegistration responseJson: {}", responseJson);
+        logger.trace("finishRegistration responseJson: {}", responseJson);
         Either<List<String>, WebAuthnServer.SuccessfulRegistrationResult> result = server.finishRegistration(responseJson);
         return finishResponse(
             result,
@@ -120,7 +120,7 @@ public class WebAuthnRestResource {
     @Path("authenticate")
     @POST
     public Response startAuthentication(@QueryParam("username") String username) throws MalformedURLException {
-        logger.info("startAuthentication username: {}", username);
+        logger.trace("startAuthentication username: {}", username);
         AssertionRequest request = server.startAuthentication(username);
         return startResponse(new StartAuthenticationResponse(request));
     }
@@ -128,7 +128,7 @@ public class WebAuthnRestResource {
     @Path("authenticate/finish")
     @POST
     public Response finishAuthentication(String responseJson) {
-        logger.info("finishAuthentication responseJson: {}", responseJson);
+        logger.trace("finishAuthentication responseJson: {}", responseJson);
 
         Either<List<String>, WebAuthnServer.SuccessfulAuthenticationResult> result = server.finishAuthentication(responseJson);
 
@@ -143,7 +143,7 @@ public class WebAuthnRestResource {
     @Path("action/{action}/finish")
     @POST
     public Response finishAuthenticatedAction(@PathParam("action") String action, String responseJson) {
-        logger.info("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
+        logger.trace("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
 
         Either<List<String>, WebAuthnServer.SuccessfulAuthenticationResult> result = server.finishAuthentication(responseJson);
 
@@ -177,7 +177,7 @@ public class WebAuthnRestResource {
     @Path("action/deregister")
     @POST
     public Response deregisterCredential(@QueryParam("username") String username, @QueryParam("credentialId") String credentialId) throws MalformedURLException {
-        logger.info("deregisterCredential username: {}, credentialId: {}", username, credentialId);
+        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
             try {
@@ -223,7 +223,7 @@ public class WebAuthnRestResource {
                 );
             }
         } else {
-            logger.info("fail {} responseJson: {}", methodName, responseJson);
+            logger.debug("fail {} responseJson: {}", methodName, responseJson);
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
                 result.left().get()
