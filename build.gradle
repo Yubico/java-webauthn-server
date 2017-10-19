@@ -14,7 +14,7 @@ plugins {
 
 import com.yubico.gradle.plugins.signing.GpgSigningPlugin
 
-project.ext.publishEnabled = System.env.CI != 'true'
+project.ext.publishEnabled = System.env.CI != 'true' && project.hasProperty('ossrhUsername')
 
 if (publishEnabled) {
   nexusStaging {
