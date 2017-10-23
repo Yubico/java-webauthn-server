@@ -114,6 +114,9 @@ public class MetadataService {
     }
 
     public Attestation getAttestation(final X509Certificate attestationCertificate) {
+        if (attestationCertificate == null) {
+            return unknownAttestation;
+        }
         try {
             String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
             return cache.get(fingerprint, new Callable<Attestation>() {

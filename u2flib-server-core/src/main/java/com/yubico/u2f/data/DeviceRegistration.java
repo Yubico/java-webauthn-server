@@ -71,11 +71,12 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     @JsonIgnore
-    public X509Certificate getAttestationCertificate() throws U2fBadInputException, CertificateException, NoSuchFieldException {
+    public X509Certificate getAttestationCertificate() throws U2fBadInputException, CertificateException {
         if (attestationCert == null) {
-            throw new NoSuchFieldException();
+            return null;
+        } else {
+            return CertificateParser.parseDer(U2fB64Encoding.decode(attestationCert));
         }
-        return CertificateParser.parseDer(U2fB64Encoding.decode(attestationCert));
     }
 
     public long getCounter() {
@@ -96,8 +97,6 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
         try {
             certificate = getAttestationCertificate();
         } catch (CertificateException e) {
-            // do nothing
-        } catch (NoSuchFieldException e) {
             // do nothing
         } catch (U2fBadInputException e) {
             // do nothing

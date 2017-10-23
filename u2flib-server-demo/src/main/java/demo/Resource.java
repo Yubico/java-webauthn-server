@@ -60,7 +60,7 @@ public class Resource {
 
     @Path("finishRegistration")
     @POST
-    public View finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, NoSuchFieldException {
+    public View finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
         RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.remove(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
