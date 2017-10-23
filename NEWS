@@ -1,3 +1,10 @@
+== Version 0.18.2 (unreleased) ==
+
+* Improved error handling in client data input validation
+** Thanks to Nicholas Wilson for the contribution, see
+   https://github.com/Yubico/java-u2flib-server/pull/25
+
+
 == Version 0.18.1 ==
 
 * Lombok now longer leaks into runtime dependencies

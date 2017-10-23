@@ -42,7 +42,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     private boolean compromised;
 
     @JsonCreator
-    DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
+    public DeviceRegistration(@JsonProperty("keyHandle") String keyHandle, @JsonProperty("publicKey") String publicKey, @JsonProperty("attestationCert") String attestationCert, @JsonProperty("counter") long counter, @JsonProperty("compromised") boolean compromised) {
         this.keyHandle = keyHandle;
         this.publicKey = publicKey;
         this.attestationCert = attestationCert;
@@ -71,7 +71,7 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
     }
 
     @JsonIgnore
-    public X509Certificate getAttestationCertificate() throws CertificateException, NoSuchFieldException {
+    public X509Certificate getAttestationCertificate() throws U2fBadInputException, CertificateException, NoSuchFieldException {
         if (attestationCert == null) {
             throw new NoSuchFieldException();
         }
@@ -98,6 +98,8 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
         } catch (CertificateException e) {
             // do nothing
         } catch (NoSuchFieldException e) {
+            // do nothing
+        } catch (U2fBadInputException e) {
             // do nothing
         }
         return MoreObjects.toStringHelper(this)

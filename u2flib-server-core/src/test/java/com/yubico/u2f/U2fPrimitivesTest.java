@@ -168,6 +168,46 @@ public class U2fPrimitivesTest {
         u2f.finishSignature(request, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0), allowedOrigins);
     }
 
+    @Test(expected = U2fBadInputException.class)
+    public void finishAuthentication_badBase64() throws Exception {
+        SignRequest authentication = SignRequest.builder()
+            .challenge(SERVER_CHALLENGE_SIGN_BASE64)
+            .appId(APP_ID_SIGN)
+            .keyHandle(KEY_HANDLE_BASE64)
+            .build();
+
+        SignResponse response = new SignResponse("****", "****", "****");
+
+        u2f.finishSignature(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0));
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishAuthentication_clientDataMissingField() throws Exception {
+        SignRequest authentication = SignRequest.builder()
+            .challenge(SERVER_CHALLENGE_SIGN_BASE64)
+            .appId(APP_ID_SIGN)
+            .keyHandle(KEY_HANDLE_BASE64)
+            .build();
+
+        SignResponse response = new SignResponse(U2fB64Encoding.encode("{}".getBytes()), "", "");
+
+        u2f.finishSignature(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0));
+    }
+
+    @Test(expected = U2fBadInputException.class)
+    public void finishAuthentication_truncatedData() throws Exception {
+        SignRequest authentication = SignRequest.builder()
+            .challenge(SERVER_CHALLENGE_SIGN_BASE64)
+            .appId(APP_ID_SIGN)
+            .keyHandle(KEY_HANDLE_BASE64)
+            .build();
+
+        SignResponse response = new SignResponse(CLIENT_DATA_SIGN_BASE64,
+                "", KEY_HANDLE_BASE64);
+
+        u2f.finishSignature(authentication, response, new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void startSignature_compromisedDevice() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest(SERVER_CHALLENGE_REGISTER_BASE64, APP_ID_ENROLL);

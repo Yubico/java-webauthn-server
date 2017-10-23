@@ -18,6 +18,7 @@ import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
+import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
@@ -71,15 +72,15 @@ public class RawRegisterResponse {
 
     public static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
         ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
-        byte reservedByte = bytes.readSigned();
-        if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
-            throw new U2fBadInputException(
-                    "Incorrect value of reserved byte. Expected: " + REGISTRATION_RESERVED_BYTE_VALUE +
-                            ". Was: " + reservedByte
-            );
-        }
-
         try {
+            byte reservedByte = bytes.readSigned();
+            if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
+                throw new U2fBadInputException(
+                        "Incorrect value of reserved byte. Expected: " + REGISTRATION_RESERVED_BYTE_VALUE +
+                                ". Was: " + reservedByte
+                );
+            }
+
             return new RawRegisterResponse(
                     bytes.read(65),
                     bytes.read(bytes.readUnsigned()),
@@ -89,6 +90,8 @@ public class RawRegisterResponse {
             );
         } catch (CertificateException e) {
             throw new U2fBadInputException("Malformed attestation certificate", e);
+        } catch (IOException e) {
+            throw new U2fBadInputException("Truncated registration data", e);
         }
     }
 
