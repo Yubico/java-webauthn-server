@@ -64,7 +64,6 @@ public class WebAuthnRestResource {
         }
     }
 
-    @Path("/")
     @GET
     public Response index() throws NoSuchMethodException, IOException {
         return Response.ok(jsonMapper.writeValueAsString(new IndexResponse())).build();
