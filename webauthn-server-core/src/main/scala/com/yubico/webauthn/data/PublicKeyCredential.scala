@@ -2,7 +2,6 @@ package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
@@ -33,7 +32,6 @@ trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
     * containing a credential private key wrapped with a symmetric key that is
     * burned into the authenticator.
     */
-  @JsonIgnore
   val rawId: ArrayBuffer
 
   /**

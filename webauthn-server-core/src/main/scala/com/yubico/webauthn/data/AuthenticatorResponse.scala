@@ -16,7 +16,6 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 ))
 trait AuthenticatorResponse {
 
-  @JsonIgnore
   val clientDataJSON: ArrayBuffer
 
   /**
