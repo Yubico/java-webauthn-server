@@ -9,11 +9,11 @@ class.
  git clone https://github.com/Yubico/java-u2flib-server.git
 
 === 2. Run
- ./gradlew :webauthn-server-demo:run
+ ./gradlew :webauthn-server-demo:appRun
 
 === 3. Try it out
 Then point a WebAuthn compatible web browser to
-link:https://localhost:8443/[https://localhost:8443/].
+link:https://localhost:8443/webauthn/[https://localhost:8443/webauthn/].
 
 NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
 certificate. This will cause your browser to show a warning, which is safe to

@@ -1,12 +1,11 @@
 description = 'WebAuthn demo'
 
 apply plugin: 'scala'
-apply plugin: 'application'
+apply plugin: 'war'
+apply from: 'gretty-2.0.0.plugin'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
-
-mainClassName = 'demo.App'
 
 dependencies {
 
@@ -14,24 +13,28 @@ dependencies {
     project(':u2flib-server-core'),
     project(':u2flib-server-attestation'),
     project(':webauthn-server-core'),
-    [group: 'io.dropwizard', name: 'dropwizard-core', version:'0.9.2'],
-    [group: 'io.dropwizard', name: 'dropwizard-assets', version:'0.9.2'],
-    [group: 'io.dropwizard', name: 'dropwizard-views', version:'0.9.2'],
-    [group: 'io.dropwizard', name: 'dropwizard-views-freemarker', version:'0.9.2'],
-    [group: 'org.freemarker', name: 'freemarker', version:'2.3.26-incubating'],
 
     'com.fasterxml.jackson.core:jackson-core:2.6.5',
     'com.fasterxml.jackson.core:jackson-databind:2.6.5',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.5',
     'com.fasterxml.jackson.module:jackson-module-scala_2.11:2.6.5',
-    'org.scala-lang:scala-library:2.11.3'
+    'javax.ws.rs:javax.ws.rs-api:2.1',
+    'org.scala-lang:scala-library:2.11.3',
+  )
+
+  runtime(
+    'ch.qos.logback:logback-classic:1.2.3',
+    'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
+    'org.glassfish.jersey.inject:jersey-hk2:2.26',
   )
 
 }
 
-project.ext.serverConfigFile = file('config.yml')
-
-run {
-  inputs.file serverConfigFile
-  args 'server', project.serverConfigFile.path
+gretty {
+  contextPath = '/webauthn'
+  httpEnabled = false
+  httpsEnabled = true
+  servletContainer = 'jetty7' // Orders of magnitude faster than jetty9
+  sslKeyStorePassword = 'p@ssw0rd'
+  sslKeyStorePath = file('keystore.jks')
 }

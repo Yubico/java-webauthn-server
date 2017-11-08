@@ -1,0 +1,16 @@
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSSZ} [%thread] %-5level %logger{36} - %msg%n%rEx</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </root>
+
+  <logger name="demo.webauthn" level="DEBUG"/>
+  <logger name="com.yubico" level="DEBUG"/>
+
+</configuration>

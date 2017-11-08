@@ -2,10 +2,10 @@
 <head>
   <meta charset="utf-8"/>
   <title>WebAuthn Demo</title>
-  <link href="/css/fonts.css" rel="stylesheet" />
-  <link href="/css/bootstrap.min.css" rel="stylesheet" media="screen"/>
-  <link href="/css/bootstrap-responsive.min.css" rel="stylesheet"/>
-  <link href="/css/bootstrap-yubico.css" rel="stylesheet"/>
+  <link href="css/fonts.css" rel="stylesheet" />
+  <link href="css/bootstrap.min.css" rel="stylesheet" media="screen"/>
+  <link href="css/bootstrap-responsive.min.css" rel="stylesheet"/>
+  <link href="css/bootstrap-yubico.css" rel="stylesheet"/>
   <style type="text/css">
 
 .row {
@@ -23,9 +23,9 @@ input[type="text"] {
 
   </style>
 
-  <script src="/lib/base64js/base64js-1.2.0.min.js"></script>
-  <script src="/js/base64url.js"></script>
-  <script src="/js/webauthn.js"></script>
+  <script src="lib/base64js/base64js-1.2.0.min.js"></script>
+  <script src="js/base64url.js"></script>
+  <script src="js/webauthn.js"></script>
 
   <script>
 
@@ -82,7 +82,7 @@ function resetDisplays() {
 }
 
 function getIndexActions() {
-  return fetch('/api/webauthn/')
+  return fetch('api/v1/')
     .then(response => response.json());
 }
 
@@ -292,7 +292,7 @@ window.onload = init;
 
     <div class="header-logo visible-desktop">
       <a href="https://www.yubico.com/" title="Yubico">
-        <img src="/img/yubico-logo.png"/>
+        <img src="img/yubico-logo.png"/>
       </a>
     </div>
 

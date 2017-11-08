@@ -1,28 +1,19 @@
 package demo;
 
+import javax.ws.rs.core.Application;
+
 import demo.webauthn.WebAuthnRestResource;
-import io.dropwizard.Application;
-import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.jersey.setup.JerseyEnvironment;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import io.dropwizard.views.ViewBundle;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
-public class App extends Application<Config> {
-    @Override
-    public void initialize(Bootstrap<Config> bootstrap) {
-        bootstrap.addBundle(new ViewBundle());
-        bootstrap.addBundle(new AssetsBundle("/assets/", "/", "index.html"));
-    }
+public class App extends Application {
 
     @Override
-    public void run(Config config, Environment environment) throws Exception {
-        JerseyEnvironment jersey = environment.jersey();
-        jersey.setUrlPattern("/api/*");
-        jersey.register(new WebAuthnRestResource());
+    public Set<Object> getSingletons() {
+        return new HashSet<>(Arrays.asList(
+            new WebAuthnRestResource()
+        ));
     }
 
-    public static void main(String... args) throws Exception {
-        new App().run(args);
-    }
 }

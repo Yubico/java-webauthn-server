@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.util.Either;
 
-@Path("/webauthn")
+@Path("/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class WebAuthnRestResource {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRestResource.class);
