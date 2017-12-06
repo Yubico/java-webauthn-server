@@ -118,8 +118,29 @@ public class SoftKeyTest {
     }
 
 
-    private String tamperSignature(String signature) {
+    @Test(expected = RuntimeException.class)
+    public void shouldThrowSeparateExceptionForMalformedSignature() throws Exception {
+
+        Client client = createClient();
+
+        DeviceRegistration registeredDevice = client.register();
+
+        SignRequest signRequest = u2f.startSignature(APP_ID, registeredDevice);
+        SignResponse originalResponse = client.sign(registeredDevice, signRequest);
+        SignResponse tamperedResponse = new SignResponse(
+            U2fB64Encoding.encode(originalResponse.getClientData().asJson().getBytes()),
+            makeSignatureMalformed(originalResponse.getSignatureData()),
+            originalResponse.getKeyHandle()
+        );
+        u2f.finishSignature(signRequest, tamperedResponse, registeredDevice);
+    }
+
+    private String makeSignatureMalformed(String signature) {
         return signature.substring(0, 5) + "47" + signature.substring(7);
+    }
+
+    private String tamperSignature(String signature) {
+        return signature.substring(0, 24) + "47" + signature.substring(26);
     }
 
     private Client createClient() {
