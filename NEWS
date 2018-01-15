@@ -1,8 +1,33 @@
-== Version 0.18.2 (unreleased) ==
+== Version 0.19.0 ==
+
+Breaking changes:
+
+* Overhauled exception hierarchy
+ ** New exception class: `U2fCeremonyException`
+ ** New exception class: `U2fRegistrationException extends U2fCeremonyException`
+ ** New exception class: `U2fAuthenticationException extends U2fCeremonyException`
+ ** The following exception classes now extend `U2fAuthenticationException`:
+  *** `DeviceCompromisedException`
+  *** `InvalidDeviceCounterException`
+  *** `NoEligableDevicesException`
+  *** `NoEligibleDevicesException`
+ ** `U2fBadConfigurationException` is now a checked exception
+ ** `U2fBadInputException` is now a checked exception, and is no longer thrown directly by the methods of `U2F`.
+  *** Methods of `U2F` now catch this exception and wrap it in a `U2fRegistrationException` or ``U2fAuthenticationException`.
+* `DeviceRegistration.getAttestationCertificate()` now returns `null` instead of throwing `NoSuchFieldException`
+* `static ClientData.getString(JsonNode, String)` now throws `U2fBadInputException` instead of `NullPointerException`, or if the returned field is not a `String` value
+* Some `AssertionError`s and `IllegalArgumentException`s are now `U2fBadInputException`s instead
+
+
+Improvements:
+
+* `BouncyCastleCrypto` now throws more descriptive exceptions
+
+
+Bug fixes:
 
 * Improved error handling in client data input validation
-** Thanks to Nicholas Wilson for the contribution, see
-   https://github.com/Yubico/java-u2flib-server/pull/25
+ ** Thanks to Nicholas Wilson for the contribution, see https://github.com/Yubico/java-u2flib-server/pull/25
 
 
 == Version 0.18.1 ==
