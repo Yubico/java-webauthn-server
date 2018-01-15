@@ -17,7 +17,7 @@ public class U2fB64EncodingTest {
     }
 
     @Test
-    public void decodeTest() {
+    public void decodeTest() throws U2fBadInputException {
         String base64Data = "VGVzdA";
         String base64DataWithPadding = "VGVzdA==";
         String base64DataEmpty = "";
@@ -33,12 +33,12 @@ public class U2fB64EncodingTest {
     }
 
     @Test(expected = U2fBadInputException.class)
-    public void decodeBadAlphabetTest() {
+    public void decodeBadAlphabetTest() throws U2fBadInputException {
         U2fB64Encoding.decode("****");
     }
 
     @Test(expected = U2fBadInputException.class)
-    public void decodeBadPaddingTest() {
+    public void decodeBadPaddingTest() throws U2fBadInputException {
         U2fB64Encoding.decode("A===");
     }
 }

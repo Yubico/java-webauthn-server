@@ -48,7 +48,7 @@ public class ClientData {
         return challenge;
     }
 
-    private static String getString(JsonNode data, String key) {
+    private static String getString(JsonNode data, String key) throws U2fBadInputException {
         JsonNode node = data.get(key);
         if (node == null) {
             throw new U2fBadInputException("Bad clientData: missing field " + key);

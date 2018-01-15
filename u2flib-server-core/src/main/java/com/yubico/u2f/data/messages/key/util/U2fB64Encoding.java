@@ -11,7 +11,7 @@ public class U2fB64Encoding {
         return BASE64_ENCODER.encode(decoded);
     }
 
-    public static byte[] decode(String encoded) {
+    public static byte[] decode(String encoded) throws U2fBadInputException {
         try {
             return BASE64_DECODER.decode(encoded);
         } catch (IllegalArgumentException e) {

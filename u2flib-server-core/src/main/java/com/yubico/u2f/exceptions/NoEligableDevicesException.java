@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Deprecated
 @Getter
-public class NoEligableDevicesException extends Exception {
+public class NoEligableDevicesException extends U2fAuthenticationException {
     private final List<DeviceRegistration> devices;
 
     public NoEligableDevicesException(Iterable<? extends DeviceRegistration> devices, String message, Throwable cause) {

@@ -2,21 +2,24 @@ package com.yubico.u2f.softkey;
 
 import com.yubico.u2f.U2fPrimitives;
 import com.yubico.u2f.data.DeviceRegistration;
+import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.SignRequest;
 import com.yubico.u2f.data.messages.SignResponse;
-import com.yubico.u2f.data.messages.ClientData;
 import com.yubico.u2f.data.messages.key.Client;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.u2f.exceptions.U2fRegistrationException;
 import com.yubico.u2f.testdata.AcmeKey;
 import com.yubico.u2f.testdata.GnubbyKey;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.security.KeyPair;
 import java.util.HashMap;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import static org.hamcrest.core.Is.isA;
 import static org.junit.Assert.assertEquals;
 
 public class SoftKeyTest {
@@ -24,6 +27,9 @@ public class SoftKeyTest {
     public static final String APP_ID = "my-app";
 
     private U2fPrimitives u2f;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setup() {
@@ -51,8 +57,10 @@ public class SoftKeyTest {
         assertEquals("CN=Gnubby Pilot", deviceRegistration.getAttestationCertificate().getIssuerDN().getName());
     }
 
-    @Test(expected = U2fBadInputException.class)
-    public void shouldVerifyAttestationCert() throws Exception {
+    @Test
+    public void shouldVerifyAttestationCert() throws Throwable {
+        expectedException.expectCause(isA(U2fBadInputException.class));
+
         SoftKey key = new SoftKey(
                 new HashMap<String, KeyPair>(),
                 0,
@@ -77,8 +85,9 @@ public class SoftKeyTest {
         signUsing(clientUsingClone, registeredDevice);
     }
 
-    @Test(expected = U2fBadInputException.class)
-     public void shouldVerifyChallenge() throws Exception {
+    @Test
+     public void shouldVerifyChallenge() throws Throwable {
+        expectedException.expectCause(isA(U2fBadInputException.class));
 
         Client client = createClient();
 
@@ -100,8 +109,9 @@ public class SoftKeyTest {
         return U2fB64Encoding.encode(rawClientData);
     }
 
-    @Test(expected = U2fBadInputException.class)
-    public void shouldVerifySignature() throws Exception {
+    @Test
+    public void shouldVerifySignature() throws Throwable {
+        expectedException.expectCause(isA(U2fBadInputException.class));
 
         Client client = createClient();
 

@@ -3,6 +3,7 @@ package com.yubico.u2f;
 import com.google.common.net.InetAddresses;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -16,7 +17,7 @@ public class AppId {
      *
      * @param appId the App ID to be validated
      */
-    public static void checkIsValid(String appId) {
+    public static void checkIsValid(String appId) throws U2fBadConfigurationException {
         if(!appId.contains(":")) {
             throw new U2fBadConfigurationException("App ID does not look like a valid facet or URL. Web facets must start with 'https://'. " + DISABLE_INSTRUCTIONS);
         }
@@ -30,13 +31,13 @@ public class AppId {
         }
     }
 
-    private static void checkPathIsNotSlash(URI url) {
+    private static void checkPathIsNotSlash(URI url) throws U2fBadConfigurationException {
         if("/".equals(url.getPath())) {
             throw new U2fBadConfigurationException("The path of the URL set as App ID is '/'. This is probably not what you want -- remove the trailing slash of the App ID URL. " + DISABLE_INSTRUCTIONS);
         }
     }
 
-    private static URI checkValidUrl(String appId) {
+    private static URI checkValidUrl(String appId) throws U2fBadConfigurationException {
         URI url = null;
         try {
             url = new URI(appId);
@@ -46,7 +47,7 @@ public class AppId {
         return url;
     }
 
-    private static void checkNotIpAddress(URI url) {
+    private static void checkNotIpAddress(URI url) throws U2fBadConfigurationException {
         if (InetAddresses.isInetAddress(url.getAuthority()) || (url.getHost() != null && InetAddresses.isInetAddress(url.getHost()))) {
             throw new U2fBadConfigurationException("App ID must not be an IP-address, since it is not supported (by Chrome). Use a host name instead. " + DISABLE_INSTRUCTIONS);
         }

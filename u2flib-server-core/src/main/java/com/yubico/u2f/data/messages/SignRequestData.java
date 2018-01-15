@@ -42,7 +42,7 @@ public class SignRequestData extends JsonSerializable implements Persistable {
         this.signRequests = signRequests;
     }
 
-    public SignRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws U2fBadInputException, NoEligibleDevicesException {
+    public SignRequestData(String appId, Iterable<? extends DeviceRegistration> devices, U2fPrimitives u2f, ChallengeGenerator challengeGenerator) throws NoEligibleDevicesException {
         this.appId = appId;
 
         byte[] challenge = challengeGenerator.generateChallenge();
