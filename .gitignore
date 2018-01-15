@@ -5,6 +5,7 @@
 
 # Intellij
 .idea/
+out/
 *.iml
 *.iws
 
@@ -14,3 +15,8 @@
 # Maven
 log/
 target/
+
+# Gradle
+.gradle/
+/build/
+/*/build/

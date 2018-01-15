@@ -11,9 +11,13 @@ import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.*;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
+import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
+import com.yubico.u2f.exceptions.U2fAuthenticationException;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
+import com.yubico.u2f.exceptions.U2fRegistrationException;
 import java.util.Set;
 
 public class U2F {
@@ -46,14 +50,14 @@ public class U2F {
      * @param devices the devices currently registered to the user.
      * @return a RegisterRequestData, which should be sent to the client and temporarily saved by the server.
      */
-    public RegisterRequestData startRegistration(String appId, Iterable<? extends DeviceRegistration> devices) {
+    public RegisterRequestData startRegistration(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadConfigurationException {
         if(validateAppId) {
             AppId.checkIsValid(appId);
         }
         return new RegisterRequestData(appId, devices, primitives, challengeGenerator);
     }
 
-    public SignRequestData startSignature(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, NoEligibleDevicesException {
+    public SignRequestData startSignature(String appId, Iterable<? extends DeviceRegistration> devices) throws U2fBadConfigurationException, NoEligibleDevicesException {
         if(validateAppId) {
             AppId.checkIsValid(appId);
         }
@@ -63,7 +67,7 @@ public class U2F {
     /***
      *
      */
-    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response) throws U2fBadInputException {
+    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response) throws U2fRegistrationException {
         return finishRegistration(registerRequestData, response, null);
     }
 
@@ -75,16 +79,16 @@ public class U2F {
      * @param facets              A list of valid facets to verify against.
      * @return a DeviceRegistration object, holding information about the registered device. Servers should
      * persist this.
-     * @throws com.yubico.u2f.exceptions.U2fBadInputException
+     * @throws U2fRegistrationException if parsing or verification of the response fails
      */
-    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response, Set<String> facets) throws U2fBadInputException {
+    public DeviceRegistration finishRegistration(RegisterRequestData registerRequestData, RegisterResponse response, Set<String> facets) throws U2fRegistrationException {
         return primitives.finishRegistration(registerRequestData.getRegisterRequest(response), response, facets);
     }
 
     /**
      * @see U2F#finishSignature(SignRequestData, SignResponse, Iterable, java.util.Set)
      */
-    public DeviceRegistration finishSignature(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fBadInputException, DeviceCompromisedException {
+    public DeviceRegistration finishSignature(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices) throws U2fAuthenticationException {
         return finishSignature(signRequestData, response, devices, null);
     }
 
@@ -96,22 +100,29 @@ public class U2F {
      * @param devices                 the devices currently registered to the user.
      * @param facets                  A list of valid facets to verify against.
      * @return The (updated) DeviceRegistration that signed the challenge.
-     * @throws com.yubico.u2f.exceptions.U2fBadInputException
+     *
+     * @throws InvalidDeviceCounterException if the response is valid but the signature counter has not increased.
+     * @throws DeviceCompromisedException if the device with the response's key handle is marked as compromised.
+     * @throws U2fAuthenticationException if parsing or verification of the response fails.
      */
-    public DeviceRegistration finishSignature(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
-        final SignRequest request = signRequestData.getSignRequest(response);
-        DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
-            @Override
-            public boolean apply(DeviceRegistration input) {
-                return Objects.equal(request.getKeyHandle(), input.getKeyHandle());
+    public DeviceRegistration finishSignature(SignRequestData signRequestData, SignResponse response, Iterable<? extends DeviceRegistration> devices, Set<String> facets) throws U2fAuthenticationException {
+        try {
+            final SignRequest request = signRequestData.getSignRequest(response);
+            DeviceRegistration device = Iterables.find(devices, new Predicate<DeviceRegistration>() {
+                @Override
+                public boolean apply(DeviceRegistration input) {
+                    return Objects.equal(request.getKeyHandle(), input.getKeyHandle());
+                }
+            });
+
+            if (device.isCompromised()) {
+                throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot make trusted signatures.");
             }
-        });
 
-        if (device.isCompromised()) {
-            throw new DeviceCompromisedException(device, "The device is marked as possibly compromised, and cannot make trusted signatures.");
+            primitives.finishSignature(request, response, device, facets);
+            return device;
+        } catch (U2fBadInputException e) {
+            throw new U2fAuthenticationException("finishSignature failed", e);
         }
-
-        primitives.finishSignature(request, response, device, facets);
-        return device;
     }
 }

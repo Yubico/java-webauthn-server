@@ -48,8 +48,15 @@ public class ClientData {
         return challenge;
     }
 
-    private static String getString(JsonNode data, String key) {
-        return data.get(key).asText();
+    private static String getString(JsonNode data, String key) throws U2fBadInputException {
+        JsonNode node = data.get(key);
+        if (node == null) {
+            throw new U2fBadInputException("Bad clientData: missing field " + key);
+        }
+        if (!node.isTextual()) {
+            throw new U2fBadInputException("Bad clientData: field " + key + " not a string");
+        }
+        return node.asText();
     }
 
     public void checkContent(String type, String challenge, Optional<Set<String>> facets) throws U2fBadInputException {

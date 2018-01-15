@@ -4,7 +4,7 @@ import com.yubico.u2f.data.DeviceRegistration;
 import lombok.Getter;
 
 @Getter
-public class DeviceCompromisedException extends Exception {
+public class DeviceCompromisedException extends U2fAuthenticationException {
     private final DeviceRegistration deviceRegistration;
 
     public DeviceCompromisedException(DeviceRegistration deviceRegistration, String message, Throwable cause) {

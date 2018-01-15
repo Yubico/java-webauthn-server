@@ -9,6 +9,7 @@
 
 package com.yubico.u2f.crypto;
 
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -39,10 +40,23 @@ public class BouncyCastleCrypto implements Crypto {
             ecdsaSignature.initVerify(publicKey);
             ecdsaSignature.update(signedBytes);
             if (!ecdsaSignature.verify(signature)) {
-                throw new U2fBadInputException("Signature is invalid");
+                throw new U2fBadInputException(String.format(
+                    "Signature is invalid. Public key: %s, signed data: %s , signature: %s",
+                    publicKey,
+                    U2fB64Encoding.encode(signedBytes),
+                    U2fB64Encoding.encode(signature)
+                ));
             }
         } catch (GeneralSecurityException e) {
-            throw new U2fBadInputException("Bad signature");
+            throw new RuntimeException(
+                String.format(
+                    "Failed to verify signature. This could be a problem with your JVM environment, or a bug in u2flib-server-core. Public key: %s, signed data: %s , signature: %s",
+                    publicKey,
+                    U2fB64Encoding.encode(signedBytes),
+                    U2fB64Encoding.encode(signature)
+                ),
+                e
+            );
         }
     }
 
@@ -68,7 +82,10 @@ public class BouncyCastleCrypto implements Crypto {
                     )
             );
         } catch (GeneralSecurityException e) { //This should not happen
-            throw new RuntimeException(e);
+            throw new RuntimeException(
+                "Failed to decode public key: " + U2fB64Encoding.encode(encodedPublicKey),
+                e
+            );
         }
     }
 
