@@ -69,7 +69,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
     authenticatorData: ArrayBuffer = Defaults.authenticatorData,
     callerTokenBindingId: Option[String] = None,
     challenge: ArrayBuffer = Defaults.challenge,
-    clientDataJsonBytes: ArrayBuffer = Defaults.clientDataJsonBytes,
+    clientDataJson: String = Defaults.clientDataJson,
     clientExtensionResults: AuthenticationExtensions = Defaults.clientExtensionResults,
     credentialId: ArrayBuffer = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
@@ -79,6 +79,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature
   ): FinishAssertionSteps = {
+    val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
 
     val request = PublicKeyCredentialRequestOptions(
       rpId = Some(rpId.id).asJava,
@@ -149,7 +150,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
 
         it("Fails if clientDataJSON is missing.") {
-          val steps = finishAssertion(clientDataJsonBytes = null)
+          val steps = finishAssertion(clientDataJson = null)
           val step: steps.Step2 = steps.begin.next.get
 
           step.validations shouldBe a [Failure[_]]
@@ -178,8 +179,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
       describe("3. Perform JSON deserialization on cData to extract the client data C used for the signature.") {
         it("Fails if cData is not valid JSON.") {
-          val malformedClientData = Vector[Byte]('{'.toByte)
-          val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
+          val steps = finishAssertion(clientDataJson = "{")
           val step: steps.Step3 = steps.begin.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
@@ -188,8 +188,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
 
         it("Succeeds if cData is valid JSON.") {
-          val malformedClientData = "{}".getBytes("UTF-8").toVector
-          val steps = finishAssertion(clientDataJsonBytes = malformedClientData)
+          val steps = finishAssertion(clientDataJson = "{}")
           val step: steps.Step3 = steps.begin.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -230,11 +229,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
 
         it("Verification succeeds if both sides specify the same token binding ID.") {
-          val clientDataJsonBytes: ArrayBuffer = BinaryUtil.fromHex("7b226368616c6c656e6765223a224141454241674d4643413056496a645a45476c35596c73222c226f726967696e223a226c6f63616c686f7374222c2268617368416c676f726974686d223a225348412d323536222c22746f6b656e42696e64696e674964223a2259454c4c4f575355424d4152494e45227d").get
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE"}"""
 
           val steps = finishAssertion(
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
-            clientDataJsonBytes = clientDataJsonBytes
+            clientDataJson = clientDataJson
           )
           val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -252,11 +251,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
 
         it("Verification fails if assertion specifies token binding ID but caller does not.") {
-          val clientDataJsonBytes: ArrayBuffer = BinaryUtil.fromHex("7b226368616c6c656e6765223a224141454241674d4643413056496a645a45476c35596c73222c226f726967696e223a226c6f63616c686f7374222c2268617368416c676f726974686d223a225348412d323536222c22746f6b656e42696e64696e674964223a2259454c4c4f575355424d4152494e45227d").get
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE"}"""
 
           val steps = finishAssertion(
             callerTokenBindingId = None,
-            clientDataJsonBytes = clientDataJsonBytes
+            clientDataJson = clientDataJson
           )
           val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -266,11 +265,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
 
         it("Verification fails if assertion and caller specify different token binding IDs.") {
-          val clientDataJsonBytes: ArrayBuffer = BinaryUtil.fromHex("7b226368616c6c656e6765223a224141454241674d4643413056496a645a45476c35596c73222c226f726967696e223a226c6f63616c686f7374222c2268617368416c676f726974686d223a225348412d323536222c22746f6b656e42696e64696e674964223a2259454c4c4f575355424d4152494e45227d").get
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE"}"""
 
           val steps = finishAssertion(
             callerTokenBindingId = Some("ORANGESUBMARINE"),
-            clientDataJsonBytes = clientDataJsonBytes
+            clientDataJson = clientDataJson
           )
           val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -283,11 +282,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
       describe("8. Verify that the") {
         it("clientExtensions member of C is a subset of the extensions requested by the Relying Party.") {
           val failSteps = finishAssertion(
-            clientDataJsonBytes =
-              WebAuthnCodecs.json.writeValueAsBytes(
+            clientDataJson =
+              WebAuthnCodecs.json.writeValueAsString(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector
+              )
           )
           val failStep: failSteps.Step8 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -297,11 +296,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
           val successSteps = finishAssertion(
             requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-            clientDataJsonBytes =
-              WebAuthnCodecs.json.writeValueAsBytes(
+            clientDataJson =
+              WebAuthnCodecs.json.writeValueAsString(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector
+              )
           )
           val successStep: successSteps.Step8 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -311,11 +310,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
         it("authenticatorExtensions in C is also a subset of the extensions requested by the Relying Party.") {
           val failSteps = finishAssertion(
-            clientDataJsonBytes =
-              WebAuthnCodecs.json.writeValueAsBytes(
+            clientDataJson =
+              WebAuthnCodecs.json.writeValueAsString(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector
+              )
           )
           val failStep: failSteps.Step8 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -325,11 +324,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
           val successSteps = finishAssertion(
             requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-            clientDataJsonBytes =
-              WebAuthnCodecs.json.writeValueAsBytes(
+            clientDataJson =
+              WebAuthnCodecs.json.writeValueAsString(
                 WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              ).toVector
+              )
           )
           val successStep: successSteps.Step8 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -370,11 +369,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         def checkForbidden(algorithm: String): Unit = {
           it(s"${algorithm} is forbidden.") {
             val steps = finishAssertion(
-              clientDataJsonBytes =
-                WebAuthnCodecs.json.writeValueAsBytes(
+              clientDataJson =
+                WebAuthnCodecs.json.writeValueAsString(
                   WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                     .set("hashAlgorithm", jsonFactory.textNode(algorithm))
-                ).toVector
+                )
             )
             val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -399,10 +398,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
         it("A mutated clientDataJSON fails verification.") {
           val steps = finishAssertion(
-            clientDataJsonBytes = WebAuthnCodecs.json.writeValueAsBytes(
+            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
               WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                 .set("foo", jsonFactory.textNode("bar"))
-            ).toVector
+            )
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
