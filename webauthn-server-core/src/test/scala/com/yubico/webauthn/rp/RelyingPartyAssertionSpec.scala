@@ -52,10 +52,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
     val credentialId: ArrayBuffer = BinaryUtil.fromHex("").get
     val credentialKey: KeyPair = new TestAuthenticator().importEcKeypair(
-      privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dd17580fe3c2e374c79fb30fbef657e326119d18ae538160c831851b92df19d7a00a06082a8648ce3d030107a144034200049613906235a63e87c085d52901bde35dcd9ca424526a4de551abe7ef4e3157aee6d01e1f4f805ee323ebf5ee7a54d4008d6bb97d9281a97f83e0be31dc3b8ef6").get,
-      publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d030107034200049613906235a63e87c085d52901bde35dcd9ca424526a4de551abe7ef4e3157aee6d01e1f4f805ee323ebf5ee7a54d4008d6bb97d9281a97f83e0be31dc3b8ef6").get
+      privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420187acbc139d42facdda4d0b977c041228373fbbb2721e924e01ba348efd53c31a00a06082a8648ce3d030107a14403420004d8d1062f6720c3a494202026c6b518824ae2f118a60b1d2b39f0a0f3008048a16360b471a931f0dcc004939e500e0e76252b02ef7b8c8955a0a9e4bb7bcc5f64").get,
+      publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d03010703420004d8d1062f6720c3a494202026c6b518824ae2f118a60b1d2b39f0a0f3008048a16360b471a931f0dcc004939e500e0e76252b02ef7b8c8955a0a9e4bb7bcc5f64").get
     )
-    val signature: ArrayBuffer = BinaryUtil.fromHex("3046022100e6f0c87a54aa16f2e0862035746f2732f3a8b27a404a29681f77d4a5c023861702210093b8b8da66ebce71c5bc467b61bc18277606ab895d25c226b066d5054345749a").get
+    val signature: ArrayBuffer = BinaryUtil.fromHex("3045022100d109b235ca9b6c7e300b9ede9cd83859ac587a7b93de3eb245cb354aa6164b09022044bf160c4f42d732d11c64d2dec211787d417468429e41fcfd31c7a3dd11706c").get
 
     // These values are defined by the attestationObject and clientDataJson above
     val clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
@@ -263,7 +263,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         it("Verification succeeds if both sides specify the same token binding ID.") {
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE"}"""
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE","type":"webauthn.get"}"""
 
           val steps = finishAssertion(
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
@@ -285,7 +285,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         it("Verification fails if assertion specifies token binding ID but caller does not.") {
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE"}"""
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE","type":"webauthn.get"}"""
 
           val steps = finishAssertion(
             callerTokenBindingId = None,
@@ -299,7 +299,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         it("Verification fails if assertion and caller specify different token binding IDs.") {
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE"}"""
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE","type":"webauthn.get"}"""
 
           val steps = finishAssertion(
             callerTokenBindingId = Some("ORANGESUBMARINE"),
