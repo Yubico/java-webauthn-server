@@ -81,26 +81,29 @@ case class FinishAssertionSteps(
   }
 
   case class Step4 private[webauthn] (override val prev: Step3) extends Step[Step3, Step5] {
+  }
+
+  case class Step5 private[webauthn] (override val prev: Step4) extends Step[Step4, Step6] {
     override def validate() {
       assert(
         U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.challenge,
         "Incorrect challenge."
       )
     }
-    def nextStep = Step5(this)
+    def nextStep = Step6(this)
   }
 
-  case class Step5 private[webauthn] (override val prev: Step4) extends Step[Step4, Step6] {
+  case class Step6 private[webauthn] (override val prev: Step5) extends Step[Step5, Step7] {
     override def validate() {
       assert(
         origins contains response.response.collectedClientData.origin,
         "Incorrect origin: " + response.response.collectedClientData.origin
       )
     }
-    override def nextStep = Step6(this)
+    override def nextStep = Step7(this)
   }
 
-  case class Step6 private[webauthn] (override val prev: Step5) extends Step[Step5, Step7] {
+  case class Step7 private[webauthn] (override val prev: Step6) extends Step[Step6, Step8] {
     override def validate() {
       (callerTokenBindingId.asScala, response.response.collectedClientData.tokenBindingId.asScala) match {
         case (None, None) =>
@@ -110,11 +113,11 @@ case class FinishAssertionSteps(
           assert(callerToken == responseToken, "Incorrect token binding ID.")
       }
     }
-    override def nextStep = Step7(this)
+    override def nextStep = Step8(this)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
   }
-  case class Step7 private[webauthn] (override val prev: Step6) extends Step[Step6, Step8] {
+  case class Step8 private[webauthn] (override val prev: Step7) extends Step[Step7, Step9] {
     override def validate() {
       response.response.collectedClientData.clientExtensions.asScala foreach { extensions =>
         assert(
@@ -140,20 +143,20 @@ case class FinishAssertionSteps(
         )
       }
     }
-    override def nextStep = Step8(this)
+    override def nextStep = Step9(this)
   }
 
-  case class Step8 private[webauthn] (override val prev: Step7) extends Step[Step7, Step9] {
+  case class Step9 private[webauthn] (override val prev: Step8) extends Step[Step8, Step10] {
     override def validate() {
       assert(
         response.response.parsedAuthenticatorData.rpIdHash == crypto.hash(rpId).toVector,
         "Wrong RP ID hash."
       )
     }
-    override def nextStep = Step9(this)
+    override def nextStep = Step10(this)
   }
 
-  case class Step9 private[webauthn] (override val prev: Step8) extends Step[Step8, Step10] {
+  case class Step10 private[webauthn] (override val prev: Step9) extends Step[Step9, Step11] {
     override def validate(): Unit = {
       val hashAlgorithm: String = response.response.collectedClientData.hashAlgorithm.toLowerCase
       assert(
@@ -161,18 +164,18 @@ case class FinishAssertionSteps(
         s"Forbidden hash algorithm: ${hashAlgorithm}"
       )
     }
-    override def nextStep = Step10(this)
+    override def nextStep = Step11(this)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
     val supportedHashAlgorithms: List[String] = List("SHA-256")
   }
 
-  case class Step10 (override val prev: Step9) extends Step[Step9, Finished] {
+  case class Step11 (override val prev: Step10) extends Step[Step10, Finished] {
     override def validate() {
       assert(
         Try(
           crypto.checkSignature(
-            prev.prev.prev.prev.prev.prev.prev.prev.prev.pubkey,
+            prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.pubkey,
             signedBytes.toArray,
             response.response.signature.toArray
           )
@@ -186,7 +189,7 @@ case class FinishAssertionSteps(
     val signedBytes: ArrayBuffer = response.response.authenticatorData ++ prev.clientDataJsonHash
   }
 
-  case class Finished private[webauthn] (override val prev: Step10) extends Step[Step10, Finished] {
+  case class Finished private[webauthn] (override val prev: Step11) extends Step[Step11, Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
