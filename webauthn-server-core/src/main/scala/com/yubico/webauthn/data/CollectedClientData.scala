@@ -50,4 +50,9 @@ case class CollectedClientData(
   def tokenBindingId: Optional[Base64UrlString] =
     Optional.ofNullable(clientData.get("tokenBindingId")).asScala.map(_.asText).asJava
 
+  /**
+    * The type of the requested operation, set by the client.
+    */
+  def `type`: String = clientData.get("type").asText
+
 }

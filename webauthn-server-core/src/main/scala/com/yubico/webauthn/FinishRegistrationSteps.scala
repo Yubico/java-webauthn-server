@@ -41,6 +41,10 @@ sealed trait Step[A <: Step[_]] {
     else next flatMap { _.run }
 }
 
+object FinishRegistrationSteps {
+  val ClientDataType: String = "webauthn.create"
+}
+
 case class FinishRegistrationSteps(
   request: MakePublicKeyCredentialOptions,
   response: PublicKeyCredential[AuthenticatorAttestationResponse],
@@ -61,7 +65,12 @@ case class FinishRegistrationSteps(
     def clientData: CollectedClientData = response.response.collectedClientData
   }
 
-  case class Step2 private[webauthn] () extends Step[Step3] {
+  case class Step2 private[webauthn] (clientData: CollectedClientData) extends Step[Step3] {
+    override def validate() = assert(
+      clientData.`type` == FinishRegistrationSteps.ClientDataType,
+      s"""The "type" in the client data must be exactly "${FinishRegistrationSteps.ClientDataType}"."""
+    )
+    override def nextStep = Step3()
   }
 
   case class Step3 private[webauthn] () extends Step[Step4] {

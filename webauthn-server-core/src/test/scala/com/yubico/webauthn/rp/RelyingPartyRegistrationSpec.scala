@@ -36,9 +36,11 @@ import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.apache.commons.io.IOUtils
 import org.junit.runner.RunWith
+import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -47,7 +49,7 @@ import scala.util.Try
 
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
+class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
@@ -131,8 +133,40 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         step1.next shouldBe a [Failure[_]]
       }
 
-      it("2. Verify that the type in C is the string webauthn.create.") {
-        fail("Not implemented.")
+      describe("2. Verify that the type in C is the string webauthn.create.") {
+        it("The default test case succeeds.") {
+          val steps = finishRegistration()
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+        }
+
+
+        def assertFails(typeString: String): Unit = {
+          val steps = finishRegistration(
+            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
+              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                .set("type", jsonFactory.textNode(typeString))
+            )
+          )
+          val step: steps.Step2 = steps.begin.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+        }
+
+        it("""Any value other than "webauthn.create" fails.""") {
+          forAll { (typeString: String) =>
+            whenever (typeString != "webauthn.create") {
+              assertFails(typeString)
+            }
+          }
+          forAll(Gen.alphaNumStr) { (typeString: String) =>
+            whenever (typeString != "webauthn.create") {
+              assertFails(typeString)
+            }
+          }
+        }
       }
 
       it("3. Verify that the challenge in C matches the challenge that was sent to the authenticator in the create() call.") {

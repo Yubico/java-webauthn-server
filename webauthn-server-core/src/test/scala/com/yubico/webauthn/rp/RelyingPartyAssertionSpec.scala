@@ -26,9 +26,11 @@ import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.junit.runner.RunWith
+import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
 import scala.collection.JavaConverters._
 import scala.util.Failure
@@ -36,7 +38,7 @@ import scala.util.Success
 
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyAssertionSpec extends FunSpec with Matchers {
+class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   val crypto: Crypto = new BouncyCastleCrypto()
@@ -47,7 +49,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
 
     // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
     val authenticatorData: ArrayBuffer = BinaryUtil.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000539").get
-    val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256"}"""
+    val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
     val credentialId: ArrayBuffer = BinaryUtil.fromHex("").get
     val credentialKey: KeyPair = new TestAuthenticator().importEcKeypair(
       privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420dd17580fe3c2e374c79fb30fbef657e326119d18ae538160c831851b92df19d7a00a06082a8648ce3d030107a144034200049613906235a63e87c085d52901bde35dcd9ca424526a4de551abe7ef4e3157aee6d01e1f4f805ee323ebf5ee7a54d4008d6bb97d9281a97f83e0be31dc3b8ef6").get,
@@ -197,8 +199,40 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      it("4. Verify that the type in C is the string webauthn.get.") {
-        fail("Not implemented.")
+      describe("4. Verify that the type in C is the string webauthn.get.") {
+        it("The default test case succeeds.") {
+          val steps = finishAssertion()
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+        }
+
+
+        def assertFails(typeString: String): Unit = {
+          val steps = finishAssertion(
+            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
+              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                .set("type", jsonFactory.textNode(typeString))
+            )
+          )
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+        }
+
+        it("""Any value other than "webauthn.get" fails.""") {
+          forAll { (typeString: String) =>
+            whenever (typeString != "webauthn.get") {
+              assertFails(typeString)
+            }
+          }
+          forAll(Gen.alphaNumStr) { (typeString: String) =>
+            whenever (typeString != "webauthn.get") {
+              assertFails(typeString)
+            }
+          }
+        }
       }
 
       it("5. Verify that the challenge member of C matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {

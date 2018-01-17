@@ -17,6 +17,10 @@ import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import scala.collection.JavaConverters._
 import scala.util.Try
 
+object FinishAssertionSteps {
+  val ClientDataType: String = "webauthn.get"
+}
+
 case class FinishAssertionSteps(
   request: PublicKeyCredentialRequestOptions,
   response: PublicKeyCredential[AuthenticatorAssertionResponse],
@@ -81,6 +85,13 @@ case class FinishAssertionSteps(
   }
 
   case class Step4 private[webauthn] (override val prev: Step3) extends Step[Step3, Step5] {
+    override def validate(): Unit = {
+      assert(
+        prev.clientData.`type` == FinishAssertionSteps.ClientDataType,
+        s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}"."""
+      )
+    }
+    override def nextStep = Step5(this)
   }
 
   case class Step5 private[webauthn] (override val prev: Step4) extends Step[Step4, Step6] {

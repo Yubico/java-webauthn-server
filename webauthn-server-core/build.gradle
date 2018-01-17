@@ -21,8 +21,9 @@ dependencies {
   )
 
   testCompile(
-    'org.scalatest:scalatest_2.11:3.0.4',
     'commons-io:commons-io:2.5',
+    'org.scalatest:scalatest_2.11:3.0.4',
+    'org.scalacheck:scalacheck_2.11:1.13.5',
   )
 
   scalaRepl(
