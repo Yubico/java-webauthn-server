@@ -61,6 +61,10 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
 
     if (attestationCertificate.getSubjectDN == attestationCertificate.getIssuerDN
       && validSelfSignature(attestationCertificate)
+      && (
+        WebAuthnCodecs.importCoseP256PublicKey(attestationObject.authenticatorData.attestationData.get.credentialPublicKey) ==
+        attestationCertificate.getPublicKey
+      )
     )
       SelfAttestation
     else
