@@ -117,7 +117,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
     )._finishRegistration(request, response, callerTokenBindingId.asJava)
   }
 
-  describe("§6.1. Registering a new credential") {
+  describe("§7.1. Registering a new credential") {
 
     describe("When registering a new credential, represented by a AuthenticatorAttestationResponse structure, as part of a registration ceremony, a Relying Party MUST proceed as follows:") {
 
@@ -131,7 +131,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         step1.next shouldBe a [Failure[_]]
       }
 
-      it("2. Verify that the challenge in C matches the challenge that was sent to the authenticator in the create() call.") {
+      it("2. Verify that the type in C is the string webauthn.create.") {
+        fail("Not implemented.")
+      }
+
+      it("3. Verify that the challenge in C matches the challenge that was sent to the authenticator in the create() call.") {
         val steps = finishRegistration(challenge = Vector.fill(16)(0: Byte))
         val step2: steps.Step2 = steps.begin.next.get
 
@@ -140,7 +144,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         step2.next shouldBe a [Failure[_]]
       }
 
-      it("3. Verify that the origin in C matches the Relying Party's origin.") {
+      it("4. Verify that the origin in C matches the Relying Party's origin.") {
         val steps = finishRegistration(origin = "root.evil")
         val step3: steps.Step3 = steps.begin.next.get.next.get
 
@@ -149,7 +153,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         step3.next shouldBe a [Failure[_]]
       }
 
-      describe("4. Verify that the tokenBindingId in C matches the Token Binding ID for the TLS connection over which the attestation was obtained.") {
+      describe("5. Verify that the tokenBindingId in C matches the Token Binding ID for the TLS connection over which the attestation was obtained.") {
         it("Verification succeeds if neither side specifies token binding ID.") {
           val steps = finishRegistration()
           val step4: steps.Step4 = steps.begin.next.get.next.get.next.get
@@ -213,7 +217,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("5. Verify that the") {
+      describe("6. Verify that the") {
         it("clientExtensions in C is a subset of the extensions requested by the RP.") {
           val failSteps = finishRegistration(
             clientDataJsonBytes =
@@ -271,7 +275,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("6. Compute the hash of clientDataJSON using the algorithm identified by C.hashAlgorithm.") {
+      describe("7. Compute the hash of clientDataJSON using the algorithm identified by C.hashAlgorithm.") {
         it("SHA-256 is allowed.") {
           val steps = finishRegistration()
           val step6: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
@@ -301,7 +305,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         checkForbidden("SHA1")
       }
 
-      it("7. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
+      it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
         val steps = finishRegistration()
         val step7: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -312,7 +316,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         step7.attestation.attestationStatement should not be null
       }
 
-      describe("8. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
+      describe("9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
         it("Fails if RP ID is different.") {
           val steps = finishRegistration(rpId = Defaults.rpId.copy(id = "root.evil"))
           val step8: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -331,7 +335,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("9. Determine the attestation statement format by performing an USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
+      describe("10. Determine the attestation statement format by performing an USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
         def setup(format: String): FinishRegistrationSteps = {
           val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
             WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray)
@@ -376,7 +380,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         checkFailure("bleurgh")
       }
 
-      describe("10. Verify that attStmt is a correct, validly-signed attestation statement, using the attestation statement format fmt’s verification procedure given authenticator data authData and the hash of the serialized client data computed in step 6.") {
+      describe("11. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 6.") {
 
         describe("For the fido-u2f statement format,") {
           it("the default test case is a valid self attestation.") {
@@ -590,7 +594,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("11. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the AAGUID in the attestation data contained in authData.") {
+      describe("12. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
 
         describe("For the fido-u2f statement format") {
 
@@ -623,7 +627,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
 
       }
 
-      describe("12. Assess the attestation trustworthiness using the outputs of the verification procedure in step 10, as follows:") {
+      describe("13. Assess the attestation trustworthiness using the outputs of the verification procedure in step 10, as follows:") {
 
         describe("If self attestation was used, check if self attestation is acceptable under Relying Party policy.") {
 
@@ -709,19 +713,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
 
       }
 
-      it("13. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in the options.user passed to create(), by associating it with the credential ID and credential public key contained in authData’s attestation data, as appropriate for the Relying Party's systems.") {
+      it("14. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in the options.user passed to create(), by associating it with the credentialId and credentialPublicKey in the attestedCredentialData in authData, as appropriate for the Relying Party's system.") {
         // Nothing to test
       }
 
-      it("14. If the attestation statement attStmt successfully verified but is not trustworthy per step 12 above, the Relying Party SHOULD fail the registration ceremony.") {
+      it("15. If the attestation statement attStmt successfully verified but is not trustworthy per step 12 above, the Relying Party SHOULD fail the registration ceremony.") {
         // Nothing to test
       }
 
-      it("14. NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §5.3.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
+      it("15. NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.3.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
         // Nothing to test
       }
 
-      it("15. If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
+      it("15. (Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
         val steps = finishRegistration(
           clientDataJsonBytes = WebAuthnCodecs.json.writeValueAsBytes(
             WebAuthnCodecs.json.readTree(Defaults.clientDataJson.getBytes("UTF-8")).asInstanceOf[ObjectNode]
@@ -740,6 +744,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers {
 
         steps.run shouldBe a [Failure[_]]
         steps.run.failed.get shouldBe an [AssertionError]
+      }
+
+      it("To avoid ambiguity during authentication, the Relying Party SHOULD check that each credential is registered to no more than one user. If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.") {
+        fail("Not implemented.")
       }
 
     }

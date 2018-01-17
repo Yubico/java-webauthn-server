@@ -112,7 +112,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
-  describe("6.2. Verifying an authentication assertion") {
+  describe("§7.2. Verifying an authentication assertion") {
 
     describe("When verifying a given PublicKeyCredential structure (credential) as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
 
@@ -198,7 +198,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      it("4. Verify that the challenge member of C matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
+      it("4. Verify that the type in C is the string webauthn.get.") {
+        fail("Not implemented.")
+      }
+
+      it("5. Verify that the challenge member of C matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
         val steps = finishAssertion(challenge = Vector.fill(16)(0: Byte))
         val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
@@ -207,7 +211,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         step.next shouldBe a [Failure[_]]
       }
 
-      it("5. Verify that the origin member of C matches the Relying Party's origin.") {
+      it("6. Verify that the origin member of C matches the Relying Party's origin.") {
         val steps = finishAssertion(origin = "root.evil")
         val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
@@ -216,7 +220,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         step.next shouldBe a [Failure[_]]
       }
 
-      describe("6. Verify that the tokenBindingId member of C (if present) matches the Token Binding ID for the TLS connection over which the signature was obtained.") {
+      describe("7. Verify that the tokenBindingId member of C (if present) matches the Token Binding ID for the TLS connection over which the signature was obtained.") {
         it("Verification succeeds if neither side specifies token binding ID.") {
           val steps = finishAssertion()
           val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
@@ -276,7 +280,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("7. Verify that the") {
+      describe("8. Verify that the") {
         it("clientExtensions member of C is a subset of the extensions requested by the Relying Party.") {
           val failSteps = finishAssertion(
             clientDataJsonBytes =
@@ -305,7 +309,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
           successStep.next shouldBe a [Success[_]]
         }
 
-        it("authenticatorExtensions member of C is also a subset of the extensions requested by the Relying Party.") {
+        it("authenticatorExtensions in C is also a subset of the extensions requested by the Relying Party.") {
           val failSteps = finishAssertion(
             clientDataJsonBytes =
               WebAuthnCodecs.json.writeValueAsBytes(
@@ -334,7 +338,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("8. Verify that the RP ID hash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+      describe("9. Verify that the rpIdHash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
         it("Fails if RP ID is different.") {
           val steps = finishAssertion(rpId = Defaults.rpId.copy(id = "root.evil"))
           val step: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -353,7 +357,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      describe("9. Let hash be the result of computing a hash over the cData using the algorithm represented by the hashAlgorithm member of C.") {
+      describe("10. Let hash be the result of computing a hash over the cData using the algorithm represented by the hashAlgorithm member of C.") {
         it("SHA-256 is allowed.") {
           val steps = finishAssertion()
           val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
@@ -383,7 +387,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         checkForbidden("SHA1")
       }
 
-      describe("10. Using the credential public key looked up in step 1, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
+      describe("11. Using the credential public key looked up in step 1, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
         it("The default test case succeeds.") {
           val steps = finishAssertion()
           val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
@@ -444,7 +448,22 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers {
         }
       }
 
-      it("11. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
+      describe("12. If the signature counter value adata.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following substep:") {
+        describe("If the signature counter value adata.signCount is") {
+          describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
+            it("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
+              fail("Not implemented.")
+            }
+          }
+          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
+            it("This is an signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
+              fail("Not implemented.")
+            }
+          }
+        }
+      }
+
+      it("13. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
         val steps = finishAssertion()
         val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
