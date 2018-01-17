@@ -53,14 +53,13 @@ case class FinishAssertionSteps(
     override def prev = this
     override def nextStep = Step2(this)
     override def validate() = {
-      assert(_pubkey.isPresent, "Unknown credential ID.")
+      assert(_credential.isPresent, s"Unknown credential. Credential ID: ${response.id}, user handle: ${response.response.userHandleBase64}")
     }
 
-    private lazy val _pubkey: Optional[PublicKey] = (
-      credentialRepository.lookup(response.id).asScala
-        orElse credentialRepository.lookup(response.rawId).asScala
-      ).asJava
-    def pubkey: PublicKey = _pubkey.get
+    private lazy val _credential: Optional[RegisteredCredential] =
+      credentialRepository.lookup(response.rawId, response.response.userHandle.asScala)
+
+    def credential: RegisteredCredential = _credential.get
   }
 
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
@@ -186,7 +185,7 @@ case class FinishAssertionSteps(
       assert(
         Try(
           crypto.checkSignature(
-            prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.pubkey,
+            prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.credential.publicKey,
             signedBytes.toArray,
             response.response.signature.toArray
           )

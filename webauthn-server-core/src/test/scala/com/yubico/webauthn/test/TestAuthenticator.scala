@@ -210,7 +210,8 @@ class TestAuthenticator (
     credentialKey: KeyPair = Defaults.credentialKey,
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
-    tokenBindingId: Option[String] = None
+    tokenBindingId: Option[String] = None,
+    userHandle: Option[ArrayBuffer] = None
   ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse] = {
 
     val options = PublicKeyCredentialRequestOptions(
@@ -248,7 +249,8 @@ class TestAuthenticator (
         authDataBytes,
         crypto.hash(clientDataJsonBytes.toArray).toVector,
         credentialKey.getPrivate
-      )
+      ),
+      userHandle = userHandle.asJava
     )
 
     data.impl.PublicKeyCredential(

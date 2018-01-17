@@ -13,6 +13,7 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishAssertionSteps
 import com.yubico.webauthn.CredentialRepository
+import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.CollectedClientData
@@ -57,6 +58,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     )
     val signature: ArrayBuffer = BinaryUtil.fromHex("3045022100d109b235ca9b6c7e300b9ede9cd83859ac587a7b93de3eb245cb354aa6164b09022044bf160c4f42d732d11c64d2dec211787d417468429e41fcfd31c7a3dd11706c").get
 
+    // These values are not signed over
+    val userHandle: ArrayBuffer = BinaryUtil.fromHex("6d8972d9603ce4f3fa5d520ce6d024bf").get
+
     // These values are defined by the attestationObject and clientDataJson above
     val clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
@@ -79,7 +83,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     origin: String = Defaults.rpId.id,
     requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
-    signature: ArrayBuffer = Defaults.signature
+    signature: ArrayBuffer = Defaults.signature,
+    userHandle: ArrayBuffer = Defaults.userHandle
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
 
@@ -95,7 +100,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       AuthenticatorAssertionResponse(
         clientDataJSON = clientDataJsonBytes,
         authenticatorData = authenticatorData,
-        signature = signature
+        signature = signature,
+        userHandle = Some(userHandle).asJava
       ),
       clientExtensionResults
     )
@@ -107,11 +113,19 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       origins = List(origin).asJava,
       preferredPubkeyParams = Nil.asJava,
       rp = rpId,
-      credentialRepository = credentialRepository getOrElse (
-        new CredentialRepository {
-          override def lookup(credId: Base64UrlString) = (if (credId == U2fB64Encoding.encode(credentialId.toArray)) Some(credentialKey.getPublic) else None).asJava
-        }
-      )
+      credentialRepository = credentialRepository getOrElse new CredentialRepository {
+        override def lookup(credId: Base64UrlString, lookupUserHandle: Option[Base64UrlString]) =
+          (
+            if (credId == U2fB64Encoding.encode(credentialId.toArray))
+              Some(RegisteredCredential(
+                credentialId = U2fB64Encoding.decode(credId).toVector,
+                publicKey = credentialKey.getPublic,
+                signatureCount = 0L,
+                userHandle = userHandle
+              ))
+            else None
+          ).asJava
+      }
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
@@ -121,7 +135,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
-          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString) = None.asJava }))
+          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = None.asJava }))
           val step: steps.Step1 = steps.begin
 
           step.validations shouldBe a [Failure[_]]
@@ -130,11 +144,20 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         it("Succeeds if the credential ID is known.") {
-          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString) = Some(Defaults.credentialKey.getPublic).asJava }))
+          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
+            override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = Some(
+              RegisteredCredential(
+                credentialId = U2fB64Encoding.decode(id).toVector,
+                signatureCount = 0L,
+                publicKey = Defaults.credentialKey.getPublic,
+                userHandle = U2fB64Encoding.decode(uh.get).toVector
+              )
+            ).asJava
+          }))
           val step: steps.Step1 = steps.begin
 
           step.validations shouldBe a [Success[_]]
-          step.pubkey should equal (Defaults.credentialKey.getPublic)
+          step.credential.publicKey should equal (Defaults.credentialKey.getPublic)
           step.next shouldBe a [Success[_]]
         }
       }
