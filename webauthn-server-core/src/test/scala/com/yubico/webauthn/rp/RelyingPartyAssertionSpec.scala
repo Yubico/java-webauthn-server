@@ -84,7 +84,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature,
-    userHandle: ArrayBuffer = Defaults.userHandle
+    userHandle: ArrayBuffer = Defaults.userHandle,
+    validateSignatureCounter: Boolean = true
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
 
@@ -125,7 +126,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               ))
             else None
           ).asJava
-      }
+      },
+      validateSignatureCounter = validateSignatureCounter
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
@@ -507,13 +509,70 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("12. If the signature counter value adata.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following substep:") {
         describe("If the signature counter value adata.signCount is") {
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
-            it("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
-              fail("Not implemented.")
+            val credentialRepository = new CredentialRepository {
+              override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = Some(
+                RegisteredCredential(
+                  credentialId = U2fB64Encoding.decode(id).toVector,
+                  signatureCount = 1336L,
+                  publicKey = Defaults.credentialKey.getPublic,
+                  userHandle = U2fB64Encoding.decode(uh.get).toVector
+                )
+              ).asJava
+            }
+
+            describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
+              it("An increasing signature counter always succeeds.") {
+                val steps = finishAssertion(
+                  credentialRepository = Some(credentialRepository),
+                  validateSignatureCounter = true
+                )
+                val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Success[_]]
+                step.next shouldBe a [Success[steps.Finished]]
+                step.next.get.signatureCounterValid should be (true)
+                step.next.get.signatureCount should be (1337)
+              }
             }
           }
+
           describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
-            it("This is an signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
-              fail("Not implemented.")
+            val credentialRepository = new CredentialRepository {
+              override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = Some(
+                RegisteredCredential(
+                  credentialId = U2fB64Encoding.decode(id).toVector,
+                  signatureCount = 1337L,
+                  publicKey = Defaults.credentialKey.getPublic,
+                  userHandle = U2fB64Encoding.decode(uh.get).toVector
+                )
+              ).asJava
+            }
+
+            describe("This is an signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
+              it("If signature counter validation is disabled, the a nonincreasing signature counter succeeds.") {
+                val steps = finishAssertion(
+                  credentialRepository = Some(credentialRepository),
+                  validateSignatureCounter = false
+                )
+                val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Success[_]]
+                step.next shouldBe a [Success[steps.Finished]]
+                step.next.get.signatureCounterValid should be(false)
+                step.next.get.signatureCount should be(1337)
+              }
+
+              it("If signature counter validation is enabled, the a nonincreasing signature counter fails.") {
+                val steps = finishAssertion(
+                  credentialRepository = Some(credentialRepository),
+                  validateSignatureCounter = true
+                )
+                val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Failure[_]]
+                step.validations.failed.get shouldBe an [AssertionError]
+                step.next shouldBe a [Failure[_]]
+              }
             }
           }
         }
@@ -521,7 +580,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       it("13. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
         val steps = finishAssertion()
-        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
         step.validations shouldBe a [Success[_]]
         steps.run shouldBe a [Success[_]]

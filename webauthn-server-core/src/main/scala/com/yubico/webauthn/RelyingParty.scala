@@ -32,7 +32,8 @@ class RelyingParty (
   val crypto: Crypto = new BouncyCastleCrypto,
   val allowSelfAttestation: Boolean = false,
   val credentialRepository: CredentialRepository,
-  val metadataService: Optional[MetadataService] = None.asJava
+  val metadataService: Optional[MetadataService] = None.asJava,
+  val validateSignatureCounter: Boolean = true
 ) {
 
   def startRegistration(
@@ -103,7 +104,8 @@ class RelyingParty (
       origins = origins,
       rpId = rp.id,
       crypto = crypto,
-      credentialRepository = credentialRepository
+      credentialRepository = credentialRepository,
+      validateSignatureCounter = validateSignatureCounter
     )
 
 }

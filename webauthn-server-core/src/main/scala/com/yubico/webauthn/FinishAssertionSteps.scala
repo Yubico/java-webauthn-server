@@ -28,7 +28,8 @@ case class FinishAssertionSteps(
   origins: java.util.List[String],
   rpId: String,
   crypto: Crypto,
-  credentialRepository: CredentialRepository
+  credentialRepository: CredentialRepository,
+  validateSignatureCounter: Boolean = true
 ) {
 
   sealed trait Step[A <: Step[_, _], B <: Step[_, _]] {
@@ -180,7 +181,7 @@ case class FinishAssertionSteps(
     val supportedHashAlgorithms: List[String] = List("SHA-256")
   }
 
-  case class Step11 (override val prev: Step10) extends Step[Step10, Finished] {
+  case class Step11 (override val prev: Step10) extends Step[Step10, Step12] {
     override def validate() {
       assert(
         Try(
@@ -194,17 +195,44 @@ case class FinishAssertionSteps(
         "Invalid assertion signature."
       )
     }
-    override def nextStep = Finished(this)
+    override def nextStep = Step12(this)
 
     val signedBytes: ArrayBuffer = response.response.authenticatorData ++ prev.clientDataJsonHash
   }
 
-  case class Finished private[webauthn] (override val prev: Step11) extends Step[Step11, Finished] {
+  case class Step12 (override val prev: Step11) extends Step[Step11, Finished] {
+    override def validate(): Unit = {
+      if (validateSignatureCounter) {
+        assert(
+          signatureCounterValid,
+          s"Signature counter must increase. Stored value: ${storedSignatureCountBefore}, received value: ${assertionSignatureCount}"
+        )
+      }
+    }
+
+    def signatureCounterValid: Boolean = (
+      assertionSignatureCount == 0
+        || assertionSignatureCount > storedSignatureCountBefore
+    )
+
+    override def nextStep = Finished(this)
+
+    def storedSignatureCountBefore: Long =
+      credentialRepository.lookup(response.rawId, response.response.userHandle.asScala).asScala
+        .map(_.signatureCount)
+        .getOrElse(0L)
+
+    def assertionSignatureCount: Long = response.response.parsedAuthenticatorData.signatureCounter
+  }
+
+  case class Finished private[webauthn] (override val prev: Step12) extends Step[Step12, Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
     override def result: Option[Boolean] = Some(success)
 
+    val signatureCounterValid: Boolean = prev.signatureCounterValid
+    val signatureCount: Long = prev.assertionSignatureCount
     val success: Boolean = true
   }
 
