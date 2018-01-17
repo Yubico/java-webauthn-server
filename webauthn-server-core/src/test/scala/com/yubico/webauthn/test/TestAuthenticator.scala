@@ -3,6 +3,7 @@ package com.yubico.webauthn.test
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.InputStream
+import java.io.FileInputStream
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.KeyFactory
@@ -181,6 +182,14 @@ class TestAuthenticator (
       clientExtensionResults = WebAuthnCodecs.json.readTree("{}")
     )
   }
+
+  def createBasicAttestedCredential(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
+    createCredential(
+      attestationCertAndKey = Some(importCertAndKeyFromPem(
+        getClass().getResourceAsStream("/attestation-cert.pem"),
+        getClass().getResourceAsStream("/attestation-key.pem")
+      ))
+    )
 
   def createSelfAttestedCredential(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
     val keypair = generateEcKeypair()
