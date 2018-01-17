@@ -182,6 +182,14 @@ class TestAuthenticator (
     )
   }
 
+  def createSelfAttestedCredential(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
+    val keypair = generateEcKeypair()
+    createCredential(
+      attestationCertAndKey = Some(generateAttestationCertificate(keypair)),
+      credentialKeypair = Some(keypair)
+    )
+  }
+
   def createAssertion(
     allowCredentials: List[PublicKeyCredentialDescriptor] = List(PublicKeyCredentialDescriptor(id = Defaults.credentialId)),
     authenticatorExtensions: Option[JsonNode] = None,
