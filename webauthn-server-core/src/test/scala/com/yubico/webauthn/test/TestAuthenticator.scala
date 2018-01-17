@@ -123,6 +123,7 @@ class TestAuthenticator (
     challenge: ArrayBuffer = Defaults.challenge,
     clientData: Option[JsonNode] = None,
     clientExtensions: Option[JsonNode] = None,
+    credentialKeypair: Option[KeyPair] = None,
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
     tokenBindingId: Option[String] = None,
@@ -159,7 +160,7 @@ class TestAuthenticator (
     val authDataBytes: ArrayBuffer = makeAuthDataBytes(
       rpId = Defaults.rpId,
       attestationDataBytes = Some(makeAttestationDataBytes(
-        publicKeyCose = ecPublicKeyToCose(generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]),
+        publicKeyCose = ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
         rpId = Defaults.rpId
       ))
     )
