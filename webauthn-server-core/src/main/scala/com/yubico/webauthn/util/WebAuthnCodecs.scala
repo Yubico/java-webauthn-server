@@ -1,20 +1,21 @@
 package com.yubico.webauthn.util
 
 import java.security.PublicKey
-import java.security.KeyPairGenerator
-import java.security.SecureRandom
 import java.security.KeyFactory
 import java.security.Provider
 
 import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.webauthn.data.ArrayBuffer
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECParameterSpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
+
+import scala.collection.JavaConverters._
 
 
 object WebAuthnCodecs {
@@ -38,6 +39,24 @@ object WebAuthnCodecs {
     val yBytes = key.get("y").binaryValue()
 
     Vector[Byte](0x04) ++ (xBytes takeRight 32) ++ (yBytes takeRight 32)
+  }
+
+  def rawEcdaKeyToCose(key: ArrayBuffer): JsonNode = {
+    assert(
+      key.length == 64
+        || (key.length == 65 && key.head == 0x04),
+      s"Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was ${key.length} bytes starting with ${key.head.formatted("%02x")}"
+    )
+
+    val start: Int = if (key.length == 64) 0 else 1
+
+    val jsonFactory = JsonNodeFactory.instance
+
+    jsonFactory.objectNode().setAll(Map(
+      "alg" -> jsonFactory.textNode("ES256"),
+      "x" -> jsonFactory.binaryNode(key.slice(start, start + 32).toArray),
+      "y" -> jsonFactory.binaryNode(key.drop(start + 32).toArray)
+    ).asJava)
   }
 
   def coseKeyToRawArray(key: JsonNode): Array[Byte] = coseKeyToRaw(key).toArray
