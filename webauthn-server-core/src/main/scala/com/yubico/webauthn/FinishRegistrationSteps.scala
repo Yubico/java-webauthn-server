@@ -171,12 +171,13 @@ case class FinishRegistrationSteps(
     override def validate(): Unit = {
       assert(formatSupported, s"Unsupported attestation statement format: ${format}")
     }
-    override def nextStep = Step11(clientDataJsonHash, attestation, attestationStatementVerifier)
+    override def nextStep = Step11(clientDataJsonHash, attestation, attestationStatementVerifier.get)
 
     def format: String = attestation.format
-    def formatSupported: Boolean = format == "fido-u2f"
-    def attestationStatementVerifier: AttestationStatementVerifier = format match {
-      case "fido-u2f" => FidoU2fAttestationStatementVerifier
+    def formatSupported: Boolean = attestationStatementVerifier.isDefined
+    def attestationStatementVerifier: Option[AttestationStatementVerifier] = format match {
+      case "fido-u2f" => Some(FidoU2fAttestationStatementVerifier)
+      case _ => None
     }
   }
 
