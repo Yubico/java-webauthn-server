@@ -1,5 +1,6 @@
 package com.yubico.webauthn
 
+import java.security.cert.X509Certificate
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
@@ -24,6 +25,7 @@ import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.FidoU2fAttestationTrustResolver
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
+import com.yubico.webauthn.impl.X5cAttestationStatementVerifier
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -197,6 +199,8 @@ case class FinishRegistrationSteps(
     )
 
     def attestationType: AttestationType = attestationStatementVerifier.getAttestationType(attestation)
+    def attestationTrustPath: Option[List[X509Certificate]] =
+      attestationStatementVerifier.asInstanceOf[X5cAttestationStatementVerifier].getAttestationTrustPath(attestation)
   }
 
   case class Step12 private[webauthn] (

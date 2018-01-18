@@ -698,7 +698,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               it("If successful, return attestation type Basic and trust path x5c.") {
-                fail("Test not implemented.")
+                val steps = finishRegistration(attestationObject = packedAttestationObject)
+                val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Success[_]]
+                step.next shouldBe a [Success[_]]
+                step.attestationType should be (Basic)
+                step.attestationTrustPath should not be empty
+                step.attestationTrustPath.get should be (List(packedAttCert))
               }
             }
 
