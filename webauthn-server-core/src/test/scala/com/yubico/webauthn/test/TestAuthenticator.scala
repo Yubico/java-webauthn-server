@@ -444,9 +444,10 @@ class TestAuthenticator (
     verifySignature(pubKey, signedDataBytes, signatureBytes)
   }
 
-  def generateAttestationCertificate(keypair: KeyPair = generateEcKeypair()): (X509Certificate, PrivateKey) = {
-    val name = new X500Name("CN=Yubico WebAuthn unit tests")
-
+  def generateAttestationCertificate(
+    keypair: KeyPair = generateEcKeypair(),
+    name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE")
+  ): (X509Certificate, PrivateKey) = {
     (
       CertificateParser.parseDer(
         new X509v3CertificateBuilder(
