@@ -189,12 +189,13 @@ class TestAuthenticator (
     )
   }
 
-  def createBasicAttestedCredential(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
+  def createBasicAttestedCredential(attestationStatementFormat: String = "fido-u2f"): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
     createCredential(
       attestationCertAndKey = Some(importCertAndKeyFromPem(
         getClass().getResourceAsStream("/attestation-cert.pem"),
         getClass().getResourceAsStream("/attestation-key.pem")
-      ))
+      )),
+      attestationStatementFormat = attestationStatementFormat
     )
 
   def createSelfAttestedCredential(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
