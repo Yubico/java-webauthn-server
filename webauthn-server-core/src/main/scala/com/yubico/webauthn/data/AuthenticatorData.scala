@@ -14,7 +14,7 @@ import scala.collection.JavaConverters._
 
 
 case class AuthenticatorData(
-  private val authData: ArrayBuffer
+  val authData: ArrayBuffer
 ) {
   private val RpIdHashLength = 32
   private val FlagsLength = 1
