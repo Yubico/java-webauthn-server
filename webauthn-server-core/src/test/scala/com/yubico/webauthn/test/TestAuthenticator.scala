@@ -173,7 +173,8 @@ class TestAuthenticator (
     val attestationObjectBytes = makeAttestationObjectBytes(
       authDataBytes,
       attestationStatementFormat,
-      (authDataBytes, clientDataJson, attestationCertAndKey)
+      clientDataJson,
+      attestationCertAndKey
     )
 
     val response = data.impl.AuthenticatorAttestationResponse(
@@ -273,7 +274,7 @@ class TestAuthenticator (
     ).asJava)
   }
 
-  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, format: String, attStmtArgs: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)])): ArrayBuffer = {
+  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, format: String, clientDataJson: String, certAndKey: Option[(X509Certificate, PrivateKey)]): ArrayBuffer = {
     val makeAttestationStatement: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)]) => JsonNode = format match {
       case "fido-u2f" => makeU2fAttestationStatement _
       case "packed" => makePackedAttestationStatement _
@@ -283,7 +284,7 @@ class TestAuthenticator (
     val attObj = f.objectNode().setAll(Map(
       "authData" -> f.binaryNode(authDataBytes.toArray),
       "fmt" -> f.textNode(format),
-      "attStmt" -> makeAttestationStatement.tupled(attStmtArgs)
+      "attStmt" -> makeAttestationStatement(authDataBytes, clientDataJson, certAndKey)
     ).asJava)
 
     WebAuthnCodecs.cbor.writeValueAsBytes(attObj).toVector
