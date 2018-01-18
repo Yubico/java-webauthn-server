@@ -2,8 +2,12 @@ package com.yubico.webauthn.rp
 
 import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
+import javax.security.auth.x500.X500Principal
 
 import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
@@ -12,7 +16,9 @@ import com.yubico.u2f.attestation.MetadataObject
 import com.yubico.u2f.attestation.MetadataService
 import com.yubico.u2f.attestation.resolvers.SimpleResolver
 import com.yubico.u2f.crypto.BouncyCastleCrypto
+import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.data.ArrayBuffer
@@ -31,11 +37,14 @@ import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
+import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.apache.commons.io.IOUtils
+import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
+import org.mockito.Mockito
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -61,6 +70,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     // These values are defined by the attestationObject and clientDataJson above
     val clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
+    val clientDataJsonHash: ArrayBuffer = new BouncyCastleCrypto().hash(clientDataJsonBytes.toArray).toVector
     val challenge: ArrayBuffer = U2fB64Encoding.decode(clientData.challenge).toVector
     val requestedExtensions: Option[AuthenticationExtensions] = None
     val clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode()
@@ -76,6 +86,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     )
 
   }
+
+  val crypto: Crypto = new BouncyCastleCrypto
+  def sha256(bytes: ArrayBuffer): ArrayBuffer = crypto.hash(bytes.toArray).toVector
 
   def finishRegistration(
     allowSelfAttestation: Boolean = false,
@@ -579,16 +592,243 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
         }
 
-        it("The packed statement format is supported.") {
-          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
-            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
-              .set("fmt", jsonFactory.textNode("packed"))
-          ).toVector
-          val steps = finishRegistration(attestationObject = attestationObject)
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+        describe("For the packed statement format") {
+          val verifier = PackedAttestationStatementVerifier
 
-          step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          val packedAttestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020a1547f852f4e0f4f9053f80e9fadb4a48d63e35380f3efd0220d9f9d41b038abbf63616c67654553323536617858210080a6cdee2a417c27fb0e9b03ac8ecd8befbc8d4656f6d754c69c1ad5e10258ba61795820409da04c3bbb9e66bb32bce662966213cbe6dbed938c294cc3a446b1c837c4a7ff63666d74667061636b65646761747453746d74bf637835639f5901e6308201e230820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200041dcdbfa0dd3df4278033f07f5129670f6d3e5778fddeb4bc086afb07c83e79db88f5ef09a841d0d2020d89e9fcce88908e58930630850d4eb7123c6d251c7c79a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020349003046022100cf5a35af9e39ddc75c21575e53582fa14ed5d650951650e4c45ec2bcffd83c800221009719eb3a39777b5196e2a4b858818920388e672e69af8f004326579716bff78cff6373696758483046022100eecff95eea7d5993737c3e6964c453335a39602dc86dd32317daf908aaea1b4802210087d0e2fd85474e647f28f019eaf19861e8137e6a61ea491849a7a3e43a8fd33fffff").get
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+
+          val packedClientDataJsonHash: ArrayBuffer = sha256(clientDataJson.getBytes("UTF-8").toVector)
+
+          val packedAttObj = AttestationObject(packedAttestationObject)
+          val packedAttCert = CertificateParser.parseDer(packedAttObj.attestationStatement.get("x5c").get(0).binaryValue())
+          val aaguid = packedAttObj.authenticatorData.attestationData.get.aaguid
+
+          it("the attestation statement verifier implementation is PackedAttestationStatementVerifier.") {
+            val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
+              WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
+                .set("fmt", jsonFactory.textNode("packed"))
+            ).toVector
+            val steps = finishRegistration(attestationObject = attestationObject)
+            val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+            step.attestationStatementVerifier.get should be theSameInstanceAs PackedAttestationStatementVerifier
+          }
+
+          describe("the verification procedure is:") {
+            def makeAttestationObject(attStmt: Map[String, JsonNode]): AttestationObject =
+              AttestationObject(
+                WebAuthnCodecs.cbor.writeValueAsBytes(
+                  WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
+                    .setAll(Map(
+                      "fmt" -> jsonFactory.textNode("packed"),
+                      "attStmt" -> jsonFactory.objectNode().setAll(attStmt.asJava)
+                    ).asJava)
+                ).toVector
+              )
+
+            describe("1. Verify that the given attestation statement is valid CBOR conforming to the syntax defined above.") {
+
+              it("Fails if attStmt.sig is a text value.") {
+                val attestationObject = makeAttestationObject(attStmt = Map("sig" -> jsonFactory.textNode("foo")))
+                val result: Try[Boolean] = verifier._verifyAttestationSignature(attestationObject, Defaults.clientDataJsonHash)
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [AssertionError]
+              }
+
+              it("Fails if attStmt.sig is missing.") {
+                val attestationObject = makeAttestationObject(attStmt = Map("x5c" -> jsonFactory.arrayNode()))
+                val result: Try[Boolean] = verifier._verifyAttestationSignature(attestationObject, Defaults.clientDataJsonHash)
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [AssertionError]
+              }
+            }
+
+            it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
+              val authenticatorData: AuthenticatorData = packedAttObj.authenticatorData
+              val clientDataHash = MessageDigest.getInstance(WebAuthnCodecs.json.readTree(clientDataJson).get("hashAlgorithm").textValue()).digest(clientDataJson.getBytes("UTF-8"))
+
+              authenticatorData should not be null
+              clientDataHash should not be null
+            }
+
+            describe("3. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
+              describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
+                it("Succeeds for the default test case.") {
+                  val result: Try[Boolean] = verifier._verifyAttestationSignature(packedAttObj, packedClientDataJsonHash)
+                  result should equal (Success(true))
+                }
+
+                it("Fail if the default test case is mutated.") {
+                  val mutatedAttestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c647434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00206d418a6349d838c8674948709e51219357548ca070c48d0210c5e8bfe8e22277bf63616c676545533235366178582043ff557da4db027562880f55a4ba243adcc93da9d01fdc359c41eee3f6fdbb4761795821009de362d1fc6f740acd926e2d61e21b59c17e8f12b1c699975756c9d1c4983d4eff63666d74667061636b65646761747453746d74bf637835639f59013c308201383081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d0301070342000451cc135e064304105c3c9d15fca2a3ec52a73462c458f65f715c8c690fddfec99012901e8875d2fef88c3ae1a7720cdbfb1950fb02406e3713ce85e6030bd66f300a06082a8648ce3d04030203490030460221009ca0c2ed89764f43d1bd41fee681da1a6f51280a28f5e7cc509c6d89096ff3e5022100892fd9745a93077c948b6ef0eaaa453bd01eb63e17629c9272b29c3ff4c7f3d6ff6373696758473045022100aa9be4687e2d2b9f5baa459cec577a388885599679896ce0698632bbb04f270b022069e9469fae5b28c2e94c96d6b3bc79d65fb6e05d12dcc1dbbddc6081244cda6cffff").get
+
+                  val result: Try[Boolean] = verifier._verifyAttestationSignature(AttestationObject(mutatedAttestationObject), packedClientDataJsonHash)
+                  result should equal (Success(false))
+                }
+              }
+
+              describe("2. Verify that x5c meets the requirements in §7.2.1 Packed attestation statement certificate requirements.") {
+                it("Fails for an attestation signature with an invalid country code.") {
+                  val authenticator = new TestAuthenticator
+                  val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
+                    name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
+                  )
+                  val credential = authenticator.createCredential(
+                    attestationCertAndKey = Some(badCert, key),
+                    attestationStatementFormat = "packed"
+                  )
+                  val result = Try(verifier.verifyAttestationSignature(credential.response.attestation, sha256(credential.response.clientDataJSON)))
+
+                  result shouldBe a [Failure[_]]
+                  result.failed.get shouldBe an [AssertionError]
+                }
+
+                it("succeeds for the default test case.") {
+                  val result = verifier.verifyAttestationSignature(packedAttObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  result should equal (true)
+                }
+              }
+
+              it("3. If x5c contains an extension with OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the AAGUID in authenticatorData.") {
+                fail("Test not implemented.")
+              }
+
+              it("If successful, return attestation type Basic and trust path x5c.") {
+                fail("Test not implemented.")
+              }
+            }
+
+            describe("4. If ecdaaKeyId is present, then the attestation type is ECDAA. In this case:") {
+              it("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId (see [FIDOEcdaaAlgorithm]).") {
+                fail("Test not implemented.")
+              }
+
+              it("2. If successful, return attestation type ECDAA and trust path ecdaaKeyId.") {
+                fail("Test not implemented.")
+              }
+            }
+
+            describe("5. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
+              it("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
+                fail("Test not implemented.")
+              }
+
+              it("2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg.") {
+                fail("Test not implemented.")
+              }
+
+              it("3. If successful, return attestation type Self and empty trust path.") {
+                fail("Test not implemented.")
+              }
+            }
+          }
+
+          describe("7.2.1. Packed attestation statement certificate requirements") {
+            describe("The attestation certificate MUST have the following fields/extensions:") {
+              it("Version must be set to 3.") {
+                val badCert = Mockito.mock(classOf[X509Certificate])
+                val principal = new X500Principal("O=Yubico, C=SE, OU=Authenticator Attestation")
+                Mockito.when(badCert.getVersion) thenReturn 2
+                Mockito.when(badCert.getSubjectX500Principal) thenReturn principal
+                Mockito.when(badCert.getBasicConstraints) thenReturn -1
+                val result = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [AssertionError]
+
+                verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal (Success(true))
+              }
+
+              describe("Subject field MUST be set to:") {
+                it("Subject-C: Country where the Authenticator vendor is incorporated") {
+                  val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                    name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
+                  )._1
+                  val result = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                  result shouldBe a [Failure[_]]
+                  result.failed.get shouldBe an [AssertionError]
+
+                  verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal (Success(true))
+                }
+
+                it("Subject-O: Legal name of the Authenticator vendor") {
+                  val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                    name = new X500Name("C=SE, OU=Authenticator Attestation")
+                  )._1
+                  val result = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                  result shouldBe a [Failure[_]]
+                  result.failed.get shouldBe an [AssertionError]
+
+                  verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal(Success(true))
+                }
+
+                it("Subject-OU: Authenticator Attestation") {
+                  val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                    name = new X500Name("O=Yubico, C=SE, OU=Foo")
+                  )._1
+                  val result = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                  result shouldBe a [Failure[_]]
+                  result.failed.get shouldBe an [AssertionError]
+
+                  verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal(Success(true))
+                }
+
+                it("Subject-CN: No stipulation.") {
+                  // Nothing to test
+                }
+              }
+
+              it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as value.") {
+                val idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4"
+                packedAttCert.getExtensionValue(idFidoGenCeAaguid)
+
+                val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                  name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
+                  extensions = List((idFidoGenCeAaguid, false, Vector(0, 1, 2, 3)))
+                )._1
+                val result = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [AssertionError]
+
+                val goodCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                  name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
+                  extensions = Nil
+                )._1
+                val goodResult = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                goodResult shouldBe a [Failure[_]]
+                goodResult.failed.get shouldBe an [AssertionError]
+
+                verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal(Success(true))
+              }
+
+              it("The Basic Constraints extension MUST have the CA component set to false") {
+                val badCert = Mockito.mock(classOf[X509Certificate])
+                val principal = new X500Principal("O=Yubico, C=SE, OU=Authenticator Attestation")
+                Mockito.when(badCert.getVersion) thenReturn 3
+                Mockito.when(badCert.getSubjectX500Principal) thenReturn principal
+                Mockito.when(badCert.getBasicConstraints) thenReturn 0
+                val result = verifier._verifyX5cRequirements(badCert, aaguid)
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [AssertionError]
+
+                verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal (Success(true))
+              }
+
+              it("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both optional as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
+                fail("Test not implemented.")
+              }
+            }
+          }
         }
 
         it("The tpm statement format is supported.") {

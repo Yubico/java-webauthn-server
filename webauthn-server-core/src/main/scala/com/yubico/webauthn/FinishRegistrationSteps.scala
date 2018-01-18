@@ -23,6 +23,7 @@ import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.FidoU2fAttestationTrustResolver
+import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -177,6 +178,7 @@ case class FinishRegistrationSteps(
     def formatSupported: Boolean = attestationStatementVerifier.isDefined
     def attestationStatementVerifier: Option[AttestationStatementVerifier] = format match {
       case "fido-u2f" => Some(FidoU2fAttestationStatementVerifier)
+      case "packed" => Some(PackedAttestationStatementVerifier)
       case _ => None
     }
   }
