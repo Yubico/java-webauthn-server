@@ -45,6 +45,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
@@ -447,11 +448,12 @@ class TestAuthenticator (
 
   def generateAttestationCertificate(
     keypair: KeyPair = generateEcKeypair(),
-    name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE")
+    name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"),
+    extensions: Iterable[(String, Boolean, ArrayBuffer)] = List(("1.3.6.1.4.1.45724.1.1.4", false, Defaults.aaguid))
   ): (X509Certificate, PrivateKey) = {
     (
-      CertificateParser.parseDer(
-        new X509v3CertificateBuilder(
+      CertificateParser.parseDer({
+        val builder = new X509v3CertificateBuilder(
           name,
           new BigInteger("1337"),
           Date.from(Instant.parse("2018-09-06T17:42:00Z")),
@@ -459,9 +461,14 @@ class TestAuthenticator (
           name,
           SubjectPublicKeyInfo.getInstance(keypair.getPublic.getEncoded)
         )
-        .build(new JcaContentSignerBuilder("SHA256with" + keypair.getPrivate.getAlgorithm).build(keypair.getPrivate))
-        .getEncoded
-      ),
+
+        extensions foreach { case (oid, critical, value) =>
+          builder.addExtension(new ASN1ObjectIdentifier(oid), critical, value.toArray)
+        }
+
+        builder.build(new JcaContentSignerBuilder("SHA256with" + keypair.getPrivate.getAlgorithm).build(keypair.getPrivate))
+          .getEncoded
+      }),
       keypair.getPrivate
     )
   }
