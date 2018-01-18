@@ -100,6 +100,7 @@ class TestAuthenticator (
 ) {
 
   object Defaults {
+    val aaguid: ArrayBuffer = Vector[Byte](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
     val challenge: ArrayBuffer = Vector[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91)
     val credentialId: ArrayBuffer = (0 to 31).toVector map { _.toByte }
     val rpId = "localhost"
@@ -362,7 +363,7 @@ class TestAuthenticator (
     publicKeyCose: JsonNode,
     rpId: String = Defaults.rpId,
     counterBytes: ArrayBuffer = BinaryUtil.fromHex("0539").get,
-    aaguid: ArrayBuffer = Vector[Byte](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+    aaguid: ArrayBuffer = Defaults.aaguid
   ): ArrayBuffer = {
     val credentialPublicKeyBytes = WebAuthnCodecs.cbor.writeValueAsBytes(publicKeyCose)
     val credentialId = sha256(credentialPublicKeyBytes)
