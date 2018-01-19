@@ -5,6 +5,7 @@ import java.util.Optional
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
@@ -98,7 +99,7 @@ case class AuthenticatorData(
         } yield item
       ).toList
 
-      val credentialPublicKey = allRemainingCbor.head
+      val credentialPublicKey = allRemainingCbor.head.asInstanceOf[ObjectNode]
       val extensions: Option[JsonNode] =
         if (flags.ED) Some(allRemainingCbor(1))
         else None

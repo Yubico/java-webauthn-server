@@ -2,7 +2,7 @@ package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 case class AttestationData private[data] (
@@ -24,7 +24,7 @@ case class AttestationData private[data] (
     *
     * @todo verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
     */
-  credentialPublicKey: JsonNode
+  credentialPublicKey: ObjectNode
 
 ) {
 

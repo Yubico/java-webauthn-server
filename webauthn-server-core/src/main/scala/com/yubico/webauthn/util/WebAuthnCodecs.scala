@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
@@ -29,7 +30,7 @@ object WebAuthnCodecs {
 
   def json: ObjectMapper = new ObjectMapper().setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
 
-  def coseKeyToRaw(key: JsonNode): ArrayBuffer = {
+  def coseKeyToRaw(key: ObjectNode): ArrayBuffer = {
     assert(
       key.get("alg").isNumber && key.get("alg").longValue == javaAlgorithmNameToCoseAlgorithmIdentifier("ES256"),
       s"""COSE key must have the property "alg" set to ${javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")}."""
@@ -44,7 +45,7 @@ object WebAuthnCodecs {
     Vector[Byte](0x04) ++ (xBytes takeRight 32) ++ (yBytes takeRight 32)
   }
 
-  def rawEcdaKeyToCose(key: ArrayBuffer): JsonNode = {
+  def rawEcdaKeyToCose(key: ArrayBuffer): ObjectNode = {
     assert(
       key.length == 64
         || (key.length == 65 && key.head == 0x04),
@@ -57,19 +58,19 @@ object WebAuthnCodecs {
       "alg" -> jsonFactory.numberNode(javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")),
       "x" -> jsonFactory.binaryNode(key.slice(start, start + 32).toArray),
       "y" -> jsonFactory.binaryNode(key.drop(start + 32).toArray)
-    ).asJava)
+    ).asJava).asInstanceOf[ObjectNode]
   }
 
-  def ecPublicKeyToCose(key: ECPublicKey): JsonNode =
+  def ecPublicKeyToCose(key: ECPublicKey): ObjectNode =
     jsonFactory.objectNode().setAll(Map(
       "alg" -> jsonFactory.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)),
       "x" -> jsonFactory.binaryNode(key.getW.getAffineX.toByteArray),
       "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
-    ).asJava)
+    ).asJava).asInstanceOf[ObjectNode]
 
-  def coseKeyToRawArray(key: JsonNode): Array[Byte] = coseKeyToRaw(key).toArray
+  def coseKeyToRawArray(key: ObjectNode): Array[Byte] = coseKeyToRaw(key).toArray
 
-  def importCoseP256PublicKey(key: JsonNode): PublicKey = {
+  def importCoseP256PublicKey(key: ObjectNode): PublicKey = {
     val ecSpec: ECParameterSpec = ECNamedCurveTable.getParameterSpec("secp256r1")
 
     val kf: KeyFactory = KeyFactory.getInstance("ECDSA", javaCryptoProvider)
