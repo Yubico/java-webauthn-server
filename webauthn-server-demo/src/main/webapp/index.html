@@ -86,9 +86,10 @@ function getIndexActions() {
     .then(response => response.json());
 }
 
-function getRegisterRequest(url, username, credentialNickname) {
-  return fetch(`${url}?username=${username}&credentialNickname=${credentialNickname}`, { method: 'POST' })
-    .then(response => response.json());
+function getRegisterRequest(url, username, displayName, credentialNickname) {
+  return fetch(`${url}?username=${username}&displayName=${displayName}&credentialNickname=${credentialNickname}`, { method: 'POST' })
+    .then(response => response.json())
+  ;
 }
 
 function executeRegisterRequest(request) {
@@ -158,11 +159,12 @@ function performCeremony({
 
 function register() {
   const username = document.getElementById('username').value;
+  const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRegisterRequest(urls.register, username, credentialNickname),
+    getRequest: urls => getRegisterRequest(urls.register, username, displayName, credentialNickname),
     statusStrings: {
       init: 'Initiating registration ceremony with server...',
       authenticatorRequest: 'Asking authenticators to create credential...',
@@ -302,6 +304,10 @@ window.onload = init;
       <div class="row">
         <label for="username">Username:</label>
         <div><input type="text" id="username"/></div>
+      </div>
+      <div class="row">
+        <label for="displayName">Display name:</label>
+        <div><input type="text" id="displayName"/></div>
       </div>
 
       <div class="row">

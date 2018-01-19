@@ -85,9 +85,17 @@ public class WebAuthnRestResource {
 
     @Path("register")
     @POST
-    public Response startRegistration(@QueryParam("username") String username, @QueryParam("credentialNickname") String credentialNickname) throws MalformedURLException {
+    public Response startRegistration(
+        @QueryParam("username") String username,
+        @QueryParam("displayName") String displayName,
+        @QueryParam("credentialNickname") String credentialNickname
+    ) throws MalformedURLException {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
-        RegistrationRequest request = server.startRegistration(username, credentialNickname);
+        RegistrationRequest request = server.startRegistration(
+            username,
+            displayName,
+            credentialNickname
+        );
         return startResponse(new StartRegistrationResponse(request));
     }
 

@@ -63,17 +63,21 @@ public class WebAuthnServer {
         new BouncyCastleCrypto(),
         true,
         credentialRepository,
-        Optional.of(metadataService)
+        Optional.of(metadataService),
+        true
     );
 
-    public RegistrationRequest startRegistration(String username, String credentialNickname) {
+    public RegistrationRequest startRegistration(String username, String displayName, String credentialNickname) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
+
+        byte[] userId = challengeGenerator.generateChallenge();
+
         RegistrationRequest request = new RegistrationRequest(
             username,
             credentialNickname,
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
             rp.startRegistration(
-                new UserIdentity(username, username, username, Optional.empty()),
+                new UserIdentity(username, displayName, userId, Optional.empty()),
                 Optional.of(
                     userStorage.get(username).stream()
                         .map(registration -> registration.getRegistration().keyId())
@@ -123,6 +127,8 @@ public class WebAuthnServer {
                         addRegistration(
                             request.getUsername(),
                             request.getCredentialNickname(),
+                            request.getMakePublicKeyCredentialOptions().user().idBase64(),
+                            response,
                             registrationTry.get()
                         )
                     )
@@ -250,8 +256,16 @@ public class WebAuthnServer {
         return Right.apply(startAuthenticatedAction(username, action));
     }
 
-    private CredentialRegistration addRegistration(String username, String nickname, RegistrationResult registration) {
-        CredentialRegistration reg = new CredentialRegistration(username, nickname, clock.instant(), registration);
+    private CredentialRegistration addRegistration(String username, String nickname, String userHandleBase64, RegistrationResponse response, RegistrationResult registration) {
+        CredentialRegistration reg = CredentialRegistration.builder()
+            .username(username)
+            .credentialNickname(nickname)
+            .registrationTime(clock.instant())
+            .registration(registration)
+            .userHandleBase64(userHandleBase64)
+            .signatureCount(response.getCredential().response().attestation().authenticatorData().signatureCounter())
+            .build();
+
         logger.debug(
             "Adding registration: username: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
             username,
@@ -261,7 +275,7 @@ public class WebAuthnServer {
             registration.publicKeyCose()
         );
         userStorage.put(username, reg);
-        credentialRepository.add(registration.keyId().idBase64(), registration.publicKeyCose());
+        credentialRepository.add(registration.keyId().idBase64(), reg);
         return reg;
     }
 }

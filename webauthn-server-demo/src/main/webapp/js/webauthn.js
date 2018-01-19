@@ -8,6 +8,58 @@
   }
 })(this, function(base64url) {
 
+  const browserFixes = function() {
+    const fixes = [
+      {
+        name: 'Firefox 57',
+        isEnabled() {
+          return typeof InstallTrigger !== undefined && window.navigator.userAgent.match(/Firefox \/57/);
+        },
+        fixRegisterRequest(makePublicKeyCredentialOptions) {
+          return {
+            ...makePublicKeyCredentialOptions,
+            excludeList: makePublicKeyCredentialOptions.excludeCredentials,
+            parameters: makePublicKeyCredentialOptions.pubKeyCredParams,
+          }
+        },
+        fixAuthenticateRequest(publicKeyCredentialRequestOptions) {
+          return {
+            ...publicKeyCredentialRequestOptions,
+            allowList: publicKeyCredentialRequestOptions.allowCredentials,
+          };
+        },
+      },
+    ];
+
+    return {
+      fixRegisterRequest(mpkco) {
+        return fixes.reduce(
+          (result, fix) => {
+            if (fix.isEnabled()) {
+              return fix.fixRegisterRequest(result);
+            } else {
+              return result;
+            }
+          },
+          mpkco
+        );
+      },
+
+      fixAuthenticateRequest(pkcro) {
+        return fixes.reduce(
+          (result, fix) => {
+            if (fix.isEnabled()) {
+              return fix.fixAuthenticateRequest(result);
+            } else {
+              return result;
+            }
+          },
+          pkcro
+        );
+      },
+    };
+  }();
+
   /**
    * Add Jackson JSON deserialization type hints to a PublicKeyCredential-like
    * plain object structure.
@@ -54,13 +106,16 @@
 
     const makePublicKeyCredentialOptions = {
       ...request,
+      user: {
+        ...request.user,
+        id: base64url.toByteArray(request.user.id),
+      },
       challenge: base64url.toByteArray(request.challenge),
-      excludeCredentials: excludeCredentials,
-      excludeList: excludeCredentials, // For Firefox Nightly 57.0a1
+      excludeCredentials,
       timeout: 10000,
     };
 
-    return makePublicKeyCredentialOptions;
+    return browserFixes.fixRegisterRequest(makePublicKeyCredentialOptions);
   }
 
   /**
@@ -96,12 +151,11 @@
     const publicKeyCredentialRequestOptions = {
       ...request,
       allowCredentials: allowCredentials,
-      allowList: allowCredentials,
       challenge: base64url.toByteArray(request.challenge),
       timeout: 10000,
     };
 
-    return publicKeyCredentialRequestOptions;
+    return browserFixes.fixAuthenticateRequest(publicKeyCredentialRequestOptions);
   }
 
   /**
