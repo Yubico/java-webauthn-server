@@ -58,7 +58,7 @@ case class FinishAssertionSteps(
     }
 
     private lazy val _credential: Optional[RegisteredCredential] =
-      credentialRepository.lookup(response.rawId, response.response.userHandle.asScala)
+      credentialRepository.lookup(response.rawId, response.response.userHandle)
 
     def credential: RegisteredCredential = _credential.get
   }
@@ -218,7 +218,7 @@ case class FinishAssertionSteps(
     override def nextStep = Finished(this)
 
     def storedSignatureCountBefore: Long =
-      credentialRepository.lookup(response.rawId, response.response.userHandle.asScala).asScala
+      credentialRepository.lookup(response.rawId, response.response.userHandle).asScala
         .map(_.signatureCount)
         .getOrElse(0L)
 

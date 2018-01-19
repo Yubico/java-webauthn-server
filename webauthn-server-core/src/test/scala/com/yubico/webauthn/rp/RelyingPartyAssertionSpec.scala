@@ -2,6 +2,7 @@ package com.yubico.webauthn.rp
 
 import java.security.MessageDigest
 import java.security.KeyPair
+import java.util.Optional
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -115,7 +116,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       preferredPubkeyParams = Nil.asJava,
       rp = rpId,
       credentialRepository = credentialRepository getOrElse new CredentialRepository {
-        override def lookup(credId: Base64UrlString, lookupUserHandle: Option[Base64UrlString]) =
+        override def lookup(credId: Base64UrlString, lookupUserHandle: Optional[Base64UrlString]) =
           (
             if (credId == U2fB64Encoding.encode(credentialId.toArray))
               Some(RegisteredCredential(
@@ -137,7 +138,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
-          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = None.asJava }))
+          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava }))
           val step: steps.Step1 = steps.begin
 
           step.validations shouldBe a [Failure[_]]
@@ -147,7 +148,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Succeeds if the credential ID is known.") {
           val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
-            override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = Some(
+            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
               RegisteredCredential(
                 credentialId = U2fB64Encoding.decode(id).toVector,
                 signatureCount = 0L,
@@ -510,7 +511,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         describe("If the signature counter value adata.signCount is") {
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
-              override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = Some(
+              override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
                 RegisteredCredential(
                   credentialId = U2fB64Encoding.decode(id).toVector,
                   signatureCount = 1336L,
@@ -538,7 +539,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
-              override def lookup(id: Base64UrlString, uh: Option[Base64UrlString]) = Some(
+              override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
                 RegisteredCredential(
                   credentialId = U2fB64Encoding.decode(id).toVector,
                   signatureCount = 1337L,
