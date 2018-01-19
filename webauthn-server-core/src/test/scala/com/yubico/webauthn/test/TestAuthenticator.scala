@@ -189,9 +189,12 @@ class TestAuthenticator (
     )
   }
 
-  def createBasicAttestedCredential(attestationStatementFormat: String = "fido-u2f"): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
+  def createBasicAttestedCredential(
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+    attestationStatementFormat: String = "fido-u2f"
+  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
     createCredential(
-      attestationCertAndKey = Some(importCertAndKeyFromPem(
+      attestationCertAndKey = attestationCertAndKey orElse Some(importCertAndKeyFromPem(
         getClass().getResourceAsStream("/attestation-cert.pem"),
         getClass().getResourceAsStream("/attestation-key.pem")
       )),
