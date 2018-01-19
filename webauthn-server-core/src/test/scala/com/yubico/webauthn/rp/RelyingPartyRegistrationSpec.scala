@@ -62,75 +62,153 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
   def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
-  object Defaults {
-    // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
-    val attestationObject: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020fcf11b31e19931ba2ef2cffcf6c27a863de6ab43873d05bbd8f30c4fd69e15febf63616c67654553323536617858206a7f09e364f7dab64ec5a7a24aa5293acde8e722e555934e1e223bb0a9d1f398617958210091baa59d427eb615d0bf8cf8852cdb5ab6bcde2788bf5e017dc5f0fa91a972c7ff63666d74686669646f2d7532666761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff6373696758473045022050deefc3e97a4b395fdd3465c59ed07ed2f76410fc9d0835e34835922df3da39022100f3f0c69da18d5ffb08f6b6d4be5dec97ec5e9c57d98ddfcddfbedcb86e437d1bffff").get
-    val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+  object TestData {
+    object AndroidKey {
+      val BasicAttestation: TestData = Packed.SelfAttestation.editAttestationObject("fmt", "android-key")
+    }
+    object AndroidSafetynet {
+      val BasicAttestation: TestData = Packed.SelfAttestation.editAttestationObject("fmt", "android-safetynet")
+    }
+    object FidoU2f {
+      val BasicAttestation: TestData = TestData(
+        // Generated using TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "fido-u2f")
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020911aee3a7c89cab9ab12eb01b36cc02c42883137ba69a6e95a6b9149a9c8e78ebf63616c6726617858207af790b78a390249edec623954e93f685aa3a1d1df5405dd868998bcf6e169dd617958210095f9d179fdc54499f18e7f9fa20533a4c6cfed72e687bc54873fd127d41e1d54ff63666d74686669646f2d7532666761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff6373696758473045022100ff217fbaeb2dceb2fa0c345cab4f41c9d80a00237a3ce91b74ce3cc663aa465c022007812ac34059ee4625a5fbefeb5275001dc3087c05a794aabee7ea5841bda777ffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+      val SelfAttestation: TestData = TestData(
+        // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "fido-u2f")
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020144321ccb686e702e4a0be583d1fd939065dc98ccb7addc3f083b4eed7012632bf63616c67266178582100e11a7396378df7d12bfa30d575abdc16c0dc92a34257382c6d88655178e65b19617958201615cd1fd3392df5e5c6f9a05f267ee38a6433f5ed61f3837f8c7145aafc35b5ff63666d74686669646f2d7532666761747453746d74bf637835639f5901e5308201e130820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004e11a7396378df7d12bfa30d575abdc16c0dc92a34257382c6d88655178e65b191615cd1fd3392df5e5c6f9a05f267ee38a6433f5ed61f3837f8c7145aafc35b5a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d04030203480030450220448b7f1a772975eaa5363e8bcc3ef44282413e54a47b8a3b7000b5f64bed9ba8022100f2f4f06d0030f436d89091db6f44537c5b539acfd1bef43c20092a5da6e9b810ff63736967584730450220781611040686624bf2d38d82ae1fe4fbf6812cfeaf8cbf37171af3983328cc7a022100fde91f6cac3b3d6828ef2aceb67d47c4ccbbde17ef4835c05ce253e847c166eaffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+    }
+    object Packed {
+      val BasicAttestation: TestData = TestData(
+        // Generated using TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(a.generateAttestationCertificate()), attestationStatementFormat = "packed")
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a849960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020473cccff94947e2790150cf07cf259e62e97f6e1f600938823a26e86f9542a5abf63616c67266178582100b7e901abc5f848f702063a84f9879e7bfc4420e497d74f04f75ec8096d9da33f6179582100d7d5a29171550d0c4fad243b545c27efeef0716a30083c5ea63a01e96056a502ff63666d74667061636b65646761747453746d74bf6373696758483046022100daaf493e85972038aa0805d9fa8ced463810b5e2a3384a599672ed88bf93e6f9022100c8ae12db36eda8b2744a153794b5535d4ea026701ccca594a6e423e60602fb9a637835639f5901e5308201e130820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004ac75ebf919ce2e365ebd31192f5d7f58ac2f0bccd774c28a89224e8f2015176eaf8846dda24d97446d5a25eca1a1e1cfba0a8eff76a4d03e15bb4b0c86fa2fc6a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d040302034800304502202ee6095203768431cf1b7107675c1cf0eb029096b317b700ce37977b0310f178022100ce5bfb5a58241da8c4e3a86dfafab596b798df87ef5f79ed59d395e11d1817abffffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+      val BasicAttestationWithoutAaguidExtension: TestData = TestData(
+        // Generated using TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(a.generateAttestationCertificate(extensions = Nil)), attestationStatementFormat = "packed")
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00208a77a78607430f6ddad766aaeecce6d974ca4d42f95be216f0a10ee50bdef599bf63616c6765455332353661785820499841182f0321043a5873495d102de28ef1fb92c230c604dfe8bc21c931c70a61795820220a01182407d642c4ca2a09ba2170a042f087a18bf284ebf83d89eb6a0c65cbff63666d74667061636b65646761747453746d74bf637835639f5901c0308201bc30820162a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004056f968a406e763871595e76df2d0f95ea8189ecef39c210daf819bc9826e2ffd8be0631aa372604206e7260f0f5bbf5fb43532a9a0699ac8e31a8203f35e4d6300a06082a8648ce3d0403020348003045022100c7a9fc10eb81f7a888c6e05ea01e94393f95c9fbbf8ec747e967a97db65f45a802200881e68dc8805bd18fa156511f0f5da282378bd77868560f5a8b8f96fdfc3423ff6373696758463044022072f8b21e55bfd74fcf14116bd01b5efe034aae8d9b8b6f3763c02d25e487655a022040438688022ba64c1db18b2c2b9637d6243945ec8b73bbbfef1a4755092a204affff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+      val BasicAttestationWithWrongAaguidExtension: TestData = TestData(
+        // Generated using TestAuthenticator.createBasicAttestedCredential(aaguid = Vector[Byte](15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0), attestationStatementFormat = "packed")
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976341000005390f0e0d0c0b0a0908070605040302010000202aba487f856dccd69c13c8a0e41332ecafc1965b66dad5027bea312fbc2f45fabf63616c676545533235366178582022387031d413f5dbfe60b9750c0209fdcfa5d6eacae7d1a64504ff7a58aa5d2c6179582100abe15cad50dd40204a4fd4ea1b6b8ec7492b779ab7f8dfd7ecde1e31aefd39c0ff63666d74667061636b65646761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff6373696758463044022034ae9278ba1dcac079e94c292b28a7993a82cb2c0e87ecde14f9385b177f8627022039facd2b523cf6e067fc504308f0e3b1e67d5afd74d6c4838fa391a781fc5c21ffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+      val SelfAttestation: TestData = TestData(
+        // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed")
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a849960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020a08246c682a9bd4e431fbc05d907f9377208b336535f1cac94fd97ede6e07777bf63616c67266178582100f5a5de3f481e3d35c41c4402ba2d82a0bc7d282c68bf15e6d8dce907835b29096179582100f4217ff5e44a94443717b0670d919391cfcf275a42b49fb975afe70108d57d58ff63666d74667061636b65646761747453746d74bf6373696758473045022100c4e86e4ecf70796fd8ea471fbae9bfe027a4affab4fc93e47efebc02c6243491022041c1d7f5e60b7a8e7e373a31f39e8ff1bd71ad30d253511e5286445f6927193663616c6726ffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+      val SelfAttestationWithWrongAlgValue = TestData(
+        // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed") after editing generator code to set the wrong alg value
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00206ff53d1e8f2cc231b6294395729698d3eaa5064bc00839a1e767ed62cb7d46ebbf63616c67266178582100b7a32acd8cf6fd9f86e9ed25fa5ec637a54277ec6d23f62812207ce139bd3b486179582058d5d51c1e888f3a8520adb6f28eb399eff8627f5046b143d6574e98dda9b305ff63666d74667061636b65646761747453746d74bf6373696758473045022068307070d0347b004167fa828b8273f766ad1064fc0ca6b0ab5ee8f7e4177c9c022100e9d28534daaf3c09908e8f3ef7e594524dc34b1a02324ba7c163f4fa10075a2b63616c67390100ffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+      )
+    }
+    object Tpm {
+      val PrivacyCa: TestData = Packed.SelfAttestation.editAttestationObject("fmt", "tpm")
+    }
+  }
 
-    // These values are defined by the attestationObject and clientDataJson above
-    val clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
-    val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
-    val clientDataJsonHash: ArrayBuffer = new BouncyCastleCrypto().hash(clientDataJsonBytes.toArray).toVector
-    val challenge: ArrayBuffer = U2fB64Encoding.decode(clientData.challenge).toVector
-    val requestedExtensions: Option[AuthenticationExtensions] = None
-    val clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode()
+  case class TestData(
+    attestationObject: ArrayBuffer,
+    clientDataJson: String,
+    clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode(),
+    overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
+    requestedExtensions: Option[AuthenticationExtensions] = None,
+    rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
+    userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = "test")
+  ) {
+    def clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
+    def clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
+    def clientDataJsonHash: ArrayBuffer = new BouncyCastleCrypto().hash(clientDataJsonBytes.toArray).toVector
+    def aaguid: ArrayBuffer = AttestationObject(attestationObject).authenticatorData.attestationData.get.aaguid
+    def packedAttestationCert: X509Certificate =
+      CertificateParser.parseDer(
+        AttestationObject(attestationObject)
+          .attestationStatement
+          .get("x5c")
+          .get(0)
+          .binaryValue
+      )
 
-    val rpId = RelyingPartyIdentity(name = "Test party", id = "localhost")
-    val userId = UserIdentity(name = "test@test.org", displayName = "Test user", id = "test")
-
-    val createCredentialOptions = MakePublicKeyCredentialOptions(
-      rp = rpId,
-      user = userId,
-      challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(alg = -7)).asJava
+    def editClientData[A <: JsonNode](updater: ObjectNode => A): TestData = copy(
+      clientDataJson = WebAuthnCodecs.json.writeValueAsString(
+        updater(WebAuthnCodecs.json.readTree(clientDataJson).asInstanceOf[ObjectNode])
+      )
     )
 
+    def editClientData[A <: JsonNode](name: String, value: A): TestData = editClientData { clientData: ObjectNode =>
+      clientData.set(name, value)
+    }
+    def editClientData(name: String, value: String): TestData = editClientData(name, jsonFactory.textNode(value))
+    def responseChallenge: ArrayBuffer = U2fB64Encoding.decode(clientData.challenge).toVector
+
+    def editClientData(name: String, value: ArrayBuffer): TestData =
+      editClientData(
+        name,
+        jsonFactory.textNode(U2fB64Encoding.encode(value.toArray))
+      )
+
+    def editAttestationObject[A <: JsonNode](name: String, value: A): TestData = copy(
+      attestationObject = WebAuthnCodecs.cbor.writeValueAsBytes(
+        WebAuthnCodecs.cbor.readTree(attestationObject.toArray).asInstanceOf[ObjectNode]
+          .set(name, value)
+      ).toVector
+    )
+
+    def editAttestationObject(name: String, value: String): TestData =
+      editAttestationObject(name, jsonFactory.textNode(value))
+
+    def editAuthenticatorData(updater: ArrayBuffer => ArrayBuffer): TestData = {
+      val attObj: ObjectNode = WebAuthnCodecs.cbor.readTree(attestationObject.toArray).asInstanceOf[ObjectNode]
+      val authData: ArrayBuffer = attObj.get("authData").binaryValue.toVector
+      editAttestationObject("authData", jsonFactory.binaryNode(updater(authData).toArray))
+    }
+
+    def request: MakePublicKeyCredentialOptions = overrideRequest getOrElse MakePublicKeyCredentialOptions(
+      rp = rpId,
+      user = userId,
+      challenge = U2fB64Encoding.decode(clientData.challenge).toVector,
+      pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)).asJava,
+      extensions = requestedExtensions.asJava
+    )
+
+    def response = PublicKeyCredential(
+      AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialId,
+      AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
+      clientExtensionResults
+    )
   }
 
   val crypto: Crypto = new BouncyCastleCrypto
   def sha256(bytes: ArrayBuffer): ArrayBuffer = crypto.hash(bytes.toArray).toVector
 
   def finishRegistration(
+    testData: TestData,
     allowSelfAttestation: Boolean = false,
-    attestationObject: ArrayBuffer = Defaults.attestationObject,
     authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
     callerTokenBindingId: Option[String] = None,
-    challenge: ArrayBuffer = Defaults.challenge,
-    clientDataJson: String = Defaults.clientDataJson,
-    clientExtensionResults: AuthenticationExtensions = Defaults.clientExtensionResults,
     credentialId: Option[ArrayBuffer] = None,
     metadataService: Option[MetadataService] = None,
-    origin: String = Defaults.rpId.id,
-    requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
-    rpId: RelyingPartyIdentity = Defaults.rpId,
-    userId: UserIdentity = Defaults.userId
+    makePublicKeyCredentialOptions: Option[MakePublicKeyCredentialOptions] = None,
+    rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost")
   ): FinishRegistrationSteps = {
-    val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
-
-    val request = MakePublicKeyCredentialOptions(
-      rp = rpId,
-      user = userId,
-      challenge = challenge,
-      pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)).asJava,
-      extensions = requestedExtensions.asJava
-    )
-
-    val response = PublicKeyCredential(
-      credentialId getOrElse AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialId,
-      AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
-      clientExtensionResults
-    )
+    val clientDataJsonBytes: ArrayBuffer = testData.clientDataJson.getBytes("UTF-8").toVector
 
     new RelyingParty(
       allowSelfAttestation = allowSelfAttestation,
       authenticatorRequirements = authenticatorRequirements.asJava,
       challengeGenerator = null,
-      origins = List(origin).asJava,
-      preferredPubkeyParams = request.pubKeyCredParams,
-      rp = rpId,
+      origins = List(rp.id).asJava,
+      preferredPubkeyParams = Nil.asJava,
+      rp = rp,
       credentialRepository = null,
       metadataService = metadataService.asJava
-    )._finishRegistration(request, response, callerTokenBindingId.asJava)
+    )._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
   }
 
   describe("§7.1. Registering a new credential") {
@@ -138,7 +216,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     describe("When registering a new credential, represented by a AuthenticatorAttestationResponse structure, as part of a registration ceremony, a Relying Party MUST proceed as follows:") {
 
       it("1. Perform JSON deserialization on the clientDataJSON field of the AuthenticatorAttestationResponse object to extract the client data C claimed as collected during the credential creation.") {
-        val steps = finishRegistration(clientDataJson = "{")
+        val steps = finishRegistration(
+          testData = TestData.FidoU2f.BasicAttestation.copy(
+            clientDataJson = "{",
+            overrideRequest = Some(TestData.FidoU2f.BasicAttestation.request)
+          )
+        )
         val step1: steps.Step1 = steps.begin
 
         step1.validations shouldBe a [Failure[_]]
@@ -148,7 +231,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("2. Verify that the type in C is the string webauthn.create.") {
         it("The default test case succeeds.") {
-          val steps = finishRegistration()
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
           val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -157,10 +240,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         def assertFails(typeString: String): Unit = {
           val steps = finishRegistration(
-            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                .set("type", jsonFactory.textNode(typeString))
-            )
+            testData = TestData.FidoU2f.BasicAttestation.editClientData("type", typeString)
           )
           val step: steps.Step2 = steps.begin.next.get
 
@@ -183,7 +263,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       it("3. Verify that the challenge in C matches the challenge that was sent to the authenticator in the create() call.") {
-        val steps = finishRegistration(challenge = Vector.fill(16)(0: Byte))
+        val steps = finishRegistration(
+          testData = TestData.FidoU2f.BasicAttestation.copy(
+            overrideRequest = Some(TestData.FidoU2f.BasicAttestation.request.copy(challenge = Vector.fill(16)(0: Byte)))
+          )
+        )
         val step: steps.Step3 = steps.begin.next.get.next.get
 
         step.validations shouldBe a [Failure[_]]
@@ -192,7 +276,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       it("4. Verify that the origin in C matches the Relying Party's origin.") {
-        val steps = finishRegistration(origin = "root.evil")
+        val steps = finishRegistration(
+          testData = TestData.FidoU2f.BasicAttestation.editClientData("origin", "root.evil")
+        )
         val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
         step.validations shouldBe a [Failure[_]]
@@ -202,7 +288,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("5. Verify that the tokenBindingId in C matches the Token Binding ID for the TLS connection over which the attestation was obtained.") {
         it("Verification succeeds if neither side specifies token binding ID.") {
-          val steps = finishRegistration()
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
           val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -210,11 +296,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Verification succeeds if both sides specify the same token binding ID.") {
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE","type":"webauthn.create"}"""
-
           val steps = finishRegistration(
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
-            clientDataJson = clientDataJson
+            testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBindingId", "YELLOWSUBMARINE")
           )
           val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
@@ -223,7 +307,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Verification fails if caller specifies token binding ID but attestation does not.") {
-          val steps = finishRegistration(callerTokenBindingId = Some("YELLOWSUBMARINE"))
+          val steps = finishRegistration(
+            testData = TestData.FidoU2f.BasicAttestation,
+            callerTokenBindingId = Some("YELLOWSUBMARINE")
+          )
           val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
@@ -232,13 +319,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Verification fails if attestation specifies token binding ID but caller does not.") {
-          val attestationObjectBytes: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002067d2e4a43d68158d5be9786d7a708c94782669deda891bda4a586c1331e1d7bebf63616c67654553323536617858201f228113a2cc82ad4633ff58dffe09c8d28177f11590b737d1a13f628db33721617958207721f99e5ff74631df92d1c3ebc758e821cd1c7b323946d97f4ff43083cf0b2fff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d0301070342000485a43c1f4e2e625cc3ce85f0a7b827b1358be9c1be9d45fba1632e5e7f4d1db5488bd7a6101ae16457cb12a3d3408b989993e017c027e1af43624bdec1402e6e300a06082a8648ce3d040302034800304502205298725d18bd9645a8118f42f4a9a9fa49396851305c1bff3da01f29fc704656022100d93a584a1273b695f0c7497bf6fcc1a9ecbe29376c00a4abb25ff7af48a92ccfff63736967584630440220188eb445f56aa23f3be2f7b327cca187a34fd300af3d3c985fda6a8829f770440220340f2029d42d48bc021341d7054ee708a5d9223580faac6530990de8a5775a53ffff").get
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE","type":"webauthn.create"}"""
-
           val steps = finishRegistration(
             callerTokenBindingId = None,
-            attestationObject = attestationObjectBytes,
-            clientDataJson = clientDataJson
+            testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBindingId", "YELLOWSUBMARINE")
           )
           val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
@@ -248,13 +331,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Verification fails if attestation and caller specify different token binding IDs.") {
-          val attestationObjectBytes: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002067d2e4a43d68158d5be9786d7a708c94782669deda891bda4a586c1331e1d7bebf63616c67654553323536617858201f228113a2cc82ad4633ff58dffe09c8d28177f11590b737d1a13f628db33721617958207721f99e5ff74631df92d1c3ebc758e821cd1c7b323946d97f4ff43083cf0b2fff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d0301070342000485a43c1f4e2e625cc3ce85f0a7b827b1358be9c1be9d45fba1632e5e7f4d1db5488bd7a6101ae16457cb12a3d3408b989993e017c027e1af43624bdec1402e6e300a06082a8648ce3d040302034800304502205298725d18bd9645a8118f42f4a9a9fa49396851305c1bff3da01f29fc704656022100d93a584a1273b695f0c7497bf6fcc1a9ecbe29376c00a4abb25ff7af48a92ccfff63736967584630440220188eb445f56aa23f3be2f7b327cca187a34fd300af3d3c985fda6a8829f770440220340f2029d42d48bc021341d7054ee708a5d9223580faac6530990de8a5775a53ffff").get
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBindingId":"YELLOWSUBMARINE","type":"webauthn.create"}"""
-
           val steps = finishRegistration(
             callerTokenBindingId = Some("ORANGESUBMARINE"),
-            attestationObject = attestationObjectBytes,
-            clientDataJson = clientDataJson
+            testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBindingId", "YELLOWSUBMARINE")
           )
           val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
 
@@ -267,11 +346,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       describe("6. Verify that the") {
         it("clientExtensions in C is a subset of the extensions requested by the RP.") {
           val failSteps = finishRegistration(
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
+            testData = TestData.FidoU2f.BasicAttestation.editClientData("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
           )
           val failStep: failSteps.Step6 = failSteps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -280,12 +355,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           failStep.next shouldBe a [Failure[_]]
 
           val successSteps = finishRegistration(
-            requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
+            testData = TestData.FidoU2f.BasicAttestation.copy(
+              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
+            )
           )
           val successStep: successSteps.Step6 = successSteps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -295,11 +367,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         it("authenticatorExtensions in C is also a subset of the extensions requested by the RP.") {
           val failSteps = finishRegistration(
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
+            testData = TestData.FidoU2f.BasicAttestation.editClientData(
+              "authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+            )
           )
           val failStep: failSteps.Step6 = failSteps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -308,12 +378,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           failStep.next shouldBe a [Failure[_]]
 
           val successSteps = finishRegistration(
-            requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
+            testData = TestData.FidoU2f.BasicAttestation.copy(
+              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
+            ).editClientData(
+              "authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+            )
           )
           val successStep: successSteps.Step6 = successSteps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -324,22 +393,20 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("7. Compute the hash of clientDataJSON using the algorithm identified by C.hashAlgorithm.") {
         it("SHA-256 is allowed.") {
-          val steps = finishRegistration()
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
           val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
-          step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
+          step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(TestData.FidoU2f.BasicAttestation.clientDataJsonBytes.toArray).toVector)
         }
 
         def checkForbidden(algorithm: String): Unit = {
           it(s"${algorithm} is forbidden.") {
             val steps = finishRegistration(
-              clientDataJson =
-                WebAuthnCodecs.json.writeValueAsString(
-                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                    .set("hashAlgorithm", jsonFactory.textNode(algorithm))
-                )
+              testData = TestData.FidoU2f.BasicAttestation.editClientData(
+                "hashAlgorithm", jsonFactory.textNode(algorithm)
+              )
             )
             val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -353,7 +420,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
-        val steps = finishRegistration()
+        val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
         val step: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
         step.validations shouldBe a [Success[_]]
@@ -365,7 +432,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
         it("Fails if RP ID is different.") {
-          val steps = finishRegistration(rpId = Defaults.rpId.copy(id = "root.evil"))
+          val steps = finishRegistration(
+            testData = TestData.FidoU2f.BasicAttestation.editAuthenticatorData { authData: ArrayBuffer =>
+              Vector.fill[Byte](32)(0) ++ authData.drop(32)
+            }
+          )
           val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
@@ -374,7 +445,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Succeeds if RP ID is the same.") {
-          val steps = finishRegistration()
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
           val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -384,13 +455,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("10. Determine the attestation statement format by performing an USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
         def setup(format: String): FinishRegistrationSteps = {
-          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
-            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray)
-              .asInstanceOf[ObjectNode]
-              .set("fmt", jsonFactory.textNode(format))
-          ).toVector
-
-          finishRegistration(attestationObject = attestationObject)
+          finishRegistration(
+            testData = TestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", format)
+          )
         }
 
         def checkFailure(format: String): Unit = {
@@ -431,7 +498,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         describe("For the fido-u2f statement format,") {
           it("the default test case is a valid basic attestation.") {
-            val steps = finishRegistration()
+            val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
             val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
@@ -440,9 +507,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           it("a test case with self attestation is valid.") {
-            val attestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020b6301bd05fa254360b23ceede039fa0ac97b74ab6f8241c1cce225b521f92f61bf63616c67654553323536617858203f735d9a1b48a08c099f8ab5c6824465a13d7aea552f038fbc886e5f4916910861795821008192a1ecfcfcb285050fbbb49c1f7ecbfb0eb7558782c271480bc656b2f473c1ff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d030107034200043f735d9a1b48a08c099f8ab5c6824465a13d7aea552f038fbc886e5f491691088192a1ecfcfcb285050fbbb49c1f7ecbfb0eb7558782c271480bc656b2f473c1300a06082a8648ce3d0403020348003045022100f3f63e97ae36b181a8e2ca3d8bb60201c80f089c241e28c59a61302a1638f7870220116b43eeb54e7192f5ce9a0d018410ac0c608bc53ea2e1cbecdad9910689fcd6ff63736967584730450221009d6277e2300f7542107941ef1915613a0fbba66a27c37c56559d8817236c66250220632eadc777524e0032e2731275ccf06e6021a44c7804993cb894d8546cd9727effff").get
-
-            val steps = finishRegistration(attestationObject = attestationObject)
+            val steps = finishRegistration(testData = TestData.FidoU2f.SelfAttestation)
             val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
@@ -453,10 +518,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           def flipByte(index: Int, bytes: ArrayBuffer): ArrayBuffer = bytes.updated(index, (0xff ^ bytes(index)).toByte)
 
           it("a test case with different signed client data is not valid.") {
-            val steps = finishRegistration()
+            val testData = TestData.FidoU2f.SelfAttestation
+            val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
             val step: steps.Step11 = new steps.Step11(
-              attestation = AttestationObject(Defaults.attestationObject),
-              clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.updated(20, (Defaults.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
+              attestation = AttestationObject(testData.attestationObject),
+              clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.updated(20, (testData.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
               attestationStatementVerifier = FidoU2fAttestationStatementVerifier
             )
 
@@ -473,16 +539,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           def checkByteFlipFails(index: Int): Unit = {
-            val attestationObject = mutateAuthenticatorData(Defaults.attestationObject) {
-              flipByte(index, _)
-            }
+            val testData = TestData.FidoU2f.BasicAttestation.editAuthenticatorData { flipByte(index, _) }
+
             val steps = finishRegistration(
-              attestationObject = attestationObject,
+              testData = testData,
               credentialId = Some(Vector.fill[Byte](16)(0))
             )
             val step: steps.Step11 = new steps.Step11(
-              attestation = AttestationObject(attestationObject),
-              clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
+              attestation = AttestationObject(testData.attestationObject),
+              clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
               attestationStatementVerifier = FidoU2fAttestationStatementVerifier
             )
 
@@ -500,7 +565,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           it("a test case with a different signed credential public key is not valid.") {
-            val attestationObject = mutateAuthenticatorData(Defaults.attestationObject) { authenticatorData =>
+            val testData = TestData.FidoU2f.BasicAttestation.editAuthenticatorData { authenticatorData =>
               val decoded = AuthenticatorData(authenticatorData)
               val L = decoded.attestationData.get.credentialId.length
               val evilPublicKey = decoded.attestationData.get.credentialPublicKey.asInstanceOf[ObjectNode]
@@ -509,12 +574,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorData.take(32 + 1 + 4 + 16 + 2 + L) ++ WebAuthnCodecs.cbor.writeValueAsBytes(evilPublicKey)
             }
             val steps = finishRegistration(
-              attestationObject = attestationObject,
+              testData = testData,
               credentialId = Some(Vector.fill[Byte](16)(0))
             )
             val step: steps.Step11 = new steps.Step11(
-              attestation = AttestationObject(attestationObject),
-              clientDataJsonHash = new BouncyCastleCrypto().hash(Defaults.clientDataJsonBytes.toArray).toVector,
+              attestation = AttestationObject(testData.attestationObject),
+              clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
               attestationStatementVerifier = FidoU2fAttestationStatementVerifier
             )
 
@@ -530,9 +595,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val credential = testAuthenticator.createCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
-                attestationObject = credential.response.attestationObject,
-                credentialId = Some(credential.rawId),
-                clientDataJson = new String(credential.response.clientDataJSON.toArray, "UTF-8")
+                testData = TestData(
+                  attestationObject = credential.response.attestationObject,
+                  clientDataJson = new String(credential.response.clientDataJSON.toArray, "UTF-8")
+                ),
+                credentialId = Some(credential.rawId)
               )
               val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -555,9 +622,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val credential = testAuthenticator.createCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
-                attestationObject = credential.response.attestationObject,
-                credentialId = Some(credential.rawId),
-                clientDataJson = new String(credential.response.clientDataJSON.toArray, "UTF-8")
+                testData = TestData(
+                  attestationObject = credential.response.attestationObject,
+                  clientDataJson = new String(credential.response.clientDataJSON.toArray, "UTF-8")
+                ),
+                credentialId = Some(credential.rawId)
               )
               val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -595,21 +664,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("For the packed statement format") {
           val verifier = PackedAttestationStatementVerifier
 
-          val packedAttestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020a1547f852f4e0f4f9053f80e9fadb4a48d63e35380f3efd0220d9f9d41b038abbf63616c67654553323536617858210080a6cdee2a417c27fb0e9b03ac8ecd8befbc8d4656f6d754c69c1ad5e10258ba61795820409da04c3bbb9e66bb32bce662966213cbe6dbed938c294cc3a446b1c837c4a7ff63666d74667061636b65646761747453746d74bf637835639f5901e6308201e230820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200041dcdbfa0dd3df4278033f07f5129670f6d3e5778fddeb4bc086afb07c83e79db88f5ef09a841d0d2020d89e9fcce88908e58930630850d4eb7123c6d251c7c79a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020349003046022100cf5a35af9e39ddc75c21575e53582fa14ed5d650951650e4c45ec2bcffd83c800221009719eb3a39777b5196e2a4b858818920388e672e69af8f004326579716bff78cff6373696758483046022100eecff95eea7d5993737c3e6964c453335a39602dc86dd32317daf908aaea1b4802210087d0e2fd85474e647f28f019eaf19861e8137e6a61ea491849a7a3e43a8fd33fffff").get
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-
-          val packedClientDataJsonHash: ArrayBuffer = sha256(clientDataJson.getBytes("UTF-8").toVector)
-
-          val packedAttObj = AttestationObject(packedAttestationObject)
-          val packedAttCert = CertificateParser.parseDer(packedAttObj.attestationStatement.get("x5c").get(0).binaryValue())
-          val aaguid = packedAttObj.authenticatorData.attestationData.get.aaguid
-
           it("the attestation statement verifier implementation is PackedAttestationStatementVerifier.") {
-            val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
-              WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
-                .set("fmt", jsonFactory.textNode("packed"))
-            ).toVector
-            val steps = finishRegistration(attestationObject = attestationObject)
+            val steps = finishRegistration(testData = TestData.Packed.BasicAttestation)
             val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
@@ -618,30 +674,29 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("the verification procedure is:") {
-            def makeAttestationObject(attStmt: Map[String, JsonNode]): AttestationObject =
-              AttestationObject(
-                WebAuthnCodecs.cbor.writeValueAsBytes(
-                  WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
-                    .setAll(Map(
-                      "fmt" -> jsonFactory.textNode("packed"),
-                      "attStmt" -> jsonFactory.objectNode().setAll(attStmt.asJava)
-                    ).asJava)
-                ).toVector
-              )
-
             describe("1. Verify that the given attestation statement is valid CBOR conforming to the syntax defined above.") {
 
               it("Fails if attStmt.sig is a text value.") {
-                val attestationObject = makeAttestationObject(attStmt = Map("sig" -> jsonFactory.textNode("foo")))
-                val result: Try[Boolean] = verifier._verifyAttestationSignature(attestationObject, Defaults.clientDataJsonHash)
+                val testData = TestData.Packed.BasicAttestation
+                  .editAttestationObject("attStmt", jsonFactory.objectNode().set("sig", jsonFactory.textNode("foo")))
+
+                val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                  AttestationObject(testData.attestationObject),
+                  testData.clientDataJsonHash
+                )
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
               }
 
               it("Fails if attStmt.sig is missing.") {
-                val attestationObject = makeAttestationObject(attStmt = Map("x5c" -> jsonFactory.arrayNode()))
-                val result: Try[Boolean] = verifier._verifyAttestationSignature(attestationObject, Defaults.clientDataJsonHash)
+                val testData = TestData.Packed.BasicAttestation
+                  .editAttestationObject("attStmt", jsonFactory.objectNode().set("x5c", jsonFactory.arrayNode()))
+
+                val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                  AttestationObject(testData.attestationObject),
+                  testData.clientDataJsonHash
+                )
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
@@ -649,8 +704,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
-              val authenticatorData: AuthenticatorData = packedAttObj.authenticatorData
-              val clientDataHash = MessageDigest.getInstance(WebAuthnCodecs.json.readTree(clientDataJson).get("hashAlgorithm").textValue()).digest(clientDataJson.getBytes("UTF-8"))
+              val testData = TestData.Packed.BasicAttestation
+              val authenticatorData: AuthenticatorData = AttestationObject(testData.attestationObject).authenticatorData
+              val clientDataHash = MessageDigest.getInstance(WebAuthnCodecs.json.readTree(testData.clientDataJson).get("hashAlgorithm").textValue()).digest(testData.clientDataJson.getBytes("UTF-8"))
 
               authenticatorData should not be null
               clientDataHash should not be null
@@ -658,7 +714,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             describe("3. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
               it("The attestation type is identified as Basic.") {
-                val steps = finishRegistration(attestationObject = packedAttestationObject)
+                val steps = finishRegistration(testData = TestData.Packed.BasicAttestation)
                 val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
@@ -668,14 +724,21 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
                 it("Succeeds for the default test case.") {
-                  val result: Try[Boolean] = verifier._verifyAttestationSignature(packedAttObj, packedClientDataJsonHash)
+                  val testData = TestData.Packed.BasicAttestation
+                  val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
                   result should equal (Success(true))
                 }
 
                 it("Fail if the default test case is mutated.") {
-                  val mutatedAttestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c647434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00206d418a6349d838c8674948709e51219357548ca070c48d0210c5e8bfe8e22277bf63616c676545533235366178582043ff557da4db027562880f55a4ba243adcc93da9d01fdc359c41eee3f6fdbb4761795821009de362d1fc6f740acd926e2d61e21b59c17e8f12b1c699975756c9d1c4983d4eff63666d74667061636b65646761747453746d74bf637835639f59013c308201383081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d0301070342000451cc135e064304105c3c9d15fca2a3ec52a73462c458f65f715c8c690fddfec99012901e8875d2fef88c3ae1a7720cdbfb1950fb02406e3713ce85e6030bd66f300a06082a8648ce3d04030203490030460221009ca0c2ed89764f43d1bd41fee681da1a6f51280a28f5e7cc509c6d89096ff3e5022100892fd9745a93077c948b6ef0eaaa453bd01eb63e17629c9272b29c3ff4c7f3d6ff6373696758473045022100aa9be4687e2d2b9f5baa459cec577a388885599679896ce0698632bbb04f270b022069e9469fae5b28c2e94c96d6b3bc79d65fb6e05d12dcc1dbbddc6081244cda6cffff").get
+                  val testData = TestData.Packed.BasicAttestation
 
-                  val result: Try[Boolean] = verifier._verifyAttestationSignature(AttestationObject(mutatedAttestationObject), packedClientDataJsonHash)
+                  val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                    AttestationObject(testData.editAuthenticatorData({ authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }).attestationObject),
+                    testData.clientDataJsonHash
+                  )
                   result should equal (Success(false))
                 }
               }
@@ -697,55 +760,63 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
 
                 it("succeeds for the default test case.") {
-                  val result = verifier.verifyAttestationSignature(packedAttObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val testData = TestData.Packed.BasicAttestation
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
                   result should equal (true)
                 }
               }
 
               describe("3. If x5c contains an extension with OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the AAGUID in authenticatorData.") {
                 it("Succeeds for the default test case.") {
-                  val result = verifier.verifyAttestationSignature(packedAttObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
-                  val cert: X509Certificate = CertificateParser.parseDer(packedAttObj.attestationStatement.get("x5c").get(0).binaryValue())
+                  val testData = TestData.Packed.BasicAttestation
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
 
-                  cert.getNonCriticalExtensionOIDs.asScala should equal (Set("1.3.6.1.4.1.45724.1.1.4"))
+                  testData.packedAttestationCert.getNonCriticalExtensionOIDs.asScala should equal (Set("1.3.6.1.4.1.45724.1.1.4"))
                   result should equal (true)
                 }
 
                 it("Succeeds if the attestation certificate does not have the extension.") {
-                  // These values generated using TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(a.generateAttestationCertificate(extensions = Nil)), attestationStatementFormat = "packed")
-                  val attestationObj = AttestationObject(BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00208a77a78607430f6ddad766aaeecce6d974ca4d42f95be216f0a10ee50bdef599bf63616c6765455332353661785820499841182f0321043a5873495d102de28ef1fb92c230c604dfe8bc21c931c70a61795820220a01182407d642c4ca2a09ba2170a042f087a18bf284ebf83d89eb6a0c65cbff63666d74667061636b65646761747453746d74bf637835639f5901c0308201bc30820162a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004056f968a406e763871595e76df2d0f95ea8189ecef39c210daf819bc9826e2ffd8be0631aa372604206e7260f0f5bbf5fb43532a9a0699ac8e31a8203f35e4d6300a06082a8648ce3d0403020348003045022100c7a9fc10eb81f7a888c6e05ea01e94393f95c9fbbf8ec747e967a97db65f45a802200881e68dc8805bd18fa156511f0f5da282378bd77868560f5a8b8f96fdfc3423ff6373696758463044022072f8b21e55bfd74fcf14116bd01b5efe034aae8d9b8b6f3763c02d25e487655a022040438688022ba64c1db18b2c2b9637d6243945ec8b73bbbfef1a4755092a204affff").get)
-                  val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+                  val testData = TestData.Packed.BasicAttestationWithoutAaguidExtension
 
-                  val result = verifier.verifyAttestationSignature(attestationObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
-                  val cert: X509Certificate = CertificateParser.parseDer(attestationObj.attestationStatement.get("x5c").get(0).binaryValue())
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
 
-                  cert.getNonCriticalExtensionOIDs shouldBe null
+                  testData.packedAttestationCert.getNonCriticalExtensionOIDs shouldBe null
                   result should equal (true)
                 }
 
                 it("Fails if the attestation certificate has the extension and it does not match the AAGUID.") {
-                  // These values generated using TestAuthenticator.createBasicAttestedCredential(aaguid = Vector[Byte](15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0), attestationStatementFormat = "packed")
-                  val attestationObj = AttestationObject(BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976341000005390f0e0d0c0b0a0908070605040302010000202aba487f856dccd69c13c8a0e41332ecafc1965b66dad5027bea312fbc2f45fabf63616c676545533235366178582022387031d413f5dbfe60b9750c0209fdcfa5d6eacae7d1a64504ff7a58aa5d2c6179582100abe15cad50dd40204a4fd4ea1b6b8ec7492b779ab7f8dfd7ecde1e31aefd39c0ff63666d74667061636b65646761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff6373696758463044022034ae9278ba1dcac079e94c292b28a7993a82cb2c0e87ecde14f9385b177f8627022039facd2b523cf6e067fc504308f0e3b1e67d5afd74d6c4838fa391a781fc5c21ffff").get)
-                  val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+                  val testData = TestData.Packed.BasicAttestationWithWrongAaguidExtension
 
-                  val result = verifier._verifyAttestationSignature(attestationObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
-                  val cert: X509Certificate = CertificateParser.parseDer(attestationObj.attestationStatement.get("x5c").get(0).binaryValue())
+                  val result = verifier._verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
 
-                  cert.getNonCriticalExtensionOIDs should not be empty
+                  testData.packedAttestationCert.getNonCriticalExtensionOIDs should not be empty
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
                 }
               }
 
               it("If successful, return attestation type Basic and trust path x5c.") {
-                val steps = finishRegistration(attestationObject = packedAttestationObject)
+                val testData = TestData.Packed.BasicAttestation
+                val steps = finishRegistration(testData = testData)
                 val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
                 step.attestationType should be (Basic)
                 step.attestationTrustPath should not be empty
-                step.attestationTrustPath.get should be (List(packedAttCert))
+                step.attestationTrustPath.get should be (List(testData.packedAttestationCert))
               }
             }
 
@@ -760,12 +831,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             describe("5. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
-              // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed")
-              val packedSelfAttestationObject: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002080cd099173bf7d236ef7bfcd2eb1a73ff40de6fa986f6c0decdaa57a6bbc6b83bf63616c67266178582040d93783595af7cf1d42d0c1197d45825c67065c541ab1de8fa671a77ae0a0c36179582100d55e6dfbabe2b3d838fa04d1dda0ec1f753180e518b9638cc85c084448fe5b52ff63666d74667061636b65646761747453746d74bf637369675846304402207a3955f4f4ef312b4df4912805558a367234cbd3d1445abf2246d4cb24146572022034c0f8e5f4cb75feafbff9d2e478773bd9d7115c4b9ab08c0b970f44921f2de563616c6726ffff").get
-              val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+              val testDataBase = TestData.Packed.SelfAttestation
 
               it("The attestation type is identified as SelfAttestation.") {
-                val steps = finishRegistration(attestationObject = packedSelfAttestationObject)
+                val steps = finishRegistration(testData = testDataBase)
                 val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
@@ -775,20 +844,25 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               describe("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
                 it("Succeeds for the default test case.") {
-                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testDataBase.attestationObject),
+                    testDataBase.clientDataJsonHash
+                  )
 
-                  AttestationObject(packedSelfAttestationObject).authenticatorData.attestationData.get.credentialPublicKey.get("alg").longValue should equal (-7)
-                  AttestationObject(packedSelfAttestationObject).attestationStatement.get("alg").longValue should equal (-7)
+                  AttestationObject(testDataBase.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.get("alg").longValue should equal (-7)
+                  AttestationObject(testDataBase.attestationObject).attestationStatement.get("alg").longValue should equal (-7)
                   result should equal (true)
                 }
 
                 it("Fails if the alg is a different value.") {
-                  val attestationObject: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00206ff53d1e8f2cc231b6294395729698d3eaa5064bc00839a1e767ed62cb7d46ebbf63616c67266178582100b7a32acd8cf6fd9f86e9ed25fa5ec637a54277ec6d23f62812207ce139bd3b486179582058d5d51c1e888f3a8520adb6f28eb399eff8627f5046b143d6574e98dda9b305ff63666d74667061636b65646761747453746d74bf6373696758473045022068307070d0347b004167fa828b8273f766ad1064fc0ca6b0ab5ee8f7e4177c9c022100e9d28534daaf3c09908e8f3ef7e594524dc34b1a02324ba7c163f4fa10075a2b63616c67390100ffff").get
-                  val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-                  val result = verifier._verifyAttestationSignature(AttestationObject(attestationObject), sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val testData = TestData.Packed.SelfAttestationWithWrongAlgValue
+                  val result = verifier._verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
 
-                  AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialPublicKey.get("alg").longValue should equal (-7)
-                  AttestationObject(attestationObject).attestationStatement.get("alg").longValue should equal (-257)
+                  AttestationObject(testData.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.get("alg").longValue should equal (-7)
+                  AttestationObject(testData.attestationObject).attestationStatement.get("alg").longValue should equal (-257)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
                 }
@@ -796,23 +870,34 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               describe("2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg.") {
                 it("Succeeds for the default test case.") {
-                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testDataBase.attestationObject),
+                    testDataBase.clientDataJsonHash
+                  )
                   result should equal (true)
                 }
 
                 it("Fails if the attestation object is mutated.") {
-                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject.updated(32, if (packedSelfAttestationObject(32) == 0) 1: Byte else 0: Byte)), sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val testData = testDataBase.editAuthenticatorData { authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
                   result should equal (false)
                 }
 
                 it("Fails if the client data is mutated.") {
-                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), sha256(clientDataJson.updated(4, 'ä').getBytes("UTF-8").toVector))
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testDataBase.attestationObject),
+                    sha256(testDataBase.clientDataJson.updated(4, 'ä').getBytes("UTF-8").toVector)
+                  )
                   result should equal (false)
                 }
 
                 it("Fails if the client data hash is mutated.") {
-                  val hash = sha256(clientDataJson.getBytes("UTF-8").toVector)
-                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), hash.updated(7, if (hash(7) == 0) 1: Byte else 0: Byte))
+                  val result = verifier.verifyAttestationSignature(
+                    AttestationObject(testDataBase.attestationObject),
+                    testDataBase.clientDataJsonHash.updated(7, if (testDataBase.clientDataJsonHash(7) == 0) 1: Byte else 0: Byte))
                   result should equal (false)
                 }
               }
@@ -824,6 +909,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("7.2.1. Packed attestation statement certificate requirements") {
+            val testDataBase = TestData.Packed.BasicAttestation
+
             describe("The attestation certificate MUST have the following fields/extensions:") {
               it("Version must be set to 3.") {
                 val badCert = Mockito.mock(classOf[X509Certificate])
@@ -831,12 +918,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 Mockito.when(badCert.getVersion) thenReturn 2
                 Mockito.when(badCert.getSubjectX500Principal) thenReturn principal
                 Mockito.when(badCert.getBasicConstraints) thenReturn -1
-                val result = verifier._verifyX5cRequirements(badCert, aaguid)
+                val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
 
-                verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal (Success(true))
+                verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (Success(true))
               }
 
               describe("Subject field MUST be set to:") {
@@ -844,36 +931,36 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )._1
-                  val result = verifier._verifyX5cRequirements(badCert, aaguid)
+                  val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
 
-                  verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal (Success(true))
+                  verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (Success(true))
                 }
 
                 it("Subject-O: Legal name of the Authenticator vendor") {
                   val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
                     name = new X500Name("C=SE, OU=Authenticator Attestation")
                   )._1
-                  val result = verifier._verifyX5cRequirements(badCert, aaguid)
+                  val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
 
-                  verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal(Success(true))
+                  verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(Success(true))
                 }
 
                 it("Subject-OU: Authenticator Attestation") {
                   val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=SE, OU=Foo")
                   )._1
-                  val result = verifier._verifyX5cRequirements(badCert, aaguid)
+                  val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
 
-                  verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal(Success(true))
+                  verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(Success(true))
                 }
 
                 it("Subject-CN: No stipulation.") {
@@ -883,13 +970,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as value.") {
                 val idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4"
-                packedAttCert.getExtensionValue(idFidoGenCeAaguid)
 
                 val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
                   extensions = List((idFidoGenCeAaguid, false, Vector(0, 1, 2, 3)))
                 )._1
-                val result = verifier._verifyX5cRequirements(badCert, aaguid)
+                val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
@@ -898,12 +984,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
                   extensions = Nil
                 )._1
-                val goodResult = verifier._verifyX5cRequirements(badCert, aaguid)
+                val goodResult = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                 goodResult shouldBe a [Failure[_]]
                 goodResult.failed.get shouldBe an [AssertionError]
 
-                verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal(Success(true))
+                verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(Success(true))
               }
 
               it("The Basic Constraints extension MUST have the CA component set to false") {
@@ -912,12 +998,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 Mockito.when(badCert.getVersion) thenReturn 3
                 Mockito.when(badCert.getSubjectX500Principal) thenReturn principal
                 Mockito.when(badCert.getBasicConstraints) thenReturn 0
-                val result = verifier._verifyX5cRequirements(badCert, aaguid)
+                val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
 
-                verifier._verifyX5cRequirements(packedAttCert, aaguid) should equal (Success(true))
+                verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (Success(true))
               }
 
               it("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both optional as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
@@ -928,11 +1014,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("The tpm statement format is supported.") {
-          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
-            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
-              .set("fmt", jsonFactory.textNode("tpm"))
-          ).toVector
-          val steps = finishRegistration(attestationObject = attestationObject)
+          val steps = finishRegistration(testData = TestData.Tpm.PrivacyCa)
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -940,11 +1022,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("The android-key statement format is supported.") {
-          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
-            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
-              .set("fmt", jsonFactory.textNode("android-key"))
-          ).toVector
-          val steps = finishRegistration(attestationObject = attestationObject)
+          val steps = finishRegistration(testData = TestData.AndroidKey.BasicAttestation)
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -952,11 +1030,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("The android-safetynet statement format is supported.") {
-          val attestationObject: ArrayBuffer = WebAuthnCodecs.cbor.writeValueAsBytes(
-            WebAuthnCodecs.cbor.readTree(Defaults.attestationObject.toArray).asInstanceOf[ObjectNode]
-              .set("fmt", jsonFactory.textNode("android-safetynet"))
-          ).toVector
-          val steps = finishRegistration(attestationObject = attestationObject)
+          val steps = finishRegistration(testData = TestData.AndroidSafetynet.BasicAttestation)
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
@@ -969,8 +1043,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("For the fido-u2f statement format") {
 
           it("with self attestation, no trust anchors are returned.") {
-            val attestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020b6301bd05fa254360b23ceede039fa0ac97b74ab6f8241c1cce225b521f92f61bf63616c67654553323536617858203f735d9a1b48a08c099f8ab5c6824465a13d7aea552f038fbc886e5f4916910861795821008192a1ecfcfcb285050fbbb49c1f7ecbfb0eb7558782c271480bc656b2f473c1ff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d030107034200043f735d9a1b48a08c099f8ab5c6824465a13d7aea552f038fbc886e5f491691088192a1ecfcfcb285050fbbb49c1f7ecbfb0eb7558782c271480bc656b2f473c1300a06082a8648ce3d0403020348003045022100f3f63e97ae36b181a8e2ca3d8bb60201c80f089c241e28c59a61302a1638f7870220116b43eeb54e7192f5ce9a0d018410ac0c608bc53ea2e1cbecdad9910689fcd6ff63736967584730450221009d6277e2300f7542107941ef1915613a0fbba66a27c37c56559d8817236c66250220632eadc777524e0032e2731275ccf06e6021a44c7804993cb894d8546cd9727effff").get
-            val steps = finishRegistration(attestationObject = attestationObject)
+            val steps = finishRegistration(testData = TestData.FidoU2f.SelfAttestation)
             val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
@@ -981,7 +1054,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("with basic attestation, a trust resolver is returned.") {
             val metadataResolver: MetadataResolver = new SimpleResolver
             val metadataService: MetadataService = new MetadataService(metadataResolver, null, null)
-            val steps = finishRegistration(metadataService = Some(metadataService))
+            val steps = finishRegistration(
+              testData = TestData.FidoU2f.BasicAttestation,
+              metadataService = Some(metadataService)
+            )
             val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
@@ -998,12 +1074,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("If self attestation was used, check if self attestation is acceptable under Relying Party policy.") {
 
           describe("The default test case, with self attestation,") {
-            val attestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020b6301bd05fa254360b23ceede039fa0ac97b74ab6f8241c1cce225b521f92f61bf63616c67654553323536617858203f735d9a1b48a08c099f8ab5c6824465a13d7aea552f038fbc886e5f4916910861795821008192a1ecfcfcb285050fbbb49c1f7ecbfb0eb7558782c271480bc656b2f473c1ff63666d74686669646f2d7532666761747453746d74bf637835639f59013b308201373081dea00302010202020539300a06082a8648ce3d04030230253123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473301e170d3138303930363137343230305a170d3138303930363137343230305a30253123302106035504030c1a59756269636f20576562417574686e20756e69742074657374733059301306072a8648ce3d020106082a8648ce3d030107034200043f735d9a1b48a08c099f8ab5c6824465a13d7aea552f038fbc886e5f491691088192a1ecfcfcb285050fbbb49c1f7ecbfb0eb7558782c271480bc656b2f473c1300a06082a8648ce3d0403020348003045022100f3f63e97ae36b181a8e2ca3d8bb60201c80f089c241e28c59a61302a1638f7870220116b43eeb54e7192f5ce9a0d018410ac0c608bc53ea2e1cbecdad9910689fcd6ff63736967584730450221009d6277e2300f7542107941ef1915613a0fbba66a27c37c56559d8817236c66250220632eadc777524e0032e2731275ccf06e6021a44c7804993cb894d8546cd9727effff").get
-
             it("is rejected if self attestation is not allowed.") {
               val steps = finishRegistration(
-                allowSelfAttestation = false,
-                attestationObject = attestationObject
+                testData = TestData.FidoU2f.SelfAttestation,
+                allowSelfAttestation = false
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -1015,8 +1089,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if self attestation is allowed.") {
               val steps = finishRegistration(
-                allowSelfAttestation = true,
-                attestationObject = attestationObject
+                testData = TestData.FidoU2f.SelfAttestation,
+                allowSelfAttestation = true
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -1037,7 +1111,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             it("is rejected if trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
               val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
-              val steps = finishRegistration(metadataService = Some(metadataService))
+              val steps = finishRegistration(
+                testData = TestData.FidoU2f.BasicAttestation,
+                metadataService = Some(metadataService)
+              )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               step.validations shouldBe a [Failure[_]]
@@ -1064,7 +1141,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 )
               )
 
-              val steps = finishRegistration(metadataService = Some(metadataService))
+              val steps = finishRegistration(
+                testData = TestData.FidoU2f.BasicAttestation,
+                metadataService = Some(metadataService)
+              )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               step.validations shouldBe a [Success[_]]
@@ -1092,12 +1172,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       it("15. (Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
-        val steps = finishRegistration(
-          clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-            WebAuthnCodecs.json.readTree(Defaults.clientDataJson.getBytes("UTF-8")).asInstanceOf[ObjectNode]
-              .set("foo", jsonFactory.textNode("bar"))
-          )
-        )
+        val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation.editClientData("foo", "bar"))
         val step10: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
         val step11: steps.Step11 = step10.next.get
 
