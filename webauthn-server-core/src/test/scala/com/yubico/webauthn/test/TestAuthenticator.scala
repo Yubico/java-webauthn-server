@@ -291,7 +291,7 @@ class TestAuthenticator (
 
   def ecPublicKeyToCose(key: ECPublicKey): JsonNode = {
     jsonFactory.objectNode().setAll(Map(
-      "alg" -> jsonFactory.textNode("ES256"),
+      "alg" -> jsonFactory.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)),
       "x" -> jsonFactory.binaryNode(key.getW.getAffineX.toByteArray),
       "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
     ).asJava)
