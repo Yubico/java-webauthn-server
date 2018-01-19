@@ -13,7 +13,7 @@
       {
         name: 'Firefox 57',
         isEnabled() {
-          return typeof InstallTrigger !== undefined && window.navigator.userAgent.match(/Firefox \/57/);
+          return typeof InstallTrigger !== undefined && window.navigator.userAgent.match(/Firefox\/57/);
         },
         fixRegisterRequest(makePublicKeyCredentialOptions) {
           return {
