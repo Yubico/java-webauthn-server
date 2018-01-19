@@ -903,7 +903,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               it("3. If successful, return attestation type Self and empty trust path.") {
-                fail("Test not implemented.")
+                val testData = TestData.Packed.SelfAttestation
+                val steps = finishRegistration(testData = testData)
+                val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Success[_]]
+                step.next shouldBe a [Success[_]]
+                step.attestationType should be (SelfAttestation)
+                step.attestationTrustPath shouldBe empty
               }
             }
           }
