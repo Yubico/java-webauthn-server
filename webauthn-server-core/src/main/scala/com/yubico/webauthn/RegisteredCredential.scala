@@ -10,5 +10,12 @@ case class RegisteredCredential(
   publicKey: PublicKey,
   signatureCount: Long,
   userHandle: ArrayBuffer
-)
+) {
+  def this(
+    credentialId: ArrayBuffer,
+    publicKey: PublicKey,
+    signatureCount: Long,
+    userHandle: Array[Byte]
+  ) = this(credentialId, publicKey, signatureCount, userHandle.toVector)
+}
 
