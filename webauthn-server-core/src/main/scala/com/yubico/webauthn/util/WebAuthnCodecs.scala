@@ -32,7 +32,8 @@ object WebAuthnCodecs {
 
   def coseKeyToRaw(key: ObjectNode): ArrayBuffer = {
     assert(
-      key.has("alg") && key.get("alg").isNumber && key.get("alg").longValue == javaAlgorithmNameToCoseAlgorithmIdentifier("ES256"),
+      (key.has("alg") && key.get("alg").isNumber && key.get("alg").longValue == javaAlgorithmNameToCoseAlgorithmIdentifier("ES256"))
+      || (key.has("alg") && key.get("alg").isTextual && key.get("alg").textValue == "ES256"),
       s"""COSE key must have the property "alg" set to ${javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")}: ${key}"""
     )
     assert(
