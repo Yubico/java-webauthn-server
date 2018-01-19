@@ -155,7 +155,11 @@ function performCeremony({
     })
 
     .then(data => {
-      setStatus(statusStrings.success);
+      if (data && data.success) {
+        setStatus(statusStrings.success);
+      } else {
+        setStatus('Error!');
+      }
       showServerResponse(data);
       return data;
     })

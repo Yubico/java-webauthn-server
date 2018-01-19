@@ -92,6 +92,7 @@ public class WebAuthnServer {
 
     @Value
     public static class SuccessfulRegistrationResult {
+        final boolean success = true;
         RegistrationRequest request;
         RegistrationResponse response;
         CredentialRegistration registration;
@@ -163,6 +164,7 @@ public class WebAuthnServer {
 
     @Value
     public static class SuccessfulAuthenticationResult {
+        final boolean success = true;
         AssertionRequest request;
         AssertionResponse response;
         Collection<CredentialRegistration> registrations;
