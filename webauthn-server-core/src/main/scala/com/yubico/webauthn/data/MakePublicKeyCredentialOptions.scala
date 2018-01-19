@@ -36,7 +36,6 @@ case class MakePublicKeyCredentialOptions(
     * client will make a best-effort to create the most preferred credential
     * that it can.
     */
-  @JsonProperty("parameters")
   pubKeyCredParams: java.util.List[PublicKeyCredentialParameters],
 
   /**

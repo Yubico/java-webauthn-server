@@ -68,8 +68,6 @@ object WebAuthnCodecs {
       "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
     ).asJava).asInstanceOf[ObjectNode]
 
-  def coseKeyToRawArray(key: ObjectNode): Array[Byte] = coseKeyToRaw(key).toArray
-
   def importCoseP256PublicKey(key: ObjectNode): PublicKey = {
     val ecSpec: ECParameterSpec = ECNamedCurveTable.getParameterSpec("secp256r1")
 
@@ -78,7 +76,7 @@ object WebAuthnCodecs {
     ecSpec.getCurve
 
     val pubKeySpec: ECPublicKeySpec = new ECPublicKeySpec(
-      ecSpec.getCurve.decodePoint(coseKeyToRawArray(key)),
+      ecSpec.getCurve.decodePoint(coseKeyToRaw(key).toArray),
       ecSpec
     )
 

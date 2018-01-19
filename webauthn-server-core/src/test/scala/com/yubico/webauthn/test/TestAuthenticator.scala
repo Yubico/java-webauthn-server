@@ -132,7 +132,7 @@ class TestAuthenticator (
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
     tokenBindingId: Option[String] = None,
-    userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = "test"),
+    userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = Vector(42, 13, 37)),
     useSelfAttestation: Boolean = false
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
 

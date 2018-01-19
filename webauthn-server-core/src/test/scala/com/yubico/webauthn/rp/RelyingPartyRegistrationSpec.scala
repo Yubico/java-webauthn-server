@@ -120,7 +120,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
     requestedExtensions: Option[AuthenticationExtensions] = None,
     rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
-    userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = "test")
+    userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37))
   ) {
     def clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     def clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector

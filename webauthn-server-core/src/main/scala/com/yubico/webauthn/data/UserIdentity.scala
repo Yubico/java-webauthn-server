@@ -3,7 +3,10 @@ package com.yubico.webauthn.data
 import java.net.URL
 import java.util.Optional
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
 /**
@@ -31,7 +34,8 @@ case class UserIdentity (
     * contain more than one credential for a given Relying Party under the same
     * id.
     */
-  id: String,
+  @JsonIgnore
+  id: ArrayBuffer,
 
   /**
     * A URL which resolves to an image associated with the user account.
@@ -40,4 +44,11 @@ case class UserIdentity (
     */
   icon: Optional[URL] = None.asJava
 
-)
+) {
+
+  def this(name: String, displayName: String, id: Array[Byte], icon: Optional[URL]) =
+    this(name, displayName, id.toVector, icon)
+
+  @JsonProperty("id")
+  def idBase64: String = U2fB64Encoding.encode(id.toArray)
+}
