@@ -693,8 +693,39 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              it("3. If x5c contains an extension with OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the AAGUID in authenticatorData.") {
-                fail("Test not implemented.")
+              describe("3. If x5c contains an extension with OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the AAGUID in authenticatorData.") {
+                it("Succeeds for the default test case.") {
+                  val result = verifier.verifyAttestationSignature(packedAttObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val cert: X509Certificate = CertificateParser.parseDer(packedAttObj.attestationStatement.get("x5c").get(0).binaryValue())
+
+                  cert.getNonCriticalExtensionOIDs.asScala should equal (Set("1.3.6.1.4.1.45724.1.1.4"))
+                  result should equal (true)
+                }
+
+                it("Succeeds if the attestation certificate does not have the extension.") {
+                  // These values generated using TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(a.generateAttestationCertificate(extensions = Nil)), attestationStatementFormat = "packed")
+                  val attestationObj = AttestationObject(BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00208a77a78607430f6ddad766aaeecce6d974ca4d42f95be216f0a10ee50bdef599bf63616c6765455332353661785820499841182f0321043a5873495d102de28ef1fb92c230c604dfe8bc21c931c70a61795820220a01182407d642c4ca2a09ba2170a042f087a18bf284ebf83d89eb6a0c65cbff63666d74667061636b65646761747453746d74bf637835639f5901c0308201bc30820162a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004056f968a406e763871595e76df2d0f95ea8189ecef39c210daf819bc9826e2ffd8be0631aa372604206e7260f0f5bbf5fb43532a9a0699ac8e31a8203f35e4d6300a06082a8648ce3d0403020348003045022100c7a9fc10eb81f7a888c6e05ea01e94393f95c9fbbf8ec747e967a97db65f45a802200881e68dc8805bd18fa156511f0f5da282378bd77868560f5a8b8f96fdfc3423ff6373696758463044022072f8b21e55bfd74fcf14116bd01b5efe034aae8d9b8b6f3763c02d25e487655a022040438688022ba64c1db18b2c2b9637d6243945ec8b73bbbfef1a4755092a204affff").get)
+                  val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+
+                  val result = verifier.verifyAttestationSignature(attestationObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val cert: X509Certificate = CertificateParser.parseDer(attestationObj.attestationStatement.get("x5c").get(0).binaryValue())
+
+                  cert.getNonCriticalExtensionOIDs shouldBe null
+                  result should equal (true)
+                }
+
+                it("Fails if the attestation certificate has the extension and it does not match the AAGUID.") {
+                  // These values generated using TestAuthenticator.createBasicAttestedCredential(aaguid = Vector[Byte](15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0), attestationStatementFormat = "packed")
+                  val attestationObj = AttestationObject(BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976341000005390f0e0d0c0b0a0908070605040302010000202aba487f856dccd69c13c8a0e41332ecafc1965b66dad5027bea312fbc2f45fabf63616c676545533235366178582022387031d413f5dbfe60b9750c0209fdcfa5d6eacae7d1a64504ff7a58aa5d2c6179582100abe15cad50dd40204a4fd4ea1b6b8ec7492b779ab7f8dfd7ecde1e31aefd39c0ff63666d74667061636b65646761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff6373696758463044022034ae9278ba1dcac079e94c292b28a7993a82cb2c0e87ecde14f9385b177f8627022039facd2b523cf6e067fc504308f0e3b1e67d5afd74d6c4838fa391a781fc5c21ffff").get)
+                  val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+
+                  val result = verifier._verifyAttestationSignature(attestationObj, sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  val cert: X509Certificate = CertificateParser.parseDer(attestationObj.attestationStatement.get("x5c").get(0).binaryValue())
+
+                  cert.getNonCriticalExtensionOIDs should not be empty
+                  result shouldBe a [Failure[_]]
+                  result.failed.get shouldBe an [AssertionError]
+                }
               }
 
               it("If successful, return attestation type Basic and trust path x5c.") {
