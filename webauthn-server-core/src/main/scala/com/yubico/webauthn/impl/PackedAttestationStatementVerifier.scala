@@ -13,6 +13,7 @@ import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.Ecdaa
 import com.yubico.webauthn.data.SelfAttestation
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
@@ -56,6 +57,11 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
   private def verifyEcdaaSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = ???
 
   private def verifySelfAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
+    val keyAlg: COSEAlgorithmIdentifier = attestationObject.authenticatorData.attestationData.get.credentialPublicKey.get("alg").asLong
+    val sigAlg: COSEAlgorithmIdentifier = attestationObject.attestationStatement.get("alg").asLong
+
+    assert(keyAlg == sigAlg, s"Key algorithm and signature algorithm must be equal, was: Key: ${keyAlg}, Sig: ${sigAlg}")
+
     val pubkey = WebAuthnCodecs.importCoseP256PublicKey(attestationObject.authenticatorData.attestationData.get.credentialPublicKey) // TODO support other key types than ECDSA
     val signedData: ArrayBuffer = attestationObject.authenticatorData.authData ++ clientDataJsonHash
     val signature = attestationObject.attestationStatement.get("sig").binaryValue.toVector
