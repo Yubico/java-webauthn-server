@@ -22,6 +22,7 @@ import scala.collection.JavaConverters._
 object WebAuthnCodecs {
 
   private val javaCryptoProvider: Provider = new BouncyCastleProvider
+  private def jsonFactory = JsonNodeFactory.instance
 
   def cbor: ObjectMapper = new ObjectMapper(new CBORFactory()).setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
 
@@ -50,8 +51,6 @@ object WebAuthnCodecs {
     )
 
     val start: Int = if (key.length == 64) 0 else 1
-
-    val jsonFactory = JsonNodeFactory.instance
 
     jsonFactory.objectNode().setAll(Map(
       "alg" -> jsonFactory.numberNode(javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")),
