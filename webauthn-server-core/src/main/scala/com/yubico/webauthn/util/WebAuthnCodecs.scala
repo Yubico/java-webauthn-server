@@ -79,6 +79,7 @@ object WebAuthnCodecs {
 
   def javaAlgorithmNameToCoseAlgorithmIdentifier(alg: String): COSEAlgorithmIdentifier = alg match {
     case "ECDSA" | "ES256" => -7
+    case "RS256" => -257
   }
 
 }
