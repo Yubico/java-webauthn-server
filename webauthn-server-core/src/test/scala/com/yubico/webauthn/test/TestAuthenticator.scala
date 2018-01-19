@@ -205,10 +205,13 @@ class TestAuthenticator (
       attestationStatementFormat = attestationStatementFormat
     )
 
-  def createSelfAttestedCredential(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
+  def createSelfAttestedCredential(
+    attestationStatementFormat: String = "fido-u2f"
+  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
     val keypair = generateEcKeypair()
     createCredential(
       attestationCertAndKey = Some(generateAttestationCertificate(keypair)),
+      attestationStatementFormat = attestationStatementFormat,
       credentialKeypair = Some(keypair)
     )
   }
