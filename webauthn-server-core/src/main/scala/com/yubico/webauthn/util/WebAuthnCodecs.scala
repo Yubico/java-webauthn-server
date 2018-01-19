@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECParameterSpec
@@ -74,6 +75,10 @@ object WebAuthnCodecs {
     )
 
     kf.generatePublic(pubKeySpec)
+  }
+
+  def javaAlgorithmNameToCoseAlgorithmIdentifier(alg: String): COSEAlgorithmIdentifier = alg match {
+    case "ECDSA" | "ES256" => -7
   }
 
 }
