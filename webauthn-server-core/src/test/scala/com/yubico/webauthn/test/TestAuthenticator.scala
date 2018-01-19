@@ -168,7 +168,7 @@ class TestAuthenticator (
       rpId = Defaults.rpId,
       attestationDataBytes = Some(makeAttestationDataBytes(
         aaguid = aaguid,
-        publicKeyCose = ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
+        publicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
         rpId = Defaults.rpId
       ))
     )
@@ -287,14 +287,6 @@ class TestAuthenticator (
       clientExtensionResults = jsonFactory.objectNode()
     )
 
-  }
-
-  def ecPublicKeyToCose(key: ECPublicKey): JsonNode = {
-    jsonFactory.objectNode().setAll(Map(
-      "alg" -> jsonFactory.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)),
-      "x" -> jsonFactory.binaryNode(key.getW.getAffineX.toByteArray),
-      "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
-    ).asJava)
   }
 
   def makeAttestationObjectBytes(

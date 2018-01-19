@@ -3,6 +3,7 @@ package com.yubico.webauthn.util
 import java.security.PublicKey
 import java.security.KeyFactory
 import java.security.Provider
+import java.security.interfaces.ECPublicKey
 
 import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -58,6 +59,13 @@ object WebAuthnCodecs {
       "y" -> jsonFactory.binaryNode(key.drop(start + 32).toArray)
     ).asJava)
   }
+
+  def ecPublicKeyToCose(key: ECPublicKey): JsonNode =
+    jsonFactory.objectNode().setAll(Map(
+      "alg" -> jsonFactory.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)),
+      "x" -> jsonFactory.binaryNode(key.getW.getAffineX.toByteArray),
+      "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
+    ).asJava)
 
   def coseKeyToRawArray(key: JsonNode): Array[Byte] = coseKeyToRaw(key).toArray
 
