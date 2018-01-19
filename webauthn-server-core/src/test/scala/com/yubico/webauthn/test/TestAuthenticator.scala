@@ -132,7 +132,8 @@ class TestAuthenticator (
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
     tokenBindingId: Option[String] = None,
-    userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = "test")
+    userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = "test"),
+    useSelfAttestation: Boolean = false
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
 
     val options = MakePublicKeyCredentialOptions(
@@ -176,7 +177,8 @@ class TestAuthenticator (
       authDataBytes,
       attestationStatementFormat,
       clientDataJson,
-      attestationCertAndKey
+      attestationCertAndKey,
+      selfAttestationKey = if (useSelfAttestation) Some(credentialKeypair.get.getPrivate) else None
     )
 
     val response = data.impl.AuthenticatorAttestationResponse(
@@ -209,11 +211,21 @@ class TestAuthenticator (
     attestationStatementFormat: String = "fido-u2f"
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
     val keypair = generateEcKeypair()
-    createCredential(
-      attestationCertAndKey = Some(generateAttestationCertificate(keypair)),
-      attestationStatementFormat = attestationStatementFormat,
-      credentialKeypair = Some(keypair)
-    )
+    attestationStatementFormat match {
+      case "fido-u2f" =>
+        createCredential(
+          attestationCertAndKey = Some(generateAttestationCertificate (keypair) ),
+          attestationStatementFormat = attestationStatementFormat,
+          credentialKeypair = Some(keypair)
+        )
+      case "packed" =>
+        createCredential(
+          attestationCertAndKey = None,
+          attestationStatementFormat = attestationStatementFormat,
+          credentialKeypair = Some(keypair),
+          useSelfAttestation = true
+        )
+    }
   }
 
   def createAssertion(
@@ -285,10 +297,16 @@ class TestAuthenticator (
     ).asJava)
   }
 
-  def makeAttestationObjectBytes(authDataBytes: ArrayBuffer, format: String, clientDataJson: String, certAndKey: Option[(X509Certificate, PrivateKey)]): ArrayBuffer = {
+  def makeAttestationObjectBytes(
+    authDataBytes: ArrayBuffer,
+    format: String,
+    clientDataJson: String,
+    certAndKey: Option[(X509Certificate, PrivateKey)],
+    selfAttestationKey: Option[PrivateKey] = None
+  ): ArrayBuffer = {
     val makeAttestationStatement: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)]) => JsonNode = format match {
       case "fido-u2f" => makeU2fAttestationStatement _
-      case "packed" => makePackedAttestationStatement _
+      case "packed" => makePackedAttestationStatement(_, _, _, selfAttestationKey = selfAttestationKey)
     }
 
     val f = JsonNodeFactory.instance
@@ -344,18 +362,29 @@ class TestAuthenticator (
   def makePackedAttestationStatement(
     authDataBytes: ArrayBuffer,
     clientDataJson: String,
-    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+    selfAttestationKey: Option[PrivateKey] = None
   ): JsonNode = {
-    val (cert, key) = attestationCertAndKey getOrElse generateAttestationCertificate()
+    val (cert, key) = selfAttestationKey match {
+      case Some(key) => (null, key)
+      case None => attestationCertAndKey getOrElse generateAttestationCertificate()
+    }
 
     val signedData = authDataBytes ++ crypto.hash(clientDataJson)
     val signature = sign(signedData, key)
 
     val f = JsonNodeFactory.instance
-    f.objectNode().setAll(Map(
-      "x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)),
-      "sig" -> f.binaryNode(signature.toArray)
-    ).asJava)
+    f.objectNode().setAll(
+      (
+        Map("sig" -> f.binaryNode(signature.toArray))
+          ++ (
+            selfAttestationKey match {
+              case Some(key) => Map("alg" -> f.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)))
+              case None => Map("x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)))
+            }
+          )
+      ).asJava
+    )
   }
 
   def makeAuthDataBytes(
