@@ -56,7 +56,12 @@ function showJson(name, data) {
     .textContent = JSON.stringify(data, false, 2);
 }
 function showRequest(data) { return showJson('request', data); }
-function showAuthenticatorResponse(data) { return showJson('authenticator-response', data); }
+function showAuthenticatorResponse(data) {
+  return showJson('authenticator-response', {
+    ...data,
+    _clientDataJson: data && JSON.parse(new TextDecoder('utf-8').decode(base64url.toByteArray(data.response.clientDataJSON))),
+  });
+}
 function showServerResponse(data) { return showJson('server-response', data); }
 
 function hideDeviceInfo() {
