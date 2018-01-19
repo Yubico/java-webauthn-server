@@ -121,6 +121,7 @@ class TestAuthenticator (
     """.stripMargin
 
   def createCredential(
+    aaguid: ArrayBuffer = Defaults.aaguid,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f",
     authenticatorExtensions: Option[JsonNode] = None,
@@ -165,6 +166,7 @@ class TestAuthenticator (
     val authDataBytes: ArrayBuffer = makeAuthDataBytes(
       rpId = Defaults.rpId,
       attestationDataBytes = Some(makeAttestationDataBytes(
+        aaguid = aaguid,
         publicKeyCose = ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
         rpId = Defaults.rpId
       ))
@@ -190,10 +192,12 @@ class TestAuthenticator (
   }
 
   def createBasicAttestedCredential(
+    aaguid: ArrayBuffer = Defaults.aaguid,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f"
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
     createCredential(
+      aaguid = aaguid,
       attestationCertAndKey = attestationCertAndKey orElse Some(importCertAndKeyFromPem(
         getClass().getResourceAsStream("/attestation-cert.pem"),
         getClass().getResourceAsStream("/attestation-key.pem")
