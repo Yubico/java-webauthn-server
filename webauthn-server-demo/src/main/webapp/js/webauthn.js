@@ -31,31 +31,26 @@
       },
     ];
 
+    function applyFixes(fixName, arg) {
+      return fixes.reduce(
+        (result, fix) => {
+          if (fix.isEnabled()) {
+            return fix[fixName](result);
+          } else {
+            return result;
+          }
+        },
+        arg
+      );
+    }
+
     return {
       fixRegisterRequest(mpkco) {
-        return fixes.reduce(
-          (result, fix) => {
-            if (fix.isEnabled()) {
-              return fix.fixRegisterRequest(result);
-            } else {
-              return result;
-            }
-          },
-          mpkco
-        );
+        return applyFixes('fixRegisterRequest', mpkco);
       },
 
       fixAuthenticateRequest(pkcro) {
-        return fixes.reduce(
-          (result, fix) => {
-            if (fix.isEnabled()) {
-              return fix.fixAuthenticateRequest(result);
-            } else {
-              return result;
-            }
-          },
-          pkcro
-        );
+        return applyFixes('fixAuthenticateRequest', pkcro);
       },
     };
   }();
