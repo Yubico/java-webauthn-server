@@ -8,6 +8,14 @@
   }
 })(this, function(base64js) {
 
+  function ensureUint8Array(arg) {
+    if (arg instanceof ArrayBuffer) {
+      return new Uint8Array(arg);
+    } else {
+      return arg;
+    }
+  }
+
   function base64UrlToMime(code) {
     return code.replace(/-/g, '+').replace(/_/g, '/') + '===='.substring(0, (4 - (code.length % 4)) % 4);
   }
@@ -17,7 +25,7 @@
   }
 
   function fromByteArray(bytes) {
-    return mimeBase64ToUrl(base64js.fromByteArray(bytes));
+    return mimeBase64ToUrl(base64js.fromByteArray(ensureUint8Array(bytes)));
   }
 
   function toByteArray(code) {
