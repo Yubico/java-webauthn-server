@@ -249,6 +249,7 @@ public class WebAuthnRestResource {
     }
 
     private Response messagesJson(ResponseBuilder response, List<String> messages) {
+        logger.debug("Encoding messages as JSON: {}", messages);
         try {
             return response.entity(
                 jsonMapper.writeValueAsString(
