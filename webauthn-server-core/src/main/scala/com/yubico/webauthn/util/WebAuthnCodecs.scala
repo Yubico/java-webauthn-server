@@ -29,8 +29,8 @@ object WebAuthnCodecs {
 
   def coseKeyToRaw(key: JsonNode): ArrayBuffer = {
     assert(
-      key.get("alg").isTextual && key.get("alg").textValue() == "ES256",
-      """COSE key must have the property "alg" set to "ES256"."""
+      key.get("alg").isNumber && key.get("alg").longValue == javaAlgorithmNameToCoseAlgorithmIdentifier("ES256"),
+      s"""COSE key must have the property "alg" set to ${javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")}."""
     )
     assert(
       key.get("x").isBinary && key.get("y").isBinary(),
@@ -54,7 +54,7 @@ object WebAuthnCodecs {
     val jsonFactory = JsonNodeFactory.instance
 
     jsonFactory.objectNode().setAll(Map(
-      "alg" -> jsonFactory.textNode("ES256"),
+      "alg" -> jsonFactory.numberNode(javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")),
       "x" -> jsonFactory.binaryNode(key.slice(start, start + 32).toArray),
       "y" -> jsonFactory.binaryNode(key.drop(start + 32).toArray)
     ).asJava)
