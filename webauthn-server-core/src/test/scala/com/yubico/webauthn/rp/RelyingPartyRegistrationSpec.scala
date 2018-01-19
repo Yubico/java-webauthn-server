@@ -657,6 +657,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             describe("3. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
+              it("The attestation type is identified as Basic.") {
+                val steps = finishRegistration(attestationObject = packedAttestationObject)
+                val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Success[_]]
+                step.next shouldBe a [Success[_]]
+                step.attestationType should be (Basic)
+              }
+
               describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
                 it("Succeeds for the default test case.") {
                   val result: Try[Boolean] = verifier._verifyAttestationSignature(packedAttObj, packedClientDataJsonHash)
