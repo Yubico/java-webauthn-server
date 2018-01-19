@@ -760,12 +760,61 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             describe("5. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
-              it("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
-                fail("Test not implemented.")
+              // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed")
+              val packedSelfAttestationObject: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002080cd099173bf7d236ef7bfcd2eb1a73ff40de6fa986f6c0decdaa57a6bbc6b83bf63616c67266178582040d93783595af7cf1d42d0c1197d45825c67065c541ab1de8fa671a77ae0a0c36179582100d55e6dfbabe2b3d838fa04d1dda0ec1f753180e518b9638cc85c084448fe5b52ff63666d74667061636b65646761747453746d74bf637369675846304402207a3955f4f4ef312b4df4912805558a367234cbd3d1445abf2246d4cb24146572022034c0f8e5f4cb75feafbff9d2e478773bd9d7115c4b9ab08c0b970f44921f2de563616c6726ffff").get
+              val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+
+              it("The attestation type is identified as SelfAttestation.") {
+                val steps = finishRegistration(attestationObject = packedSelfAttestationObject)
+                val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+                step.validations shouldBe a [Success[_]]
+                step.next shouldBe a [Success[_]]
+                step.attestationType should be (SelfAttestation)
               }
 
-              it("2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg.") {
-                fail("Test not implemented.")
+              describe("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
+                it("Succeeds for the default test case.") {
+                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), sha256(clientDataJson.getBytes("UTF-8").toVector))
+
+                  AttestationObject(packedSelfAttestationObject).authenticatorData.attestationData.get.credentialPublicKey.get("alg").longValue should equal (-7)
+                  AttestationObject(packedSelfAttestationObject).attestationStatement.get("alg").longValue should equal (-7)
+                  result should equal (true)
+                }
+
+                it("Fails if the alg is a different value.") {
+                  val attestationObject: ArrayBuffer = BinaryUtil.fromHex("bf68617574684461746158a749960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00206ff53d1e8f2cc231b6294395729698d3eaa5064bc00839a1e767ed62cb7d46ebbf63616c67266178582100b7a32acd8cf6fd9f86e9ed25fa5ec637a54277ec6d23f62812207ce139bd3b486179582058d5d51c1e888f3a8520adb6f28eb399eff8627f5046b143d6574e98dda9b305ff63666d74667061636b65646761747453746d74bf6373696758473045022068307070d0347b004167fa828b8273f766ad1064fc0ca6b0ab5ee8f7e4177c9c022100e9d28534daaf3c09908e8f3ef7e594524dc34b1a02324ba7c163f4fa10075a2b63616c67390100ffff").get
+                  val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
+                  val result = verifier._verifyAttestationSignature(AttestationObject(attestationObject), sha256(clientDataJson.getBytes("UTF-8").toVector))
+
+                  AttestationObject(attestationObject).authenticatorData.attestationData.get.credentialPublicKey.get("alg").longValue should equal (-7)
+                  AttestationObject(attestationObject).attestationStatement.get("alg").longValue should equal (-257)
+                  result shouldBe a [Failure[_]]
+                  result.failed.get shouldBe an [AssertionError]
+                }
+              }
+
+              describe("2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg.") {
+                it("Succeeds for the default test case.") {
+                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  result should equal (true)
+                }
+
+                it("Fails if the attestation object is mutated.") {
+                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject.updated(32, if (packedSelfAttestationObject(32) == 0) 1: Byte else 0: Byte)), sha256(clientDataJson.getBytes("UTF-8").toVector))
+                  result should equal (false)
+                }
+
+                it("Fails if the client data is mutated.") {
+                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), sha256(clientDataJson.updated(4, 'ä').getBytes("UTF-8").toVector))
+                  result should equal (false)
+                }
+
+                it("Fails if the client data hash is mutated.") {
+                  val hash = sha256(clientDataJson.getBytes("UTF-8").toVector)
+                  val result = verifier.verifyAttestationSignature(AttestationObject(packedSelfAttestationObject), hash.updated(7, if (hash(7) == 0) 1: Byte else 0: Byte))
+                  result should equal (false)
+                }
               }
 
               it("3. If successful, return attestation type Self and empty trust path.") {
