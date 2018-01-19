@@ -530,7 +530,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[steps.Finished]]
+                step.next shouldBe a [Success[_]]
                 step.next.get.signatureCounterValid should be (true)
                 step.next.get.signatureCount should be (1337)
               }
@@ -558,7 +558,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[steps.Finished]]
+                step.next shouldBe a [Success[_]]
                 step.next.get.signatureCounterValid should be(false)
                 step.next.get.signatureCount should be(1337)
               }
