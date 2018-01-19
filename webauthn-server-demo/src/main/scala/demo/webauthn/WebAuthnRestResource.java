@@ -232,7 +232,7 @@ public class WebAuthnRestResource {
 
     private Response jsonFail() {
         return Response.status(Status.INTERNAL_SERVER_ERROR)
-            .entity("{\"messages\";[\"Failed to encode response as JSON\"]}")
+            .entity("{\"messages\":[\"Failed to encode response as JSON\"]}")
             .build();
     }
 
