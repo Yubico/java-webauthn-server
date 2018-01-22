@@ -64,7 +64,8 @@ public class WebAuthnServer {
         true,
         credentialRepository,
         Optional.of(metadataService),
-        true
+        true,
+        false
     );
 
     public RegistrationRequest startRegistration(String username, String displayName, String credentialNickname) {
