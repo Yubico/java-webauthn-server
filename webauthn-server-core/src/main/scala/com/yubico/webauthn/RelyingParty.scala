@@ -33,7 +33,8 @@ class RelyingParty (
   val allowSelfAttestation: Boolean = false,
   val credentialRepository: CredentialRepository,
   val metadataService: Optional[MetadataService] = None.asJava,
-  val validateSignatureCounter: Boolean = true
+  val validateSignatureCounter: Boolean = true,
+  val validateTypeAttribute: Boolean = true
 ) {
 
   def startRegistration(
@@ -71,7 +72,8 @@ class RelyingParty (
       rpId = rp.id,
       crypto = crypto,
       allowSelfAttestation = allowSelfAttestation,
-      metadataService = metadataService
+      metadataService = metadataService,
+      validateTypeAttribute = validateTypeAttribute
     )
 
   def startAssertion(
@@ -105,7 +107,8 @@ class RelyingParty (
       rpId = rp.id,
       crypto = crypto,
       credentialRepository = credentialRepository,
-      validateSignatureCounter = validateSignatureCounter
+      validateSignatureCounter = validateSignatureCounter,
+      validateTypeAttribute = validateTypeAttribute
     )
 
 }

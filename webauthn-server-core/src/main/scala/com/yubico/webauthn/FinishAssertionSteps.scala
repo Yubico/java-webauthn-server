@@ -13,6 +13,8 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -29,8 +31,11 @@ case class FinishAssertionSteps(
   rpId: String,
   crypto: Crypto,
   credentialRepository: CredentialRepository,
+  validateTypeAttribute: Boolean = true,
   validateSignatureCounter: Boolean = true
 ) {
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[FinishAssertionSteps])
 
   sealed trait Step[A <: Step[_, _], B <: Step[_, _]] {
     protected def isFinished: Boolean = false
@@ -86,10 +91,24 @@ case class FinishAssertionSteps(
 
   case class Step4 private[webauthn] (override val prev: Step3) extends Step[Step3, Step5] {
     override def validate(): Unit = {
-      assert(
-        prev.clientData.`type` == FinishAssertionSteps.ClientDataType,
-        s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}"."""
-      )
+      try
+        assert(
+          prev.clientData.`type` == FinishAssertionSteps.ClientDataType,
+          s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}", was: ${prev.clientData.`type`}."""
+        )
+      catch {
+        case e: AssertionError =>
+          if (validateTypeAttribute)
+            throw e
+          else
+            logger.warn(e.getMessage)
+
+        case e: NullPointerException =>
+          if (validateTypeAttribute)
+            throw e
+          else
+            logger.warn("""Missing "type" attribute in client data.""")
+      }
     }
     override def nextStep = Step5(this)
   }

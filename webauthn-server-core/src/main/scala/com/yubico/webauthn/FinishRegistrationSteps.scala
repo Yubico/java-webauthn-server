@@ -26,6 +26,8 @@ import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.FidoU2fAttestationTrustResolver
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.X5cAttestationStatementVerifier
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 import scala.collection.JavaConverters._
 import scala.util.Try
@@ -56,8 +58,10 @@ case class FinishRegistrationSteps(
   rpId: String,
   crypto: Crypto,
   allowSelfAttestation: Boolean,
-  metadataService: Optional[MetadataService]
+  metadataService: Optional[MetadataService],
+  validateTypeAttribute: Boolean = true
 ) {
+  private val logger: Logger = LoggerFactory.getLogger(classOf[FinishRegistrationSteps])
 
   private[webauthn] def begin: Step1 = Step1()
   def run: Try[RegistrationResult] = begin.run
@@ -69,10 +73,26 @@ case class FinishRegistrationSteps(
   }
 
   case class Step2 private[webauthn] (clientData: CollectedClientData) extends Step[Step3] {
-    override def validate() = assert(
-      clientData.`type` == FinishRegistrationSteps.ClientDataType,
-      s"""The "type" in the client data must be exactly "${FinishRegistrationSteps.ClientDataType}"."""
-    )
+    override def validate() = {
+      try
+        assert(
+          clientData.`type` == FinishRegistrationSteps.ClientDataType,
+          s"""The "type" in the client data must be exactly "${FinishRegistrationSteps.ClientDataType}", was: ${clientData.`type`}"""
+        )
+      catch {
+        case e: AssertionError =>
+          if (validateTypeAttribute)
+            throw e
+          else
+            logger.warn(e.getMessage)
+
+        case e: NullPointerException =>
+          if (validateTypeAttribute)
+            throw e
+          else
+            logger.warn("""Missing "type" attribute in client data.""")
+      }
+    }
     override def nextStep = Step3()
   }
 
