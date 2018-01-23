@@ -124,6 +124,7 @@ function submitResponse(url, requestId, response) {
 }
 
 function performCeremony({
+  callbacks = {}, /* { init, authenticatorRequest, serverRequest } */
   getIndexActions, /* function(): object */
   getRequest, /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
   statusStrings, /* { init, authenticatorRequest, serverRequest, success, } */
@@ -138,11 +139,17 @@ function performCeremony({
 
     .then(urls => {
       setStatus(statusStrings.int);
+      if (callbacks.init) {
+        callbacks.init(urls);
+      }
       return getRequest(urls);
     })
 
     .then(({ request, actions: urls }) => {
       setStatus(statusStrings.authenticatorRequest);
+      if (callbacks.authenticatorRequest) {
+        callbacks.authenticatorRequest({ request, urls });
+      }
       showRequest(request);
       return executeRequest(request)
         .then(webauthn.responseToObject)
@@ -155,6 +162,9 @@ function performCeremony({
 
     .then(({ urls, request, response }) => {
       setStatus(statusStrings.serverRequest || 'Sending response to server...');
+      if (callbacks.serverRequest) {
+        callbacks.serverRequest({ urls, request, response });
+      }
       showAuthenticatorResponse(response);
       return submitResponse(urls.finish, request.requestId, response);
     })
