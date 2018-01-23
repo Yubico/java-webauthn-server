@@ -15,12 +15,16 @@ import scala.collection.JavaConverters._
 
 
 case class AuthenticatorData(
+  @JsonIgnore
   val authData: ArrayBuffer
 ) {
   private val RpIdHashLength = 32
   private val FlagsLength = 1
   private val CounterLength = 4
   private val FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength
+
+  @JsonProperty("authData")
+  def authDataBase64: String = U2fB64Encoding.encode(authData.toArray)
 
   /**
     * The SHA-256 hash of the RP ID associated with the credential.
