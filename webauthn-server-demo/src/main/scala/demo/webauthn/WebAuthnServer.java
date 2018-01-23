@@ -260,13 +260,19 @@ public class WebAuthnServer {
         return request;
     }
 
-    public Either<List<String>, ?> finishAuthenticatedAction(SuccessfulAuthenticationResult result) {
-        AuthenticatedAction<?> action = authenticatedActions.remove(result.request);
-        if (action == null) {
-            return Left.apply(Arrays.asList("No action was associated with assertion request ID: " + result.getRequest().getRequestId()));
-        } else {
-            return action.apply(result);
-        }
+    public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
+        return com.yubico.util.Either.fromScala(finishAuthentication(responseJson))
+            .flatMap(result -> {
+                AuthenticatedAction<?> action = authenticatedActions.remove(result.request);
+                if (action == null) {
+                    return com.yubico.util.Either.left(Collections.singletonList(
+                        "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
+                    ));
+                } else {
+                    return com.yubico.util.Either.fromScala(action.apply(result));
+                }
+            })
+            .toScala();
     }
 
     public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, String credentialId, Function<CredentialRegistration, T> resultMapper) {

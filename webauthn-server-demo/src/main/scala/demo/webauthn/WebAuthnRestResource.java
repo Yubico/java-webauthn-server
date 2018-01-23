@@ -151,15 +151,7 @@ public class WebAuthnRestResource {
     @POST
     public Response finishAuthenticatedAction(@PathParam("action") String action, String responseJson) {
         logger.trace("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
-
-        Either<List<String>, WebAuthnServer.SuccessfulAuthenticationResult> result = server.finishAuthentication(responseJson);
-
-        Either<List<String>, ?> mappedResult = com.yubico.util.Either.fromScala(result)
-            .flatMap(res -> {
-                Either<List<String>, ?> actionResult = server.finishAuthenticatedAction(res);
-                return com.yubico.util.Either.fromScala(actionResult);
-            })
-            .toScala();
+        Either<List<String>, ?> mappedResult = server.finishAuthenticatedAction(responseJson);
 
         return finishResponse(
             mappedResult,
