@@ -9,9 +9,11 @@ import com.yubico.webauthn.RegistrationResult;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.Wither;
 
 @Value
 @Builder
+@Wither
 public class CredentialRegistration extends JsonSerializable {
 
     String userHandleBase64;
