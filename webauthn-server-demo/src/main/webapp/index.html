@@ -62,7 +62,12 @@ function showAuthenticatorResponse(data) {
     _clientDataJson: data && JSON.parse(new TextDecoder('utf-8').decode(base64url.toByteArray(data.response.clientDataJSON))),
   });
 }
-function showServerResponse(data) { return showJson('server-response', data); }
+function showServerResponse(data) {
+  if (data && data.messages) {
+    addMessages(data.messages);
+  }
+  return showJson('server-response', data);
+}
 
 function hideDeviceInfo() {
   document.getElementById("device-info").style = "display: none";
@@ -273,10 +278,6 @@ function deregister() {
         }
       } else {
         addMessage('Credential deregistration failed.');
-      }
-
-      if (data.messages) {
-        addMessages(data.messages);
       }
     })
     .catch((err) => {
