@@ -1,8 +1,6 @@
 package demo.webauthn;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
@@ -24,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +37,7 @@ public class WebAuthnServer {
 
     private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
     private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
-    private final Multimap<String, CredentialRegistration> userStorage = HashMultimap.create();
+    private final RegistrationStorage userStorage = new InMemoryRegistrationStorage();
     private final InMemoryCredentialRepository credentialRepository = new InMemoryCredentialRepository();
     private final Map<AssertionRequest, AuthenticatedAction> authenticatedActions = new HashMap<>();
 
@@ -80,11 +77,7 @@ public class WebAuthnServer {
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
             rp.startRegistration(
                 new UserIdentity(username, displayName, userId, Optional.empty()),
-                Optional.of(
-                    userStorage.get(username).stream()
-                        .map(registration -> registration.getRegistration().keyId())
-                        .collect(Collectors.toList())
-                ),
+                Optional.of(userStorage.getCredentialIdsForUsername(username)),
                 Optional.empty()
             )
         );
@@ -150,11 +143,7 @@ public class WebAuthnServer {
             username,
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
             rp.startAssertion(
-                Optional.of(
-                    userStorage.get(username).stream()
-                        .map(credentialRegistration -> credentialRegistration.getRegistration().keyId())
-                        .collect(Collectors.toList())
-                ),
+                Optional.of(userStorage.getCredentialIdsForUsername(username)),
                 Optional.empty()
             )
         );
@@ -194,24 +183,9 @@ public class WebAuthnServer {
                 )
             );
 
-            boolean usernameOwnsCredential = userStorage.get(request.getUsername())
-                .stream()
-                .anyMatch(credentialRegistration ->
-                    credentialRegistration.getRegistration().keyId().idBase64().equals(response.getCredential().id())
-                )
-            ;
-
+            boolean usernameOwnsCredential = userStorage.usernameOwnsCredential(request.getUsername(), response.getCredential().id());
             Optional<Boolean> userHandleOwnsCredential = Optional.ofNullable(response.getCredential().response().userHandleBase64())
-                .map(userHandle ->
-                    userStorage.values().stream()
-                        .filter(credentialRegistration ->
-                            userHandle.equals(credentialRegistration.getUserHandleBase64())
-                        )
-                        .anyMatch(credentialRegistration ->
-                            response.getCredential().id().equals(credentialRegistration.getRegistration().keyId().idBase64())
-                        )
-                )
-            ;
+                .map(userHandle -> userStorage.userHandleOwnsCredential(userHandle, response.getCredential().id()));
 
             if (credentialIsAllowed.isPresent() && !credentialIsAllowed.get()) {
                 return Left.apply(Collections.singletonList(String.format(
@@ -233,23 +207,35 @@ public class WebAuthnServer {
 
                 if (assertionTry.isSuccess()) {
                     if ((boolean) assertionTry.get()) {
-                        final CredentialRegistration credentialRegistration = userStorage.get(request.getUsername()).stream()
-                            .filter(credReg -> credReg.getRegistration().keyId().idBase64().equals(response.getCredential().id()))
-                            .findFirst()
-                            .get();
+                        final CredentialRegistration credentialRegistration = userStorage.getRegistrationByUsernameAndCredentialId(
+                            request.getUsername(),
+                            response.getCredential().id()
+                        ).get();
 
                         final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
                             response.getCredential().response().parsedAuthenticatorData().signatureCounter()
                         );
 
-                        userStorage.put(request.getUsername(), updatedCredReg);
-                        userStorage.remove(request.getUsername(), credentialRegistration);
+                        try {
+                            userStorage.updateSignatureCountForUsername(
+                                request.getUsername(),
+                                response.getCredential().id(),
+                                response.getCredential().response().parsedAuthenticatorData().signatureCounter()
+                            );
+                        } catch (Exception e) {
+                            logger.error(
+                                "Failed to update signature count for user \"{}\", credential \"{}\"",
+                                request.getUsername(),
+                                response.getCredential().id(),
+                                e
+                            );
+                        }
 
                         return Right.apply(
                             new SuccessfulAuthenticationResult(
                                 request,
                                 response,
-                                userStorage.get(request.getUsername())
+                                userStorage.getRegistrationsByUsername(request.getUsername())
                             )
                         );
                     } else {
@@ -299,12 +285,10 @@ public class WebAuthnServer {
         }
 
         AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
-            Optional<CredentialRegistration> credReg = userStorage.get(username).stream()
-                .filter(credentialRegistration -> credentialRegistration.getRegistration().keyId().idBase64().equals(credentialId))
-                .findAny();
+            Optional<CredentialRegistration> credReg = userStorage.getRegistrationByUsernameAndCredentialId(username, credentialId);
 
             if (credReg.isPresent()) {
-                userStorage.remove(username, credReg.get());
+                userStorage.removeRegistrationByUsername(username, credReg.get());
                 credentialRepository.remove(credentialId);
                 return Right.apply(resultMapper.apply(credReg.get()));
             } else {
@@ -333,7 +317,7 @@ public class WebAuthnServer {
             registration.keyId().idBase64(),
             registration.publicKeyCose()
         );
-        userStorage.put(username, reg);
+        userStorage.addRegistrationByUsername(username, reg);
         credentialRepository.add(registration.keyId().idBase64(), reg);
         return reg;
     }
