@@ -233,6 +233,18 @@ public class WebAuthnServer {
 
                 if (assertionTry.isSuccess()) {
                     if ((boolean) assertionTry.get()) {
+                        final CredentialRegistration credentialRegistration = userStorage.get(request.getUsername()).stream()
+                            .filter(credReg -> credReg.getRegistration().keyId().idBase64().equals(response.getCredential().id()))
+                            .findFirst()
+                            .get();
+
+                        final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
+                            response.getCredential().response().parsedAuthenticatorData().signatureCounter()
+                        );
+
+                        userStorage.put(request.getUsername(), updatedCredReg);
+                        userStorage.remove(request.getUsername(), credentialRegistration);
+
                         return Right.apply(
                             new SuccessfulAuthenticationResult(
                                 request,
