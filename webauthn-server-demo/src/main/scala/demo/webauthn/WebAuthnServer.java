@@ -38,7 +38,6 @@ public class WebAuthnServer {
     private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
     private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
     private final RegistrationStorage userStorage = new InMemoryRegistrationStorage();
-    private final InMemoryCredentialRepository credentialRepository = new InMemoryCredentialRepository();
     private final Map<AssertionRequest, AuthenticatedAction> authenticatedActions = new HashMap<>();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
@@ -60,7 +59,7 @@ public class WebAuthnServer {
         Optional.empty(),
         new BouncyCastleCrypto(),
         true,
-        credentialRepository,
+        userStorage,
         Optional.of(metadataService),
         true,
         false
@@ -289,7 +288,6 @@ public class WebAuthnServer {
 
             if (credReg.isPresent()) {
                 userStorage.removeRegistrationByUsername(username, credReg.get());
-                credentialRepository.remove(credentialId);
                 return Right.apply(resultMapper.apply(credReg.get()));
             } else {
                 return Left.apply(Arrays.asList("Credential ID not registered:" + credentialId));
@@ -318,7 +316,6 @@ public class WebAuthnServer {
             registration.publicKeyCose()
         );
         userStorage.addRegistrationByUsername(username, reg);
-        credentialRepository.add(registration.keyId().idBase64(), reg);
         return reg;
     }
 }

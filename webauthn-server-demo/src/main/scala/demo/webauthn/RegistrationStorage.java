@@ -1,11 +1,12 @@
 package demo.webauthn;
 
+import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface RegistrationStorage {
+public interface RegistrationStorage extends CredentialRepository {
 
     boolean addRegistrationByUsername(String username, CredentialRegistration reg);
 
