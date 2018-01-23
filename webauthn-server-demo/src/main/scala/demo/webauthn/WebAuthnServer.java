@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,7 +175,7 @@ public class WebAuthnServer {
     public Either<List<String>, SuccessfulAuthenticationResult> finishAuthentication(String responseJson) {
         logger.trace("finishAuthentication responseJson: {}", responseJson);
 
-        AssertionResponse response = null;
+        final AssertionResponse response;
         try {
             response = jsonMapper.readValue(responseJson, AssertionResponse.class);
         } catch (IOException e) {
@@ -187,30 +188,67 @@ public class WebAuthnServer {
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
-            Try<Object> assertionTry = rp.finishAssertion(
-                request.getPublicKeyCredentialRequestOptions(),
-                response.getCredential(),
-                Optional.empty()
+            Optional<Boolean> credentialIsAllowed = request.getPublicKeyCredentialRequestOptions().allowCredentials().map(allowCredentials ->
+                allowCredentials.stream().anyMatch(credential ->
+                    credential.idBase64().equals(response.getCredential().id())
+                )
             );
 
-            if (assertionTry.isSuccess()) {
-                if ((boolean) assertionTry.get()) {
-                    return Right.apply(
-                        new SuccessfulAuthenticationResult(
-                            request,
-                            response,
-                            userStorage.get(request.getUsername())
+            boolean usernameOwnsCredential = userStorage.get(request.getUsername())
+                .stream()
+                .anyMatch(credentialRegistration ->
+                    credentialRegistration.getRegistration().keyId().idBase64().equals(response.getCredential().id())
+                )
+            ;
+
+            Optional<Boolean> userHandleOwnsCredential = Optional.ofNullable(response.getCredential().response().userHandleBase64())
+                .map(userHandle ->
+                    userStorage.values().stream()
+                        .filter(credentialRegistration ->
+                            userHandle.equals(credentialRegistration.getUserHandleBase64())
                         )
-                    );
-                } else {
-                    return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
-                }
+                        .anyMatch(credentialRegistration ->
+                            response.getCredential().id().equals(credentialRegistration.getRegistration().keyId().idBase64())
+                        )
+                )
+            ;
 
+            if (credentialIsAllowed.isPresent() && !credentialIsAllowed.get()) {
+                return Left.apply(Collections.singletonList(String.format(
+                    "Credential is not allowed for this authentication: %s",
+                    response.getCredential().id()
+                )));
+            } else if (!usernameOwnsCredential || (userHandleOwnsCredential.isPresent() && !userHandleOwnsCredential.get())) {
+                return Left.apply(Collections.singletonList(String.format(
+                    "User \"%s\" does not own credential: %s",
+                    request.getUsername(),
+                    response.getCredential().id()
+                )));
             } else {
-                logger.debug("Assertion failed", assertionTry.failed().get());
-                return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
-            }
+                Try<Object> assertionTry = rp.finishAssertion(
+                    request.getPublicKeyCredentialRequestOptions(),
+                    response.getCredential(),
+                    Optional.empty()
+                );
 
+                if (assertionTry.isSuccess()) {
+                    if ((boolean) assertionTry.get()) {
+                        return Right.apply(
+                            new SuccessfulAuthenticationResult(
+                                request,
+                                response,
+                                userStorage.get(request.getUsername())
+                            )
+                        );
+                    } else {
+                        return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
+                    }
+
+                } else {
+                    logger.debug("Assertion failed", assertionTry.failed().get());
+                    return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+                }
+            }
         }
     }
 
