@@ -172,29 +172,23 @@
 
   /** Turn a PublicKeyCredential object into a plain object with base64url encoded binary values */
   function responseToObject(response) {
-    if (response instanceof PublicKeyCredential) {
-      if (response.response instanceof AuthenticatorAttestationResponse) {
-        return {
-          id: response.id,
-          response: {
-            attestationObject: base64url.fromByteArray(response.response.attestationObject),
-            clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
-          },
-        };
-      } else if (response.response instanceof AuthenticatorAssertionResponse) {
-        return {
-          id: response.id,
-          response: {
-            authenticatorData: base64url.fromByteArray(response.response.authenticatorData),
-            clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
-            signature: base64url.fromByteArray(response.response.signature),
-          },
-        };
-      } else {
-        throw new Error("Argument.response must be an AuthenticatorAttestationResponse or AuthenticatorAssertionResponse, was: " + (typeof response.response));
-      }
+    if (response.response.attestationObject) {
+      return {
+        id: response.id,
+        response: {
+          attestationObject: base64url.fromByteArray(response.response.attestationObject),
+          clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
+        },
+      };
     } else {
-      throw new Error("Argument must be a PublicKeyCredential, was: " + (typeof response));
+      return {
+        id: response.id,
+        response: {
+          authenticatorData: base64url.fromByteArray(response.response.authenticatorData),
+          clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
+          signature: base64url.fromByteArray(response.response.signature),
+        },
+      };
     }
   }
 
