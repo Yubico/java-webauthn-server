@@ -188,16 +188,11 @@ case class FinishAssertionSteps(
 
   case class Step10 private[webauthn] (override val prev: Step9) extends Step[Step9, Step11] {
     override def validate(): Unit = {
-      val hashAlgorithm: String = response.response.collectedClientData.hashAlgorithm.toLowerCase
-      assert(
-        supportedHashAlgorithms map { _.toLowerCase } contains hashAlgorithm,
-        s"Forbidden hash algorithm: ${hashAlgorithm}"
-      )
+      assert(clientDataJsonHash != null, "Failed to compute hash of client data")
     }
     override def nextStep = Step11(this)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
-    val supportedHashAlgorithms: List[String] = List("SHA-256")
   }
 
   case class Step11 (override val prev: Step10) extends Step[Step10, Step12] {

@@ -392,7 +392,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("7. Compute the hash of clientDataJSON using the algorithm identified by C.hashAlgorithm.") {
-        it("SHA-256 is allowed.") {
+        it("SHA-256 is always used.") {
           val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
           val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -400,23 +400,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           step.next shouldBe a [Success[_]]
           step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(TestData.FidoU2f.BasicAttestation.clientDataJsonBytes.toArray).toVector)
         }
-
-        def checkForbidden(algorithm: String): Unit = {
-          it(s"${algorithm} is forbidden.") {
-            val steps = finishRegistration(
-              testData = TestData.FidoU2f.BasicAttestation.editClientData(
-                "hashAlgorithm", jsonFactory.textNode(algorithm)
-              )
-            )
-            val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
-
-            step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [AssertionError]
-            step.next shouldBe a [Failure[_]]
-          }
-        }
-        checkForbidden("MD5")
-        checkForbidden("SHA1")
       }
 
       it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {

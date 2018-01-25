@@ -158,14 +158,9 @@ case class FinishRegistrationSteps(
   }
 
   case class Step7 private[webauthn] () extends Step[Step8] {
-    val supportedHashAlgorithms: List[String] = List("SHA-256")
 
     override def validate() {
-      val hashAlgorithm: String = response.response.collectedClientData.hashAlgorithm.toLowerCase
-      assert(
-        supportedHashAlgorithms map { _.toLowerCase } contains hashAlgorithm,
-        s"Forbidden hash algorithm: ${hashAlgorithm}"
-      )
+      assert(clientDataJsonHash != null, "Failed to compute hash of client data")
     }
     override def nextStep = Step8(clientDataJsonHash)
 

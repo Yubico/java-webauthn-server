@@ -30,16 +30,6 @@ case class CollectedClientData(
   def clientExtensions: Optional[AuthenticationExtensions] = Optional.ofNullable(clientData.get("clientExtensions"))
 
   /**
-    * The name of the algorithm the client used to compute the hash of the serialized client data.
-    *
-    * This SHOULD be a ''recognized algorithm name'', but [[CollectedClientData]] does not enforce it.
-    */
-  def hashAlgorithm: String =
-    Optional.ofNullable(clientData.get("hashAlgorithm"))
-      .orElse(clientData.get("hashAlg")) // TODO Remove this when Firefox updates attribute name to agree with spec
-      .asText
-
-  /**
     * The fully qualified origin of the requester, as identified by the client.
     */
   def origin: String = clientData.get("origin").asText

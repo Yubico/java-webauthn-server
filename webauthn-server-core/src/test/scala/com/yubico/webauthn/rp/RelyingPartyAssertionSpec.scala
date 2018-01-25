@@ -417,7 +417,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       describe("10. Let hash be the result of computing a hash over the cData using the algorithm represented by the hashAlgorithm member of C.") {
-        it("SHA-256 is allowed.") {
+        it("SHA-256 is always used.") {
           val steps = finishAssertion()
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -425,25 +425,6 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.next shouldBe a [Success[_]]
           step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
         }
-
-        def checkForbidden(algorithm: String): Unit = {
-          it(s"${algorithm} is forbidden.") {
-            val steps = finishAssertion(
-              clientDataJson =
-                WebAuthnCodecs.json.writeValueAsString(
-                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                    .set("hashAlgorithm", jsonFactory.textNode(algorithm))
-                )
-            )
-            val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-            step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [AssertionError]
-            step.next shouldBe a [Failure[_]]
-          }
-        }
-        checkForbidden("MD5")
-        checkForbidden("SHA1")
       }
 
       describe("11. Using the credential public key looked up in step 1, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
