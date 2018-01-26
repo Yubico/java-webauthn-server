@@ -30,7 +30,7 @@ class RelyingParty (
   val origins: java.util.List[String],
   val authenticatorRequirements: Optional[AuthenticatorSelectionCriteria] = None.asJava,
   val crypto: Crypto = new BouncyCastleCrypto,
-  val allowSelfAttestation: Boolean = false,
+  val allowUntrustedAttestation: Boolean = false,
   val credentialRepository: CredentialRepository,
   val metadataService: Optional[MetadataService] = None.asJava,
   val validateSignatureCounter: Boolean = true,
@@ -71,7 +71,7 @@ class RelyingParty (
       origins = origins,
       rpId = rp.id,
       crypto = crypto,
-      allowSelfAttestation = allowSelfAttestation,
+      allowUntrustedAttestation = allowUntrustedAttestation,
       metadataService = metadataService,
       validateTypeAttribute = validateTypeAttribute
     )

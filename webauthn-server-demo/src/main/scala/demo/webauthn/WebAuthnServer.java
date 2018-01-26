@@ -90,6 +90,7 @@ public class WebAuthnServer {
         RegistrationRequest request;
         RegistrationResponse response;
         CredentialRegistration registration;
+        boolean attestationTrusted;
     }
 
     public Either<List<String>, SuccessfulRegistrationResult> finishRegistration(String responseJson) {
@@ -125,7 +126,8 @@ public class WebAuthnServer {
                             request.getMakePublicKeyCredentialOptions().user().idBase64(),
                             response,
                             registrationTry.get()
-                        )
+                        ),
+                        registrationTry.get().attestationTrusted()
                     )
                 );
             } else {

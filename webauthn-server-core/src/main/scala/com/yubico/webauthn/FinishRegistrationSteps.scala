@@ -57,7 +57,7 @@ case class FinishRegistrationSteps(
   origins: java.util.List[String],
   rpId: String,
   crypto: Crypto,
-  allowSelfAttestation: Boolean,
+  allowUntrustedAttestation: Boolean,
   metadataService: Optional[MetadataService],
   validateTypeAttribute: Boolean = true
 ) {
@@ -250,10 +250,10 @@ case class FinishRegistrationSteps(
     override def validate() {
       attestationType match {
         case SelfAttestation =>
-          assert(allowSelfAttestation, "Self attestation is not allowed.")
+          assert(allowUntrustedAttestation, "Self attestation is not allowed.")
 
         case Basic =>
-          assert(attestationTrusted, "Failed to derive trust for attestation key.")
+          assert(allowUntrustedAttestation || attestationTrusted, "Failed to derive trust for attestation key.")
 
         case _ => ???
       }
@@ -266,7 +266,7 @@ case class FinishRegistrationSteps(
 
     def attestationTrusted: Boolean = {
       attestationType match {
-        case SelfAttestation => allowSelfAttestation
+        case SelfAttestation => allowUntrustedAttestation
         case Basic => attestationMetadata.asScala map { _.isTrusted } getOrElse false
         case _ => ???
       }

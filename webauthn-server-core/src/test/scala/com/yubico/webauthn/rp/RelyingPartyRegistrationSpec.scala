@@ -189,7 +189,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
   def finishRegistration(
     testData: TestData,
-    allowSelfAttestation: Boolean = false,
+    allowUntrustedAttestation: Boolean = false,
     authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
     callerTokenBindingId: Option[String] = None,
     credentialId: Option[ArrayBuffer] = None,
@@ -200,7 +200,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     val clientDataJsonBytes: ArrayBuffer = testData.clientDataJson.getBytes("UTF-8").toVector
 
     new RelyingParty(
-      allowSelfAttestation = allowSelfAttestation,
+      allowUntrustedAttestation = allowUntrustedAttestation,
       authenticatorRequirements = authenticatorRequirements.asJava,
       challengeGenerator = null,
       origins = List(rp.id).asJava,
@@ -1067,10 +1067,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("If self attestation was used, check if self attestation is acceptable under Relying Party policy.") {
 
           describe("The default test case, with self attestation,") {
-            it("is rejected if self attestation is not allowed.") {
+            it("is rejected if untrusted attestation is not allowed.") {
               val steps = finishRegistration(
                 testData = TestData.FidoU2f.SelfAttestation,
-                allowSelfAttestation = false
+                allowUntrustedAttestation = false
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -1080,10 +1080,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.next shouldBe a [Failure[_]]
             }
 
-            it("is accepted if self attestation is allowed.") {
+            it("is accepted if untrusted attestation is allowed.") {
               val steps = finishRegistration(
                 testData = TestData.FidoU2f.SelfAttestation,
-                allowSelfAttestation = true
+                allowUntrustedAttestation = true
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -1101,10 +1101,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.") {
 
           describe("A test case with basic attestation") {
-            it("is rejected if trust cannot be derived from the trust anchors.") {
+            it("is rejected if untrusted attestation is not allowed and trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
               val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
               val steps = finishRegistration(
+                allowUntrustedAttestation = false,
                 testData = TestData.FidoU2f.BasicAttestation,
                 metadataService = Some(metadataService)
               )
@@ -1115,6 +1116,23 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.attestationMetadata.asScala should not be empty
               step.attestationMetadata.get.getMetadataIdentifier should be (null)
               step.next shouldBe a [Failure[_]]
+            }
+
+            it("is accepted if untrusted attestation is allowed and trust cannot be derived from the trust anchors.") {
+              val metadataResolver = new SimpleResolver
+              val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
+              val steps = finishRegistration(
+                allowUntrustedAttestation = true,
+                testData = TestData.FidoU2f.BasicAttestation,
+                metadataService = Some(metadataService)
+              )
+              val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+              step.validations shouldBe a [Success[_]]
+              step.attestationTrusted should be (false)
+              step.attestationMetadata.asScala should not be empty
+              step.attestationMetadata.get.getMetadataIdentifier should be (null)
+              step.next shouldBe a [Success[_]]
             }
 
             it("is accepted if trust can be derived from the trust anchors.") {

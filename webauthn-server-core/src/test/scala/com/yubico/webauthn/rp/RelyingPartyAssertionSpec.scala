@@ -109,7 +109,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     )
 
     new RelyingParty(
-      allowSelfAttestation = false,
+      allowUntrustedAttestation = false,
       authenticatorRequirements = None.asJava,
       challengeGenerator = null,
       origins = List(origin).asJava,
