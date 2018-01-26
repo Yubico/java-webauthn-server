@@ -76,15 +76,11 @@ function showServerResponse(data) {
 function hideDeviceInfo() {
   document.getElementById("device-info").style = "display: none";
 }
-function showDeviceInfo({
-  displayName,
-  imageUrl,
-  nickname,
-}) {
+function showDeviceInfo(params) {
   document.getElementById("device-info").style = undefined;
-  document.getElementById("device-name").textContent = displayName;
-  document.getElementById("device-nickname").textContent = nickname;
-  document.getElementById("device-icon").src = imageUrl;
+  document.getElementById("device-name").textContent = params.displayName;
+  document.getElementById("device-nickname").textContent = params.nickname;
+  document.getElementById("device-icon").src = params.imageUrl;
 }
 
 function resetDisplays() {
@@ -127,14 +123,14 @@ function submitResponse(url, requestId, response) {
   ;
 }
 
-function performCeremony({
-  callbacks = {}, /* { init, authenticatorRequest, serverRequest } */
-  getIndexActions, /* function(): object */
-  getRequest, /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
-  statusStrings, /* { init, authenticatorRequest, serverRequest, success, } */
-  executeRequest, /* function({ makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
-  handleError, /* function(err): ? */
-}) {
+function performCeremony(params) {
+  const callbacks = params.callbacks || {}; /* { init, authenticatorRequest, serverRequest } */
+  const getIndexActions = params.getIndexActions; /* function(): object */
+  const getRequest = params.getRequest; /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
+  const statusStrings = params.statusStrings; /* { init, authenticatorRequest, serverRequest, success, } */
+  const executeRequest = params.executeRequest; /* function({ makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
+  const handleError = params.handleError; /* function(err): ? */
+
   setStatus('Looking up API paths...');
   resetDisplays();
 
@@ -149,7 +145,9 @@ function performCeremony({
       return getRequest(urls);
     })
 
-    .then(({ request, actions: urls }) => {
+    .then((params) => {
+      const request = params.request;
+      const urls = params.actions;
       setStatus(statusStrings.authenticatorRequest);
       if (callbacks.authenticatorRequest) {
         callbacks.authenticatorRequest({ request, urls });
@@ -164,7 +162,11 @@ function performCeremony({
         }));
     })
 
-    .then(({ urls, request, response }) => {
+    .then((params) => {
+      const urls = params.urls;
+      const request = params.request;
+      const response = params.response;
+
       setStatus(statusStrings.serverRequest || 'Sending response to server...');
       if (callbacks.serverRequest) {
         callbacks.serverRequest({ urls, request, response });
