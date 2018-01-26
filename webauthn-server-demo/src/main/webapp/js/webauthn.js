@@ -8,6 +8,10 @@
   }
 })(this, function(base64url) {
 
+  function extend(obj, more) {
+    return Object.assign({}, obj, more);
+  }
+
   const browserFixes = function() {
     const fixes = [
       {
@@ -16,17 +20,17 @@
           return typeof InstallTrigger !== undefined && window.navigator.userAgent.match(/Firefox\/57/);
         },
         fixRegisterRequest(makePublicKeyCredentialOptions) {
-          return {
-            ...makePublicKeyCredentialOptions,
+          return extend(
+            makePublicKeyCredentialOptions, {
             excludeList: makePublicKeyCredentialOptions.excludeCredentials,
             parameters: makePublicKeyCredentialOptions.pubKeyCredParams,
-          }
+          });
         },
         fixAuthenticateRequest(publicKeyCredentialRequestOptions) {
-          return {
-            ...publicKeyCredentialRequestOptions,
+          return extend(
+            publicKeyCredentialRequestOptions, {
             allowList: publicKeyCredentialRequestOptions.allowCredentials,
-          };
+          });
         },
       },
     ];
@@ -60,27 +64,27 @@
    * plain object structure.
    */
   function addJacksonDeserializationHints(response) {
-    const root = {
-      ...response,
+    const root = extend(
+      response, {
       '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
-    };
+    });
 
     if (response.response.attestationObject) {
-      return {
-        ...root,
-        response: {
-          ...response.response,
+      return extend(
+        root, {
+        response: extend(
+          response.response, {
           '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse',
-        },
-      };
+        }),
+      });
     } else {
-      return {
-        ...root,
-        response: {
-          ...response.response,
+      return extend(
+        root, {
+        response: extend(
+          response.response, {
           '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse',
-        },
-      };
+        })
+      });
     }
   }
 
@@ -94,22 +98,22 @@
    *   `publicKey` parameter to `navigator.credentials.create()`
    */
   function decodeMakePublicKeyCredentialOptions(request) {
-    const excludeCredentials = request.excludeCredentials.map(credential => ({
-      ...credential,
+    const excludeCredentials = request.excludeCredentials.map(credential => extend(
+      credential, {
       id: base64url.toByteArray(credential.id),
     }));
 
-    const makePublicKeyCredentialOptions = {
-      ...request,
+    const makePublicKeyCredentialOptions = extend(
+      request, {
       attestation: 'direct',
-      user: {
-        ...request.user,
+      user: extend(
+        request.user, {
         id: base64url.toByteArray(request.user.id),
-      },
+      }),
       challenge: base64url.toByteArray(request.challenge),
       excludeCredentials,
       timeout: 10000,
-    };
+    });
 
     return browserFixes.fixRegisterRequest(makePublicKeyCredentialOptions);
   }
@@ -139,17 +143,17 @@
    *   `publicKey` parameter to `navigator.credentials.get()`
    */
   function decodePublicKeyCredentialRequestOptions(request) {
-    const allowCredentials = request.allowCredentials.map(credential => ({
-      ...credential,
+    const allowCredentials = request.allowCredentials.map(credential => extend(
+      credential, {
       id: base64url.toByteArray(credential.id),
     }));
 
-    const publicKeyCredentialRequestOptions = {
-      ...request,
+    const publicKeyCredentialRequestOptions = extend(
+      request, {
       allowCredentials: allowCredentials,
       challenge: base64url.toByteArray(request.challenge),
       timeout: 10000,
-    };
+    });
 
     return browserFixes.fixAuthenticateRequest(publicKeyCredentialRequestOptions);
   }
