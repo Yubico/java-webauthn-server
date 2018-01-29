@@ -54,11 +54,11 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
   override def getAttestationType(attestationObject: AttestationObject): AttestationType = {
     val attestationCertificate = getAttestationCertificate(attestationObject)
 
-    if (attestationCertificate.getSubjectDN == attestationCertificate.getIssuerDN
+    if (attestationCertificate.getPublicKey.isInstanceOf[ECPublicKey]
       && validSelfSignature(attestationCertificate)
       && (
-        WebAuthnCodecs.importCoseP256PublicKey(attestationObject.authenticatorData.attestationData.get.credentialPublicKey) ==
-        attestationCertificate.getPublicKey
+        WebAuthnCodecs.ecPublicKeyToRaw(attestationObject.authenticatorData.attestationData.get.parsedCredentialPublicKey) ==
+        WebAuthnCodecs.ecPublicKeyToRaw(attestationCertificate.getPublicKey.asInstanceOf[ECPublicKey])
       )
     )
       SelfAttestation
