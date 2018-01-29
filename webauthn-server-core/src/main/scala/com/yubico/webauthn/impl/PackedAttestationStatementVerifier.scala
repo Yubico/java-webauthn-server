@@ -5,6 +5,7 @@ import java.security.cert.X509Certificate
 import java.util.Locale
 import javax.naming.ldap.LdapName
 
+import com.upokecenter.cbor.CBORObject
 import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.webauthn.AttestationStatementVerifier
 import com.yubico.webauthn.data.AttestationObject
@@ -59,7 +60,7 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
   private def verifySelfAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
     val pubkey = attestationObject.authenticatorData.attestationData.get.parsedCredentialPublicKey
 
-    val keyAlg: COSEAlgorithmIdentifier = WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(pubkey.getAlgorithm)
+    val keyAlg: COSEAlgorithmIdentifier = CBORObject.DecodeFromBytes(attestationObject.authenticatorData.attestationData.get.credentialPublicKey.toArray).get(1).AsInt64
     val sigAlg: COSEAlgorithmIdentifier = attestationObject.attestationStatement.get("alg").asLong
 
     assert(keyAlg == sigAlg, s"Key algorithm and signature algorithm must be equal, was: Key: ${keyAlg}, Sig: ${sigAlg}")
