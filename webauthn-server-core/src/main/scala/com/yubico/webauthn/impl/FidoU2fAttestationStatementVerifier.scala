@@ -82,7 +82,7 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
         attestationObject.attestationStatement.get("sig") match {
           case signature if signature.isBinary =>
 
-            val userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(attestationData.credentialPublicKey))
+            val userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(attestationData.parsedCredentialPublicKey)
             val keyHandle = attestationData.credentialId
             val u2fRegisterResponse = new RawRegisterResponse(userPublicKey.toArray,
               keyHandle.toArray,

@@ -1,7 +1,5 @@
 package com.yubico.webauthn.util
 
-import java.security.PublicKey
-import java.security.KeyFactory
 import java.security.Provider
 import java.security.interfaces.ECPublicKey
 
@@ -13,10 +11,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.jce.spec.ECParameterSpec
-import org.bouncycastle.jce.spec.ECPublicKeySpec
 import COSE.OneKey
 
 import scala.collection.JavaConverters._
@@ -38,7 +33,7 @@ object WebAuthnCodecs {
     Vector[Byte](0x04) ++ x.drop(x.length - 32).padTo(32, 0: Byte) ++ y.drop(y.length - 32).padTo(32, 0: Byte)
   }
 
-  def rawEcdaKeyToCose(key: ArrayBuffer): ObjectNode = {
+  def rawEcdaKeyToCose(key: ArrayBuffer): ArrayBuffer = {
     assert(
       key.length == 64
         || (key.length == 65 && key.head == 0x04),
@@ -47,19 +42,18 @@ object WebAuthnCodecs {
 
     val start: Int = if (key.length == 64) 0 else 1
 
-    jsonFactory.objectNode().setAll(Map(
-      "alg" -> jsonFactory.numberNode(javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")),
-      "x" -> jsonFactory.binaryNode(key.slice(start, start + 32).toArray),
-      "y" -> jsonFactory.binaryNode(key.drop(start + 32).toArray)
-    ).asJava).asInstanceOf[ObjectNode]
+    CBORObject.FromObject(Map(
+      1 -> 2, // Key type: EC
+      3 -> javaAlgorithmNameToCoseAlgorithmIdentifier("ES256"),
+      -1 -> 1, // Curve: P-256
+      -2 -> key.slice(start, start + 32).toArray, // x
+      -3 -> key.drop(start + 32).toArray // y
+    ).asJava)
+      .EncodeToBytes
+      .toVector
   }
 
-  def ecPublicKeyToCose(key: ECPublicKey): ObjectNode =
-    jsonFactory.objectNode().setAll(Map(
-      "alg" -> jsonFactory.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)),
-      "x" -> jsonFactory.binaryNode(key.getW.getAffineX.toByteArray),
-      "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
-    ).asJava).asInstanceOf[ObjectNode]
+  def ecPublicKeyToCose(key: ECPublicKey): ArrayBuffer = rawEcdaKeyToCose(ecPublicKeyToRaw(key))
 
   def importCoseP256PublicKey(key: Array[Byte]): ECPublicKey = importCoseP256PublicKey(key.toVector)
   def importCoseP256PublicKey(key: ArrayBuffer): ECPublicKey = {

@@ -551,10 +551,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testData = TestData.FidoU2f.BasicAttestation.editAuthenticatorData { authenticatorData =>
               val decoded = AuthenticatorData(authenticatorData)
               val L = decoded.attestationData.get.credentialId.length
-              val evilPublicKey = decoded.attestationData.get.credentialPublicKey.asInstanceOf[ObjectNode]
-                .set("x", jsonFactory.binaryNode(Array.fill[Byte](32)(0)))
+              val evilPublicKey = decoded.attestationData.get.credentialPublicKey.updated(30, 0: Byte)
 
-              authenticatorData.take(32 + 1 + 4 + 16 + 2 + L) ++ WebAuthnCodecs.cbor.writeValueAsBytes(evilPublicKey)
+              authenticatorData.take(32 + 1 + 4 + 16 + 2 + L) ++ evilPublicKey
             }
             val steps = finishRegistration(
               testData = testData,

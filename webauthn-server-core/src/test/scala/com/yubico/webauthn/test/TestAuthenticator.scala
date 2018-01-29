@@ -394,19 +394,18 @@ class TestAuthenticator (
       )
 
   def makeAttestationDataBytes(
-    publicKeyCose: JsonNode,
+    publicKeyCose: ArrayBuffer,
     rpId: String = Defaults.rpId,
     counterBytes: ArrayBuffer = BinaryUtil.fromHex("0539").get,
     aaguid: ArrayBuffer = Defaults.aaguid
   ): ArrayBuffer = {
-    val credentialPublicKeyBytes = WebAuthnCodecs.cbor.writeValueAsBytes(publicKeyCose)
-    val credentialId = sha256(credentialPublicKeyBytes)
+    val credentialId = sha256(publicKeyCose)
 
     (Vector[Byte]()
       ++ aaguid
       ++ util.BinaryUtil.fromHex("0020").get
       ++ credentialId
-      ++ credentialPublicKeyBytes
+      ++ publicKeyCose
     )
   }
 
