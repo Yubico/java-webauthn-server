@@ -22,9 +22,6 @@ case class PublicKeyCredentialParameters(
   `type`: PublicKeyCredentialType = PublicKey
 ) {
 
-  @JsonProperty
-  def algorithm: Any = alg // TODO remove algorithm
-
   @JsonProperty("type")
   def typeJson: String = `type`.id
 }
