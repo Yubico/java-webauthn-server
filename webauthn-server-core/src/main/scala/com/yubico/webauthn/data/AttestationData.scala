@@ -26,6 +26,7 @@ case class AttestationData private[data] (
     *
     * @todo verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
     */
+  @JsonIgnore
   credentialPublicKey: ArrayBuffer
 
 ) {
@@ -35,6 +36,9 @@ case class AttestationData private[data] (
 
   @JsonProperty("credentialId")
   def credentialIdBase64: String = U2fB64Encoding.encode(credentialId.toArray)
+
+  @JsonProperty("credentialPublicKey")
+  def credentialPublicKeyBase64: String = U2fB64Encoding.encode(credentialPublicKey.toArray)
 
   def parsedCredentialPublicKey: ECPublicKey = WebAuthnCodecs.importCoseP256PublicKey(credentialPublicKey)
 
