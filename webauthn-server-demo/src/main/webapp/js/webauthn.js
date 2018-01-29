@@ -101,6 +101,7 @@
 
     const makePublicKeyCredentialOptions = {
       ...request,
+      attestation: 'direct',
       user: {
         ...request.user,
         id: base64url.toByteArray(request.user.id),
