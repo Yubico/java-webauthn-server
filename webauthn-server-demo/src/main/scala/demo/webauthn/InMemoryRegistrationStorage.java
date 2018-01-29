@@ -91,7 +91,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
         logger.debug("lookup credential ID: {}, user handle: {}; result: {}", credentialId, userHandle, registrationMaybe);
         return registrationMaybe.flatMap(registration -> {
-            final ObjectNode cose = registration.getRegistration().publicKeyCose();
+            final byte[] cose = registration.getRegistration().publicKeyCose();
             final PublicKey key = WebAuthnCodecs.importCoseP256PublicKey(cose);
 
             if (key == null) {

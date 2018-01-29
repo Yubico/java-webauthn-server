@@ -1,9 +1,11 @@
 package com.yubico.webauthn.data
 
+import java.security.interfaces.ECPublicKey
+
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.webauthn.util.WebAuthnCodecs
 
 case class AttestationData private[data] (
 
@@ -24,7 +26,7 @@ case class AttestationData private[data] (
     *
     * @todo verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
     */
-  credentialPublicKey: ObjectNode
+  credentialPublicKey: ArrayBuffer
 
 ) {
 
@@ -33,5 +35,7 @@ case class AttestationData private[data] (
 
   @JsonProperty("credentialId")
   def credentialIdBase64: String = U2fB64Encoding.encode(credentialId.toArray)
+
+  def parsedCredentialPublicKey: ECPublicKey = WebAuthnCodecs.importCoseP256PublicKey(credentialPublicKey)
 
 }

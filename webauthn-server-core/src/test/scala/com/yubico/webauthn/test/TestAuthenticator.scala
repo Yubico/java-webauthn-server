@@ -322,7 +322,7 @@ class TestAuthenticator (
       authData.rpIdHash,
       clientDataJson,
       authData.attestationData.get.credentialId,
-      WebAuthnCodecs.coseKeyToRaw(authData.attestationData.get.credentialPublicKey)
+      WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(authData.attestationData.get.credentialPublicKey))
     )
 
     val f = JsonNodeFactory.instance

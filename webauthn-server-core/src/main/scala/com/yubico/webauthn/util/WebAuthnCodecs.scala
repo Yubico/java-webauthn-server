@@ -7,16 +7,17 @@ import java.security.interfaces.ECPublicKey
 
 import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
+import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECParameterSpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
+import COSE.OneKey
 
 import scala.collection.JavaConverters._
 
@@ -30,20 +31,11 @@ object WebAuthnCodecs {
 
   def json: ObjectMapper = new ObjectMapper().setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
 
-  def coseKeyToRaw(key: ObjectNode): ArrayBuffer = {
-    assert(
-      (key.has("alg") && key.get("alg").isNumber && key.get("alg").longValue == javaAlgorithmNameToCoseAlgorithmIdentifier("ES256"))
-      || (key.has("alg") && key.get("alg").isTextual && key.get("alg").textValue == "ES256"),
-      s"""COSE key must have the property "alg" set to ${javaAlgorithmNameToCoseAlgorithmIdentifier("ES256")}: ${key}"""
-    )
-    assert(
-      key.has("x") && key.has("y") && key.get("x").isBinary && key.get("y").isBinary(),
-      """COSE key must have binary "x" and "y" properties."""
-    )
-    val xBytes = key.get("x").binaryValue()
-    val yBytes = key.get("y").binaryValue()
+  def ecPublicKeyToRaw(key: ECPublicKey): ArrayBuffer = {
+    val x = key.getW.getAffineX.toByteArray.toVector
+    val y = key.getW.getAffineX.toByteArray.toVector
 
-    Vector[Byte](0x04) ++ (xBytes takeRight 32) ++ (yBytes takeRight 32)
+    Vector[Byte](0x04) ++ Vector.fill[Byte](32 - x.length)(0) ++ x ++ Vector.fill[Byte](32 - x.length)(0) ++ y
   }
 
   def rawEcdaKeyToCose(key: ArrayBuffer): ObjectNode = {
@@ -69,19 +61,11 @@ object WebAuthnCodecs {
       "y" -> jsonFactory.binaryNode(key.getW.getAffineY.toByteArray)
     ).asJava).asInstanceOf[ObjectNode]
 
-  def importCoseP256PublicKey(key: ObjectNode): PublicKey = {
-    val ecSpec: ECParameterSpec = ECNamedCurveTable.getParameterSpec("secp256r1")
-
-    val kf: KeyFactory = KeyFactory.getInstance("ECDSA", javaCryptoProvider)
-
-    ecSpec.getCurve
-
-    val pubKeySpec: ECPublicKeySpec = new ECPublicKeySpec(
-      ecSpec.getCurve.decodePoint(coseKeyToRaw(key).toArray),
-      ecSpec
-    )
-
-    kf.generatePublic(pubKeySpec)
+  def importCoseP256PublicKey(key: Array[Byte]): ECPublicKey = importCoseP256PublicKey(key.toVector)
+  def importCoseP256PublicKey(key: ArrayBuffer): ECPublicKey = {
+    val cbor = CBORObject.DecodeFromBytes(key.toArray)
+    val pubKey = new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.toArray)))
+    pubKey
   }
 
   def javaAlgorithmNameToCoseAlgorithmIdentifier(alg: String): COSEAlgorithmIdentifier = alg match {

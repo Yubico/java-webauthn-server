@@ -5,13 +5,10 @@ import java.util.Optional
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
-
-import scala.collection.JavaConverters._
 
 
 case class AuthenticatorData(
@@ -79,44 +76,17 @@ case class AuthenticatorData(
 
     val optionalBytes: ArrayBuffer = bytes.drop(16 + 2 + L)
 
-    if (optionalBytes.head == 0x04 && optionalBytes.length == 65) {
-      // This is probably a raw ECDSA key
-      // TODO remove this when Edge sends public key as COSE instead of raw
-      val credentialPublicKey = WebAuthnCodecs.rawEcdaKeyToCose(optionalBytes)
-
+    {
       (
         Some(AttestationData(
           aaguid = bytes.slice(0, 16),
           credentialId = bytes.slice(16 + 2, 16 + 2 + L),
-          credentialPublicKey = credentialPublicKey
+          credentialPublicKey = optionalBytes
         )),
         None
       )
-
-    } else {
-      val allRemainingCbor: List[JsonNode] = (
-        for { item <- WebAuthnCodecs.cbor
-                        .reader
-                        .forType(classOf[JsonNode])
-                        .readValues[JsonNode](optionalBytes.toArray)
-                        .asScala
-        } yield item
-      ).toList
-
-      val credentialPublicKey = allRemainingCbor.head.asInstanceOf[ObjectNode]
-      val extensions: Option[JsonNode] =
-        if (flags.ED) Some(allRemainingCbor(1))
-        else None
-
-      (
-        Some(AttestationData(
-          aaguid = bytes.slice(0, 16),
-          credentialId = bytes.slice(16 + 2, 16 + 2 + L),
-          credentialPublicKey = credentialPublicKey
-        )),
-        extensions
-      )
     }
+
   }
 
 }

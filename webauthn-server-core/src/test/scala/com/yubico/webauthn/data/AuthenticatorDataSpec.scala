@@ -1,16 +1,17 @@
 package com.yubico.webauthn.data
 
+import java.security.interfaces.ECPublicKey
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
+import com.yubico.webauthn.util.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
-
-import scala.collection.JavaConverters._
 
 @RunWith(classOf[JUnitRunner])
 class AuthenticatorDataSpec extends FunSpec with Matchers {
@@ -48,10 +49,10 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
           BinaryUtil.toHex(authData.attestationData.get.aaguid) should equal ("00000000000000000000000000000000")
           BinaryUtil.toHex(authData.attestationData.get.credentialId) should equal ("00085b9bfacca2df2ad6efef962dd05190249b429cc35091785bd6f80e68cb2fee69a5c0796c2c20ca8e634a521481995cc6c6989d4f91f43151392bcaa486d8072e399094e9d2e14a7065a79b8f4bc9610043ab0bd3383c9c041a460c741db5b36e5c85e9727ee8b1803f335666abee049af72ee1bc18a9ee782404ad31f59eb332db488a2a779a3b4a17798cb1b4790e92edc99cde9edbb617e35f6135c7026ca5")
 
-          authData.attestationData.get.credentialPublicKey.fieldNames.asScala.toSet should equal (Set("alg", "x", "y"))
-          authData.attestationData.get.credentialPublicKey.get("alg").asText should equal ("ES256")
-          authData.attestationData.get.credentialPublicKey.get("x").binaryValue should equal (U2fB64Encoding.decode("aoOddornU5isY2MWLBDqzR4rQ70aEjE9DCRBTSQOydw"))
-          authData.attestationData.get.credentialPublicKey.get("y").binaryValue should equal (U2fB64Encoding.decode("LW3Pt8GP0pOPbYjXOjvwjQ4x_X5xDKlV57nfKXZxU4E"))
+          val pubkey: ECPublicKey = authData.attestationData.get.parsedCredentialPublicKey
+          pubkey.getAlgorithm should equal ("ES256")
+          pubkey.getW.getAffineX.toByteArray should equal (U2fB64Encoding.decode("aoOddornU5isY2MWLBDqzR4rQ70aEjE9DCRBTSQOydw"))
+          pubkey.getW.getAffineY.toByteArray should equal (U2fB64Encoding.decode("LW3Pt8GP0pOPbYjXOjvwjQ4x_X5xDKlV57nfKXZxU4E"))
         }
       }
 
