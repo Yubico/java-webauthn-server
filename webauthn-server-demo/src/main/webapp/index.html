@@ -210,6 +210,10 @@ function register() {
       } else {
         showDeviceInfo(nicknameInfo);
       }
+
+      if (!data.attestationTrusted) {
+        addMessage("Warning: Attestation is not trusted!");
+      }
     }
   })
   .catch((err) => {
