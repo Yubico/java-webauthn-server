@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.upokecenter.cbor.CBORObject
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.attestation.MetadataResolver
 import com.yubico.u2f.attestation.MetadataObject
@@ -831,9 +832,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testDataBase.clientDataJsonHash
                   )
 
-                  WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(
-                    AttestationObject(testDataBase.attestationObject).authenticatorData.attestationData.get.parsedCredentialPublicKey.getAlgorithm
-                  ) should equal (-7)
+                  CBORObject.DecodeFromBytes(AttestationObject(testDataBase.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
                   AttestationObject(testDataBase.attestationObject).attestationStatement.get("alg").longValue should equal (-7)
                   result should equal (true)
                 }
@@ -845,9 +844,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testData.clientDataJsonHash
                   )
 
-                  WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(
-                    AttestationObject(testData.attestationObject).authenticatorData.attestationData.get.parsedCredentialPublicKey.getAlgorithm
-                  ) should equal (-7)
+                  CBORObject.DecodeFromBytes(AttestationObject(testData.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
                   AttestationObject(testData.attestationObject).attestationStatement.get("alg").longValue should equal (-257)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]

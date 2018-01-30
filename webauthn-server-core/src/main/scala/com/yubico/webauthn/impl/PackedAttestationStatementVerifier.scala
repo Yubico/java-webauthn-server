@@ -15,7 +15,6 @@ import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.Ecdaa
 import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.util.WebAuthnCodecs
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
 
@@ -60,7 +59,7 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
   private def verifySelfAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
     val pubkey = attestationObject.authenticatorData.attestationData.get.parsedCredentialPublicKey
 
-    val keyAlg: COSEAlgorithmIdentifier = CBORObject.DecodeFromBytes(attestationObject.authenticatorData.attestationData.get.credentialPublicKey.toArray).get(1).AsInt64
+    val keyAlg: COSEAlgorithmIdentifier = CBORObject.DecodeFromBytes(attestationObject.authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64
     val sigAlg: COSEAlgorithmIdentifier = attestationObject.attestationStatement.get("alg").asLong
 
     assert(keyAlg == sigAlg, s"Key algorithm and signature algorithm must be equal, was: Key: ${keyAlg}, Sig: ${sigAlg}")

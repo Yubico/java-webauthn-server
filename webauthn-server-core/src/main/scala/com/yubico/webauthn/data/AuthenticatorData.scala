@@ -1,14 +1,19 @@
 package com.yubico.webauthn.data
 
+import java.io.ByteArrayInputStream
 import java.util.Optional
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
+import com.upokecenter.cbor.CBORObject
+import com.upokecenter.cbor.CBORException
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util.BinaryUtil
-import com.yubico.webauthn.util.WebAuthnCodecs
+
+import scala.util.Success
+import scala.util.Try
+import scala.util.Failure
 
 
 case class AuthenticatorData(
@@ -57,36 +62,50 @@ case class AuthenticatorData(
     *
     * See ''§8 WebAuthn Extensions'' of [[com.yubico.webauthn.VersionInfo]] for details.
     */
-  val extensions: Optional[JsonNode] = optionalParts._2.asJava
+  val extensions: Optional[ArrayBuffer] = optionalParts._2.asJava
 
-  private lazy val optionalParts: (Option[AttestationData], Option[JsonNode]) =
+  private lazy val optionalParts: (Option[AttestationData], Option[ArrayBuffer]) =
     if (flags.AT)
-      parseAttestationData(authData drop FixedLengthPartEndIndex)
+      parseAttestationData(flags, authData drop FixedLengthPartEndIndex)
     else if (flags.ED)
-      (None, Some(WebAuthnCodecs.cbor.readTree(authData.drop(FixedLengthPartEndIndex).toArray)))
+      (None, Some(validateExtensions(authData.drop(FixedLengthPartEndIndex))))
     else
       (None, None)
 
-  private def parseAttestationData(bytes: ArrayBuffer): (Some[AttestationData], Option[JsonNode]) = {
+  private def parseAttestationData(flags: AuthenticationDataFlags, bytes: ArrayBuffer): (Some[AttestationData], Option[ArrayBuffer]) = {
 
     val credentialIdLengthBytes = bytes.slice(16, 16 + 2)
     val L: Int = BinaryUtil.getUint16(credentialIdLengthBytes) getOrElse {
       throw new IllegalArgumentException(s"Invalid credential ID length bytes: ${credentialIdLengthBytes}")
     }
 
-    val optionalBytes: ArrayBuffer = bytes.drop(16 + 2 + L)
+    var indefiniteLengthBytes = new ByteArrayInputStream(bytes.drop(16 + 2 + L).toArray)
 
-    {
-      (
-        Some(AttestationData(
-          aaguid = bytes.slice(0, 16),
-          credentialId = bytes.slice(16 + 2, 16 + 2 + L),
-          credentialPublicKey = optionalBytes
-        )),
-        None
-      )
+    val credentialPublicKey: CBORObject = CBORObject.Read(indefiniteLengthBytes)
+    val extensions: Option[CBORObject] = (flags.ED, indefiniteLengthBytes.available > 0) match {
+      case (true, true) => Some(CBORObject.Read(indefiniteLengthBytes))
+      case (false, true) => throw new IllegalArgumentException(s"Flags indicate no extension data, but ${indefiniteLengthBytes.available} bytes remain after attestation data.")
+      case (true, false) => throw new IllegalArgumentException(s"Flags indicate there should be extension data, but no bytes remain after attestation data.")
+      case (false, false) => None
     }
 
+    (
+      Some(AttestationData(
+        aaguid = bytes.slice(0, 16),
+        credentialId = bytes.slice(16 + 2, 16 + 2 + L),
+        credentialPublicKey = credentialPublicKey.EncodeToBytes().toVector
+      )),
+      extensions map { _.EncodeToBytes.toVector }
+    )
   }
+
+  private def validateExtensions(bytes: ArrayBuffer): ArrayBuffer =
+    Try {
+      CBORObject.DecodeFromBytes(bytes.toArray)
+    } match {
+      case Success(_) => bytes
+      case Failure(e: CBORException) => throw new IllegalArgumentException(e)
+      case Failure(e) => throw e
+    }
 
 }
