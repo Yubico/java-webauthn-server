@@ -236,7 +236,7 @@ case class FinishRegistrationSteps(
       case SelfAttestation => None
       case Basic =>
         attestation.format match {
-          case "fido-u2f" => Try(new KnownX509TrustAnchorsTrustResolver(metadataService.get)).toOption
+          case "fido-u2f"|"packed" => Try(new KnownX509TrustAnchorsTrustResolver(metadataService.get)).toOption
         }
       case _ => ???
     }).asJava
