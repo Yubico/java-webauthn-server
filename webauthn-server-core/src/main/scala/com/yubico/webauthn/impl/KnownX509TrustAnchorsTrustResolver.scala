@@ -11,7 +11,7 @@ import com.yubico.webauthn.data.AttestationObject
 import scala.collection.JavaConverters._
 
 
-class FidoMetadataServiceAttestationTrustResolver(
+class KnownX509TrustAnchorsTrustResolver(
   private val metadataService: MetadataService
 ) extends AttestationTrustResolver {
 

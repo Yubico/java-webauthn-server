@@ -23,7 +23,7 @@ import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
-import com.yubico.webauthn.impl.FidoMetadataServiceAttestationTrustResolver
+import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.X5cAttestationStatementVerifier
 import org.slf4j.LoggerFactory
@@ -236,7 +236,7 @@ case class FinishRegistrationSteps(
       case SelfAttestation => None
       case Basic =>
         attestation.format match {
-          case "fido-u2f" => Try(new FidoMetadataServiceAttestationTrustResolver(metadataService.get)).toOption
+          case "fido-u2f" => Try(new KnownX509TrustAnchorsTrustResolver(metadataService.get)).toOption
         }
       case _ => ???
     }).asJava
