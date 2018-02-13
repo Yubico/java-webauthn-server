@@ -1097,13 +1097,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         describe("Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.") {
 
-          describe("A test case with basic attestation") {
+          def generateTests(testData: TestData): Unit = {
             it("is rejected if untrusted attestation is not allowed and trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
               val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
               val steps = finishRegistration(
                 allowUntrustedAttestation = false,
-                testData = TestData.FidoU2f.BasicAttestation,
+                testData = testData,
                 metadataService = Some(metadataService)
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -1120,7 +1120,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
               val steps = finishRegistration(
                 allowUntrustedAttestation = true,
-                testData = TestData.FidoU2f.BasicAttestation,
+                testData = testData,
                 metadataService = Some(metadataService)
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -1150,7 +1150,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               )
 
               val steps = finishRegistration(
-                testData = TestData.FidoU2f.BasicAttestation,
+                testData = testData,
                 metadataService = Some(metadataService)
               )
               val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -1163,6 +1163,25 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
           }
 
+          describe("An android-key basic attestation") {
+            it("fails for now.") {
+              fail("Test not implemented.")
+            }
+          }
+
+          describe("An android-safetynet basic attestation") {
+            it("fails for now.") {
+              fail("Test not implemented.")
+            }
+          }
+
+          describe("A fido-u2f basic attestation") {
+            generateTests(testData = TestData.FidoU2f.BasicAttestation)
+          }
+
+          describe("A packed basic attestation") {
+            generateTests(testData = TestData.Packed.BasicAttestation)
+          }
         }
 
       }
