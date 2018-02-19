@@ -312,6 +312,8 @@ function authenticate(username = null) {
       success: 'Authentication successful!',
     },
     executeRequest: executeAuthenticateRequest,
+  }).then(data => {
+    addMessage(`Authenticated as: ${data.registrations[0].username}`);
   }).catch((err) => {
     setStatus('Authentication failed.');
     addMessage(`${err.name}: ${err.message}`);
