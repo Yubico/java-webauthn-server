@@ -13,8 +13,6 @@ plugins {
 }
 
 
-import com.yubico.gradle.plugins.signing.GpgSigningPlugin
-
 project.ext.publishEnabled = System.env.CI != 'true' && project.hasProperty('ossrhUsername')
 
 if (publishEnabled) {
@@ -26,17 +24,18 @@ if (publishEnabled) {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '4.1'
+  gradleVersion = '4.5.1'
 }
 
 allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
+  apply plugin: 'signing'
   apply plugin: 'idea'
 
   if (publishEnabled) {
-    apply plugin: GpgSigningPlugin
     signing {
+      useGpgCmd()
       sign configurations.archives
     }
     signArchives.dependsOn check
