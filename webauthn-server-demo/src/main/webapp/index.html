@@ -99,9 +99,36 @@ function getIndexActions() {
     .then(response => response.json());
 }
 
-function getRegisterRequest(url, username, displayName, credentialNickname) {
+function getRegisterRequest(url, username, displayName, credentialNickname, requireResidentKey = false) {
   return fetch(`${url}?username=${username}&displayName=${displayName}&credentialNickname=${credentialNickname}`, { method: 'POST' })
     .then(response => response.json())
+    .then(response => {
+      console.log('response', response);
+      return response;
+    })
+    .then(response => Object.assign({},
+      response,
+      {
+        request: Object.assign({},
+          response.request,
+          {
+            makePublicKeyCredentialOptions: Object.assign({},
+              response.request.makePublicKeyCredentialOptions,
+              {
+                authenticatorSelection: Object.assign({},
+                  response.request.makePublicKeyCredentialOptions.authenticatorSelection,
+                  { requireResidentKey }
+                )
+              }
+            )
+          }
+        )
+      }
+    ))
+    .then(response => {
+      console.log('response', response);
+      return response;
+    })
   ;
 }
 
@@ -190,7 +217,10 @@ function performCeremony(params) {
   ;
 }
 
-function register() {
+function registerResidentKey() {
+  return register(requireResidentKey = true);
+}
+function register(requireResidentKey = false) {
   const username = document.getElementById('username').value;
   const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
@@ -199,7 +229,7 @@ function register() {
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRegisterRequest(urls.register, username, displayName, credentialNickname),
+    getRequest: urls => getRegisterRequest(urls.register, username, displayName, credentialNickname, requireResidentKey),
     statusStrings: {
       init: 'Initiating registration ceremony with server...',
       authenticatorRequest: 'Asking authenticators to create credential...',
@@ -249,8 +279,13 @@ function register() {
 }
 
 function getAuthenticateRequest(url, username) {
-  return fetch(`${url}?username=${username}`, { method: 'POST' })
-    .then(response => response.json());
+  return fetch(
+    username
+      ? `${url}?username=${username}`
+      : url
+    ,
+    { method: 'POST' }
+  ).then(response => response.json());
 }
 
 function getDeregisterRequest(url, username, credentialId) {
@@ -264,9 +299,10 @@ function executeAuthenticateRequest(request) {
   return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
 }
 
-function authenticate() {
-  const username = document.getElementById('username').value;
-
+function authenticateWithUsername() {
+  return authenticate(username = document.getElementById('username').value);
+}
+function authenticate(username = null) {
   return performCeremony({
     getIndexActions,
     getRequest: urls => getAuthenticateRequest(urls.authenticate, username),
@@ -356,14 +392,24 @@ window.onload = init;
             Register new credential
           </button>
         </div>
+        <div>
+          <button type="button" onClick="javascript:registerResidentKey()">
+            Register new username-less credential
+          </button>
+        </div>
       </div>
 
       <div class="row">
         <div></div>
         <div></div>
         <div>
-          <button type="button" onClick="javascript:authenticate()">
+          <button type="button" onClick="javascript:authenticateWithUsername()">
             Authenticate
+          </button>
+        </div>
+        <div>
+          <button type="button" onClick="javascript:authenticate()">
+            Authenticate without username
           </button>
         </div>
       </div>

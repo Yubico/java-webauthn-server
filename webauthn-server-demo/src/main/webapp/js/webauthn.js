@@ -143,14 +143,14 @@
    *   `publicKey` parameter to `navigator.credentials.get()`
    */
   function decodePublicKeyCredentialRequestOptions(request) {
-    const allowCredentials = request.allowCredentials.map(credential => extend(
+    const allowCredentials = request.allowCredentials && request.allowCredentials.map(credential => extend(
       credential, {
       id: base64url.toByteArray(credential.id),
     }));
 
     const publicKeyCredentialRequestOptions = extend(
       request, {
-      allowCredentials: allowCredentials,
+      allowCredentials,
       challenge: base64url.toByteArray(request.challenge),
       timeout: 10000,
     });

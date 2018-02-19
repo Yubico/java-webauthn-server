@@ -41,6 +41,22 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
+    public Collection<CredentialRegistration> getRegistrationsByUserHandle(String userHandleBase64) {
+        return storage.values().stream()
+            .filter(credentialRegistration ->
+                userHandleBase64.equals(credentialRegistration.getUserHandleBase64())
+            )
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<String> getUsername(String userHandleBase64) {
+        return getRegistrationsByUserHandle(userHandleBase64).stream()
+            .findAny()
+            .map(CredentialRegistration::getUsername);
+    }
+
+    @Override
     public boolean usernameOwnsCredential(String username, String idBase64) {
         return storage.get(username).stream()
             .anyMatch(credentialRegistration ->

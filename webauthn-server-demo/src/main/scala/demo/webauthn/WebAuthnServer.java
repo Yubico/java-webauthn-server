@@ -135,13 +135,13 @@ public class WebAuthnServer {
         }
     }
 
-    public AssertionRequest startAuthentication(String username) {
+    public AssertionRequest startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
         AssertionRequest request = new AssertionRequest(
             username,
             U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
             rp.startAssertion(
-                Optional.of(userStorage.getCredentialIdsForUsername(username)),
+                username.map(userStorage::getCredentialIdsForUsername),
                 Optional.empty()
             )
         );
@@ -181,74 +181,89 @@ public class WebAuthnServer {
                 )
             );
 
-            boolean usernameOwnsCredential = userStorage.usernameOwnsCredential(request.getUsername(), response.getCredential().id());
-            Optional<Boolean> userHandleOwnsCredential = Optional.ofNullable(response.getCredential().response().userHandleBase64())
-                .map(userHandle -> userStorage.userHandleOwnsCredential(userHandle, response.getCredential().id()));
+            Optional<String> userHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
 
-            if (credentialIsAllowed.isPresent() && !credentialIsAllowed.get()) {
-                return Left.apply(Collections.singletonList(String.format(
-                    "Credential is not allowed for this authentication: %s",
-                    response.getCredential().id()
-                )));
-            } else if (!usernameOwnsCredential || (userHandleOwnsCredential.isPresent() && !userHandleOwnsCredential.get())) {
-                return Left.apply(Collections.singletonList(String.format(
-                    "User \"%s\" does not own credential: %s",
-                    request.getUsername(),
-                    response.getCredential().id()
-                )));
+            if (!request.getUsername().isPresent() && !userHandle.isPresent()) {
+                return Left.apply(Arrays.asList("User handle must be returned if username was not supplied in startAuthentication"));
             } else {
-                Try<Object> assertionTry = rp.finishAssertion(
-                    request.getPublicKeyCredentialRequestOptions(),
-                    response.getCredential(),
-                    Optional.empty()
-                );
+                final String username;
+                if (request.getUsername().isPresent()) {
+                    username = request.getUsername().get();
+                } else {
+                    username = userStorage.getUsername(userHandle.get()).orElse(null);
+                }
 
-                if (assertionTry.isSuccess()) {
-                    if ((boolean) assertionTry.get()) {
-                        final CredentialRegistration credentialRegistration = userStorage.getRegistrationByUsernameAndCredentialId(
+                if (username == null) {
+                    return Left.apply(Arrays.asList("User not registered: " + request.getUsername().orElse(userHandle.get())));
+                } else {
+                    boolean usernameOwnsCredential = userStorage.usernameOwnsCredential(username, response.getCredential().id());
+
+                    if (credentialIsAllowed.isPresent() && !credentialIsAllowed.get()) {
+                        return Left.apply(Collections.singletonList(String.format(
+                            "Credential is not allowed for this authentication: %s",
+                            response.getCredential().id()
+                        )));
+                    } else if (!usernameOwnsCredential) {
+                        return Left.apply(Collections.singletonList(String.format(
+                            "User \"%s\" does not own credential: %s",
                             request.getUsername(),
                             response.getCredential().id()
-                        ).get();
-
-                        final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
-                            response.getCredential().response().parsedAuthenticatorData().signatureCounter()
-                        );
-
-                        try {
-                            userStorage.updateSignatureCountForUsername(
-                                request.getUsername(),
-                                response.getCredential().id(),
-                                response.getCredential().response().parsedAuthenticatorData().signatureCounter()
-                            );
-                        } catch (Exception e) {
-                            logger.error(
-                                "Failed to update signature count for user \"{}\", credential \"{}\"",
-                                request.getUsername(),
-                                response.getCredential().id(),
-                                e
-                            );
-                        }
-
-                        return Right.apply(
-                            new SuccessfulAuthenticationResult(
-                                request,
-                                response,
-                                userStorage.getRegistrationsByUsername(request.getUsername())
-                            )
-                        );
+                        )));
                     } else {
-                        return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
-                    }
+                        Try<Object> assertionTry = rp.finishAssertion(
+                            request.getPublicKeyCredentialRequestOptions(),
+                            response.getCredential(),
+                            Optional.empty()
+                        );
 
-                } else {
-                    logger.debug("Assertion failed", assertionTry.failed().get());
-                    return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+                        if (assertionTry.isSuccess()) {
+                            if ((boolean) assertionTry.get()) {
+                                final CredentialRegistration credentialRegistration = userStorage.getRegistrationByUsernameAndCredentialId(
+                                    username,
+                                    response.getCredential().id()
+                                ).get();
+
+                                final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
+                                    response.getCredential().response().parsedAuthenticatorData().signatureCounter()
+                                );
+
+                                try {
+                                    userStorage.updateSignatureCountForUsername(
+                                        username,
+                                        response.getCredential().id(),
+                                        response.getCredential().response().parsedAuthenticatorData().signatureCounter()
+                                    );
+                                } catch (Exception e) {
+                                    logger.error(
+                                        "Failed to update signature count for user \"{}\", credential \"{}\"",
+                                        request.getUsername(),
+                                        response.getCredential().id(),
+                                        e
+                                    );
+                                }
+
+                                return Right.apply(
+                                    new SuccessfulAuthenticationResult(
+                                        request,
+                                        response,
+                                        userStorage.getRegistrationsByUsername(username)
+                                    )
+                                );
+                            } else {
+                                return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
+                            }
+
+                        } else {
+                            logger.debug("Assertion failed", assertionTry.failed().get());
+                            return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+                        }
+                    }
                 }
             }
         }
     }
 
-    public AssertionRequest startAuthenticatedAction(String username, AuthenticatedAction<?> action) {
+    public AssertionRequest startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
         final AssertionRequest request = startAuthentication(username);
         synchronized (authenticatedActions) {
             authenticatedActions.put(request, action);
@@ -293,7 +308,7 @@ public class WebAuthnServer {
             }
         };
 
-        return Right.apply(startAuthenticatedAction(username, action));
+        return Right.apply(startAuthenticatedAction(Optional.of(username), action));
     }
 
     private CredentialRegistration addRegistration(String username, String nickname, String userHandleBase64, RegistrationResponse response, RegistrationResult registration) {

@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,7 +129,7 @@ public class WebAuthnRestResource {
     @POST
     public Response startAuthentication(@QueryParam("username") String username) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
-        AssertionRequest request = server.startAuthentication(username);
+        AssertionRequest request = server.startAuthentication(Optional.ofNullable(username));
         return startResponse(new StartAuthenticationResponse(request));
     }
 
