@@ -6,7 +6,7 @@ set -e
 
 cd /home/emlun/java-u2flib-server/webauthn-server-demo
 
-./gradlew war
+../gradlew war
 
 cp build/libs/webauthn-server-demo-0.18.0.war docker/webauthn-server-demo.war
 

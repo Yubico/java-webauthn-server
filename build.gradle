@@ -25,6 +25,10 @@ if (publishEnabled) {
   }
 }
 
+task wrapper(type: Wrapper) {
+  gradleVersion = '4.1'
+}
+
 allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
@@ -36,10 +40,6 @@ allprojects  {
       sign configurations.archives
     }
     signArchives.dependsOn check
-  }
-
-  task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
   }
 
   group = 'com.yubico'
