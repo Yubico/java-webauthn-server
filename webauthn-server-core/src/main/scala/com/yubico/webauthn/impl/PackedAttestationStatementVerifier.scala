@@ -123,7 +123,15 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
     assert(getDnField("OU", cert) contains ouValue, s"""Organization Unit (OU) field of attestation certificate DN must be exactly "${ouValue}", was: ${getDnField("OU", cert)}""")
 
     Option(cert.getExtensionValue(idFidoGenCeAaguid))
-      .map { ASN1Primitive.fromByteArray(_).asInstanceOf[DEROctetString].getOctets }
+      .map { ext =>
+        ASN1Primitive.fromByteArray(
+          ASN1Primitive.fromByteArray(ext)
+          .asInstanceOf[DEROctetString]
+          .getOctets
+        )
+          .asInstanceOf[DEROctetString]
+          .getOctets
+      }
       .foreach { value: Array[Byte] =>
         assert(value.toVector == aaguid, s"X.509 extension ${idFidoGenCeAaguid} (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.")
       }
