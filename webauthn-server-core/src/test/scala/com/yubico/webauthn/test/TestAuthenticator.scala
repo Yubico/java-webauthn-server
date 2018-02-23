@@ -508,16 +508,8 @@ class TestAuthenticator (
   def generateRsaCertificate(): (X509Certificate, PrivateKey) =
     generateAttestationCertificate(keypair = generateRsaKeypair())
 
-  def importCertFromPem(certPem: InputStream): X509Certificate =
-    CertificateParser.parseDer(
-      new PEMParser(new BufferedReader(new InputStreamReader(certPem)))
-        .readObject()
-        .asInstanceOf[X509CertificateHolder]
-        .getEncoded
-    )
-
   def importCertAndKeyFromPem(certPem: InputStream, keyPem: InputStream): (X509Certificate, PrivateKey) = {
-    val cert: X509Certificate = importCertFromPem(certPem)
+    val cert: X509Certificate = Util.importCertFromPem(certPem)
 
     val priKeyParser = new PEMParser(new BufferedReader(new InputStreamReader(keyPem)))
     priKeyParser.readObject() // Throw away the EC params part
