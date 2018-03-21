@@ -77,6 +77,16 @@ case class FinishAssertionSteps(
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
     override def nextStep = Step3(this)
     override def validate() = {
+      Option(response.response.userHandleBase64) match {
+        case Some(userHandle) =>
+          val registration = credentialRepository.lookup(response.id, Some(userHandle).asJava).asScala
+          assert(registration.isDefined, s"Unknown credential: ${response.id}")
+          assert(
+            registration.get.userHandle == response.response.userHandle.get,
+            s"User handle ${userHandle} does not own credential ${response.id}"
+          )
+        case None =>
+      }
     }
   }
 

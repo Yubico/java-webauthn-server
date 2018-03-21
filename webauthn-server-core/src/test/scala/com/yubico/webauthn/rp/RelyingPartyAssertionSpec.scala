@@ -85,7 +85,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature,
-    userHandle: ArrayBuffer = Defaults.userHandle,
+    userHandle: Option[ArrayBuffer] = Some(Defaults.userHandle),
     validateSignatureCounter: Boolean = true
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
@@ -103,7 +103,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         clientDataJSON = clientDataJsonBytes,
         authenticatorData = authenticatorData,
         signature = signature,
-        userHandle = Some(userHandle).asJava
+        userHandle = userHandle.asJava
       ),
       clientExtensionResults
     )
@@ -123,7 +123,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 credentialId = U2fB64Encoding.decode(credId).toVector,
                 publicKey = credentialKey.getPublic,
                 signatureCount = 0L,
-                userHandle = userHandle
+                userHandle = userHandle.get
               ))
             else None
           ).asJava
@@ -196,7 +196,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Fails if credential ID is not owned by the given user handle.") {
           val steps = finishAssertion(
             credentialRepository = credentialRepository,
-            userHandle = Vector(8, 9, 10, 11)
+            userHandle = Some(Vector(8, 9, 10, 11))
           )
           val step: steps.Step2 = steps.begin.next.get
 
@@ -208,7 +208,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Succeeds if credential ID is owned by the given user handle.") {
           val steps = finishAssertion(
             credentialRepository = credentialRepository,
-            userHandle = Vector(4, 5, 6, 7)
+            userHandle = Some(Vector(4, 5, 6, 7))
           )
           val step: steps.Step2 = steps.begin.next.get
 
@@ -219,9 +219,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
-          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
-            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
-          }))
+          val steps = finishAssertion(
+            credentialRepository = Some(new CredentialRepository {
+              override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
+            }),
+            userHandle = None
+          )
           val step: steps.Step3 = steps.begin.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
