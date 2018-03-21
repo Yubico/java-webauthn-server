@@ -3,7 +3,6 @@ package com.yubico.webauthn.test
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.InputStream
-import java.io.FileInputStream
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.KeyFactory
@@ -33,15 +32,15 @@ import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.util
 import com.yubico.webauthn.data
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
+import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
@@ -49,7 +48,6 @@ import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
-import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
@@ -105,6 +103,10 @@ class TestAuthenticator (
     val challenge: ArrayBuffer = Vector[Byte](0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91)
     val credentialId: ArrayBuffer = (0 to 31).toVector map { _.toByte }
     val rpId = "localhost"
+    object TokenBinding {
+      val status = "supported"
+      val id = None
+    }
 
     val credentialKey: KeyPair = generateEcKeypair()
   }
@@ -131,7 +133,8 @@ class TestAuthenticator (
     credentialKeypair: Option[KeyPair] = None,
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
-    tokenBindingId: Option[String] = None,
+    tokenBindingStatus: String = Defaults.TokenBinding.status,
+    tokenBindingId: Option[String] = Defaults.TokenBinding.id,
     userId: UserIdentity = UserIdentity(name = "Test", displayName = "Test", id = Vector(42, 13, 37)),
     useSelfAttestation: Boolean = false
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
@@ -155,7 +158,15 @@ class TestAuthenticator (
         "type" -> jsonFactory.textNode("webauthn.create")
       ).asJava)
 
-      tokenBindingId foreach { id => json.set("tokenBindingId", jsonFactory.textNode(id)) }
+      json.set(
+        "tokenBinding",
+        {
+          val tokenBinding = jsonFactory.objectNode()
+          tokenBinding.set("status", jsonFactory.textNode(tokenBindingStatus))
+          tokenBindingId foreach { id => tokenBinding.set("id", jsonFactory.textNode(id)) }
+          tokenBinding
+        }
+      )
 
       clientExtensions foreach { extensions => json.set("clientExtensions", extensions) }
       authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
@@ -238,7 +249,8 @@ class TestAuthenticator (
     credentialKey: KeyPair = Defaults.credentialKey,
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
-    tokenBindingId: Option[String] = None,
+    tokenBindingStatus: String = Defaults.TokenBinding.status,
+    tokenBindingId: Option[String] = Defaults.TokenBinding.id,
     userHandle: Option[ArrayBuffer] = None
   ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse] = {
 
@@ -259,7 +271,15 @@ class TestAuthenticator (
         "hashAlgorithm" -> jsonFactory.textNode("SHA-256")
       ).asJava)
 
-      tokenBindingId foreach { id => json.set("tokenBindingId", jsonFactory.textNode(id)) }
+      json.set(
+        "tokenBinding",
+        {
+          val tokenBinding = jsonFactory.objectNode()
+          tokenBinding.set("status", jsonFactory.textNode(tokenBindingStatus))
+          tokenBindingId foreach { id => tokenBinding.set("id", jsonFactory.textNode(id)) }
+          tokenBinding
+        }
+      )
 
       clientExtensions foreach { extensions => json.set("clientExtensions", extensions) }
       authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
