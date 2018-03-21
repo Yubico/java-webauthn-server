@@ -456,68 +456,70 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("14. Verify that the values of the") {
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          notImplemented()
+          it("Fails if clientExtensions is not a subset of the extensions requested by the Relying Party.") {
+            val steps = finishAssertion(
+              clientDataJson =
+                WebAuthnCodecs.json.writeValueAsString(
+                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                    .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
+                )
+            )
+            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an[AssertionError]
+            step.next shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if clientExtensions is a subset of the extensions requested by the Relying Party.") {
+            val steps = finishAssertion(
+              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
+              clientDataJson =
+                WebAuthnCodecs.json.writeValueAsString(
+                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                    .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
+                )
+            )
+            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
         }
 
         describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          notImplemented()
+          it("Fails if authenticatorExtensions is a subset of the extensions requested by the Relying Party.") {
+            val steps = finishAssertion(
+              clientDataJson =
+                WebAuthnCodecs.json.writeValueAsString(
+                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                    .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
+                )
+            )
+            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an[AssertionError]
+            step.next shouldBe a [Failure[_]]
+
+          }
+
+          it("Succeeds if authenticatorExtensions is a subset of the extensions requested by the Relying Party.") {
+            val steps = finishAssertion(
+              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
+              clientDataJson =
+                WebAuthnCodecs.json.writeValueAsString(
+                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+                    .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
+                )
+            )
+            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
         }
 
-        it("clientExtensions member of C is a subset of the extensions requested by the Relying Party.") {
-          val failSteps = finishAssertion(
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
-          )
-          val failStep: failSteps.Step14 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          failStep.validations shouldBe a [Failure[_]]
-          failStep.validations.failed.get shouldBe an[AssertionError]
-          failStep.next shouldBe a [Failure[_]]
-
-          val successSteps = finishAssertion(
-            requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
-          )
-          val successStep: successSteps.Step14 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          successStep.validations shouldBe a [Success[_]]
-          successStep.next shouldBe a [Success[_]]
-        }
-
-        it("authenticatorExtensions in C is also a subset of the extensions requested by the Relying Party.") {
-          val failSteps = finishAssertion(
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
-          )
-          val failStep: failSteps.Step14 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          failStep.validations shouldBe a [Failure[_]]
-          failStep.validations.failed.get shouldBe an[AssertionError]
-          failStep.next shouldBe a [Failure[_]]
-
-          val successSteps = finishAssertion(
-            requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-            clientDataJson =
-              WebAuthnCodecs.json.writeValueAsString(
-                WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                  .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-              )
-          )
-          val successStep: successSteps.Step14 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          successStep.validations shouldBe a [Success[_]]
-          successStep.next shouldBe a [Success[_]]
-        }
       }
 
       it("15. Let hash be the result of computing a hash over the cData using SHA-256.") {
