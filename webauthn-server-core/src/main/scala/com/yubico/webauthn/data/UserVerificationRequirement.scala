@@ -1,0 +1,6 @@
+package com.yubico.webauthn.data
+
+sealed trait UserVerificationRequirement
+case object Discouraged extends UserVerificationRequirement
+case object Preferred extends UserVerificationRequirement
+case object Required extends UserVerificationRequirement

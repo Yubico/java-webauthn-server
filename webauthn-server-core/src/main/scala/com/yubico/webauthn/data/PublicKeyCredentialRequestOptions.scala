@@ -34,6 +34,11 @@ case class PublicKeyCredentialRequestOptions(
   allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
 
   /**
+    * This member describes the Relying Party's requirements regarding user verification for the get() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement.
+    */
+  userVerification: UserVerificationRequirement = Preferred,
+
+  /**
     * Additional parameters requesting additional processing by the client and authenticator.
     *
     * For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.

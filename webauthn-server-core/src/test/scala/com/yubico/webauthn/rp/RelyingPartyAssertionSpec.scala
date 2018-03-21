@@ -22,6 +22,10 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.data.Preferred
+import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.data.Required
+import com.yubico.webauthn.data.Discouraged
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse
 import com.yubico.webauthn.test.TestAuthenticator
@@ -86,6 +90,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature,
     userHandle: Option[ArrayBuffer] = Some(Defaults.userHandle),
+    userVerificationRequirement: UserVerificationRequirement = Preferred,
     validateSignatureCounter: Boolean = true
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
@@ -94,6 +99,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       rpId = Some(rpId.id).asJava,
       challenge = challenge,
       allowCredentials = allowCredentials.asJava,
+      userVerification = userVerificationRequirement,
       extensions = requestedExtensions.asJava
     )
 
@@ -516,7 +522,75 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       describe("12. If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.") {
-        notImplemented()
+        val flagOn: ArrayBuffer = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) | 0x04).toByte)
+        val flagOff: ArrayBuffer = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) & 0xfb).toByte)
+
+        it("Succeeds if UV is discouraged and flag is not set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Discouraged,
+            authenticatorData = flagOff
+          )
+          val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is discouraged and flag is set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Discouraged,
+            authenticatorData = flagOn
+          )
+          val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is preferred and flag is not set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Preferred,
+            authenticatorData = flagOff
+          )
+          val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is preferred and flag is set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Preferred,
+            authenticatorData = flagOn
+          )
+          val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Fails if UV is required and flag is not set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Required,
+            authenticatorData = flagOff
+          )
+          val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if UV is required and flag is set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Required,
+            authenticatorData = flagOn
+          )
+          val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.") {
