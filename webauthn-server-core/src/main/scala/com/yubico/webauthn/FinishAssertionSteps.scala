@@ -17,6 +17,7 @@ import com.yubico.webauthn.data.TokenBindingInfo
 import com.yubico.webauthn.data.Present
 import com.yubico.webauthn.data.Supported
 import com.yubico.webauthn.data.NotSupported
+import com.yubico.webauthn.data.Required
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -191,7 +192,11 @@ case class FinishAssertionSteps(
   }
 
   case class Step12 private[webauthn] (override val prev: Step11) extends Step[Step11, Step13] {
-    override def validate() {}
+    override def validate(): Unit = {
+      if (request.userVerification == Required) {
+        assert(response.response.parsedAuthenticatorData.flags.UV, "User Verification is required.")
+      }
+    }
     override def nextStep = Step13(this)
   }
 
