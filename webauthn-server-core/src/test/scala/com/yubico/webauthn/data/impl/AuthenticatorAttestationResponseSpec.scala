@@ -2,6 +2,7 @@ package com.yubico.webauthn.data.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.data.Present
 import com.yubico.webauthn.util.BinaryUtil
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
@@ -20,8 +21,9 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
       val challenge = "HfpNmDkOp66Edjd5-uvwlg"
       val fooExtension = "bar"
       val origin = "localhost"
+      val tokenBindingStatus = Present
       val tokenBindingId = "IgqNmDkOp68Edjd8-uwxmh"
-      val exampleJson: ArrayBuffer = s"""{"authenticatorExtensions":{"boo":"${booExtension}"},"challenge":"${challenge}","clientExtensions":{"foo":"${fooExtension}"},"origin":"${origin}","tokenBindingId":"${tokenBindingId}"}""".getBytes("UTF-8").toVector
+      val exampleJson: ArrayBuffer = s"""{"authenticatorExtensions":{"boo":"${booExtension}"},"challenge":"${challenge}","clientExtensions":{"foo":"${fooExtension}"},"origin":"${origin}","tokenBinding":{"status":"${tokenBindingStatus.toJson}","id":"${tokenBindingId}"}}""".getBytes("UTF-8").toVector
 
       it("can be parsed as JSON.") {
         val clientData: JsonNode = AuthenticatorAttestationResponse(null, exampleJson).clientData
@@ -49,8 +51,14 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
           response.collectedClientData.origin should equal (origin)
         }
 
-        it("tokenBindingId") {
-          response.collectedClientData.tokenBindingId.get should equal (tokenBindingId)
+        describe("tokenBinding") {
+          it("status") {
+            response.collectedClientData.tokenBinding.status should equal (tokenBindingStatus)
+          }
+
+          it("id") {
+            response.collectedClientData.tokenBinding.id.get should equal (tokenBindingId)
+          }
         }
 
       }

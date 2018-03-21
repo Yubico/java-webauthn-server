@@ -13,6 +13,10 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.data.TokenBindingInfo
+import com.yubico.webauthn.data.Present
+import com.yubico.webauthn.data.Supported
+import com.yubico.webauthn.data.NotSupported
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -152,15 +156,7 @@ case class FinishAssertionSteps(
   }
 
   case class Step10 private[webauthn] (override val prev: Step9) extends Step[Step9, Step11] {
-    override def validate() {
-      (callerTokenBindingId.asScala, response.response.collectedClientData.tokenBindingId.asScala) match {
-        case (None, None) =>
-        case (_, None) => throw new AssertionError("Token binding ID set by caller but not in attestation message.")
-        case (None, _) => throw new AssertionError("Token binding ID set in attestation message but not by caller.")
-        case (Some(callerToken), Some(responseToken)) =>
-          assert(callerToken == responseToken, "Incorrect token binding ID.")
-      }
-    }
+    override def validate() = response.response.collectedClientData.tokenBinding.validate(callerTokenBindingId.asScala)
     override def nextStep = Step11(this)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector

@@ -21,6 +21,10 @@ import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.SelfAttestation
+import com.yubico.webauthn.data.TokenBindingInfo
+import com.yubico.webauthn.data.Present
+import com.yubico.webauthn.data.Supported
+import com.yubico.webauthn.data.NotSupported
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
@@ -117,14 +121,7 @@ case class FinishRegistrationSteps(
   }
 
   case class Step5 private[webauthn] () extends Step[Step6] {
-    override def validate() =
-      (callerTokenBindingId.asScala, response.response.collectedClientData.tokenBindingId.asScala) match {
-        case (None, None) =>
-        case (_, None) => throw new AssertionError("Token binding ID set by caller but not in attestation message.")
-        case (None, _) => throw new AssertionError("Token binding ID set in attestation message but not by caller.")
-        case (Some(callerToken), Some(responseToken)) =>
-          assert(callerToken == responseToken, "Incorrect token binding ID.")
-      }
+    override def validate() = response.response.collectedClientData.tokenBinding.validate(callerTokenBindingId.asScala)
     def nextStep = Step6()
   }
 

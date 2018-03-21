@@ -37,8 +37,20 @@ case class CollectedClientData(
   /**
     * The URL-safe Base64 encoded TLS token binding ID the client has negotiated with the RP.
     */
-  def tokenBindingId: Optional[Base64UrlString] =
-    Optional.ofNullable(clientData.get("tokenBindingId")).asScala.map(_.asText).asJava
+  def tokenBinding: TokenBindingInfo = {
+    val tb = clientData.get("tokenBinding")
+    assert(tb != null, """Property "tokenBinding" missing from client data.""")
+    assert(tb.isObject, """Property "tokenBinding" missing from client data.""")
+    TokenBindingInfo(
+      {
+        val status = tb.get("status").textValue
+        TokenBindingStatus.fromJson(status).getOrElse(
+          throw new IllegalArgumentException("Invalid value for tokenBinding.status: " + status)
+        )
+      },
+      Option(tb.get("id")).map(_.textValue)
+    )
+  }
 
   /**
     * The type of the requested operation, set by the client.
