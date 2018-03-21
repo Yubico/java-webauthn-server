@@ -63,6 +63,14 @@ case class FinishAssertionSteps(
     override def prev = this
     override def nextStep = Step2(this)
     override def validate() = {
+      request.allowCredentials.asScala match {
+        case Some(allowed) =>
+          assert(
+            allowed.asScala exists { _.id == response.rawId },
+            "Unrequested credential ID: " + response.id
+          )
+        case None =>
+      }
     }
   }
 
