@@ -17,10 +17,10 @@ trait AuthenticatorAssertionResponse extends AuthenticatorResponse {
   def parsedAuthenticatorData: AuthenticatorData = AuthenticatorData(authenticatorData)
 
   @JsonProperty("authenticatorData")
-  def authenticatorDataBase64: String = U2fB64Encoding.encode(authenticatorData.toArray)
+  def authenticatorDataBase64: Base64UrlString = U2fB64Encoding.encode(authenticatorData.toArray)
   @JsonProperty("signature")
-  def signatureBase64: String = U2fB64Encoding.encode(signature.toArray)
+  def signatureBase64: Base64UrlString = U2fB64Encoding.encode(signature.toArray)
   @JsonProperty("userHandle")
-  def userHandleBase64: String = (userHandle.asScala map { uh => U2fB64Encoding.encode(uh.toArray) }).orNull
+  def userHandleBase64: Base64UrlString = (userHandle.asScala map { uh => U2fB64Encoding.encode(uh.toArray) }).orNull
 
 }
