@@ -72,7 +72,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
   }
 
   def finishAssertion(
-    allowCredentials: Option[Seq[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor(id = Defaults.credentialId))),
+    allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor(id = Defaults.credentialId)).asJava),
     authenticatorData: ArrayBuffer = Defaults.authenticatorData,
     callerTokenBindingId: Option[String] = None,
     challenge: ArrayBuffer = Defaults.challenge,
@@ -93,7 +93,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val request = PublicKeyCredentialRequestOptions(
       rpId = Some(rpId.id).asJava,
       challenge = challenge,
-      allowCredentials = Some(List(PublicKeyCredentialDescriptor(id = credentialId)).asJava).asJava,
+      allowCredentials = allowCredentials.asJava,
       extensions = requestedExtensions.asJava
     )
 
@@ -143,7 +143,42 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     describe("When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
 
       describe("1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.") {
-        notImplemented()
+        it("Fails if returned credential ID is a requested one.") {
+          val steps = finishAssertion(
+            allowCredentials = Some(List(PublicKeyCredentialDescriptor(id = Vector(3, 2, 1, 0))).asJava),
+            credentialId = Vector(0, 1, 2, 3)
+          )
+          val step: steps.Step1 = steps.begin
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if returned credential ID is a requested one.") {
+          val steps = finishAssertion(
+            allowCredentials = Some(List(
+              PublicKeyCredentialDescriptor(id = Vector(0, 1, 2, 3)),
+              PublicKeyCredentialDescriptor(id = Vector(4, 5, 6, 7))
+            ).asJava),
+            credentialId = Vector(4, 5, 6, 7)
+          )
+          val step: steps.Step1 = steps.begin
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if returned no credential IDs were requested.") {
+          val steps = finishAssertion(
+            allowCredentials = None,
+            credentialId = Vector(0, 1, 2, 3)
+          )
+          val step: steps.Step1 = steps.begin
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
