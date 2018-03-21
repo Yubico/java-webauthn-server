@@ -5,6 +5,7 @@ import java.time.LocalDate
 
 sealed trait DocumentStatus
 case object WorkingDraft extends DocumentStatus
+case object CandidateRelease extends DocumentStatus
 
 /**
   * Reference to a particular version of a specification document.
@@ -32,10 +33,10 @@ object VersionInfo {
     * Represents the specification this implementation is based on
     */
   val specification = Specification(
-    url = new URL("https://www.w3.org/TR/2017/WD-webauthn-20171205/"),
+    url = new URL("https://www.w3.org/TR/2018/CR-webauthn-20180320/"),
     latestVersionUrl = new URL("https://www.w3.org/TR/webauthn/"),
-    status = WorkingDraft,
-    releaseDate = LocalDate.parse("2017-12-05")
+    status = CandidateRelease,
+    releaseDate = LocalDate.parse("2018-03-20")
   )
 
 }
