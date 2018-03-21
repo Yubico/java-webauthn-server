@@ -152,7 +152,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
-          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava }))
+          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
+            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
+          }))
           val step: steps.Step3 = steps.begin.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
