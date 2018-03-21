@@ -51,13 +51,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
     // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
     val authenticatorData: ArrayBuffer = BinaryUtil.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000539").get
-    val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
+    val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get","tokenBinding":{"status":"supported"}}"""
     val credentialId: ArrayBuffer = BinaryUtil.fromHex("").get
     val credentialKey: KeyPair = new TestAuthenticator().importEcKeypair(
-      privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420187acbc139d42facdda4d0b977c041228373fbbb2721e924e01ba348efd53c31a00a06082a8648ce3d030107a14403420004d8d1062f6720c3a494202026c6b518824ae2f118a60b1d2b39f0a0f3008048a16360b471a931f0dcc004939e500e0e76252b02ef7b8c8955a0a9e4bb7bcc5f64").get,
-      publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d03010703420004d8d1062f6720c3a494202026c6b518824ae2f118a60b1d2b39f0a0f3008048a16360b471a931f0dcc004939e500e0e76252b02ef7b8c8955a0a9e4bb7bcc5f64").get
+      privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104206a88f478910df685bc0cfcc2077e64fb3a8ba770fb23fbbcd1f6572ce35cf360a00a06082a8648ce3d030107a14403420004d8020a2ec718c2c595bb890fcdaf9b81cc742118efdbb8812ac4a9dd5ace2990ec22a48faf1544df0fe5fe0e2e7a69720e63a83d7f46aa022f1323eaf7967762").get,
+      publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d03010703420004d8020a2ec718c2c595bb890fcdaf9b81cc742118efdbb8812ac4a9dd5ace2990ec22a48faf1544df0fe5fe0e2e7a69720e63a83d7f46aa022f1323eaf7967762").get
     )
-    val signature: ArrayBuffer = BinaryUtil.fromHex("3045022100d109b235ca9b6c7e300b9ede9cd83859ac587a7b93de3eb245cb354aa6164b09022044bf160c4f42d732d11c64d2dec211787d417468429e41fcfd31c7a3dd11706c").get
+    val signature: ArrayBuffer = BinaryUtil.fromHex("30450221008d478e4c24894d261c7fd3790363ba9687facf4dd1d59610933a2c292cffc3d902205069264c167833d239d6af4c7bf7326c4883fb8c3517a2c86318aa3060d8b441").get
 
     // These values are not signed over
     val userHandle: ArrayBuffer = BinaryUtil.fromHex("6d8972d9603ce4f3fa5d520ce6d024bf").get
