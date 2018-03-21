@@ -594,7 +594,76 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       describe("13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.") {
-        notImplemented()
+        val flagOn: ArrayBuffer = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) | 0x04 | 0x01).toByte)
+        val flagOff: ArrayBuffer = Defaults.authenticatorData.updated(32, ((Defaults.authenticatorData(32) | 0x04) & 0xfe).toByte)
+
+        it("Fails if UV is discouraged and flag is not set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Discouraged,
+            authenticatorData = flagOff
+          )
+          val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if UV is discouraged and flag is set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Discouraged,
+            authenticatorData = flagOn
+          )
+          val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Fails if UV is preferred and flag is not set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Preferred,
+            authenticatorData = flagOff
+          )
+          val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if UV is preferred and flag is set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Preferred,
+            authenticatorData = flagOn
+          )
+          val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is required and flag is not set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Required,
+            authenticatorData = flagOff
+          )
+          val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is required and flag is set.") {
+          val steps = finishAssertion(
+            userVerificationRequirement = Required,
+            authenticatorData = flagOn
+          )
+          val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("14. Verify that the values of the") {
