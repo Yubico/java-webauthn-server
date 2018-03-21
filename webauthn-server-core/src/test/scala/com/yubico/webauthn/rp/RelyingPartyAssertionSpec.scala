@@ -132,14 +132,28 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
+  def notImplemented(): Unit = {
+    it("Fails.") {
+      fail("Test not implemented.")
+    }
+  }
+
   describe("§7.2. Verifying an authentication assertion") {
 
-    describe("When verifying a given PublicKeyCredential structure (credential) as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
+    describe("When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
 
-      describe("1. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
+      describe("1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.") {
+        notImplemented()
+      }
+
+      describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
+        notImplemented()
+      }
+
+      describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
           val steps = finishAssertion(credentialRepository = Some(new CredentialRepository { override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava }))
-          val step: steps.Step1 = steps.begin
+          val step: steps.Step3 = steps.begin.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -157,7 +171,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               )
             ).asJava
           }))
-          val step: steps.Step1 = steps.begin
+          val step: steps.Step3 = steps.begin.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.credential.publicKey should equal (Defaults.credentialKey.getPublic)
@@ -165,10 +179,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("2. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
+      describe("4. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
         it("Succeeds if all three are present.") {
           val steps = finishAssertion()
-          val step: steps.Step2 = steps.begin.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.clientData should not be null
@@ -179,7 +193,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Fails if clientDataJSON is missing.") {
           val steps = finishAssertion(clientDataJson = null)
-          val step: steps.Step2 = steps.begin.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -188,7 +202,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Fails if authenticatorData is missing.") {
           val steps = finishAssertion(authenticatorData = null)
-          val step: steps.Step2 = steps.begin.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -197,7 +211,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Fails if signature is missing.") {
           val steps = finishAssertion(signature = null)
-          val step: steps.Step2 = steps.begin.next.get
+          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -205,10 +219,15 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("3. Perform JSON deserialization on cData to extract the client data C used for the signature.") {
+      describe("5. Let JSONtext be the result of running UTF-8 decode on the value of cData.") {
+        it("Nothing to test.") {
+        }
+      }
+
+      describe("6. Let C, the client data claimed as used for the signature, be the result of running an implementation-specific JSON parser on JSONtext.") {
         it("Fails if cData is not valid JSON.") {
           val steps = finishAssertion(clientDataJson = "{")
-          val step: steps.Step3 = steps.begin.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe a [JsonParseException]
@@ -217,7 +236,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Succeeds if cData is valid JSON.") {
           val steps = finishAssertion(clientDataJson = "{}")
-          val step: steps.Step3 = steps.begin.next.get.next.get
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.clientData should not be null
@@ -225,14 +244,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("4. Verify that the type in C is the string webauthn.get.") {
+      describe("7. Verify that the value of C.type is the string webauthn.get.") {
         it("The default test case succeeds.") {
           val steps = finishAssertion()
-          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
         }
-
 
         def assertFails(typeString: String): Unit = {
           val steps = finishAssertion(
@@ -241,7 +259,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 .set("type", jsonFactory.textNode(typeString))
             )
           )
-          val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -261,28 +279,28 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      it("5. Verify that the challenge member of C matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
+      it("8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
         val steps = finishAssertion(challenge = Vector.fill(16)(0: Byte))
-        val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
+        val step: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
         step.validations shouldBe a [Failure[_]]
         step.validations.failed.get shouldBe an [AssertionError]
         step.next shouldBe a [Failure[_]]
       }
 
-      it("6. Verify that the origin member of C matches the Relying Party's origin.") {
+      it("9. Verify that the value of C.origin matches the Relying Party's origin.") {
         val steps = finishAssertion(origin = "root.evil")
-        val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+        val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
         step.validations shouldBe a [Failure[_]]
         step.validations.failed.get shouldBe an [AssertionError]
         step.next shouldBe a [Failure[_]]
       }
 
-      describe("7. Verify that the tokenBindingId member of C (if present) matches the Token Binding ID for the TLS connection over which the signature was obtained.") {
+      describe("10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained. If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.") {
         it("Verification succeeds if neither side specifies token binding ID.") {
           val steps = finishAssertion()
-          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
@@ -295,7 +313,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
             clientDataJson = clientDataJson
           )
-          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
@@ -303,7 +321,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Verification fails if caller specifies token binding ID but assertion does not.") {
           val steps = finishAssertion(callerTokenBindingId = Some("YELLOWSUBMARINE"))
-          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -317,7 +335,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             callerTokenBindingId = None,
             clientDataJson = clientDataJson
           )
-          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -331,7 +349,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             callerTokenBindingId = Some("ORANGESUBMARINE"),
             clientDataJson = clientDataJson
           )
-          val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -339,7 +357,43 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("8. Verify that the") {
+      describe("11. Verify that the rpIdHash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+        it("Fails if RP ID is different.") {
+          val steps = finishAssertion(rpId = Defaults.rpId.copy(id = "root.evil"))
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if RP ID is the same.") {
+          val steps = finishAssertion()
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+      }
+
+      describe("12. If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.") {
+        notImplemented()
+      }
+
+      describe("13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.") {
+        notImplemented()
+      }
+
+      describe("14. Verify that the values of the") {
+
+        describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
+          notImplemented()
+        }
+
+        describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
+          notImplemented()
+        }
+
         it("clientExtensions member of C is a subset of the extensions requested by the Relying Party.") {
           val failSteps = finishAssertion(
             clientDataJson =
@@ -348,7 +402,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               )
           )
-          val failStep: failSteps.Step8 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val failStep: failSteps.Step14 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           failStep.validations shouldBe a [Failure[_]]
           failStep.validations.failed.get shouldBe an[AssertionError]
@@ -362,7 +416,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               )
           )
-          val successStep: successSteps.Step8 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val successStep: successSteps.Step14 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           successStep.validations shouldBe a [Success[_]]
           successStep.next shouldBe a [Success[_]]
@@ -376,7 +430,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               )
           )
-          val failStep: failSteps.Step8 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val failStep: failSteps.Step14 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           failStep.validations shouldBe a [Failure[_]]
           failStep.validations.failed.get shouldBe an[AssertionError]
@@ -390,47 +444,26 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
               )
           )
-          val successStep: successSteps.Step8 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val successStep: successSteps.Step14 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           successStep.validations shouldBe a [Success[_]]
           successStep.next shouldBe a [Success[_]]
         }
       }
 
-      describe("9. Verify that the rpIdHash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
-        it("Fails if RP ID is different.") {
-          val steps = finishAssertion(rpId = Defaults.rpId.copy(id = "root.evil"))
-          val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+      it("15. Let hash be the result of computing a hash over the cData using SHA-256.") {
+        val steps = finishAssertion()
+        val step: steps.Step15 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if RP ID is the same.") {
-          val steps = finishAssertion()
-          val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
-        }
+        step.validations shouldBe a [Success[_]]
+        step.next shouldBe a [Success[_]]
+        step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
       }
 
-      describe("10. Let hash be the result of computing a hash over the cData using the algorithm represented by the hashAlgorithm member of C.") {
-        it("SHA-256 is always used.") {
-          val steps = finishAssertion()
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
-          step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
-        }
-      }
-
-      describe("11. Using the credential public key looked up in step 1, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
+      describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
         it("The default test case succeeds.") {
           val steps = finishAssertion()
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
@@ -444,7 +477,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 .set("foo", jsonFactory.textNode("bar"))
             )
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -458,7 +491,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             authenticatorData = rpIdHash ++ Defaults.authenticatorData.drop(32),
             rpId = Defaults.rpId.copy(id = rpId)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -469,7 +502,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val steps = finishAssertion(
             authenticatorData = Defaults.authenticatorData.updated(32, (Defaults.authenticatorData(32) | 0x02).toByte)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -480,7 +513,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val steps = finishAssertion(
             authenticatorData = Defaults.authenticatorData.updated(33, 42.toByte)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -488,7 +521,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("12. If the signature counter value adata.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following substep:") {
+      describe("17. If the signature counter value adata.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
         describe("If the signature counter value adata.signCount is") {
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
@@ -508,7 +541,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   credentialRepository = Some(credentialRepository),
                   validateSignatureCounter = true
                 )
-                val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
@@ -518,7 +551,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             }
           }
 
-          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
+          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute. ") {
             val credentialRepository = new CredentialRepository {
               override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
                 RegisteredCredential(
@@ -530,13 +563,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               ).asJava
             }
 
-            describe("This is an signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
+            describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
               it("If signature counter validation is disabled, the a nonincreasing signature counter succeeds.") {
                 val steps = finishAssertion(
                   credentialRepository = Some(credentialRepository),
                   validateSignatureCounter = false
                 )
-                val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
@@ -549,7 +582,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   credentialRepository = Some(credentialRepository),
                   validateSignatureCounter = true
                 )
-                val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
                 step.validations shouldBe a [Failure[_]]
                 step.validations.failed.get shouldBe an [AssertionError]
@@ -560,9 +593,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      it("13. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
+      it("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
         val steps = finishAssertion()
-        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
         step.validations shouldBe a [Success[_]]
         steps.run shouldBe a [Success[_]]
