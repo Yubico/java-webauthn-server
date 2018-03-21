@@ -201,7 +201,11 @@ case class FinishAssertionSteps(
   }
 
   case class Step13 private[webauthn] (override val prev: Step12) extends Step[Step12, Step14] {
-    override def validate() {}
+    override def validate(): Unit = {
+      if (request.userVerification != Required) {
+        assert(response.response.parsedAuthenticatorData.flags.UP, "User Presence is required.")
+      }
+    }
     override def nextStep = Step14(this)
   }
 
