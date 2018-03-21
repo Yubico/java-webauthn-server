@@ -182,7 +182,39 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
-        notImplemented()
+        val credentialRepository = Some(new CredentialRepository {
+          override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+            RegisteredCredential(
+              credentialId = Vector(0, 1, 2, 3),
+              signatureCount = 0L,
+              publicKey = Defaults.credentialKey.getPublic,
+              userHandle = Vector(4, 5, 6, 7)
+            )
+          ).asJava
+        })
+
+        it("Fails if credential ID is not owned by the given user handle.") {
+          val steps = finishAssertion(
+            credentialRepository = credentialRepository,
+            userHandle = Vector(8, 9, 10, 11)
+          )
+          val step: steps.Step2 = steps.begin.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if credential ID is owned by the given user handle.") {
+          val steps = finishAssertion(
+            credentialRepository = credentialRepository,
+            userHandle = Vector(4, 5, 6, 7)
+          )
+          val step: steps.Step2 = steps.begin.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
