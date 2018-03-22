@@ -189,14 +189,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   def sha256(bytes: ArrayBuffer): ArrayBuffer = crypto.hash(bytes.toArray).toVector
 
   def finishRegistration(
-    testData: TestData,
     allowUntrustedAttestation: Boolean = false,
     authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
     callerTokenBindingId: Option[String] = None,
     credentialId: Option[ArrayBuffer] = None,
-    metadataService: Option[MetadataService] = None,
     makePublicKeyCredentialOptions: Option[MakePublicKeyCredentialOptions] = None,
-    rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost")
+    metadataService: Option[MetadataService] = None,
+    rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
+    testData: TestData
   ): FinishRegistrationSteps = {
     val clientDataJsonBytes: ArrayBuffer = testData.clientDataJson.getBytes("UTF-8").toVector
 
