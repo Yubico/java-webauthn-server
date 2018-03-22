@@ -138,12 +138,6 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
-  def notImplemented(): Unit = {
-    it("Fails.") {
-      fail("Test not implemented.")
-    }
-  }
-
   describe("§7.2. Verifying an authentication assertion") {
 
     describe("When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
