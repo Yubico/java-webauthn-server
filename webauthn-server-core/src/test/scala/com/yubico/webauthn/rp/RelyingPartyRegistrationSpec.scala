@@ -709,9 +709,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = TestData.Packed.BasicAttestation.copy(
                 requestedExtensions = Some(jsonFactory.objectNode())
               ).editAuthenticatorData(
-                _ => TestAuthenticator.makeAuthDataBytes(
-                  extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
-                )
+                authData => authData.updated(32, (authData(32) | 0x80).toByte) ++
+                  WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector
               )
             )
             val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -727,9 +726,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = TestData.Packed.BasicAttestation.copy(
                 requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
               ).editAuthenticatorData(
-                _ => TestAuthenticator.makeAuthDataBytes(
-                  extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
-                )
+                authData => authData.updated(32, (authData(32) | 0x80).toByte) ++
+                  WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector
               )
             )
             val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
