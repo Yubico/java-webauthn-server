@@ -42,6 +42,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -122,6 +123,7 @@ object TestAuthenticator {
 
   private def createCredential(
     aaguid: ArrayBuffer = Defaults.aaguid,
+    alg: Option[COSEAlgorithmIdentifier] = None,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f",
     authenticatorExtensions: Option[JsonNode] = None,
@@ -186,7 +188,8 @@ object TestAuthenticator {
       attestationStatementFormat,
       clientDataJson,
       attestationCertAndKey,
-      selfAttestationKey = if (useSelfAttestation) Some(credentialKeypair.get.getPrivate) else None
+      selfAttestationKey = if (useSelfAttestation) Some(credentialKeypair.get.getPrivate) else None,
+      alg = alg
     )
 
     val response = data.impl.AuthenticatorAttestationResponse(
@@ -216,7 +219,8 @@ object TestAuthenticator {
     )
 
   def createSelfAttestedCredential(
-    attestationStatementFormat: String = "fido-u2f"
+    attestationStatementFormat: String = "fido-u2f",
+    alg: Option[COSEAlgorithmIdentifier] = None
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
     val keypair = generateEcKeypair()
     attestationStatementFormat match {
@@ -224,14 +228,16 @@ object TestAuthenticator {
         createCredential(
           attestationCertAndKey = Some(generateAttestationCertificate (keypair) ),
           attestationStatementFormat = attestationStatementFormat,
-          credentialKeypair = Some(keypair)
+          credentialKeypair = Some(keypair),
+          alg = alg
         )
       case "packed" =>
         createCredential(
           attestationCertAndKey = None,
           attestationStatementFormat = attestationStatementFormat,
           credentialKeypair = Some(keypair),
-          useSelfAttestation = true
+          useSelfAttestation = true,
+          alg = alg
         )
     }
   }
@@ -311,11 +317,12 @@ object TestAuthenticator {
     format: String,
     clientDataJson: String,
     certAndKey: Option[(X509Certificate, PrivateKey)],
-    selfAttestationKey: Option[PrivateKey] = None
+    selfAttestationKey: Option[PrivateKey] = None,
+    alg: Option[COSEAlgorithmIdentifier] = None
   ): ArrayBuffer = {
     val makeAttestationStatement: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)]) => JsonNode = format match {
       case "fido-u2f" => makeU2fAttestationStatement _
-      case "packed" => makePackedAttestationStatement(_, _, _, selfAttestationKey = selfAttestationKey)
+      case "packed" => makePackedAttestationStatement(_, _, _, selfAttestationKey = selfAttestationKey, alg = alg)
     }
 
     val f = JsonNodeFactory.instance
@@ -372,7 +379,8 @@ object TestAuthenticator {
     authDataBytes: ArrayBuffer,
     clientDataJson: String,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
-    selfAttestationKey: Option[PrivateKey] = None
+    selfAttestationKey: Option[PrivateKey] = None,
+    alg: Option[COSEAlgorithmIdentifier] = None
   ): JsonNode = {
     val (cert, key) = selfAttestationKey match {
       case Some(key) => (null, key)
@@ -388,7 +396,7 @@ object TestAuthenticator {
         Map("sig" -> f.binaryNode(signature.toArray))
           ++ (
             selfAttestationKey match {
-              case Some(key) => Map("alg" -> f.numberNode(WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)))
+              case Some(key) => Map("alg" -> f.numberNode(alg getOrElse WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)))
               case None => Map("x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)))
             }
           )
