@@ -18,7 +18,7 @@ case class AuthenticatorSelectionCriteria(
     * If present, eligible authenticators are filtered to only authenticators
     * attached with the specified §4.4.4 Authenticator Attachment enumeration.
     */
-  aa: Optional[AuthenticatorAttachment] = None.asJava,
+  authenticatorAttachment: Optional[AuthenticatorAttachment] = None.asJava,
 
   /**
     * requireResidentKey
@@ -27,19 +27,15 @@ case class AuthenticatorSelectionCriteria(
     * true, the authenticator MUST create a Client-side-resident Credential
     * Private Key when creating a public key credential.
     */
-  rk: Boolean = false,
+  requireResidentKey: Boolean = false,
 
   /**
     * requireUserVerification
     *
-    * This member describes the Relying Party's requirements regarding the
-    * authenticator being capable of performing user verification. If the
-    * parameter is set to true, the authenticator MUST perform user verification
-    * when performing the create() operation and future §4.1.4 Use an existing
-    * credential to make an assertion - PublicKeyCredential’s
-    * \[\[DiscoverFromExternalSource]](options) method operations when it is
-    * requested to verify the credential.
+    * This member describes the Relying Party's requirements regarding user
+    * verification for the create() operation. Eligible authenticators are
+    * filtered to only those capable of satisfying this requirement.
     */
-  uv: Boolean = false
+  userVerification: UserVerificationRequirement = Preferred
 
 )
