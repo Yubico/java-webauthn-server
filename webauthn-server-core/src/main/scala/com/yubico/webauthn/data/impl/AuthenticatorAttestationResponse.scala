@@ -14,6 +14,8 @@ case class AuthenticatorAttestationResponse (
 ) extends com.yubico.webauthn.data.AuthenticatorAttestationResponse
   with JacksonAuthenticatorResponse {
 
+  override lazy val authenticatorData: ArrayBuffer = attestation.authenticatorData.authData
+
   @JsonCreator
   def this(@JsonProperty("attestationObject") attestationObjectBase64: String, @JsonProperty("clientDataJSON") clientDataJsonBase64: String) =
     this(U2fB64Encoding.decode(attestationObjectBase64).toVector, U2fB64Encoding.decode(clientDataJsonBase64).toVector)

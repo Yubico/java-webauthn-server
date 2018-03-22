@@ -9,15 +9,9 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 trait AuthenticatorAssertionResponse extends AuthenticatorResponse {
 
-  val authenticatorData: ArrayBuffer
   val signature: ArrayBuffer
   val userHandle: Optional[ArrayBuffer]
 
-  @JsonProperty("_authenticatorData")
-  def parsedAuthenticatorData: AuthenticatorData = AuthenticatorData(authenticatorData)
-
-  @JsonProperty("authenticatorData")
-  def authenticatorDataBase64: Base64UrlString = U2fB64Encoding.encode(authenticatorData.toArray)
   @JsonProperty("signature")
   def signatureBase64: Base64UrlString = U2fB64Encoding.encode(signature.toArray)
   @JsonProperty("userHandle")

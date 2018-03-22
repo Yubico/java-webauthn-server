@@ -16,6 +16,14 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 ))
 trait AuthenticatorResponse {
 
+  val authenticatorData: ArrayBuffer
+
+  @JsonProperty("authenticatorData")
+  def authenticatorDataBase64: Base64UrlString = U2fB64Encoding.encode(authenticatorData.toArray)
+
+  @JsonProperty("_authenticatorData")
+  def parsedAuthenticatorData: AuthenticatorData = AuthenticatorData(authenticatorData)
+
   val clientDataJSON: ArrayBuffer
 
   /**

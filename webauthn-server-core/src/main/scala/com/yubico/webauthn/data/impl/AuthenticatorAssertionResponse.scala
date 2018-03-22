@@ -9,7 +9,6 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.ArrayBuffer
 
 case class AuthenticatorAssertionResponse(
-
   override val clientDataJSON: ArrayBuffer,
   override val authenticatorData: ArrayBuffer,
   override val signature: ArrayBuffer,
