@@ -57,7 +57,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val authenticatorData: ArrayBuffer = BinaryUtil.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000539").get
     val clientDataJson: String = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get","tokenBinding":{"status":"supported"}}"""
     val credentialId: ArrayBuffer = BinaryUtil.fromHex("").get
-    val credentialKey: KeyPair = new TestAuthenticator().importEcKeypair(
+    val credentialKey: KeyPair = TestAuthenticator.importEcKeypair(
       privateBytes = BinaryUtil.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104206a88f478910df685bc0cfcc2077e64fb3a8ba770fb23fbbcd1f6572ce35cf360a00a06082a8648ce3d030107a14403420004d8020a2ec718c2c595bb890fcdaf9b81cc742118efdbb8812ac4a9dd5ace2990ec22a48faf1544df0fe5fe0e2e7a69720e63a83d7f46aa022f1323eaf7967762").get,
       publicBytes = BinaryUtil.fromHex("3059301306072a8648ce3d020106082a8648ce3d03010703420004d8020a2ec718c2c595bb890fcdaf9b81cc742118efdbb8812ac4a9dd5ace2990ec22a48faf1544df0fe5fe0e2e7a69720e63a83d7f46aa022f1323eaf7967762").get
     )
@@ -691,7 +691,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
               requestedExtensions = Some(jsonFactory.objectNode()),
-              authenticatorData = new TestAuthenticator().makeAuthDataBytes(
+              authenticatorData = TestAuthenticator.makeAuthDataBytes(
                 extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
               )
             )
@@ -706,7 +706,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
               requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-              authenticatorData = new TestAuthenticator().makeAuthDataBytes(
+              authenticatorData = TestAuthenticator.makeAuthDataBytes(
                 extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
               )
             )

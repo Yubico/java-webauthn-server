@@ -58,43 +58,40 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
 
-object TestAuthenticator extends App {
-  val a = new TestAuthenticator()
+object TestAuthenticator {
 
-  val attestationCertBytes: ArrayBuffer = BinaryUtil.fromHex("308201313081d8a003020102020441c4567d300a06082a8648ce3d0403023021311f301d0603550403131646697265666f782055324620536f667420546f6b656e301e170d3137303930353134303030345a170d3137303930373134303030345a3021311f301d0603550403131646697265666f782055324620536f667420546f6b656e3059301306072a8648ce3d020106082a8648ce3d03010703420004f9b7dfc17c8a7dcaacdaaad402c7f1f8570e3e9165f6ce2b9b9a4f64333405e1b952c516560bbe7d304d2da3b6582734dadd980e379b0f86a3e42cc657cffe84300a06082a8648ce3d0403020348003045022067fd4da98db1ddbcef53041d3cfd15ed6b8315cb4116889c2eabe6b50b7f985f02210098842f6835ee18181acc765f642fa124556121f418e108c5ec1bb22e9c28b76b").get
-  val publicKeyHex: String = "04f9b7dfc17c8a7dcaacdaaad402c7f1f8570e3e9165f6ce2b9b9a4f64333405e1b952c516560bbe7d304d2da3b6582734dadd980e379b0f86a3e42cc657cffe84"
-  val signedDataBytes: ArrayBuffer = BinaryUtil.fromHex("0049960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976354543ac68315afe4cd7947adf5f7e8e7dc87ddf4582ef6e7fb467e5cad098af50008f926c96b3248cb3733c70a10e3e0995af0892220d6293780335390594e35a73a3743ed97c8e4fd9c0e183d60ccb764edac2fcbdb84b6b940089be98744673db427ce9d4f09261d4f6535bf52dcd216d9ba81a88f2ed5d7fa04bb25e641a3cd7ef9922fdb8d7d4b9f81a55f661b74f26d97a9382dda9a6b62c378cf6603b9f1218a87c158d88bf1ac51b0e4343657de0e9a6b6d60289fed2b46239abe00947e6a04c6733148283cb5786a678afc959262a71be0925da9992354ba6438022d68ae573285e5564196d62edfc46432cba9393c6138882856a0296b41f5b4b97e00e935").get
-  val signatureBytes: ArrayBuffer = BinaryUtil.fromHex("3046022100a78ca2cb9feb402acc9f50d16d96487821122bbbdf70c8745a6d37161a16de09022100e10db1bf39b73b18acf9236f758558a7811e04a7901d12f7f34f503b171fe51e").get
+  def main(args: Array[String]): Unit = {
+    val attestationCertBytes: ArrayBuffer = BinaryUtil.fromHex("308201313081d8a003020102020441c4567d300a06082a8648ce3d0403023021311f301d0603550403131646697265666f782055324620536f667420546f6b656e301e170d3137303930353134303030345a170d3137303930373134303030345a3021311f301d0603550403131646697265666f782055324620536f667420546f6b656e3059301306072a8648ce3d020106082a8648ce3d03010703420004f9b7dfc17c8a7dcaacdaaad402c7f1f8570e3e9165f6ce2b9b9a4f64333405e1b952c516560bbe7d304d2da3b6582734dadd980e379b0f86a3e42cc657cffe84300a06082a8648ce3d0403020348003045022067fd4da98db1ddbcef53041d3cfd15ed6b8315cb4116889c2eabe6b50b7f985f02210098842f6835ee18181acc765f642fa124556121f418e108c5ec1bb22e9c28b76b").get
+    val publicKeyHex: String = "04f9b7dfc17c8a7dcaacdaaad402c7f1f8570e3e9165f6ce2b9b9a4f64333405e1b952c516560bbe7d304d2da3b6582734dadd980e379b0f86a3e42cc657cffe84"
+    val signedDataBytes: ArrayBuffer = BinaryUtil.fromHex("0049960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976354543ac68315afe4cd7947adf5f7e8e7dc87ddf4582ef6e7fb467e5cad098af50008f926c96b3248cb3733c70a10e3e0995af0892220d6293780335390594e35a73a3743ed97c8e4fd9c0e183d60ccb764edac2fcbdb84b6b940089be98744673db427ce9d4f09261d4f6535bf52dcd216d9ba81a88f2ed5d7fa04bb25e641a3cd7ef9922fdb8d7d4b9f81a55f661b74f26d97a9382dda9a6b62c378cf6603b9f1218a87c158d88bf1ac51b0e4343657de0e9a6b6d60289fed2b46239abe00947e6a04c6733148283cb5786a678afc959262a71be0925da9992354ba6438022d68ae573285e5564196d62edfc46432cba9393c6138882856a0296b41f5b4b97e00e935").get
+    val signatureBytes: ArrayBuffer = BinaryUtil.fromHex("3046022100a78ca2cb9feb402acc9f50d16d96487821122bbbdf70c8745a6d37161a16de09022100e10db1bf39b73b18acf9236f758558a7811e04a7901d12f7f34f503b171fe51e").get
 
-  a.verifyU2fExampleWithCert(attestationCertBytes, signedDataBytes, signatureBytes)
-  a.verifyU2fExampleWithExplicitParams(publicKeyHex, signedDataBytes, signatureBytes)
+    verifyU2fExampleWithCert(attestationCertBytes, signedDataBytes, signatureBytes)
+    verifyU2fExampleWithExplicitParams(publicKeyHex, signedDataBytes, signatureBytes)
 
-  println(a.generateAttestationCertificate())
+    println(generateAttestationCertificate())
 
-  val credential = a.createCredential()
+    val credential = createCredential()
 
-  println(credential)
-  println(s"Client data: ${new String(credential.response.clientDataJSON.toArray, "UTF-8")}")
-  println(s"Client data: ${BinaryUtil.toHex(credential.response.clientDataJSON)}")
-  println(s"Client data: ${credential.response.collectedClientData}")
-  println(s"Attestation object: ${BinaryUtil.toHex(credential.response.attestationObject)}")
-  println(s"Attestation object: ${credential.response.attestation}")
+    println(credential)
+    println(s"Client data: ${new String(credential.response.clientDataJSON.toArray, "UTF-8")}")
+    println(s"Client data: ${BinaryUtil.toHex(credential.response.clientDataJSON)}")
+    println(s"Client data: ${credential.response.collectedClientData}")
+    println(s"Attestation object: ${BinaryUtil.toHex(credential.response.attestationObject)}")
+    println(s"Attestation object: ${credential.response.attestation}")
 
-  println("Javascript:")
-  println(s"""parseCreateCredentialResponse({ response: { attestationObject: new Buffer("${BinaryUtil.toHex(credential.response.attestationObject)}", 'hex'), clientDataJSON: new Buffer("${BinaryUtil.toHex(credential.response.clientDataJSON)}", 'hex') } })""")
+    println("Javascript:")
+    println(s"""parseCreateCredentialResponse({ response: { attestationObject: new Buffer("${BinaryUtil.toHex(credential.response.attestationObject)}", 'hex'), clientDataJSON: new Buffer("${BinaryUtil.toHex(credential.response.clientDataJSON)}", 'hex') } })""")
 
-  println(s"Public key: ${BinaryUtil.toHex(a.Defaults.credentialKey.getPublic.getEncoded.toVector)}")
-  println(s"Private key: ${BinaryUtil.toHex(a.Defaults.credentialKey.getPrivate.getEncoded.toVector)}")
+    println(s"Public key: ${BinaryUtil.toHex(Defaults.credentialKey.getPublic.getEncoded.toVector)}")
+    println(s"Private key: ${BinaryUtil.toHex(Defaults.credentialKey.getPrivate.getEncoded.toVector)}")
 
-  val assertion = a.createAssertion()
-  println(s"Assertion signature: ${BinaryUtil.toHex(assertion.response.signature)}")
-  println(s"Authenticator data: ${BinaryUtil.toHex(assertion.response.authenticatorData)}")
-  println(s"Client data: ${BinaryUtil.toHex(assertion.response.clientDataJSON)}")
-  println(s"Client data: ${new String(assertion.response.clientDataJSON.toArray, "UTF-8")}")
-
-}
-
-class TestAuthenticator {
+    val assertion = createAssertion()
+    println(s"Assertion signature: ${BinaryUtil.toHex(assertion.response.signature)}")
+    println(s"Authenticator data: ${BinaryUtil.toHex(assertion.response.authenticatorData)}")
+    println(s"Client data: ${BinaryUtil.toHex(assertion.response.clientDataJSON)}")
+    println(s"Client data: ${new String(assertion.response.clientDataJSON.toArray, "UTF-8")}")
+  }
 
   val crypto: Crypto = new BouncyCastleCrypto
   val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider()

@@ -519,7 +519,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = TestData.Packed.BasicAttestation.copy(
                 requestedExtensions = Some(jsonFactory.objectNode())
               ).editAuthenticatorData(
-                _ => new TestAuthenticator().makeAuthDataBytes(
+                _ => TestAuthenticator.makeAuthDataBytes(
                   extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
                 )
               )
@@ -537,7 +537,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = TestData.Packed.BasicAttestation.copy(
                 requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
               ).editAuthenticatorData(
-                _ => new TestAuthenticator().makeAuthDataBytes(
+                _ => TestAuthenticator.makeAuthDataBytes(
                   extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
                 )
               )
@@ -686,7 +686,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
-            val testAuthenticator = new TestAuthenticator()
+            val testAuthenticator = TestAuthenticator
 
             def checkRejected(keypair: KeyPair): Unit = {
               val credential = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
@@ -842,7 +842,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               describe("2. Verify that x5c meets the requirements in §7.2.1 Packed attestation statement certificate requirements.") {
                 it("Fails for an attestation signature with an invalid country code.") {
-                  val authenticator = new TestAuthenticator
+                  val authenticator = TestAuthenticator
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
@@ -1032,7 +1032,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               describe("Subject field MUST be set to:") {
                 it("Subject-C: Country where the Authenticator vendor is incorporated") {
-                  val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                  val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )._1
                   val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
@@ -1044,7 +1044,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
 
                 it("Subject-O: Legal name of the Authenticator vendor") {
-                  val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                  val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("C=SE, OU=Authenticator Attestation")
                   )._1
                   val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
@@ -1056,7 +1056,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
 
                 it("Subject-OU: Authenticator Attestation") {
-                  val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                  val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=SE, OU=Foo")
                   )._1
                   val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
@@ -1075,7 +1075,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as value.") {
                 val idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4"
 
-                val badCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
                   extensions = List((idFidoGenCeAaguid, false, Vector(0, 1, 2, 3)))
                 )._1
@@ -1084,7 +1084,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
 
-                val goodCert: X509Certificate = new TestAuthenticator().generateAttestationCertificate(
+                val goodCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
                   extensions = Nil
                 )._1
