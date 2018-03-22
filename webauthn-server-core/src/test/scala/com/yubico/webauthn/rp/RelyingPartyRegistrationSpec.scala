@@ -62,6 +62,7 @@ import scala.util.Try
 class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+  def toJson(obj: Map[String, String]): JsonNode = jsonFactory.objectNode().setAll(obj.mapValues(jsonFactory.textNode).asJava)
 
   object TestData {
     object AndroidKey {
@@ -315,20 +316,63 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.") {
+        it("Verification succeeds if neither side uses token binding ID.") {
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Verification succeeds if assertion specifies token binding is unsupported, and caller does not use it.") {
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation
+            .editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
+          )
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Verification succeeds if assertion specifies token binding is supported, and caller does not use it.") {
+          val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation
+            .editClientData("tokenBinding", toJson(Map("status" -> "supported")))
+          )
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Verification fails if assertion does not specify token binding status.") {
+          val steps = finishRegistration(
+            callerTokenBindingId = None,
+            testData = TestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
+          )
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Verification fails if assertion specifies token binding ID but caller does not.") {
+          val steps = finishRegistration(
+            callerTokenBindingId = None,
+            testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "present", "id" -> "YELLOWSUBMARINE")))
+          )
+          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
 
         describe("If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.") {
-          it("Verification succeeds if neither side specifies token binding ID.") {
-            val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation)
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
-
-            step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
-          }
-
           it("Verification succeeds if both sides specify the same token binding ID.") {
             val steps = finishRegistration(
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
-              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBindingId", "YELLOWSUBMARINE")
+              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "present", "id" -> "YELLOWSUBMARINE")))
             )
             val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -336,10 +380,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.next shouldBe a [Success[_]]
           }
 
-          it("Verification fails if caller specifies token binding ID but attestation does not.") {
+          it("Verification fails if ID is missing from tokenBinding in assertion.") {
             val steps = finishRegistration(
-              testData = TestData.FidoU2f.BasicAttestation,
-              callerTokenBindingId = Some("YELLOWSUBMARINE")
+              callerTokenBindingId = Some("YELLOWSUBMARINE"),
+              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "present")))
             )
             val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -348,10 +392,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fails if attestation specifies token binding ID but caller does not.") {
+          it("Verification fails if caller specifies token binding ID but assertion does not support it.") {
             val steps = finishRegistration(
-              callerTokenBindingId = None,
-              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBindingId", "YELLOWSUBMARINE")
+              callerTokenBindingId = Some("YELLOWSUBMARINE"),
+              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
             )
             val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
@@ -360,10 +404,22 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fails if attestation and caller specify different token binding IDs.") {
+          it("Verification fails if caller specifies token binding ID but assertion does not use it.") {
+            val steps = finishRegistration(
+              callerTokenBindingId = Some("YELLOWSUBMARINE"),
+              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "supported")))
+            )
+            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [AssertionError]
+            step.next shouldBe a [Failure[_]]
+          }
+
+          it("Verification fails if assertion and caller specify different token binding IDs.") {
             val steps = finishRegistration(
               callerTokenBindingId = Some("ORANGESUBMARINE"),
-              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBindingId", "YELLOWSUBMARINE")
+              testData = TestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "supported", "id" -> "YELLOWSUBMARINE")))
             )
             val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
 
