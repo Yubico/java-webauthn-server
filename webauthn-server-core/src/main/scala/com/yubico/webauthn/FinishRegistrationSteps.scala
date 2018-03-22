@@ -179,7 +179,9 @@ case class FinishRegistrationSteps(
   }
 
   case class Step12 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step13] {
-    override def validate() {}
+    override def validate() {
+      ExtensionsValidation.validate(request.extensions.asScala, response)
+    }
     override def nextStep = Step13(clientDataJsonHash, attestation)
   }
 
