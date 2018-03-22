@@ -154,7 +154,6 @@ class TestAuthenticator (
       json.setAll(Map(
         "challenge" -> jsonFactory.textNode(challengeBase64),
         "origin" -> jsonFactory.textNode(origin),
-        "hashAlgorithm" -> jsonFactory.textNode("SHA-256"),
         "type" -> jsonFactory.textNode("webauthn.create")
       ).asJava)
 
@@ -268,7 +267,6 @@ class TestAuthenticator (
       json.setAll(Map(
         "challenge" -> jsonFactory.textNode(challengeBase64),
         "origin" -> jsonFactory.textNode(origin),
-        "hashAlgorithm" -> jsonFactory.textNode("SHA-256"),
         "type" -> jsonFactory.textNode("webauthn.get")
       ).asJava)
 
