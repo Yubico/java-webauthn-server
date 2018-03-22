@@ -226,18 +226,35 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Nothing to test.") {}
       }
 
-      it("2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.") {
-        val steps = finishRegistration(
-          testData = TestData.FidoU2f.BasicAttestation.copy(
-            clientDataJson = "{",
-            overrideRequest = Some(TestData.FidoU2f.BasicAttestation.request)
-          )
-        )
-        val step1: steps.Step1 = steps.begin
+      describe("2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.") {
 
-        step1.validations shouldBe a [Failure[_]]
-        step1.validations.failed.get shouldBe a [JsonParseException]
-        step1.next shouldBe a [Failure[_]]
+        it("Fails if clientDataJson is not valid JSON.") {
+          val steps = finishRegistration(
+            testData = TestData.FidoU2f.BasicAttestation.copy(
+              clientDataJson = "{",
+              overrideRequest = Some(TestData.FidoU2f.BasicAttestation.request)
+            )
+          )
+          val step: steps.Step2 = steps.begin.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe a [JsonParseException]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if clientDataJson is valid JSON.") {
+          val steps = finishRegistration(
+            testData = TestData.FidoU2f.BasicAttestation.copy(
+              clientDataJson = "{}",
+              overrideRequest = Some(TestData.FidoU2f.BasicAttestation.request)
+            )
+          )
+          val step: steps.Step2 = steps.begin.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.clientData should not be null
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("3. Verify that the value of C.type is webauthn.create.") {
