@@ -591,7 +591,85 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("11. If user verification is not required for this registration, verify that the User Present bit of the flags in authData is set.") {
-        notImplemented()
+        val testData = TestData.Packed.BasicAttestation
+        val authData = testData.response.response.authenticatorData
+
+        def flagOn(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, (authData(32) | 0x04 | 0x01).toByte)
+        def flagOff(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, ((authData(32) | 0x04) & 0xfe).toByte)
+
+        it("Fails if UV is discouraged and flag is not set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+            ).editAuthenticatorData(flagOff)
+          )
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if UV is discouraged and flag is set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+            ).editAuthenticatorData(flagOn)
+          )
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Fails if UV is preferred and flag is not set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+            ).editAuthenticatorData(flagOff)
+          )
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if UV is preferred and flag is set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+            ).editAuthenticatorData(flagOn)
+          )
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is required and flag is not set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+            ).editAuthenticatorData(flagOff)
+          )
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is required and flag is set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+            ).editAuthenticatorData(flagOn)
+          )
+          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("12. Verify that the values of the ") {
