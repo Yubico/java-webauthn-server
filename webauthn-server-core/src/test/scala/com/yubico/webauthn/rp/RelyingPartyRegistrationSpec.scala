@@ -22,6 +22,7 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
+import com.yubico.webauthn.data
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -57,6 +58,32 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+object RelyingPartyRegistrationSpec extends App {
+  regenerateTestData()
+
+  def printTestDataCode(credential: data.PublicKeyCredential[data.AuthenticatorAttestationResponse]): Unit = {
+    println(s"""
+            |attestationObject = BinaryUtil.fromHex("${BinaryUtil.toHex(credential.response.attestationObject)}").get,
+            |clientDataJson = \"\"\"${new String(credential.response.clientDataJSON.toArray, "UTF-8")}\"\"\"
+            |
+            """.stripMargin)
+  }
+
+  def regenerateTestData(): Unit = {
+    val td = new RelyingPartyRegistrationSpec().TestData
+    for { testData <- List(
+      td.FidoU2f.BasicAttestation,
+      td.FidoU2f.SelfAttestation,
+      td.Packed.BasicAttestation,
+      td.Packed.BasicAttestationWithoutAaguidExtension,
+      td.Packed.BasicAttestationWithWrongAaguidExtension,
+      td.Packed.SelfAttestation,
+      td.Packed.SelfAttestationWithWrongAlgValue
+    ) } {
+      printTestDataCode(testData.regenerate())
+    }
+  }
+}
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
@@ -72,43 +99,44 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       val BasicAttestation: TestData = Packed.SelfAttestation.editAttestationObject("fmt", "android-safetynet")
     }
     object FidoU2f {
-      val BasicAttestation: TestData = TestData(
-        // Generated using TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "fido-u2f")
+
+      val BasicAttestation: TestData = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020935120d24e514e4fc6f176d961f2c4fec6a9e7121551eb16ca2d924a6ec935fea5225820659f68ce57e1ea233737f2c059da92de928c7dc6c93d77614173bc351719106903260102215820aae29b4e4874031077899f2b2752849fce1142be8e0bafeb3fb0a19089cfaba8200163666d74686669646f2d7532666761747453746d74bf637835639f5901e4308201e030820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004485b958b2a1994e831d4d421821999a4761a7bb2b99b97cd9dc47cde4e8c90bd7fadbea04a94b513c4b542031335912d5b570b8f76a3b9fe9f794f7e48e12485a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d040302034700304402206eedfe57c3bcd63c2ecc759ec92f9ec5942a59ef07f26b372f592823e0a5cee202206784015e437379c1d6bf5ad1c039cdfc8f18e80cee8048ad3a0b9b8000e57abbff63736967584830460221008a99856a71a8b36d6b20e547e580144bbc23bc2282522882b0dbce27856431220221009b250b906bec543d764290db03705af98bef315fb89f709b169df6a1548bad36ffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create","tokenBinding":{"status":"supported"}}"""
-      )
-      val SelfAttestation: TestData = TestData(
-        // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "fido-u2f")
+      ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "fido-u2f") }
+
+      val SelfAttestation: TestData = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00206723f8f6e11877f0b08cfc194409f9f74d3829b1812ae5d4dab3f03af15b2b7da5225820041c3ca500b410a00689f90c2ee6dbd24a19aee46d5e680142dd4e1600fbc5a80326010221582096b865d655e848b7ff17722b8c746ba86014b47cbb5db98630892c8a501eabeb200163666d74686669646f2d7532666761747453746d74bf637835639f5901e6308201e230820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d0301070342000496b865d655e848b7ff17722b8c746ba86014b47cbb5db98630892c8a501eabeb041c3ca500b410a00689f90c2ee6dbd24a19aee46d5e680142dd4e1600fbc5a8a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020349003046022100d59bddc1d75720260512281fce63aa3fbdf7b259fb6a60c29df7b23a6dc8ac6e022100cfb8f5e39d02e37d828ebd9203e93c21d19d9024e00956774f4a7e675fa925d5ff6373696758473045022100e58f18d162dcedc23cc945b52bb415d6b31aceba155f9aef1dc5461c175f221f022007e12fb1ebb1020b29a06b338b05b7950d05e6b1aa4c52c3ab3d168b7df8485affff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-      )
+      ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "fido-u2f") }
+
     }
     object Packed {
-      val BasicAttestation: TestData = TestData(
-        // Generated using TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(a.generateAttestationCertificate()), attestationStatementFormat = "packed")
+
+      val BasicAttestation: TestData = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158a849960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020473cccff94947e2790150cf07cf259e62e97f6e1f600938823a26e86f9542a5abf63616c67266178582100b7e901abc5f848f702063a84f9879e7bfc4420e497d74f04f75ec8096d9da33f6179582100d7d5a29171550d0c4fad243b545c27efeef0716a30083c5ea63a01e96056a502ff63666d74667061636b65646761747453746d74bf6373696758483046022100daaf493e85972038aa0805d9fa8ced463810b5e2a3384a599672ed88bf93e6f9022100c8ae12db36eda8b2744a153794b5535d4ea026701ccca594a6e423e60602fb9a637835639f5901e5308201e130820187a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004ac75ebf919ce2e365ebd31192f5d7f58ac2f0bccd774c28a89224e8f2015176eaf8846dda24d97446d5a25eca1a1e1cfba0a8eff76a4d03e15bb4b0c86fa2fc6a3233021301f060b2b0601040182e51c0101040410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d040302034800304502202ee6095203768431cf1b7107675c1cf0eb029096b317b700ce37977b0310f178022100ce5bfb5a58241da8c4e3a86dfafab596b798df87ef5f79ed59d395e11d1817abffffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-      )
-      val BasicAttestationWithoutAaguidExtension: TestData = TestData(
-        // Generated using TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(a.generateAttestationCertificate(extensions = Nil)), attestationStatementFormat = "packed")
+      ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "packed") }
+
+      val BasicAttestationWithoutAaguidExtension: TestData = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158ab49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00208a77a78607430f6ddad766aaeecce6d974ca4d42f95be216f0a10ee50bdef599bf63616c6765455332353661785820499841182f0321043a5873495d102de28ef1fb92c230c604dfe8bc21c931c70a61795820220a01182407d642c4ca2a09ba2170a042f087a18bf284ebf83d89eb6a0c65cbff63666d74667061636b65646761747453746d74bf637835639f5901c0308201bc30820162a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004056f968a406e763871595e76df2d0f95ea8189ecef39c210daf819bc9826e2ffd8be0631aa372604206e7260f0f5bbf5fb43532a9a0699ac8e31a8203f35e4d6300a06082a8648ce3d0403020348003045022100c7a9fc10eb81f7a888c6e05ea01e94393f95c9fbbf8ec747e967a97db65f45a802200881e68dc8805bd18fa156511f0f5da282378bd77868560f5a8b8f96fdfc3423ff6373696758463044022072f8b21e55bfd74fcf14116bd01b5efe034aae8d9b8b6f3763c02d25e487655a022040438688022ba64c1db18b2c2b9637d6243945ec8b73bbbfef1a4755092a204affff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-      )
-      val BasicAttestationWithWrongAaguidExtension: TestData = TestData(
-        // Generated using TestAuthenticator.createBasicAttestedCredential(aaguid = Vector[Byte](15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0), attestationStatementFormat = "packed")
+      ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(TestAuthenticator.generateAttestationCertificate(extensions = Nil)), attestationStatementFormat = "packed") }
+
+      val BasicAttestationWithWrongAaguidExtension: TestData = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158ac49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976341000005390f0e0d0c0b0a0908070605040302010000202aba487f856dccd69c13c8a0e41332ecafc1965b66dad5027bea312fbc2f45fabf63616c676545533235366178582022387031d413f5dbfe60b9750c0209fdcfa5d6eacae7d1a64504ff7a58aa5d2c6179582100abe15cad50dd40204a4fd4ea1b6b8ec7492b779ab7f8dfd7ecde1e31aefd39c0ff63666d74667061636b65646761747453746d74bf637835639f5902fe308202fa308201e2a003020102020103300d06092a864886f70d01010b0500302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341301e170d3137303931313132353431395a170d3237303930393132353431395a308185310b30090603550406130253453112301006035504070c0953746f636b686f6c6d310f300d060355040a0c0659756269636f311c301a060355040b0c13576562417574686e20756e69742074657374733133303106035504030c2a576562417574686e20756e69742074657374206174746573746174696f6e2063657274696669636174653059301306072a8648ce3d020106082a8648ce3d030107034200046e8e20021f3b33f2f98876aeed34328d8b9fa226576e78e9f5675d3c68af4c24fca58e4f3a26675e9f027329dab2840fc327dafff5f78d81726d16fbbc0ebce2a3819730819430090603551d1304023000301d0603551d0e041604145df47f419caa95f3936fb9e52620ad8c319daa6630460603551d23043f303da130a42e302c312a302806035504030c21576562417574686e20756e69742074657374206174746573746174696f6e204341820900c4bf47d5aff768f730130603551d25040c300a06082b06010505070302300b0603551d0f040403020780300d06092a864886f70d01010b05000382010100bf46d0d0d87718d1b332a754375c6a5c0bc49ae46e728aedbd11e2b510ba90154df29d147f42bcb7762e31ebf33bfd7ab425c31712e58851e29bc997f83c8fd545ce03a05a9a07bdb45eb9c4579aaffd5205b763d9be2317e07e50c983fab7a8a3aea4e57e26c7ec0f33523d3b6eadac44ac6cb59c95108e7c1e8811b45a9e14de379a6d293dcda02ff210b5e2e23319c18e325fe521e53c3edacf0fa484fb51990193928d710e0bab0e682e5c0f89f21d2b1a47d8848b06f3b342ca03f47ad17b5703805d2d96f8797e5f132acc69c7764a0f5011638c2ddd37365c504a480b35a42557b7889d90d04a180c1432a6b3230127e27fc8b7f5dbe450dd4d3c5ce7ff6373696758463044022034ae9278ba1dcac079e94c292b28a7993a82cb2c0e87ecde14f9385b177f8627022039facd2b523cf6e067fc504308f0e3b1e67d5afd74d6c4838fa391a781fc5c21ffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-      )
-      val SelfAttestation: TestData = TestData(
-        // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed")
+      ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(aaguid = Vector[Byte](15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0), attestationStatementFormat = "packed") }
+
+      val SelfAttestation: TestData = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00203d9d5bfaaa4da0ad497290893c912d7b4254040231840d3bda0f44ceba9156b4a5225820b91175047561dae5c25d070685f79252303da23fcbc0cae0623c8d9706805dd60326010221582045ff2cae9d88d50575f707ee3a311d7e72b8d27dca1ddfbe036dc0bb14a668f9200163666d74667061636b65646761747453746d74bf6373696758473045022100e9ad9bd2bb84b59779d6146abd6a58c88599930bac44855c57fa7fda086e840b02206bb7dffeb2c066a8c356a91b3ca903006265c2726cf575cf0231d54c95eeb10263616c6726ffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-      )
-      val SelfAttestationWithWrongAlgValue = TestData(
-        // Generated using TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed") after editing generator code to set the wrong alg value
+      ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed") }
+
+      val SelfAttestationWithWrongAlgValue = new TestData(
         attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002042c3d73e9556f5608ceb1d9697180a5718c4cd70b27e825bea233beef405e9f2a52258206c34d919639345ec6d6c93d74fba5a61fb46a3b0c7377eb15b7aa275ef4e549303260102215820e6cb7a6e5d4559d7a9c61ada1778b1e1113031f685ad14dcc9bb4678761be885200163666d74667061636b65646761747453746d74bf637369675847304502200179a686702d4e9cc4682d558edeae8c9c27289c1ca0739f40074de693f7a2d0022100eea8a76c40fe05b490222c6b98cf11a1a3ca72441b0e8cc7d13990b3efa6025663616c67390100ffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.create"}"""
-      )
+      ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed", alg = Some(-8)) }
     }
     object Tpm {
       val PrivacyCa: TestData = Packed.SelfAttestation.editAttestationObject("fmt", "tpm")
@@ -124,6 +152,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
     userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37))
   ) {
+    def regenerate(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = null
+
     def clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     def clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
     def clientDataJsonHash: ArrayBuffer = new BouncyCastleCrypto().hash(clientDataJsonBytes.toArray).toVector
