@@ -663,13 +663,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("14. Verify that the values of the") {
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          it("Fails if clientExtensions is not a subset of the extensions requested by the Relying Party.") {
+          it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
-              clientDataJson =
-                WebAuthnCodecs.json.writeValueAsString(
-                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                    .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-                )
+              requestedExtensions = Some(jsonFactory.objectNode()),
+              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
             )
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -678,14 +675,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             step.next shouldBe a [Failure[_]]
           }
 
-          it("Succeeds if clientExtensions is a subset of the extensions requested by the Relying Party.") {
+          it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
               requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-              clientDataJson =
-                WebAuthnCodecs.json.writeValueAsString(
-                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                    .set("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-                )
+              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
             )
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -695,13 +688,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          it("Fails if authenticatorExtensions is a subset of the extensions requested by the Relying Party.") {
+          it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
-              clientDataJson =
-                WebAuthnCodecs.json.writeValueAsString(
-                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                    .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-                )
+              requestedExtensions = Some(jsonFactory.objectNode()),
+              authenticatorData = new TestAuthenticator().makeAuthDataBytes(
+                extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
+              )
             )
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -711,14 +703,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           }
 
-          it("Succeeds if authenticatorExtensions is a subset of the extensions requested by the Relying Party.") {
+          it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
               requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-              clientDataJson =
-                WebAuthnCodecs.json.writeValueAsString(
-                  WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
-                    .set("authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-                )
+              authenticatorData = new TestAuthenticator().makeAuthDataBytes(
+                extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
+              )
             )
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
