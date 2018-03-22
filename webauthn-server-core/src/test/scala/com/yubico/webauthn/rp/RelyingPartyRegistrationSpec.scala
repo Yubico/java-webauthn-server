@@ -412,52 +412,67 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       describe("12. Verify that the values of the ") {
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the create() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          it("clientExtensions in C is a subset of the extensions requested by the RP.") {
-            val failSteps = finishRegistration(
-              testData = TestData.FidoU2f.BasicAttestation.editClientData("clientExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))
-            )
-            val failStep: failSteps.Step12 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-            failStep.validations shouldBe a [Failure[_]]
-            failStep.validations.failed.get shouldBe an[AssertionError]
-            failStep.next shouldBe a [Failure[_]]
-
-            val successSteps = finishRegistration(
-              testData = TestData.FidoU2f.BasicAttestation.copy(
-                requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
+          it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = Some(jsonFactory.objectNode()),
+                clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
               )
             )
-            val successStep: successSteps.Step12 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-            successStep.validations shouldBe a [Success[_]]
-            successStep.next shouldBe a [Success[_]]
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an[AssertionError]
+            step.next shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
+                clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
           }
         }
 
         describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the create() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          it("authenticatorExtensions in C is also a subset of the extensions requested by the RP.") {
-            val failSteps = finishRegistration(
-              testData = TestData.FidoU2f.BasicAttestation.editClientData(
-                "authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+          it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = Some(jsonFactory.objectNode())
+              ).editAuthenticatorData(
+                _ => new TestAuthenticator().makeAuthDataBytes(
+                  extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
+                )
               )
             )
-            val failStep: failSteps.Step12 = failSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-            failStep.validations shouldBe a [Failure[_]]
-            failStep.validations.failed.get shouldBe an[AssertionError]
-            failStep.next shouldBe a [Failure[_]]
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an[AssertionError]
+            step.next shouldBe a [Failure[_]]
 
-            val successSteps = finishRegistration(
-              testData = TestData.FidoU2f.BasicAttestation.copy(
+          }
+
+          it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
                 requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
-              ).editClientData(
-                "authenticatorExtensions", jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+              ).editAuthenticatorData(
+                _ => new TestAuthenticator().makeAuthDataBytes(
+                  extensionsCborBytes = Some(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector)
+                )
               )
             )
-            val successStep: successSteps.Step12 = successSteps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-            successStep.validations shouldBe a [Success[_]]
-            successStep.next shouldBe a [Success[_]]
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
           }
         }
 
