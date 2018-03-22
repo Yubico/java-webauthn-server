@@ -223,7 +223,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     describe("When registering a new credential, represented by an AuthenticatorAttestationResponse structure response and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of a registration ceremony, a Relying Party MUST proceed as follows:") {
 
       describe("1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.") {
-        notImplemented()
+        it("Nothing to test.") {}
       }
 
       it("2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.") {
