@@ -91,12 +91,13 @@ object TestAuthenticator extends App {
   println(s"Authenticator data: ${BinaryUtil.toHex(assertion.response.authenticatorData)}")
   println(s"Client data: ${BinaryUtil.toHex(assertion.response.clientDataJSON)}")
   println(s"Client data: ${new String(assertion.response.clientDataJSON.toArray, "UTF-8")}")
+
 }
 
-class TestAuthenticator (
-  val crypto: Crypto = new BouncyCastleCrypto,
-  val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider
-) {
+class TestAuthenticator {
+
+  val crypto: Crypto = new BouncyCastleCrypto
+  val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider()
 
   object Defaults {
     val aaguid: ArrayBuffer = Vector[Byte](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
