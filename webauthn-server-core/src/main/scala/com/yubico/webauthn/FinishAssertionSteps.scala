@@ -208,28 +208,7 @@ case class FinishAssertionSteps(
 
   case class Step14 private[webauthn] (override val prev: Step13) extends Step[Step13, Step15] {
     override def validate() {
-      assert(
-        request.extensions.isPresent,
-        "Extensions were returned, but not requested."
-      )
-
-      assert(
-        response.clientExtensionResults.fieldNames.asScala.toSet subsetOf request.extensions.asScala.map(_.fieldNames.asScala.toSet).getOrElse(Set.empty),
-        "Client extensions are not a subset of requested extensions."
-      )
-
-      for {
-        cbor <- response.response.parsedAuthenticatorData.extensions.asScala
-        cborArray = cbor.toArray
-        extensions: JsonNode = WebAuthnCodecs.cbor.readTree(cborArray)
-      } {
-        assert(request.extensions.isPresent, "Extensions were returned, but not requested.")
-
-        assert(
-          extensions.fieldNames.asScala.toSet subsetOf request.extensions.get.fieldNames.asScala.toSet,
-          "Authenticator extensions are not a subset of requested extensions."
-        )
-      }
+      ExtensionsValidation.validate(request.extensions.asScala, response)
     }
     override def nextStep = Step15(this)
   }
