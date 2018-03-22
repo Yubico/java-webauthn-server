@@ -25,6 +25,8 @@ import com.yubico.webauthn.data.TokenBindingInfo
 import com.yubico.webauthn.data.Present
 import com.yubico.webauthn.data.Supported
 import com.yubico.webauthn.data.NotSupported
+import com.yubico.webauthn.data.Required
+import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
@@ -71,12 +73,17 @@ case class FinishRegistrationSteps(
   def run: Try[RegistrationResult] = begin.run
 
   case class Step1 private[webauthn] () extends Step[Step2] {
+    override def validate() = {}
+    override def nextStep = Step2()
+  }
+
+  case class Step2 private[webauthn] () extends Step[Step3] {
     override def validate() = assert(clientData != null, "Client data must not be null.")
-    override def nextStep = Step2(clientData)
+    override def nextStep = Step3(clientData)
     def clientData: CollectedClientData = response.response.collectedClientData
   }
 
-  case class Step2 private[webauthn] (clientData: CollectedClientData) extends Step[Step3] {
+  case class Step3 private[webauthn] (clientData: CollectedClientData) extends Step[Step4] {
     override def validate() = {
       try
         assert(
@@ -97,32 +104,27 @@ case class FinishRegistrationSteps(
             logger.warn("""Missing "type" attribute in client data.""")
       }
     }
-    override def nextStep = Step3()
-  }
-
-  case class Step3 private[webauthn] () extends Step[Step4] {
-    override def validate() {
-      assert(
-        U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.challenge,
-        "Incorrect challenge."
-      )
-    }
     override def nextStep = Step4()
   }
 
   case class Step4 private[webauthn] () extends Step[Step5] {
     override def validate() {
       assert(
-        origins contains response.response.collectedClientData.origin,
-        "Incorrect origin: " + response.response.collectedClientData.origin
+        U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.challenge,
+        "Incorrect challenge."
       )
     }
     override def nextStep = Step5()
   }
 
   case class Step5 private[webauthn] () extends Step[Step6] {
-    override def validate() = response.response.collectedClientData.tokenBinding.validate(callerTokenBindingId.asScala)
-    def nextStep = Step6()
+    override def validate() {
+      assert(
+        origins contains response.response.collectedClientData.origin,
+        "Incorrect origin: " + response.response.collectedClientData.origin
+      )
+    }
+    override def nextStep = Step6()
   }
 
   case class Step6 private[webauthn] () extends Step[Step7] {
@@ -183,10 +185,25 @@ case class FinishRegistrationSteps(
   }
 
   case class Step10 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step11] {
+    override def validate(): Unit = {}
+    override def nextStep = Step11(clientDataJsonHash, attestation)
+  }
+
+  case class Step11 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step12] {
+    override def validate(): Unit = {}
+    override def nextStep = Step12(clientDataJsonHash, attestation)
+  }
+
+  case class Step12 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step13] {
+    override def validate() {}
+    override def nextStep = Step13(clientDataJsonHash, attestation)
+  }
+
+  case class Step13 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step14] {
     override def validate(): Unit = {
       assert(formatSupported, s"Unsupported attestation statement format: ${format}")
     }
-    override def nextStep = Step11(clientDataJsonHash, attestation, attestationStatementVerifier.get)
+    override def nextStep = Step14(clientDataJsonHash, attestation, attestationStatementVerifier.get)
 
     def format: String = attestation.format
     def formatSupported: Boolean = attestationStatementVerifier.isDefined
@@ -197,14 +214,14 @@ case class FinishRegistrationSteps(
     }
   }
 
-  case class Step11 (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject, attestationStatementVerifier: AttestationStatementVerifier) extends Step[Step12] {
+  case class Step14 (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject, attestationStatementVerifier: AttestationStatementVerifier) extends Step[Step15] {
     override def validate() {
       assert(
         attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash),
         "Invalid attestation signature."
       )
     }
-    override def nextStep = Step12(
+    override def nextStep = Step15(
       attestation = attestation,
       attestationType = attestationType,
       attestationStatementVerifier = attestationStatementVerifier
@@ -215,15 +232,15 @@ case class FinishRegistrationSteps(
       attestationStatementVerifier.asInstanceOf[X5cAttestationStatementVerifier].getAttestationTrustPath(attestation)
   }
 
-  case class Step12 private[webauthn] (
+  case class Step15 private[webauthn] (
     private val attestation: AttestationObject,
     private val attestationType: AttestationType,
     private val attestationStatementVerifier: AttestationStatementVerifier
-  ) extends Step[Step13] {
+  ) extends Step[Step16] {
     override def validate() {
       assert(attestationType == SelfAttestation || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
     }
-    override def nextStep = Step13(
+    override def nextStep = Step16(
       attestation = attestation,
       attestationType = attestationType,
       trustResolver = trustResolver
@@ -239,11 +256,11 @@ case class FinishRegistrationSteps(
     }).asJava
   }
 
-  case class Step13 private[webauthn] (
+  case class Step16 private[webauthn] (
     attestation: AttestationObject,
     attestationType: AttestationType,
     trustResolver: Optional[AttestationTrustResolver]
-  ) extends Step[Finished] {
+  ) extends Step[Step17] {
     override def validate() {
       attestationType match {
         case SelfAttestation =>
@@ -255,7 +272,7 @@ case class FinishRegistrationSteps(
         case _ => ???
       }
     }
-    override def nextStep = Finished(
+    override def nextStep = Step17(
       attestationTrusted = attestationTrusted,
       attestationType = attestationType,
       attestationMetadata = attestationMetadata
@@ -269,6 +286,45 @@ case class FinishRegistrationSteps(
       }
     }
     def attestationMetadata: Optional[Attestation] = trustResolver.asScala.flatMap(_.resolveTrustAnchor(attestation).asScala).asJava
+  }
+
+  case class Step17 private[webauthn] (
+    attestationMetadata: Optional[Attestation],
+    attestationTrusted: Boolean,
+    attestationType: AttestationType
+  ) extends Step[Step18] {
+    override def validate() {}
+    override def nextStep = Step18(
+      attestationTrusted = attestationTrusted,
+      attestationType = attestationType,
+      attestationMetadata = attestationMetadata
+    )
+  }
+
+  case class Step18 private[webauthn] (
+    attestationMetadata: Optional[Attestation],
+    attestationTrusted: Boolean,
+    attestationType: AttestationType
+  ) extends Step[Step19] {
+    override def validate() {}
+    override def nextStep = Step19(
+      attestationTrusted = attestationTrusted,
+      attestationType = attestationType,
+      attestationMetadata = attestationMetadata
+    )
+  }
+
+  case class Step19 private[webauthn] (
+    attestationMetadata: Optional[Attestation],
+    attestationTrusted: Boolean,
+    attestationType: AttestationType
+  ) extends Step[Finished] {
+    override def validate() {}
+    override def nextStep = Finished(
+      attestationTrusted = attestationTrusted,
+      attestationType = attestationType,
+      attestationMetadata = attestationMetadata
+    )
   }
 
   case class Finished private[webauthn] (
