@@ -161,7 +161,11 @@ case class FinishRegistrationSteps(
   }
 
   case class Step10 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step11] {
-    override def validate(): Unit = {}
+    override def validate(): Unit = {
+      if (request.authenticatorSelection.asScala.map(_.userVerification).getOrElse(Preferred) == Required) {
+        assert(response.response.parsedAuthenticatorData.flags.UV, "User Verification is required.")
+      }
+    }
     override def nextStep = Step11(clientDataJsonHash, attestation)
   }
 
