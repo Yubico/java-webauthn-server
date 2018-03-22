@@ -128,32 +128,8 @@ case class FinishRegistrationSteps(
   }
 
   case class Step6 private[webauthn] () extends Step[Step7] {
-    override def validate() {
-      response.response.collectedClientData.clientExtensions.asScala foreach { extensions =>
-        assert(
-          request.extensions.isPresent,
-          "Extensions were returned, but not requested."
-        )
-
-        assert(
-          extensions.fieldNames.asScala.toSet subsetOf request.extensions.get.fieldNames.asScala.toSet,
-          "Client extensions are not a subset of requested extensions."
-        )
-      }
-
-      response.response.collectedClientData.authenticatorExtensions.asScala foreach { extensions =>
-        assert(
-          request.extensions.isPresent,
-          "Extensions were returned, but not requested."
-        )
-
-        assert(
-          extensions.fieldNames.asScala.toSet subsetOf request.extensions.get.fieldNames.asScala.toSet,
-          "Authenticator extensions are not a subset of requested extensions."
-        )
-      }
-    }
-    override def nextStep = Step7()
+    override def validate() = response.response.collectedClientData.tokenBinding.validate(callerTokenBindingId.asScala)
+    def nextStep = Step7()
   }
 
   case class Step7 private[webauthn] () extends Step[Step8] {
