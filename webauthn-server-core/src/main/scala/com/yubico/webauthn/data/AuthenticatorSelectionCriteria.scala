@@ -1,6 +1,7 @@
 package com.yubico.webauthn.data
 
 import java.util.Optional
+import com.yubico.scala.util.JavaConverters._
 
 
 /**
@@ -17,7 +18,7 @@ case class AuthenticatorSelectionCriteria(
     * If present, eligible authenticators are filtered to only authenticators
     * attached with the specified §4.4.4 Authenticator Attachment enumeration.
     */
-  aa: Optional[AuthenticatorAttachment],
+  aa: Optional[AuthenticatorAttachment] = None.asJava,
 
   /**
     * requireResidentKey
