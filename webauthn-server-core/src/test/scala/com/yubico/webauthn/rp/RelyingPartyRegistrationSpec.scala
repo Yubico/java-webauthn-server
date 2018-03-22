@@ -36,6 +36,9 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.SelfAttestation
+import com.yubico.webauthn.data.Discouraged
+import com.yubico.webauthn.data.Preferred
+import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
@@ -146,6 +149,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   case class TestData(
     attestationObject: ArrayBuffer,
     clientDataJson: String,
+    authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
     clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode(),
     overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
     requestedExtensions: Option[AuthenticationExtensions] = None,
@@ -206,7 +210,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       user = userId,
       challenge = U2fB64Encoding.decode(clientData.challenge).toVector,
       pubKeyCredParams = List(PublicKeyCredentialParameters(`type` = PublicKey, alg = -7L)).asJava,
-      extensions = requestedExtensions.asJava
+      extensions = requestedExtensions.asJava,
+      authenticatorSelection = authenticatorSelection.asJava
     )
 
     def response = PublicKeyCredential(
@@ -505,7 +510,84 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("10. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
-        notImplemented()
+        val testData = TestData.Packed.BasicAttestation
+        val authData = testData.response.response.authenticatorData
+
+        def flagOn(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, (authData(32) | 0x04).toByte)
+        def flagOff(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, (authData(32) & 0xfb).toByte)
+
+        it("Succeeds if UV is discouraged and flag is not set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+            ).editAuthenticatorData(flagOff)
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is discouraged and flag is set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+            ).editAuthenticatorData(flagOn)
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is preferred and flag is not set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+            ).editAuthenticatorData(flagOff)
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Succeeds if UV is preferred and flag is set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+            ).editAuthenticatorData(flagOn)
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+
+        it("Fails if UV is required and flag is not set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+            ).editAuthenticatorData(flagOff)
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe a [Failure[_]]
+        }
+
+        it("Succeeds if UV is required and flag is set.") {
+          val steps = finishRegistration(
+            testData = testData.copy(
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+            ).editAuthenticatorData(flagOn)
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("11. If user verification is not required for this registration, verify that the User Present bit of the flags in authData is set.") {
