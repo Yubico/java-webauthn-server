@@ -1,9 +1,9 @@
 package com.yubico.webauthn
 
 
-import java.security.PublicKey
 import java.util.Optional
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
@@ -13,11 +13,8 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.TokenBindingInfo
-import com.yubico.webauthn.data.Present
-import com.yubico.webauthn.data.Supported
-import com.yubico.webauthn.data.NotSupported
 import com.yubico.webauthn.data.Required
+import com.yubico.webauthn.util.WebAuthnCodecs
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -211,23 +208,22 @@ case class FinishAssertionSteps(
 
   case class Step14 private[webauthn] (override val prev: Step13) extends Step[Step13, Step15] {
     override def validate() {
-      response.response.collectedClientData.clientExtensions.asScala foreach { extensions =>
-        assert(
-          request.extensions.isPresent,
-          "Extensions were returned, but not requested."
-        )
+      assert(
+        request.extensions.isPresent,
+        "Extensions were returned, but not requested."
+      )
 
-        assert(
-          extensions.fieldNames.asScala.toSet subsetOf request.extensions.get.fieldNames.asScala.toSet,
-          "Client extensions are not a subset of requested extensions."
-        )
-      }
+      assert(
+        response.clientExtensionResults.fieldNames.asScala.toSet subsetOf request.extensions.asScala.map(_.fieldNames.asScala.toSet).getOrElse(Set.empty),
+        "Client extensions are not a subset of requested extensions."
+      )
 
-      response.response.collectedClientData.authenticatorExtensions.asScala foreach { extensions =>
-        assert(
-          request.extensions.isPresent,
-          "Extensions were returned, but not requested."
-        )
+      for {
+        cbor <- response.response.parsedAuthenticatorData.extensions.asScala
+        cborArray = cbor.toArray
+        extensions: JsonNode = WebAuthnCodecs.cbor.readTree(cborArray)
+      } {
+        assert(request.extensions.isPresent, "Extensions were returned, but not requested.")
 
         assert(
           extensions.fieldNames.asScala.toSet subsetOf request.extensions.get.fieldNames.asScala.toSet,
