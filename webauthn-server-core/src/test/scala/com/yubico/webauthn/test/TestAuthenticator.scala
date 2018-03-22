@@ -122,7 +122,7 @@ class TestAuthenticator (
       |Client data: ${BinaryUtil.toHex(publicKeyCredential.response.clientDataJSON)}
     """.stripMargin
 
-  def createCredential(
+  private def createCredential(
     aaguid: ArrayBuffer = Defaults.aaguid,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f",
