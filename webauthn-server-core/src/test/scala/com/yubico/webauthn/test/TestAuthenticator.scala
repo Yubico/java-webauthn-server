@@ -20,6 +20,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Date
+import java.util.Base64
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -39,18 +40,20 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.asn1.x509.BasicConstraints
+import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.cert.X509v3CertificateBuilder
+import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
@@ -74,7 +77,7 @@ object TestAuthenticator {
 
     println(generateAttestationCertificate())
 
-    val credential = createCredential()
+    val (credential, _) = createBasicAttestedCredential(attestationStatementFormat = "packed")
 
     println(credential)
     println(s"Client data: ${new String(credential.response.clientDataJSON.toArray, "UTF-8")}")
@@ -210,35 +213,49 @@ object TestAuthenticator {
     aaguid: ArrayBuffer = Defaults.aaguid,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f"
-  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
-    createCredential(
-      aaguid = aaguid,
-      attestationCertAndKey = attestationCertAndKey orElse Some(generateAttestationCertificate()),
-      attestationStatementFormat = attestationStatementFormat
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[X509Certificate]) = {
+    val (caCert, generatedAttestationCertAndKey) = attestationCertAndKey match {
+      case None =>
+        val (caCert, caKey) = generateAttestationCaCertificate()
+        (Some(caCert), Some(generateAttestationCertificate(caCertAndKey = Some((caCert, caKey)))))
+      case Some(_) => (None, None)
+    }
+
+    (
+      createCredential(
+        aaguid = aaguid,
+        attestationCertAndKey = attestationCertAndKey orElse generatedAttestationCertAndKey,
+        attestationStatementFormat = attestationStatementFormat
+      ),
+      caCert
     )
+  }
 
   def createSelfAttestedCredential(
     attestationStatementFormat: String = "fido-u2f",
     alg: Option[COSEAlgorithmIdentifier] = None
-  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[Nothing]) = {
     val keypair = generateEcKeypair()
-    attestationStatementFormat match {
-      case "fido-u2f" =>
-        createCredential(
-          attestationCertAndKey = Some(generateAttestationCertificate (keypair) ),
-          attestationStatementFormat = attestationStatementFormat,
-          credentialKeypair = Some(keypair),
-          alg = alg
-        )
-      case "packed" =>
-        createCredential(
-          attestationCertAndKey = None,
-          attestationStatementFormat = attestationStatementFormat,
-          credentialKeypair = Some(keypair),
-          useSelfAttestation = true,
-          alg = alg
-        )
-    }
+    (
+      attestationStatementFormat match {
+        case "fido-u2f" =>
+          createCredential(
+            attestationCertAndKey = Some(generateAttestationCertificate (keypair) ),
+            attestationStatementFormat = attestationStatementFormat,
+            credentialKeypair = Some(keypair),
+            alg = alg
+          )
+        case "packed" =>
+          createCredential(
+            attestationCertAndKey = None,
+            attestationStatementFormat = attestationStatementFormat,
+            credentialKeypair = Some(keypair),
+            useSelfAttestation = true,
+            alg = alg
+          )
+      },
+      None
+    )
   }
 
   def createAssertion(
@@ -502,31 +519,69 @@ object TestAuthenticator {
     verifySignature(pubKey, signedDataBytes, signatureBytes)
   }
 
+  def generateAttestationCaCertificate(
+    keypair: KeyPair = generateEcKeypair(),
+    name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE")
+  ): (X509Certificate, PrivateKey) = {
+    (
+      buildCertificate(
+        publicKey = keypair.getPublic,
+        issuerName = name,
+        subjectName = name,
+        signingKey = keypair.getPrivate,
+        isCa = true
+      ),
+      keypair.getPrivate
+    )
+  }
+
   def generateAttestationCertificate(
     keypair: KeyPair = generateEcKeypair(),
     name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"),
-    extensions: Iterable[(String, Boolean, ArrayBuffer)] = List(("1.3.6.1.4.1.45724.1.1.4", false, Defaults.aaguid))
+    extensions: Iterable[(String, Boolean, ArrayBuffer)] = List(("1.3.6.1.4.1.45724.1.1.4", false, Defaults.aaguid)),
+    caCertAndKey: Option[(X509Certificate, PrivateKey)] = None
   ): (X509Certificate, PrivateKey) = {
     (
-      CertificateParser.parseDer({
-        val builder = new X509v3CertificateBuilder(
-          name,
-          new BigInteger("1337"),
-          Date.from(Instant.parse("2018-09-06T17:42:00Z")),
-          Date.from(Instant.parse("2018-09-06T17:42:00Z")),
-          name,
-          SubjectPublicKeyInfo.getInstance(keypair.getPublic.getEncoded)
-        )
-
-        extensions foreach { case (oid, critical, value) =>
-          builder.addExtension(new ASN1ObjectIdentifier(oid), critical, new DEROctetString(value.toArray))
-        }
-
-        builder.build(new JcaContentSignerBuilder("SHA256with" + keypair.getPrivate.getAlgorithm).build(keypair.getPrivate))
-          .getEncoded
-      }),
+      buildCertificate(
+        publicKey = keypair.getPublic,
+        issuerName = caCertAndKey.map(_._1).map(JcaX500NameUtil.getSubject).getOrElse(name),
+        subjectName = name,
+        signingKey = caCertAndKey.map(_._2).getOrElse(keypair.getPrivate),
+        isCa = false,
+        extensions = extensions
+      ),
       keypair.getPrivate
     )
+  }
+
+  private def buildCertificate(
+    publicKey: PublicKey,
+    issuerName: X500Name,
+    subjectName: X500Name,
+    signingKey: PrivateKey,
+    isCa: Boolean = false,
+    extensions: Iterable[(String, Boolean, ArrayBuffer)] = Nil
+  ): X509Certificate = {
+    CertificateParser.parseDer({
+      val builder = new X509v3CertificateBuilder(
+        issuerName,
+        new BigInteger("1337"),
+        Date.from(Instant.parse("2018-09-06T17:42:00Z")),
+        Date.from(Instant.parse("2018-09-06T17:42:00Z")),
+        subjectName,
+        SubjectPublicKeyInfo.getInstance(publicKey.getEncoded)
+      )
+
+      for { (oid, critical, value) <- extensions } {
+        builder.addExtension(new ASN1ObjectIdentifier(oid), critical, new DEROctetString(value.toArray))
+      }
+
+      if (isCa) {
+        builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
+      }
+
+      builder.build(new JcaContentSignerBuilder("SHA256with" + signingKey.getAlgorithm).build(signingKey)).getEncoded
+    })
   }
 
   def generateRsaCertificate(): (X509Certificate, PrivateKey) =
@@ -547,5 +602,12 @@ object TestAuthenticator {
 
     (cert, key)
   }
+
+  def toPem(cert: X509Certificate): String = (
+    "-----BEGIN CERTIFICATE-----\n"
+    + Base64.getMimeEncoder(64, System.getProperty("line.separator").getBytes("UTF-8"))
+        .encodeToString(cert.getEncoded)
+    + "\n-----END CERTIFICATE-----\n"
+  )
 
 }

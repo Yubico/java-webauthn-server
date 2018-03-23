@@ -64,12 +64,18 @@ import scala.util.Try
 object RelyingPartyRegistrationSpecTestData extends App {
   regenerateTestData()
 
-  def printTestDataCode(credential: data.PublicKeyCredential[data.AuthenticatorAttestationResponse]): Unit = {
-    println(s"""
-            |attestationObject = BinaryUtil.fromHex("${BinaryUtil.toHex(credential.response.attestationObject)}").get,
-            |clientDataJson = \"\"\"${new String(credential.response.clientDataJSON.toArray, "UTF-8")}\"\"\"
-            |
-            """.stripMargin)
+  def printTestDataCode(
+    credential: data.PublicKeyCredential[data.AuthenticatorAttestationResponse],
+    caCert: Option[X509Certificate]
+  ): Unit = {
+    for { caCert <- caCert } {
+      println(s"""attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("${BinaryUtil.toHex(caCert.getEncoded)}").get.toArray)),""")
+    }
+    println(s"""attestationObject = BinaryUtil.fromHex("${BinaryUtil.toHex(credential.response.attestationObject)}").get,
+               |clientDataJson = \"\"\"${new String(credential.response.clientDataJSON.toArray, "UTF-8")}\"\"\"
+               |
+               |
+               """.stripMargin)
   }
 
   def regenerateTestData(): Unit = {
@@ -83,7 +89,8 @@ object RelyingPartyRegistrationSpecTestData extends App {
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationWithWrongAlgValue
     ) } {
-      printTestDataCode(testData.regenerate())
+      val (cred, cert) = testData.regenerate()
+      printTestDataCode(cred, cert)
     }
   }
 }
@@ -104,7 +111,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     object FidoU2f {
 
       val BasicAttestation: TestData = new TestData(
-        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020bf8facaa1004d6cfe4fd47c3d2824796b15851872d7d1798f08c454503225fffa522582086bc6ebc89b8024e61ff9c373658145e27885541030f0b3ea3686a5df3aced8d03260102215820d71fe87fa84dad983b4d9dcdff748412db764b149dc8368fc47d73f9c23948a7200163666d74686669646f2d7532666761747453746d74bf637835639f5901e6308201e230820189a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200044903cd14102cd02788ac6f0d521fc90266ccc1e826fce9d7e14d474395323904fc985692cf5183af198e9636a37631dfaed8f75db80a9fa688b9788a4cc9b004a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d040302034700304402207305e8a31438d77ce8bb1ea096c7de39705eb105ac76e3cb6a6732fba96817a5022027d13d42b3978e1827fb829f0a627a9c1bd2ad198d62a94ecef5125b8a4c681aff637369675848304602210094a16bf8faba050dea79cfcf29e0bc79297aaf4afc4ded2767c8c3d698994a2502210086220589da6deb0dbe1d8b92a0db3fdc749b2a0a6c007fa5229a26594315d0bbffff").get,
+        attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("308201d83082017da00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004cfe9bbc171191c5d3f5237d9ccea472297c97372be0e6559ea4f229f799019889d0ac8a94b21b03db7726486e9ca7df9c913cd4597550aff452004371551e42ca3133011300f0603551d130101ff040530030101ff300a06082a8648ce3d04030203490030460221008c6f70a3f00ce2ea5936cccedfc39edcda300fdf0a2b218be5f1e78bcd1c09c3022100ffb9a8e3f91362df6289b5f7376fd626d7a2c7fe94bb9e5fefb42ea8a1d4cd33").get.toArray)),
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f002088e3863ea71f7a8bd90177b64528822945ca4b9a5e3253c37e4ee26fb43525f4a52258200e4db7c79890b728f8d41f28f5da03a743f547d7fd21da628f8bf9841befc1ec03260102215820ebb3465d68d477a6da35516218e46d2788c9d86a2e59fd8a5b4082c0d88d7453200163666d74686669646f2d7532666761747453746d74bf637835639f5901e9308201e53082018ca00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d0301070342000427ef1b1440fd4e7161680aee8e00747e835a57881022e94fd660b90ced70bd2072c3878ec97ba3a4f1e44f0f72e5ee49d89dcdf5ca1245e649801469bc5cd80fa32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d04030203470030440220786cbdb9107d3abcf04e56745e39b5eb4bdd7401154e2c93cf9ca36865b7bae202205f5460e68c9d1f8e7310c1150e334f4adc2fe99de713f8ac31e63eb3395086fdff6373696758473045022100c1b359db4aeb8a43aca81cc428469f1e093fc766f478e45fda54feaa157ff02a02203022f9f1bbfe72b90bc13c2210bf626c25789c360cf8366e5b9fc114225b7319ffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}"""
       ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "fido-u2f") }
 
@@ -117,7 +125,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     object Packed {
 
       val BasicAttestation: TestData = new TestData(
-        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020371eac436c78b973dc166ff1d796ae8c6a7fb6d2ef1d6d66e002de57a4f7223fa522582008ceef3bec50ef0707c7589f0956294659c58f2f510553f8493963e7c1462c7e03260102215820668037a881d6df1949313c107133bce1f90d1d5f398fef00928cab8456d403ec200163666d74667061636b65646761747453746d74bf6373696758473045022100825ddb1368dbbb41f97792fc62c0e6ce3420d5d0ebb5d1800ae81b6b730cb9130220116d8c43fb41fb00f033fe32d6d359438a0414a6bc0d7a2b5297851961d3a4c9637835639f5901e7308201e330820189a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004e6b618628de5526ecb100efb6c4df1ecca142119460b7a81f10a6f0ce680ccc8e9914970b508d74f9b59d5517b50fce25261ceb6d98ad2bac567c0dcd1ecac62a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020348003045022050f131e4a14bb716c7a86b530feef8d44d405974c7609f5e5666eef32a10155d022100c22c195d307d029f66fddd302b23fbc25c187dd94a3d796ab5a5ce54fc4e95ffffffff").get,
+        attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("308201d83082017da00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200040394c5fa42d59c832d6c8e4783eaac8971fdac20105f046a773da02f4d460a9be64df86e87a45124d21c30bf3361ae96840a598a2f2b019ec25b3f8004623b79a3133011300f0603551d130101ff040530030101ff300a06082a8648ce3d0403020349003046022100af8544c2c6b656513b5074ba1fc90d0b78b7710501e75fc3f3531d15103f3843022100b8ef7dac90e9168e012be191e0c210de79aec3a4584f0de2f8c6a3e645658cc0").get.toArray)),
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020cd51f2253872fad05f2b5307b0df89d47cadb2ace87e518916545900ad5f4eada522582089d3e7e7f696e009be5471fd85378e0072bf61fd5b33de6a6b6880256793148703260102215820925956d46552e8366d2acd2a57a2ed17b3e5f663cd194c56e6554c2f2b8f26de200163666d74667061636b65646761747453746d74bf637369675846304402201c564842e0415dcb4fe08874ea4e05e0f48309cc8ded393c5455e6fe2bd1375302202bb4762e4a4c49fd82f330c4cd4105be16175ee8ae3608989835e3ab50d643a2637835639f5901ea308201e63082018ca00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200046b06cc7af7fe4b180a251bef098174dabb011f6e72cea398fb6124aed056e7108c01efdf5aacf71e66c42110cf038d36c92faafba32e5ce97a451117341d1fe8a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020348003045022100d64bf76adeaa2d44bcc7a1f68da98830382ef3a6b6493205c57d4007b151fcf8022012f4568c72be6c76e66c524b8e0cefe529bb385732bffe43672d2709448e3220ffffff").get,
         clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}"""
       ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "packed") }
 
@@ -154,9 +163,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
     requestedExtensions: Option[AuthenticationExtensions] = None,
     rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
-    userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37))
+    userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37)),
+    attestationCaCert: Option[X509Certificate] = None
   ) {
-    def regenerate(): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = null
+    def regenerate(): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[X509Certificate]) = null
 
     def clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     def clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
@@ -961,7 +971,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(keypair: KeyPair): Unit = {
-              val credential = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = TestData(
@@ -988,7 +998,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(keypair: KeyPair): Unit = {
-              val credential = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = TestData(
@@ -1116,7 +1126,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val credential = authenticator.createBasicAttestedCredential(
+                  val (credential, _) = authenticator.createBasicAttestedCredential(
                     attestationCertAndKey = Some(badCert, key),
                     attestationStatementFormat = "packed"
                   )
@@ -1367,12 +1377,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               it("The Basic Constraints extension MUST have the CA component set to false") {
-                val badCert = Mockito.mock(classOf[X509Certificate])
-                val principal = new X500Principal("O=Yubico, C=SE, OU=Authenticator Attestation")
-                Mockito.when(badCert.getVersion) thenReturn 3
-                Mockito.when(badCert.getSubjectX500Principal) thenReturn principal
-                Mockito.when(badCert.getBasicConstraints) thenReturn 0
-                val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                val result = verifier._verifyX5cRequirements(testDataBase.attestationCaCert.get, testDataBase.aaguid)
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [AssertionError]
@@ -1519,13 +1524,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             it("is accepted if trust can be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
               val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
-              val attestationCaCertPem = IOUtils.toString(getClass.getResourceAsStream("/attestation-ca-cert.pem"), "UTF-8")
 
               metadataResolver.addMetadata(
                 new MetadataObject(
                   jsonFactory.objectNode().setAll(Map(
                     "vendorInfo" -> jsonFactory.objectNode(),
-                    "trustedCertificates" -> jsonFactory.arrayNode().add(jsonFactory.textNode(attestationCaCertPem)),
+                    "trustedCertificates" -> jsonFactory.arrayNode().add(jsonFactory.textNode(TestAuthenticator.toPem(testData.attestationCaCert.get))),
                     "devices" -> jsonFactory.arrayNode(),
                     "identifier" -> jsonFactory.textNode("Test attestation CA"),
                     "version" -> jsonFactory.numberNode(42)
