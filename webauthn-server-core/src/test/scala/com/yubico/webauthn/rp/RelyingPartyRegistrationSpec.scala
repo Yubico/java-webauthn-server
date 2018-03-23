@@ -1073,7 +1073,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
               val testData = TestData.Packed.BasicAttestation
               val authenticatorData: AuthenticatorData = AttestationObject(testData.attestationObject).authenticatorData
-              val clientDataHash = MessageDigest.getInstance(WebAuthnCodecs.json.readTree(testData.clientDataJson).get("hashAlgorithm").textValue()).digest(testData.clientDataJson.getBytes("UTF-8"))
+              val clientDataHash = MessageDigest.getInstance("SHA-256").digest(testData.clientDataJson.getBytes("UTF-8"))
 
               authenticatorData should not be null
               clientDataHash should not be null
