@@ -689,6 +689,32 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.next shouldBe a [Failure[_]]
           }
 
+          it("Succeeds if clientExtensionResults is empty.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = None,
+                clientExtensionResults = jsonFactory.objectNode()
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
+
+          it("Succeeds if clientExtensionResults is empty and requested extensions is an empty object.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = Some(jsonFactory.objectNode()),
+                clientExtensionResults = jsonFactory.objectNode()
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
+
           it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
             val steps = finishRegistration(
               testData = TestData.Packed.BasicAttestation.copy(
@@ -719,6 +745,64 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.validations.failed.get shouldBe an[AssertionError]
             step.next shouldBe a [Failure[_]]
 
+          }
+
+          it("Succeeds if authenticator extensions is not present.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = None
+              ).editAuthenticatorData(
+                authData => authData.updated(32, (authData(32) & 0x7f).toByte)
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
+
+          it("Succeeds if authenticator extensions is empty.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = None
+              ).editAuthenticatorData(
+                authData => authData.updated(32, (authData(32) | 0x80).toByte) ++
+                  WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode()).toVector
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
+
+          it("Succeeds if authenticator extensions is not present and requested extensions is an empty object.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = Some(jsonFactory.objectNode())
+              ).editAuthenticatorData(
+                authData => authData.updated(32, (authData(32) & 0x7f).toByte)
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
+          }
+
+          it("Succeeds if authenticator extensions is empty and requested extensions is an empty object.") {
+            val steps = finishRegistration(
+              testData = TestData.Packed.BasicAttestation.copy(
+                requestedExtensions = Some(jsonFactory.objectNode())
+              ).editAuthenticatorData(
+                authData => authData.updated(32, (authData(32) | 0x80).toByte) ++
+                  WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode()).toVector
+              )
+            )
+            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.next shouldBe a [Success[_]]
           }
 
           it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
