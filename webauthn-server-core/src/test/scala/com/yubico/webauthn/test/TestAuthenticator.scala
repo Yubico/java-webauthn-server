@@ -46,6 +46,8 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.ASN1Primitive
+import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
@@ -517,7 +519,7 @@ object TestAuthenticator {
         )
 
         extensions foreach { case (oid, critical, value) =>
-          builder.addExtension(new ASN1ObjectIdentifier(oid), critical, value.toArray)
+          builder.addExtension(new ASN1ObjectIdentifier(oid), critical, new DEROctetString(value.toArray))
         }
 
         builder.build(new JcaContentSignerBuilder("SHA256with" + keypair.getPrivate.getAlgorithm).build(keypair.getPrivate))
