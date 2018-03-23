@@ -1229,7 +1229,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   )
 
                   CBORObject.DecodeFromBytes(AttestationObject(testData.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  AttestationObject(testData.attestationObject).attestationStatement.get("alg").longValue should equal (-257)
+                  AttestationObject(testData.attestationObject).attestationStatement.get("alg").longValue should equal (-8)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
                 }
