@@ -1589,14 +1589,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       it("(Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
         val steps = finishRegistration(testData = TestData.FidoU2f.BasicAttestation.editClientData("foo", "bar"))
         val step14: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-        val step15: steps.Step15 = step14.next.get
+        val step15: Try[steps.Step15] = Try(step14.next.get)
 
-        step14.validations shouldBe a [Success[_]]
-        step14.next shouldBe a [Success[_]]
+        step14.validations shouldBe a [Failure[_]]
+        step14.next shouldBe a [Failure[_]]
 
-        step15.validations shouldBe a [Failure[_]]
-        step15.validations.failed.get shouldBe an [AssertionError]
-        step15.next shouldBe a [Failure[_]]
+        step15 shouldBe a [Failure[_]]
+        step15.failed.get shouldBe an [AssertionError]
 
         steps.run shouldBe a [Failure[_]]
         steps.run.failed.get shouldBe an [AssertionError]
