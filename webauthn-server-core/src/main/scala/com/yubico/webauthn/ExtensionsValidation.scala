@@ -1,6 +1,5 @@
 package com.yubico.webauthn
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -13,28 +12,24 @@ import scala.collection.JavaConverters._
 object ExtensionsValidation {
 
   def validate(requested: Option[AuthenticationExtensions], response: PublicKeyCredential[_ <: AuthenticatorResponse]): Boolean = {
+    val requestedExtensionIds: Set[String] = requested map { _.fieldNames.asScala.toSet } getOrElse Set.empty
+
+    val clientExtensionIds: Set[String] = response.clientExtensionResults.fieldNames.asScala.toSet
     assert(
-      requested.isDefined,
-      "Client extensions were returned, but not requested."
+      clientExtensionIds subsetOf requestedExtensionIds,
+      s"Client extensions {${clientExtensionIds.toSeq.sorted.mkString(", ")}} are not a subset of requested extensions {${requestedExtensionIds.toSeq.sorted.mkString(", ")}."
     )
 
+    val authenticatorExtensionIds: Set[String] =
+      response.response.parsedAuthenticatorData.extensions.asScala
+        .map(_.toArray)
+        .map(WebAuthnCodecs.cbor.readTree)
+        .map(_.fieldNames.asScala.toSet)
+        .getOrElse(Set.empty)
     assert(
-      response.clientExtensionResults.fieldNames.asScala.toSet subsetOf requested.map(_.fieldNames.asScala.toSet).getOrElse(Set.empty),
-      "Client extensions are not a subset of requested extensions."
+      authenticatorExtensionIds subsetOf requestedExtensionIds,
+      s"Authenticator extensions {${authenticatorExtensionIds.toSeq.sorted.mkString(", ")}} are not a subset of requested extensions {${requestedExtensionIds.toSeq.sorted.mkString(", ")}."
     )
-
-    for {
-      cbor <- response.response.parsedAuthenticatorData.extensions.asScala
-      cborArray = cbor.toArray
-      extensions: JsonNode = WebAuthnCodecs.cbor.readTree(cborArray)
-    } {
-      assert(requested.isDefined, "Authenticator extensions were returned, but not requested.")
-
-      assert(
-        extensions.fieldNames.asScala.toSet subsetOf requested.get.fieldNames.asScala.toSet,
-        "Authenticator extensions are not a subset of requested extensions."
-      )
-    }
 
     true
   }
