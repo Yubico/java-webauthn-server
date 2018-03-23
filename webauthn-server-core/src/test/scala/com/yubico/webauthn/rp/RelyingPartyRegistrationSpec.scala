@@ -61,7 +61,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-object RelyingPartyRegistrationSpec extends App {
+object RelyingPartyRegistrationSpecTestData extends App {
   regenerateTestData()
 
   def printTestDataCode(credential: data.PublicKeyCredential[data.AuthenticatorAttestationResponse]): Unit = {
