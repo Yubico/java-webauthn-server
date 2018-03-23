@@ -211,10 +211,7 @@ object TestAuthenticator {
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] =
     createCredential(
       aaguid = aaguid,
-      attestationCertAndKey = attestationCertAndKey orElse Some(importCertAndKeyFromPem(
-        getClass().getResourceAsStream("/attestation-cert.pem"),
-        getClass().getResourceAsStream("/attestation-key.pem")
-      )),
+      attestationCertAndKey = attestationCertAndKey orElse Some(generateAttestationCertificate()),
       attestationStatementFormat = attestationStatementFormat
     )
 
