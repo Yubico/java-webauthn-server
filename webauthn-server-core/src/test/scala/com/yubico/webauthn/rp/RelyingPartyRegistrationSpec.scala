@@ -1037,8 +1037,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val steps = finishRegistration(testData = TestData.Packed.BasicAttestation)
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-            step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
             step.attestationStatementVerifier should be theSameInstanceAs PackedAttestationStatementVerifier
           }
 
