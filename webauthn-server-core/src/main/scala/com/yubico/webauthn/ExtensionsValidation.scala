@@ -15,7 +15,7 @@ object ExtensionsValidation {
   def validate(requested: Option[AuthenticationExtensions], response: PublicKeyCredential[_ <: AuthenticatorResponse]): Boolean = {
     assert(
       requested.isDefined,
-      "Extensions were returned, but not requested."
+      "Client extensions were returned, but not requested."
     )
 
     assert(
@@ -28,7 +28,7 @@ object ExtensionsValidation {
       cborArray = cbor.toArray
       extensions: JsonNode = WebAuthnCodecs.cbor.readTree(cborArray)
     } {
-      assert(requested.isDefined, "Extensions were returned, but not requested.")
+      assert(requested.isDefined, "Authenticator extensions were returned, but not requested.")
 
       assert(
         extensions.fieldNames.asScala.toSet subsetOf requested.get.fieldNames.asScala.toSet,
