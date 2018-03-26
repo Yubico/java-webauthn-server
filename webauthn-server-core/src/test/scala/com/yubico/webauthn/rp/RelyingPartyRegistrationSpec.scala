@@ -260,7 +260,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       rp = rp,
       credentialRepository = credentialRepository getOrElse null,
       metadataService = metadataService.asJava
-    )._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
+    )._finishRegistration(testData.request, testData.response, credentialRepository getOrElse null, callerTokenBindingId.asJava)
   }
 
   private def notImplemented(): Unit = {

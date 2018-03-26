@@ -65,7 +65,8 @@ case class FinishRegistrationSteps(
   crypto: Crypto,
   allowUntrustedAttestation: Boolean,
   metadataService: Optional[MetadataService],
-  validateTypeAttribute: Boolean = true
+  validateTypeAttribute: Boolean = true,
+  credentialRepository: CredentialRepository
 ) {
   private val logger: Logger = LoggerFactory.getLogger(classOf[FinishRegistrationSteps])
 
@@ -279,7 +280,9 @@ case class FinishRegistrationSteps(
     attestationTrusted: Boolean,
     attestationType: AttestationType
   ) extends Step[Step18] {
-    override def validate() {}
+    override def validate(): Unit = {
+      assert(credentialRepository.lookupAll(response.id).isEmpty, s"Credential ID is already registered: ${response.id}")
+    }
     override def nextStep = Step18(
       attestationTrusted = attestationTrusted,
       attestationType = attestationType,
