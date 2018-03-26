@@ -133,4 +133,11 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
         });
     }
 
+    @Override
+    public scala.collection.immutable.Set<RegisteredCredential> lookupAll(String credentialId) {
+        return scala.collection.JavaConverters.asScalaSetConverter(storage.values().stream()
+            .filter(reg -> reg.getRegistration().keyId().idBase64().equals(credentialId))
+            .collect(Collectors.toSet())).asScala().toSet();
+    }
+
 }
