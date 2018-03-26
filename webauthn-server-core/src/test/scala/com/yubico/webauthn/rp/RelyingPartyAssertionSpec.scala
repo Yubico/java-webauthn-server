@@ -133,6 +133,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               ))
             else None
           ).asJava
+        override def lookupAll(credId: Base64UrlString) = lookup(credId, None.asJava).asScala.toSet
       },
       validateSignatureCounter = validateSignatureCounter
     )._finishAssertion(request, response, callerTokenBindingId.asJava)
@@ -191,6 +192,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               userHandle = Vector(4, 5, 6, 7)
             )
           ).asJava
+          override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
         })
 
         it("Fails if credential ID is not owned by the given user handle.") {
@@ -222,6 +224,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val steps = finishAssertion(
             credentialRepository = Some(new CredentialRepository {
               override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
+              override def lookupAll(id: Base64UrlString) = Set.empty
             }),
             userHandle = None
           )
@@ -242,6 +245,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 userHandle = U2fB64Encoding.decode(uh.get).toVector
               )
             ).asJava
+            override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
           }))
           val step: steps.Step3 = steps.begin.next.get.next.get
 
@@ -801,6 +805,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   userHandle = U2fB64Encoding.decode(uh.get).toVector
                 )
               ).asJava
+              override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
             }
 
             describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
@@ -829,6 +834,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   userHandle = U2fB64Encoding.decode(uh.get).toVector
                 )
               ).asJava
+              override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
             }
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {

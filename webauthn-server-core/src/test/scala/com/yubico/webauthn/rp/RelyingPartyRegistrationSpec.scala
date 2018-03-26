@@ -4,6 +4,7 @@ import java.security.MessageDigest
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.util.Optional
 import javax.security.auth.x500.X500Principal
 
 import com.fasterxml.jackson.core.JsonParseException
@@ -23,6 +24,8 @@ import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.data
+import com.yubico.webauthn.CredentialRepository
+import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticationExtensions
 import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
@@ -39,6 +42,7 @@ import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.Discouraged
 import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.data.Required
+import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
@@ -239,6 +243,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
     callerTokenBindingId: Option[String] = None,
     credentialId: Option[ArrayBuffer] = None,
+    credentialRepository: Option[CredentialRepository] = None,
     makePublicKeyCredentialOptions: Option[MakePublicKeyCredentialOptions] = None,
     metadataService: Option[MetadataService] = None,
     rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
@@ -253,7 +258,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       origins = List(rp.id).asJava,
       preferredPubkeyParams = Nil.asJava,
       rp = rp,
-      credentialRepository = null,
+      credentialRepository = credentialRepository getOrElse null,
       metadataService = metadataService.asJava
     )._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
   }
@@ -1575,7 +1580,62 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("17. Check that the credentialId is not yet registered to any other user. If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.") {
-        notImplemented()
+
+        val testData = TestData.FidoU2f.SelfAttestation
+
+        it("Registration is aborted if the given credential ID is already registered.") {
+          val credentialRepository = new CredentialRepository {
+            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+              RegisteredCredential(
+                credentialId = U2fB64Encoding.decode(id).toVector,
+                signatureCount = 1337L,
+                publicKey = testData.response.response.attestation.authenticatorData.attestationData.get.parsedCredentialPublicKey,
+                userHandle = U2fB64Encoding.decode(uh.get).toVector
+              )
+            ).asJava
+
+            override def lookupAll(id: Base64UrlString) = id match {
+              case id if id == testData.response.response.attestation.authenticatorData.attestationData.get.credentialIdBase64 =>
+                Set(
+                  RegisteredCredential(
+                    credentialId = U2fB64Encoding.decode(id).toVector,
+                    signatureCount = 1337L,
+                    publicKey = testData.response.response.attestation.authenticatorData.attestationData.get.parsedCredentialPublicKey,
+                    userHandle = testData.request.user.id
+                  )
+                )
+              case _ => Set.empty
+            }
+          }
+
+          val steps = finishRegistration(
+            allowUntrustedAttestation = true,
+            testData = testData,
+            credentialRepository = Some(credentialRepository)
+          )
+          val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [AssertionError]
+          step.next shouldBe an [Failure[_]]
+        }
+
+        it("Registration proceeds if the given credential ID is not already registered.") {
+          val credentialRepository = new CredentialRepository {
+            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
+            override def lookupAll(id: Base64UrlString) = Set.empty
+          }
+
+          val steps = finishRegistration(
+            allowUntrustedAttestation = true,
+            testData = testData,
+            credentialRepository = Some(credentialRepository)
+          )
+          val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
       }
 
       describe("18. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in the options.user passed to create(), by associating it with the credentialId and credentialPublicKey in the attestedCredentialData in authData, as appropriate for the Relying Party's system.") {
