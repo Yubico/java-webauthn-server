@@ -4,7 +4,6 @@ import java.security.cert.X509Certificate
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.attestation.MetadataObject
 import com.yubico.u2f.attestation.MetadataService
 import com.yubico.u2f.attestation.Attestation
 import com.yubico.u2f.crypto.Crypto
@@ -21,10 +20,6 @@ import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.SelfAttestation
-import com.yubico.webauthn.data.TokenBindingInfo
-import com.yubico.webauthn.data.Present
-import com.yubico.webauthn.data.Supported
-import com.yubico.webauthn.data.NotSupported
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
@@ -35,7 +30,6 @@ import com.yubico.webauthn.impl.X5cAttestationStatementVerifier
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 
 sealed trait Step[A <: Step[_]] {
