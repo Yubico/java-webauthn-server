@@ -262,7 +262,6 @@ object TestAuthenticator {
     (createCredential(attestationStatementFormat = "none"), None)
 
   def createAssertion(
-    allowCredentials: List[PublicKeyCredentialDescriptor] = List(PublicKeyCredentialDescriptor(id = Defaults.credentialId)),
     authenticatorExtensions: Option[JsonNode] = None,
     challenge: ArrayBuffer = Defaults.challenge,
     clientData: Option[JsonNode] = None,
@@ -276,13 +275,7 @@ object TestAuthenticator {
     userHandle: Option[ArrayBuffer] = None
   ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse] = {
 
-    val options = PublicKeyCredentialRequestOptions(
-      rpId = Some(rpId).asJava,
-      challenge = challenge,
-      allowCredentials = Some(allowCredentials.asJava).asJava
-    )
-
-    val challengeBase64 = U2fB64Encoding.encode(options.challenge.toArray)
+    val challengeBase64 = U2fB64Encoding.encode(challenge.toArray)
 
     val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
       val json: ObjectNode = jsonFactory.objectNode()
