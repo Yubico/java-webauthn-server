@@ -76,8 +76,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
-    val clientDataJsonBytes: ArrayBuffer = testData.clientDataJson.getBytes("UTF-8").toVector
-
     new RelyingParty(
       allowUntrustedAttestation = allowUntrustedAttestation,
       authenticatorRequirements = authenticatorRequirements.asJava,
