@@ -59,6 +59,7 @@ case class FinishRegistrationSteps(
   crypto: Crypto,
   allowUntrustedAttestation: Boolean,
   metadataService: Optional[MetadataService],
+  allowMissingTokenBinding: Boolean = false,
   validateTypeAttribute: Boolean = true,
   credentialRepository: CredentialRepository
 ) {
@@ -123,7 +124,9 @@ case class FinishRegistrationSteps(
   }
 
   case class Step6 private[webauthn] () extends Step[Step7] {
-    override def validate() = response.response.collectedClientData.tokenBinding.validate(callerTokenBindingId.asScala)
+    override def validate() = {
+      response.response.collectedClientData.tokenBinding(allowMissing = allowMissingTokenBinding).validate(callerTokenBindingId.asScala)
+    }
     def nextStep = Step7()
   }
 

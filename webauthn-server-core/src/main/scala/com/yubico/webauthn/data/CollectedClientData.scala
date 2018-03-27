@@ -3,7 +3,8 @@ package com.yubico.webauthn.data
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.yubico.scala.util.JavaConverters._
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
   * High-level API for reading W3C specified values out of client data.
@@ -13,6 +14,8 @@ import com.yubico.scala.util.JavaConverters._
 case class CollectedClientData(
   private val clientData: JsonNode
 ) {
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[CollectedClientData])
 
   /**
     * Input or output values for or from authenticator extensions, if any.
@@ -37,20 +40,28 @@ case class CollectedClientData(
   /**
     * The URL-safe Base64 encoded TLS token binding ID the client has negotiated with the RP.
     */
-  def tokenBinding: TokenBindingInfo = {
+  def tokenBinding(allowMissing: Boolean = false): TokenBindingInfo = {
     val tb = clientData.get("tokenBinding")
-    assert(tb != null, """Property "tokenBinding" missing from client data.""")
-    assert(tb.isObject, """Property "tokenBinding" missing from client data.""")
-    TokenBindingInfo(
-      {
-        val status = tb.get("status").textValue
-        TokenBindingStatus.fromJson(status).getOrElse(
-          throw new IllegalArgumentException("Invalid value for tokenBinding.status: " + status)
+
+    (tb, allowMissing) match {
+      case (null, true) => {
+        logger.warn("""Property "tokenBinding" missing""")
+        TokenBindingInfo(status = NotSupported, id = None)
+      }
+      case (o, _) if o != null && o.isObject =>
+        TokenBindingInfo(
+          {
+            val status = tb.get("status").textValue
+            TokenBindingStatus.fromJson(status).getOrElse(
+              throw new IllegalArgumentException("Invalid value for tokenBinding.status: " + status)
+            )
+          },
+          Option(tb.get("id")).map(_.textValue)
         )
-      },
-      Option(tb.get("id")).map(_.textValue)
-    )
+      case _ => throw new IllegalArgumentException("""Property "tokenBinding" missing from client data.""")
+    }
   }
+  def tokenBinding: TokenBindingInfo = tokenBinding()
 
   /**
     * The type of the requested operation, set by the client.

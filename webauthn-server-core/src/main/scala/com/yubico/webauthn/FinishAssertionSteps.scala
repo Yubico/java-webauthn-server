@@ -33,6 +33,7 @@ case class FinishAssertionSteps(
   rpId: String,
   crypto: Crypto,
   credentialRepository: CredentialRepository,
+  allowMissingTokenBinding: Boolean = false,
   validateTypeAttribute: Boolean = true,
   validateSignatureCounter: Boolean = true
 ) {
@@ -172,7 +173,7 @@ case class FinishAssertionSteps(
   }
 
   case class Step10 private[webauthn] (override val prev: Step9) extends Step[Step9, Step11] {
-    override def validate() = response.response.collectedClientData.tokenBinding.validate(callerTokenBindingId.asScala)
+    override def validate() = response.response.collectedClientData.tokenBinding(allowMissing = allowMissingTokenBinding).validate(callerTokenBindingId.asScala)
     override def nextStep = Step11(this)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector

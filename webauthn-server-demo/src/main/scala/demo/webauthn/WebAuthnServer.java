@@ -56,6 +56,7 @@ public class WebAuthnServer {
         Optional.empty(),
         new BouncyCastleCrypto(),
         true,
+        true,
         userStorage,
         Optional.of(metadataService),
         true,
