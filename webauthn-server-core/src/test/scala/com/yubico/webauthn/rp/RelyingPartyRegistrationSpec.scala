@@ -51,7 +51,6 @@ import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
-import org.apache.commons.io.IOUtils
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.mockito.Mockito
