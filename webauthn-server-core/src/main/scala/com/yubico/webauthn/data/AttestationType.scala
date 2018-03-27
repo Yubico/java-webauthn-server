@@ -61,3 +61,13 @@ case object PrivacyCa extends AttestationType { override val name = "Privacy CA"
   * as ECDAA-Issuer.
   */
 case object Ecdaa extends AttestationType { override val name = "ECDAA" }
+
+/**
+  * No attestation
+  *
+  * The none attestation statement format is used to replace any
+  * authenticator-provided attestation statement when a Relying Party indicates
+  * it does not wish to receive attestation information, see §5.4.6 Attestation
+  * Conveyance Preference enumeration (enum AttestationConveyancePreference).
+  */
+case object None extends AttestationType { override val name = "None" }

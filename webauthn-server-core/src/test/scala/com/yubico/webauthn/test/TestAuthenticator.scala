@@ -258,6 +258,9 @@ object TestAuthenticator {
     )
   }
 
+  def createUnattestedCredential(): (PublicKeyCredential[AuthenticatorAttestationResponse], Option[X509Certificate]) =
+    (createCredential(attestationStatementFormat = "none"), None)
+
   def createAssertion(
     allowCredentials: List[PublicKeyCredentialDescriptor] = List(PublicKeyCredentialDescriptor(id = Defaults.credentialId)),
     authenticatorExtensions: Option[JsonNode] = None,
@@ -338,6 +341,7 @@ object TestAuthenticator {
   ): ArrayBuffer = {
     val makeAttestationStatement: (ArrayBuffer, String, Option[(X509Certificate, PrivateKey)]) => JsonNode = format match {
       case "fido-u2f" => makeU2fAttestationStatement _
+      case "none" => makeNoneAttestationStatement _
       case "packed" => makePackedAttestationStatement(_, _, _, selfAttestationKey = selfAttestationKey, alg = alg)
     }
 
@@ -376,6 +380,12 @@ object TestAuthenticator {
       )
     ).asJava)
   }
+
+  def makeNoneAttestationStatement(
+    authDataBytes: ArrayBuffer,
+    clientDataJson: String,
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None
+  ): JsonNode = JsonNodeFactory.instance.objectNode()
 
   def makeU2fSignedData(
     rpIdHash: ArrayBuffer,

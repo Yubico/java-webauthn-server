@@ -47,6 +47,7 @@ import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
+import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
@@ -87,6 +88,7 @@ object RelyingPartyRegistrationSpecTestData extends App {
     for { testData <- List(
       td.FidoU2f.BasicAttestation,
       td.FidoU2f.SelfAttestation,
+      td.None.Default,
       td.Packed.BasicAttestation,
       td.Packed.BasicAttestationWithoutAaguidExtension,
       td.Packed.BasicAttestationWithWrongAaguidExtension,
@@ -126,6 +128,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "fido-u2f") }
 
     }
+    object None {
+      val Default = new TestData(
+        attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020f7c49900dc6073fb5fd1c10ebcd53904c581f7fc989080dc87a30e5701488a79a5225820d5fe91bb518f13b9c484a9d81a14fc400cc1a2ce0151bd415f3190e620a30a85032601022158205e3057e50fb81f4f6a887c94fb9148d2f7e4c688d9c9a54d89465f5618c6cf0a200163666d74646e6f6e656761747453746d74bfffff").get,
+        clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}"""
+      ) { override def regenerate() = TestAuthenticator.createUnattestedCredential() }
+    }
     object Packed {
 
       val BasicAttestation: TestData = new TestData(
@@ -162,13 +170,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   case class TestData(
     attestationObject: ArrayBuffer,
     clientDataJson: String,
-    authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
+    authenticatorSelection: Option[AuthenticatorSelectionCriteria] = scala.None,
     clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode(),
-    overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
-    requestedExtensions: Option[AuthenticationExtensions] = None,
+    overrideRequest: Option[MakePublicKeyCredentialOptions] = scala.None,
+    requestedExtensions: Option[AuthenticationExtensions] = scala.None,
     rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
     userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37)),
-    attestationCaCert: Option[X509Certificate] = None
+    attestationCaCert: Option[X509Certificate] = scala.None
   ) {
     def regenerate(): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[X509Certificate]) = null
 
@@ -871,6 +879,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         checkSuccess("android-key")
         checkSuccess("android-safetynet")
         checkSuccess("fido-u2f")
+        checkSuccess("none")
         checkSuccess("packed")
         checkSuccess("tpm")
 
@@ -1036,6 +1045,42 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               checkAccepted(testAuthenticator.generateEcKeypair(curve = "P-256"))
             }
           }
+        }
+
+        describe("For the none statement format,") {
+          def flipByte(index: Int, bytes: ArrayBuffer): ArrayBuffer = bytes.updated(index, (0xff ^ bytes(index)).toByte)
+
+          def checkByteFlipSucceeds(mutationDescription: String, index: Int): Unit = {
+            it(s"the default test case with mutated ${mutationDescription} is accepted.") {
+              val testData = TestData.None.Default.editAuthenticatorData {
+                flipByte(index, _)
+              }
+
+              val steps = finishRegistration(testData = testData)
+              val step: steps.Step14 = new steps.Step14(
+                attestation = AttestationObject(testData.attestationObject),
+                clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
+                attestationStatementVerifier = NoneAttestationStatementVerifier
+              )
+
+              step.validations shouldBe a [Success[_]]
+              step.attestationType should equal (data.None)
+              step.next shouldBe a [Success[_]]
+            }
+          }
+
+          it("the default test case is accepted.") {
+            val steps = finishRegistration(testData = TestData.None.Default)
+            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.attestationType should equal (data.None)
+            step.next shouldBe a [Success[_]]
+          }
+
+          checkByteFlipSucceeds("signature counter", 32 + 1)
+          checkByteFlipSucceeds("AAGUID", 32 + 1 + 4)
+          checkByteFlipSucceeds("credential ID", 32 + 1 + 4 + 16 + 2)
         }
 
         describe("For the packed statement format") {
@@ -1444,9 +1489,49 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         }
 
+        describe("For the none statement format") {
+          it("no trust anchors are returned.") {
+            val steps = finishRegistration(testData = TestData.None.Default)
+            val step: steps.Step15 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+            step.validations shouldBe a [Success[_]]
+            step.trustResolver.asScala shouldBe empty
+            step.next shouldBe a [Success[_]]
+          }
+        }
+
       }
 
       describe("16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:") {
+
+        describe("If none attestation was used, check if no attestation is acceptable under Relying Party policy.") {
+          describe("The default test case") {
+            it("is rejected if untrusted attestation is not allowed.") {
+              val steps = finishRegistration(
+                testData = TestData.None.Default,
+                allowUntrustedAttestation = false
+              )
+              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+              step.validations shouldBe a [Failure[_]]
+              step.validations.failed.get shouldBe an [AssertionError]
+              step.attestationTrusted should be (false)
+              step.next shouldBe a [Failure[_]]
+            }
+
+            it("is accepted if untrusted attestation is allowed.") {
+              val steps = finishRegistration(
+                testData = TestData.None.Default,
+                allowUntrustedAttestation = true
+              )
+              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+              step.validations shouldBe a [Success[_]]
+              step.attestationTrusted should be (true)
+              step.next shouldBe a [Success[_]]
+            }
+          }
+        }
 
         describe("If self attestation was used, check if self attestation is acceptable under Relying Party policy.") {
 
