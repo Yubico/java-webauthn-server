@@ -59,7 +59,8 @@ import scala.util.Try
 class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  private def toJson(obj: Map[String, String]): JsonNode = jsonFactory.objectNode().setAll(obj.mapValues(jsonFactory.textNode).asJava)
+  private def toJsonObject(obj: Map[String, JsonNode]): JsonNode = jsonFactory.objectNode().setAll(obj.asJava)
+  private def toJson(obj: Map[String, String]): JsonNode = toJsonObject(obj.mapValues(jsonFactory.textNode))
 
   private val crypto: Crypto = new BouncyCastleCrypto
   private def sha256(bytes: ArrayBuffer): ArrayBuffer = crypto.hash(bytes.toArray).toVector
@@ -1422,13 +1423,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               metadataResolver.addMetadata(
                 new MetadataObject(
-                  jsonFactory.objectNode().setAll(Map(
+                  toJsonObject(Map(
                     "vendorInfo" -> jsonFactory.objectNode(),
                     "trustedCertificates" -> jsonFactory.arrayNode().add(jsonFactory.textNode(TestAuthenticator.toPem(testData.attestationCaCert.get))),
                     "devices" -> jsonFactory.arrayNode(),
                     "identifier" -> jsonFactory.textNode("Test attestation CA"),
                     "version" -> jsonFactory.numberNode(42)
-                  ).asJava)
+                  ))
                 )
               )
 
