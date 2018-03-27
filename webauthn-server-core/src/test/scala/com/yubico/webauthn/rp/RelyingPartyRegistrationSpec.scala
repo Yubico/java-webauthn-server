@@ -89,12 +89,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     )._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
   }
 
-  private def notImplemented(): Unit = {
-    it("Fails.") {
-      fail("Test not implemented.")
-    }
-  }
-
   describe("§7.1. Registering a new credential") {
 
     describe("When registering a new credential, represented by an AuthenticatorAttestationResponse structure response and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of a registration ceremony, a Relying Party MUST proceed as follows:") {
