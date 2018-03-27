@@ -27,6 +27,7 @@ import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.X5cAttestationStatementVerifier
+import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -193,6 +194,7 @@ case class FinishRegistrationSteps(
     def formatSupported: Boolean = attestationStatementVerifier.isDefined
     def attestationStatementVerifier: Option[AttestationStatementVerifier] = format match {
       case "fido-u2f" => Some(FidoU2fAttestationStatementVerifier)
+      case "none" => Some(NoneAttestationStatementVerifier)
       case "packed" => Some(PackedAttestationStatementVerifier)
       case _ => None
     }
@@ -222,7 +224,7 @@ case class FinishRegistrationSteps(
     private val attestationStatementVerifier: AttestationStatementVerifier
   ) extends Step[Step16] {
     override def validate() {
-      assert(attestationType == SelfAttestation || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
+      assert(attestationType == SelfAttestation || attestationType == data.None || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
     }
     override def nextStep = Step16(
       attestation = attestation,
@@ -236,6 +238,7 @@ case class FinishRegistrationSteps(
         attestation.format match {
           case "fido-u2f"|"packed" => Try(new KnownX509TrustAnchorsTrustResolver(metadataService.get)).toOption
         }
+      case data.None => None
       case _ => ???
     }).asJava
   }
@@ -253,6 +256,9 @@ case class FinishRegistrationSteps(
         case Basic =>
           assert(allowUntrustedAttestation || attestationTrusted, "Failed to derive trust for attestation key.")
 
+        case data.None =>
+          assert(allowUntrustedAttestation, "No attestation is not allowed.")
+
         case _ => ???
       }
     }
@@ -264,7 +270,7 @@ case class FinishRegistrationSteps(
 
     def attestationTrusted: Boolean = {
       attestationType match {
-        case SelfAttestation => allowUntrustedAttestation
+        case SelfAttestation | data.None => allowUntrustedAttestation
         case Basic => attestationMetadata.asScala map { _.isTrusted } getOrElse false
         case _ => ???
       }
