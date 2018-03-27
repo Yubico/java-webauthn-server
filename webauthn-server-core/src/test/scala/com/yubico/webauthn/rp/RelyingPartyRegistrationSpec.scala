@@ -21,7 +21,6 @@ import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.FinishRegistrationSteps
-import com.yubico.webauthn.data
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.data.ArrayBuffer
@@ -36,6 +35,7 @@ import com.yubico.webauthn.data.Discouraged
 import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Base64UrlString
+import com.yubico.webauthn.data.NoneAttestation
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
@@ -863,7 +863,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           def checkByteFlipSucceeds(mutationDescription: String, index: Int): Unit = {
             it(s"the default test case with mutated ${mutationDescription} is accepted.") {
-              val testData = RegistrationTestData.None.Default.editAuthenticatorData {
+              val testData = RegistrationTestData.NoneAttestation.Default.editAuthenticatorData {
                 flipByte(index, _)
               }
 
@@ -875,17 +875,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               )
 
               step.validations shouldBe a [Success[_]]
-              step.attestationType should equal (data.None)
+              step.attestationType should equal (NoneAttestation)
               step.next shouldBe a [Success[_]]
             }
           }
 
           it("the default test case is accepted.") {
-            val steps = finishRegistration(testData = RegistrationTestData.None.Default)
+            val steps = finishRegistration(testData = RegistrationTestData.NoneAttestation.Default)
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
-            step.attestationType should equal (data.None)
+            step.attestationType should equal (NoneAttestation)
             step.next shouldBe a [Success[_]]
           }
 
@@ -1302,7 +1302,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         describe("For the none statement format") {
           it("no trust anchors are returned.") {
-            val steps = finishRegistration(testData = RegistrationTestData.None.Default)
+            val steps = finishRegistration(testData = RegistrationTestData.NoneAttestation.Default)
             val step: steps.Step15 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
@@ -1319,7 +1319,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           describe("The default test case") {
             it("is rejected if untrusted attestation is not allowed.") {
               val steps = finishRegistration(
-                testData = RegistrationTestData.None.Default,
+                testData = RegistrationTestData.NoneAttestation.Default,
                 allowUntrustedAttestation = false
               )
               val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -1332,7 +1332,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if untrusted attestation is allowed.") {
               val steps = finishRegistration(
-                testData = RegistrationTestData.None.Default,
+                testData = RegistrationTestData.NoneAttestation.Default,
                 allowUntrustedAttestation = true
               )
               val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get

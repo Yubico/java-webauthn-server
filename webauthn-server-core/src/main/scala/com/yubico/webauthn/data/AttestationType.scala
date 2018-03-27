@@ -70,4 +70,4 @@ case object Ecdaa extends AttestationType { override val name = "ECDAA" }
   * it does not wish to receive attestation information, see §5.4.6 Attestation
   * Conveyance Preference enumeration (enum AttestationConveyancePreference).
   */
-case object None extends AttestationType { override val name = "None" }
+case object NoneAttestation extends AttestationType { override val name = "None" }

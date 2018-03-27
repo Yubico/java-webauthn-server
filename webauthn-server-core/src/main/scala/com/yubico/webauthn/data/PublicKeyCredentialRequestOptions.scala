@@ -26,12 +26,12 @@ case class PublicKeyCredentialRequestOptions(
     *
     * If omitted, its value will be set by the client.
     */
-  rpId: Optional[String] = scala.None.asJava,
+  rpId: Optional[String] = None.asJava,
 
   /**
     * A list of public key credentials acceptable to the caller, in descending order of the caller’s preference.
     */
-  allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = scala.None.asJava,
+  allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
 
   /**
     * This member describes the Relying Party's requirements regarding user verification for the get() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement.
@@ -43,7 +43,7 @@ case class PublicKeyCredentialRequestOptions(
     *
     * For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
     */
-  extensions: Optional[AuthenticationExtensions] = scala.None.asJava
+  extensions: Optional[AuthenticationExtensions] = None.asJava
 
 ) {
 

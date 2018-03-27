@@ -51,7 +51,7 @@ object RegistrationTestDataGenerator extends App {
     for { testData <- List(
       td.FidoU2f.BasicAttestation,
       td.FidoU2f.SelfAttestation,
-      td.None.Default,
+      td.NoneAttestation.Default,
       td.Packed.BasicAttestation,
       td.Packed.BasicAttestationWithoutAaguidExtension,
       td.Packed.BasicAttestationWithWrongAaguidExtension,
@@ -87,7 +87,7 @@ object RegistrationTestData {
     ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "fido-u2f") }
 
   }
-  object None {
+  object NoneAttestation {
     val Default = new RegistrationTestData(
       attestationObject = BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020f7c49900dc6073fb5fd1c10ebcd53904c581f7fc989080dc87a30e5701488a79a5225820d5fe91bb518f13b9c484a9d81a14fc400cc1a2ce0151bd415f3190e620a30a85032601022158205e3057e50fb81f4f6a887c94fb9148d2f7e4c688d9c9a54d89465f5618c6cf0a200163666d74646e6f6e656761747453746d74bfffff").get,
       clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}"""
@@ -129,13 +129,13 @@ object RegistrationTestData {
 case class RegistrationTestData(
   attestationObject: ArrayBuffer,
   clientDataJson: String,
-  authenticatorSelection: Option[AuthenticatorSelectionCriteria] = scala.None,
+  authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
   clientExtensionResults: AuthenticationExtensions = RegistrationTestData.jsonFactory.objectNode(),
-  overrideRequest: Option[MakePublicKeyCredentialOptions] = scala.None,
-  requestedExtensions: Option[AuthenticationExtensions] = scala.None,
+  overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
+  requestedExtensions: Option[AuthenticationExtensions] = None,
   rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
   userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37)),
-  attestationCaCert: Option[X509Certificate] = scala.None
+  attestationCaCert: Option[X509Certificate] = None
 ) {
   def regenerate(): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[X509Certificate]) = null
 

@@ -22,6 +22,7 @@ import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Preferred
+import com.yubico.webauthn.data.NoneAttestation
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
@@ -224,7 +225,7 @@ case class FinishRegistrationSteps(
     private val attestationStatementVerifier: AttestationStatementVerifier
   ) extends Step[Step16] {
     override def validate() {
-      assert(attestationType == SelfAttestation || attestationType == data.None || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
+      assert(attestationType == SelfAttestation || attestationType == NoneAttestation || trustResolver.isPresent, "Failed to obtain attestation trust anchors.")
     }
     override def nextStep = Step16(
       attestation = attestation,
@@ -238,7 +239,7 @@ case class FinishRegistrationSteps(
         attestation.format match {
           case "fido-u2f"|"packed" => Try(new KnownX509TrustAnchorsTrustResolver(metadataService.get)).toOption
         }
-      case data.None => None
+      case NoneAttestation => None
       case _ => ???
     }).asJava
   }
@@ -256,7 +257,7 @@ case class FinishRegistrationSteps(
         case Basic =>
           assert(allowUntrustedAttestation || attestationTrusted, "Failed to derive trust for attestation key.")
 
-        case data.None =>
+        case NoneAttestation =>
           assert(allowUntrustedAttestation, "No attestation is not allowed.")
 
         case _ => ???
@@ -270,7 +271,7 @@ case class FinishRegistrationSteps(
 
     def attestationTrusted: Boolean = {
       attestationType match {
-        case SelfAttestation | data.None => allowUntrustedAttestation
+        case SelfAttestation | NoneAttestation => allowUntrustedAttestation
         case Basic => attestationMetadata.asScala map { _.isTrusted } getOrElse false
         case _ => ???
       }

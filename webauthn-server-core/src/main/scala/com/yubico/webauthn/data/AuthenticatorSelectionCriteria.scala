@@ -18,7 +18,7 @@ case class AuthenticatorSelectionCriteria(
     * If present, eligible authenticators are filtered to only authenticators
     * attached with the specified §4.4.4 Authenticator Attachment enumeration.
     */
-  authenticatorAttachment: Optional[AuthenticatorAttachment] = scala.None.asJava,
+  authenticatorAttachment: Optional[AuthenticatorAttachment] = None.asJava,
 
   /**
     * requireResidentKey

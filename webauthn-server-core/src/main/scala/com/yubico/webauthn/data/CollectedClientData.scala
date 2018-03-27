@@ -46,7 +46,7 @@ case class CollectedClientData(
     (tb, allowMissing) match {
       case (null, true) => {
         logger.warn("""Property "tokenBinding" missing""")
-        TokenBindingInfo(status = NotSupported, id = scala.None)
+        TokenBindingInfo(status = NotSupported, id = None)
       }
       case (o, _) if o != null && o.isObject =>
         TokenBindingInfo(
