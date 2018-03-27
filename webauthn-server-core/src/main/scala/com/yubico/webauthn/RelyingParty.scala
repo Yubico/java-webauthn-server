@@ -55,15 +55,13 @@ class RelyingParty (
   def finishRegistration(
     request: MakePublicKeyCredentialOptions,
     response: PublicKeyCredential[AuthenticatorAttestationResponse],
-    credentialRepository: CredentialRepository,
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): Try[RegistrationResult] =
-    _finishRegistration(request, response, credentialRepository, callerTokenBindingId).run
+    _finishRegistration(request, response, callerTokenBindingId).run
 
   private[webauthn] def _finishRegistration(
     request: MakePublicKeyCredentialOptions,
     response: PublicKeyCredential[AuthenticatorAttestationResponse],
-    credentialRepository: CredentialRepository,
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): FinishRegistrationSteps =
     FinishRegistrationSteps(
