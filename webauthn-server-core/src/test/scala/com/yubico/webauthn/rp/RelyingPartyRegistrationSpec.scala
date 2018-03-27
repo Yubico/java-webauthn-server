@@ -916,13 +916,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.next shouldBe a [Failure[_]]
           }
 
-          def mutateAuthenticatorData(attestationObject: ArrayBuffer)(mutator: ArrayBuffer => ArrayBuffer): ArrayBuffer = {
-            val decodedCbor: ObjectNode = WebAuthnCodecs.cbor.readTree(attestationObject.toArray).asInstanceOf[ObjectNode]
-            decodedCbor.set("authData", jsonFactory.binaryNode(mutator(decodedCbor.get("authData").binaryValue().toVector).toArray))
-
-            WebAuthnCodecs.cbor.writeValueAsBytes(decodedCbor).toVector
-          }
-
           def checkByteFlipFails(index: Int): Unit = {
             val testData = TestData.FidoU2f.BasicAttestation.editAuthenticatorData { flipByte(index, _) }
 
