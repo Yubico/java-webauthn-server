@@ -58,13 +58,13 @@ import scala.util.Try
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
-  def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  def toJson(obj: Map[String, String]): JsonNode = jsonFactory.objectNode().setAll(obj.mapValues(jsonFactory.textNode).asJava)
+  private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+  private def toJson(obj: Map[String, String]): JsonNode = jsonFactory.objectNode().setAll(obj.mapValues(jsonFactory.textNode).asJava)
 
-  val crypto: Crypto = new BouncyCastleCrypto
-  def sha256(bytes: ArrayBuffer): ArrayBuffer = crypto.hash(bytes.toArray).toVector
+  private val crypto: Crypto = new BouncyCastleCrypto
+  private def sha256(bytes: ArrayBuffer): ArrayBuffer = crypto.hash(bytes.toArray).toVector
 
-  def finishRegistration(
+  private def finishRegistration(
     allowUntrustedAttestation: Boolean = false,
     authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
     callerTokenBindingId: Option[String] = None,
