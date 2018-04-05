@@ -33,7 +33,7 @@ import scala.util.Try;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
-    public static final String ORIGIN = "https://localhost:8443";
+    private static final String DEFAULT_ORIGIN = "https://localhost:8443";
 
     private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
     private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
@@ -52,7 +52,7 @@ public class WebAuthnServer {
         new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty()),
         challengeGenerator,
         Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
-        Arrays.asList(ORIGIN),
+        getOriginsFromEnv(),
         Optional.empty(),
         new BouncyCastleCrypto(),
         true,
@@ -62,6 +62,24 @@ public class WebAuthnServer {
         true,
         false
     );
+
+    private static List<String> getOriginsFromEnv() {
+        final String origins = System.getenv("YUBICO_WEBAUTHN_ALLOWED_ORIGINS");
+
+        logger.debug("YUBICO_WEBAUTHN_ALLOWED_ORIGINS: {}", origins);
+
+        List<String> result;
+
+        if (origins == null) {
+            result = Arrays.asList(DEFAULT_ORIGIN);
+        } else {
+            result = Arrays.asList(origins.split(","));
+        }
+
+        logger.info("Origins: {}", result);
+
+        return result;
+    }
 
     public RegistrationRequest startRegistration(String username, String displayName, String credentialNickname) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
