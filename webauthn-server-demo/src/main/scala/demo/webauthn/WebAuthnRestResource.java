@@ -1,5 +1,6 @@
 package demo.webauthn;
 
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -87,9 +88,9 @@ public class WebAuthnRestResource {
     @Path("register")
     @POST
     public Response startRegistration(
-        @QueryParam("username") String username,
-        @QueryParam("displayName") String displayName,
-        @QueryParam("credentialNickname") String credentialNickname
+        @FormParam("username") String username,
+        @FormParam("displayName") String displayName,
+        @FormParam("credentialNickname") String credentialNickname
     ) throws MalformedURLException {
         logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}", username, displayName, credentialNickname);
         RegistrationRequest request = server.startRegistration(
