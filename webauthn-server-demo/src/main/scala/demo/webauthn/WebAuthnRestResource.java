@@ -91,7 +91,7 @@ public class WebAuthnRestResource {
         @QueryParam("displayName") String displayName,
         @QueryParam("credentialNickname") String credentialNickname
     ) throws MalformedURLException {
-        logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
+        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}", username, displayName, credentialNickname);
         RegistrationRequest request = server.startRegistration(
             username,
             displayName,
