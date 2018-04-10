@@ -2,6 +2,7 @@ description = 'WebAuthn demo'
 
 apply plugin: 'scala'
 apply plugin: 'war'
+apply plugin: 'application'
 apply from: 'gretty-2.0.0.plugin'
 
 sourceCompatibility = '1.8'
@@ -19,6 +20,8 @@ dependencies {
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.5',
     'com.fasterxml.jackson.module:jackson-module-scala_2.11:2.6.5',
     'javax.ws.rs:javax.ws.rs-api:2.1',
+    'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
+    'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
     'org.scala-lang:scala-library:2.11.3',
   )
 
@@ -29,6 +32,8 @@ dependencies {
   )
 
 }
+
+mainClassName = 'demo.webauthn.EmbeddedServer'
 
 gretty {
   contextPath = '/webauthn'
