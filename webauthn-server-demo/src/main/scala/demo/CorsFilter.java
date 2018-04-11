@@ -5,12 +5,11 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 
 import demo.webauthn.Config;
-import java.io.IOException;
 
 public class CorsFilter implements ContainerResponseFilter {
 
     @Override
-    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
         String origin = requestContext.getHeaderString("origin");
         Config.getOrigins().stream()
             .filter(allowedOrigin -> allowedOrigin.equals(origin))
