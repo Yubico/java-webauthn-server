@@ -2,6 +2,7 @@ package com.yubico.u2f.data.messages;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.u2f.TestUtils;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.junit.Test;
 
 import static com.yubico.u2f.testdata.TestVectors.*;
@@ -41,13 +42,13 @@ public class SignResponseTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void fromJsonDetectsTooLongJsonContent() {
+    public void fromJsonDetectsTooLongJsonContent() throws U2fBadInputException {
         SignResponse.fromJson(makeLongJson(20000));
         fail("fromJson did not detect too long JSON content.");
     }
 
     @Test
-    public void fromJsonAllowsShortJsonContent() {
+    public void fromJsonAllowsShortJsonContent() throws U2fBadInputException {
         assertNotNull(SignResponse.fromJson(makeLongJson(19999)));
     }
 

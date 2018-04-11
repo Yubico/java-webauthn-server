@@ -5,6 +5,7 @@
 
 # Intellij
 .idea/
+out/
 *.iml
 *.iws
 */out/
@@ -18,4 +19,5 @@ target/
 
 # Gradle
 .gradle/
-build/
+/build/
+/*/build/

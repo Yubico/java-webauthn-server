@@ -22,6 +22,10 @@ import com.yubico.u2f.data.messages.SignRequestData;
 import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
+import com.yubico.u2f.exceptions.U2fAuthenticationException;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
+import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.u2f.exceptions.U2fRegistrationException;
 import demo.u2f.view.AuthenticationView;
 import demo.u2f.view.FinishAuthenticationView;
 import demo.u2f.view.FinishRegistrationView;
@@ -52,7 +56,7 @@ public class Resource {
 
     @Path("startRegistration")
     @GET
-    public View startRegistration(@QueryParam("username") String username) {
+    public View startRegistration(@QueryParam("username") String username) throws U2fBadConfigurationException, U2fBadInputException {
         RegisterRequestData registerRequestData = u2f.startRegistration(APP_ID, getRegistrations(username));
         requestStorage.put(registerRequestData.getRequestId(), registerRequestData.toJson());
         return new RegistrationView(registerRequestData.toJson(), username);
@@ -60,7 +64,7 @@ public class Resource {
 
     @Path("finishRegistration")
     @POST
-    public View finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, NoSuchFieldException {
+    public View finishRegistration(@FormParam("tokenResponse") String response, @FormParam("username") String username) throws CertificateException, U2fBadInputException, U2fRegistrationException {
         RegisterResponse registerResponse = RegisterResponse.fromJson(response);
         RegisterRequestData registerRequestData = RegisterRequestData.fromJson(requestStorage.remove(registerResponse.getRequestId()));
         DeviceRegistration registration = u2f.finishRegistration(registerRequestData, registerResponse);
@@ -74,7 +78,7 @@ public class Resource {
 
     @Path("startAuthentication")
     @GET
-    public View startAuthentication(@QueryParam("username") String username) {
+    public View startAuthentication(@QueryParam("username") String username) throws U2fBadConfigurationException, U2fBadInputException {
         try {
             SignRequestData signRequestData = u2f.startSignature(APP_ID, getRegistrations(username));
             requestStorage.put(signRequestData.getRequestId(), signRequestData.toJson());
@@ -87,7 +91,7 @@ public class Resource {
     @Path("finishAuthentication")
     @POST
     public View finishAuthentication(@FormParam("tokenResponse") String response,
-                                       @FormParam("username") String username) {
+                                       @FormParam("username") String username) throws U2fBadInputException {
         SignResponse signResponse = SignResponse.fromJson(response);
         SignRequestData authenticateRequest = SignRequestData.fromJson(requestStorage.remove(signResponse.getRequestId()));
         DeviceRegistration registration = null;
@@ -96,13 +100,15 @@ public class Resource {
         } catch (DeviceCompromisedException e) {
             registration = e.getDeviceRegistration();
             return new FinishAuthenticationView(false, "Device possibly compromised and therefore blocked: " + e.getMessage());
+        } catch (U2fAuthenticationException e) {
+            return new FinishAuthenticationView(false, "Authentication failed: " + e.getCause().getMessage());
         } finally {
             userStorage.getUnchecked(username).put(registration.getKeyHandle(), registration.toJson());
         }
         return new FinishAuthenticationView(true);
     }
 
-    private Iterable<DeviceRegistration> getRegistrations(String username) {
+    private Iterable<DeviceRegistration> getRegistrations(String username) throws U2fBadInputException {
         List<DeviceRegistration> registrations = new ArrayList<DeviceRegistration>();
         for (String serialized : userStorage.getUnchecked(username).values()) {
             registrations.add(DeviceRegistration.fromJson(serialized));

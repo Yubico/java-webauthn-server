@@ -42,7 +42,7 @@ allprojects  {
   }
 
   group = 'com.yubico'
-  version = '0.18.0'
+  version = '0.19.0'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
@@ -79,8 +79,9 @@ subprojects {
 
   dependencies {
 
+    compileOnly 'org.projectlombok:lombok:1.16.18'
+
     compile(
-      [group: 'org.projectlombok', name: 'lombok', version:'1.16.18'],
       'org.slf4j:slf4j-api:1.7.25',
     )
 
