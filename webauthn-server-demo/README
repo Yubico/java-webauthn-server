@@ -31,6 +31,9 @@ bypass.
  3. Run `webauthn-server-demo-X.Y.Z/bin/webauthn-server-demo`. You should also
     set the following environment variables:
 
+    - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
+      `YUBICO_WEBAUTHN_PORT=8081`
+
     - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
       server will accept requests for. Example:
       `YUBICO_WEBAUTHN_ALLOWED_ORIGINS=http://demo.yubico.com:8080`
