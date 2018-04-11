@@ -12,11 +12,9 @@ import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
-import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,10 +34,6 @@ import scala.util.Try;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
-    private static final String DEFAULT_ORIGIN = "https://localhost:8443";
-    private static final RelyingPartyIdentity DEFAULT_RP_ID
-        = new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty());
-
     private final Cache<String, AssertionRequest> assertRequestStorage = newCache();
     private final Cache<String, RegistrationRequest> registerRequestStorage = newCache();
     private final InMemoryRegistrationStorage userStorage = new InMemoryRegistrationStorage();
@@ -54,10 +48,10 @@ public class WebAuthnServer {
 
 
     private final RelyingParty rp = new RelyingParty(
-        getRpIdFromEnv(),
+        Config.getRpIdentity(),
         challengeGenerator,
         Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
-        getOriginsFromEnv(),
+        Config.getOrigins(),
         Optional.empty(),
         new BouncyCastleCrypto(),
         true,
@@ -76,56 +70,6 @@ public class WebAuthnServer {
             .maximumSize(100)
             .expireAfterAccess(1, TimeUnit.HOURS)
             .build();
-    }
-
-    private static List<String> getOriginsFromEnv() {
-        final String origins = System.getenv("YUBICO_WEBAUTHN_ALLOWED_ORIGINS");
-
-        logger.debug("YUBICO_WEBAUTHN_ALLOWED_ORIGINS: {}", origins);
-
-        final List<String> result;
-
-        if (origins == null) {
-            result = Arrays.asList(DEFAULT_ORIGIN);
-        } else {
-            result = Arrays.asList(origins.split(","));
-        }
-
-        logger.info("Origins: {}", result);
-
-        return result;
-    }
-
-    private static RelyingPartyIdentity getRpIdFromEnv() throws MalformedURLException {
-        final String name = System.getenv("YUBICO_WEBAUTHN_RP_NAME");
-        final String id = System.getenv("YUBICO_WEBAUTHN_RP_ID");
-        final String icon = System.getenv("YUBICO_WEBAUTHN_RP_ICON");
-
-        logger.debug("RP name: {}", name);
-        logger.debug("RP ID: {}", id);
-        logger.debug("RP icon: {}", icon);
-
-        final RelyingPartyIdentity result;
-
-        if (name == null || id == null) {
-            logger.debug("RP name or ID not given - using default.");
-            result = DEFAULT_RP_ID;
-        } else {
-            Optional<URL> iconUrl = Optional.empty();
-            if (icon != null) {
-                try {
-                    iconUrl = Optional.of(new URL(icon));
-                } catch (MalformedURLException e) {
-                    logger.error("Invalid icon URL: {}", icon, e);
-                    throw e;
-                }
-            }
-            result = new RelyingPartyIdentity(name, id, iconUrl);
-        }
-
-        logger.info("RP identity: {}", result);
-
-        return result;
     }
 
     public RegistrationRequest startRegistration(String username, String displayName, String credentialNickname) {
