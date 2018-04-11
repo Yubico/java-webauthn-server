@@ -31,6 +31,11 @@ dependencies {
     'org.glassfish.jersey.inject:jersey-hk2:2.26',
   )
 
+  modules {
+    module('javax.servlet:servlet-api') {
+      replacedBy('javax.servlet:javax.servlet-api')
+    }
+  }
 }
 
 mainClassName = 'demo.webauthn.EmbeddedServer'
