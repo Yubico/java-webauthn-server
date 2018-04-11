@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -121,14 +122,19 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                 logger.error("Failed to decode public key in storage: ID: {} COSE: {}", credentialId, coseString);
                 return Optional.empty();
             } else {
-                return Optional.of(
-                    new RegisteredCredential(
-                        registration.getRegistration().keyId().id(),
-                        key,
-                        registration.getSignatureCount(),
-                        U2fB64Encoding.decode(registration.getUserHandleBase64())
-                    )
-                );
+                try {
+                    return Optional.of(
+                        new RegisteredCredential(
+                            registration.getRegistration().keyId().id(),
+                            key,
+                            registration.getSignatureCount(),
+                            U2fB64Encoding.decode(registration.getUserHandleBase64())
+                        )
+                    );
+                } catch (U2fBadInputException e) {
+                    logger.error("Failed to base64decode user handle: {}", registration.getUserHandleBase64(), e);
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
