@@ -22,7 +22,7 @@ bypass.
 
 == Standalone REST server
 
- 1. Duild the standalone REST server distribution:
+ 1. Build the standalone REST server distribution:
 
      ../gradlew distTar
 
