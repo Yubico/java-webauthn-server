@@ -11,7 +11,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 public class EmbeddedServer {
 
     public static void main(String[] args) throws Exception {
-        final int port = Integer.parseInt(args[0]);
+        final int port = args.length > 0 ? Integer.parseInt(args[0]) : 8081;
 
         URI baseUri = UriBuilder.fromUri("http://localhost").port(port).build();
 
