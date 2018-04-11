@@ -15,14 +15,17 @@ public class Config {
     private static final Logger logger = LoggerFactory.getLogger(Config.class);
 
     private static final String DEFAULT_ORIGIN = "https://localhost:8443";
+    private static final int DEFAULT_PORT = 8080;
     private static final RelyingPartyIdentity DEFAULT_RP_ID
         = new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty());
 
     private final List<String> origins;
+    private final int port;
     private final RelyingPartyIdentity rpIdentity;
 
-    private Config(List<String> origins, RelyingPartyIdentity rpIdentity) {
+    private Config(List<String> origins, int port, RelyingPartyIdentity rpIdentity) {
         this.origins = Collections.unmodifiableList(origins);
+        this.port = port;
         this.rpIdentity = rpIdentity;
     }
 
@@ -30,7 +33,7 @@ public class Config {
     private static Config getInstance() {
         if (instance == null) {
             try {
-                instance = new Config(computeOrigins(), computeRpIdentity());
+                instance = new Config(computeOrigins(), computePort(), computeRpIdentity());
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
@@ -40,6 +43,10 @@ public class Config {
 
     public static List<String> getOrigins() {
         return getInstance().origins;
+    }
+
+    public static int getPort() {
+        return getInstance().port;
     }
 
     public static RelyingPartyIdentity getRpIdentity() {
@@ -62,6 +69,16 @@ public class Config {
         logger.info("Origins: {}", result);
 
         return result;
+    }
+
+    private static int computePort() {
+        final String port = System.getenv("YUBICO_WEBAUTHN_PORT");
+
+        if (port == null) {
+            return DEFAULT_PORT;
+        } else {
+            return Integer.parseInt(port);
+        }
     }
 
     private static RelyingPartyIdentity computeRpIdentity() throws MalformedURLException {
