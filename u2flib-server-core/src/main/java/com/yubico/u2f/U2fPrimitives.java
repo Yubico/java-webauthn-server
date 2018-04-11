@@ -20,8 +20,11 @@ import com.yubico.u2f.data.messages.key.RawSignResponse;
 import com.yubico.u2f.data.messages.key.RawRegisterResponse;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.DeviceCompromisedException;
+import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 
+import com.yubico.u2f.exceptions.U2fAuthenticationException;
+import com.yubico.u2f.exceptions.U2fRegistrationException;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -67,7 +70,7 @@ public class U2fPrimitives {
     /**
      * @see U2fPrimitives#finishRegistration(com.yubico.u2f.data.messages.RegisterRequest, com.yubico.u2f.data.messages.RegisterResponse, java.util.Set)
      */
-    public DeviceRegistration finishRegistration(RegisterRequest registerRequest, RegisterResponse response) throws U2fBadInputException {
+    public DeviceRegistration finishRegistration(RegisterRequest registerRequest, RegisterResponse response) throws U2fRegistrationException {
         return finishRegistration(registerRequest, response, null);
     }
 
@@ -81,13 +84,17 @@ public class U2fPrimitives {
      */
     public DeviceRegistration finishRegistration(RegisterRequest registerRequest,
                                                  RegisterResponse response,
-                                                 Set<String> facets) throws U2fBadInputException {
-        ClientData clientData = response.getClientData();
-        clientData.checkContent(REGISTER_TYPE, registerRequest.getChallenge(), Optional.fromNullable(facets));
+                                                 Set<String> facets) throws U2fRegistrationException {
+        try {
+            ClientData clientData = response.getClientData();
+            clientData.checkContent(REGISTER_TYPE, registerRequest.getChallenge(), Optional.fromNullable(facets));
 
-        RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(response.getRegistrationData(), crypto);
-        rawRegisterResponse.checkSignature(registerRequest.getAppId(), clientData.asJson());
-        return rawRegisterResponse.createDevice();
+            RawRegisterResponse rawRegisterResponse = RawRegisterResponse.fromBase64(response.getRegistrationData(), crypto);
+            rawRegisterResponse.checkSignature(registerRequest.getAppId(), clientData.asJson());
+            return rawRegisterResponse.createDevice();
+        } catch (U2fBadInputException e) {
+            throw new U2fRegistrationException("finishRegistration failed", e);
+        }
     }
 
     /**
@@ -124,7 +131,7 @@ public class U2fPrimitives {
      */
     public void finishSignature(SignRequest signRequest,
                                 SignResponse response,
-                                DeviceRegistration deviceRegistration) throws U2fBadInputException, DeviceCompromisedException {
+                                DeviceRegistration deviceRegistration) throws U2fAuthenticationException {
         finishSignature(signRequest, response, deviceRegistration, null);
     }
 
@@ -137,25 +144,29 @@ public class U2fPrimitives {
     public void finishSignature(SignRequest signRequest,
                                 SignResponse response,
                                 DeviceRegistration deviceRegistration,
-                                Set<String> facets) throws U2fBadInputException, DeviceCompromisedException {
+                                Set<String> facets) throws U2fAuthenticationException {
         checkArgument(!deviceRegistration.isCompromised(), "Device has been marked as compromised, cannot sign.");
         checkArgument(signRequest.getKeyHandle().equals(deviceRegistration.getKeyHandle()), "Wrong DeviceRegistration for the given SignRequest");
         if (!deviceRegistration.getKeyHandle().equals(response.getKeyHandle())) {
-            throw new U2fBadInputException("KeyHandle of SignResponse does not match");
+            throw new U2fAuthenticationException("KeyHandle of SignResponse does not match");
         }
 
-        ClientData clientData = response.getClientData();
-        clientData.checkContent(SIGN_TYPE, signRequest.getChallenge(), Optional.fromNullable(facets));
+        try {
+            ClientData clientData = response.getClientData();
+            clientData.checkContent(SIGN_TYPE, signRequest.getChallenge(), Optional.fromNullable(facets));
 
-        RawSignResponse rawSignResponse = RawSignResponse.fromBase64(
+            RawSignResponse rawSignResponse = RawSignResponse.fromBase64(
                 response.getSignatureData(), crypto
-        );
-        rawSignResponse.checkSignature(
+            );
+            rawSignResponse.checkSignature(
                 signRequest.getAppId(),
                 clientData.asJson(),
                 U2fB64Encoding.decode(deviceRegistration.getPublicKey())
-        );
-        rawSignResponse.checkUserPresence();
-        deviceRegistration.checkAndUpdateCounter(rawSignResponse.getCounter());
+            );
+            rawSignResponse.checkUserPresence();
+            deviceRegistration.checkAndUpdateCounter(rawSignResponse.getCounter());
+        } catch (U2fBadInputException e) {
+            throw new U2fAuthenticationException("finishSignature failed", e);
+        }
     }
 }

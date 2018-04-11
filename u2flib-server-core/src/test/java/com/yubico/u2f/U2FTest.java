@@ -14,10 +14,13 @@ import com.yubico.u2f.exceptions.DeviceCompromisedException;
 import com.yubico.u2f.exceptions.NoEligibleDevicesException;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.*;
+import static org.hamcrest.core.Is.isA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -27,6 +30,9 @@ import static org.mockito.Mockito.when;
 
 public class U2FTest {
     U2F u2f = U2F.withoutAppIdValidation();
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void startRegistration_compromisedDevice() throws Exception {
@@ -43,7 +49,7 @@ public class U2FTest {
     }
 
     @Test(expected = U2fBadConfigurationException.class)
-    public void defaultConstructedU2FstartRegistrationShouldRefuseInvalidAppId() {
+    public void defaultConstructedU2FstartRegistrationShouldRefuseInvalidAppId() throws U2fBadInputException, U2fBadConfigurationException {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         deviceRegistration.markCompromised();
         new U2F().startRegistration("example.com", ImmutableList.of(deviceRegistration));
@@ -52,7 +58,7 @@ public class U2FTest {
     }
 
     @Test
-    public void startRegistrationShouldReturnARandomChallenge() {
+    public void startRegistrationShouldReturnARandomChallenge() throws U2fBadInputException, U2fBadConfigurationException {
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
         RegisterRequestData data = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
         RegisterRequestData data2 = u2f.startRegistration("example.com", ImmutableList.of(deviceRegistration));
@@ -110,8 +116,10 @@ public class U2FTest {
         u2f.finishSignature(requestData, tokenResponse, ImmutableList.of(deviceRegistration));
     }
 
-    @Test(expected = U2fBadInputException.class)
+    @Test
     public void finishSignature_invalidFacet() throws Exception {
+        expectedException.expectCause(isA(U2fBadInputException.class));
+
         DeviceRegistration deviceRegistration = new DeviceRegistration(KEY_HANDLE_BASE64, USER_PUBLIC_KEY_SIGN_HEX, ATTESTATION_CERTIFICATE, 0);
 
         SignRequest request = SignRequest.builder()

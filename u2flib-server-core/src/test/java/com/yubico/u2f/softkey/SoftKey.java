@@ -15,6 +15,7 @@ import com.yubico.u2f.testdata.GnubbyKey;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 
+import java.io.IOException;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -88,11 +89,15 @@ public final class SoftKey implements Cloneable {
 
     private byte[] stripMetaData(byte[] a) {
         ByteInputStream bis = new ByteInputStream(a);
-        bis.read(3);
-        bis.read(bis.readUnsigned() + 1);
-        int keyLength = bis.readUnsigned();
-        bis.read(1);
-        return bis.read(keyLength - 1);
+        try {
+            bis.read(3);
+            bis.read(bis.readUnsigned() + 1);
+            int keyLength = bis.readUnsigned();
+            bis.read(1);
+            return bis.read(keyLength - 1);
+        } catch (IOException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public RawSignResponse sign(SignRequest signRequest) throws Exception {

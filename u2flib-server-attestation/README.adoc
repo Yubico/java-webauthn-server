@@ -16,14 +16,14 @@ Maven:
  <dependency>
    <groupId>com.yubico</groupId>
    <artifactId>u2flib-server-attestation</artifactId>
-   <version>0.18.0</version>
+   <version>0.19.0</version>
  </dependency>
 
 Gradle:
 [source, groovy]
  repositories{ mavenCentral() }
  dependencies {
-   compile 'com.yubico:u2flib-server-attestation:0.18.0'
+   compile 'com.yubico:u2flib-server-attestation:0.19.0'
  }
 
 

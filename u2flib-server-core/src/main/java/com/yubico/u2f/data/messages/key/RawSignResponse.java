@@ -17,7 +17,7 @@ import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-
+import java.io.IOException;
 import lombok.EqualsAndHashCode;
 
 /**
@@ -44,14 +44,18 @@ public class RawSignResponse {
         this.crypto = crypto;
     }
 
-    public static RawSignResponse fromBase64(String rawDataBase64, Crypto crypto) {
+    public static RawSignResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
         ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
-        return new RawSignResponse(
-                bytes.readSigned(),
-                bytes.readInteger(),
-                bytes.readAll(),
-                crypto
-        );
+        try {
+            return new RawSignResponse(
+                    bytes.readSigned(),
+                    bytes.readInteger(),
+                    bytes.readAll(),
+                    crypto
+            );
+        } catch (IOException e) {
+            throw new U2fBadInputException("Truncated authentication data", e);
+        }
     }
 
     public void checkSignature(String appId, String clientData, byte[] publicKey) throws U2fBadInputException {
