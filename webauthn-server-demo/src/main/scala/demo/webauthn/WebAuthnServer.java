@@ -1,6 +1,8 @@
 package demo.webauthn;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
@@ -19,10 +21,9 @@ import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.Value;
 import org.slf4j.Logger;
@@ -39,10 +40,10 @@ public class WebAuthnServer {
     private static final RelyingPartyIdentity DEFAULT_RP_ID
         = new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty());
 
-    private final Map<String, AssertionRequest> assertRequestStorage = new HashMap<String, AssertionRequest>();
-    private final Map<String, RegistrationRequest> registerRequestStorage = new HashMap<String, RegistrationRequest>();
-    private final RegistrationStorage userStorage = new InMemoryRegistrationStorage();
-    private final Map<AssertionRequest, AuthenticatedAction> authenticatedActions = new HashMap<>();
+    private final Cache<String, AssertionRequest> assertRequestStorage = newCache();
+    private final Cache<String, RegistrationRequest> registerRequestStorage = newCache();
+    private final InMemoryRegistrationStorage userStorage = new InMemoryRegistrationStorage();
+    private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
@@ -68,6 +69,13 @@ public class WebAuthnServer {
     );
 
     public WebAuthnServer() throws MalformedURLException {
+    }
+
+    private static <K, V> Cache<K, V> newCache() {
+        return CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .expireAfterAccess(1, TimeUnit.HOURS)
+            .build();
     }
 
     private static List<String> getOriginsFromEnv() {
@@ -158,7 +166,8 @@ public class WebAuthnServer {
             return Left.apply(Arrays.asList("Registration failed!", "Failed to decode response object.", e.getMessage()));
         }
 
-        RegistrationRequest request = registerRequestStorage.remove(response.getRequestId());
+        RegistrationRequest request = registerRequestStorage.getIfPresent(response.getRequestId());
+        registerRequestStorage.invalidate(response.getRequestId());
 
         if (request == null) {
             logger.debug("fail finishRegistration responseJson: {}", responseJson);
@@ -228,7 +237,8 @@ public class WebAuthnServer {
             return Left.apply(Arrays.asList("Assertion failed!", "Failed to decode response object.", e.getMessage()));
         }
 
-        AssertionRequest request = assertRequestStorage.remove(response.getRequestId());
+        AssertionRequest request = assertRequestStorage.getIfPresent(response.getRequestId());
+        assertRequestStorage.invalidate(response.getRequestId());
 
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
@@ -332,7 +342,8 @@ public class WebAuthnServer {
     public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
         return com.yubico.util.Either.fromScala(finishAuthentication(responseJson))
             .flatMap(result -> {
-                AuthenticatedAction<?> action = authenticatedActions.remove(result.request);
+                AuthenticatedAction<?> action = authenticatedActions.getIfPresent(result.request);
+                authenticatedActions.invalidate(result.request);
                 if (action == null) {
                     return com.yubico.util.Either.left(Collections.singletonList(
                         "No action was associated with assertion request ID: " + result.getRequest().getRequestId()

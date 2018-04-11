@@ -19,6 +19,7 @@ dependencies {
     'com.fasterxml.jackson.core:jackson-databind:2.6.5',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.5',
     'com.fasterxml.jackson.module:jackson-module-scala_2.11:2.6.5',
+    'com.google.guava:guava:24.1-jre',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
     'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',

@@ -1,9 +1,8 @@
 package demo.webauthn;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
@@ -11,21 +10,34 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.security.PublicKey;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
 
-    private final Multimap<String, CredentialRegistration> storage = HashMultimap.create();
+    private final Cache<String, Set<CredentialRegistration>> storage = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterAccess(1, TimeUnit.DAYS)
+        .build();
+
     private Logger logger = LoggerFactory.getLogger(InMemoryRegistrationStorage.class);
 
     @Override
     public boolean addRegistrationByUsername(String username, CredentialRegistration reg) {
-        return storage.put(username, reg);
+        try {
+            return storage.get(username, HashSet::new).add(reg);
+        } catch (ExecutionException e) {
+            logger.error("Failed to add registration", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -37,12 +49,18 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     @Override
     public Collection<CredentialRegistration> getRegistrationsByUsername(String username) {
-        return storage.get(username);
+        try {
+            return storage.get(username, HashSet::new);
+        } catch (ExecutionException e) {
+            logger.error("Registration lookup failed", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public Collection<CredentialRegistration> getRegistrationsByUserHandle(String userHandleBase64) {
-        return storage.values().stream()
+        return storage.asMap().values().stream()
+            .flatMap(Collection::stream)
             .filter(credentialRegistration ->
                 userHandleBase64.equals(credentialRegistration.getUserHandleBase64())
             )
@@ -58,10 +76,15 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     @Override
     public boolean usernameOwnsCredential(String username, String idBase64) {
-        return storage.get(username).stream()
-            .anyMatch(credentialRegistration ->
-                idBase64.equals(credentialRegistration.getRegistration().keyId().idBase64())
-            );
+        try {
+            return storage.get(username, HashSet::new).stream()
+                .anyMatch(credentialRegistration ->
+                    idBase64.equals(credentialRegistration.getRegistration().keyId().idBase64())
+                );
+        } catch (ExecutionException e) {
+            logger.error("Registration lookup failed", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -72,25 +95,37 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                 idBase64, username
             )));
 
-        storage.remove(username, registration);
-        storage.put(username, registration.withSignatureCount(newSignatureCount));
+        Set<CredentialRegistration> regs = storage.getIfPresent(username);
+        regs.remove(registration);
+        regs.add(registration.withSignatureCount(newSignatureCount));
     }
 
     @Override
     public Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, String idBase64) {
-        return storage.get(username).stream()
-            .filter(credReg -> idBase64.equals(credReg.getRegistration().keyId().idBase64()))
-            .findFirst();
+        try {
+            return storage.get(username, HashSet::new).stream()
+                .filter(credReg -> idBase64.equals(credReg.getRegistration().keyId().idBase64()))
+                .findFirst();
+        } catch (ExecutionException e) {
+            logger.error("Registration lookup failed", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean removeRegistrationByUsername(String username, CredentialRegistration credentialRegistration) {
-        return storage.remove(username, credentialRegistration);
+        try {
+            return storage.get(username, HashSet::new).remove(credentialRegistration);
+        } catch (ExecutionException e) {
+            logger.error("Failed to remove registration", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean userHandleOwnsCredential(String userHandleBase64, String idBase64) {
-        return storage.values().stream()
+        return storage.asMap().values().stream()
+            .flatMap(Collection::stream)
             .filter(credentialRegistration ->
                 userHandleBase64.equals(credentialRegistration.getUserHandleBase64())
             )
@@ -101,7 +136,8 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     @Override
     public Optional<RegisteredCredential> lookup(String credentialId, Optional<String> userHandle) {
-        Optional<CredentialRegistration> registrationMaybe = storage.values().stream()
+        Optional<CredentialRegistration> registrationMaybe = storage.asMap().values().stream()
+            .flatMap(Collection::stream)
             .filter(credReg -> credentialId.equals(credReg.getRegistration().keyId().idBase64()))
             .findAny();
 
@@ -135,7 +171,8 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     @Override
     public scala.collection.immutable.Set<RegisteredCredential> lookupAll(String credentialId) {
-        return scala.collection.JavaConverters.asScalaSetConverter(storage.values().stream()
+        return scala.collection.JavaConverters.asScalaSetConverter(storage.asMap().values().stream()
+            .flatMap(Collection::stream)
             .filter(reg -> reg.getRegistration().keyId().idBase64().equals(credentialId))
             .collect(Collectors.toSet())).asScala().toSet();
     }
