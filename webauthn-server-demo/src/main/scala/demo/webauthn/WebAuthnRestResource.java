@@ -38,7 +38,7 @@ public class WebAuthnRestResource {
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
     private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
-    public WebAuthnRestResource() {
+    public WebAuthnRestResource() throws MalformedURLException {
         this(new WebAuthnServer());
     }
 
