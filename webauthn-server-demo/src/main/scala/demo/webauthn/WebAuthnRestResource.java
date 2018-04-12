@@ -73,6 +73,7 @@ public class WebAuthnRestResource {
 
 
     private final class StartRegistrationResponse {
+        public final boolean success = true;
         public final RegistrationRequest request;
         public final StartRegistrationActions actions = new StartRegistrationActions();
         private StartRegistrationResponse(RegistrationRequest request) throws MalformedURLException {
@@ -93,12 +94,20 @@ public class WebAuthnRestResource {
         @FormParam("credentialNickname") String credentialNickname
     ) throws MalformedURLException {
         logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}", username, displayName, credentialNickname);
-        RegistrationRequest request = server.startRegistration(
+        Either<String, RegistrationRequest> result = server.startRegistration(
             username,
             displayName,
             credentialNickname
         );
-        return startResponse(new StartRegistrationResponse(request));
+
+        if (result.isRight()) {
+            return startResponse(new StartRegistrationResponse(result.right().get()));
+        } else {
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                result.left().get()
+            );
+        }
     }
 
     @Path("register/finish")
@@ -115,6 +124,7 @@ public class WebAuthnRestResource {
     }
 
     private final class StartAuthenticationResponse {
+        public final boolean success = true;
         public final AssertionRequest request;
         public final StartAuthenticationActions actions = new StartAuthenticationActions();
         private StartAuthenticationResponse(AssertionRequest request) throws MalformedURLException {

@@ -72,23 +72,27 @@ public class WebAuthnServer {
             .build();
     }
 
-    public RegistrationRequest startRegistration(String username, String displayName, String credentialNickname) {
+    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
-        byte[] userId = challengeGenerator.generateChallenge();
+        if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
+            byte[] userId = challengeGenerator.generateChallenge();
 
-        RegistrationRequest request = new RegistrationRequest(
-            username,
-            credentialNickname,
-            U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
-            rp.startRegistration(
-                new UserIdentity(username, displayName, userId, Optional.empty()),
-                Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                Optional.empty()
-            )
-        );
-        registerRequestStorage.put(request.getRequestId(), request);
-        return request;
+            RegistrationRequest request = new RegistrationRequest(
+                username,
+                credentialNickname,
+                U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+                rp.startRegistration(
+                    new UserIdentity(username, displayName, userId, Optional.empty()),
+                    Optional.of(userStorage.getCredentialIdsForUsername(username)),
+                    Optional.empty()
+                )
+            );
+            registerRequestStorage.put(request.getRequestId(), request);
+            return new Right(request);
+        } else {
+            return new Left("The username \"" + username + "\" is already registered.");
+        }
     }
 
     @Value
