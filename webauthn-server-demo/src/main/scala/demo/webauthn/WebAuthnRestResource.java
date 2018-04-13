@@ -174,6 +174,7 @@ public class WebAuthnRestResource {
     }
 
     private final class StartAuthenticatedActionResponse {
+        public final boolean success = true;
         public final AssertionRequest request;
         public final StartAuthenticatedActionActions actions = new StartAuthenticatedActionActions();
         private StartAuthenticatedActionResponse(AssertionRequest request) throws MalformedURLException {
