@@ -134,8 +134,8 @@ public class WebAuthnServer {
                         response,
                         addRegistration(
                             request.getUsername(),
+                            request.getMakePublicKeyCredentialOptions().user(),
                             request.getCredentialNickname(),
-                            request.getMakePublicKeyCredentialOptions().user().idBase64(),
                             response,
                             registrationTry.get()
                         ),
@@ -328,13 +328,13 @@ public class WebAuthnServer {
         return Right.apply(startAuthenticatedAction(Optional.of(username), action));
     }
 
-    private CredentialRegistration addRegistration(String username, String nickname, String userHandleBase64, RegistrationResponse response, RegistrationResult registration) {
+    private CredentialRegistration addRegistration(String username, UserIdentity userIdentity, String nickname, RegistrationResponse response, RegistrationResult registration) {
         CredentialRegistration reg = CredentialRegistration.builder()
             .username(username)
+            .userIdentity(userIdentity)
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .registration(registration)
-            .userHandleBase64(userHandleBase64)
             .signatureCount(response.getCredential().response().attestation().authenticatorData().signatureCounter())
             .build();
 

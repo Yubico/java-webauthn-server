@@ -63,7 +63,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
         return storage.asMap().values().stream()
             .flatMap(Collection::stream)
             .filter(credentialRegistration ->
-                userHandleBase64.equals(credentialRegistration.getUserHandleBase64())
+                userHandleBase64.equals(credentialRegistration.getUserIdentity().idBase64())
             )
             .collect(Collectors.toList());
     }
@@ -128,7 +128,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
         return storage.asMap().values().stream()
             .flatMap(Collection::stream)
             .filter(credentialRegistration ->
-                userHandleBase64.equals(credentialRegistration.getUserHandleBase64())
+                userHandleBase64.equals(credentialRegistration.getUserIdentity().idBase64())
             )
             .anyMatch(credentialRegistration ->
                 idBase64.equals(credentialRegistration.getRegistration().keyId().idBase64())
@@ -164,11 +164,11 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                             registration.getRegistration().keyId().id(),
                             key,
                             registration.getSignatureCount(),
-                            U2fB64Encoding.decode(registration.getUserHandleBase64())
+                            U2fB64Encoding.decode(registration.getUserIdentity().idBase64())
                         )
                     );
                 } catch (U2fBadInputException e) {
-                    logger.error("Failed to base64decode user handle: {}", registration.getUserHandleBase64(), e);
+                    logger.error("Failed to base64decode user handle: {}", registration.getUserIdentity().idBase64(), e);
                     throw new RuntimeException(e);
                 }
             }
