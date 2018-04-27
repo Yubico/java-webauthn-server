@@ -39,6 +39,13 @@ case class PublicKeyCredentialCreationOptions(
   pubKeyCredParams: java.util.List[PublicKeyCredentialParameters],
 
   /**
+    * Specifies a time, in milliseconds, that the caller is willing to wait for
+    * the call to complete. This is treated as a hint, and MAY be overridden by
+    * the platform.
+    */
+  timeout: Optional[Long] = None.asJava,
+
+  /**
     * Intended for use by Relying Parties that wish to limit the creation of
     * multiple credentials for the same account on a single authenticator. The
     * client is requested to return an error if the new credential would be
@@ -49,9 +56,15 @@ case class PublicKeyCredentialCreationOptions(
 
   /**
     * Intended for use by Relying Parties that wish to select the appropriate
-    * authenticators to participate in the create() or get() operation.
+    * authenticators to participate in the create() operation.
     */
   authenticatorSelection: Optional[AuthenticatorSelectionCriteria] = None.asJava,
+
+  /**
+    * Intended for use by Relying Parties that wish to express their preference
+    * for attestation conveyance. The default is none.
+    */
+  attestation: AttestationConveyancePreference = AttestationConveyancePreference.default,
 
   /**
     * Additional parameters requesting additional processing by the client and
