@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,9 +74,13 @@ public class WebAuthnServer {
     }
 
     public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname) {
+        return startRegistration(username, displayName, credentialNickname, false);
+    }
+
+    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname, boolean allowExistingUsername) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
-        if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
+        if (allowExistingUsername || userStorage.getRegistrationsByUsername(username).isEmpty()) {
             byte[] userId = challengeGenerator.generateChallenge();
 
             RegistrationRequest request = new RegistrationRequest(
@@ -92,6 +97,38 @@ public class WebAuthnServer {
             return new Right(request);
         } else {
             return new Left("The username \"" + username + "\" is already registered.");
+        }
+    }
+
+    public <T> Either<String, AssertionRequest> startAddCredential(String username, String credentialNickname, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
+        logger.trace("startAddCredential username: {}, credentialNickname: {}", username, credentialNickname);
+
+        if (username == null || username.isEmpty()) {
+            return Left.apply("username must not be empty.");
+        }
+
+        Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
+
+        if (registrations.isEmpty()) {
+            return new Left("The username \"" + username + "\" is not registered.");
+        } else {
+            CredentialRegistration existingRegistration = registrations.stream().findAny().get();
+
+            RegistrationRequest request = new RegistrationRequest(
+                username,
+                credentialNickname,
+                U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+                rp.startRegistration(
+                    existingRegistration.getUserIdentity(),
+                    Optional.of(userStorage.getCredentialIdsForUsername(username)),
+                    Optional.empty()
+                )
+            );
+            registerRequestStorage.put(request.getRequestId(), request);
+
+            AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> whenAuthenticated.apply(request);
+
+            return Right.apply(startAuthenticatedAction(Optional.of(username), action));
         }
     }
 

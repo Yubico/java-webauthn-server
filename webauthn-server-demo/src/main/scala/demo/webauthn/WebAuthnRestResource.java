@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.util.Either;
+import scala.util.Left;
+import scala.util.Right;
 
 @Path("/v1")
 @Produces(MediaType.APPLICATION_JSON)
@@ -58,11 +60,13 @@ public class WebAuthnRestResource {
         public final URL register;
         public final URL authenticate;
         public final URL deregister;
+        public final URL addCredential;
 
         public Index() throws NoSuchMethodException, MalformedURLException {
             register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
             deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
+            addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
         }
     }
 
@@ -186,6 +190,37 @@ public class WebAuthnRestResource {
         private StartAuthenticatedActionActions() throws MalformedURLException {
         }
     }
+
+    @Path("action/add-credential")
+    @POST
+    public Response addCredential(@QueryParam("username") String username, @QueryParam("credentialNickname") String credentialNickname) throws MalformedURLException {
+        logger.trace("addCredential username: {}", username);
+
+        Either<String, AssertionRequest> result = server.startAddCredential(username, credentialNickname, (RegistrationRequest request) -> {
+            try {
+                return Right.apply(new StartRegistrationResponse(request));
+            } catch (MalformedURLException e) {
+                logger.error("Failed to construct registration response", e);
+                return Left.apply(Arrays.asList("Failed to construct response. This is probably a bug in the server."));
+            }
+        });
+
+        if (result.isRight()) {
+            return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
+        } else {
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                result.left().get()
+            );
+        }
+    }
+
+    @Path("action/add-credential/finish/finish")
+    @POST
+    public Response finishAddCredential(String responseJson) {
+        return finishRegistration(responseJson);
+    }
+
     @Path("action/deregister")
     @POST
     public Response deregisterCredential(@QueryParam("username") String username, @QueryParam("credentialId") String credentialId) throws MalformedURLException {
