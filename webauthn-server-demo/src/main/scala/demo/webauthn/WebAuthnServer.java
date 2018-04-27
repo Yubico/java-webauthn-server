@@ -159,7 +159,7 @@ public class WebAuthnServer {
             return Left.apply(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
             Try<RegistrationResult> registrationTry = rp.finishRegistration(
-                request.getMakePublicKeyCredentialOptions(),
+                request.getPublicKeyCredentialCreationOptions(),
                 response.getCredential(),
                 Optional.empty()
             );
@@ -171,7 +171,7 @@ public class WebAuthnServer {
                         response,
                         addRegistration(
                             request.getUsername(),
-                            request.getMakePublicKeyCredentialOptions().user(),
+                            request.getPublicKeyCredentialCreationOptions().user(),
                             request.getCredentialNickname(),
                             response,
                             registrationTry.get()

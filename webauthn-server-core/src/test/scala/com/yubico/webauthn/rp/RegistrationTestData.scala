@@ -13,7 +13,7 @@ import com.yubico.webauthn.data
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticationExtensions
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.CollectedClientData
@@ -131,7 +131,7 @@ case class RegistrationTestData(
   clientDataJson: String,
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
   clientExtensionResults: AuthenticationExtensions = RegistrationTestData.jsonFactory.objectNode(),
-  overrideRequest: Option[MakePublicKeyCredentialOptions] = None,
+  overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
   requestedExtensions: Option[AuthenticationExtensions] = None,
   rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
   userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37)),
@@ -186,7 +186,7 @@ case class RegistrationTestData(
     editAttestationObject("authData", RegistrationTestData.jsonFactory.binaryNode(updater(authData).toArray))
   }
 
-  def request: MakePublicKeyCredentialOptions = overrideRequest getOrElse MakePublicKeyCredentialOptions(
+  def request: PublicKeyCredentialCreationOptions = overrideRequest getOrElse PublicKeyCredentialCreationOptions(
     rp = rpId,
     user = userId,
     challenge = U2fB64Encoding.decode(clientData.challenge).toVector,

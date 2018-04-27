@@ -24,7 +24,7 @@ import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.data.ArrayBuffer
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
@@ -71,7 +71,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     callerTokenBindingId: Option[String] = None,
     credentialId: Option[ArrayBuffer] = None,
     credentialRepository: Option[CredentialRepository] = None,
-    makePublicKeyCredentialOptions: Option[MakePublicKeyCredentialOptions] = None,
     metadataService: Option[MetadataService] = None,
     rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
     testData: RegistrationTestData

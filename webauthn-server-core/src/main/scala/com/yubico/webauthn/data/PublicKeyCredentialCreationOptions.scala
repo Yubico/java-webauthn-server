@@ -9,7 +9,7 @@ import com.yubico.u2f.data.messages.json.JsonSerializable
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
-case class MakePublicKeyCredentialOptions(
+case class PublicKeyCredentialCreationOptions(
 
   /**
     * Contains data about the Relying Party responsible for the request.

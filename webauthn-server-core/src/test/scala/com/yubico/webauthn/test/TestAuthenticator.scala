@@ -41,7 +41,7 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.util.WebAuthnCodecs
@@ -144,7 +144,7 @@ object TestAuthenticator {
     useSelfAttestation: Boolean = false
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
 
-    val options = MakePublicKeyCredentialOptions(
+    val options = PublicKeyCredentialCreationOptions(
       rp = RelyingPartyIdentity(name = "Test party", id = rpId),
       user = userId ,
       challenge = challenge,

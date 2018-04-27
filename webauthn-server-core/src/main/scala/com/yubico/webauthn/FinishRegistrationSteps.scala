@@ -9,7 +9,7 @@ import com.yubico.u2f.attestation.Attestation
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.Base64UrlString
@@ -53,7 +53,7 @@ object FinishRegistrationSteps {
 }
 
 case class FinishRegistrationSteps(
-  request: MakePublicKeyCredentialOptions,
+  request: PublicKeyCredentialCreationOptions,
   response: PublicKeyCredential[AuthenticatorAttestationResponse],
   callerTokenBindingId: Optional[Base64UrlString],
   origins: java.util.List[String],

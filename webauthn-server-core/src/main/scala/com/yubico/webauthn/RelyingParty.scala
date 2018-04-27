@@ -7,7 +7,7 @@ import com.yubico.u2f.attestation.MetadataService
 import com.yubico.u2f.crypto.ChallengeGenerator
 import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -42,8 +42,8 @@ class RelyingParty (
     user: UserIdentity,
     excludeCredentials: Optional[java.util.Collection[PublicKeyCredentialDescriptor]] = None.asJava,
     extensions: Optional[AuthenticationExtensions] = None.asJava
-  ): MakePublicKeyCredentialOptions =
-    MakePublicKeyCredentialOptions(
+  ): PublicKeyCredentialCreationOptions =
+    PublicKeyCredentialCreationOptions(
       rp = rp,
       user = user,
       challenge = challengeGenerator.generateChallenge().toVector,
@@ -54,14 +54,14 @@ class RelyingParty (
     )
 
   def finishRegistration(
-    request: MakePublicKeyCredentialOptions,
+    request: PublicKeyCredentialCreationOptions,
     response: PublicKeyCredential[AuthenticatorAttestationResponse],
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): Try[RegistrationResult] =
     _finishRegistration(request, response, callerTokenBindingId).run
 
   private[webauthn] def _finishRegistration(
-    request: MakePublicKeyCredentialOptions,
+    request: PublicKeyCredentialCreationOptions,
     response: PublicKeyCredential[AuthenticatorAttestationResponse],
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): FinishRegistrationSteps =

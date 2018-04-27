@@ -1,6 +1,6 @@
 package demo.webauthn;
 
-import com.yubico.webauthn.data.MakePublicKeyCredentialOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
 
@@ -11,6 +11,6 @@ public class RegistrationRequest {
     String username;
     String credentialNickname;
     String requestId;
-    MakePublicKeyCredentialOptions makePublicKeyCredentialOptions;
+    PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
 
 }
