@@ -193,8 +193,8 @@ public class WebAuthnRestResource {
 
     @Path("action/add-credential")
     @POST
-    public Response addCredential(@QueryParam("username") String username, @QueryParam("credentialNickname") String credentialNickname) throws MalformedURLException {
-        logger.trace("addCredential username: {}", username);
+    public Response addCredential(@FormParam("username") String username, @FormParam("credentialNickname") String credentialNickname) throws MalformedURLException {
+        logger.trace("addCredential username: {}, credentialNickname: {}", username, credentialNickname);
 
         Either<String, AssertionRequest> result = server.startAddCredential(username, credentialNickname, (RegistrationRequest request) -> {
             try {
