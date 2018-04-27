@@ -19,6 +19,7 @@ import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.data.AttestationConveyancePreference
 
 import scala.util.Try
 
@@ -29,6 +30,7 @@ class RelyingParty (
   val preferredPubkeyParams: java.util.List[PublicKeyCredentialParameters],
   val origins: java.util.List[String],
   val authenticatorRequirements: Optional[AuthenticatorSelectionCriteria] = None.asJava,
+  val attestationConveyancePreference: Optional[AttestationConveyancePreference] = None.asJava,
   val crypto: Crypto = new BouncyCastleCrypto,
   val allowMissingTokenBinding: Boolean = false,
   val allowUntrustedAttestation: Boolean = false,
@@ -50,6 +52,7 @@ class RelyingParty (
       pubKeyCredParams = preferredPubkeyParams,
       excludeCredentials = excludeCredentials,
       authenticatorSelection = authenticatorRequirements,
+      attestation = attestationConveyancePreference.asScala getOrElse AttestationConveyancePreference.default,
       extensions = extensions
     )
 

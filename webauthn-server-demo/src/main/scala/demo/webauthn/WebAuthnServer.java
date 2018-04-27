@@ -10,6 +10,9 @@ import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.data.AttestationConveyancePreference$;
+import com.yubico.webauthn.data.Direct;
+import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.UserIdentity;
@@ -23,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +56,7 @@ public class WebAuthnServer {
         Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
         Config.getOrigins(),
         Optional.empty(),
+        Optional.of(Direct$.MODULE$),
         new BouncyCastleCrypto(),
         true,
         true,
