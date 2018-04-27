@@ -61,7 +61,7 @@ case class PublicKeyCredentialRequestOptions(
     * For example, if transaction confirmation is sought from the user, then
     * the prompt string might be included as an extension.
     */
-  extensions: Optional[AuthenticationExtensions] = None.asJava
+  extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava
 
 ) {
 

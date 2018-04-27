@@ -13,7 +13,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
-import com.yubico.webauthn.data.AuthenticationExtensions
+import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.Base64UrlString
@@ -41,7 +41,7 @@ class RelyingParty (
   def startRegistration(
     user: UserIdentity,
     excludeCredentials: Optional[java.util.Collection[PublicKeyCredentialDescriptor]] = None.asJava,
-    extensions: Optional[AuthenticationExtensions] = None.asJava
+    extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava
   ): PublicKeyCredentialCreationOptions =
     PublicKeyCredentialCreationOptions(
       rp = rp,
@@ -81,7 +81,7 @@ class RelyingParty (
 
   def startAssertion(
     allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
-    extensions: Optional[AuthenticationExtensions] = None.asJava
+    extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava
   ): PublicKeyCredentialRequestOptions =
     PublicKeyCredentialRequestOptions(
       rpId = Some(rp.id).asJava,

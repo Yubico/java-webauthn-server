@@ -49,7 +49,7 @@ trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
     * A map containing extension identifier → client extension output entries
     * produced by the extension’s client extension processing.
     */
-  val clientExtensionResults: AuthenticationExtensions
+  val clientExtensionResults: AuthenticationExtensionsClientInputs
 
   /**
     * The PublicKeyCredential's type value is the string "public-key".

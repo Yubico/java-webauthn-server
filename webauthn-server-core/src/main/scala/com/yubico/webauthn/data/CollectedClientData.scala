@@ -20,7 +20,7 @@ case class CollectedClientData(
   /**
     * Input or output values for or from authenticator extensions, if any.
     */
-  def authenticatorExtensions: Optional[AuthenticationExtensions] = Optional.ofNullable(clientData.get("authenticatorExtensions"))
+  def authenticatorExtensions: Optional[AuthenticationExtensionsClientInputs] = Optional.ofNullable(clientData.get("authenticatorExtensions"))
 
   /**
     * The URL-safe Base64 encoded challenge as provided by the RP.
@@ -30,7 +30,7 @@ case class CollectedClientData(
   /**
     * Input or output values for or from client extensions, if any.
     */
-  def clientExtensions: Optional[AuthenticationExtensions] = Optional.ofNullable(clientData.get("clientExtensions"))
+  def clientExtensions: Optional[AuthenticationExtensionsClientInputs] = Optional.ofNullable(clientData.get("clientExtensions"))
 
   /**
     * The fully qualified origin of the requester, as identified by the client.

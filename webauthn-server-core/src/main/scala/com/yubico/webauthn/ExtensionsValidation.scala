@@ -1,7 +1,7 @@
 package com.yubico.webauthn
 
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.data.AuthenticationExtensions
+import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorResponse
 import com.yubico.webauthn.util.WebAuthnCodecs
@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
 
 object ExtensionsValidation {
 
-  def validate(requested: Option[AuthenticationExtensions], response: PublicKeyCredential[_ <: AuthenticatorResponse]): Boolean = {
+  def validate(requested: Option[AuthenticationExtensionsClientInputs], response: PublicKeyCredential[_ <: AuthenticatorResponse]): Boolean = {
     val requestedExtensionIds: Set[String] = requested map { _.fieldNames.asScala.toSet } getOrElse Set.empty
 
     val clientExtensionIds: Set[String] = response.clientExtensionResults.fieldNames.asScala.toSet

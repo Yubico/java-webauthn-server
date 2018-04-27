@@ -16,7 +16,7 @@ import com.yubico.webauthn.FinishAssertionSteps
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.data.ArrayBuffer
-import com.yubico.webauthn.data.AuthenticationExtensions
+import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -70,8 +70,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val clientData = CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     val clientDataJsonBytes: ArrayBuffer = clientDataJson.getBytes("UTF-8").toVector
     val challenge: ArrayBuffer = U2fB64Encoding.decode(clientData.challenge).toVector
-    val requestedExtensions: Option[AuthenticationExtensions] = None
-    val clientExtensionResults: AuthenticationExtensions = jsonFactory.objectNode()
+    val requestedExtensions: Option[AuthenticationExtensionsClientInputs] = None
+    val clientExtensionResults: AuthenticationExtensionsClientInputs = jsonFactory.objectNode()
 
   }
 
@@ -81,12 +81,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     callerTokenBindingId: Option[String] = None,
     challenge: ArrayBuffer = Defaults.challenge,
     clientDataJson: String = Defaults.clientDataJson,
-    clientExtensionResults: AuthenticationExtensions = Defaults.clientExtensionResults,
+    clientExtensionResults: AuthenticationExtensionsClientInputs = Defaults.clientExtensionResults,
     credentialId: ArrayBuffer = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
     credentialRepository: Option[CredentialRepository] = None,
     origin: String = Defaults.rpId.id,
-    requestedExtensions: Option[AuthenticationExtensions] = Defaults.requestedExtensions,
+    requestedExtensions: Option[AuthenticationExtensionsClientInputs] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature,
     userHandle: Option[ArrayBuffer] = Some(Defaults.userHandle),

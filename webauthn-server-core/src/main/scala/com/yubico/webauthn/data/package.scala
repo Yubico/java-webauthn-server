@@ -8,7 +8,7 @@ package object data {
   type ArrayBuffer = Vector[Byte]
 
   /** Container for extension values in [[PublicKeyCredential]]. */
-  type AuthenticationExtensions = JsonNode
+  type AuthenticationExtensionsClientInputs = JsonNode
 
   /** A URL-safe base64 encoded array of bytes. */
   type Base64UrlString = String

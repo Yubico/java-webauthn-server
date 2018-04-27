@@ -12,7 +12,7 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
-import com.yubico.webauthn.data.AuthenticationExtensions
+import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
@@ -130,9 +130,9 @@ case class RegistrationTestData(
   attestationObject: ArrayBuffer,
   clientDataJson: String,
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
-  clientExtensionResults: AuthenticationExtensions = RegistrationTestData.jsonFactory.objectNode(),
+  clientExtensionResults: AuthenticationExtensionsClientInputs = RegistrationTestData.jsonFactory.objectNode(),
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
-  requestedExtensions: Option[AuthenticationExtensions] = None,
+  requestedExtensions: Option[AuthenticationExtensionsClientInputs] = None,
   rpId: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
   userId: UserIdentity = UserIdentity(name = "test@test.org", displayName = "Test user", id = Vector(42, 13, 37)),
   attestationCaCert: Option[X509Certificate] = None
