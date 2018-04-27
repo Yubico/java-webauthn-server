@@ -52,7 +52,7 @@ case class PublicKeyCredentialRequestOptions(
     * Eligible authenticators are filtered to only those capable of satisfying
     * this requirement.
     */
-  userVerification: UserVerificationRequirement = Preferred,
+  userVerification: UserVerificationRequirement = UserVerificationRequirement.default,
 
   /**
     * Additional parameters requesting additional processing by the client and

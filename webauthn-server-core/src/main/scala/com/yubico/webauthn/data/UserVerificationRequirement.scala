@@ -16,6 +16,10 @@ private class UVRSerializer extends JsonSerializer[UserVerificationRequirement] 
     )
 }
 
+object UserVerificationRequirement {
+  val default: UserVerificationRequirement = Preferred
+}
+
 @JsonSerialize(using = classOf[UVRSerializer])
 sealed trait UserVerificationRequirement
 case object Discouraged extends UserVerificationRequirement
