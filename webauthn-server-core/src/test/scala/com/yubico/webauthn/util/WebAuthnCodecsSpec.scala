@@ -47,8 +47,8 @@ class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenProp
         val expectedX = pubkey.getW.getAffineX.toByteArray.toVector
         val expectedY = pubkey.getW.getAffineY.toByteArray.toVector
 
-        x should equal (if (expectedX.length == 33 && expectedX(0) == 0) expectedX.tail else expectedX)
-        y should equal (if (expectedY.length == 33 && expectedY(0) == 0) expectedY.tail else expectedY)
+        x.dropWhile(_ == (0: Byte)) should equal (expectedX.dropWhile(_ == (0: Byte)))
+        y.dropWhile(_ == (0: Byte)) should equal (expectedY.dropWhile(_ == (0: Byte)))
       }
     }
 
