@@ -35,7 +35,7 @@ class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenProp
   describe("The ecPublicKeyToRaw method") {
 
     it("outputs the correct x and y values") {
-      forAll { pubkey: ECPublicKey =>
+      forAll (minSuccessful(500)) { pubkey: ECPublicKey =>
         val rawkey = WebAuthnCodecs.ecPublicKeyToRaw(pubkey)
 
         rawkey.length should equal (65)
