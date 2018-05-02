@@ -14,6 +14,7 @@ import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.Required
+import com.yubico.webauthn.data.TokenBindingValidator
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
@@ -173,7 +174,7 @@ case class FinishAssertionSteps(
   }
 
   case class Step10 private[webauthn] (override val prev: Step9) extends Step[Step9, Step11] {
-    override def validate() = response.response.collectedClientData.tokenBinding(allowMissing = allowMissingTokenBinding).validate(callerTokenBindingId.asScala)
+    override def validate() = TokenBindingValidator.validate(response.response.collectedClientData.tokenBinding, callerTokenBindingId)
     override def nextStep = Step11(this)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector

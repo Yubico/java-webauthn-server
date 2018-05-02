@@ -23,6 +23,7 @@ import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.data.NoneAttestation
+import com.yubico.webauthn.data.TokenBindingValidator
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
@@ -127,7 +128,7 @@ case class FinishRegistrationSteps(
 
   case class Step6 private[webauthn] () extends Step[Step7] {
     override def validate() = {
-      response.response.collectedClientData.tokenBinding(allowMissing = allowMissingTokenBinding).validate(callerTokenBindingId.asScala)
+      TokenBindingValidator.validate(response.response.collectedClientData.tokenBinding, callerTokenBindingId)
     }
     def nextStep = Step7()
   }

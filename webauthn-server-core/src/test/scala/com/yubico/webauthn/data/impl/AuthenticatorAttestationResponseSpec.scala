@@ -53,11 +53,11 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
 
         describe("tokenBinding") {
           it("status") {
-            response.collectedClientData.tokenBinding.status should equal (tokenBindingStatus)
+            response.collectedClientData.tokenBinding.get.status should equal (tokenBindingStatus)
           }
 
           it("id") {
-            response.collectedClientData.tokenBinding.id.get should equal (tokenBindingId)
+            response.collectedClientData.tokenBinding.get.id.get should equal (tokenBindingId)
           }
         }
 

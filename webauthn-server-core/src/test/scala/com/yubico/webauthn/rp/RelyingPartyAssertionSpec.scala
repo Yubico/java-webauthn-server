@@ -382,29 +382,28 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.next shouldBe a [Success[_]]
         }
 
-        it("Verification succeeds if assertion specifies token binding is unsupported, and caller does not use it.") {
+        it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
           val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"not-supported"},"type":"webauthn.get"}"""
-          val steps = finishAssertion()
+          val steps = finishAssertion(clientDataJson = clientDataJson)
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
         }
 
-        it("Verification succeeds if assertion specifies token binding is supported, and caller does not use it.") {
+        it("Verification succeeds if client data specifies token binding is supported, and RP does not use it.") {
           val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"supported"},"type":"webauthn.get"}"""
-          val steps = finishAssertion()
+          val steps = finishAssertion(clientDataJson = clientDataJson)
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
           step.validations shouldBe a [Success[_]]
           step.next shouldBe a [Success[_]]
         }
 
-        it("Verification fails if assertion does not specify token binding status.") {
+        it("Verification fails if client data does not specify token binding status and RP specifies token binding ID.") {
           val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
-
           val steps = finishAssertion(
-            callerTokenBindingId = None,
+            callerTokenBindingId = Some("YELLOWSUBMARINE"),
             clientDataJson = clientDataJson
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -414,9 +413,19 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.next shouldBe a [Failure[_]]
         }
 
-        it("Verification fails if assertion specifies token binding ID but caller does not.") {
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
+        it("Verification succeeds if client data does not specify token binding status and RP does not specify token binding ID.") {
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
+          val steps = finishAssertion(
+            callerTokenBindingId = None,
+            clientDataJson = clientDataJson
+          )
+          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
+          step.validations shouldBe a [Success[_]]
+          step.next shouldBe a [Success[_]]
+        }
+        it("Verification fails if client data specifies token binding ID but RP does not.") {
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
           val steps = finishAssertion(
             callerTokenBindingId = None,
             clientDataJson = clientDataJson
@@ -431,7 +440,6 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         describe("If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.") {
           it("Verification succeeds if both sides specify the same token binding ID.") {
             val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
-
             val steps = finishAssertion(
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               clientDataJson = clientDataJson
@@ -442,9 +450,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             step.next shouldBe a [Success[_]]
           }
 
-          it("Verification fails if ID is missing from tokenBinding in assertion.") {
+          it("Verification fails if ID is missing from tokenBinding in client data.") {
             val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present"},"type":"webauthn.get"}"""
-
             val steps = finishAssertion(
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               clientDataJson = clientDataJson
@@ -456,9 +463,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             step.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fails if caller specifies token binding ID but assertion does not support it.") {
+          it("Verification fails if RP specifies token binding ID but client does not support it.") {
             val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"not-supported"},"type":"webauthn.get"}"""
-
             val steps = finishAssertion(
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               clientDataJson = clientDataJson
@@ -470,9 +476,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             step.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fails if caller specifies token binding ID but assertion does not use it.") {
+          it("Verification fails if RP specifies token binding ID but client does not use it.") {
             val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"supported"},"type":"webauthn.get"}"""
-
             val steps = finishAssertion(
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               clientDataJson = clientDataJson
@@ -484,9 +489,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             step.next shouldBe a [Failure[_]]
           }
 
-          it("Verification fails if assertion and caller specify different token binding IDs.") {
+          it("Verification fails if client data and RP specify different token binding IDs.") {
             val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
-
             val steps = finishAssertion(
               callerTokenBindingId = Some("ORANGESUBMARINE"),
               clientDataJson = clientDataJson
