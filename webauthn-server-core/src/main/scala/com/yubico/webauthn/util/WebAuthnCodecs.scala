@@ -30,7 +30,7 @@ object WebAuthnCodecs {
     val x = key.getW.getAffineX.toByteArray.toVector
     val y = key.getW.getAffineY.toByteArray.toVector
 
-    Vector[Byte](0x04) ++ x.drop(x.length - 32).padTo(32, 0: Byte) ++ y.drop(y.length - 32).padTo(32, 0: Byte)
+    Vector[Byte](0x04) ++ Vector.fill[Byte](32 - x.length)(0) ++ x.drop(x.length - 32) ++ Vector.fill[Byte](32 - y.length)(0) ++ y.drop(y.length - 32)
   }
 
   def rawEcdaKeyToCose(key: ArrayBuffer): ArrayBuffer = {
