@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
   *       authenticator, which may be sent over a low-bandwidth link.
   */
 case class PublicKeyCredentialParameters(
-  alg: Any,
+  alg: COSEAlgorithmIdentifier,
   @JsonIgnore
   `type`: PublicKeyCredentialType = PublicKey
 ) {
