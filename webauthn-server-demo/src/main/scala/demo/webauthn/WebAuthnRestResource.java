@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.webauthn.VersionInfo$;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,6 +54,7 @@ public class WebAuthnRestResource {
 
     private final class IndexResponse {
         public final Index actions = new Index();
+        public final Info info = new Info();
         private IndexResponse() throws NoSuchMethodException, MalformedURLException {
         }
     }
@@ -62,17 +64,35 @@ public class WebAuthnRestResource {
         public final URL deregister;
         public final URL addCredential;
 
-        public Index() throws NoSuchMethodException, MalformedURLException {
+
+        public Index() throws MalformedURLException {
             register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
             deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
             addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
         }
     }
+    private final class Info {
+        public final URL version;
+
+        public Info() throws MalformedURLException {
+            version = uriInfo.getAbsolutePathBuilder().path("version").build().toURL();
+        }
+
+    }
 
     @GET
     public Response index() throws NoSuchMethodException, IOException {
         return Response.ok(jsonMapper.writeValueAsString(new IndexResponse())).build();
+    }
+
+    private static final class VersionResponse {
+        public final VersionInfo$ version = VersionInfo$.MODULE$;
+    }
+    @GET
+    @Path("version")
+    public Response version() throws JsonProcessingException {
+        return Response.ok(jsonMapper.writeValueAsString(new VersionResponse())).build();
     }
 
 
