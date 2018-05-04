@@ -13,6 +13,9 @@ https://www.w3.org/TR/webauthn/#rp-operations[Relying Party operations] required
 for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
+The project is currently implemented mostly in Scala; this is intended to be
+translated to Java when the specification and these APIs seem stable enough.
+
 
 === Example Usage
 
