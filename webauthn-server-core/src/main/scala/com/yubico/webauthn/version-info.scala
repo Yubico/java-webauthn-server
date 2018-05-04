@@ -15,10 +15,6 @@ private class LocalDateJsonSerializer extends JsonSerializer[LocalDate] {
   }
 }
 
-sealed trait DocumentStatus
-case object WorkingDraft extends DocumentStatus
-case object CandidateRelease extends DocumentStatus
-
 /**
   * Reference to a particular version of a specification document.
   *
@@ -48,7 +44,7 @@ object VersionInfo {
   val specification = Specification(
     url = new URL("https://www.w3.org/TR/2018/CR-webauthn-20180320/"),
     latestVersionUrl = new URL("https://www.w3.org/TR/webauthn/"),
-    status = CandidateRelease,
+    status = DocumentStatus.CANDIDATE_RECOMMENDATION,
     releaseDate = LocalDate.parse("2018-03-20")
   )
 
