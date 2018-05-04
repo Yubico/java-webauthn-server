@@ -6,7 +6,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -162,7 +161,7 @@ public class WebAuthnRestResource {
     }
     @Path("authenticate")
     @POST
-    public Response startAuthentication(@QueryParam("username") String username) throws MalformedURLException {
+    public Response startAuthentication(@FormParam("username") String username) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
         AssertionRequest request = server.startAuthentication(Optional.ofNullable(username));
         return startResponse(new StartAuthenticationResponse(request));
@@ -243,7 +242,7 @@ public class WebAuthnRestResource {
 
     @Path("action/deregister")
     @POST
-    public Response deregisterCredential(@QueryParam("username") String username, @QueryParam("credentialId") String credentialId) throws MalformedURLException {
+    public Response deregisterCredential(@FormParam("username") String username, @FormParam("credentialId") String credentialId) throws MalformedURLException {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
