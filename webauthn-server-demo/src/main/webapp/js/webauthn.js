@@ -83,7 +83,6 @@
       }),
       challenge: base64url.toByteArray(request.challenge),
       excludeCredentials,
-      timeout: 10000,
     });
 
     return browserFixes.fixRegisterRequest(publicKeyCredentialCreationOptions);
@@ -123,7 +122,6 @@
       request, {
       allowCredentials,
       challenge: base64url.toByteArray(request.challenge),
-      timeout: 10000,
     });
 
     return browserFixes.fixAuthenticateRequest(publicKeyCredentialRequestOptions);
