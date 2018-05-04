@@ -21,13 +21,13 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.Base64UrlString
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Discouraged
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.impl.PublicKeyCredential
-import com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs

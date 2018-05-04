@@ -20,8 +20,8 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKey
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.impl.PublicKeyCredential
-import com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs

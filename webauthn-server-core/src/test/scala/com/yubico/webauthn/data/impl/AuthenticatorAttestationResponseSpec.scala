@@ -3,6 +3,7 @@ package com.yubico.webauthn.data.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.Present
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.util.BinaryUtil
 import org.junit.runner.RunWith
 import org.scalatest.Matchers

@@ -39,11 +39,10 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -197,7 +196,7 @@ object TestAuthenticator {
       alg = alg
     )
 
-    val response = data.impl.AuthenticatorAttestationResponse(
+    val response = AuthenticatorAttestationResponse(
       attestationObject = attestationObjectBytes,
       clientDataJSON = clientDataJsonBytes
     )
@@ -305,7 +304,7 @@ object TestAuthenticator {
 
     val authDataBytes: ArrayBuffer = makeAuthDataBytes(rpId = Defaults.rpId)
 
-    val response = data.impl.AuthenticatorAssertionResponse(
+    val response = AuthenticatorAssertionResponse(
       clientDataJSON = clientDataJsonBytes,
       authenticatorData = authDataBytes,
       signature = makeAssertionSignature(

@@ -1,12 +1,24 @@
 package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.webauthn.data.impl.JacksonAuthenticatorResponse
 
 
-trait AuthenticatorAttestationResponse extends AuthenticatorResponse {
+case class AuthenticatorAttestationResponse (
 
-  val attestationObject: ArrayBuffer
+  attestationObject: ArrayBuffer,
+  override val clientDataJSON: ArrayBuffer
+
+) extends AuthenticatorResponse
+  with JacksonAuthenticatorResponse {
+
+  override lazy val authenticatorData: ArrayBuffer = attestation.authenticatorData.authData
+
+  @JsonCreator
+  def this(@JsonProperty("attestationObject") attestationObjectBase64: String, @JsonProperty("clientDataJSON") clientDataJsonBase64: String) =
+    this(U2fB64Encoding.decode(attestationObjectBase64).toVector, U2fB64Encoding.decode(clientDataJsonBase64).toVector)
 
   @JsonProperty("_attestationObject")
   lazy val attestation: AttestationObject = AttestationObject(attestationObject)
