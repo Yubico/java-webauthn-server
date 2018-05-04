@@ -100,7 +100,14 @@ function getIndexActions() {
 }
 
 function getRegisterRequest(url, username, displayName, credentialNickname, requireResidentKey = false) {
-  return fetch(`${url}?username=${username}&displayName=${displayName}&credentialNickname=${credentialNickname}`, { method: 'POST' })
+  return fetch(url, {
+    body: new URLSearchParams({
+      username,
+      displayName,
+      credentialNickname,
+    }),
+    method: 'POST',
+  })
     .then(response => response.json())
     .then(response => {
       console.log('response', response);
@@ -112,11 +119,11 @@ function getRegisterRequest(url, username, displayName, credentialNickname, requ
         request: Object.assign({},
           response.request,
           {
-            makePublicKeyCredentialOptions: Object.assign({},
-              response.request.makePublicKeyCredentialOptions,
+            publicKeyCredentialCreationOptions: Object.assign({},
+              response.request.publicKeyCredentialCreationOptions,
               {
                 authenticatorSelection: Object.assign({},
-                  response.request.makePublicKeyCredentialOptions.authenticatorSelection,
+                  response.request.publicKeyCredentialCreationOptions.authenticatorSelection,
                   { requireResidentKey }
                 )
               }
@@ -135,7 +142,7 @@ function getRegisterRequest(url, username, displayName, credentialNickname, requ
 function executeRegisterRequest(request) {
   console.log('executeRegisterRequest', request);
 
-  return webauthn.createCredential(request.makePublicKeyCredentialOptions);
+  return webauthn.createCredential(request.publicKeyCredentialCreationOptions);
 }
 
 function submitResponse(url, requestId, response) {
@@ -143,7 +150,7 @@ function submitResponse(url, requestId, response) {
 
   const body = {
     requestId,
-    credential: webauthn.addJacksonDeserializationHints(response),
+    credential: response,
   };
 
   return fetch(url, {
@@ -156,9 +163,9 @@ function submitResponse(url, requestId, response) {
 function performCeremony(params) {
   const callbacks = params.callbacks || {}; /* { init, authenticatorRequest, serverRequest } */
   const getIndexActions = params.getIndexActions; /* function(): object */
-  const getRequest = params.getRequest; /* function(urls: object): { makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object } */
+  const getRequest = params.getRequest; /* function(urls: object): { publicKeyCredentialCreationOptions: object } | { publicKeyCredentialRequestOptions: object } */
   const statusStrings = params.statusStrings; /* { init, authenticatorRequest, serverRequest, success, } */
-  const executeRequest = params.executeRequest; /* function({ makePublicKeyCredentialOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
+  const executeRequest = params.executeRequest; /* function({ publicKeyCredentialCreationOptions: object } | { publicKeyCredentialRequestOptions: object }): Promise[PublicKeyCredential] */
   const handleError = params.handleError; /* function(err): ? */
 
   setStatus('Looking up API paths...');
@@ -265,8 +272,8 @@ function register(requireResidentKey = false) {
     console.error('Registration failed', err);
 
     if (err.name === 'NotAllowedError') {
-      if (request.makePublicKeyCredentialOptions.excludeCredentials
-          && request.makePublicKeyCredentialOptions.excludeCredentials.length > 0
+      if (request.publicKeyCredentialCreationOptions.excludeCredentials
+          && request.publicKeyCredentialCreationOptions.excludeCredentials.length > 0
       ) {
         addMessage('Credential creation failed, probably because an already registered credential is avaiable.');
       } else {
@@ -279,17 +286,23 @@ function register(requireResidentKey = false) {
 }
 
 function getAuthenticateRequest(url, username) {
-  return fetch(
-    username
-      ? `${url}?username=${username}`
-      : url
-    ,
-    { method: 'POST' }
-  ).then(response => response.json());
+  return fetch(url, {
+    body: new URLSearchParams({
+      username,
+    }),
+    method: 'POST',
+  })
+    .then(response => response.json());
 }
 
 function getDeregisterRequest(url, username, credentialId) {
-  return fetch(`${url}?username=${username}&credentialId=${credentialId}`, { method: 'POST' })
+  return fetch(url, {
+    body: new URLSearchParams({
+      username,
+      credentialId,
+    }),
+    method: 'POST',
+  })
     .then(response => response.json());
 }
 

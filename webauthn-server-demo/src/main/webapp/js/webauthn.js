@@ -19,11 +19,11 @@
         isEnabled() {
           return typeof InstallTrigger !== undefined && window.navigator.userAgent.match(/Firefox\/57/);
         },
-        fixRegisterRequest(makePublicKeyCredentialOptions) {
+        fixRegisterRequest(publicKeyCredentialCreationOptions) {
           return extend(
-            makePublicKeyCredentialOptions, {
-            excludeList: makePublicKeyCredentialOptions.excludeCredentials,
-            parameters: makePublicKeyCredentialOptions.pubKeyCredParams,
+            publicKeyCredentialCreationOptions, {
+            excludeList: publicKeyCredentialCreationOptions.excludeCredentials,
+            parameters: publicKeyCredentialCreationOptions.pubKeyCredParams,
           });
         },
         fixAuthenticateRequest(publicKeyCredentialRequestOptions) {
@@ -60,50 +60,21 @@
   }();
 
   /**
-   * Add Jackson JSON deserialization type hints to a PublicKeyCredential-like
-   * plain object structure.
-   */
-  function addJacksonDeserializationHints(response) {
-    const root = extend(
-      response, {
-      '@jackson_type': 'com.yubico.webauthn.data.impl.PublicKeyCredential',
-    });
-
-    if (response.response.attestationObject) {
-      return extend(
-        root, {
-        response: extend(
-          response.response, {
-          '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAttestationResponse',
-        }),
-      });
-    } else {
-      return extend(
-        root, {
-        response: extend(
-          response.response, {
-          '@jackson_type': 'com.yubico.webauthn.data.impl.AuthenticatorAssertionResponse',
-        })
-      });
-    }
-  }
-
-  /**
    * Create a WebAuthn credential.
    *
-   * @param request: object - A MakePublicKeyCredentialOptions object, except
+   * @param request: object - A PublicKeyCredentialCreationOptions object, except
    *   where binary values are base64url encoded strings instead of byte arrays
    *
-   * @return a MakePublicKeyCredentialOptions suitable for passing as the
+   * @return a PublicKeyCredentialCreationOptions suitable for passing as the
    *   `publicKey` parameter to `navigator.credentials.create()`
    */
-  function decodeMakePublicKeyCredentialOptions(request) {
+  function decodePublicKeyCredentialCreationOptions(request) {
     const excludeCredentials = request.excludeCredentials.map(credential => extend(
       credential, {
       id: base64url.toByteArray(credential.id),
     }));
 
-    const makePublicKeyCredentialOptions = extend(
+    const publicKeyCredentialCreationOptions = extend(
       request, {
       attestation: 'direct',
       user: extend(
@@ -115,20 +86,20 @@
       timeout: 10000,
     });
 
-    return browserFixes.fixRegisterRequest(makePublicKeyCredentialOptions);
+    return browserFixes.fixRegisterRequest(publicKeyCredentialCreationOptions);
   }
 
   /**
    * Create a WebAuthn credential.
    *
-   * @param request: object - A MakePublicKeyCredentialOptions object, except
+   * @param request: object - A PublicKeyCredentialCreationOptions object, except
    *   where binary values are base64url encoded strings instead of byte arrays
    *
    * @return the Promise returned by `navigator.credentials.create`
    */
   function createCredential(request) {
     return navigator.credentials.create({
-      publicKey: decodeMakePublicKeyCredentialOptions(request),
+      publicKey: decodePublicKeyCredentialCreationOptions(request),
     });
   }
 
@@ -198,8 +169,7 @@
   }
 
   return {
-    addJacksonDeserializationHints,
-    decodeMakePublicKeyCredentialOptions,
+    decodePublicKeyCredentialCreationOptions,
     decodePublicKeyCredentialRequestOptions,
     createCredential,
     getAssertion,
