@@ -122,10 +122,6 @@ function getRegisterRequest(urls, username, displayName, credentialNickname, req
   })
     .then(response => response.json())
     .then(rejectIfNotSuccess)
-    .then(response => {
-      console.log('response', response);
-      return response;
-    })
   ;
 }
 
