@@ -12,53 +12,6 @@
     return Object.assign({}, obj, more);
   }
 
-  const browserFixes = function() {
-    const fixes = [
-      {
-        name: 'Firefox 57',
-        isEnabled() {
-          return typeof InstallTrigger !== undefined && window.navigator.userAgent.match(/Firefox\/57/);
-        },
-        fixRegisterRequest(publicKeyCredentialCreationOptions) {
-          return extend(
-            publicKeyCredentialCreationOptions, {
-            excludeList: publicKeyCredentialCreationOptions.excludeCredentials,
-            parameters: publicKeyCredentialCreationOptions.pubKeyCredParams,
-          });
-        },
-        fixAuthenticateRequest(publicKeyCredentialRequestOptions) {
-          return extend(
-            publicKeyCredentialRequestOptions, {
-            allowList: publicKeyCredentialRequestOptions.allowCredentials,
-          });
-        },
-      },
-    ];
-
-    function applyFixes(fixName, arg) {
-      return fixes.reduce(
-        (result, fix) => {
-          if (fix.isEnabled()) {
-            return fix[fixName](result);
-          } else {
-            return result;
-          }
-        },
-        arg
-      );
-    }
-
-    return {
-      fixRegisterRequest(mpkco) {
-        return applyFixes('fixRegisterRequest', mpkco);
-      },
-
-      fixAuthenticateRequest(pkcro) {
-        return applyFixes('fixAuthenticateRequest', pkcro);
-      },
-    };
-  }();
-
   /**
    * Create a WebAuthn credential.
    *
@@ -85,7 +38,7 @@
       excludeCredentials,
     });
 
-    return browserFixes.fixRegisterRequest(publicKeyCredentialCreationOptions);
+    return publicKeyCredentialCreationOptions;
   }
 
   /**
@@ -124,7 +77,7 @@
       challenge: base64url.toByteArray(request.challenge),
     });
 
-    return browserFixes.fixAuthenticateRequest(publicKeyCredentialRequestOptions);
+    return publicKeyCredentialRequestOptions;
   }
 
   /**
