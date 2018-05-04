@@ -213,7 +213,7 @@ function performCeremony(params) {
 function registerResidentKey() {
   return register(requireResidentKey = true);
 }
-function register(requireResidentKey = false) {
+function register(requireResidentKey = false, getRequest = getRegisterRequest) {
   const username = document.getElementById('username').value;
   const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
@@ -222,7 +222,7 @@ function register(requireResidentKey = false) {
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRegisterRequest(urls.register, username, displayName, credentialNickname, requireResidentKey),
+    getRequest: urls => getRequest(urls.register, username, displayName, credentialNickname, requireResidentKey),
     statusStrings: {
       init: 'Initiating registration ceremony with server...',
       authenticatorRequest: 'Asking authenticators to create credential...',
@@ -309,10 +309,10 @@ function executeAuthenticateRequest(request) {
 function authenticateWithUsername() {
   return authenticate(username = document.getElementById('username').value);
 }
-function authenticate(username = null) {
+function authenticate(username = null, getRequest = getAuthenticateRequest) {
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getAuthenticateRequest(urls.authenticate, username),
+    getRequest: urls => getRequest(urls.authenticate, username),
     statusStrings: {
       init: 'Initiating authentication ceremony with server...',
       authenticatorRequest: 'Asking authenticators to perform assertion...',
