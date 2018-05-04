@@ -113,29 +113,6 @@ function getRegisterRequest(url, username, displayName, credentialNickname, requ
       console.log('response', response);
       return response;
     })
-    .then(response => Object.assign({},
-      response,
-      {
-        request: Object.assign({},
-          response.request,
-          {
-            publicKeyCredentialCreationOptions: Object.assign({},
-              response.request.publicKeyCredentialCreationOptions,
-              {
-                authenticatorSelection: Object.assign({},
-                  response.request.publicKeyCredentialCreationOptions.authenticatorSelection,
-                  { requireResidentKey }
-                )
-              }
-            )
-          }
-        )
-      }
-    ))
-    .then(response => {
-      console.log('response', response);
-      return response;
-    })
   ;
 }
 
