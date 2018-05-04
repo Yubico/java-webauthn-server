@@ -3,6 +3,18 @@ package com.yubico.webauthn
 import java.net.URL
 import java.time.LocalDate
 
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+
+
+private class LocalDateJsonSerializer extends JsonSerializer[LocalDate] {
+  override def serialize(t: LocalDate, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider): Unit = {
+    jsonGenerator.writeString(t.toString)
+  }
+}
+
 sealed trait DocumentStatus
 case object WorkingDraft extends DocumentStatus
 case object CandidateRelease extends DocumentStatus
@@ -19,6 +31,7 @@ case class Specification(
   url: URL,
   latestVersionUrl: URL,
   status: DocumentStatus,
+  @JsonSerialize(using = classOf[LocalDateJsonSerializer])
   releaseDate: LocalDate
 )
 
