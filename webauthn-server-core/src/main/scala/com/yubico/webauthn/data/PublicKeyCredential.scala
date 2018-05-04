@@ -1,24 +1,12 @@
 package com.yubico.webauthn.data
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
-@JsonTypeInfo(use = Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@jackson_type")
-@JsonSubTypes(Array(
-  new Type(classOf[impl.PublicKeyCredential[_]])
-))
-trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
-
-  /**
-    * This attribute is inherited from `Credential`, though PublicKeyCredential
-    * overrides `Credential`'s getter, instead returning the base64url encoding
-    * of the [[rawId]].
-    */
-  override val id: String = U2fB64Encoding.encode(rawId.toArray)
+case class PublicKeyCredential[+A <: AuthenticatorResponse] (
 
   /**
     * An identifier for the credential, chosen by the client.
@@ -32,7 +20,8 @@ trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
     * containing a credential private key wrapped with a symmetric key that is
     * burned into the authenticator.
     */
-  val rawId: ArrayBuffer
+  @JsonIgnore
+  rawId: ArrayBuffer,
 
   /**
     * The authenticator's response to the client’s request to either create a
@@ -43,13 +32,30 @@ trait PublicKeyCredential[+A <: AuthenticatorResponse] extends Credential {
     * otherwise, the PublicKeyCredential was created in response to get(), and
     * this attribute’s value will be an [[AuthenticatorAssertionResponse]].
     */
-  val response: A
+  response: A,
 
   /**
     * A map containing extension identifier → client extension output entries
     * produced by the extension’s client extension processing.
     */
-  val clientExtensionResults: AuthenticationExtensionsClientInputs
+  clientExtensionResults: AuthenticationExtensionsClientInputs
+
+) extends Credential {
+
+  @JsonCreator
+  def this(
+    @JsonProperty("id") idBase64: String,
+    @JsonProperty response: A,
+    @JsonProperty clientExtensionResults: AuthenticationExtensionsClientInputs
+  ) =
+    this(U2fB64Encoding.decode(idBase64).toVector, response, clientExtensionResults)
+
+  /**
+    * This attribute is inherited from `Credential`, though PublicKeyCredential
+    * overrides `Credential`'s getter, instead returning the base64url encoding
+    * of the [[rawId]].
+    */
+  override val id: String = U2fB64Encoding.encode(rawId.toArray)
 
   /**
     * The PublicKeyCredential's type value is the string "public-key".

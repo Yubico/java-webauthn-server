@@ -201,7 +201,7 @@ object TestAuthenticator {
       clientDataJSON = clientDataJsonBytes
     )
 
-    data.impl.PublicKeyCredential(
+    PublicKeyCredential(
       rawId = response.attestation.authenticatorData.attestationData.get.credentialId,
       response = response,
       clientExtensionResults = WebAuthnCodecs.json.readTree("{}")
@@ -315,7 +315,7 @@ object TestAuthenticator {
       userHandle = userHandle.asJava
     )
 
-    data.impl.PublicKeyCredential(
+    PublicKeyCredential(
       rawId = credentialId,
       response = response,
       clientExtensionResults = jsonFactory.objectNode()

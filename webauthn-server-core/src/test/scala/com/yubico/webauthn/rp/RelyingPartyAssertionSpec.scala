@@ -26,8 +26,8 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Discouraged
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.impl.PublicKeyCredential
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
