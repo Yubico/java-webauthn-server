@@ -1,9 +1,12 @@
 package com.yubico.webauthn.data
 
+import java.io.ByteArrayInputStream
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.webauthn.util.WebAuthnCodecs
 
 trait AuthenticatorResponse {
 
@@ -21,7 +24,8 @@ trait AuthenticatorResponse {
     * The [clientDataJSON] parsed as a [[JsonNode]].
     */
   @JsonProperty("_clientData")
-  def clientData: JsonNode
+  lazy val clientData: JsonNode =
+    WebAuthnCodecs.json.readTree(new ByteArrayInputStream(clientDataJSON.toArray))
 
   /**
     * The `clientData` parsed as a domain object.

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
-import com.yubico.webauthn.data.impl.JacksonAuthenticatorResponse
 
 
 case class AuthenticatorAssertionResponse(
@@ -15,8 +14,7 @@ case class AuthenticatorAssertionResponse(
   signature: ArrayBuffer,
   userHandle: Optional[ArrayBuffer]
 
-) extends AuthenticatorResponse
-  with JacksonAuthenticatorResponse {
+) extends AuthenticatorResponse {
 
   @JsonCreator
   def this(

@@ -3,7 +3,6 @@ package com.yubico.webauthn.data
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
-import com.yubico.webauthn.data.impl.JacksonAuthenticatorResponse
 
 
 case class AuthenticatorAttestationResponse (
@@ -11,8 +10,7 @@ case class AuthenticatorAttestationResponse (
   attestationObject: ArrayBuffer,
   override val clientDataJSON: ArrayBuffer
 
-) extends AuthenticatorResponse
-  with JacksonAuthenticatorResponse {
+) extends AuthenticatorResponse {
 
   override lazy val authenticatorData: ArrayBuffer = attestation.authenticatorData.authData
 
