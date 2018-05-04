@@ -1,16 +1,13 @@
-package com.yubico.webauthn.impl
+package com.yubico.webauthn.test
 
-import java.security.MessageDigest
 import java.util.Base64
 
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationObject
-import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.AuthenticationDataFlags
 import com.yubico.webauthn.util.WebAuthnCodecs
 import com.yubico.webauthn.util.BinaryUtil
-import org.bouncycastle.asn1.ASN1Object
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
