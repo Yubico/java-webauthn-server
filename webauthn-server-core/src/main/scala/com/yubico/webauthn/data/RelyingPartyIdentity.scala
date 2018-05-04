@@ -16,7 +16,7 @@ case class RelyingPartyIdentity (
     *
     * For example: "Acme Corporation", "Widgets, Inc.", or "Awesome Site".
     */
-  name: String,
+  override val name: String,
 
   /**
     * The RP identifier with which credentials are associated.
@@ -28,6 +28,6 @@ case class RelyingPartyIdentity (
     *
     * For example, this could be the RP's logo.
     */
-  icon: Optional[URL] = None.asJava
+  override val icon: Optional[URL] = None.asJava
 
-)
+) extends PublicKeyCredentialEntity

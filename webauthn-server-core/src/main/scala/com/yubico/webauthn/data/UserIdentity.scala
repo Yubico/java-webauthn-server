@@ -19,7 +19,7 @@ case class UserIdentity (
     *
     * For example: "john.p.smith@example.com" or "+14255551234".
     */
-  name: String,
+  override val name: String,
 
   /**
     * A friendly name for the user account (e.g. "Ryan A. Smith").
@@ -42,9 +42,9 @@ case class UserIdentity (
     *
     * For example, this could be the user's avatar.
     */
-  icon: Optional[URL] = None.asJava
+  override val icon: Optional[URL] = None.asJava
 
-) {
+) extends PublicKeyCredentialEntity {
 
   def this(name: String, displayName: String, id: Array[Byte], icon: Optional[URL]) =
     this(name, displayName, id.toVector, icon)
