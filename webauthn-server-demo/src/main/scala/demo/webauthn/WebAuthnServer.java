@@ -10,8 +10,6 @@ import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
-import com.yubico.webauthn.data.AttestationConveyancePreference$;
-import com.yubico.webauthn.data.Direct;
 import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;

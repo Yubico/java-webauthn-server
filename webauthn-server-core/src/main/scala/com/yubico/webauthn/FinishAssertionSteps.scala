@@ -3,7 +3,6 @@ package com.yubico.webauthn
 
 import java.util.Optional
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
@@ -15,7 +14,6 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.TokenBindingValidator
-import com.yubico.webauthn.util.WebAuthnCodecs
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 

@@ -5,7 +5,6 @@ import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.Optional
-import javax.security.auth.x500.X500Principal
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
@@ -24,7 +23,6 @@ import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.data.ArrayBuffer
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
@@ -41,6 +39,7 @@ import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.WebAuthnCodecs
+import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.mockito.Mockito

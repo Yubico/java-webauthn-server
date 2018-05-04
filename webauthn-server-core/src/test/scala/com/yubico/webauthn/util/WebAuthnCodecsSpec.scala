@@ -1,11 +1,8 @@
 package com.yubico.webauthn.util
 
-import java.security.KeyPairGenerator
-import java.security.SecureRandom
 import java.security.interfaces.ECPublicKey
 
 import com.yubico.u2f.crypto.BouncyCastleCrypto
-import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary

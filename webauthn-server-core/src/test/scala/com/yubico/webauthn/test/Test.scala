@@ -2,7 +2,6 @@ package com.yubico.webauthn.test
 
 import java.util.Base64
 
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticationDataFlags
@@ -14,6 +13,7 @@ import org.bouncycastle.asn1.util.ASN1Dump
 import COSE.ECPublicKey
 import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
 object Test extends App {

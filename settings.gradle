@@ -1,8 +1,3 @@
 rootProject.name = 'u2flib-server-parent'
-include ':u2flib-server-core'
-include ':u2flib-server-attestation'
 include ':webauthn-server-core'
 include ':webauthn-server-demo'
-
-project(':u2flib-server-core').projectDir = "$rootDir/u2flib-server-core" as File
-project(':u2flib-server-attestation').projectDir = "$rootDir/u2flib-server-attestation" as File

@@ -3,7 +3,6 @@ package com.yubico.webauthn.impl
 import java.security.Signature
 import java.security.cert.X509Certificate
 import java.util.Locale
-import javax.naming.ldap.LdapName
 
 import com.upokecenter.cbor.CBORObject
 import com.yubico.u2f.crypto.BouncyCastleCrypto
@@ -15,6 +14,7 @@ import com.yubico.webauthn.data.Basic
 import com.yubico.webauthn.data.Ecdaa
 import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import javax.naming.ldap.LdapName
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
 

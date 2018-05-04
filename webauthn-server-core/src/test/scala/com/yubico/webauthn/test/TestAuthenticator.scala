@@ -29,8 +29,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
-import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.u2f.data.messages.key.util.CertificateParser
 import com.yubico.webauthn.util
 import com.yubico.webauthn.data
 import com.yubico.webauthn.data.ArrayBuffer

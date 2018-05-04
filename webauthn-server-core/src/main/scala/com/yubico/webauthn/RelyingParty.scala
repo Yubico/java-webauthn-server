@@ -5,8 +5,8 @@ import java.util.Optional
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.attestation.MetadataService
 import com.yubico.u2f.crypto.ChallengeGenerator
-import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
+import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.RelyingPartyIdentity

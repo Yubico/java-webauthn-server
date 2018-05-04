@@ -6,7 +6,6 @@ import java.security.interfaces.ECPublicKey
 import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ArrayBuffer

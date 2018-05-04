@@ -11,8 +11,6 @@ configurations {
 dependencies {
 
   compile(
-    project(':u2flib-server-attestation'),
-    project(':u2flib-server-core'),
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
     [group: 'com.google.guava', name: 'guava', version:'19.0'],

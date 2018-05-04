@@ -1,6 +1,7 @@
 package com.yubico.webauthn.data
 
 import java.util.Optional
+
 import com.yubico.scala.util.JavaConverters._
 
 
