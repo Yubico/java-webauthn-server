@@ -111,8 +111,8 @@ function getIndexActions() {
     .then(response => response.json());
 }
 
-function getRegisterRequest(url, username, displayName, credentialNickname, requireResidentKey = false) {
-  return fetch(url, {
+function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey = false) {
+  return fetch(urls.register, {
     body: new URLSearchParams({
       username,
       displayName,
@@ -226,7 +226,7 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRequest(urls.register, username, displayName, credentialNickname, requireResidentKey),
+    getRequest: urls => getRequest(urls, username, displayName, credentialNickname, requireResidentKey),
     statusStrings: {
       init: 'Initiating registration ceremony with server...',
       authenticatorRequest: 'Asking authenticators to create credential...',
@@ -280,8 +280,8 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
   });
 }
 
-function getAuthenticateRequest(url, username) {
-  return fetch(url, {
+function getAuthenticateRequest(urls, username) {
+  return fetch(urls.authenticate, {
     body: new URLSearchParams({
       username,
     }),
@@ -292,8 +292,8 @@ function getAuthenticateRequest(url, username) {
   ;
 }
 
-function getDeregisterRequest(url, username, credentialId) {
-  return fetch(url, {
+function getDeregisterRequest(urls, username, credentialId) {
+  return fetch(urls.deregister, {
     body: new URLSearchParams({
       username,
       credentialId,
@@ -317,7 +317,7 @@ function authenticateWithUsername() {
 function authenticate(username = null, getRequest = getAuthenticateRequest) {
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRequest(urls.authenticate, username),
+    getRequest: urls => getRequest(urls, username),
     statusStrings: {
       init: 'Initiating authentication ceremony with server...',
       authenticatorRequest: 'Asking authenticators to perform assertion...',
@@ -325,7 +325,10 @@ function authenticate(username = null, getRequest = getAuthenticateRequest) {
     },
     executeRequest: executeAuthenticateRequest,
   }).then(data => {
-    addMessage(`Authenticated as: ${data.registrations[0].username}`);
+    if (data.registrations) {
+      addMessage(`Authenticated as: ${data.registrations[0].username}`);
+    }
+    return data;
   }).catch((err) => {
     setStatus('Authentication failed.');
     if (err.name === 'InvalidStateError') {
@@ -346,7 +349,7 @@ function deregister() {
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getDeregisterRequest(urls.deregister, username, credentialId),
+    getRequest: urls => getDeregisterRequest(urls, username, credentialId),
     statusStrings: {
       init: 'Initiating authentication ceremony with server...',
       authenticatorRequest: 'Asking authenticators to perform assertion...',
@@ -375,6 +378,33 @@ function deregister() {
       console.error('Authentication failed', err);
       return rejected(err);
     });
+}
+
+function getAddCredentialRequest(url, username, credentialNickname) {
+  return fetch(url, {
+    body: new URLSearchParams({
+      username,
+      credentialNickname,
+    }),
+    method: 'POST',
+  }).then(response => response.json());
+}
+
+function addCredential() {
+  const username = document.getElementById('username').value;
+  const credentialNickname = document.getElementById('credentialNickname').value;
+
+  return authenticate(
+    username,
+    urls => getAddCredentialRequest(urls.addCredential, username, credentialNickname)
+  )
+    .then(data =>
+      register(
+        username,
+        () => data
+      )
+    )
+  ;
 }
 
 function init() {
@@ -436,6 +466,16 @@ window.onload = init;
         <div>
           <button type="button" onClick="javascript:authenticate()">
             Authenticate without username
+          </button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div></div>
+        <div></div>
+        <div>
+          <button type="button" onClick="javascript:addCredential()">
+            Register additional credential
           </button>
         </div>
       </div>
