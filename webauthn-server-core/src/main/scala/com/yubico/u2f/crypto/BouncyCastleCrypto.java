@@ -55,7 +55,7 @@ public class BouncyCastleCrypto implements Crypto {
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(
                 String.format(
-                    "Failed to verify signature. This could be a problem with your JVM environment, or a bug in u2flib-server-core. Public key: %s, signed data: %s , signature: %s",
+                    "Failed to verify signature. This could be a problem with your JVM environment, or a bug in webauthn-server-core. Public key: %s, signed data: %s , signature: %s",
                     publicKey,
                     U2fB64Encoding.encode(signedBytes),
                     U2fB64Encoding.encode(signature)

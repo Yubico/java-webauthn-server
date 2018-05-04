@@ -4,7 +4,7 @@
 set -e
 
 
-cd /home/emlun/java-u2flib-server/webauthn-server-demo
+cd /home/emlun/java-webauthn-server/webauthn-server-demo
 
 ../gradlew war
 

@@ -1,12 +1,14 @@
 = webauthn-server-demo
 
-A simple self-contained demo server supporting multiple devices per user. The
-central part is the
-https://github.com/Yubico/java-u2flib-server/blob/master/webauthn-server-demo/src/main/java/demo/WebAuthnResource.java[WebAuthnResource]
-class.
+A simple self-contained demo server supporting multiple authenticators per user.
+The central part is the
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/WebAuthnServer.java[WebAuthnServer]
+class, and the
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/WebAuthnResource.java[WebAuthnResource]
+class which provides the REST API on top of it.
 
 === 1. Clone
- git clone https://github.com/Yubico/java-u2flib-server.git
+ git clone https://github.com/Yubico/java-webauthn-server.git
 
 === 2. Run
  ./gradlew :webauthn-server-demo:appRun

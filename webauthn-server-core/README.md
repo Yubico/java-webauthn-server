@@ -7,11 +7,9 @@ This is a prototype implementation of a Web Authentication Relying Party (RP).
 Running
 ---
 
-An example app is included in the [u2flib-server-demo](../u2flib-server-demo). To run it:
-
-    $ cd java-u2flib-server/u2flib-server-demo
-    $ ./gradlew run
-    $ $BROWSER https://localhost:8443/
+An example app is included in the
+[webauthn-server-demo](../webauthn-server-demo) directory. See [its
+README](../webauthn-server-demo/README) for instructions on how to run it.
 
 
 Implementation status
