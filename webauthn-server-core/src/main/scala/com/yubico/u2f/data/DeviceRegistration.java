@@ -24,20 +24,25 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @EqualsAndHashCode(of = { "keyHandle", "publicKey", "attestationCert" })
 public class DeviceRegistration extends JsonSerializable implements Serializable {
     private static final long serialVersionUID = -142942195464329902L;
     public static final long INITIAL_COUNTER_VALUE = -1;
 
+    @Getter
     @JsonProperty
     private final String keyHandle;
+    @Getter
     @JsonProperty
     private final String publicKey;
     @JsonProperty
     private final String attestationCert;
+    @Getter
     @JsonProperty
     private long counter;
+    @Getter
     @JsonProperty
     private boolean compromised;
 
@@ -62,14 +67,6 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
         this.counter = counter;
     }
 
-    public String getKeyHandle() {
-        return keyHandle;
-    }
-
-    public String getPublicKey() {
-        return publicKey;
-    }
-
     @JsonIgnore
     public X509Certificate getAttestationCertificate() throws U2fBadInputException, CertificateException {
         if (attestationCert == null) {
@@ -77,14 +74,6 @@ public class DeviceRegistration extends JsonSerializable implements Serializable
         } else {
             return CertificateParser.parseDer(U2fB64Encoding.decode(attestationCert));
         }
-    }
-
-    public long getCounter() {
-        return counter;
-    }
-
-    public boolean isCompromised() {
-        return compromised;
     }
 
     public void markCompromised() {
