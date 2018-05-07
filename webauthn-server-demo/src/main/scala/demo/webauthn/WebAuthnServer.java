@@ -231,12 +231,6 @@ public class WebAuthnServer {
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
-            Optional<Boolean> credentialIsAllowed = request.getPublicKeyCredentialRequestOptions().allowCredentials().map(allowCredentials ->
-                allowCredentials.stream().anyMatch(credential ->
-                    credential.idBase64().equals(response.getCredential().id())
-                )
-            );
-
             Optional<String> userHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
 
             if (!request.getUsername().isPresent() && !userHandle.isPresent()) {
@@ -254,12 +248,7 @@ public class WebAuthnServer {
                 } else {
                     boolean usernameOwnsCredential = userStorage.usernameOwnsCredential(username, response.getCredential().id());
 
-                    if (credentialIsAllowed.isPresent() && !credentialIsAllowed.get()) {
-                        return Left.apply(Collections.singletonList(String.format(
-                            "Credential is not allowed for this authentication: %s",
-                            response.getCredential().id()
-                        )));
-                    } else if (!usernameOwnsCredential) {
+                    if (!usernameOwnsCredential) {
                         return Left.apply(Collections.singletonList(String.format(
                             "User \"%s\" does not own credential: %s",
                             request.getUsername(),
