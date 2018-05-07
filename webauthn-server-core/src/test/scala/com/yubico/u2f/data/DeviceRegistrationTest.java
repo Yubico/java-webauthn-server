@@ -3,16 +3,15 @@ package com.yubico.u2f.data;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.sun.security.ntlm.Client;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
 import org.junit.Test;
 
-import static junit.framework.Assert.fail;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class DeviceRegistrationTest {
 

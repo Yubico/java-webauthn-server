@@ -11,7 +11,7 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -50,7 +50,7 @@ public class SimpleResolverTest {
             new InvalidKeyException("Forced failure"),
             new NoSuchProviderException("Forced failure"),
             new SignatureException("Forced failure")
-        ).when(cert).verify(Matchers.<PublicKey>any());
+        ).when(cert).verify(ArgumentMatchers.<PublicKey>any());
         Principal issuerDN = mock(Principal.class);
         when(issuerDN.getName()).thenReturn("CN=Yubico U2F Root CA Serial 457200631");
         when(cert.getIssuerDN()).thenReturn(issuerDN);
