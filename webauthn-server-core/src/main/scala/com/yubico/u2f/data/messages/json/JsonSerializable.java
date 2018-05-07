@@ -28,11 +28,6 @@ public abstract class JsonSerializable {
         }
     }
 
-    @Override
-    public String toString() {
-        return toJson();
-    }
-
     public static <T extends JsonSerializable> T fromJson(String json, Class<T> cls) throws U2fBadInputException {
         try {
             return OBJECT_MAPPER.readValue(json, cls);

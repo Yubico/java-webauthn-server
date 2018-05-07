@@ -11,10 +11,8 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.yubico.u2f.AppId;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.DeviceRegistration;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
@@ -95,10 +93,6 @@ public class RawRegisterResponse {
         }
     }
 
-    public void checkSignature(AppId appId, String clientData) throws U2fBadInputException {
-        checkSignature(crypto.hash(appId.value), crypto.hash(clientData));
-    }
-
     public void checkSignature(byte[] appIdHash, byte[] clientDataHash) throws U2fBadInputException {
         byte[] signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
         crypto.checkSignature(attestationCertificate, signedBytes, signature);
@@ -112,15 +106,6 @@ public class RawRegisterResponse {
         encoded.write(keyHandle);
         encoded.write(userPublicKey);
         return encoded.toByteArray();
-    }
-
-    public DeviceRegistration createDevice() throws U2fBadInputException {
-        return new DeviceRegistration(
-                U2fB64Encoding.encode(keyHandle),
-                U2fB64Encoding.encode(userPublicKey),
-                attestationCertificate,
-                DeviceRegistration.INITIAL_COUNTER_VALUE
-        );
     }
 
 }

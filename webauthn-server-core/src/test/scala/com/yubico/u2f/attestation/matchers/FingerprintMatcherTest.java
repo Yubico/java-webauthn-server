@@ -31,7 +31,6 @@ public class FingerprintMatcherTest {
     @Test
     public void matchesIsFalseIfNoFingerprintMatches() throws CertificateException {
         final X509Certificate cert = CertificateParser.parsePem(ATTESTATION_CERT);
-        final String fingerprint = Hashing.sha1().hashBytes(cert.getEncoded()).toString().toLowerCase();
 
         ArrayNode fingerprints = new ArrayNode(JsonNodeFactory.instance);
         fingerprints.add(new TextNode("foo"));

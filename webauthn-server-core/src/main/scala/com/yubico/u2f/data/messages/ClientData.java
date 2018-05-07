@@ -22,10 +22,6 @@ public class ClientData {
     private final String origin;
     private final String rawClientData;
 
-    public String asJson() {
-        return rawClientData;
-    }
-
     public ClientData(String clientData) throws U2fBadInputException {
         rawClientData = new String(U2fB64Encoding.decode(clientData));
         try {
