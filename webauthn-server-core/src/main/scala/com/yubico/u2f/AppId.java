@@ -7,8 +7,6 @@ import java.net.URISyntaxException;
 
 public class AppId {
 
-    public static final String DISABLE_INSTRUCTIONS = "To disable this check, instantiate the U2F object using U2F.withoutAppIdValidation()";
-
     public final String value;
 
     public AppId(String appId) throws U2fBadConfigurationException {
@@ -24,10 +22,10 @@ public class AppId {
      */
     private static void checkIsValid(String appId) throws U2fBadConfigurationException {
         if(!appId.contains(":")) {
-            throw new U2fBadConfigurationException("App ID does not look like a valid facet or URL. Web facets must start with 'https://'. " + DISABLE_INSTRUCTIONS);
+            throw new U2fBadConfigurationException("App ID does not look like a valid facet or URL. Web facets must start with 'https://'.");
         }
         if(appId.startsWith("http:")) {
-            throw new U2fBadConfigurationException("HTTP is not supported for App IDs (by Chrome). Use HTTPS instead. " + DISABLE_INSTRUCTIONS);
+            throw new U2fBadConfigurationException("HTTP is not supported for App IDs (by Chrome). Use HTTPS instead.");
         }
         if(appId.startsWith("https://")) {
             URI url = checkValidUrl(appId);
@@ -38,7 +36,7 @@ public class AppId {
 
     private static void checkPathIsNotSlash(URI url) throws U2fBadConfigurationException {
         if("/".equals(url.getPath())) {
-            throw new U2fBadConfigurationException("The path of the URL set as App ID is '/'. This is probably not what you want -- remove the trailing slash of the App ID URL. " + DISABLE_INSTRUCTIONS);
+            throw new U2fBadConfigurationException("The path of the URL set as App ID is '/'. This is probably not what you want -- remove the trailing slash of the App ID URL.");
         }
     }
 
@@ -52,7 +50,7 @@ public class AppId {
 
     private static void checkNotIpAddress(URI url) throws U2fBadConfigurationException {
         if (InetAddresses.isInetAddress(url.getAuthority()) || (url.getHost() != null && InetAddresses.isInetAddress(url.getHost()))) {
-            throw new U2fBadConfigurationException("App ID must not be an IP-address, since it is not supported (by Chrome). Use a host name instead. " + DISABLE_INSTRUCTIONS);
+            throw new U2fBadConfigurationException("App ID must not be an IP-address, since it is not supported (by Chrome). Use a host name instead.");
         }
     }
 }
