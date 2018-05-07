@@ -58,7 +58,15 @@ public class ClientData {
         return node.asText();
     }
 
-    public void checkContent(String type, String challenge, Optional<Set<String>> facets) throws U2fBadInputException {
+    public void checkContent(String type, String challenge, Set<String> facets) throws U2fBadInputException {
+        checkContent(type, challenge, Optional.of(facets));
+    }
+
+    public void checkContent(String type, String challenge) throws U2fBadInputException {
+        checkContent(type, challenge, Optional.<Set<String>>absent());
+    }
+
+    private void checkContent(String type, String challenge, Optional<Set<String>> facets) throws U2fBadInputException {
         if (!type.equals(this.type)) {
             throw new U2fBadInputException("Bad clientData: wrong type " + this.type);
         }

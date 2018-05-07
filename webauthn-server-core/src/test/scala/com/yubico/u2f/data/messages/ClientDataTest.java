@@ -1,9 +1,7 @@
 package com.yubico.u2f.data.messages;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-import java.util.Set;
 import org.junit.Test;
 
 import static com.yubico.u2f.data.messages.ClientData.canonicalizeOrigin;
@@ -30,6 +28,6 @@ public class ClientDataTest {
     @Test
     public void shouldCheckContent() throws U2fBadInputException {
         ClientData clientData = new ClientData(CLIENT_DATA_REGISTRATION_BASE64);
-        clientData.checkContent("navigator.id.finishEnrollment", SERVER_CHALLENGE_REGISTER_BASE64, Optional.<Set<String>>of(ImmutableSet.of(APP_ID_ENROLL)));
+        clientData.checkContent("navigator.id.finishEnrollment", SERVER_CHALLENGE_REGISTER_BASE64, ImmutableSet.of(APP_ID_ENROLL));
     }
 }
