@@ -3,9 +3,8 @@ package com.yubico.u2f.data;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.yubico.u2f.data.messages.key.Client;
+import com.sun.security.ntlm.Client;
 import com.yubico.u2f.exceptions.InvalidDeviceCounterException;
-import com.yubico.u2f.softkey.SoftKey;
 import org.junit.Test;
 
 import static junit.framework.Assert.fail;
@@ -128,8 +127,7 @@ public class DeviceRegistrationTest {
         assertNotNull(new DeviceRegistration("A", "B", null, 0, false).toString());
     }
 
-    private DeviceRegistration getDeviceRegistration() throws Exception {
-        Client client = new Client(new SoftKey());
-        return client.register();
+    private DeviceRegistration getDeviceRegistration() {
+        return new DeviceRegistration("A", "B", "C", 0, false);
     }
 }
