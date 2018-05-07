@@ -7,11 +7,6 @@ import lombok.Getter;
 public class DeviceCompromisedException extends U2fAuthenticationException {
     private final DeviceRegistration deviceRegistration;
 
-    public DeviceCompromisedException(DeviceRegistration deviceRegistration, String message, Throwable cause) {
-        super(message, cause);
-        this.deviceRegistration = deviceRegistration;
-    }
-
     public DeviceCompromisedException(DeviceRegistration deviceRegistration, String message) {
         super(message);
         this.deviceRegistration = deviceRegistration;
