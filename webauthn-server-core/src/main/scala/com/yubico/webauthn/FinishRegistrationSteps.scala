@@ -218,7 +218,10 @@ case class FinishRegistrationSteps(
 
     def attestationType: AttestationType = attestationStatementVerifier.getAttestationType(attestation)
     def attestationTrustPath: Option[List[X509Certificate]] =
-      attestationStatementVerifier.asInstanceOf[X5cAttestationStatementVerifier].getAttestationTrustPath(attestation)
+      attestationStatementVerifier match {
+        case x5c: X5cAttestationStatementVerifier => x5c.getAttestationTrustPath(attestation)
+        case _ => None
+      }
   }
 
   case class Step15 private[webauthn] (
