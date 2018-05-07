@@ -11,6 +11,7 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.yubico.u2f.AppId;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.DeviceRegistration;
@@ -95,8 +96,8 @@ public class RawRegisterResponse {
         }
     }
 
-    public void checkSignature(String appId, String clientData) throws U2fBadInputException {
-        checkSignature(crypto.hash(appId), crypto.hash(clientData));
+    public void checkSignature(AppId appId, String clientData) throws U2fBadInputException {
+        checkSignature(crypto.hash(appId.value), crypto.hash(clientData));
     }
 
     public void checkSignature(byte[] appIdHash, byte[] clientDataHash) throws U2fBadInputException {

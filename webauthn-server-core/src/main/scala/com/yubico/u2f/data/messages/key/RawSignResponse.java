@@ -11,6 +11,7 @@ package com.yubico.u2f.data.messages.key;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import com.yubico.u2f.AppId;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
 import com.yubico.u2f.data.messages.SignResponse;
@@ -58,9 +59,9 @@ public class RawSignResponse {
         }
     }
 
-    public void checkSignature(String appId, String clientData, byte[] publicKey) throws U2fBadInputException {
+    public void checkSignature(AppId appId, String clientData, byte[] publicKey) throws U2fBadInputException {
         byte[] signedBytes = packBytesToSign(
-                crypto.hash(appId),
+                crypto.hash(appId.value),
                 userPresence,
                 counter,
                 crypto.hash(clientData)

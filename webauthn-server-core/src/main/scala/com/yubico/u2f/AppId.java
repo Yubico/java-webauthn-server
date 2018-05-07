@@ -9,13 +9,20 @@ public class AppId {
 
     public static final String DISABLE_INSTRUCTIONS = "To disable this check, instantiate the U2F object using U2F.withoutAppIdValidation()";
 
+    public final String value;
+
+    public AppId(String appId) throws U2fBadConfigurationException {
+        checkIsValid(appId);
+        this.value = appId;
+    }
+
     /**
      * Throws {@link U2fBadConfigurationException} if the given App ID is found to be incompatible with the U2F specification or any major
      * U2F Client implementation.
      *
      * @param appId the App ID to be validated
      */
-    public static void checkIsValid(String appId) throws U2fBadConfigurationException {
+    private static void checkIsValid(String appId) throws U2fBadConfigurationException {
         if(!appId.contains(":")) {
             throw new U2fBadConfigurationException("App ID does not look like a valid facet or URL. Web facets must start with 'https://'. " + DISABLE_INSTRUCTIONS);
         }

@@ -48,7 +48,7 @@ public class AppIdTest {
 
     private static boolean isValid(String appId) {
         try {
-            AppId.checkIsValid(appId);
+            new AppId(appId);
             return true;
         } catch (U2fBadConfigurationException e) {
             return false;
