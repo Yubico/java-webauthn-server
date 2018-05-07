@@ -11,7 +11,7 @@ public enum DocumentStatus {
     WORKING_DRAFT("working-draft"),
     CANDIDATE_RECOMMENDATION("candidate-recommendation");
 
-    private String name;
+    private final String name;
 
     DocumentStatus(String name) {
         this.name = name;
