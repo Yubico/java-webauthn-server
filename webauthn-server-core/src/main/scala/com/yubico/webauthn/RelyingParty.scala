@@ -20,6 +20,7 @@ import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.AttestationConveyancePreference
+import com.yubico.webauthn.data.RegistrationResult
 
 import scala.util.Try
 

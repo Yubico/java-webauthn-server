@@ -3,7 +3,7 @@ package demo.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
-import com.yubico.webauthn.RegistrationResult;
+import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
 import demo.webauthn.json.ScalaJackson;
 import java.time.Instant;

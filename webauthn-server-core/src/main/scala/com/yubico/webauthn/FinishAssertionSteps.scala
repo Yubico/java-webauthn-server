@@ -14,6 +14,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.TokenBindingValidator
+import com.yubico.webauthn.data.RegisteredCredential
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 

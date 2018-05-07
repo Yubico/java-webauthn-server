@@ -6,7 +6,7 @@ import com.google.common.cache.CacheBuilder;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.CredentialRepository;
-import com.yubico.webauthn.RegisteredCredential;
+import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.data.CredentialRegistration;

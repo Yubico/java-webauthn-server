@@ -3,6 +3,7 @@ package com.yubico.webauthn
 import java.util.Optional
 
 import com.yubico.webauthn.data.Base64UrlString
+import com.yubico.webauthn.data.RegisteredCredential
 
 
 trait CredentialRepository {

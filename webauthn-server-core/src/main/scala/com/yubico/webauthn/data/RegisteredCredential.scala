@@ -1,8 +1,6 @@
-package com.yubico.webauthn
+package com.yubico.webauthn.data
 
 import java.security.PublicKey
-
-import com.yubico.webauthn.data.ArrayBuffer
 
 
 case class RegisteredCredential(
@@ -18,4 +16,3 @@ case class RegisteredCredential(
     userHandle: Array[Byte]
   ) = this(credentialId, publicKey, signatureCount, userHandle.toVector)
 }
-
