@@ -49,7 +49,7 @@ public class RawCodecTest {
     }
 
     @Test
-    public void testEncodeRegisterSignedBytes() throws Exception {
+    public void testEncodeRegisterSignedBytes() {
         byte[] encodedBytes = RawRegisterResponse.packBytesToSign(APP_ID_ENROLL_SHA256,
                 CLIENT_DATA_ENROLL_SHA256, KEY_HANDLE, USER_PUBLIC_KEY_REGISTER_HEX);
         assertArrayEquals(EXPECTED_REGISTER_SIGNED_BYTES, encodedBytes);
@@ -65,7 +65,7 @@ public class RawCodecTest {
     }
 
     @Test
-    public void testEncodeSignResponse() throws Exception {
+    public void testEncodeSignResponse() {
         RawSignResponse rawSignResponse = new RawSignResponse(
                 RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, SIGNATURE_SIGN);
 
@@ -84,7 +84,7 @@ public class RawCodecTest {
     }
 
     @Test
-    public void testEncodeSignedBytes() throws Exception {
+    public void testEncodeSignedBytes() {
         byte[] encodedBytes = RawSignResponse.packBytesToSign(APP_ID_SIGN_SHA256,
                 RawSignResponse.USER_PRESENT_FLAG, COUNTER_VALUE, CLIENT_DATA_SIGN_SHA256);
 

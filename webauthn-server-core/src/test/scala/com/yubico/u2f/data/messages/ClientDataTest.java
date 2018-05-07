@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 public class ClientDataTest {
 
     @Test
-    public void shouldCanonicalizeOrigin() throws U2fBadInputException {
+    public void shouldCanonicalizeOrigin() {
         assertEquals("http://example.com", canonicalizeOrigin("http://example.com"));
         assertEquals("http://example.com", canonicalizeOrigin("http://example.com/"));
         assertEquals("http://example.com", canonicalizeOrigin("http://example.com/foo"));

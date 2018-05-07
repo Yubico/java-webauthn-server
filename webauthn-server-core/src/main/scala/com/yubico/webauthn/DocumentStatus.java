@@ -19,7 +19,7 @@ public enum DocumentStatus {
 
     static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<DocumentStatus> {
         @Override
-        public void serialize(DocumentStatus documentStatus, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+        public void serialize(DocumentStatus documentStatus, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
             jsonGenerator.writeString(documentStatus.name);
         }
     }
