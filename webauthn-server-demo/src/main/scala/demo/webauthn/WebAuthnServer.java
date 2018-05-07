@@ -8,12 +8,15 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.util.BinaryUtil;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
@@ -32,6 +35,7 @@ import java.util.function.Function;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.immutable.Vector;
 import scala.util.Either;
 import scala.util.Left;
 import scala.util.Right;
@@ -246,62 +250,67 @@ public class WebAuthnServer {
                 if (username == null) {
                     return Left.apply(Arrays.asList("User not registered: " + request.getUsername().orElse(userHandle.get())));
                 } else {
-                    boolean usernameOwnsCredential = userStorage.usernameOwnsCredential(username, response.getCredential().id());
+                    PublicKeyCredential<AuthenticatorAssertionResponse> credentialWithUserHandle =
+                        userHandle.isPresent()
+                            ? response.getCredential()
+                            : response.getCredential().copy(
+                                response.getCredential().rawId(),
+                                response.getCredential().response().copy(
+                                    response.getCredential().response().clientDataJSON(),
+                                    response.getCredential().response().authenticatorData(),
+                                    response.getCredential().response().signature(),
+                                    userStorage.getUserHandle(username)
+                                ),
+                                response.getCredential().clientExtensionResults()
+                              )
+                    ;
 
-                    if (!usernameOwnsCredential) {
-                        return Left.apply(Collections.singletonList(String.format(
-                            "User \"%s\" does not own credential: %s",
-                            request.getUsername(),
-                            response.getCredential().id()
-                        )));
-                    } else {
-                        Try<Object> assertionTry = rp.finishAssertion(
-                            request.getPublicKeyCredentialRequestOptions(),
-                            response.getCredential(),
-                            Optional.empty()
-                        );
+                    Try<Object> assertionTry = rp.finishAssertion(
+                        request.getPublicKeyCredentialRequestOptions(),
+                        credentialWithUserHandle,
+                        Optional.empty()
+                    );
 
-                        if (assertionTry.isSuccess()) {
-                            if ((boolean) assertionTry.get()) {
-                                final CredentialRegistration credentialRegistration = userStorage.getRegistrationByUsernameAndCredentialId(
+                    if (assertionTry.isSuccess()) {
+                        if ((boolean) assertionTry.get()) {
+                            final CredentialRegistration credentialRegistration = userStorage.getRegistrationByUsernameAndCredentialId(
+                                username,
+                                response.getCredential().id()
+                            ).get();
+
+                            final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
+                                response.getCredential().response().parsedAuthenticatorData().signatureCounter()
+                            );
+
+                            try {
+                                userStorage.updateSignatureCountForUsername(
                                     username,
-                                    response.getCredential().id()
-                                ).get();
-
-                                final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
+                                    response.getCredential().id(),
                                     response.getCredential().response().parsedAuthenticatorData().signatureCounter()
                                 );
-
-                                try {
-                                    userStorage.updateSignatureCountForUsername(
-                                        username,
-                                        response.getCredential().id(),
-                                        response.getCredential().response().parsedAuthenticatorData().signatureCounter()
-                                    );
-                                } catch (Exception e) {
-                                    logger.error(
-                                        "Failed to update signature count for user \"{}\", credential \"{}\"",
-                                        request.getUsername(),
-                                        response.getCredential().id(),
-                                        e
-                                    );
-                                }
-
-                                return Right.apply(
-                                    new SuccessfulAuthenticationResult(
-                                        request,
-                                        response,
-                                        userStorage.getRegistrationsByUsername(username)
-                                    )
+                            } catch (Exception e) {
+                                logger.error(
+                                    "Failed to update signature count for user \"{}\", credential \"{}\"",
+                                    request.getUsername(),
+                                    response.getCredential().id(),
+                                    e
                                 );
-                            } else {
-                                return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                             }
 
+                            return Right.apply(
+                                new SuccessfulAuthenticationResult(
+                                    request,
+                                    response,
+                                    userStorage.getRegistrationsByUsername(username)
+                                )
+                            );
                         } else {
-                            logger.debug("Assertion failed", assertionTry.failed().get());
-                            return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+                            return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                         }
+
+                    } else {
+                        logger.debug("Assertion failed", assertionTry.failed().get());
+                        return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
                     }
                 }
             }
