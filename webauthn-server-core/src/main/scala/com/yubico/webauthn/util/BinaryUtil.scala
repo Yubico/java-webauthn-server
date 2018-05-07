@@ -3,8 +3,11 @@ package com.yubico.webauthn.util
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.u2f.exceptions.U2fBadInputException
 import com.yubico.webauthn.data.HexString
 import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.data.Base64UrlString
 
 import scala.util.Try
 
@@ -35,6 +38,10 @@ object BinaryUtil {
         throw new IllegalArgumentException(s"Hex string must be of even length, was: ${hex.length}")
     }
   )
+
+  def fromBase64(base64: Base64UrlString): Vector[Byte] = Try(
+    U2fB64Encoding.decode(base64).toVector
+  ) getOrElse { throw new U2fBadInputException("Bad base64 encoding") }
 
   /**
     * Read one byte as an unsigned 8-bit integer.
