@@ -2,6 +2,7 @@ package demo.webauthn;
 
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

@@ -1,16 +1,16 @@
-package demo.webauthn;
+package demo.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import lombok.Value;
 
 @Value
-public class AssertionResponse {
+public class RegistrationResponse {
 
     String requestId;
 
     @JsonIgnoreProperties({ "rawId" })
-    PublicKeyCredential<AuthenticatorAssertionResponse> credential;
+    PublicKeyCredential<AuthenticatorAttestationResponse> credential;
 
 }

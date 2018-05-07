@@ -1,4 +1,4 @@
-package demo.webauthn;
+package demo.webauthn.data;
 
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import lombok.EqualsAndHashCode;

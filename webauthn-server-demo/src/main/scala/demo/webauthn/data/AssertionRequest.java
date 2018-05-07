@@ -1,4 +1,4 @@
-package demo.webauthn;
+package demo.webauthn.data;
 
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;

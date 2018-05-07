@@ -9,6 +9,7 @@ import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.util.WebAuthnCodecs;
+import demo.webauthn.data.CredentialRegistration;
 import java.security.PublicKey;
 import java.util.Collection;
 import java.util.HashSet;
