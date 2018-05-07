@@ -9,6 +9,9 @@
 
 package com.yubico.u2f.exceptions;
 
+/**
+ * Thrown when invalid data is given to the server by an external caller.
+ */
 @SuppressWarnings("serial")
 public class U2fBadInputException extends Exception {
 
