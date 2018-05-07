@@ -25,8 +25,7 @@ import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
 
 /**
- * The register response produced by the token/key, which is transformed by the client into an RegisterResponse
- * and sent to the server.
+ * The register response produced by the token/key
  */
 @EqualsAndHashCode
 public class RawRegisterResponse {

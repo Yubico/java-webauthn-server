@@ -14,7 +14,6 @@ import com.google.common.io.ByteStreams;
 import com.yubico.u2f.AppId;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.SignResponse;
 import com.yubico.u2f.data.messages.key.util.ByteInputStream;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
@@ -22,8 +21,7 @@ import java.io.IOException;
 import lombok.EqualsAndHashCode;
 
 /**
- * The sign response produced by the token/key, which is transformed by the client into an
- * {@link SignResponse} and sent to the server.
+ * The sign response produced by the token/key
  */
 @EqualsAndHashCode(of = { "userPresence", "counter", "signature" })
 public class RawSignResponse {
