@@ -15,7 +15,6 @@ import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.UserIdentity;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -63,9 +62,6 @@ public class WebAuthnServer {
         true,
         false
     );
-
-    public WebAuthnServer() throws MalformedURLException {
-    }
 
     private static <K, V> Cache<K, V> newCache() {
         return CacheBuilder.newBuilder()
