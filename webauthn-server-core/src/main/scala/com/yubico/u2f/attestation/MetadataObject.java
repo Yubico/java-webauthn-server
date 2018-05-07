@@ -100,8 +100,8 @@ public class MetadataObject extends JsonSerializable {
 
     public static MetadataObject fromJson(String json) throws U2fBadConfigurationException {
         try {
-            return new MetadataObject(OBJECT_MAPPER.readTree(json));
-        } catch (IOException e) {
+            return fromJson(json, MetadataObject.class);
+        } catch (U2fBadInputException e) {
             throw new U2fBadConfigurationException("Malformed data", e);
         }
     }
