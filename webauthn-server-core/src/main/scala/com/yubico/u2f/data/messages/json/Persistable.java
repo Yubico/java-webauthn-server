@@ -5,7 +5,7 @@ import java.io.Serializable;
 
 public interface Persistable extends Serializable {
     @JsonIgnore
-    public String getRequestId();
+    String getRequestId();
 
-    public String toJson();
+    String toJson();
 }

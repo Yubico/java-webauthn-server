@@ -6,5 +6,5 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.security.cert.X509Certificate;
 
 public interface DeviceMatcher {
-    public boolean matches(X509Certificate attestationCertificate, JsonNode parameters);
+    boolean matches(X509Certificate attestationCertificate, JsonNode parameters);
 }

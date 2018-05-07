@@ -122,7 +122,7 @@ public class MetadataService {
             String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
             return cache.get(fingerprint, new Callable<Attestation>() {
                 @Override
-                public Attestation call() throws Exception {
+                public Attestation call() {
                     return lookupAttestation(attestationCertificate);
                 }
             });
