@@ -19,6 +19,7 @@ import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
+import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Arrays;

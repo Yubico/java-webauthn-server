@@ -1,4 +1,4 @@
-package demo.webauthn
+package demo.webauthn.json
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.Base64Variants

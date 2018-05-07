@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.VersionInfo$;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.RegistrationRequest;
+import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;

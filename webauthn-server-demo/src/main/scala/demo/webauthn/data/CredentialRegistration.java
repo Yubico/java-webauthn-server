@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
-import demo.webauthn.ScalaJackson;
+import demo.webauthn.json.ScalaJackson;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Value;
