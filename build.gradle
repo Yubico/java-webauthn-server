@@ -112,15 +112,10 @@ subprojects {
 
           pom.project {
             name project.description
-            description 'Java server-side library for U2F'
+            description 'Java server-side library for Web Authentication'
             url 'https://developers.yubico.com/'
 
             developers {
-              developer {
-                id 'dain'
-                name 'Dain Nilsson'
-                email 'dain@yubico.com'
-              }
               developer {
                 id 'emil'
                 name 'Emil Lundberg'
@@ -136,9 +131,9 @@ subprojects {
             }
 
             scm {
-              url 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
-              connection 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
-              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-u2flib-server.git'
+              url 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              connection 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
               tag 'HEAD'
             }
           }
