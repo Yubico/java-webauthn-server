@@ -85,18 +85,6 @@ public class MetadataService {
         this(resolver, null, null);
     }
 
-    public MetadataService(MetadataResolver resolver, Map<String, ? extends DeviceMatcher> matchers) {
-        this(resolver, null, matchers);
-    }
-
-    public MetadataService(MetadataResolver resolver, Cache<String, Attestation> cache) {
-        this(resolver, cache, null);
-    }
-
-    public void registerDeviceMatcher(String matcherType, DeviceMatcher matcher) {
-        matchers.put(matcherType, matcher);
-    }
-
     private boolean deviceMatches(JsonNode selectors, X509Certificate attestationCertificate) {
         if (selectors != null && !selectors.isNull()) {
             for (JsonNode selector : selectors) {
