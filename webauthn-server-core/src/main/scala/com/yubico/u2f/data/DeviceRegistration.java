@@ -26,7 +26,7 @@ import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
-@EqualsAndHashCode(of = { "keyHandle", "publicKey", "attestationCert" })
+@EqualsAndHashCode(of = { "keyHandle", "publicKey", "attestationCert" }, callSuper = false)
 public class DeviceRegistration extends JsonSerializable implements Serializable {
     private static final long serialVersionUID = -142942195464329902L;
     public static final long INITIAL_COUNTER_VALUE = -1;

@@ -18,7 +18,7 @@ import java.util.Map;
 import lombok.EqualsAndHashCode;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@EqualsAndHashCode(of = { "data" })
+@EqualsAndHashCode(of = { "data" }, callSuper = false)
 public class MetadataObject extends JsonSerializable {
     private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {
     };
