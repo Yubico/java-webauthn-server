@@ -278,9 +278,7 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
 
 function getAuthenticateRequest(urls, username) {
   return fetch(urls.authenticate, {
-    body: new URLSearchParams({
-      username,
-    }),
+    body: new URLSearchParams(username ? { username } : {}),
     method: 'POST',
   })
     .then(response => response.json())
