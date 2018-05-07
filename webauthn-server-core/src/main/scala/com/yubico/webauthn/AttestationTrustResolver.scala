@@ -1,4 +1,4 @@
-package com.yubico.webauthn.impl
+package com.yubico.webauthn
 
 import java.util.Optional
 

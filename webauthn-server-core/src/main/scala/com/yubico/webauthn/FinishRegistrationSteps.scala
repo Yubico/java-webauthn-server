@@ -25,7 +25,6 @@ import com.yubico.webauthn.data.Preferred
 import com.yubico.webauthn.data.NoneAttestation
 import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
-import com.yubico.webauthn.impl.AttestationTrustResolver
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.X5cAttestationStatementVerifier
