@@ -1,4 +1,4 @@
-package com.yubico.webauthn
+package com.yubico.webauthn.impl
 
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs

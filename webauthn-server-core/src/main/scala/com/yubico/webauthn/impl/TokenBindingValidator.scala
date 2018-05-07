@@ -1,8 +1,12 @@
-package com.yubico.webauthn.data
+package com.yubico.webauthn.impl
 
 import java.util.Optional
 
 import com.yubico.scala.util.JavaConverters._
+import com.yubico.webauthn.data.TokenBindingInfo
+import com.yubico.webauthn.data.Supported
+import com.yubico.webauthn.data.Present
+import com.yubico.webauthn.data.NotSupported
 
 
 object TokenBindingValidator {
