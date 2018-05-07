@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.yubico.u2f.data.messages.json.JsonSerializable;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.io.IOException;
 import java.util.List;
@@ -36,18 +37,18 @@ public class MetadataObject extends JsonSerializable {
     private final List<JsonNode> devices;
 
     @JsonCreator
-    public MetadataObject(JsonNode data) throws U2fBadInputException {
+    public MetadataObject(JsonNode data) throws U2fBadConfigurationException {
         this.data = data;
         try {
             vendorInfo = OBJECT_MAPPER.readValue(data.get("vendorInfo").traverse(), MAP_STRING_STRING_TYPE);
             trustedCertificates = OBJECT_MAPPER.readValue(data.get("trustedCertificates").traverse(), LIST_STRING_TYPE);
             devices = OBJECT_MAPPER.readValue(data.get("devices").traverse(), LIST_JSONNODE_TYPE);
         } catch (JsonMappingException e) {
-            throw new U2fBadInputException("Invalid JSON data", e);
+            throw new U2fBadConfigurationException("Invalid JSON data", e);
         } catch (JsonParseException e) {
-            throw new U2fBadInputException("Invalid JSON data", e);
+            throw new U2fBadConfigurationException("Invalid JSON data", e);
         } catch (IOException e) {
-            throw new U2fBadInputException("Invalid JSON data", e);
+            throw new U2fBadConfigurationException("Invalid JSON data", e);
         }
 
         identifier = data.get("identifier").asText();
@@ -79,7 +80,7 @@ public class MetadataObject extends JsonSerializable {
         return MoreObjects.firstNonNull(devices, ImmutableList.<JsonNode>of());
     }
 
-    public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadInputException {
+    public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadConfigurationException {
         JsonNode items;
         try {
             items = OBJECT_MAPPER.readValue(jsonData, JsonNode.class);
@@ -87,7 +88,7 @@ public class MetadataObject extends JsonSerializable {
                 items = OBJECT_MAPPER.createArrayNode().add(items);
             }
         } catch (IOException e) {
-            throw new U2fBadInputException("Malformed data", e);
+            throw new U2fBadConfigurationException("Malformed data", e);
         }
 
         ImmutableList.Builder<MetadataObject> objects = ImmutableList.builder();
@@ -97,11 +98,11 @@ public class MetadataObject extends JsonSerializable {
         return objects.build();
     }
 
-    public static MetadataObject fromJson(String json) throws U2fBadInputException {
+    public static MetadataObject fromJson(String json) throws U2fBadConfigurationException {
         try {
             return new MetadataObject(OBJECT_MAPPER.readTree(json));
         } catch (IOException e) {
-            throw new U2fBadInputException("Malformed data", e);
+            throw new U2fBadConfigurationException("Malformed data", e);
         }
     }
 }

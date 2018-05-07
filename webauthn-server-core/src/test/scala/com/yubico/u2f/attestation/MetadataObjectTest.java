@@ -2,6 +2,7 @@ package com.yubico.u2f.attestation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class MetadataObjectTest {
     }
 
     @Test
-    public void testParseFromJson() throws U2fBadInputException {
+    public void testParseFromJson() throws U2fBadConfigurationException {
         MetadataObject parsed1 = Iterables.getOnlyElement(MetadataObject.parseFromJson(JSON));
         MetadataObject parsed2 = Iterables.getOnlyElement(MetadataObject.parseFromJson("[" + JSON + "]"));
         MetadataObject expected = MetadataObject.fromJson(JSON);

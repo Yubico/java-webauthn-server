@@ -16,6 +16,7 @@ import com.google.common.io.Closeables;
 import com.yubico.u2f.attestation.matchers.ExtensionMatcher;
 import com.yubico.u2f.attestation.matchers.FingerprintMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +56,7 @@ public class MetadataService {
             logger.error("createDefaultMetadataResolver failed", e);
         } catch (CertificateException e) {
             logger.error("createDefaultMetadataResolver failed", e);
-        } catch (U2fBadInputException e) {
+        } catch (U2fBadConfigurationException e) {
             logger.error("createDefaultMetadataResolver failed", e);
         } finally {
             Closeables.closeQuietly(is);
