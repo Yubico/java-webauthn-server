@@ -17,13 +17,6 @@ public class Attestation implements Serializable {
     private final Map<String, String> deviceProperties;
     private final Set<Transport> transports;
 
-    private Attestation() {
-        metadataIdentifier = null;
-        vendorProperties = null;
-        deviceProperties = null;
-        transports = Sets.immutableEnumSet(null);
-    }
-
     public Attestation(String metadataIdentifier, Map<String, String> vendorProperties, Map<String, String> deviceProperties, Set<Transport> transports) {
         this.metadataIdentifier = metadataIdentifier;
         this.vendorProperties = vendorProperties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(vendorProperties);

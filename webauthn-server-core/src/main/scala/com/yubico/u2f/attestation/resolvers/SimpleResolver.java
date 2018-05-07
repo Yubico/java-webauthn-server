@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap;
 import com.yubico.u2f.attestation.MetadataObject;
 import com.yubico.u2f.attestation.MetadataResolver;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -25,7 +26,7 @@ public class SimpleResolver implements MetadataResolver {
     private final Multimap<String, X509Certificate> certs = ArrayListMultimap.create();
     private final Map<X509Certificate, MetadataObject> metadata = new HashMap<X509Certificate, MetadataObject>();
 
-    public void addMetadata(String jsonData) throws CertificateException, U2fBadInputException {
+    public void addMetadata(String jsonData) throws CertificateException, U2fBadConfigurationException {
         for (MetadataObject object : MetadataObject.parseFromJson(jsonData)) {
             addMetadata(object);
         }

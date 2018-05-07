@@ -11,17 +11,11 @@ package com.yubico.u2f;
 
 import com.google.common.io.BaseEncoding;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -32,8 +26,6 @@ import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.math.ec.ECPoint;
 
 public class TestUtils {
 
@@ -80,38 +72,4 @@ public class TestUtils {
         }
     }
 
-    public static PublicKey parsePublicKey(byte[] keyBytes) {
-        try {
-            X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
-            ECParameterSpec curveSpec = new ECParameterSpec(curve.getCurve(), curve.getG(), curve.getN(),
-                    curve.getH());
-            ECPoint point = curve.getCurve().decodePoint(keyBytes);
-            return KeyFactory.getInstance("ECDSA").generatePublic(
-                    new ECPublicKeySpec(point, curveSpec));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (InvalidKeySpecException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static byte[] serialize(Object o) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream objectOut = new ObjectOutputStream(out);
-        objectOut.writeObject(o);
-        objectOut.close();
-        return out.toByteArray();
-    }
-
-    public static <T> T deserialize(byte[] serialized) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream is = new ByteArrayInputStream(serialized);
-        ObjectInputStream objectIn = new ObjectInputStream(is);
-        T object = (T) objectIn.readObject();
-        objectIn.close();
-        return  object;
-    }
-
-    public static <T> T clone(T input) throws IOException, ClassNotFoundException {
-        return deserialize(serialize(input));
-    }
 }

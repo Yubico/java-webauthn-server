@@ -9,7 +9,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.EnumSet;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -105,7 +105,7 @@ public class MetadataServiceTest {
         JsonNode device = mock(JsonNode.class);
         MetadataObject metadata = mock(MetadataObject.class);
         when(metadata.getDevices()).thenReturn(ImmutableList.of(device));
-        when(resolver.resolve(Matchers.<X509Certificate>any())).thenReturn(metadata);
+        when(resolver.resolve(ArgumentMatchers.<X509Certificate>any())).thenReturn(metadata);
 
         MetadataService service = new MetadataService(resolver);
 

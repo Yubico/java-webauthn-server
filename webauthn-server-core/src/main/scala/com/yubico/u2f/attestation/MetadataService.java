@@ -16,6 +16,7 @@ import com.google.common.io.Closeables;
 import com.yubico.u2f.attestation.matchers.ExtensionMatcher;
 import com.yubico.u2f.attestation.matchers.FingerprintMatcher;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +56,7 @@ public class MetadataService {
             logger.error("createDefaultMetadataResolver failed", e);
         } catch (CertificateException e) {
             logger.error("createDefaultMetadataResolver failed", e);
-        } catch (U2fBadInputException e) {
+        } catch (U2fBadConfigurationException e) {
             logger.error("createDefaultMetadataResolver failed", e);
         } finally {
             Closeables.closeQuietly(is);
@@ -85,18 +86,6 @@ public class MetadataService {
         this(resolver, null, null);
     }
 
-    public MetadataService(MetadataResolver resolver, Map<String, ? extends DeviceMatcher> matchers) {
-        this(resolver, null, matchers);
-    }
-
-    public MetadataService(MetadataResolver resolver, Cache<String, Attestation> cache) {
-        this(resolver, cache, null);
-    }
-
-    public void registerDeviceMatcher(String matcherType, DeviceMatcher matcher) {
-        matchers.put(matcherType, matcher);
-    }
-
     private boolean deviceMatches(JsonNode selectors, X509Certificate attestationCertificate) {
         if (selectors != null && !selectors.isNull()) {
             for (JsonNode selector : selectors) {
@@ -122,7 +111,7 @@ public class MetadataService {
             String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
             return cache.get(fingerprint, new Callable<Attestation>() {
                 @Override
-                public Attestation call() throws Exception {
+                public Attestation call() {
                     return lookupAttestation(attestationCertificate);
                 }
             });
