@@ -43,13 +43,11 @@ public class AppId {
     }
 
     private static URI checkValidUrl(String appId) throws U2fBadConfigurationException {
-        URI url = null;
         try {
-            url = new URI(appId);
+            return new URI(appId);
         } catch (URISyntaxException e) {
             throw new U2fBadConfigurationException("App ID looks like a HTTPS URL, but has syntax errors.", e);
         }
-        return url;
     }
 
     private static void checkNotIpAddress(URI url) throws U2fBadConfigurationException {
