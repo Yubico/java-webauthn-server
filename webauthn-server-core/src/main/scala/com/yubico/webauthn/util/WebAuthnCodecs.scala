@@ -1,25 +1,19 @@
 package com.yubico.webauthn.util
 
-import java.security.Provider
 import java.security.interfaces.ECPublicKey
 
 import com.fasterxml.jackson.core.Base64Variants
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory
 import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import COSE.OneKey
 
 import scala.collection.JavaConverters._
 
 
 object WebAuthnCodecs {
-
-  private val javaCryptoProvider: Provider = new BouncyCastleProvider
-  private def jsonFactory = JsonNodeFactory.instance
 
   def cbor: ObjectMapper = new ObjectMapper(new CBORFactory()).setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
 
@@ -55,11 +49,8 @@ object WebAuthnCodecs {
   def ecPublicKeyToCose(key: ECPublicKey): ArrayBuffer = rawEcdaKeyToCose(ecPublicKeyToRaw(key))
 
   def importCoseP256PublicKey(key: Array[Byte]): ECPublicKey = importCoseP256PublicKey(key.toVector)
-  def importCoseP256PublicKey(key: ArrayBuffer): ECPublicKey = {
-    val cbor = CBORObject.DecodeFromBytes(key.toArray)
-    val pubKey = new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.toArray)))
-    pubKey
-  }
+  def importCoseP256PublicKey(key: ArrayBuffer): ECPublicKey =
+    new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.toArray)))
 
   def javaAlgorithmNameToCoseAlgorithmIdentifier(alg: String): COSEAlgorithmIdentifier = alg match {
     case "ECDSA" | "ES256" => -7
