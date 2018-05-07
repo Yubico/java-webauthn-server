@@ -92,7 +92,7 @@ public class ClientData {
         }
     }
 
-    public static Set<String> canonicalizeOrigins(Set<String> origins) {
+    private static Set<String> canonicalizeOrigins(Set<String> origins) {
         ImmutableSet.Builder<String> result = ImmutableSet.builder();
         for (String origin : origins) {
             result.add(canonicalizeOrigin(origin));
@@ -100,7 +100,7 @@ public class ClientData {
         return result.build();
     }
 
-    public static String canonicalizeOrigin(String url) {
+    static String canonicalizeOrigin(String url) {
         try {
             URI uri = new URI(url);
             if (uri.getAuthority() == null) {
