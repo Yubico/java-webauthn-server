@@ -8,6 +8,7 @@ import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.util.BinaryUtil;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.data.CredentialRegistration;
 import java.security.PublicKey;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.collection.immutable.Vector;
 
 public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
 
@@ -74,6 +76,13 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
         return getRegistrationsByUserHandle(userHandleBase64).stream()
             .findAny()
             .map(CredentialRegistration::getUsername);
+    }
+
+    @Override
+    public Optional<Vector<Object>> getUserHandle(String username) {
+        return getRegistrationsByUsername(username).stream()
+            .findAny()
+            .map(reg -> BinaryUtil.fromBase64(reg.getUserIdentity().idBase64()));
     }
 
     @Override

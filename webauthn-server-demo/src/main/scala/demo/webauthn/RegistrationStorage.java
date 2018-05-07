@@ -6,6 +6,7 @@ import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import scala.collection.immutable.Vector;
 
 public interface RegistrationStorage extends CredentialRepository {
 
@@ -16,6 +17,7 @@ public interface RegistrationStorage extends CredentialRepository {
     Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, String idBase64);
     Collection<CredentialRegistration> getRegistrationsByUserHandle(String userHandleBase64);
     Optional<String> getUsername(String userHandleBase64);
+    Optional<Vector<Object>> getUserHandle(String username);
 
     boolean removeRegistrationByUsername(String username, CredentialRegistration credentialRegistration);
 
