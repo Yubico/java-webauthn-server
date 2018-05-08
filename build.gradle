@@ -12,7 +12,6 @@ plugins {
   id 'net.researchgate.release' version '2.4.0'
 }
 
-import com.yubico.gradle.plugins.signing.GpgSigningPlugin
 
 project.ext.publishEnabled = System.env.CI != 'true' && project.hasProperty('ossrhUsername')
 
@@ -24,24 +23,26 @@ if (publishEnabled) {
   }
 }
 
+task wrapper(type: Wrapper) {
+  gradleVersion = '4.5.1'
+}
+
 allprojects  {
   apply plugin: 'java'
   apply plugin: 'maven'
+  apply plugin: 'signing'
+  apply plugin: 'idea'
 
   if (publishEnabled) {
-    apply plugin: GpgSigningPlugin
     signing {
+      useGpgCmd()
       sign configurations.archives
     }
     signArchives.dependsOn check
   }
 
-  task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
-  }
-
   group = 'com.yubico'
-  version = '0.19.0'
+  version = '0.1.0'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
@@ -55,6 +56,9 @@ allprojects  {
 
     maven { url "http://repo.maven.apache.org/maven2" }
   }
+
+
+  idea.module { downloadJavadoc = true }
 }
 
 evaluationDependsOnChildren()
@@ -108,15 +112,10 @@ subprojects {
 
           pom.project {
             name project.description
-            description 'Java server-side library for U2F'
+            description 'Java server-side library for Web Authentication'
             url 'https://developers.yubico.com/'
 
             developers {
-              developer {
-                id 'dain'
-                name 'Dain Nilsson'
-                email 'dain@yubico.com'
-              }
               developer {
                 id 'emil'
                 name 'Emil Lundberg'
@@ -132,9 +131,9 @@ subprojects {
             }
 
             scm {
-              url 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
-              connection 'scm:git:git://github.com/Yubico/java-u2flib-server.git'
-              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-u2flib-server.git'
+              url 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              connection 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
               tag 'HEAD'
             }
           }
@@ -145,7 +144,7 @@ subprojects {
 
 }
 
-configure(subprojects.findAll { it.name != 'u2flib-server-demo' }) {
+subprojects {
   apply plugin: 'info.solidsoft.pitest'
 
   pitest {

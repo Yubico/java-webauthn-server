@@ -1,0 +1,49 @@
+description = 'WebAuthn demo'
+
+apply plugin: 'scala'
+apply plugin: 'war'
+apply plugin: 'application'
+apply from: 'gretty-2.0.0.plugin'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+dependencies {
+
+  compile(
+    project(':webauthn-server-core'),
+
+    'com.fasterxml.jackson.core:jackson-core:2.6.5',
+    'com.fasterxml.jackson.core:jackson-databind:2.6.5',
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.5',
+    'com.fasterxml.jackson.module:jackson-module-scala_2.11:2.6.5',
+    'com.google.guava:guava:24.1-jre',
+    'javax.ws.rs:javax.ws.rs-api:2.1',
+    'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
+    'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
+    'org.scala-lang:scala-library:2.11.3',
+  )
+
+  runtime(
+    'ch.qos.logback:logback-classic:1.2.3',
+    'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
+    'org.glassfish.jersey.inject:jersey-hk2:2.26',
+  )
+
+  modules {
+    module('javax.servlet:servlet-api') {
+      replacedBy('javax.servlet:javax.servlet-api')
+    }
+  }
+}
+
+mainClassName = 'demo.webauthn.EmbeddedServer'
+
+gretty {
+  contextPath = '/webauthn'
+  httpEnabled = false
+  httpsEnabled = true
+  servletContainer = 'jetty7' // Orders of magnitude faster than jetty9
+  sslKeyStorePassword = 'p@ssw0rd'
+  sslKeyStorePath = file('keystore.jks')
+}

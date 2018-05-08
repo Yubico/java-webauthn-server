@@ -1,0 +1,54 @@
+= webauthn-server-demo
+
+A simple self-contained demo server supporting multiple authenticators per user.
+The central part is the
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/WebAuthnServer.java[WebAuthnServer]
+class, and the
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/WebAuthnResource.java[WebAuthnResource]
+class which provides the REST API on top of it.
+
+=== 1. Clone
+ git clone https://github.com/Yubico/java-webauthn-server.git
+
+=== 2. Run
+ ./gradlew :webauthn-server-demo:appRun
+
+=== 3. Try it out
+Then point a WebAuthn compatible web browser to
+link:https://localhost:8443/webauthn/[https://localhost:8443/webauthn/].
+
+NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
+certificate. This will cause your browser to show a warning, which is safe to
+bypass.
+
+
+== Standalone REST server
+
+ 1. Build the standalone REST server distribution:
+
+     ../gradlew distTar
+
+ 2. Unpack `build/distributions/webauthn-server-demo-X.Y.Z.tar` somewhere
+
+ 3. Run `webauthn-server-demo-X.Y.Z/bin/webauthn-server-demo`. You should also
+    set the following environment variables:
+
+    - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
+      `YUBICO_WEBAUTHN_PORT=8081`
+
+    - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
+      server will accept requests for. Example:
+      `YUBICO_WEBAUTHN_ALLOWED_ORIGINS=http://demo.yubico.com:8080`
+
+    - `YUBICO_WEBAUTHN_RP_ID`: The https://www.w3.org/TR/webauthn/#rp-id[RP ID]
+      the server will report.  Example: `YUBICO_WEBAUTHN_RP_ID=demo.yubico.com`
+
+    - `YUBICO_WEBAUTHN_RP_NAME`: The human-readable
+      https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP
+      name] the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
+      Authentication demo'`
+
+    - `YUBICO_WEBAUTHN_RP_ICON`: An optional URL to an
+      https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-icon[icon]
+      to represent this Relying Party. Example:
+      `YUBICO_WEBAUTHN_RP_ICON='https://www.yubico.com/wp-content/uploads/2014/09/favicon.ico'`

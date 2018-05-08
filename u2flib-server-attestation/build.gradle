@@ -1,9 +1,0 @@
-description = 'U2F attestation'
-
-dependencies {
-
-  compile(
-    project(':u2flib-server-core'),
-  )
-
-}
