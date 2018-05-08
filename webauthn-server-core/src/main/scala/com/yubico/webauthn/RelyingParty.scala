@@ -21,6 +21,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.AttestationConveyancePreference
 import com.yubico.webauthn.data.RegistrationResult
+import com.yubico.webauthn.data.AssertionResult
 
 import scala.util.Try
 
@@ -99,7 +100,7 @@ class RelyingParty (
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
     userHandle: Optional[Base64UrlString] = None.asJava
-  ): Try[Boolean] =
+  ): Try[AssertionResult] =
     _finishAssertion(request, response, callerTokenBindingId, userHandle).run
 
   private[webauthn] def _finishAssertion(

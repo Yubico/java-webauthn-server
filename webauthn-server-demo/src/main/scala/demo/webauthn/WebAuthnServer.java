@@ -9,6 +9,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -255,7 +256,7 @@ public class WebAuthnServer {
                         )
                     );
 
-                    Try<Object> assertionTry = rp.finishAssertion(
+                    Try<AssertionResult> assertionTry = rp.finishAssertion(
                         request.getPublicKeyCredentialRequestOptions(),
                         response.getCredential(),
                         Optional.empty(),
@@ -263,7 +264,7 @@ public class WebAuthnServer {
                     );
 
                     if (assertionTry.isSuccess()) {
-                        if ((boolean) assertionTry.get()) {
+                        if (assertionTry.get().success()) {
                             try {
                                 userStorage.updateSignatureCountForUsername(
                                     username,

@@ -14,6 +14,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.RegisteredCredential
+import com.yubico.webauthn.data.AssertionResult
 import com.yubico.webauthn.impl.TokenBindingValidator
 import com.yubico.webauthn.impl.ExtensionsValidation
 import com.yubico.webauthn.util.BinaryUtil
@@ -46,20 +47,20 @@ case class FinishAssertionSteps(
   sealed trait Step[A <: Step[_, _], B <: Step[_, _]] {
     protected def isFinished: Boolean = false
     protected def nextStep: B
-    protected def result: Option[Boolean] = None
+    protected def result: Option[AssertionResult] = None
     protected def validate(): Unit
 
     private[webauthn] def next: Try[B] = validations map { _ => nextStep }
     private[webauthn] def prev: A
     private[webauthn] def validations: Try[Unit] = Try { validate() }
 
-    def run: Try[Boolean] =
+    def run: Try[AssertionResult] =
       if (isFinished) Try(result.get)
       else next flatMap { _.run }
   }
 
   private[webauthn] def begin: Step1 = Step1()
-  def run: Try[Boolean] = begin.run
+  def run: Try[AssertionResult] = begin.run
 
   case class Step1 private[webauthn] () extends Step[Step1, Step2] {
     override def prev = this
@@ -274,11 +275,13 @@ case class FinishAssertionSteps(
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
-    override def result: Option[Boolean] = Some(success)
+    override def result: Option[AssertionResult] = Some(AssertionResult(
+      credentialId = response.rawId,
+      signatureCount = prev.assertionSignatureCount,
+      signatureCounterValid = prev.signatureCounterValid,
+      success = true
+    ))
 
-    val signatureCounterValid: Boolean = prev.signatureCounterValid
-    val signatureCount: Long = prev.assertionSignatureCount
-    val success: Boolean = true
   }
 
 }

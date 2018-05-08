@@ -822,8 +822,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
-                step.next.get.signatureCounterValid should be (true)
-                step.next.get.signatureCount should be (1337)
+                step.next.get.result.get.signatureCounterValid should be (true)
+                step.next.get.result.get.signatureCount should be (1337)
               }
             }
           }
@@ -851,8 +851,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
-                step.next.get.signatureCounterValid should be(false)
-                step.next.get.signatureCount should be(1337)
+                step.next.get.result.get.signatureCounterValid should be(false)
+                step.next.get.result.get.signatureCount should be(1337)
               }
 
               it("If signature counter validation is enabled, the a nonincreasing signature counter fails.") {
@@ -877,8 +877,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         step.validations shouldBe a [Success[_]]
         steps.run shouldBe a [Success[_]]
-        step.success should be (true)
-        steps.run.get should be (true)
+        steps.run.get.success should be (true)
+
+        step.result.get.success should be (true)
+        step.result.get.credentialId should equal (Defaults.credentialId)
       }
 
     }
