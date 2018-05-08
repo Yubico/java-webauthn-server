@@ -74,7 +74,7 @@ public class WebAuthnServer {
     private static <K, V> Cache<K, V> newCache() {
         return CacheBuilder.newBuilder()
             .maximumSize(100)
-            .expireAfterAccess(1, TimeUnit.HOURS)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
             .build();
     }
 
