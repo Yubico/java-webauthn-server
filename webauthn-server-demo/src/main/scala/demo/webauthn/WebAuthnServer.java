@@ -113,21 +113,23 @@ public class WebAuthnServer {
         if (registrations.isEmpty()) {
             return new Left("The username \"" + username + "\" is not registered.");
         } else {
-            CredentialRegistration existingRegistration = registrations.stream().findAny().get();
+            final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
-            RegistrationRequest request = new RegistrationRequest(
-                username,
-                credentialNickname,
-                U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
-                rp.startRegistration(
-                    existingRegistration.getUserIdentity(),
-                    Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                    Optional.empty()
-                )
-            );
-            registerRequestStorage.put(request.getRequestId(), request);
+            AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
+                RegistrationRequest request = new RegistrationRequest(
+                    username,
+                    credentialNickname,
+                    U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+                    rp.startRegistration(
+                        existingUser,
+                        Optional.of(userStorage.getCredentialIdsForUsername(username)),
+                        Optional.empty()
+                    )
+                );
+                registerRequestStorage.put(request.getRequestId(), request);
 
-            AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> whenAuthenticated.apply(request);
+                return whenAuthenticated.apply(request);
+            };
 
             return Right.apply(startAuthenticatedAction(Optional.of(username), action));
         }
