@@ -43,7 +43,7 @@ public class WebAuthnRestResource {
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
     private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
-    public WebAuthnRestResource() throws MalformedURLException {
+    public WebAuthnRestResource() {
         this(new WebAuthnServer());
     }
 
@@ -57,7 +57,7 @@ public class WebAuthnRestResource {
     private final class IndexResponse {
         public final Index actions = new Index();
         public final Info info = new Info();
-        private IndexResponse() throws NoSuchMethodException, MalformedURLException {
+        private IndexResponse() throws MalformedURLException {
         }
     }
     private final class Index {
@@ -84,7 +84,7 @@ public class WebAuthnRestResource {
     }
 
     @GET
-    public Response index() throws NoSuchMethodException, IOException {
+    public Response index() throws IOException {
         return Response.ok(jsonMapper.writeValueAsString(new IndexResponse())).build();
     }
 

@@ -19,13 +19,9 @@ public class App extends Application {
 
     @Override
     public Set<Object> getSingletons() {
-        try {
-            return new HashSet<>(Arrays.asList(
-                new WebAuthnRestResource()
-            ));
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        return new HashSet<>(Arrays.asList(
+            new WebAuthnRestResource()
+        ));
     }
 
 }
