@@ -43,6 +43,8 @@ object BinaryUtil {
     U2fB64Encoding.decode(base64).toVector
   ) getOrElse { throw new U2fBadInputException("Bad base64 encoding") }
 
+  def toBase64(bytes: ArrayBuffer): Base64UrlString = U2fB64Encoding.encode(bytes.toArray)
+
   /**
     * Read one byte as an unsigned 8-bit integer.
     *
