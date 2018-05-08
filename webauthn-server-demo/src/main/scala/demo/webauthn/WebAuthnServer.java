@@ -269,7 +269,7 @@ public class WebAuthnServer {
                                 userStorage.updateSignatureCountForUsername(
                                     username,
                                     response.getCredential().id(),
-                                    response.getCredential().response().parsedAuthenticatorData().signatureCounter()
+                                    assertionTry.get().signatureCount()
                                 );
                             } catch (Exception e) {
                                 logger.error(
