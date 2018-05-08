@@ -273,15 +273,6 @@ public class WebAuthnServer {
 
                     if (assertionTry.isSuccess()) {
                         if ((boolean) assertionTry.get()) {
-                            final CredentialRegistration credentialRegistration = userStorage.getRegistrationByUsernameAndCredentialId(
-                                username,
-                                response.getCredential().id()
-                            ).get();
-
-                            final CredentialRegistration updatedCredReg = credentialRegistration.withSignatureCount(
-                                response.getCredential().response().parsedAuthenticatorData().signatureCounter()
-                            );
-
                             try {
                                 userStorage.updateSignatureCountForUsername(
                                     username,
