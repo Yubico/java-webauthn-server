@@ -7,6 +7,20 @@ class, and the
 https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnRestResource.java[WebAuthnRestResource]
 class which provides the REST API on top of it.
 
+
+The demo webapp demonstrates the following notable features:
+
+- Allows registering *multiple authenticators* per user
+- Illustrates how API can be used to enable *authenticated actions*, such as
+  adding an additional authenticator or deregistering a credential
+- *Authenticator model identification*, via attestation signature (currently only
+  knows about FIDO U2F devices)
+
+The following features are not yet supported:
+
+- Username-less registration and authentication
+
+
 === 1. Clone
  git clone https://github.com/Yubico/java-webauthn-server.git
 
