@@ -248,52 +248,56 @@ public class WebAuthnServer {
                 if (username == null) {
                     return Left.apply(Arrays.asList("User not registered: " + request.getUsername().orElse(returnedUserHandle.get())));
                 } else {
-                    Optional<String> userHandle = Optional.ofNullable(
+                    final String userHandle =
                         returnedUserHandle.orElseGet(() ->
                             userStorage.getUserHandle(username)
                                 .map(BinaryUtil::toBase64)
                                 .orElse(null)
                         )
-                    );
+                    ;
 
-                    Try<AssertionResult> assertionTry = rp.finishAssertion(
-                        request.getPublicKeyCredentialRequestOptions(),
-                        response.getCredential(),
-                        Optional.empty(),
-                        userHandle
-                    );
+                    if (userHandle == null) {
+                        return Left.apply(Arrays.asList("Failed to identify user handle for user: " + request.getUsername()));
+                    } else {
+                        Try<AssertionResult> assertionTry = rp.finishAssertion(
+                            request.getPublicKeyCredentialRequestOptions(),
+                            response.getCredential(),
+                            () -> userHandle,
+                            Optional.empty()
+                        );
 
-                    if (assertionTry.isSuccess()) {
-                        if (assertionTry.get().success()) {
-                            try {
-                                userStorage.updateSignatureCountForUsername(
-                                    username,
-                                    response.getCredential().id(),
-                                    assertionTry.get().signatureCount()
+                        if (assertionTry.isSuccess()) {
+                            if (assertionTry.get().success()) {
+                                try {
+                                    userStorage.updateSignatureCountForUsername(
+                                        username,
+                                        response.getCredential().id(),
+                                        assertionTry.get().signatureCount()
+                                    );
+                                } catch (Exception e) {
+                                    logger.error(
+                                        "Failed to update signature count for user \"{}\", credential \"{}\"",
+                                        request.getUsername(),
+                                        response.getCredential().id(),
+                                        e
+                                    );
+                                }
+
+                                return Right.apply(
+                                    new SuccessfulAuthenticationResult(
+                                        request,
+                                        response,
+                                        userStorage.getRegistrationsByUsername(username)
+                                    )
                                 );
-                            } catch (Exception e) {
-                                logger.error(
-                                    "Failed to update signature count for user \"{}\", credential \"{}\"",
-                                    request.getUsername(),
-                                    response.getCredential().id(),
-                                    e
-                                );
+                            } else {
+                                return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                             }
 
-                            return Right.apply(
-                                new SuccessfulAuthenticationResult(
-                                    request,
-                                    response,
-                                    userStorage.getRegistrationsByUsername(username)
-                                )
-                            );
                         } else {
-                            return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
+                            logger.debug("Assertion failed", assertionTry.failed().get());
+                            return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
                         }
-
-                    } else {
-                        logger.debug("Assertion failed", assertionTry.failed().get());
-                        return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
                     }
                 }
             }

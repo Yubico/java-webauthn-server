@@ -121,7 +121,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public Optional<RegisteredCredential> lookup(String credentialId, Optional<String> userHandle) {
+    public Optional<RegisteredCredential> lookup(String credentialId, String userHandle) {
         Optional<CredentialRegistration> registrationMaybe = storage.asMap().values().stream()
             .flatMap(Collection::stream)
             .filter(credReg -> credentialId.equals(credReg.getRegistration().keyId().idBase64()))

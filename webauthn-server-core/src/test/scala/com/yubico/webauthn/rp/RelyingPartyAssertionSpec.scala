@@ -123,7 +123,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       preferredPubkeyParams = Nil.asJava,
       rp = rpId,
       credentialRepository = credentialRepository getOrElse new CredentialRepository {
-        override def lookup(credId: Base64UrlString, lookupUserHandle: Optional[Base64UrlString]) =
+        override def lookup(credId: Base64UrlString, lookupUserHandle: Base64UrlString) =
           (
             if (credId == U2fB64Encoding.encode(credentialId.toArray))
               Some(RegisteredCredential(
@@ -134,7 +134,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               ))
             else None
           ).asJava
-        override def lookupAll(credId: Base64UrlString) = lookup(credId, None.asJava).asScala.toSet
+        override def lookupAll(credId: Base64UrlString) = lookup(credId, null).asScala.toSet
       },
       validateSignatureCounter = validateSignatureCounter
     )._finishAssertion(request, response, (() => BinaryUtil.toBase64(userHandle)).asJava, callerTokenBindingId.asJava)
@@ -185,7 +185,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
         val credentialRepository = Some(new CredentialRepository {
-          override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+          override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
             RegisteredCredential(
               credentialId = Vector(0, 1, 2, 3),
               signatureCount = 0L,
@@ -193,7 +193,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               userHandle = Vector(4, 5, 6, 7)
             )
           ).asJava
-          override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
+          override def lookupAll(id: Base64UrlString) = ???
         })
 
         it("Fails if credential ID is not owned by the given user handle.") {
@@ -224,7 +224,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Fails if the credential ID is unknown.") {
           val steps = finishAssertion(
             credentialRepository = Some(new CredentialRepository {
-              override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
+              override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
               override def lookupAll(id: Base64UrlString) = Set.empty
             })
           )
@@ -237,15 +237,15 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("Succeeds if the credential ID is known.") {
           val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
-            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+            override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
               RegisteredCredential(
                 credentialId = U2fB64Encoding.decode(id).toVector,
                 signatureCount = 0L,
                 publicKey = Defaults.credentialKey.getPublic,
-                userHandle = U2fB64Encoding.decode(uh.get).toVector
+                userHandle = U2fB64Encoding.decode(uh).toVector
               )
             ).asJava
-            override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
+            override def lookupAll(id: Base64UrlString) = ???
           }))
           val step: steps.Step3 = steps.begin.next.get.next.get
 
@@ -801,15 +801,15 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         describe("If the signature counter value adata.signCount is") {
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
-              override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+              override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
                 RegisteredCredential(
                   credentialId = U2fB64Encoding.decode(id).toVector,
                   signatureCount = 1336L,
                   publicKey = Defaults.credentialKey.getPublic,
-                  userHandle = U2fB64Encoding.decode(uh.get).toVector
+                  userHandle = U2fB64Encoding.decode(uh).toVector
                 )
               ).asJava
-              override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
+              override def lookupAll(id: Base64UrlString) = ???
             }
 
             describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
@@ -830,15 +830,15 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute. ") {
             val credentialRepository = new CredentialRepository {
-              override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+              override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
                 RegisteredCredential(
                   credentialId = U2fB64Encoding.decode(id).toVector,
                   signatureCount = 1337L,
                   publicKey = Defaults.credentialKey.getPublic,
-                  userHandle = U2fB64Encoding.decode(uh.get).toVector
+                  userHandle = U2fB64Encoding.decode(uh).toVector
                 )
               ).asJava
-              override def lookupAll(id: Base64UrlString) = lookup(id, None.asJava).asScala.toSet
+              override def lookupAll(id: Base64UrlString) = ???
             }
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {

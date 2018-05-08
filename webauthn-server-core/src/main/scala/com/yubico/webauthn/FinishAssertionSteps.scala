@@ -84,7 +84,7 @@ case class FinishAssertionSteps(
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
     override def nextStep = Step3(this)
     override def validate() = {
-      val registration = credentialRepository.lookup(response.id, Some(userHandle).asJava).asScala
+      val registration = credentialRepository.lookup(response.id, userHandle).asScala
       assert(registration.isDefined, s"Unknown credential: ${response.id}")
       assert(
         BinaryUtil.toBase64(registration.get.userHandle) == userHandle,
@@ -100,7 +100,7 @@ case class FinishAssertionSteps(
     }
 
     private lazy val _credential: Optional[RegisteredCredential] =
-      credentialRepository.lookup(response.id, Optional.of(userHandle))
+      credentialRepository.lookup(response.id, userHandle)
 
     def credential: RegisteredCredential = _credential.get
   }
@@ -264,7 +264,7 @@ case class FinishAssertionSteps(
     override def nextStep = Finished(this)
 
     def storedSignatureCountBefore: Long =
-      credentialRepository.lookup(response.id, Optional.of(userHandle)).asScala
+      credentialRepository.lookup(response.id, userHandle).asScala
         .map(_.signatureCount)
         .getOrElse(0L)
 

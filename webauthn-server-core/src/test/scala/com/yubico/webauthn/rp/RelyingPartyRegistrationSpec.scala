@@ -1482,12 +1482,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         it("Registration is aborted if the given credential ID is already registered.") {
           val credentialRepository = new CredentialRepository {
-            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = Some(
+            override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
               RegisteredCredential(
                 credentialId = U2fB64Encoding.decode(id).toVector,
                 signatureCount = 1337L,
                 publicKey = testData.response.response.attestation.authenticatorData.attestationData.get.parsedCredentialPublicKey,
-                userHandle = U2fB64Encoding.decode(uh.get).toVector
+                userHandle = U2fB64Encoding.decode(uh).toVector
               )
             ).asJava
 
@@ -1519,7 +1519,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         it("Registration proceeds if the given credential ID is not already registered.") {
           val credentialRepository = new CredentialRepository {
-            override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
+            override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
             override def lookupAll(id: Base64UrlString) = Set.empty
           }
 
