@@ -2,9 +2,9 @@
 
 A simple self-contained demo server supporting multiple authenticators per user.
 The central part is the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/WebAuthnServer.java[WebAuthnServer]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnServer.java[WebAuthnServer]
 class, and the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/WebAuthnResource.java[WebAuthnResource]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnRestResource.java[WebAuthnRestResource]
 class which provides the REST API on top of it.
 
 === 1. Clone
