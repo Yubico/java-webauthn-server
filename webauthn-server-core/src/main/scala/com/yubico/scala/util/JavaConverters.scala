@@ -17,7 +17,9 @@ case class AsScalaOption[A](a: Optional[A]) {
 }
 
 case class AsJavaSupplier[A](a: () => A) {
-  def asJava[B >: A]: Supplier[B] = () => a()
+  def asJava[B >: A]: Supplier[B] = new Supplier[B] {
+    override def get(): B = a()
+  }
 }
 
 object JavaConverters {
