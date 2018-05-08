@@ -259,12 +259,14 @@ public class WebAuthnServer {
                 );
 
                 if (assertionTry.isSuccess()) {
-                    if (assertionTry.get().success()) {
+                    final AssertionResult result = assertionTry.get();
+
+                    if (result.success()) {
                         try {
                             userStorage.updateSignatureCountForUsername(
                                 username,
                                 response.getCredential().id(),
-                                assertionTry.get().signatureCount()
+                                result.signatureCount()
                             );
                         } catch (Exception e) {
                             logger.error(
