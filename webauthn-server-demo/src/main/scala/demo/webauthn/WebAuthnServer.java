@@ -269,7 +269,7 @@ public class WebAuthnServer {
                         } catch (Exception e) {
                             logger.error(
                                 "Failed to update signature count for user \"{}\", credential \"{}\"",
-                                request.getUsername(),
+                                username,
                                 response.getCredential().id(),
                                 e
                             );
