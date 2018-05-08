@@ -9,13 +9,12 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.RelyingParty;
-import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
-import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.util.BinaryUtil;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
@@ -233,40 +232,34 @@ public class WebAuthnServer {
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
-            Optional<String> userHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
+            Optional<String> returnedUserHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
 
-            if (!request.getUsername().isPresent() && !userHandle.isPresent()) {
+            if (!request.getUsername().isPresent() && !returnedUserHandle.isPresent()) {
                 return Left.apply(Arrays.asList("User handle must be returned if username was not supplied in startAuthentication"));
             } else {
                 final String username;
                 if (request.getUsername().isPresent()) {
                     username = request.getUsername().get();
                 } else {
-                    username = userStorage.getUsername(userHandle.get()).orElse(null);
+                    username = userStorage.getUsername(returnedUserHandle.get()).orElse(null);
                 }
 
                 if (username == null) {
-                    return Left.apply(Arrays.asList("User not registered: " + request.getUsername().orElse(userHandle.get())));
+                    return Left.apply(Arrays.asList("User not registered: " + request.getUsername().orElse(returnedUserHandle.get())));
                 } else {
-                    PublicKeyCredential<AuthenticatorAssertionResponse> credentialWithUserHandle =
-                        userHandle.isPresent()
-                            ? response.getCredential()
-                            : response.getCredential().copy(
-                                response.getCredential().rawId(),
-                                response.getCredential().response().copy(
-                                    response.getCredential().response().clientDataJSON(),
-                                    response.getCredential().response().authenticatorData(),
-                                    response.getCredential().response().signature(),
-                                    userStorage.getUserHandle(username)
-                                ),
-                                response.getCredential().clientExtensionResults()
-                              )
-                    ;
+                    Optional<String> userHandle = Optional.ofNullable(
+                        returnedUserHandle.orElseGet(() ->
+                            userStorage.getUserHandle(username)
+                                .map(BinaryUtil::toBase64)
+                                .orElse(null)
+                        )
+                    );
 
                     Try<Object> assertionTry = rp.finishAssertion(
                         request.getPublicKeyCredentialRequestOptions(),
-                        credentialWithUserHandle,
-                        Optional.empty()
+                        response.getCredential(),
+                        Optional.empty(),
+                        userHandle
                     );
 
                     if (assertionTry.isSuccess()) {

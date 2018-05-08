@@ -16,6 +16,7 @@ import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.impl.TokenBindingValidator
 import com.yubico.webauthn.impl.ExtensionsValidation
+import com.yubico.webauthn.util.BinaryUtil
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
@@ -36,7 +37,8 @@ case class FinishAssertionSteps(
   credentialRepository: CredentialRepository,
   allowMissingTokenBinding: Boolean = false,
   validateTypeAttribute: Boolean = true,
-  validateSignatureCounter: Boolean = true
+  validateSignatureCounter: Boolean = true,
+  userHandle: Optional[Base64UrlString] = None.asJava
 ) {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[FinishAssertionSteps])
@@ -77,12 +79,12 @@ case class FinishAssertionSteps(
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
     override def nextStep = Step3(this)
     override def validate() = {
-      Option(response.response.userHandleBase64) match {
-        case Some(userHandle) =>
+      Option(response.response.userHandleBase64) orElse userHandle.asScala match {
+        case Some(userHandle: Base64UrlString) =>
           val registration = credentialRepository.lookup(response.id, Some(userHandle).asJava).asScala
           assert(registration.isDefined, s"Unknown credential: ${response.id}")
           assert(
-            registration.get.userHandle == response.response.userHandle.get,
+            BinaryUtil.toBase64(registration.get.userHandle) == userHandle,
             s"User handle ${userHandle} does not own credential ${response.id}"
           )
         case None =>

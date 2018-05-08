@@ -97,14 +97,16 @@ class RelyingParty (
   def finishAssertion(
     request: PublicKeyCredentialRequestOptions,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
+    userHandle: Optional[Base64UrlString] = None.asJava
   ): Try[Boolean] =
-    _finishAssertion(request, response, callerTokenBindingId).run
+    _finishAssertion(request, response, callerTokenBindingId, userHandle).run
 
   private[webauthn] def _finishAssertion(
     request: PublicKeyCredentialRequestOptions,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
+    userHandle: Optional[Base64UrlString] = None.asJava
   ): FinishAssertionSteps =
     FinishAssertionSteps(
       request = request,
@@ -116,7 +118,8 @@ class RelyingParty (
       credentialRepository = credentialRepository,
       allowMissingTokenBinding = allowMissingTokenBinding,
       validateSignatureCounter = validateSignatureCounter,
-      validateTypeAttribute = validateTypeAttribute
+      validateTypeAttribute = validateTypeAttribute,
+      userHandle = userHandle
     )
 
 }
