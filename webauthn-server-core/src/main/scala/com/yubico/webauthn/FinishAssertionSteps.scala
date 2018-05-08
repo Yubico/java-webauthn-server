@@ -2,6 +2,7 @@ package com.yubico.webauthn
 
 
 import java.util.Optional
+import java.util.function.Supplier
 
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.crypto.Crypto
@@ -36,16 +37,16 @@ case class FinishAssertionSteps(
   rpId: String,
   crypto: Crypto,
   credentialRepository: CredentialRepository,
+  getUserHandle: Supplier[Base64UrlString],
   allowMissingTokenBinding: Boolean = false,
   validateTypeAttribute: Boolean = true,
-  validateSignatureCounter: Boolean = true,
-  knownUserHandle: Optional[Base64UrlString] = None.asJava
+  validateSignatureCounter: Boolean = true
 ) {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[FinishAssertionSteps])
 
-  private val userHandle: Option[Base64UrlString] =
-    Option(response.response.userHandleBase64) orElse knownUserHandle.asScala
+  private val userHandle: Base64UrlString =
+    Option(response.response.userHandleBase64) getOrElse getUserHandle.get()
 
   sealed trait Step[A <: Step[_, _], B <: Step[_, _]] {
     protected def isFinished: Boolean = false
@@ -83,27 +84,23 @@ case class FinishAssertionSteps(
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
     override def nextStep = Step3(this)
     override def validate() = {
-      userHandle match {
-        case Some(userHandle: Base64UrlString) =>
-          val registration = credentialRepository.lookup(response.id, Some(userHandle).asJava).asScala
-          assert(registration.isDefined, s"Unknown credential: ${response.id}")
-          assert(
-            BinaryUtil.toBase64(registration.get.userHandle) == userHandle,
-            s"User handle ${userHandle} does not own credential ${response.id}"
-          )
-        case None =>
-      }
+      val registration = credentialRepository.lookup(response.id, Some(userHandle).asJava).asScala
+      assert(registration.isDefined, s"Unknown credential: ${response.id}")
+      assert(
+        BinaryUtil.toBase64(registration.get.userHandle) == userHandle,
+        s"User handle ${userHandle} does not own credential ${response.id}"
+      )
     }
   }
 
   case class Step3 private[webauthn] (override val prev: Step2) extends Step[Step2, Step4] {
     override def nextStep = Step4(this)
     override def validate() = {
-      assert(_credential.isPresent, s"Unknown credential. Credential ID: ${response.id}, user handle: ${response.response.userHandleBase64}")
+      assert(_credential.isPresent, s"Unknown credential. Credential ID: ${response.id}, user handle: ${userHandle}")
     }
 
     private lazy val _credential: Optional[RegisteredCredential] =
-      credentialRepository.lookup(response.id, Optional.ofNullable(response.response.userHandleBase64))
+      credentialRepository.lookup(response.id, Optional.of(userHandle))
 
     def credential: RegisteredCredential = _credential.get
   }
@@ -267,7 +264,7 @@ case class FinishAssertionSteps(
     override def nextStep = Finished(this)
 
     def storedSignatureCountBefore: Long =
-      credentialRepository.lookup(response.id, Optional.ofNullable(response.response.userHandleBase64)).asScala
+      credentialRepository.lookup(response.id, Optional.of(userHandle)).asScala
         .map(_.signatureCount)
         .getOrElse(0L)
 
@@ -283,7 +280,7 @@ case class FinishAssertionSteps(
       signatureCount = prev.assertionSignatureCount,
       signatureCounterValid = prev.signatureCounterValid,
       success = true,
-      userHandle = userHandle.asJava
+      userHandle = userHandle
     ))
 
   }

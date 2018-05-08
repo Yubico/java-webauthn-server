@@ -89,9 +89,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     requestedExtensions: Option[AuthenticationExtensionsClientInputs] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature,
-    userHandle: Option[ArrayBuffer] = Some(Defaults.userHandle),
+    userHandle: ArrayBuffer = Defaults.userHandle,
     userVerificationRequirement: UserVerificationRequirement = Preferred,
-    validateSignatureCounter: Boolean = true
+    validateSignatureCounter: Boolean = true,
+    returnUserHandleInResponse: Boolean = false
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
 
@@ -109,7 +110,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         clientDataJSON = clientDataJsonBytes,
         authenticatorData = authenticatorData,
         signature = signature,
-        userHandle = userHandle.asJava
+        userHandle = (if (returnUserHandleInResponse) Some(userHandle) else None).asJava
       ),
       clientExtensionResults
     )
@@ -136,7 +137,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         override def lookupAll(credId: Base64UrlString) = lookup(credId, None.asJava).asScala.toSet
       },
       validateSignatureCounter = validateSignatureCounter
-    )._finishAssertion(request, response, callerTokenBindingId.asJava)
+    )._finishAssertion(request, response, (() => BinaryUtil.toBase64(userHandle)).asJava, callerTokenBindingId.asJava)
   }
 
   describe("§7.2. Verifying an authentication assertion") {
@@ -198,7 +199,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Fails if credential ID is not owned by the given user handle.") {
           val steps = finishAssertion(
             credentialRepository = credentialRepository,
-            userHandle = Some(Vector(8, 9, 10, 11))
+            userHandle = Vector(8, 9, 10, 11)
           )
           val step: steps.Step2 = steps.begin.next.get
 
@@ -210,7 +211,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Succeeds if credential ID is owned by the given user handle.") {
           val steps = finishAssertion(
             credentialRepository = credentialRepository,
-            userHandle = Some(Vector(4, 5, 6, 7))
+            userHandle = Vector(4, 5, 6, 7)
           )
           val step: steps.Step2 = steps.begin.next.get
 
@@ -225,10 +226,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             credentialRepository = Some(new CredentialRepository {
               override def lookup(id: Base64UrlString, uh: Optional[Base64UrlString]) = None.asJava
               override def lookupAll(id: Base64UrlString) = Set.empty
-            }),
-            userHandle = None
+            })
           )
-          val step: steps.Step3 = steps.begin.next.get.next.get
+          val step: steps.Step3 = steps.Step3(null)
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]
@@ -872,31 +872,16 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       describe("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
-        it("The result does not contain a userHandle if the user's identity is not known.") {
-          val steps = finishAssertion(userHandle = None)
-          val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+        val steps = finishAssertion()
+        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-          step.validations shouldBe a [Success[_]]
-          steps.run shouldBe a [Success[_]]
-          steps.run.get.success should be (true)
+        step.validations shouldBe a [Success[_]]
+        steps.run shouldBe a [Success[_]]
+        steps.run.get.success should be (true)
 
-          step.result.get.success should be (true)
-          step.result.get.credentialId should equal (Defaults.credentialId)
-          step.result.get.userHandle.asScala shouldBe 'empty
-        }
-
-        it("The result contains a userHandle if the user's identity is known.") {
-          val steps = finishAssertion(userHandle = Some(Defaults.userHandle))
-          val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-
-          step.validations shouldBe a [Success[_]]
-          steps.run shouldBe a [Success[_]]
-          steps.run.get.success should be (true)
-
-          step.result.get.success should be (true)
-          step.result.get.credentialId should equal (Defaults.credentialId)
-          step.result.get.userHandle.asScala should contain (BinaryUtil.toBase64(Defaults.userHandle))
-        }
+        step.result.get.success should be (true)
+        step.result.get.credentialId should equal (Defaults.credentialId)
+        step.result.get.userHandle should equal (BinaryUtil.toBase64(Defaults.userHandle))
       }
 
     }

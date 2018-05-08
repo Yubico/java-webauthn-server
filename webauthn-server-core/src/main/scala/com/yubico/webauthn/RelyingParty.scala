@@ -1,6 +1,7 @@
 package com.yubico.webauthn
 
 import java.util.Optional
+import java.util.function.Supplier
 
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.attestation.MetadataService
@@ -98,16 +99,16 @@ class RelyingParty (
   def finishAssertion(
     request: PublicKeyCredentialRequestOptions,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
-    userHandle: Optional[Base64UrlString] = None.asJava
+    getUserHandle: Supplier[Base64UrlString],
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): Try[AssertionResult] =
-    _finishAssertion(request, response, callerTokenBindingId, userHandle).run
+    _finishAssertion(request, response, getUserHandle, callerTokenBindingId).run
 
   private[webauthn] def _finishAssertion(
     request: PublicKeyCredentialRequestOptions,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
-    callerTokenBindingId: Optional[Base64UrlString] = None.asJava,
-    userHandle: Optional[Base64UrlString] = None.asJava
+    getUserHandle: Supplier[Base64UrlString],
+    callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): FinishAssertionSteps =
     FinishAssertionSteps(
       request = request,
@@ -117,10 +118,10 @@ class RelyingParty (
       rpId = rp.id,
       crypto = crypto,
       credentialRepository = credentialRepository,
+      getUserHandle = getUserHandle,
       allowMissingTokenBinding = allowMissingTokenBinding,
       validateSignatureCounter = validateSignatureCounter,
-      validateTypeAttribute = validateTypeAttribute,
-      knownUserHandle = userHandle
+      validateTypeAttribute = validateTypeAttribute
     )
 
 }
