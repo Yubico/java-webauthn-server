@@ -89,7 +89,6 @@ object BinaryUtil {
     * Read 4 bytes as a big endian unsigned 32-bit integer.
     *
     * Result is of type Long because Scala/Java don't have unsigned types.
-    * @param bytes
     * @return A value between 0 and 2^32 - 1, inclusive.
     */
   def getUint32(bytes: ArrayBuffer): Try[Long] = Try(

@@ -277,7 +277,7 @@ case class FinishRegistrationSteps(
     def attestationTrusted: Boolean = {
       attestationType match {
         case SelfAttestation | NoneAttestation => allowUntrustedAttestation
-        case Basic => attestationMetadata.asScala map { _.isTrusted } getOrElse false
+        case Basic => attestationMetadata.asScala exists { _.isTrusted }
         case _ => ???
       }
     }

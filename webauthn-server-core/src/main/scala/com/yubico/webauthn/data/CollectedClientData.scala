@@ -16,8 +16,6 @@ case class CollectedClientData(
   private val clientData: JsonNode
 ) {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[CollectedClientData])
-
   /**
     * Input or output values for or from authenticator extensions, if any.
     */

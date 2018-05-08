@@ -18,7 +18,7 @@ import scala.util.Failure
 
 case class AuthenticatorData(
   @JsonIgnore
-  val authData: ArrayBuffer
+  authData: ArrayBuffer
 ) {
   private val RpIdHashLength = 32
   private val FlagsLength = 1

@@ -42,10 +42,6 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
       "attStmt.sig must be set to a binary value."
     )
 
-    val signedData: ArrayBuffer = attestationObject.authenticatorData.authData ++ clientDataJsonHash
-
-    val signature: ArrayBuffer = signatureNode.binaryValue.toVector
-
     if (attestationObject.attestationStatement.has("x5c"))
       verifyX5cSignature(attestationObject, clientDataJsonHash)
     else if (attestationObject.attestationStatement.has("ecdaaKeyId"))
