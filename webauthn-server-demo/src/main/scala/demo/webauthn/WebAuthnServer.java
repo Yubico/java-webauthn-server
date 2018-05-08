@@ -233,70 +233,62 @@ public class WebAuthnServer {
         } else {
             Optional<String> returnedUserHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
 
-            if (!request.getUsername().isPresent() && !returnedUserHandle.isPresent()) {
+            final String username;
+            if (request.getUsername().isPresent()) {
+                username = request.getUsername().get();
+            } else {
+                username = userStorage.getUsername(returnedUserHandle.get()).orElse(null);
+            }
+
+            final String userHandle = returnedUserHandle.orElseGet(() ->
+                username == null
+                    ? null
+                    : userStorage.getUserHandle(username)
+                        .map(BinaryUtil::toBase64)
+                        .orElse(null)
+            );
+
+            if (username == null || username.isEmpty() || userHandle == null || userHandle.isEmpty()) {
                 return Left.apply(Arrays.asList("User handle must be returned if username was not supplied in startAuthentication"));
             } else {
-                final String username;
-                if (request.getUsername().isPresent()) {
-                    username = request.getUsername().get();
-                } else {
-                    username = userStorage.getUsername(returnedUserHandle.get()).orElse(null);
-                }
+                Try<AssertionResult> assertionTry = rp.finishAssertion(
+                    request.getPublicKeyCredentialRequestOptions(),
+                    response.getCredential(),
+                    () -> userHandle,
+                    Optional.empty()
+                );
 
-                if (username == null) {
-                    return Left.apply(Arrays.asList("User not registered: " + request.getUsername().orElse(returnedUserHandle.get())));
-                } else {
-                    final String userHandle =
-                        returnedUserHandle.orElseGet(() ->
-                            userStorage.getUserHandle(username)
-                                .map(BinaryUtil::toBase64)
-                                .orElse(null)
-                        )
-                    ;
-
-                    if (userHandle == null) {
-                        return Left.apply(Arrays.asList("Failed to identify user handle for user: " + request.getUsername()));
-                    } else {
-                        Try<AssertionResult> assertionTry = rp.finishAssertion(
-                            request.getPublicKeyCredentialRequestOptions(),
-                            response.getCredential(),
-                            () -> userHandle,
-                            Optional.empty()
-                        );
-
-                        if (assertionTry.isSuccess()) {
-                            if (assertionTry.get().success()) {
-                                try {
-                                    userStorage.updateSignatureCountForUsername(
-                                        username,
-                                        response.getCredential().id(),
-                                        assertionTry.get().signatureCount()
-                                    );
-                                } catch (Exception e) {
-                                    logger.error(
-                                        "Failed to update signature count for user \"{}\", credential \"{}\"",
-                                        request.getUsername(),
-                                        response.getCredential().id(),
-                                        e
-                                    );
-                                }
-
-                                return Right.apply(
-                                    new SuccessfulAuthenticationResult(
-                                        request,
-                                        response,
-                                        userStorage.getRegistrationsByUsername(username)
-                                    )
-                                );
-                            } else {
-                                return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
-                            }
-
-                        } else {
-                            logger.debug("Assertion failed", assertionTry.failed().get());
-                            return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+                if (assertionTry.isSuccess()) {
+                    if (assertionTry.get().success()) {
+                        try {
+                            userStorage.updateSignatureCountForUsername(
+                                username,
+                                response.getCredential().id(),
+                                assertionTry.get().signatureCount()
+                            );
+                        } catch (Exception e) {
+                            logger.error(
+                                "Failed to update signature count for user \"{}\", credential \"{}\"",
+                                request.getUsername(),
+                                response.getCredential().id(),
+                                e
+                            );
                         }
+
+                        return Right.apply(
+                            new SuccessfulAuthenticationResult(
+                                request,
+                                response,
+                                userStorage.getRegistrationsByUsername(username)
+                            )
+                        );
+                    } else {
+                        return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                     }
+
+                } else {
+                    logger.debug("Assertion failed", assertionTry.failed().get());
+                    return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
                 }
             }
         }
