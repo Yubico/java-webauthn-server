@@ -120,7 +120,7 @@ class RelyingParty (
       allowMissingTokenBinding = allowMissingTokenBinding,
       validateSignatureCounter = validateSignatureCounter,
       validateTypeAttribute = validateTypeAttribute,
-      userHandle = userHandle
+      knownUserHandle = userHandle
     )
 
 }

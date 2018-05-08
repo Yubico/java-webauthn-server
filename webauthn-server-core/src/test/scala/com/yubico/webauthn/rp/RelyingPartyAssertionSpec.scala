@@ -129,7 +129,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 credentialId = U2fB64Encoding.decode(credId).toVector,
                 publicKey = credentialKey.getPublic,
                 signatureCount = 0L,
-                userHandle = userHandle.get
+                userHandle = Defaults.userHandle
               ))
             else None
           ).asJava
@@ -871,16 +871,32 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      it("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
-        val steps = finishAssertion()
-        val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+      describe("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
+        it("The result does not contain a userHandle if the user's identity is not known.") {
+          val steps = finishAssertion(userHandle = None)
+          val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-        step.validations shouldBe a [Success[_]]
-        steps.run shouldBe a [Success[_]]
-        steps.run.get.success should be (true)
+          step.validations shouldBe a [Success[_]]
+          steps.run shouldBe a [Success[_]]
+          steps.run.get.success should be (true)
 
-        step.result.get.success should be (true)
-        step.result.get.credentialId should equal (Defaults.credentialId)
+          step.result.get.success should be (true)
+          step.result.get.credentialId should equal (Defaults.credentialId)
+          step.result.get.userHandle.asScala shouldBe 'empty
+        }
+
+        it("The result contains a userHandle if the user's identity is known.") {
+          val steps = finishAssertion(userHandle = Some(Defaults.userHandle))
+          val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+
+          step.validations shouldBe a [Success[_]]
+          steps.run shouldBe a [Success[_]]
+          steps.run.get.success should be (true)
+
+          step.result.get.success should be (true)
+          step.result.get.credentialId should equal (Defaults.credentialId)
+          step.result.get.userHandle.asScala should contain (BinaryUtil.toBase64(Defaults.userHandle))
+        }
       }
 
     }

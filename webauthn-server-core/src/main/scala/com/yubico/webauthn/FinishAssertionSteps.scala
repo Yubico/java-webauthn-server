@@ -39,10 +39,13 @@ case class FinishAssertionSteps(
   allowMissingTokenBinding: Boolean = false,
   validateTypeAttribute: Boolean = true,
   validateSignatureCounter: Boolean = true,
-  userHandle: Optional[Base64UrlString] = None.asJava
+  knownUserHandle: Optional[Base64UrlString] = None.asJava
 ) {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[FinishAssertionSteps])
+
+  private val userHandle: Option[Base64UrlString] =
+    Option(response.response.userHandleBase64) orElse knownUserHandle.asScala
 
   sealed trait Step[A <: Step[_, _], B <: Step[_, _]] {
     protected def isFinished: Boolean = false
@@ -80,7 +83,7 @@ case class FinishAssertionSteps(
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
     override def nextStep = Step3(this)
     override def validate() = {
-      Option(response.response.userHandleBase64) orElse userHandle.asScala match {
+      userHandle match {
         case Some(userHandle: Base64UrlString) =>
           val registration = credentialRepository.lookup(response.id, Some(userHandle).asJava).asScala
           assert(registration.isDefined, s"Unknown credential: ${response.id}")
@@ -279,7 +282,8 @@ case class FinishAssertionSteps(
       credentialId = response.rawId,
       signatureCount = prev.assertionSignatureCount,
       signatureCounterValid = prev.signatureCounterValid,
-      success = true
+      success = true,
+      userHandle = userHandle.asJava
     ))
 
   }
