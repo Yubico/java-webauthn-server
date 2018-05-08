@@ -23,7 +23,4 @@ public interface RegistrationStorage extends CredentialRepository {
 
     void updateSignatureCountForUsername(String username, String idBase64, long newSignatureCount);
 
-    boolean userHandleOwnsCredential(String userHandleBase64, String idBase64);
-    boolean usernameOwnsCredential(String username, String idBase64);
-
 }

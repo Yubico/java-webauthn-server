@@ -86,19 +86,6 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public boolean usernameOwnsCredential(String username, String idBase64) {
-        try {
-            return storage.get(username, HashSet::new).stream()
-                .anyMatch(credentialRegistration ->
-                    idBase64.equals(credentialRegistration.getRegistration().keyId().idBase64())
-                );
-        } catch (ExecutionException e) {
-            logger.error("Registration lookup failed", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     public void updateSignatureCountForUsername(String username, String idBase64, long newSignatureCount) {
         CredentialRegistration registration = getRegistrationByUsernameAndCredentialId(username, idBase64)
             .orElseThrow(() -> new NoSuchElementException(String.format(
@@ -131,18 +118,6 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
             logger.error("Failed to remove registration", e);
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public boolean userHandleOwnsCredential(String userHandleBase64, String idBase64) {
-        return storage.asMap().values().stream()
-            .flatMap(Collection::stream)
-            .filter(credentialRegistration ->
-                userHandleBase64.equals(credentialRegistration.getUserIdentity().idBase64())
-            )
-            .anyMatch(credentialRegistration ->
-                idBase64.equals(credentialRegistration.getRegistration().keyId().idBase64())
-            );
     }
 
     @Override
