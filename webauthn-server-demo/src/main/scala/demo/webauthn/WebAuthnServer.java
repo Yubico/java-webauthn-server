@@ -44,7 +44,7 @@ public class WebAuthnServer {
 
     private final Cache<String, AssertionRequest> assertRequestStorage = newCache();
     private final Cache<String, RegistrationRequest> registerRequestStorage = newCache();
-    private final InMemoryRegistrationStorage userStorage = new InMemoryRegistrationStorage();
+    private final RegistrationStorage userStorage = new InMemoryRegistrationStorage();
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
