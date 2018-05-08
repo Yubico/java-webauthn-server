@@ -79,13 +79,9 @@ public class WebAuthnServer {
     }
 
     public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname) {
-        return startRegistration(username, displayName, credentialNickname, false);
-    }
-
-    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname, boolean allowExistingUsername) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
-        if (allowExistingUsername || userStorage.getRegistrationsByUsername(username).isEmpty()) {
+        if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
             byte[] userId = challengeGenerator.generateChallenge();
 
             RegistrationRequest request = new RegistrationRequest(
