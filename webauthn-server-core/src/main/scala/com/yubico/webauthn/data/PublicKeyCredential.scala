@@ -2,10 +2,11 @@ package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 
 
+@JsonIgnoreProperties(Array("rawId"))
 case class PublicKeyCredential[+A <: AuthenticatorResponse] (
 
   /**
@@ -20,7 +21,6 @@ case class PublicKeyCredential[+A <: AuthenticatorResponse] (
     * containing a credential private key wrapped with a symmetric key that is
     * burned into the authenticator.
     */
-  @JsonIgnore
   rawId: ArrayBuffer,
 
   /**
