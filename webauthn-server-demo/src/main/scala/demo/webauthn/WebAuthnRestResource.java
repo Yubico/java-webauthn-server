@@ -61,17 +61,17 @@ public class WebAuthnRestResource {
         }
     }
     private final class Index {
-        public final URL register;
+        public final URL addCredential;
         public final URL authenticate;
         public final URL deregister;
-        public final URL addCredential;
+        public final URL register;
 
 
         public Index() throws MalformedURLException {
-            register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
+            addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
             deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
-            addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
+            register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
         }
     }
     private final class Info {
