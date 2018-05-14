@@ -1,6 +1,7 @@
 package demo.webauthn;
 
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -121,13 +122,15 @@ public class WebAuthnRestResource {
     public Response startRegistration(
         @FormParam("username") String username,
         @FormParam("displayName") String displayName,
-        @FormParam("credentialNickname") String credentialNickname
+        @FormParam("credentialNickname") String credentialNickname,
+        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
     ) throws MalformedURLException {
-        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}", username, displayName, credentialNickname);
+        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}", username, displayName, credentialNickname, requireResidentKey);
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
             displayName,
-            credentialNickname
+            credentialNickname,
+            requireResidentKey
         );
 
         if (result.isRight()) {
@@ -223,10 +226,14 @@ public class WebAuthnRestResource {
 
     @Path("action/add-credential")
     @POST
-    public Response addCredential(@FormParam("username") String username, @FormParam("credentialNickname") String credentialNickname) throws MalformedURLException {
-        logger.trace("addCredential username: {}, credentialNickname: {}", username, credentialNickname);
+    public Response addCredential(
+        @FormParam("username") String username,
+        @FormParam("credentialNickname") String credentialNickname,
+        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
+    ) throws MalformedURLException {
+        logger.trace("addCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
-        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, credentialNickname, (RegistrationRequest request) -> {
+        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, credentialNickname, requireResidentKey, (RegistrationRequest request) -> {
             try {
                 return Right.apply(new StartRegistrationResponse(request));
             } catch (MalformedURLException e) {

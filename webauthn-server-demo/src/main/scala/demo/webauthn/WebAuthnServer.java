@@ -78,7 +78,7 @@ public class WebAuthnServer {
             .build();
     }
 
-    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname) {
+    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname, boolean requireResidentKey) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
@@ -92,7 +92,7 @@ public class WebAuthnServer {
                     new UserIdentity(username, displayName, userId, Optional.empty()),
                     Optional.of(userStorage.getCredentialIdsForUsername(username)),
                     Optional.empty(),
-                    false
+                    requireResidentKey
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
@@ -102,8 +102,8 @@ public class WebAuthnServer {
         }
     }
 
-    public <T> Either<List<String>, AssertionRequest> startAddCredential(String username, String credentialNickname, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
-        logger.trace("startAddCredential username: {}, credentialNickname: {}", username, credentialNickname);
+    public <T> Either<List<String>, AssertionRequest> startAddCredential(String username, String credentialNickname, boolean requireResidentKey, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
+        logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
         if (username == null || username.isEmpty()) {
             return Left.apply(Arrays.asList("username must not be empty."));
@@ -125,7 +125,7 @@ public class WebAuthnServer {
                         existingUser,
                         Optional.of(userStorage.getCredentialIdsForUsername(username)),
                         Optional.empty(),
-                        false
+                        requireResidentKey
                     )
                 );
                 registerRequestStorage.put(request.getRequestId(), request);
