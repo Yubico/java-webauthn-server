@@ -61,7 +61,6 @@ public class WebAuthnServer {
         challengeGenerator,
         Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
         Config.getOrigins(),
-        Optional.empty(),
         Optional.of(Direct$.MODULE$),
         new BouncyCastleCrypto(),
         true,
@@ -92,7 +91,8 @@ public class WebAuthnServer {
                 rp.startRegistration(
                     new UserIdentity(username, displayName, userId, Optional.empty()),
                     Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                    Optional.empty()
+                    Optional.empty(),
+                    false
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
@@ -124,7 +124,8 @@ public class WebAuthnServer {
                     rp.startRegistration(
                         existingUser,
                         Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                        Optional.empty()
+                        Optional.empty(),
+                        false
                     )
                 );
                 registerRequestStorage.put(request.getRequestId(), request);

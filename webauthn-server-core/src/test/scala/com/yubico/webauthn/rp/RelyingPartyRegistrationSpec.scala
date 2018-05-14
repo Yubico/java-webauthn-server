@@ -66,7 +66,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
   private def finishRegistration(
     allowUntrustedAttestation: Boolean = false,
-    authenticatorRequirements: Option[AuthenticatorSelectionCriteria] = None,
     callerTokenBindingId: Option[String] = None,
     credentialId: Option[ArrayBuffer] = None,
     credentialRepository: Option[CredentialRepository] = None,
@@ -76,7 +75,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   ): FinishRegistrationSteps = {
     new RelyingParty(
       allowUntrustedAttestation = allowUntrustedAttestation,
-      authenticatorRequirements = authenticatorRequirements.asJava,
       challengeGenerator = null,
       origins = List(rp.id).asJava,
       preferredPubkeyParams = Nil.asJava,

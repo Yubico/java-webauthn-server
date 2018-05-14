@@ -32,7 +32,6 @@ class RelyingParty (
   val challengeGenerator: ChallengeGenerator,
   val preferredPubkeyParams: java.util.List[PublicKeyCredentialParameters],
   val origins: java.util.List[String],
-  val authenticatorRequirements: Optional[AuthenticatorSelectionCriteria] = None.asJava,
   val attestationConveyancePreference: Optional[AttestationConveyancePreference] = None.asJava,
   val crypto: Crypto = new BouncyCastleCrypto,
   val allowMissingTokenBinding: Boolean = false,
@@ -46,7 +45,8 @@ class RelyingParty (
   def startRegistration(
     user: UserIdentity,
     excludeCredentials: Optional[java.util.Collection[PublicKeyCredentialDescriptor]] = None.asJava,
-    extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava
+    extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava,
+    requireResidentKey: Boolean = false
   ): PublicKeyCredentialCreationOptions =
     PublicKeyCredentialCreationOptions(
       rp = rp,
@@ -54,7 +54,7 @@ class RelyingParty (
       challenge = challengeGenerator.generateChallenge().toVector,
       pubKeyCredParams = preferredPubkeyParams,
       excludeCredentials = excludeCredentials,
-      authenticatorSelection = authenticatorRequirements,
+      authenticatorSelection = Optional.of(AuthenticatorSelectionCriteria(requireResidentKey = requireResidentKey)),
       attestation = attestationConveyancePreference.asScala getOrElse AttestationConveyancePreference.default,
       extensions = extensions
     )
