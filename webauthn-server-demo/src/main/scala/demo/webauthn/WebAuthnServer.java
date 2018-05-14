@@ -101,11 +101,11 @@ public class WebAuthnServer {
         }
     }
 
-    public <T> Either<String, AssertionRequest> startAddCredential(String username, String credentialNickname, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
+    public <T> Either<List<String>, AssertionRequest> startAddCredential(String username, String credentialNickname, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
         logger.trace("startAddCredential username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (username == null || username.isEmpty()) {
-            return Left.apply("username must not be empty.");
+            return Left.apply(Arrays.asList("username must not be empty."));
         }
 
         Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
@@ -131,7 +131,7 @@ public class WebAuthnServer {
                 return whenAuthenticated.apply(request);
             };
 
-            return Right.apply(startAuthenticatedAction(Optional.of(username), action));
+            return startAuthenticatedAction(Optional.of(username), action);
         }
     }
 
@@ -190,20 +190,25 @@ public class WebAuthnServer {
         }
     }
 
-    public AssertionRequest startAuthentication(Optional<String> username) {
+    public Either<List<String>, AssertionRequest> startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
-        AssertionRequest request = new AssertionRequest(
-            username,
-            U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
-            rp.startAssertion(
-                username.map(userStorage::getCredentialIdsForUsername),
-                Optional.empty()
-            )
-        );
 
-        assertRequestStorage.put(request.getRequestId(), request);
+        if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
+            return Left.apply(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
+        } else {
+            AssertionRequest request = new AssertionRequest(
+                username,
+                U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+                rp.startAssertion(
+                    username.map(userStorage::getCredentialIdsForUsername),
+                    Optional.empty()
+                )
+            );
 
-        return request;
+            assertRequestStorage.put(request.getRequestId(), request);
+
+            return Right.apply(request);
+        }
     }
 
     @Value
@@ -296,12 +301,15 @@ public class WebAuthnServer {
         }
     }
 
-    public AssertionRequest startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
-        final AssertionRequest request = startAuthentication(username);
-        synchronized (authenticatedActions) {
-            authenticatedActions.put(request, action);
-        }
-        return request;
+    public Either<List<String>, AssertionRequest> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
+        return com.yubico.util.Either.fromScala(startAuthentication(username))
+            .map(request -> {
+                synchronized (authenticatedActions) {
+                    authenticatedActions.put(request, action);
+                }
+                return request;
+            })
+            .toScala();
     }
 
     public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
@@ -342,7 +350,7 @@ public class WebAuthnServer {
             }
         };
 
-        return Right.apply(startAuthenticatedAction(Optional.of(username), action));
+        return startAuthenticatedAction(Optional.of(username), action);
     }
 
     private CredentialRegistration addRegistration(String username, UserIdentity userIdentity, String nickname, RegistrationResponse response, RegistrationResult registration) {

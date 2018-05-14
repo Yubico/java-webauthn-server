@@ -166,8 +166,12 @@ public class WebAuthnRestResource {
     @POST
     public Response startAuthentication(@FormParam("username") String username) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
-        AssertionRequest request = server.startAuthentication(Optional.ofNullable(username));
-        return startResponse(new StartAuthenticationResponse(request));
+        Either<List<String>, AssertionRequest> request = server.startAuthentication(Optional.ofNullable(username));
+        if (request.isRight()) {
+            return startResponse(new StartAuthenticationResponse(request.right().get()));
+        } else {
+            return messagesJson(Response.status(Status.BAD_REQUEST), request.left().get());
+        }
     }
 
     @Path("authenticate/finish")
@@ -218,7 +222,7 @@ public class WebAuthnRestResource {
     public Response addCredential(@FormParam("username") String username, @FormParam("credentialNickname") String credentialNickname) throws MalformedURLException {
         logger.trace("addCredential username: {}, credentialNickname: {}", username, credentialNickname);
 
-        Either<String, AssertionRequest> result = server.startAddCredential(username, credentialNickname, (RegistrationRequest request) -> {
+        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, credentialNickname, (RegistrationRequest request) -> {
             try {
                 return Right.apply(new StartRegistrationResponse(request));
             } catch (MalformedURLException e) {
