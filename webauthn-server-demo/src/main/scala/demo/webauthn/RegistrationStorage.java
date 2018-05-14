@@ -20,6 +20,7 @@ public interface RegistrationStorage extends CredentialRepository {
     Optional<Vector<Object>> getUserHandle(String username);
 
     boolean removeRegistrationByUsername(String username, CredentialRegistration credentialRegistration);
+    boolean removeAllRegistrations(String username);
 
     void updateSignatureCountForUsername(String username, String idBase64, long newSignatureCount);
 

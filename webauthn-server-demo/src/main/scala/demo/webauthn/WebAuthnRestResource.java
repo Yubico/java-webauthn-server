@@ -1,5 +1,6 @@
 package demo.webauthn;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -63,6 +65,7 @@ public class WebAuthnRestResource {
     private final class Index {
         public final URL addCredential;
         public final URL authenticate;
+        public final URL deleteAccount;
         public final URL deregister;
         public final URL register;
 
@@ -70,6 +73,7 @@ public class WebAuthnRestResource {
         public Index() throws MalformedURLException {
             addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
+            deleteAccount = uriInfo.getAbsolutePathBuilder().path("delete-account").build().toURL();
             deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
             register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
         }
@@ -266,6 +270,27 @@ public class WebAuthnRestResource {
 
         if (result.isRight()) {
             return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
+        } else {
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                result.left().get()
+            );
+        }
+    }
+
+    @Path("delete-account")
+    @DELETE
+    public Response deleteAccount(@FormParam("username") String username) {
+        logger.trace("deleteAccount username: {}", username);
+
+        Either<List<String>, JsonNode> result = server.deleteAccount(username, () ->
+            ((ObjectNode) jsonFactory.objectNode()
+                .set("success", jsonFactory.booleanNode(true)))
+                .set("deletedAccount", jsonFactory.textNode(username))
+        );
+
+        if (result.isRight()) {
+            return Response.ok(result.right().get().toString()).build();
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),

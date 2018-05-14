@@ -121,6 +121,12 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
+    public boolean removeAllRegistrations(String username) {
+        storage.invalidate(username);
+        return true;
+    }
+
+    @Override
     public Optional<RegisteredCredential> lookup(String credentialId, String userHandle) {
         Optional<CredentialRegistration> registrationMaybe = storage.asMap().values().stream()
             .flatMap(Collection::stream)

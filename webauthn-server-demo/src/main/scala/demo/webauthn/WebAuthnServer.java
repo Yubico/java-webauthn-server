@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -351,6 +352,22 @@ public class WebAuthnServer {
         };
 
         return startAuthenticatedAction(Optional.of(username), action);
+    }
+
+    public <T> Either<List<String>, T> deleteAccount(String username, Supplier<T> onSuccess) {
+        logger.trace("deleteAccount username: {}", username);
+
+        if (username == null || username.isEmpty()) {
+            return Left.apply(Arrays.asList("Username must not be empty."));
+        }
+
+        boolean removed = userStorage.removeAllRegistrations(username);
+
+        if (removed) {
+            return Right.apply(onSuccess.get());
+        } else {
+            return Left.apply(Arrays.asList("Username not registered:" + username));
+        }
     }
 
     private CredentialRegistration addRegistration(String username, UserIdentity userIdentity, String nickname, RegistrationResponse response, RegistrationResult registration) {
