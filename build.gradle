@@ -3,6 +3,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
+    classpath 'com.cinnober.gradle:semver-git:2.3.1'
     classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
   }
 }
@@ -28,6 +29,9 @@ task wrapper(type: Wrapper) {
 }
 
 allprojects  {
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT"
+
+  apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'java'
   apply plugin: 'maven'
   apply plugin: 'signing'
@@ -42,7 +46,6 @@ allprojects  {
   }
 
   group = 'com.yubico'
-  version = '0.1.0'
 
   sourceCompatibility = 1.6
   targetCompatibility = 1.6
