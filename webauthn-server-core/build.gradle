@@ -33,6 +33,21 @@ dependencies {
 
 }
 
+
+jar {
+  manifest {
+    attributes([
+      'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
+      'Specification-Version': 'Level 1 Candidate Recommendation 2018-03-20',
+      'Specification-Vendor': 'World Wide Web Consortium',
+      'Implementation-Id': 'java-webauthn-server',
+      'Implementation-Title': 'Yubico Web Authentication server library',
+      'Implementation-Version': project.version,
+      'Implementation-Vendor': 'Yubico',
+    ])
+  }
+}
+
 def scalaReplDistDir = file(Paths.get(project.distsDir.path, 'scala-repl'))
 task scalaReplClasspath(type: Sync) {
   from configurations.scalaRepl
