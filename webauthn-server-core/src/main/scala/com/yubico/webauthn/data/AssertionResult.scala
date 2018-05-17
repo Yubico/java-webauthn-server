@@ -6,6 +6,7 @@ case class AssertionResult(
   signatureCount: Long,
   signatureCounterValid: Boolean,
   success: Boolean,
-  userHandle: Base64UrlString
+  userHandle: Base64UrlString,
+  warnings: List[String]
 )
 

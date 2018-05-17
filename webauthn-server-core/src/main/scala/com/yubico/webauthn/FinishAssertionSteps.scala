@@ -53,6 +53,8 @@ case class FinishAssertionSteps(
     protected def nextStep: B
     protected def result: Option[AssertionResult] = None
     protected def validate(): Unit
+    protected def warnings: List[String] = Nil
+    protected def allWarnings: List[String] = prev.allWarnings ++ warnings
 
     private[webauthn] def next: Try[B] = validations map { _ => nextStep }
     private[webauthn] def prev: A
@@ -79,6 +81,7 @@ case class FinishAssertionSteps(
         case None =>
       }
     }
+    override def allWarnings  = warnings
   }
 
   case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
@@ -280,7 +283,8 @@ case class FinishAssertionSteps(
       signatureCount = prev.assertionSignatureCount,
       signatureCounterValid = prev.signatureCounterValid,
       success = true,
-      userHandle = userHandle
+      userHandle = userHandle,
+      warnings = allWarnings
     ))
 
   }

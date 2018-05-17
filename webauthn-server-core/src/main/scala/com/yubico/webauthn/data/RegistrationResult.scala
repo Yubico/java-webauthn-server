@@ -10,5 +10,6 @@ case class RegistrationResult(
   attestationTrusted: Boolean,
   attestationType: AttestationType,
   attestationMetadata: Optional[Attestation],
-  publicKeyCose: Array[Byte]
+  publicKeyCose: Array[Byte],
+  warnings: List[String]
 )
