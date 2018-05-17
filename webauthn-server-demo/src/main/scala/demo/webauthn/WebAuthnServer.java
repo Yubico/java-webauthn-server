@@ -243,8 +243,13 @@ public class WebAuthnServer {
             final String username;
             if (request.getUsername().isPresent()) {
                 username = request.getUsername().get();
-            } else {
+            } else if (returnedUserHandle.isPresent()) {
                 username = userStorage.getUsername(returnedUserHandle.get()).orElse(null);
+                if (username == null) {
+                    return Left.apply(Arrays.asList("This user handle is not registered."));
+                }
+            } else {
+                return Left.apply(Arrays.asList("User handle must be returned if username was not supplied in startAuthentication"));
             }
 
             final String userHandle = returnedUserHandle.orElseGet(() ->
