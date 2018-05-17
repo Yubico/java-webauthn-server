@@ -219,6 +219,7 @@ public class WebAuthnServer {
         AssertionRequest request;
         AssertionResponse response;
         Collection<CredentialRegistration> registrations;
+        List<String> warnings;
     }
 
     public Either<List<String>, SuccessfulAuthenticationResult> finishAuthentication(String responseJson) {
@@ -293,7 +294,8 @@ public class WebAuthnServer {
                             new SuccessfulAuthenticationResult(
                                 request,
                                 response,
-                                userStorage.getRegistrationsByUsername(username)
+                                userStorage.getRegistrationsByUsername(username),
+                                result.warningsAsJava()
                             )
                         );
                     } else {
