@@ -134,7 +134,7 @@ public class WebAuthnRestResource {
         );
 
         if (result.isRight()) {
-            return startResponse(new StartRegistrationResponse(result.right().get()));
+            return startResponse("startRegistration", new StartRegistrationResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
@@ -175,7 +175,7 @@ public class WebAuthnRestResource {
         logger.trace("startAuthentication username: {}", username);
         Either<List<String>, AssertionRequest> request = server.startAuthentication(Optional.ofNullable(username));
         if (request.isRight()) {
-            return startResponse(new StartAuthenticationResponse(request.right().get()));
+            return startResponse("startAuthentication", new StartAuthenticationResponse(request.right().get()));
         } else {
             return messagesJson(Response.status(Status.BAD_REQUEST), request.left().get());
         }
@@ -243,7 +243,7 @@ public class WebAuthnRestResource {
         });
 
         if (result.isRight()) {
-            return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
+            return startResponse("addCredential", new StartAuthenticatedActionResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
@@ -276,7 +276,7 @@ public class WebAuthnRestResource {
         }));
 
         if (result.isRight()) {
-            return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
+            return startResponse("deregisterCredential", new StartAuthenticatedActionResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
@@ -306,9 +306,11 @@ public class WebAuthnRestResource {
         }
     }
 
-    private Response startResponse(Object request) {
+    private Response startResponse(String operationName, Object request) {
         try {
-            return Response.ok(jsonMapper.writeValueAsString(request)).build();
+            String json = jsonMapper.writeValueAsString(request);
+            logger.debug("{} JSON response: {}", operationName, json);
+            return Response.ok(json).build();
         } catch (IOException e) {
             return jsonFail();
         }
