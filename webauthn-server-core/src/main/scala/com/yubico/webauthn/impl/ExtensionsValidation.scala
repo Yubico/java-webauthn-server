@@ -17,7 +17,7 @@ object ExtensionsValidation {
     val clientExtensionIds: Set[String] = response.clientExtensionResults.fieldNames.asScala.toSet
     assert(
       clientExtensionIds subsetOf requestedExtensionIds,
-      s"Client extensions {${clientExtensionIds.toSeq.sorted.mkString(", ")}} are not a subset of requested extensions {${requestedExtensionIds.toSeq.sorted.mkString(", ")}."
+      s"Client extensions {${clientExtensionIds.toSeq.sorted.mkString(", ")}} are not a subset of requested extensions {${requestedExtensionIds.toSeq.sorted.mkString(", ")}}."
     )
 
     val authenticatorExtensionIds: Set[String] =
@@ -28,7 +28,7 @@ object ExtensionsValidation {
         .getOrElse(Set.empty)
     assert(
       authenticatorExtensionIds subsetOf requestedExtensionIds,
-      s"Authenticator extensions {${authenticatorExtensionIds.toSeq.sorted.mkString(", ")}} are not a subset of requested extensions {${requestedExtensionIds.toSeq.sorted.mkString(", ")}."
+      s"Authenticator extensions {${authenticatorExtensionIds.toSeq.sorted.mkString(", ")}} are not a subset of requested extensions {${requestedExtensionIds.toSeq.sorted.mkString(", ")}}."
     )
 
     true
