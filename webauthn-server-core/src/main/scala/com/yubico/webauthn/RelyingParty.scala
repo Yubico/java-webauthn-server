@@ -35,6 +35,7 @@ class RelyingParty (
   val attestationConveyancePreference: Optional[AttestationConveyancePreference] = None.asJava,
   val crypto: Crypto = new BouncyCastleCrypto,
   val allowMissingTokenBinding: Boolean = false,
+  val allowUnrequestedExtensions: Boolean = false,
   val allowUntrustedAttestation: Boolean = false,
   val credentialRepository: CredentialRepository,
   val metadataService: Optional[MetadataService] = None.asJava,
@@ -80,6 +81,7 @@ class RelyingParty (
       rpId = rp.id,
       crypto = crypto,
       allowMissingTokenBinding = allowMissingTokenBinding,
+      allowUnrequestedExtensions = allowUnrequestedExtensions,
       allowUntrustedAttestation = allowUntrustedAttestation,
       metadataService = metadataService,
       validateTypeAttribute = validateTypeAttribute
@@ -120,6 +122,7 @@ class RelyingParty (
       credentialRepository = credentialRepository,
       getUserHandle = getUserHandle,
       allowMissingTokenBinding = allowMissingTokenBinding,
+      allowUnrequestedExtensions = allowUnrequestedExtensions,
       validateSignatureCounter = validateSignatureCounter,
       validateTypeAttribute = validateTypeAttribute
     )

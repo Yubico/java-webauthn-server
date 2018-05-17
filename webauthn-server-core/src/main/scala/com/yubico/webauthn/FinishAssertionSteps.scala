@@ -24,6 +24,8 @@ import org.slf4j.Logger
 
 import scala.collection.JavaConverters._
 import scala.util.Try
+import scala.util.Failure
+import scala.util.Success
 
 object FinishAssertionSteps {
   val ClientDataType: String = "webauthn.get"
@@ -40,7 +42,8 @@ case class FinishAssertionSteps(
   getUserHandle: Supplier[Base64UrlString],
   allowMissingTokenBinding: Boolean = false,
   validateTypeAttribute: Boolean = true,
-  validateSignatureCounter: Boolean = true
+  validateSignatureCounter: Boolean = true,
+  allowUnrequestedExtensions: Boolean = false
 ) {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[FinishAssertionSteps])
@@ -216,7 +219,15 @@ case class FinishAssertionSteps(
 
   case class Step14 private[webauthn] (override val prev: Step13) extends Step[Step13, Step15] {
     override def validate() {
-      ExtensionsValidation.validate(request.extensions.asScala, response)
+      if (!allowUnrequestedExtensions) {
+        ExtensionsValidation.validate(request.extensions.asScala, response)
+      }
+    }
+    override def warnings = {
+      Try(ExtensionsValidation.validate(request.extensions.asScala, response)) match {
+        case Success(_) => Nil
+        case Failure(e) => List(e.getMessage)
+      }
     }
     override def nextStep = Step15(this)
   }

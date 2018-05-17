@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 
 import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 sealed trait Step[A <: Step[_]] {
   protected def isFinished: Boolean = false
@@ -62,6 +64,7 @@ case class FinishRegistrationSteps(
   origins: java.util.List[String],
   rpId: String,
   crypto: Crypto,
+  allowUnrequestedExtensions: Boolean = false,
   allowUntrustedAttestation: Boolean,
   metadataService: Optional[MetadataService],
   allowMissingTokenBinding: Boolean = false,
@@ -183,9 +186,17 @@ case class FinishRegistrationSteps(
 
   case class Step12 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step13] {
     override def validate() {
-      ExtensionsValidation.validate(request.extensions.asScala, response)
+      if (!allowUnrequestedExtensions) {
+        ExtensionsValidation.validate(request.extensions.asScala, response)
+      }
     }
-    override def nextStep = Step13(clientDataJsonHash, attestation, Nil)
+    override def warnings = {
+      Try(ExtensionsValidation.validate(request.extensions.asScala, response)) match {
+        case Success(_) => Nil
+        case Failure(e) => List(e.getMessage)
+      }
+    }
+    override def nextStep = Step13(clientDataJsonHash, attestation, warnings)
   }
 
   case class Step13 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject, override val warnings: List[String]) extends Step[Step14] {
