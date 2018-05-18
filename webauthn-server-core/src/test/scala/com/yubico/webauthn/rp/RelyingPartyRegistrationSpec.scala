@@ -734,7 +734,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = new steps.Step14(
               attestation = AttestationObject(testData.attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.updated(20, (testData.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              warnings = Nil
             )
 
             step.validations shouldBe a [Failure[_]]
@@ -752,7 +753,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = new steps.Step14(
               attestation = AttestationObject(testData.attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              warnings = Nil
             )
 
             step.validations shouldBe a [Failure[_]]
@@ -783,7 +785,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = new steps.Step14(
               attestation = AttestationObject(testData.attestationObject),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier
+              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              warnings = Nil
             )
 
             step.validations shouldBe a [Failure[_]]
@@ -877,7 +880,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: steps.Step14 = new steps.Step14(
                 attestation = AttestationObject(testData.attestationObject),
                 clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-                attestationStatementVerifier = NoneAttestationStatementVerifier
+                attestationStatementVerifier = NoneAttestationStatementVerifier,
+                warnings = Nil
               )
 
               step.validations shouldBe a [Success[_]]
