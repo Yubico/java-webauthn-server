@@ -13,7 +13,6 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
