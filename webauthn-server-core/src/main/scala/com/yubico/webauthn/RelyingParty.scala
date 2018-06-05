@@ -8,6 +8,7 @@ import com.yubico.u2f.attestation.MetadataService
 import com.yubico.u2f.crypto.ChallengeGenerator
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.crypto.BouncyCastleCrypto
+import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -23,6 +24,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.AttestationConveyancePreference
 import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.data.AssertionResult
+import com.yubico.webauthn.data.AssertionRequest
 
 import scala.util.Try
 
@@ -88,14 +90,24 @@ class RelyingParty (
     )
 
   def startAssertion(
+    username: Optional[String],
     allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
     extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava
-  ): PublicKeyCredentialRequestOptions =
-    PublicKeyCredentialRequestOptions(
-      rpId = Some(rp.id).asJava,
-      challenge = challengeGenerator.generateChallenge().toVector,
-      allowCredentials = allowCredentials,
-      extensions = extensions
+  ): AssertionRequest =
+    AssertionRequest(
+      requestId = U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+      username = username,
+      publicKeyCredentialRequestOptions = PublicKeyCredentialRequestOptions(
+        rpId = Some(rp.id).asJava,
+        challenge = challengeGenerator.generateChallenge().toVector,
+        allowCredentials = (
+          allowCredentials.asScala
+            orElse
+              username.asScala.map(un =>
+                credentialRepository.getCredentialIdsForUsername(un))
+        ).asJava,
+        extensions = extensions
+      )
     )
 
   def finishAssertion(

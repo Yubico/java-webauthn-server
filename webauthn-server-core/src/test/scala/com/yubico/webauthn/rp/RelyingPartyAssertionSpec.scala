@@ -2,7 +2,6 @@ package com.yubico.webauthn.rp
 
 import java.security.MessageDigest
 import java.security.KeyPair
-import java.util.Optional
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -26,8 +25,8 @@ import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Discouraged
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RegisteredCredential
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
@@ -134,6 +133,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             else None
           ).asJava
         override def lookupAll(credId: Base64UrlString) = lookup(credId, null).asScala.toSet
+        override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
       },
       validateSignatureCounter = validateSignatureCounter
     )._finishAssertion(request, response, (() => BinaryUtil.toBase64(userHandle)).asJava, callerTokenBindingId.asJava)
@@ -193,6 +193,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             )
           ).asJava
           override def lookupAll(id: Base64UrlString) = ???
+          override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
         })
 
         it("Fails if credential ID is not owned by the given user handle.") {
@@ -225,6 +226,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             credentialRepository = Some(new CredentialRepository {
               override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
               override def lookupAll(id: Base64UrlString) = Set.empty
+              override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             })
           )
           val step: steps.Step3 = steps.Step3(null)
@@ -245,6 +247,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               )
             ).asJava
             override def lookupAll(id: Base64UrlString) = ???
+            override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
           }))
           val step: steps.Step3 = steps.begin.next.get.next.get
 
@@ -809,6 +812,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 )
               ).asJava
               override def lookupAll(id: Base64UrlString) = ???
+              override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             }
 
             describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
@@ -838,6 +842,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 )
               ).asJava
               override def lookupAll(id: Base64UrlString) = ???
+              override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             }
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {

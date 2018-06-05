@@ -12,7 +12,6 @@ public interface RegistrationStorage extends CredentialRepository {
 
     boolean addRegistrationByUsername(String username, CredentialRegistration reg);
 
-    List<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
     Collection<CredentialRegistration> getRegistrationsByUsername(String username);
     Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, String idBase64);
     Collection<CredentialRegistration> getRegistrationsByUserHandle(String userHandleBase64);

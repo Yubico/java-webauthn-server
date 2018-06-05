@@ -9,6 +9,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
@@ -16,7 +17,6 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.util.BinaryUtil;
-import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
@@ -199,16 +199,13 @@ public class WebAuthnServer {
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
             return Left.apply(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
         } else {
-            AssertionRequest request = new AssertionRequest(
+            AssertionRequest request = rp.startAssertion(
                 username,
-                U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
-                rp.startAssertion(
-                    username.map(userStorage::getCredentialIdsForUsername),
-                    Optional.empty()
-                )
+                Optional.empty(),
+                Optional.empty()
             );
 
-            assertRequestStorage.put(request.getRequestId(), request);
+            assertRequestStorage.put(request.requestId(), request);
 
             return Right.apply(request);
         }
@@ -243,8 +240,8 @@ public class WebAuthnServer {
             Optional<String> returnedUserHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
 
             final String username;
-            if (request.getUsername().isPresent()) {
-                username = request.getUsername().get();
+            if (request.username().isPresent()) {
+                username = request.username().get();
             } else if (returnedUserHandle.isPresent()) {
                 username = userStorage.getUsername(returnedUserHandle.get()).orElse(null);
                 if (username == null) {
@@ -266,7 +263,7 @@ public class WebAuthnServer {
                 return Left.apply(Arrays.asList("User handle must be returned if username was not supplied in startAuthentication"));
             } else {
                 Try<AssertionResult> assertionTry = rp.finishAssertion(
-                    request.getPublicKeyCredentialRequestOptions(),
+                    request.publicKeyCredentialRequestOptions(),
                     response.getCredential(),
                     () -> userHandle,
                     Optional.empty()
@@ -329,7 +326,7 @@ public class WebAuthnServer {
                 authenticatedActions.invalidate(result.request);
                 if (action == null) {
                     return com.yubico.util.Either.left(Collections.singletonList(
-                        "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
+                        "No action was associated with assertion request ID: " + result.getRequest().requestId()
                     ));
                 } else {
                     return com.yubico.util.Either.fromScala(action.apply(result));

@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.VersionInfo$;
-import demo.webauthn.data.AssertionRequest;
+import com.yubico.webauthn.data.AssertionRequest;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;

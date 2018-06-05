@@ -34,6 +34,7 @@ import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.NoneAttestation
 import com.yubico.webauthn.data.RegisteredCredential
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
@@ -1505,6 +1506,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 )
               case _ => Set.empty
             }
+            override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
           }
 
           val steps = finishRegistration(
@@ -1523,6 +1525,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val credentialRepository = new CredentialRepository {
             override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
             override def lookupAll(id: Base64UrlString) = Set.empty
+            override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
           }
 
           val steps = finishRegistration(
