@@ -682,7 +682,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         def checkSuccess(format: String): Unit = {
-          ignore(s"""Succeeds if fmt is "${format}".""") {
+          it(s"""Succeeds if fmt is "${format}".""") {
             val steps = setup(format)
             val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
@@ -693,12 +693,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
         }
 
-        checkSuccess("android-key")
-        checkSuccess("android-safetynet")
+        ignore("Succeeds if fmt is android-key.") { checkSuccess("android-key") }
+        ignore("Succeeds if fmt is android-safetynet.") { checkSuccess("android-safetynet") }
         checkSuccess("fido-u2f")
         checkSuccess("none")
         checkSuccess("packed")
-        checkSuccess("tpm")
+        ignore("Succeeds if fmt is tpm.") { checkSuccess("tpm") }
 
         checkFailure("FIDO-U2F")
         checkFailure("Fido-U2F")
