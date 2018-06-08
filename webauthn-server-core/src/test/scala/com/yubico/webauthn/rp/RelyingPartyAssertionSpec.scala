@@ -870,7 +870,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
+      it("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
         val steps = finishAssertion()
         val step: steps.Finished = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
