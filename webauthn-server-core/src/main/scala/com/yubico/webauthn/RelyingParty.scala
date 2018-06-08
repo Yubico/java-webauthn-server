@@ -111,7 +111,7 @@ class RelyingParty (
     )
 
   def finishAssertion(
-    request: PublicKeyCredentialRequestOptions,
+    request: AssertionRequest,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
     getUserHandle: Supplier[Base64UrlString],
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava
@@ -119,7 +119,7 @@ class RelyingParty (
     _finishAssertion(request, response, getUserHandle, callerTokenBindingId).run
 
   private[webauthn] def _finishAssertion(
-    request: PublicKeyCredentialRequestOptions,
+    request: AssertionRequest,
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
     getUserHandle: Supplier[Base64UrlString],
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava

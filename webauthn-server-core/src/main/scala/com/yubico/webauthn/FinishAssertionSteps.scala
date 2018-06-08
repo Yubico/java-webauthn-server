@@ -12,10 +12,10 @@ import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.AssertionResult
+import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.impl.TokenBindingValidator
 import com.yubico.webauthn.impl.ExtensionsValidation
 import com.yubico.webauthn.util.BinaryUtil
@@ -32,7 +32,7 @@ object FinishAssertionSteps {
 }
 
 case class FinishAssertionSteps(
-  request: PublicKeyCredentialRequestOptions,
+  request: AssertionRequest,
   response: PublicKeyCredential[AuthenticatorAssertionResponse],
   callerTokenBindingId: Optional[Base64UrlString],
   origins: java.util.List[String],
@@ -75,7 +75,7 @@ case class FinishAssertionSteps(
     override def prevWarnings = Nil
     override def nextStep = Step2(allWarnings)
     override def validate() = {
-      request.allowCredentials.asScala match {
+      request.publicKeyCredentialRequestOptions.allowCredentials.asScala match {
         case Some(allowed) =>
           assert(
             allowed.asScala exists { _.id == response.rawId },
@@ -164,7 +164,7 @@ case class FinishAssertionSteps(
   case class Step8 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step7, Step9] {
     override def validate() {
       assert(
-        U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.challenge,
+        U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.publicKeyCredentialRequestOptions.challenge,
         "Incorrect challenge."
       )
     }
@@ -200,7 +200,7 @@ case class FinishAssertionSteps(
 
   case class Step12 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step11, Step13] {
     override def validate(): Unit = {
-      if (request.userVerification == Required) {
+      if (request.publicKeyCredentialRequestOptions.userVerification == Required) {
         assert(response.response.parsedAuthenticatorData.flags.UV, "User Verification is required.")
       }
     }
@@ -209,7 +209,7 @@ case class FinishAssertionSteps(
 
   case class Step13 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step12, Step14] {
     override def validate(): Unit = {
-      if (request.userVerification != Required) {
+      if (request.publicKeyCredentialRequestOptions.userVerification != Required) {
         assert(response.response.parsedAuthenticatorData.flags.UP, "User Presence is required.")
       }
     }
@@ -219,11 +219,11 @@ case class FinishAssertionSteps(
   case class Step14 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step13, Step15] {
     override def validate() {
       if (!allowUnrequestedExtensions) {
-        ExtensionsValidation.validate(request.extensions.asScala, response)
+        ExtensionsValidation.validate(request.publicKeyCredentialRequestOptions.extensions.asScala, response)
       }
     }
     override def warnings = {
-      Try(ExtensionsValidation.validate(request.extensions.asScala, response)) match {
+      Try(ExtensionsValidation.validate(request.publicKeyCredentialRequestOptions.extensions.asScala, response)) match {
         case Success(_) => Nil
         case Failure(e) => List(e.getMessage)
       }

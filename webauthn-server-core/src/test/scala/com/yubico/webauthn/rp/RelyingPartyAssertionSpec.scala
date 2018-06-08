@@ -27,6 +27,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
@@ -63,6 +64,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val signature: ArrayBuffer = BinaryUtil.fromHex("30450221008d478e4c24894d261c7fd3790363ba9687facf4dd1d59610933a2c292cffc3d902205069264c167833d239d6af4c7bf7326c4883fb8c3517a2c86318aa3060d8b441").get
 
     // These values are not signed over
+    val username: Base64UrlString = "foo-user"
     val userHandle: ArrayBuffer = BinaryUtil.fromHex("6d8972d9603ce4f3fa5d520ce6d024bf").get
 
     // These values are defined by the attestationObject and clientDataJson above
@@ -95,12 +97,16 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ArrayBuffer = if (clientDataJson == null) null else clientDataJson.getBytes("UTF-8").toVector
 
-    val request = PublicKeyCredentialRequestOptions(
-      rpId = Some(rpId.id).asJava,
-      challenge = challenge,
-      allowCredentials = allowCredentials.asJava,
-      userVerification = userVerificationRequirement,
-      extensions = requestedExtensions.asJava
+    val request = AssertionRequest(
+      requestId = null,
+      username = Some(Defaults.username).asJava,
+      publicKeyCredentialRequestOptions = PublicKeyCredentialRequestOptions(
+        rpId = Some(rpId.id).asJava,
+        challenge = challenge,
+        allowCredentials = allowCredentials.asJava,
+        userVerification = userVerificationRequirement,
+        extensions = requestedExtensions.asJava
+      )
     )
 
     val response = PublicKeyCredential(
