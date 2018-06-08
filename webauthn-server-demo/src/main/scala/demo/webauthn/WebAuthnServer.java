@@ -248,11 +248,7 @@ public class WebAuthnServer {
 
                 if (result.success()) {
                     try {
-                        userStorage.updateSignatureCountForUsername(
-                            result.username(),
-                            response.getCredential().id(),
-                            result.signatureCount()
-                        );
+                        userStorage.updateSignatureCount(result);
                     } catch (Exception e) {
                         logger.error(
                             "Failed to update signature count for user \"{}\", credential \"{}\"",

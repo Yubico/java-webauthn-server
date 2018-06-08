@@ -6,6 +6,7 @@ import com.google.common.cache.CacheBuilder;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.util.BinaryUtil;
@@ -86,16 +87,16 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public void updateSignatureCountForUsername(String username, String idBase64, long newSignatureCount) {
-        CredentialRegistration registration = getRegistrationByUsernameAndCredentialId(username, idBase64)
+    public void updateSignatureCount(AssertionResult result) {
+        CredentialRegistration registration = getRegistrationByUsernameAndCredentialId(result.username(), result.credentialIdBase64())
             .orElseThrow(() -> new NoSuchElementException(String.format(
                 "Credential \"%s\" is not registered to user \"%s\"",
-                idBase64, username
+                result.credentialIdBase64(), result.username()
             )));
 
-        Set<CredentialRegistration> regs = storage.getIfPresent(username);
+        Set<CredentialRegistration> regs = storage.getIfPresent(result.username());
         regs.remove(registration);
-        regs.add(registration.withSignatureCount(newSignatureCount));
+        regs.add(registration.withSignatureCount(result.signatureCount()));
     }
 
     @Override

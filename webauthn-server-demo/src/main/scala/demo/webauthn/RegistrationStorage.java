@@ -1,6 +1,7 @@
 package demo.webauthn;
 
 import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
@@ -19,6 +20,6 @@ public interface RegistrationStorage extends CredentialRepository {
     boolean removeRegistrationByUsername(String username, CredentialRegistration credentialRegistration);
     boolean removeAllRegistrations(String username);
 
-    void updateSignatureCountForUsername(String username, String idBase64, long newSignatureCount);
+    void updateSignatureCount(AssertionResult result);
 
 }
