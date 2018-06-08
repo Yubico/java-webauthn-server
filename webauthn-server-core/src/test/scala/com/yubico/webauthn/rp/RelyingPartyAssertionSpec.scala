@@ -229,7 +229,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             })
           )
-          val step: steps.Step3 = steps.Step3(null)
+          val step: steps.Step3 = steps.Step3(Nil)
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [AssertionError]

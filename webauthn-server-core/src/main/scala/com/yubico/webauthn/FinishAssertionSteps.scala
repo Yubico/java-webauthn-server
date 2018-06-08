@@ -56,11 +56,11 @@ case class FinishAssertionSteps(
     protected def nextStep: B
     protected def result: Option[AssertionResult] = None
     protected def validate(): Unit
+    protected def prevWarnings: List[String]
     protected def warnings: List[String] = Nil
-    protected def allWarnings: List[String] = prev.allWarnings ++ warnings
+    protected def allWarnings: List[String] = prevWarnings ++ warnings
 
     private[webauthn] def next: Try[B] = validations map { _ => nextStep }
-    private[webauthn] def prev: A
     private[webauthn] def validations: Try[Unit] = Try { validate() }
 
     def run: Try[AssertionResult] =
@@ -72,8 +72,8 @@ case class FinishAssertionSteps(
   def run: Try[AssertionResult] = begin.run
 
   case class Step1 private[webauthn] () extends Step[Step1, Step2] {
-    override def prev = this
-    override def nextStep = Step2(this)
+    override def prevWarnings = Nil
+    override def nextStep = Step2(allWarnings)
     override def validate() = {
       request.allowCredentials.asScala match {
         case Some(allowed) =>
@@ -84,11 +84,10 @@ case class FinishAssertionSteps(
         case None =>
       }
     }
-    override def allWarnings  = warnings
   }
 
-  case class Step2 private[webauthn] (override val prev: Step1) extends Step[Step1, Step3] {
-    override def nextStep = Step3(this)
+  case class Step2 private[webauthn] (override val prevWarnings: List[String]) extends Step[Step1, Step3] {
+    override def nextStep = Step3(allWarnings)
     override def validate() = {
       val registration = credentialRepository.lookup(response.id, userHandle).asScala
       assert(registration.isDefined, s"Unknown credential: ${response.id}")
@@ -99,8 +98,8 @@ case class FinishAssertionSteps(
     }
   }
 
-  case class Step3 private[webauthn] (override val prev: Step2) extends Step[Step2, Step4] {
-    override def nextStep = Step4(this)
+  case class Step3 private[webauthn] (override val prevWarnings: List[String]) extends Step[Step2, Step4] {
+    override def nextStep = Step4(credential, allWarnings)
     override def validate() = {
       assert(_credential.isPresent, s"Unknown credential. Credential ID: ${response.id}, user handle: ${userHandle}")
     }
@@ -111,39 +110,39 @@ case class FinishAssertionSteps(
     def credential: RegisteredCredential = _credential.get
   }
 
-  case class Step4 private[webauthn] (override val prev: Step3) extends Step[Step3, Step5] {
+  case class Step4 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step3, Step5] {
     override def validate() = {
       assert(clientData != null, "Missing client data.")
       assert(authenticatorData != null, "Missing authenticator data.")
       assert(signature != null, "Missing signature.")
     }
-    override def nextStep = Step5(this)
+    override def nextStep = Step5(credential, allWarnings)
 
     def authenticatorData: ArrayBuffer = response.response.authenticatorData
     def clientData: ArrayBuffer = response.response.clientDataJSON
     def signature: ArrayBuffer = response.response.signature
   }
 
-  case class Step5 private[webauthn] (override val prev: Step4) extends Step[Step4, Step6] {
+  case class Step5 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step4, Step6] {
     // Nothing to do
     override def validate(): Unit = {}
-    override def nextStep = Step6(this)
+    override def nextStep = Step6(credential,  allWarnings)
   }
 
-  case class Step6 private[webauthn] (override val prev: Step5) extends Step[Step5, Step7] {
+  case class Step6 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step5, Step7] {
     override def validate(): Unit = {
       assert(clientData != null, "Missing client data.")
     }
-    override def nextStep = Step7(this)
+    override def nextStep = Step7(credential, clientData, allWarnings)
     def clientData: CollectedClientData = response.response.collectedClientData
   }
 
-  case class Step7 private[webauthn] (override val prev: Step6) extends Step[Step6, Step8] {
+  case class Step7 private[webauthn] (credential: RegisteredCredential, clientData: CollectedClientData, override val prevWarnings: List[String]) extends Step[Step6, Step8] {
     override def validate(): Unit = {
       try
         assert(
-          prev.clientData.`type` == FinishAssertionSteps.ClientDataType,
-          s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}", was: ${prev.clientData.`type`}."""
+          clientData.`type` == FinishAssertionSteps.ClientDataType,
+          s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}", was: ${clientData.`type`}."""
         )
       catch {
         case e: AssertionError =>
@@ -159,65 +158,65 @@ case class FinishAssertionSteps(
             logger.warn("""Missing "type" attribute in client data.""")
       }
     }
-    override def nextStep = Step8(this)
+    override def nextStep = Step8(credential, allWarnings)
   }
 
-  case class Step8 private[webauthn] (override val prev: Step7) extends Step[Step7, Step9] {
+  case class Step8 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step7, Step9] {
     override def validate() {
       assert(
         U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.challenge,
         "Incorrect challenge."
       )
     }
-    def nextStep = Step9(this)
+    def nextStep = Step9(credential, allWarnings)
   }
 
-  case class Step9 private[webauthn] (override val prev: Step8) extends Step[Step8, Step10] {
+  case class Step9 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step8, Step10] {
     override def validate() {
       assert(
         origins contains response.response.collectedClientData.origin,
         "Incorrect origin: " + response.response.collectedClientData.origin
       )
     }
-    override def nextStep = Step10(this)
+    override def nextStep = Step10(credential, allWarnings)
   }
 
-  case class Step10 private[webauthn] (override val prev: Step9) extends Step[Step9, Step11] {
+  case class Step10 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step9, Step11] {
     override def validate() = TokenBindingValidator.validate(response.response.collectedClientData.tokenBinding, callerTokenBindingId)
-    override def nextStep = Step11(this)
+    override def nextStep = Step11(credential, allWarnings)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
   }
 
-  case class Step11 private[webauthn] (override val prev: Step10) extends Step[Step10, Step12] {
+  case class Step11 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step10, Step12] {
     override def validate() {
       assert(
         response.response.parsedAuthenticatorData.rpIdHash == crypto.hash(rpId).toVector,
         "Wrong RP ID hash."
       )
     }
-    override def nextStep = Step12(this)
+    override def nextStep = Step12(credential, allWarnings)
   }
 
-  case class Step12 private[webauthn] (override val prev: Step11) extends Step[Step11, Step13] {
+  case class Step12 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step11, Step13] {
     override def validate(): Unit = {
       if (request.userVerification == Required) {
         assert(response.response.parsedAuthenticatorData.flags.UV, "User Verification is required.")
       }
     }
-    override def nextStep = Step13(this)
+    override def nextStep = Step13(credential, allWarnings)
   }
 
-  case class Step13 private[webauthn] (override val prev: Step12) extends Step[Step12, Step14] {
+  case class Step13 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step12, Step14] {
     override def validate(): Unit = {
       if (request.userVerification != Required) {
         assert(response.response.parsedAuthenticatorData.flags.UP, "User Presence is required.")
       }
     }
-    override def nextStep = Step14(this)
+    override def nextStep = Step14(credential, allWarnings)
   }
 
-  case class Step14 private[webauthn] (override val prev: Step13) extends Step[Step13, Step15] {
+  case class Step14 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step13, Step15] {
     override def validate() {
       if (!allowUnrequestedExtensions) {
         ExtensionsValidation.validate(request.extensions.asScala, response)
@@ -229,24 +228,24 @@ case class FinishAssertionSteps(
         case Failure(e) => List(e.getMessage)
       }
     }
-    override def nextStep = Step15(this)
+    override def nextStep = Step15(credential, allWarnings)
   }
 
-  case class Step15 private[webauthn] (override val prev: Step14) extends Step[Step14, Step16] {
+  case class Step15 private[webauthn] (credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step14, Step16] {
     override def validate(): Unit = {
       assert(clientDataJsonHash != null, "Failed to compute hash of client data")
     }
-    override def nextStep = Step16(this)
+    override def nextStep = Step16(credential, clientDataJsonHash, allWarnings)
 
     def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
   }
 
-  case class Step16 (override val prev: Step15) extends Step[Step15, Step17] {
+  case class Step16 (credential: RegisteredCredential, clientDataJsonHash: ArrayBuffer, override val prevWarnings: List[String]) extends Step[Step15, Step17] {
     override def validate() {
       assert(
         Try(
           crypto.checkSignature(
-            prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.prev.credential.publicKey,
+            credential.publicKey,
             signedBytes.toArray,
             response.response.signature.toArray
           )
@@ -255,12 +254,12 @@ case class FinishAssertionSteps(
         "Invalid assertion signature."
       )
     }
-    override def nextStep = Step17(this)
+    override def nextStep = Step17(allWarnings)
 
-    val signedBytes: ArrayBuffer = response.response.authenticatorData ++ prev.clientDataJsonHash
+    val signedBytes: ArrayBuffer = response.response.authenticatorData ++ clientDataJsonHash
   }
 
-  case class Step17 (override val prev: Step16) extends Step[Step16, Finished] {
+  case class Step17 (override val prevWarnings: List[String]) extends Step[Step16, Finished] {
     override def validate(): Unit = {
       if (validateSignatureCounter) {
         assert(
@@ -275,7 +274,7 @@ case class FinishAssertionSteps(
         || assertionSignatureCount > storedSignatureCountBefore
     )
 
-    override def nextStep = Finished(this)
+    override def nextStep = Finished(assertionSignatureCount, signatureCounterValid, allWarnings)
 
     def storedSignatureCountBefore: Long =
       credentialRepository.lookup(response.id, userHandle).asScala
@@ -285,14 +284,14 @@ case class FinishAssertionSteps(
     def assertionSignatureCount: Long = response.response.parsedAuthenticatorData.signatureCounter
   }
 
-  case class Finished private[webauthn] (override val prev: Step17) extends Step[Step17, Finished] {
+  case class Finished private[webauthn] (assertionSignatureCount: Long, signatureCounterValid: Boolean, override val prevWarnings: List[String]) extends Step[Step17, Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
     override def result: Option[AssertionResult] = Some(AssertionResult(
       credentialId = response.rawId,
-      signatureCount = prev.assertionSignatureCount,
-      signatureCounterValid = prev.signatureCounterValid,
+      signatureCount = assertionSignatureCount,
+      signatureCounterValid = signatureCounterValid,
       success = true,
       userHandle = userHandle,
       warnings = allWarnings
