@@ -45,10 +45,10 @@ import scala.util.Success
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
-  def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  val crypto: Crypto = new BouncyCastleCrypto()
+  private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+  private val crypto: Crypto = new BouncyCastleCrypto()
 
-  object Defaults {
+  private object Defaults {
 
     val rpId = RelyingPartyIdentity(name = "Test party", id = "localhost")
 
