@@ -72,17 +72,17 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public Optional<String> getUsername(String userHandleBase64) {
+    public Optional<String> getUsernameForUserHandle(String userHandleBase64) {
         return getRegistrationsByUserHandle(userHandleBase64).stream()
             .findAny()
             .map(CredentialRegistration::getUsername);
     }
 
     @Override
-    public Optional<Vector<Object>> getUserHandle(String username) {
+    public Optional<String> getUserHandleForUsername(String username) {
         return getRegistrationsByUsername(username).stream()
             .findAny()
-            .map(reg -> BinaryUtil.fromBase64(reg.getUserIdentity().idBase64()));
+            .map(reg -> reg.getUserIdentity().idBase64());
     }
 
     @Override

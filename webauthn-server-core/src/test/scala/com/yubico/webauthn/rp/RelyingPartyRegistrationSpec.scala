@@ -1507,6 +1507,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               case _ => Set.empty
             }
             override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+            override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = ???
+            override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
           }
 
           val steps = finishRegistration(
@@ -1526,6 +1528,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
             override def lookupAll(id: Base64UrlString) = Set.empty
             override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+            override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = ???
+            override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
           }
 
           val steps = finishRegistration(
