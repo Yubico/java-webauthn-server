@@ -47,8 +47,8 @@ allprojects  {
 
   group = 'com.yubico'
 
-  sourceCompatibility = 1.6
-  targetCompatibility = 1.6
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
