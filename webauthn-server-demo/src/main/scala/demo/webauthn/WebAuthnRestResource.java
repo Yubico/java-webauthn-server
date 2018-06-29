@@ -171,7 +171,9 @@ public class WebAuthnRestResource {
     }
     @Path("authenticate")
     @POST
-    public Response startAuthentication(@FormParam("username") String username) throws MalformedURLException {
+    public Response startAuthentication(
+        @FormParam("username") String username
+    ) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
         Either<List<String>, AssertionRequest> request = server.startAuthentication(Optional.ofNullable(username));
         if (request.isRight()) {
@@ -260,7 +262,10 @@ public class WebAuthnRestResource {
 
     @Path("action/deregister")
     @POST
-    public Response deregisterCredential(@FormParam("username") String username, @FormParam("credentialId") String credentialId) throws MalformedURLException {
+    public Response deregisterCredential(
+        @FormParam("username") String username,
+        @FormParam("credentialId") String credentialId
+    ) throws MalformedURLException {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
