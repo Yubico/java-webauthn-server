@@ -8,7 +8,6 @@ import com.yubico.u2f.attestation.MetadataObject;
 import com.yubico.u2f.attestation.MetadataResolver;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -23,8 +22,8 @@ import org.slf4j.LoggerFactory;
 public class SimpleResolver implements MetadataResolver {
     private static final Logger logger = LoggerFactory.getLogger(SimpleResolver.class);
 
-    private final Multimap<String, X509Certificate> certs = ArrayListMultimap.create();
-    private final Map<X509Certificate, MetadataObject> metadata = new HashMap<X509Certificate, MetadataObject>();
+    final Multimap<String, X509Certificate> certs = ArrayListMultimap.create();
+    final Map<X509Certificate, MetadataObject> metadata = new HashMap<X509Certificate, MetadataObject>();
 
     public void addMetadata(String jsonData) throws CertificateException, U2fBadConfigurationException {
         for (MetadataObject object : MetadataObject.parseFromJson(jsonData)) {
@@ -59,6 +58,7 @@ public class SimpleResolver implements MetadataResolver {
                 logger.error("resolve failed", e);
             }
         }
+
         return null;
     }
 }

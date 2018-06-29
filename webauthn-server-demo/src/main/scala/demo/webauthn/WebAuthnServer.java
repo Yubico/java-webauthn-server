@@ -1,13 +1,21 @@
 package demo.webauthn;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
+import com.yubico.u2f.attestation.MetadataResolver;
 import com.yubico.u2f.attestation.MetadataService;
+import com.yubico.u2f.attestation.resolvers.CompositeResolver;
+import com.yubico.u2f.attestation.resolvers.SimpleResolver;
+import com.yubico.u2f.attestation.resolvers.SimpleResolverWithEquality;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
@@ -16,13 +24,15 @@ import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.util.BinaryUtil;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
 import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.cert.CertificateException;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +60,12 @@ public class WebAuthnServer {
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
-    private final MetadataService metadataService = new MetadataService();
+    private final MetadataService metadataService = new MetadataService(
+        new CompositeResolver(Arrays.asList(
+            MetadataService.createDefaultMetadataResolver(),
+            createExtraMetadataResolver()
+        ))
+    );
 
     private final Clock clock = Clock.systemDefaultZone();
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
@@ -71,6 +86,20 @@ public class WebAuthnServer {
         true,
         false
     );
+
+    private static MetadataResolver createExtraMetadataResolver() {
+        SimpleResolver resolver = new SimpleResolverWithEquality();
+        InputStream is = null;
+        try {
+            is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
+            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
+        } catch (IOException | CertificateException | U2fBadConfigurationException e) {
+            logger.error("createDefaultMetadataResolver failed", e);
+        } finally {
+            Closeables.closeQuietly(is);
+        }
+        return resolver;
+    }
 
     private static <K, V> Cache<K, V> newCache() {
         return CacheBuilder.newBuilder()

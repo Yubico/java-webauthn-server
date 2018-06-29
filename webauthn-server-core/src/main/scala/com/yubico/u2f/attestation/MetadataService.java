@@ -46,7 +46,7 @@ public class MetadataService {
             FingerprintMatcher.SELECTOR_TYPE, new FingerprintMatcher()
     );
 
-    private static MetadataResolver createDefaultMetadataResolver() {
+    public static MetadataResolver createDefaultMetadataResolver() {
         SimpleResolver resolver = new SimpleResolver();
         InputStream is = null;
         try {

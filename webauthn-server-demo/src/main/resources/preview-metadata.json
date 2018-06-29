@@ -1,0 +1,35 @@
+{
+  "identifier": "ccb72cf9-a408-4f0a-8fa1-3cf9f7029d01",
+  "version": 1,
+  "vendorInfo": {
+    "url": "https://yubico.com",
+    "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
+    "name": "Yubico"
+  },
+  "trustedCertificates": [
+    "-----BEGIN CERTIFICATE-----\nMIICrzCCAZegAwIBAgIESFs9tjANBgkqhkiG9w0BAQsFADAhMR8wHQYDVQQDDBZZ\ndWJpY28gRklETyBQcmV2aWV3IENBMB4XDTE4MDQxMjEwNTcxMFoXDTE4MTIzMTEw\nNTcxMFowbzELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UE\nCwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEoMCYGA1UEAwwfWXViaWNvIFUy\nRiBFRSBTZXJpYWwgMTIxMzkzOTEyNjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IA\nBPss3TBDKMVySlDM5vYLrX0nqRtZ4eZvKXuJydQ9wrLHeIm08P+dAijLlG384BsZ\nWJtngEqsl38oGJzNsyV0yiijbDBqMCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEu\nNDE0ODIuMS42MBMGCysGAQQBguUcAgEBBAQDAgQwMCEGCysGAQQBguUcAQEEBBIE\nEPigEfOMCk0VgAYXER+e3H0wDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQsFAAOC\nAQEAMvPkvVjXQiuvSZmGCB8NqTvGqhxyEfkoU+vz63PaaTsG3jEzjl0C7PZ26VxC\nvqWPJdM3P3e7Kp18sj4RjEHUmkya2PPipOwBd3p0qMQSQ8MeziCPLQ9uvGGb4YSh\ncvaprMv4c21b4piza+znHneNCmmq+ZS4Y23o+vYv085/BEwyLPcmPjSZ5qWysCq7\nrVvZ7OWwcU1zu5RhSZyUKl8dzK9lAzs5OdRH2fzEewsW2OkB/Ow/jBvAxqwLXXTH\nuwMFaRfpmBoZuQlcofSrnwJ8KA+K+e0dKTz2zC8EbZrWYrSpbrHKyqxeBT6DkUd8\nH4tgAd5lOr/yqrtVmIaRfq07Ng==\n-----END CERTIFICATE-----"
+  ],
+  "devices": [
+    {
+      "deviceId": "1.3.6.1.4.1.41482.1.6",
+      "displayName": "YubiKey Preview",
+      "transports": 4,
+      "imageUrl": "https://demo.yubico.com/img/YKE.png",
+      "selectors": [
+        {
+          "type": "x509Extension",
+          "parameters": {
+            "key": "1.3.6.1.4.1.41482.1.6"
+          }
+        },
+        {
+          "type": "x509Extension",
+          "parameters": {
+            "key": "1.3.6.1.4.1.41482.2",
+            "value": "1.3.6.1.4.1.41482.1.6"
+          }
+        }
+      ]
+    }
+  ]
+}
