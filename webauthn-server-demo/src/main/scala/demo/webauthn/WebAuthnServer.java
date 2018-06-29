@@ -10,6 +10,7 @@ import com.yubico.u2f.attestation.MetadataResolver;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.attestation.resolvers.CompositeResolver;
 import com.yubico.u2f.attestation.resolvers.SimpleResolver;
+import com.yubico.u2f.attestation.resolvers.SimpleResolverWithEquality;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
@@ -87,7 +88,7 @@ public class WebAuthnServer {
     );
 
     private static MetadataResolver createExtraMetadataResolver() {
-        SimpleResolver resolver = new SimpleResolver();
+        SimpleResolver resolver = new SimpleResolverWithEquality();
         InputStream is = null;
         try {
             is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
