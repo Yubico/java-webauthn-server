@@ -126,9 +126,9 @@ public class WebAuthnServer {
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
-            return new Right(request);
+            return Right.apply(request);
         } else {
-            return new Left("The username \"" + username + "\" is already registered.");
+            return Left.apply("The username \"" + username + "\" is already registered.");
         }
     }
 
@@ -142,7 +142,7 @@ public class WebAuthnServer {
         Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
 
         if (registrations.isEmpty()) {
-            return new Left("The username \"" + username + "\" is not registered.");
+            return Left.apply(Arrays.asList("The username \"" + username + "\" is not registered."));
         } else {
             final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
