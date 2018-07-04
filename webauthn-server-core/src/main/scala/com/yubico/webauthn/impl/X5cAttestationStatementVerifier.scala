@@ -12,7 +12,7 @@ trait X5cAttestationStatementVerifier {
     getAttestationTrustPath(attestationObject) flatMap { _.headOption }
 
   def getAttestationTrustPath(attestationObject: AttestationObject): Option[List[X509Certificate]] =
-    attestationObject.attestationStatement.get("x5c") match {
+    attestationObject.getAttestationStatement.get("x5c") match {
       case certs: ArrayNode =>
         Some((for {
           i <- 0 until certs.size

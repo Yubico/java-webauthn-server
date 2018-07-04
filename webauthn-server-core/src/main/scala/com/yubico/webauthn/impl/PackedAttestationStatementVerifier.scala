@@ -10,9 +10,6 @@ import com.yubico.webauthn.AttestationStatementVerifier
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AttestationType
-import com.yubico.webauthn.data.Basic
-import com.yubico.webauthn.data.Ecdaa
-import com.yubico.webauthn.data.SelfAttestation
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import javax.naming.ldap.LdapName
 import org.bouncycastle.asn1.ASN1Primitive
@@ -25,26 +22,26 @@ import scala.util.Try
 object PackedAttestationStatementVerifier extends AttestationStatementVerifier with X5cAttestationStatementVerifier {
 
   override def getAttestationType(attestation: AttestationObject): AttestationType =
-    if (attestation.attestationStatement.hasNonNull("x5c"))
-      Basic // TODO or Privacy CA
-    else if (attestation.attestationStatement.hasNonNull("ecdaaKeyId"))
-      Ecdaa
+    if (attestation.getAttestationStatement.hasNonNull("x5c"))
+      AttestationType.BASIC // TODO or Privacy CA
+    else if (attestation.getAttestationStatement.hasNonNull("ecdaaKeyId"))
+      AttestationType.ECDAA
     else
-      SelfAttestation
+      AttestationType.SELF_ATTESTATION
 
   private[webauthn] def _verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Try[Boolean] =
     Try(verifyAttestationSignature(attestationObject, clientDataJsonHash))
 
   override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
-    val signatureNode = attestationObject.attestationStatement.get("sig")
+    val signatureNode = attestationObject.getAttestationStatement.get("sig")
     assert(
       signatureNode != null && signatureNode.isBinary,
       "attStmt.sig must be set to a binary value."
     )
 
-    if (attestationObject.attestationStatement.has("x5c"))
+    if (attestationObject.getAttestationStatement.has("x5c"))
       verifyX5cSignature(attestationObject, clientDataJsonHash)
-    else if (attestationObject.attestationStatement.has("ecdaaKeyId"))
+    else if (attestationObject.getAttestationStatement.has("ecdaaKeyId"))
       verifyEcdaaSignature(attestationObject, clientDataJsonHash)
     else
       verifySelfAttestationSignature(attestationObject, clientDataJsonHash)
@@ -53,15 +50,15 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
   private def verifyEcdaaSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = ???
 
   private def verifySelfAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
-    val pubkey = attestationObject.authenticatorData.attestationData.get.parsedCredentialPublicKey
+    val pubkey = attestationObject.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey
 
-    val keyAlg: COSEAlgorithmIdentifier = CBORObject.DecodeFromBytes(attestationObject.authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64
-    val sigAlg: COSEAlgorithmIdentifier = attestationObject.attestationStatement.get("alg").asLong
+    val keyAlg: COSEAlgorithmIdentifier = new COSEAlgorithmIdentifier(CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData.getAttestationData.get.getCredentialPublicKeyBytes).get(CBORObject.FromObject(3)).AsInt64)
+    val sigAlg: COSEAlgorithmIdentifier = new COSEAlgorithmIdentifier(attestationObject.getAttestationStatement.get("alg").asLong)
 
     assert(keyAlg == sigAlg, s"Key algorithm and signature algorithm must be equal, was: Key: ${keyAlg}, Sig: ${sigAlg}")
 
-    val signedData: ArrayBuffer = attestationObject.authenticatorData.authData ++ clientDataJsonHash
-    val signature = attestationObject.attestationStatement.get("sig").binaryValue.toVector
+    val signedData: ArrayBuffer = attestationObject.getAuthenticatorData.getBytes.toVector ++ clientDataJsonHash
+    val signature = attestationObject.getAttestationStatement.get("sig").binaryValue.toVector
     Try(new BouncyCastleCrypto().checkSignature(pubkey, signedData.toArray, signature.toArray)).isSuccess
   }
 
@@ -71,20 +68,20 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
   private def verifyX5cSignature(attestationObject: AttestationObject, clientDataHash: ArrayBuffer): Boolean =
     getX5cAttestationCertificate(attestationObject) match {
       case Some(attestationCertificate) => {
-        attestationObject.attestationStatement.get("sig") match {
+        attestationObject.getAttestationStatement.get("sig") match {
           case null =>
             throw new IllegalArgumentException("""Packed attestation statement must have field "sig".""")
 
           case signatureNode if signatureNode.isBinary => {
             val signature: ArrayBuffer = signatureNode.binaryValue.toVector
-            val signedData: ArrayBuffer = attestationObject.authenticatorData.authData ++ clientDataHash
+            val signedData: ArrayBuffer = attestationObject.getAuthenticatorData.getBytes.toVector ++ clientDataHash
 
             val ecdsaSignature: Signature = Signature.getInstance("SHA256withECDSA") // TODO support other signature algorithms
             ecdsaSignature.initVerify(attestationCertificate.getPublicKey)
             ecdsaSignature.update(signedData.toArray)
 
             (ecdsaSignature.verify(signature.toArray)
-              && verifyX5cRequirements(attestationCertificate, attestationObject.authenticatorData.attestationData.get.aaguid)
+              && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData.getAttestationData.get.getAaguid.toVector)
             )
           }
 

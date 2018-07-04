@@ -51,16 +51,20 @@ class RelyingParty (
     extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava,
     requireResidentKey: Boolean = false
   ): PublicKeyCredentialCreationOptions =
-    PublicKeyCredentialCreationOptions(
-      rp = rp,
-      user = user,
-      challenge = challengeGenerator.generateChallenge().toVector,
-      pubKeyCredParams = preferredPubkeyParams,
-      excludeCredentials = excludeCredentials,
-      authenticatorSelection = Optional.of(AuthenticatorSelectionCriteria(requireResidentKey = requireResidentKey)),
-      attestation = attestationConveyancePreference.asScala getOrElse AttestationConveyancePreference.default,
-      extensions = extensions
-    )
+    PublicKeyCredentialCreationOptions.builder()
+      .rp(rp)
+      .user(user)
+      .challenge(challengeGenerator.generateChallenge())
+      .pubKeyCredParams(preferredPubkeyParams)
+      .excludeCredentials(excludeCredentials)
+      .authenticatorSelection(Optional.of(
+        AuthenticatorSelectionCriteria.builder()
+          .requireResidentKey(requireResidentKey)
+          .build()
+      ))
+      .attestation(attestationConveyancePreference.asScala getOrElse AttestationConveyancePreference.DEFAULT)
+      .extensions(extensions)
+      .build()
 
   def finishRegistration(
     request: PublicKeyCredentialCreationOptions,
@@ -80,7 +84,7 @@ class RelyingParty (
       callerTokenBindingId = callerTokenBindingId,
       credentialRepository = credentialRepository,
       origins = origins,
-      rpId = rp.id,
+      rpId = rp.getId,
       crypto = crypto,
       allowMissingTokenBinding = allowMissingTokenBinding,
       allowUnrequestedExtensions = allowUnrequestedExtensions,
@@ -94,21 +98,23 @@ class RelyingParty (
     allowCredentials: Optional[java.util.List[PublicKeyCredentialDescriptor]] = None.asJava,
     extensions: Optional[AuthenticationExtensionsClientInputs] = None.asJava
   ): AssertionRequest =
-    AssertionRequest(
-      requestId = U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
-      username = username,
-      publicKeyCredentialRequestOptions = PublicKeyCredentialRequestOptions(
-        rpId = Some(rp.id).asJava,
-        challenge = challengeGenerator.generateChallenge().toVector,
-        allowCredentials = (
-          allowCredentials.asScala
+    AssertionRequest.builder()
+      .requestId(U2fB64Encoding.encode(challengeGenerator.generateChallenge()))
+      .username(username)
+      .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+        .rpId(Some(rp.getId).asJava)
+        .challenge(challengeGenerator.generateChallenge())
+        .allowCredentials(
+          (allowCredentials.asScala
             orElse
               username.asScala.map(un =>
                 credentialRepository.getCredentialIdsForUsername(un))
-        ).asJava,
-        extensions = extensions
+            ).asJava
+        )
+        .extensions(extensions)
+        .build()
       )
-    )
+      .build()
 
   def finishAssertion(
     request: AssertionRequest,
@@ -127,7 +133,7 @@ class RelyingParty (
       response = response,
       callerTokenBindingId = callerTokenBindingId,
       origins = origins,
-      rpId = rp.id,
+      rpId = rp.getId,
       crypto = crypto,
       credentialRepository = credentialRepository,
       allowMissingTokenBinding = allowMissingTokenBinding,

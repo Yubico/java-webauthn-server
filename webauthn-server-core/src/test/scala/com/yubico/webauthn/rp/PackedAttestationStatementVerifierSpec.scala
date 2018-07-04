@@ -19,7 +19,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
       val cert = Util.importCertFromPem(getClass.getResourceAsStream("klas-cert.pem"))
 
-      val result = verifier._verifyX5cRequirements(cert, BinaryUtil.fromHex("F8A011F38C0A4D15800617111F9EDC7D").get)
+      val result = verifier._verifyX5cRequirements(cert, BinaryUtil.fromHex("F8A011F38C0A4D15800617111F9EDC7D").toVector)
 
       result shouldBe a [Success[_]]
       result.get should be (true)

@@ -19,9 +19,10 @@ import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
-import com.yubico.webauthn.data.Direct$;
-import com.yubico.webauthn.data.PublicKey$;
+import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
+import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
@@ -71,7 +72,6 @@ public class WebAuthnServer {
     private final Clock clock = Clock.systemDefaultZone();
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
 
-
     private final RelyingParty rp;
 
     public WebAuthnServer() {
@@ -86,9 +86,9 @@ public class WebAuthnServer {
         rp = new RelyingParty(
             rpIdentity,
             challengeGenerator,
-            Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
+            Collections.singletonList(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier( -7L), PublicKeyCredentialType.PUBLIC_KEY)),
             origins,
-            Optional.of(Direct$.MODULE$),
+            Optional.of(AttestationConveyancePreference.DIRECT),
             new BouncyCastleCrypto(),
             true,
             true,
@@ -132,7 +132,11 @@ public class WebAuthnServer {
                 credentialNickname,
                 U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
                 rp.startRegistration(
-                    new UserIdentity(username, displayName, userId, Optional.empty()),
+                    UserIdentity.builder()
+                        .name(username)
+                        .displayName(displayName)
+                        .id(userId)
+                        .build(),
                     Optional.of(userStorage.getCredentialIdsForUsername(username)),
                     Optional.empty(),
                     requireResidentKey
@@ -219,12 +223,12 @@ public class WebAuthnServer {
                         response,
                         addRegistration(
                             request.getUsername(),
-                            request.getPublicKeyCredentialCreationOptions().user(),
+                            request.getPublicKeyCredentialCreationOptions().getUser(),
                             request.getCredentialNickname(),
                             response,
                             registrationTry.get()
                         ),
-                        registrationTry.get().attestationTrusted()
+                        registrationTry.get().isAttestationTrusted()
                     )
                 );
             } else {
@@ -247,7 +251,7 @@ public class WebAuthnServer {
                 Optional.empty()
             );
 
-            assertRequestStorage.put(request.requestId(), request);
+            assertRequestStorage.put(request.getRequestId(), request);
 
             return Right.apply(request);
         }
@@ -288,14 +292,14 @@ public class WebAuthnServer {
             if (assertionTry.isSuccess()) {
                 final AssertionResult result = assertionTry.get();
 
-                if (result.success()) {
+                if (result.isSuccess()) {
                     try {
                         userStorage.updateSignatureCount(result);
                     } catch (Exception e) {
                         logger.error(
                             "Failed to update signature count for user \"{}\", credential \"{}\"",
-                            result.username(),
-                            response.getCredential().id(),
+                            result.getUsername(),
+                            response.getCredential().getId(),
                             e
                         );
                     }
@@ -304,8 +308,8 @@ public class WebAuthnServer {
                         new SuccessfulAuthenticationResult(
                             request,
                             response,
-                            userStorage.getRegistrationsByUsername(result.username()),
-                            result.warningsAsJava()
+                            userStorage.getRegistrationsByUsername(result.getUsername()),
+                            result.getWarnings()
                         )
                     );
                 } else {
@@ -337,7 +341,7 @@ public class WebAuthnServer {
                 authenticatedActions.invalidate(result.request);
                 if (action == null) {
                     return com.yubico.util.Either.left(Collections.singletonList(
-                        "No action was associated with assertion request ID: " + result.getRequest().requestId()
+                        "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
                     ));
                 } else {
                     return com.yubico.util.Either.fromScala(action.apply(result));
@@ -394,7 +398,7 @@ public class WebAuthnServer {
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .registration(registration)
-            .signatureCount(response.getCredential().response().attestation().authenticatorData().signatureCounter())
+            .signatureCount(response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter())
             .build();
 
         logger.debug(
@@ -402,8 +406,8 @@ public class WebAuthnServer {
             username,
             nickname,
             registration,
-            registration.keyId().idBase64(),
-            registration.publicKeyCose()
+            registration.getKeyId().getIdBase64(),
+            registration.getPublicKeyCose()
         );
         userStorage.addRegistrationByUsername(username, reg);
         return reg;

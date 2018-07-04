@@ -26,15 +26,11 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.Basic
-import com.yubico.webauthn.data.SelfAttestation
-import com.yubico.webauthn.data.Discouraged
-import com.yubico.webauthn.data.Preferred
-import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.Base64UrlString
-import com.yubico.webauthn.data.NoneAttestation
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
 import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
@@ -71,13 +67,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     credentialId: Option[ArrayBuffer] = None,
     credentialRepository: Option[CredentialRepository] = None,
     metadataService: Option[MetadataService] = None,
-    rp: RelyingPartyIdentity = RelyingPartyIdentity(name = "Test party", id = "localhost"),
+    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
     new RelyingParty(
       allowUntrustedAttestation = allowUntrustedAttestation,
       challengeGenerator = null,
-      origins = List(rp.id).asJava,
+      origins = List(rp.getId).asJava,
       preferredPubkeyParams = Nil.asJava,
       rp = rp,
       credentialRepository = credentialRepository getOrElse null,
@@ -112,7 +108,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if clientDataJson is valid JSON.") {
           val steps = finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.copy(
-              clientDataJson = "{}",
+              clientDataJson =
+                """{
+                  "challenge": "",
+                  "origin": "",
+                  "type": ""
+                }""",
               overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request)
             )
           )
@@ -160,7 +161,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       it("4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.") {
         val steps = finishRegistration(
           testData = RegistrationTestData.FidoU2f.BasicAttestation.copy(
-            overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request.copy(challenge = Vector.fill(16)(0: Byte)))
+            overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request.toBuilder.challenge(Array.fill(16)(0: Byte)).build())
           )
         )
         val step: steps.Step4 = steps.begin.next.get.next.get.next.get
@@ -322,9 +323,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         step.validations shouldBe a [Success[_]]
         step.next shouldBe a [Success[_]]
-        step.attestation.format should equal ("fido-u2f")
-        step.attestation.authenticatorData should not be null
-        step.attestation.attestationStatement should not be null
+        step.attestation.getFormat should equal ("fido-u2f")
+        step.attestation.getAuthenticatorData should not be null
+        step.attestation.getAttestationStatement should not be null
       }
 
       describe("9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
@@ -352,7 +353,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("10. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
         val testData = RegistrationTestData.Packed.BasicAttestation
-        val authData = testData.response.response.authenticatorData
+        val authData = testData.response.getResponse.getAuthenticatorData
 
         def flagOn(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, (authData(32) | 0x04).toByte)
         def flagOff(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, (authData(32) & 0xfb).toByte)
@@ -360,7 +361,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is discouraged and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOff)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -372,7 +373,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is discouraged and flag is set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOn)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -384,7 +385,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is preferred and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOff)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -396,7 +397,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is preferred and flag is set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOn)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -408,7 +409,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Fails if UV is required and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOff)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -421,7 +422,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is required and flag is set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOn)
           )
           val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -433,7 +434,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("11. If user verification is not required for this registration, verify that the User Present bit of the flags in authData is set.") {
         val testData = RegistrationTestData.Packed.BasicAttestation
-        val authData = testData.response.response.authenticatorData
+        val authData = testData.response.getResponse.getAuthenticatorData
 
         def flagOn(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, (authData(32) | 0x04 | 0x01).toByte)
         def flagOff(authData: ArrayBuffer): ArrayBuffer = authData.updated(32, ((authData(32) | 0x04) & 0xfe).toByte)
@@ -441,7 +442,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Fails if UV is discouraged and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOff)
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -454,7 +455,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is discouraged and flag is set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Discouraged))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOn)
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -466,7 +467,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Fails if UV is preferred and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOff)
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -479,7 +480,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is preferred and flag is set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Preferred))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOn)
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -491,7 +492,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is required and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOff)
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -503,7 +504,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Succeeds if UV is required and flag is set.") {
           val steps = finishRegistration(
             testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria(userVerification = Required))
+              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOn)
           )
           val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
@@ -714,7 +715,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
-            step.attestationType should equal (Basic)
+            step.attestationType should equal (AttestationType.BASIC)
             step.next shouldBe a [Success[_]]
           }
 
@@ -723,7 +724,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
-            step.attestationType should equal (SelfAttestation)
+            step.attestationType should equal (AttestationType.SELF_ATTESTATION)
             step.next shouldBe a [Success[_]]
           }
 
@@ -733,7 +734,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testData = RegistrationTestData.FidoU2f.SelfAttestation
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
             val step: steps.Step14 = new steps.Step14(
-              attestation = AttestationObject(testData.attestationObject),
+              attestation = new AttestationObject(testData.attestationObject.toArray),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.updated(20, (testData.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
               attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
               warnings = Nil
@@ -752,7 +753,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               credentialId = Some(Vector.fill[Byte](16)(0))
             )
             val step: steps.Step14 = new steps.Step14(
-              attestation = AttestationObject(testData.attestationObject),
+              attestation = new AttestationObject(testData.attestationObject.toArray),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
               attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
               warnings = Nil
@@ -773,9 +774,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           it("a test case with a different signed credential public key is not valid.") {
             val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAuthenticatorData { authenticatorData =>
-              val decoded = AuthenticatorData(authenticatorData)
-              val L = decoded.attestationData.get.credentialId.length
-              val evilPublicKey = decoded.attestationData.get.credentialPublicKey.updated(30, 0: Byte)
+              val decoded = new AuthenticatorData(authenticatorData.toArray)
+              val L = decoded.getAttestationData.get.getCredentialId.length
+              val evilPublicKey = decoded.getAttestationData.get.getCredentialPublicKeyBytes.toVector.updated(30, 0: Byte)
 
               authenticatorData.take(32 + 1 + 4 + 16 + 2 + L) ++ evilPublicKey
             }
@@ -784,7 +785,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               credentialId = Some(Vector.fill[Byte](16)(0))
             )
             val step: steps.Step14 = new steps.Step14(
-              attestation = AttestationObject(testData.attestationObject),
+              attestation = new AttestationObject(testData.attestationObject.toArray),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
               attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
               warnings = Nil
@@ -803,17 +804,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
-                  attestationObject = credential.response.attestationObject,
-                  clientDataJson = new String(credential.response.clientDataJSON.toArray, "UTF-8")
+                  attestationObject = credential.getResponse.getAttestationObject.toVector,
+                  clientDataJson = new String(credential.getResponse.getClientDataJSON, "UTF-8")
                 ),
-                credentialId = Some(credential.rawId)
+                credentialId = Some(credential.getRawId.toVector)
               )
               val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               val standaloneVerification = Try {
                 FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
-                  credential.response.attestation,
-                  new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector
+                  credential.getResponse.getAttestation,
+                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON).toVector
                 )
               }
 
@@ -830,17 +831,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
-                  attestationObject = credential.response.attestationObject,
-                  clientDataJson = new String(credential.response.clientDataJSON.toArray, "UTF-8")
+                  attestationObject = credential.getResponse.getAttestationObject.toVector,
+                  clientDataJson = new String(credential.getResponse.getClientDataJSON, "UTF-8")
                 ),
-                credentialId = Some(credential.rawId)
+                credentialId = Some(credential.getRawId.toVector)
               )
               val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               val standaloneVerification = Try {
                 FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
-                  credential.response.attestation,
-                  new BouncyCastleCrypto().hash(credential.response.clientDataJSON.toArray).toVector
+                  credential.getResponse.getAttestation,
+                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON).toVector
                 )
               }
 
@@ -879,14 +880,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(testData = testData)
               val step: steps.Step14 = new steps.Step14(
-                attestation = AttestationObject(testData.attestationObject),
+                attestation = new AttestationObject(testData.attestationObject.toArray),
                 clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
                 attestationStatementVerifier = NoneAttestationStatementVerifier,
                 warnings = Nil
               )
 
               step.validations shouldBe a [Success[_]]
-              step.attestationType should equal (NoneAttestation)
+              step.attestationType should equal (AttestationType.NONE)
               step.next shouldBe a [Success[_]]
             }
           }
@@ -896,7 +897,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Success[_]]
-            step.attestationType should equal (NoneAttestation)
+            step.attestationType should equal (AttestationType.NONE)
             step.next shouldBe a [Success[_]]
           }
 
@@ -923,7 +924,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   .editAttestationObject("attStmt", jsonFactory.objectNode().set("sig", jsonFactory.textNode("foo")))
 
                 val result: Try[Boolean] = verifier._verifyAttestationSignature(
-                  AttestationObject(testData.attestationObject),
+                  new AttestationObject(testData.attestationObject.toArray),
                   testData.clientDataJsonHash
                 )
 
@@ -936,7 +937,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   .editAttestationObject("attStmt", jsonFactory.objectNode().set("x5c", jsonFactory.arrayNode()))
 
                 val result: Try[Boolean] = verifier._verifyAttestationSignature(
-                  AttestationObject(testData.attestationObject),
+                  new AttestationObject(testData.attestationObject.toArray),
                   testData.clientDataJsonHash
                 )
 
@@ -947,7 +948,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
               val testData = RegistrationTestData.Packed.BasicAttestation
-              val authenticatorData: AuthenticatorData = AttestationObject(testData.attestationObject).authenticatorData
+              val authenticatorData: AuthenticatorData = new AttestationObject(testData.attestationObject.toArray).getAuthenticatorData
               val clientDataHash = MessageDigest.getInstance("SHA-256").digest(testData.clientDataJson.getBytes("UTF-8"))
 
               authenticatorData should not be null
@@ -961,14 +962,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
-                step.attestationType should be (Basic)
+                step.attestationType should be (AttestationType.BASIC)
               }
 
               describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result: Try[Boolean] = verifier._verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
                   result should equal (Success(true))
@@ -978,7 +979,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val testData = RegistrationTestData.Packed.BasicAttestation
 
                   val result: Try[Boolean] = verifier._verifyAttestationSignature(
-                    AttestationObject(testData.editAuthenticatorData({ authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }).attestationObject),
+                    new AttestationObject(testData.editAuthenticatorData({ authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }).attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
                   result should equal (Success(false))
@@ -995,7 +996,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     attestationCertAndKey = Some(badCert, key),
                     attestationStatementFormat = "packed"
                   )
-                  val result = Try(verifier.verifyAttestationSignature(credential.response.attestation, sha256(credential.response.clientDataJSON)))
+                  val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON.toVector)))
 
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
@@ -1004,7 +1005,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
                   result should equal (true)
@@ -1015,7 +1016,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
 
@@ -1027,7 +1028,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val testData = RegistrationTestData.Packed.BasicAttestationWithoutAaguidExtension
 
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
 
@@ -1039,7 +1040,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val testData = RegistrationTestData.Packed.BasicAttestationWithWrongAaguidExtension
 
                   val result = verifier._verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
 
@@ -1056,7 +1057,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
-                step.attestationType should be (Basic)
+                step.attestationType should be (AttestationType.BASIC)
                 step.attestationTrustPath should not be empty
                 step.attestationTrustPath.get should be (List(testData.packedAttestationCert))
               }
@@ -1081,30 +1082,30 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
-                step.attestationType should be (SelfAttestation)
+                step.attestationType should be (AttestationType.SELF_ATTESTATION)
               }
 
               describe("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
                 it("Succeeds for the default test case.") {
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testDataBase.attestationObject),
+                    new AttestationObject(testDataBase.attestationObject.toArray),
                     testDataBase.clientDataJsonHash
                   )
 
-                  CBORObject.DecodeFromBytes(AttestationObject(testDataBase.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  AttestationObject(testDataBase.attestationObject).attestationStatement.get("alg").longValue should equal (-7)
+                  CBORObject.DecodeFromBytes(new AttestationObject(testDataBase.attestationObject.toArray).getAuthenticatorData.getAttestationData.get.getCredentialPublicKeyBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
+                  new AttestationObject(testDataBase.attestationObject.toArray).getAttestationStatement.get("alg").longValue should equal (-7)
                   result should equal (true)
                 }
 
                 it("Fails if the alg is a different value.") {
                   val testData = RegistrationTestData.Packed.SelfAttestationWithWrongAlgValue
                   val result = verifier._verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
 
-                  CBORObject.DecodeFromBytes(AttestationObject(testData.attestationObject).authenticatorData.attestationData.get.credentialPublicKey.toArray).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  AttestationObject(testData.attestationObject).attestationStatement.get("alg").longValue should equal (-8)
+                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject.toArray).getAuthenticatorData.getAttestationData.get.getCredentialPublicKeyBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
+                  new AttestationObject(testData.attestationObject.toArray).getAttestationStatement.get("alg").longValue should equal (-8)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
                 }
@@ -1113,7 +1114,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               describe("2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg.") {
                 it("Succeeds for the default test case.") {
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testDataBase.attestationObject),
+                    new AttestationObject(testDataBase.attestationObject.toArray),
                     testDataBase.clientDataJsonHash
                   )
                   result should equal (true)
@@ -1122,7 +1123,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Fails if the attestation object is mutated.") {
                   val testData = testDataBase.editAuthenticatorData { authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testData.attestationObject),
+                    new AttestationObject(testData.attestationObject.toArray),
                     testData.clientDataJsonHash
                   )
                   result should equal (false)
@@ -1130,7 +1131,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 it("Fails if the client data is mutated.") {
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testDataBase.attestationObject),
+                    new AttestationObject(testDataBase.attestationObject.toArray),
                     sha256(testDataBase.clientDataJson.updated(4, 'ä').getBytes("UTF-8").toVector)
                   )
                   result should equal (false)
@@ -1138,7 +1139,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 it("Fails if the client data hash is mutated.") {
                   val result = verifier.verifyAttestationSignature(
-                    AttestationObject(testDataBase.attestationObject),
+                    new AttestationObject(testDataBase.attestationObject.toArray),
                     testDataBase.clientDataJsonHash.updated(7, if (testDataBase.clientDataJsonHash(7) == 0) 1: Byte else 0: Byte))
                   result should equal (false)
                 }
@@ -1151,7 +1152,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 step.validations shouldBe a [Success[_]]
                 step.next shouldBe a [Success[_]]
-                step.attestationType should be (SelfAttestation)
+                step.attestationType should be (AttestationType.SELF_ATTESTATION)
                 step.attestationTrustPath shouldBe empty
               }
             }
@@ -1486,22 +1487,22 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Registration is aborted if the given credential ID is already registered.") {
           val credentialRepository = new CredentialRepository {
             override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
-              RegisteredCredential(
-                credentialId = U2fB64Encoding.decode(id).toVector,
-                signatureCount = 1337L,
-                publicKey = testData.response.response.attestation.authenticatorData.attestationData.get.parsedCredentialPublicKey,
-                userHandle = U2fB64Encoding.decode(uh).toVector
+              new RegisteredCredential(
+                U2fB64Encoding.decode(id),
+                U2fB64Encoding.decode(uh),
+                testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey,
+                1337L
               )
             ).asJava
 
             override def lookupAll(id: Base64UrlString) = id match {
-              case id if id == testData.response.response.attestation.authenticatorData.attestationData.get.credentialIdBase64 =>
+              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialIdBase64 =>
                 Set(
-                  RegisteredCredential(
-                    credentialId = U2fB64Encoding.decode(id).toVector,
-                    signatureCount = 1337L,
-                    publicKey = testData.response.response.attestation.authenticatorData.attestationData.get.parsedCredentialPublicKey,
-                    userHandle = testData.request.user.id
+                  new RegisteredCredential(
+                    U2fB64Encoding.decode(id),
+                    testData.request.getUser.getId,
+                    testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey,
+                    1337L
                   )
                 )
               case _ => Set.empty

@@ -20,7 +20,7 @@ class KnownX509TrustAnchorsTrustResolver(
     Optional.ofNullable(
       metadataService.getAttestation(
         attestationObject
-          .attestationStatement
+          .getAttestationStatement
           .get("x5c")
           .asInstanceOf[ArrayNode]
           .iterator

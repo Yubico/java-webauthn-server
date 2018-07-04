@@ -11,10 +11,10 @@ import com.yubico.webauthn.data.Base64UrlString
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
-import com.yubico.webauthn.data.Required
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.AssertionResult
 import com.yubico.webauthn.data.AssertionRequest
+import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.impl.TokenBindingValidator
 import com.yubico.webauthn.impl.ExtensionsValidation
 import com.yubico.webauthn.util.BinaryUtil
@@ -70,37 +70,37 @@ case class FinishAssertionSteps(
     override def nextStep = Step1(username.get, userHandle.get, allWarnings)
     override def validate() = {
       assert(
-        request.username.isPresent || response.response.userHandle.isPresent,
+        request.getUsername.isPresent || response.getResponse.getUserHandle.isPresent,
         "At least one of username and user handle must be given; none was."
       )
       assert(
         userHandle.isDefined,
-        s"No user found for username: ${request.username.asScala}, userHandle: ${response.response.userHandleBase64}"
+        s"No user found for username: ${request.getUsername.asScala}, userHandle: ${response.getResponse.getUserHandleBase64}"
       )
       assert(
         username.isDefined,
-        s"No user found for username: ${request.username.asScala}, userHandle: ${response.response.userHandleBase64}"
+        s"No user found for username: ${request.getUsername.asScala}, userHandle: ${response.getResponse.getUserHandleBase64}"
       )
     }
     override def prevWarnings = Nil
 
     private lazy val userHandle: Option[Base64UrlString] =
-      Option(response.response.userHandleBase64)
-        .orElse(credentialRepository.getUserHandleForUsername(request.username.get).asScala)
+      Option(response.getResponse.getUserHandleBase64)
+        .orElse(credentialRepository.getUserHandleForUsername(request.getUsername.get).asScala)
 
     private lazy val username: Option[String] =
-      request.username.asScala
-        .orElse(credentialRepository.getUsernameForUserHandle(U2fB64Encoding.encode(response.response.userHandle.get.toArray)).asScala)
+      request.getUsername.asScala
+        .orElse(credentialRepository.getUsernameForUserHandle(response.getResponse.getUserHandleBase64).asScala)
   }
 
   case class Step1 private[webauthn] (username: String, userHandle: Base64UrlString, override val prevWarnings: List[String]) extends Step[Step0, Step2] {
     override def nextStep = Step2(username, userHandle, allWarnings)
     override def validate() = {
-      request.publicKeyCredentialRequestOptions.allowCredentials.asScala match {
+      request.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala match {
         case Some(allowed) =>
           assert(
-            allowed.asScala exists { _.id == response.rawId },
-            "Unrequested credential ID: " + response.id
+            allowed.asScala exists (_.getId sameElements response.getRawId),
+            "Unrequested credential ID: " + response.getId
           )
         case None =>
       }
@@ -110,11 +110,11 @@ case class FinishAssertionSteps(
   case class Step2 private[webauthn] (username: String, userHandle: Base64UrlString, override val prevWarnings: List[String]) extends Step[Step1, Step3] {
     override def nextStep = Step3(username, userHandle, allWarnings)
     override def validate() = {
-      val registration = credentialRepository.lookup(response.id, userHandle).asScala
-      assert(registration.isDefined, s"Unknown credential: ${response.id}")
+      val registration = credentialRepository.lookup(response.getId, userHandle).asScala
+      assert(registration.isDefined, s"Unknown credential: ${response.getId}")
       assert(
-        BinaryUtil.toBase64(registration.get.userHandle) == userHandle,
-        s"User handle ${userHandle} does not own credential ${response.id}"
+        registration.get.getUserHandleBase64 == userHandle,
+        s"User handle ${userHandle} does not own credential ${response.getId}"
       )
     }
   }
@@ -122,11 +122,11 @@ case class FinishAssertionSteps(
   case class Step3 private[webauthn] (username: String, userHandle: Base64UrlString, override val prevWarnings: List[String]) extends Step[Step2, Step4] {
     override def nextStep = Step4(username, userHandle, credential, allWarnings)
     override def validate() = {
-      assert(_credential.isPresent, s"Unknown credential. Credential ID: ${response.id}, user handle: ${userHandle}")
+      assert(_credential.isPresent, s"Unknown credential. Credential ID: ${response.getId}, user handle: ${userHandle}")
     }
 
     private lazy val _credential: Optional[RegisteredCredential] =
-      credentialRepository.lookup(response.id, userHandle)
+      credentialRepository.lookup(response.getId, userHandle)
 
     def credential: RegisteredCredential = _credential.get
   }
@@ -139,9 +139,9 @@ case class FinishAssertionSteps(
     }
     override def nextStep = Step5(username, userHandle, credential, allWarnings)
 
-    def authenticatorData: ArrayBuffer = response.response.authenticatorData
-    def clientData: ArrayBuffer = response.response.clientDataJSON
-    def signature: ArrayBuffer = response.response.signature
+    def authenticatorData: ArrayBuffer = response.getResponse.getAuthenticatorData.toVector
+    def clientData: ArrayBuffer = response.getResponse.getClientDataJSON.toVector
+    def signature: ArrayBuffer = response.getResponse.getSignature.toVector
   }
 
   case class Step5 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step4, Step6] {
@@ -155,15 +155,15 @@ case class FinishAssertionSteps(
       assert(clientData != null, "Missing client data.")
     }
     override def nextStep = Step7(username, userHandle, credential, clientData, allWarnings)
-    def clientData: CollectedClientData = response.response.collectedClientData
+    def clientData: CollectedClientData = response.getResponse.getCollectedClientData
   }
 
   case class Step7 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, clientData: CollectedClientData, override val prevWarnings: List[String]) extends Step[Step6, Step8] {
     override def validate(): Unit = {
       try
         assert(
-          clientData.`type` == FinishAssertionSteps.ClientDataType,
-          s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}", was: ${clientData.`type`}."""
+          clientData.getType == FinishAssertionSteps.ClientDataType,
+          s"""The "type" in the client data must be exactly "${FinishAssertionSteps.ClientDataType}", was: ${clientData.getType}."""
         )
       catch {
         case e: AssertionError =>
@@ -185,7 +185,7 @@ case class FinishAssertionSteps(
   case class Step8 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step7, Step9] {
     override def validate() {
       assert(
-        U2fB64Encoding.decode(response.response.collectedClientData.challenge).toVector == request.publicKeyCredentialRequestOptions.challenge,
+        response.getResponse.getCollectedClientData.getChallenge sameElements request.getPublicKeyCredentialRequestOptions.getChallenge,
         "Incorrect challenge."
       )
     }
@@ -195,24 +195,24 @@ case class FinishAssertionSteps(
   case class Step9 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step8, Step10] {
     override def validate() {
       assert(
-        origins contains response.response.collectedClientData.origin,
-        "Incorrect origin: " + response.response.collectedClientData.origin
+        origins contains response.getResponse.getCollectedClientData.getOrigin,
+        "Incorrect origin: " + response.getResponse.getCollectedClientData.getOrigin
       )
     }
     override def nextStep = Step10(username, userHandle, credential, allWarnings)
   }
 
   case class Step10 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step9, Step11] {
-    override def validate() = TokenBindingValidator.validate(response.response.collectedClientData.tokenBinding, callerTokenBindingId)
+    override def validate() = TokenBindingValidator.validate(response.getResponse.getCollectedClientData.getTokenBinding, callerTokenBindingId)
     override def nextStep = Step11(username, userHandle, credential, allWarnings)
 
-    def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
+    def clientDataJsonHash: ArrayBuffer = crypto.hash(response.getResponse.getClientDataJSON).toVector
   }
 
   case class Step11 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step10, Step12] {
     override def validate() {
       assert(
-        response.response.parsedAuthenticatorData.rpIdHash == crypto.hash(rpId).toVector,
+        response.getResponse.getParsedAuthenticatorData.getRpIdHash sameElements crypto.hash(rpId),
         "Wrong RP ID hash."
       )
     }
@@ -221,8 +221,8 @@ case class FinishAssertionSteps(
 
   case class Step12 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step11, Step13] {
     override def validate(): Unit = {
-      if (request.publicKeyCredentialRequestOptions.userVerification == Required) {
-        assert(response.response.parsedAuthenticatorData.flags.UV, "User Verification is required.")
+      if (request.getPublicKeyCredentialRequestOptions.getUserVerification == UserVerificationRequirement.REQUIRED) {
+        assert(response.getResponse.getParsedAuthenticatorData.getFlags.UV, "User Verification is required.")
       }
     }
     override def nextStep = Step13(username, userHandle, credential, allWarnings)
@@ -230,8 +230,8 @@ case class FinishAssertionSteps(
 
   case class Step13 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step12, Step14] {
     override def validate(): Unit = {
-      if (request.publicKeyCredentialRequestOptions.userVerification != Required) {
-        assert(response.response.parsedAuthenticatorData.flags.UP, "User Presence is required.")
+      if (request.getPublicKeyCredentialRequestOptions.getUserVerification != UserVerificationRequirement.REQUIRED) {
+        assert(response.getResponse.getParsedAuthenticatorData.getFlags.UP, "User Presence is required.")
       }
     }
     override def nextStep = Step14(username, userHandle, credential, allWarnings)
@@ -240,11 +240,11 @@ case class FinishAssertionSteps(
   case class Step14 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step13, Step15] {
     override def validate() {
       if (!allowUnrequestedExtensions) {
-        ExtensionsValidation.validate(request.publicKeyCredentialRequestOptions.extensions.asScala, response)
+        ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions.getExtensions.asScala, response)
       }
     }
     override def warnings = {
-      Try(ExtensionsValidation.validate(request.publicKeyCredentialRequestOptions.extensions.asScala, response)) match {
+      Try(ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions.getExtensions.asScala, response)) match {
         case Success(_) => Nil
         case Failure(e) => List(e.getMessage)
       }
@@ -258,7 +258,7 @@ case class FinishAssertionSteps(
     }
     override def nextStep = Step16(username, userHandle, credential, clientDataJsonHash, allWarnings)
 
-    def clientDataJsonHash: ArrayBuffer = crypto.hash(response.response.clientDataJSON.toArray).toVector
+    def clientDataJsonHash: ArrayBuffer = crypto.hash(response.getResponse.getClientDataJSON).toVector
   }
 
   case class Step16 (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, clientDataJsonHash: ArrayBuffer, override val prevWarnings: List[String]) extends Step[Step15, Step17] {
@@ -268,7 +268,7 @@ case class FinishAssertionSteps(
           crypto.checkSignature(
             credential.publicKey,
             signedBytes.toArray,
-            response.response.signature.toArray
+            response.getResponse.getSignature
           )
         ).isSuccess,
 
@@ -277,7 +277,7 @@ case class FinishAssertionSteps(
     }
     override def nextStep = Step17(username, userHandle, allWarnings)
 
-    val signedBytes: ArrayBuffer = response.response.authenticatorData ++ clientDataJsonHash
+    val signedBytes: ArrayBuffer = response.getResponse.getAuthenticatorData.toVector ++ clientDataJsonHash
   }
 
   case class Step17 (username: String, userHandle: Base64UrlString, override val prevWarnings: List[String]) extends Step[Step16, Finished] {
@@ -298,26 +298,27 @@ case class FinishAssertionSteps(
     override def nextStep = Finished(username, userHandle, assertionSignatureCount, signatureCounterValid, allWarnings)
 
     def storedSignatureCountBefore: Long =
-      credentialRepository.lookup(response.id, userHandle).asScala
+      credentialRepository.lookup(response.getId, userHandle).asScala
         .map(_.signatureCount)
         .getOrElse(0L)
 
-    def assertionSignatureCount: Long = response.response.parsedAuthenticatorData.signatureCounter
+    def assertionSignatureCount: Long = response.getResponse.getParsedAuthenticatorData.getSignatureCounter
   }
 
   case class Finished private[webauthn] (username: String, userHandle: Base64UrlString, assertionSignatureCount: Long, signatureCounterValid: Boolean, override val prevWarnings: List[String]) extends Step[Step17, Finished] {
     override def validate() { /* No-op */ }
     override def isFinished = true
     override def nextStep = this
-    override def result: Option[AssertionResult] = Some(AssertionResult(
-      credentialId = response.rawId,
-      signatureCount = assertionSignatureCount,
-      signatureCounterValid = signatureCounterValid,
-      success = true,
-      username = username,
-      userHandle = userHandle,
-      warnings = allWarnings
-    ))
+    override def result: Option[AssertionResult] = Some(AssertionResult.builder()
+      .credentialId(response.getRawId)
+      .signatureCount(assertionSignatureCount)
+      .signatureCounterValid(signatureCounterValid)
+      .success(true)
+      .username(username)
+      .userHandle(U2fB64Encoding.decode(userHandle))
+      .warnings(allWarnings.asJava)
+      .build()
+    )
 
   }
 
