@@ -317,6 +317,7 @@ public class WebAuthnRestResource {
             logger.debug("{} JSON response: {}", operationName, json);
             return Response.ok(json).build();
         } catch (IOException e) {
+            logger.error("Failed to encode response as JSON: {}", request, e);
             return jsonFail();
         }
     }
