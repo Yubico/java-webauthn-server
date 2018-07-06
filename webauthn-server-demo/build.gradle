@@ -30,6 +30,15 @@ dependencies {
     'org.glassfish.jersey.inject:jersey-hk2:2.26',
   )
 
+  testCompile(
+    project(':webauthn-server-core').sourceSets.test.output,
+
+    'commons-io:commons-io:2.5',
+    'org.mockito:mockito-core:2.10.0',
+    'org.scalatest:scalatest_2.11:3.0.4',
+    'org.scalacheck:scalacheck_2.11:1.13.5',
+  )
+
   modules {
     module('javax.servlet:servlet-api') {
       replacedBy('javax.servlet:javax.servlet-api')

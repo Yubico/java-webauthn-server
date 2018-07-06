@@ -23,6 +23,7 @@ import com.yubico.webauthn.data.Direct$;
 import com.yubico.webauthn.data.PublicKey$;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
+import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
@@ -53,9 +54,9 @@ import scala.util.Try;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
-    private final Cache<String, AssertionRequest> assertRequestStorage = newCache();
-    private final Cache<String, RegistrationRequest> registerRequestStorage = newCache();
-    private final RegistrationStorage userStorage = new InMemoryRegistrationStorage();
+    private final Cache<String, AssertionRequest> assertRequestStorage;
+    private final Cache<String, RegistrationRequest> registerRequestStorage;
+    private final RegistrationStorage userStorage;
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
@@ -71,21 +72,33 @@ public class WebAuthnServer {
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
 
 
-    private final RelyingParty rp = new RelyingParty(
-        Config.getRpIdentity(),
-        challengeGenerator,
-        Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
-        Config.getOrigins(),
-        Optional.of(Direct$.MODULE$),
-        new BouncyCastleCrypto(),
-        true,
-        true,
-        true,
-        userStorage,
-        Optional.of(metadataService),
-        true,
-        false
-    );
+    private final RelyingParty rp;
+
+    public WebAuthnServer() {
+        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins());
+    }
+
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<String, RegistrationRequest> registerRequestStorage, Cache<String, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
+        this.userStorage = userStorage;
+        this.registerRequestStorage = registerRequestStorage;
+        this.assertRequestStorage = assertRequestStorage;
+
+        rp = new RelyingParty(
+            rpIdentity,
+            challengeGenerator,
+            Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
+            origins,
+            Optional.of(Direct$.MODULE$),
+            new BouncyCastleCrypto(),
+            true,
+            true,
+            true,
+            this.userStorage,
+            Optional.of(metadataService),
+            true,
+            false
+        );
+    }
 
     private static MetadataResolver createExtraMetadataResolver() {
         SimpleResolver resolver = new SimpleResolverWithEquality();
