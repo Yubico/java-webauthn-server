@@ -82,7 +82,7 @@ subprojects {
 
   dependencies {
 
-    compileOnly 'org.projectlombok:lombok:1.16.18'
+    compileOnly 'org.projectlombok:lombok:1.18.0'
 
     compile(
       'org.slf4j:slf4j-api:1.7.25',

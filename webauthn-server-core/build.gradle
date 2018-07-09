@@ -14,8 +14,8 @@ dependencies {
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
-    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.6.5'],
-    [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.6.5'],
+    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
+    [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
     'org.scala-lang:scala-library:2.11.3'
   )
 
