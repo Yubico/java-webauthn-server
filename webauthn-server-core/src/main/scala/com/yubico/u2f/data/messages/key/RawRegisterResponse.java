@@ -32,6 +32,7 @@ public class RawRegisterResponse {
     public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
+    @EqualsAndHashCode.Exclude
     private transient final Crypto crypto;
 
     /**
