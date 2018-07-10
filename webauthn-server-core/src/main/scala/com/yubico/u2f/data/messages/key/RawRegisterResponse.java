@@ -21,11 +21,13 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * The register response produced by the token/key
  */
 @EqualsAndHashCode
+@ToString
 public class RawRegisterResponse {
     public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
