@@ -62,6 +62,10 @@ allprojects  {
 
 
   idea.module { downloadJavadoc = true }
+
+  test {
+    failFast = true
+  }
 }
 
 evaluationDependsOnChildren()
