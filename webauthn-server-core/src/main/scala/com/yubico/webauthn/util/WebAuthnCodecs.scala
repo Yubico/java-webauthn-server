@@ -9,6 +9,7 @@ import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ArrayBuffer
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import COSE.OneKey
+import com.fasterxml.jackson.databind.JsonNode
 
 import scala.collection.JavaConverters._
 
@@ -18,6 +19,8 @@ object WebAuthnCodecs {
   def cbor: ObjectMapper = new ObjectMapper(new CBORFactory()).setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
 
   def json: ObjectMapper = new ObjectMapper().setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
+
+  def deepCopy(a: JsonNode): JsonNode = json.readTree(json.writeValueAsString(a))
 
   def ecPublicKeyToRaw(key: ECPublicKey): ArrayBuffer = {
     val x = key.getW.getAffineX.toByteArray.toVector
