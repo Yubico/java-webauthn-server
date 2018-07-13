@@ -882,7 +882,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: steps.Step14 = new steps.Step14(
                 attestation = new AttestationObject(testData.attestationObject.toArray),
                 clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-                attestationStatementVerifier = NoneAttestationStatementVerifier,
+                attestationStatementVerifier = new NoneAttestationStatementVerifier,
                 warnings = Nil
               )
 
