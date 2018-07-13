@@ -228,7 +228,7 @@ case class FinishRegistrationSteps(
     def attestationType: AttestationType = attestationStatementVerifier.getAttestationType(attestation)
     def attestationTrustPath: Option[List[X509Certificate]] =
       attestationStatementVerifier match {
-        case x5c: X5cAttestationStatementVerifier => x5c.getAttestationTrustPath(attestation)
+        case x5c: X5cAttestationStatementVerifier => x5c.getAttestationTrustPath(attestation).asScala.map(_.asScala.toList)
         case _ => None
       }
   }

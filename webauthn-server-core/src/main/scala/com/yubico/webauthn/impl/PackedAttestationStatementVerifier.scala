@@ -16,6 +16,7 @@ import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
 
 import scala.collection.JavaConverters._
+import com.yubico.scala.util.JavaConverters._
 import scala.util.Try
 
 
@@ -66,7 +67,7 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
     Try(verifyX5cSignature(attestationObject, clientDataHash))
 
   private def verifyX5cSignature(attestationObject: AttestationObject, clientDataHash: ArrayBuffer): Boolean =
-    getX5cAttestationCertificate(attestationObject) match {
+    getX5cAttestationCertificate(attestationObject).asScala match {
       case Some(attestationCertificate) => {
         attestationObject.getAttestationStatement.get("sig") match {
           case null =>

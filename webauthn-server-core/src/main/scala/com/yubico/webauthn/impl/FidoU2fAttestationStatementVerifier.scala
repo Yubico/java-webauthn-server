@@ -30,7 +30,7 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
   }
 
   private def getAttestationCertificate(attestationObject: AttestationObject): X509Certificate =
-    getX5cAttestationCertificate(attestationObject) match {
+    getX5cAttestationCertificate(attestationObject).asScala match {
       case Some(attestationCertificate) => {
         assert(
           attestationCertificate.getPublicKey.getAlgorithm == "EC"
