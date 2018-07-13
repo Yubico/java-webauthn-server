@@ -30,9 +30,9 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
       AttestationType.SELF_ATTESTATION
 
   private[webauthn] def _verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Try[Boolean] =
-    Try(verifyAttestationSignature(attestationObject, clientDataJsonHash))
+    Try(verifyAttestationSignature(attestationObject, clientDataJsonHash.toArray))
 
-  override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
+  override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: Array[Byte]): Boolean = {
     val signatureNode = attestationObject.getAttestationStatement.get("sig")
     assert(
       signatureNode != null && signatureNode.isBinary,
@@ -40,11 +40,11 @@ object PackedAttestationStatementVerifier extends AttestationStatementVerifier w
     )
 
     if (attestationObject.getAttestationStatement.has("x5c"))
-      verifyX5cSignature(attestationObject, clientDataJsonHash)
+      verifyX5cSignature(attestationObject, clientDataJsonHash.toVector)
     else if (attestationObject.getAttestationStatement.has("ecdaaKeyId"))
-      verifyEcdaaSignature(attestationObject, clientDataJsonHash)
+      verifyEcdaaSignature(attestationObject, clientDataJsonHash.toVector)
     else
-      verifySelfAttestationSignature(attestationObject, clientDataJsonHash)
+      verifySelfAttestationSignature(attestationObject, clientDataJsonHash.toVector)
   }
 
   private def verifyEcdaaSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = ???

@@ -814,7 +814,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val standaloneVerification = Try {
                 FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
                   credential.getResponse.getAttestation,
-                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON).toVector
+                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
                 )
               }
 
@@ -841,7 +841,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val standaloneVerification = Try {
                 FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
                   credential.getResponse.getAttestation,
-                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON).toVector
+                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
                 )
               }
 
@@ -996,7 +996,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     attestationCertAndKey = Some(badCert, key),
                     attestationStatementFormat = "packed"
                   )
-                  val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON.toVector)))
+                  val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON.toVector).toArray))
 
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [AssertionError]
@@ -1006,7 +1006,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
+                    testData.clientDataJsonHash.toArray
                   )
                   result should equal (true)
                 }
@@ -1017,7 +1017,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
+                    testData.clientDataJsonHash.toArray
                   )
 
                   testData.packedAttestationCert.getNonCriticalExtensionOIDs.asScala should equal (Set("1.3.6.1.4.1.45724.1.1.4"))
@@ -1029,7 +1029,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
+                    testData.clientDataJsonHash.toArray
                   )
 
                   testData.packedAttestationCert.getNonCriticalExtensionOIDs shouldBe null
@@ -1089,7 +1089,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Succeeds for the default test case.") {
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject.toArray),
-                    testDataBase.clientDataJsonHash
+                    testDataBase.clientDataJsonHash.toArray
                   )
 
                   CBORObject.DecodeFromBytes(new AttestationObject(testDataBase.attestationObject.toArray).getAuthenticatorData.getAttestationData.get.getCredentialPublicKeyBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
@@ -1115,7 +1115,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Succeeds for the default test case.") {
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject.toArray),
-                    testDataBase.clientDataJsonHash
+                    testDataBase.clientDataJsonHash.toArray
                   )
                   result should equal (true)
                 }
@@ -1124,7 +1124,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val testData = testDataBase.editAuthenticatorData { authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
+                    testData.clientDataJsonHash.toArray
                   )
                   result should equal (false)
                 }
@@ -1132,7 +1132,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Fails if the client data is mutated.") {
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject.toArray),
-                    sha256(testDataBase.clientDataJson.updated(4, 'ä').getBytes("UTF-8").toVector)
+                    sha256(testDataBase.clientDataJson.updated(4, 'ä').getBytes("UTF-8").toVector).toArray
                   )
                   result should equal (false)
                 }
@@ -1140,7 +1140,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Fails if the client data hash is mutated.") {
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject.toArray),
-                    testDataBase.clientDataJsonHash.updated(7, if (testDataBase.clientDataJsonHash(7) == 0) 1: Byte else 0: Byte))
+                    testDataBase.clientDataJsonHash.updated(7, if (testDataBase.clientDataJsonHash(7) == 0) 1: Byte else 0: Byte).toArray)
                   result should equal (false)
                 }
               }

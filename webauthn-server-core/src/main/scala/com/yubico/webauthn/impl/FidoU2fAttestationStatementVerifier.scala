@@ -61,7 +61,7 @@ object FidoU2fAttestationStatementVerifier extends AttestationStatementVerifier 
       AttestationType.BASIC
   }
 
-  override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: ArrayBuffer): Boolean = {
+  override def verifyAttestationSignature(attestationObject: AttestationObject, clientDataJsonHash: Array[Byte]): Boolean = {
     val attestationCertificate = getAttestationCertificate(attestationObject)
 
     assert(

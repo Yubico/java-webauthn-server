@@ -214,7 +214,7 @@ case class FinishRegistrationSteps(
   case class Step14 (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject, attestationStatementVerifier: AttestationStatementVerifier, override val warnings: List[String]) extends Step[Step15] {
     override def validate() {
       assert(
-        attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash),
+        attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash.toArray),
         "Invalid attestation signature."
       )
     }
