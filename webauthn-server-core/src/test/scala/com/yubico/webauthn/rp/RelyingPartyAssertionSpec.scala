@@ -143,7 +143,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               ))
             else None
           ).asJava
-        override def lookupAll(credId: Base64UrlString) = lookup(credId, null).asScala.toSet
+        override def lookupAll(credId: Base64UrlString) = lookup(credId, null).asScala.toSet.asJava
         override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
         override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
         override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
@@ -242,7 +242,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val steps = finishAssertion(
             credentialRepository = Some(new CredentialRepository {
               override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
-              override def lookupAll(id: Base64UrlString) = Set.empty
+              override def lookupAll(id: Base64UrlString) = Set.empty.asJava
               override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
               override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = ???
               override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???

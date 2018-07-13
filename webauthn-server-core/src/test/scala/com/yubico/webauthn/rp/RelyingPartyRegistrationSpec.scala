@@ -1504,8 +1504,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey,
                     1337L
                   )
-                )
-              case _ => Set.empty
+                ).asJava
+              case _ => Set.empty.asJava
             }
             override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = ???
@@ -1527,7 +1527,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Registration proceeds if the given credential ID is not already registered.") {
           val credentialRepository = new CredentialRepository {
             override def lookup(id: Base64UrlString, uh: Base64UrlString) = None.asJava
-            override def lookupAll(id: Base64UrlString) = Set.empty
+            override def lookupAll(id: Base64UrlString) = Set.empty.asJava
             override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = ???
             override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???

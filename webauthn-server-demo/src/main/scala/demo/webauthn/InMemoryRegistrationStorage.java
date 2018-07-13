@@ -16,6 +16,7 @@ import demo.webauthn.data.CredentialRegistration;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -24,10 +25,12 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.immutable.Vector;
 
+@Slf4j
 public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
 
     private final Cache<String, Set<CredentialRegistration>> storage = CacheBuilder.newBuilder()
@@ -172,11 +175,25 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public scala.collection.immutable.Set<RegisteredCredential> lookupAll(String credentialId) {
-        return scala.collection.JavaConverters.asScalaSetConverter(storage.asMap().values().stream()
-            .flatMap(Collection::stream)
-            .filter(reg -> reg.getRegistration().getKeyId().getIdBase64().equals(credentialId))
-            .collect(Collectors.toSet())).asScala().toSet();
+    public Set<RegisteredCredential> lookupAll(String credentialId) {
+        return Collections.unmodifiableSet(
+            storage.asMap().values().stream()
+                .flatMap(Collection::stream)
+                .filter(reg -> reg.getRegistration().getKeyId().getIdBase64().equals(credentialId))
+                .map(reg -> {
+                    try {
+                        return new RegisteredCredential(
+                            reg.getRegistration().getKeyId().getId(),
+                            reg.getUserIdentity().getId(),
+                            WebAuthnCodecs.importCoseP256PublicKey(reg.getRegistration().getPublicKeyCose()),
+                            reg.getSignatureCount()
+                        );
+                    } catch (CoseException | IOException e) {
+                        log.error("Failed to read public key {} from storage", reg.getRegistration().getKeyId().getIdBase64(), e);
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toSet()));
     }
 
 }
