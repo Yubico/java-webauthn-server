@@ -693,7 +693,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an[AssertionError]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
             step.next shouldBe a [Failure[_]]
           }
 
@@ -720,7 +720,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
             step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an[AssertionError]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
             step.next shouldBe a [Failure[_]]
 
           }

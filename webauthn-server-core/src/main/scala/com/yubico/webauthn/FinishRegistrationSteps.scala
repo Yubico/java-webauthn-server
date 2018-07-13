@@ -183,11 +183,11 @@ case class FinishRegistrationSteps(
   case class Step12 private[webauthn] (clientDataJsonHash: ArrayBuffer, attestation: AttestationObject) extends Step[Step13] {
     override def validate() {
       if (!allowUnrequestedExtensions) {
-        ExtensionsValidation.validate(request.getExtensions.asScala, response)
+        ExtensionsValidation.validate(request.getExtensions, response)
       }
     }
     override def warnings = {
-      Try(ExtensionsValidation.validate(request.getExtensions.asScala, response)) match {
+      Try(ExtensionsValidation.validate(request.getExtensions, response)) match {
         case Success(_) => Nil
         case Failure(e) => List(e.getMessage)
       }

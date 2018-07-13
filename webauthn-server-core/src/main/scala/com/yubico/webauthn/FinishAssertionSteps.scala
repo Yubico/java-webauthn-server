@@ -240,11 +240,11 @@ case class FinishAssertionSteps(
   case class Step14 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step13, Step15] {
     override def validate() {
       if (!allowUnrequestedExtensions) {
-        ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions.getExtensions.asScala, response)
+        ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions.getExtensions, response)
       }
     }
     override def warnings = {
-      Try(ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions.getExtensions.asScala, response)) match {
+      Try(ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions.getExtensions, response)) match {
         case Success(_) => Nil
         case Failure(e) => List(e.getMessage)
       }
