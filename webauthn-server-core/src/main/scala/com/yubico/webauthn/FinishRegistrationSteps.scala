@@ -204,7 +204,7 @@ case class FinishRegistrationSteps(
     def format: String = attestation.getFormat
     def formatSupported: Boolean = attestationStatementVerifier.isDefined
     def attestationStatementVerifier: Option[AttestationStatementVerifier] = format match {
-      case "fido-u2f" => Some(FidoU2fAttestationStatementVerifier)
+      case "fido-u2f" => Some(new FidoU2fAttestationStatementVerifier)
       case "none" => Some(new NoneAttestationStatementVerifier)
       case "packed" => Some(PackedAttestationStatementVerifier)
       case _ => None

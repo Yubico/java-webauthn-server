@@ -736,7 +736,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = new steps.Step14(
               attestation = new AttestationObject(testData.attestationObject.toArray),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.updated(20, (testData.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = new FidoU2fAttestationStatementVerifier,
               warnings = Nil
             )
 
@@ -755,7 +755,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = new steps.Step14(
               attestation = new AttestationObject(testData.attestationObject.toArray),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = new FidoU2fAttestationStatementVerifier,
               warnings = Nil
             )
 
@@ -787,7 +787,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: steps.Step14 = new steps.Step14(
               attestation = new AttestationObject(testData.attestationObject.toArray),
               clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = FidoU2fAttestationStatementVerifier,
+              attestationStatementVerifier = new FidoU2fAttestationStatementVerifier,
               warnings = Nil
             )
 
@@ -812,18 +812,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               val standaloneVerification = Try {
-                FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
+                new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
                   credential.getResponse.getAttestation,
                   new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
                 )
               }
 
               step.validations shouldBe a [Failure[_]]
-              step.validations.failed.get shouldBe an [AssertionError]
+              step.validations.failed.get shouldBe an [IllegalArgumentException]
               step.next shouldBe a [Failure[_]]
 
               standaloneVerification shouldBe a [Failure[_]]
-              standaloneVerification.failed.get shouldBe an [AssertionError]
+              standaloneVerification.failed.get shouldBe an [IllegalArgumentException]
             }
 
             def checkAccepted(keypair: KeyPair): Unit = {
@@ -839,7 +839,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
               val standaloneVerification = Try {
-                FidoU2fAttestationStatementVerifier.verifyAttestationSignature(
+                new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
                   credential.getResponse.getAttestation,
                   new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
                 )
