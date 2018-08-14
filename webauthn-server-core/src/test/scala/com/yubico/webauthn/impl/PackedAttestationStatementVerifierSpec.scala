@@ -1,6 +1,5 @@
-package com.yubico.webauthn.rp
+package com.yubico.webauthn.impl
 
-import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
 import com.yubico.webauthn.test.Util
 import com.yubico.webauthn.util.BinaryUtil
 import org.scalatest.FunSpec
