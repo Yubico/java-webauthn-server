@@ -9,7 +9,7 @@ import lombok.Value;
 /**
  * This class may be used to specify requirements regarding authenticator attributes.
  *
- * @note The member identifiers are intentionally short, rather than descriptive, because they will be serialized into a
+ * Note: The member identifiers are intentionally short, rather than descriptive, because they will be serialized into a
  * message to the authenticator, which may be sent over a low-bandwidth link.
  */
 @Value
