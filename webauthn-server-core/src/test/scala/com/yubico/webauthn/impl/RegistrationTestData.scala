@@ -1,4 +1,4 @@
-package com.yubico.webauthn.rp
+package com.yubico.webauthn.impl
 
 import java.security.cert.X509Certificate
 
@@ -22,7 +22,6 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.data.PublicKeyCredentialType
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs

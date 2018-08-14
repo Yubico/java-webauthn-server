@@ -21,7 +21,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
-import com.yubico.webauthn.rp.RegistrationTestData
+import com.yubico.webauthn.impl.RegistrationTestData
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs

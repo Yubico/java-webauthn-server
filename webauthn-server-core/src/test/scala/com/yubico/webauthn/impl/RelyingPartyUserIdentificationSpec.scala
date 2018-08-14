@@ -1,4 +1,4 @@
-package com.yubico.webauthn.rp
+package com.yubico.webauthn.impl
 
 import java.security.KeyPair
 import java.util.Optional
@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
-import com.yubico.u2f.crypto.RandomChallengeGenerator
 import com.yubico.u2f.crypto.ChallengeGenerator
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.webauthn.RelyingParty

@@ -1,4 +1,4 @@
-package com.yubico.webauthn.rp
+package com.yubico.webauthn.impl
 
 import java.security.MessageDigest
 import java.security.KeyPair
@@ -31,9 +31,6 @@ import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
-import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier
-import com.yubico.webauthn.impl.PackedAttestationStatementVerifier
-import com.yubico.webauthn.impl.NoneAttestationStatementVerifier
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.util.WebAuthnCodecs
 import javax.security.auth.x500.X500Principal

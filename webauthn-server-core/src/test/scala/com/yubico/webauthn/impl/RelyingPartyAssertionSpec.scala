@@ -1,4 +1,4 @@
-package com.yubico.webauthn.rp
+package com.yubico.webauthn.impl
 
 import java.security.MessageDigest
 import java.security.KeyPair
