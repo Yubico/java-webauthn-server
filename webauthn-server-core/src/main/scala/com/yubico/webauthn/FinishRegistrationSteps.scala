@@ -206,7 +206,7 @@ case class FinishRegistrationSteps(
     def attestationStatementVerifier: Option[AttestationStatementVerifier] = format match {
       case "fido-u2f" => Some(new FidoU2fAttestationStatementVerifier)
       case "none" => Some(new NoneAttestationStatementVerifier)
-      case "packed" => Some(PackedAttestationStatementVerifier)
+      case "packed" => Some(new PackedAttestationStatementVerifier)
       case _ => None
     }
   }

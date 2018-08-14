@@ -904,13 +904,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         describe("For the packed statement format") {
-          val verifier = PackedAttestationStatementVerifier
+          val verifier = new PackedAttestationStatementVerifier
 
           it("the attestation statement verifier implementation is PackedAttestationStatementVerifier.") {
             val steps = finishRegistration(testData = RegistrationTestData.Packed.BasicAttestation)
             val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
 
-            step.attestationStatementVerifier should be theSameInstanceAs PackedAttestationStatementVerifier
+            step.attestationStatementVerifier shouldBe a [PackedAttestationStatementVerifier]
           }
 
           describe("the verification procedure is:") {
@@ -920,26 +920,26 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 val testData = RegistrationTestData.Packed.BasicAttestation
                   .editAttestationObject("attStmt", jsonFactory.objectNode().set("sig", jsonFactory.textNode("foo")))
 
-                val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                   new AttestationObject(testData.attestationObject.toArray),
-                  testData.clientDataJsonHash
-                )
+                  testData.clientDataJsonHash.toArray
+                ))
 
                 result shouldBe a [Failure[_]]
-                result.failed.get shouldBe an [AssertionError]
+                result.failed.get shouldBe an [IllegalArgumentException]
               }
 
               it("Fails if attStmt.sig is missing.") {
                 val testData = RegistrationTestData.Packed.BasicAttestation
                   .editAttestationObject("attStmt", jsonFactory.objectNode().set("x5c", jsonFactory.arrayNode()))
 
-                val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                   new AttestationObject(testData.attestationObject.toArray),
-                  testData.clientDataJsonHash
-                )
+                  testData.clientDataJsonHash.toArray
+                ))
 
                 result shouldBe a [Failure[_]]
-                result.failed.get shouldBe an [AssertionError]
+                result.failed.get shouldBe an [IllegalArgumentException]
               }
             }
 
@@ -965,20 +965,20 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
-                  val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                  val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
-                  )
+                    testData.clientDataJsonHash.toArray
+                  ))
                   result should equal (Success(true))
                 }
 
                 it("Fail if the default test case is mutated.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
 
-                  val result: Try[Boolean] = verifier._verifyAttestationSignature(
+                  val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                     new AttestationObject(testData.editAuthenticatorData({ authData: ArrayBuffer => authData.updated(16, if (authData(16) == 0) 1: Byte else 0: Byte) }).attestationObject.toArray),
-                    testData.clientDataJsonHash
-                  )
+                    testData.clientDataJsonHash.toArray
+                  ))
                   result should equal (Success(false))
                 }
               }
@@ -996,7 +996,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON.toVector).toArray))
 
                   result shouldBe a [Failure[_]]
-                  result.failed.get shouldBe an [AssertionError]
+                  result.failed.get shouldBe an [IllegalArgumentException]
                 }
 
                 it("succeeds for the default test case.") {
@@ -1036,14 +1036,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 it("Fails if the attestation certificate has the extension and it does not match the AAGUID.") {
                   val testData = RegistrationTestData.Packed.BasicAttestationWithWrongAaguidExtension
 
-                  val result = verifier._verifyAttestationSignature(
+                  val result = Try(verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
-                  )
+                    testData.clientDataJsonHash.toArray
+                  ))
 
                   testData.packedAttestationCert.getNonCriticalExtensionOIDs should not be empty
                   result shouldBe a [Failure[_]]
-                  result.failed.get shouldBe an [AssertionError]
+                  result.failed.get shouldBe an [IllegalArgumentException]
                 }
               }
 
@@ -1096,15 +1096,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 it("Fails if the alg is a different value.") {
                   val testData = RegistrationTestData.Packed.SelfAttestationWithWrongAlgValue
-                  val result = verifier._verifyAttestationSignature(
+                  val result = Try(verifier.verifyAttestationSignature(
                     new AttestationObject(testData.attestationObject.toArray),
-                    testData.clientDataJsonHash
-                  )
+                    testData.clientDataJsonHash.toArray
+                  ))
 
                   CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject.toArray).getAuthenticatorData.getAttestationData.get.getCredentialPublicKeyBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
                   new AttestationObject(testData.attestationObject.toArray).getAttestationStatement.get("alg").longValue should equal (-8)
                   result shouldBe a [Failure[_]]
-                  result.failed.get shouldBe an [AssertionError]
+                  result.failed.get shouldBe an [IllegalArgumentException]
                 }
               }
 
@@ -1165,12 +1165,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 Mockito.when(badCert.getVersion) thenReturn 2
                 Mockito.when(badCert.getSubjectX500Principal) thenReturn principal
                 Mockito.when(badCert.getBasicConstraints) thenReturn -1
-                val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid.toArray))
 
                 result shouldBe a [Failure[_]]
-                result.failed.get shouldBe an [AssertionError]
+                result.failed.get shouldBe an [IllegalArgumentException]
 
-                verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (Success(true))
+                verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid.toArray) should equal (true)
               }
 
               describe("Subject field MUST be set to:") {
@@ -1178,36 +1178,36 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )._1
-                  val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                  val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid.toArray))
 
                   result shouldBe a [Failure[_]]
-                  result.failed.get shouldBe an [AssertionError]
+                  result.failed.get shouldBe an [IllegalArgumentException]
 
-                  verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (Success(true))
+                  verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid.toArray) should equal (true)
                 }
 
                 it("Subject-O: Legal name of the Authenticator vendor") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("C=SE, OU=Authenticator Attestation")
                   )._1
-                  val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                  val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid.toArray))
 
                   result shouldBe a [Failure[_]]
-                  result.failed.get shouldBe an [AssertionError]
+                  result.failed.get shouldBe an [IllegalArgumentException]
 
-                  verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(Success(true))
+                  verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid.toArray) should equal(true)
                 }
 
                 it("Subject-OU: Authenticator Attestation") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=SE, OU=Foo")
                   )._1
-                  val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                  val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid.toArray))
 
                   result shouldBe a [Failure[_]]
-                  result.failed.get shouldBe an [AssertionError]
+                  result.failed.get shouldBe an [IllegalArgumentException]
 
-                  verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(Success(true))
+                  verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid.toArray) should equal(true)
                 }
 
                 it("Subject-CN: No stipulation.") {
@@ -1222,30 +1222,30 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
                   extensions = List((idFidoGenCeAaguid, false, Vector(0, 1, 2, 3)))
                 )._1
-                val result = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid.toArray))
 
                 result shouldBe a [Failure[_]]
-                result.failed.get shouldBe an [AssertionError]
+                result.failed.get shouldBe an [IllegalArgumentException]
 
                 val goodCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
                   extensions = Nil
                 )._1
-                val goodResult = verifier._verifyX5cRequirements(badCert, testDataBase.aaguid)
+                val goodResult = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid.toArray))
 
                 goodResult shouldBe a [Failure[_]]
-                goodResult.failed.get shouldBe an [AssertionError]
+                goodResult.failed.get shouldBe an [IllegalArgumentException]
 
-                verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(Success(true))
+                verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid.toArray) should equal(true)
               }
 
               it("The Basic Constraints extension MUST have the CA component set to false") {
-                val result = verifier._verifyX5cRequirements(testDataBase.attestationCaCert.get, testDataBase.aaguid)
+                val result = Try(verifier.verifyX5cRequirements(testDataBase.attestationCaCert.get, testDataBase.aaguid.toArray))
 
                 result shouldBe a [Failure[_]]
-                result.failed.get shouldBe an [AssertionError]
+                result.failed.get shouldBe an [IllegalArgumentException]
 
-                verifier._verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (Success(true))
+                verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid.toArray) should equal (true)
               }
 
               describe("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both optional as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
