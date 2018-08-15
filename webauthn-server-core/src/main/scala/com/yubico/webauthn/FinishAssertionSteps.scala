@@ -205,8 +205,6 @@ case class FinishAssertionSteps(
   case class Step10 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step9, Step11] {
     override def validate() = TokenBindingValidator.validate(response.getResponse.getCollectedClientData.getTokenBinding, callerTokenBindingId)
     override def nextStep = Step11(username, userHandle, credential, allWarnings)
-
-    def clientDataJsonHash: ArrayBuffer = crypto.hash(response.getResponse.getClientDataJSON).toVector
   }
 
   case class Step11 private[webauthn] (username: String, userHandle: Base64UrlString, credential: RegisteredCredential, override val prevWarnings: List[String]) extends Step[Step10, Step12] {
