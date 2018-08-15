@@ -1,7 +1,6 @@
 package com.yubico.webauthn
 
 import java.util.Optional
-import java.util.function.Supplier
 
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.u2f.attestation.MetadataService
@@ -128,18 +127,18 @@ class RelyingParty (
     response: PublicKeyCredential[AuthenticatorAssertionResponse],
     callerTokenBindingId: Optional[Base64UrlString] = None.asJava
   ): FinishAssertionSteps =
-    FinishAssertionSteps(
-      request = request,
-      response = response,
-      callerTokenBindingId = callerTokenBindingId,
-      origins = origins,
-      rpId = rp.getId,
-      crypto = crypto,
-      credentialRepository = credentialRepository,
-      allowMissingTokenBinding = allowMissingTokenBinding,
-      allowUnrequestedExtensions = allowUnrequestedExtensions,
-      validateSignatureCounter = validateSignatureCounter,
-      validateTypeAttribute = validateTypeAttribute
-    )
+    FinishAssertionSteps.builder()
+      .request(request)
+      .response(response)
+      .callerTokenBindingId(callerTokenBindingId)
+      .origins(origins)
+      .rpId(rp.getId)
+      .crypto(crypto)
+      .credentialRepository(credentialRepository)
+      .allowMissingTokenBinding(allowMissingTokenBinding)
+      .allowUnrequestedExtensions(allowUnrequestedExtensions)
+      .validateSignatureCounter(validateSignatureCounter)
+      .validateTypeAttribute(validateTypeAttribute)
+      .build()
 
 }

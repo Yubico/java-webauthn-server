@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.util.BinaryUtil;
+import java.nio.charset.Charset;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
@@ -42,6 +43,10 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
     public byte[] getClientDataJSON() {
         return BinaryUtil.copy(clientDataJSON);
+    }
+
+    public String getClientDataJSONString() {
+        return new String(clientDataJSON, Charset.forName("UTF-8"));
     }
 
     public byte[] getSignature() {
