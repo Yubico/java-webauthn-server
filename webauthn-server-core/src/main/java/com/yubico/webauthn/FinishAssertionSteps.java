@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Builder
 @Slf4j
-class FinishAssertionSteps {
+public class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
 

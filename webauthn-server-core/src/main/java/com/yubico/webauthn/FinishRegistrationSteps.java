@@ -74,7 +74,7 @@ interface Step<A extends Step<?>> {
 
 @Builder
 @Slf4j
-class FinishRegistrationSteps {
+public class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
 
