@@ -44,6 +44,11 @@ interface Step<A extends Step<?>> {
 
     List<String> getPrevWarnings();
 
+    default A next() {
+        validate();
+        return nextStep();
+    };
+
     default boolean isFinished() {
         return false;
     }
@@ -67,7 +72,7 @@ interface Step<A extends Step<?>> {
         if (isFinished()) {
             return result().get();
         } else {
-            return nextStep().run();
+            return next().run();
         }
     }
 }
@@ -525,12 +530,15 @@ public class FinishRegistrationSteps {
             switch (attestationType) {
                 case SELF_ATTESTATION:
                     assure(allowUntrustedAttestation, "Self attestation is not allowed.");
+                    break;
 
                 case BASIC:
                     assure(allowUntrustedAttestation || attestationTrusted(), "Failed to derive trust for attestation key.");
+                    break;
 
                 case NONE:
                     assure(allowUntrustedAttestation, "No attestation is not allowed.");
+                    break;
 
                 default:
                     throw new UnsupportedOperationException("Attestation type not implemented: " + attestationType);
