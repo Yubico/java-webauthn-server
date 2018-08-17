@@ -4,7 +4,6 @@ import java.security.MessageDigest
 import java.security.KeyPair
 import java.util.Optional
 
-import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
@@ -27,6 +26,7 @@ import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.test.TestAuthenticator
+import com.yubico.webauthn.test.Util.toStepWithUtilities
 import com.yubico.webauthn.util.BinaryUtil
 import com.yubico.webauthn.util.WebAuthnCodecs
 import org.junit.runner.RunWith
@@ -81,6 +81,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     else
       ???
 
+  private def getUsernameIfDefault(userHandle: Base64UrlString, username: String = Defaults.username): Optional[String] =
+    if (U2fB64Encoding.decode(userHandle).toVector == Defaults.userHandle)
+      Some(username).asJava
+    else
+      ???
+
   def finishAssertion(
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(new PublicKeyCredentialDescriptor(Defaults.credentialId.toArray)).asJava),
     authenticatorData: ArrayBuffer = Defaults.authenticatorData,
@@ -95,8 +101,10 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     requestedExtensions: Option[AuthenticationExtensionsClientInputs] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ArrayBuffer = Defaults.signature,
-    userHandleForResponse: Option[ArrayBuffer] = None,
+    userHandleForResponse: ArrayBuffer = Defaults.userHandle,
     userHandleForUser: ArrayBuffer = Defaults.userHandle,
+    usernameForRequest: String = Defaults.username,
+    usernameForUser: String = Defaults.username,
     userVerificationRequirement: UserVerificationRequirement = UserVerificationRequirement.PREFERRED,
     validateSignatureCounter: Boolean = true
   ): FinishAssertionSteps = {
@@ -104,7 +112,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
     val request = AssertionRequest.builder()
       .requestId("")
-      .username(Some(Defaults.username).asJava)
+      .username(Some(usernameForRequest).asJava)
       .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
         .rpId(Some(rpId.getId).asJava)
         .challenge(challenge.toArray)
@@ -121,18 +129,18 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         if (authenticatorData == null) null else U2fB64Encoding.encode(authenticatorData.toArray),
         if (clientDataJsonBytes == null) null else U2fB64Encoding.encode(clientDataJsonBytes.toArray),
         if (signature == null) null else U2fB64Encoding.encode(signature.toArray),
-        userHandleForResponse.map(uh => U2fB64Encoding.encode(uh.toArray)).orNull
+        U2fB64Encoding.encode(userHandleForResponse.toArray)
       ),
       clientExtensionResults
     )
 
-    new RelyingParty(
-      allowUntrustedAttestation = false,
-      challengeGenerator = null,
-      origins = List(origin).asJava,
-      preferredPubkeyParams = Nil.asJava,
-      rp = rpId,
-      credentialRepository = credentialRepository getOrElse new CredentialRepository {
+    RelyingParty.builder()
+      .allowUntrustedAttestation(false)
+      .challengeGenerator(null)
+      .origins(List(origin).asJava)
+      .preferredPubkeyParams(Nil.asJava)
+      .rp(rpId)
+      .credentialRepository(credentialRepository getOrElse new CredentialRepository {
         override def lookup(credId: Base64UrlString, lookupUserHandle: Base64UrlString) =
           (
             if (credId == U2fB64Encoding.encode(credentialId.toArray))
@@ -147,16 +155,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         override def lookupAll(credId: Base64UrlString) = lookup(credId, null).asScala.toSet.asJava
         override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
         override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
-        override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
-      },
-      validateSignatureCounter = validateSignatureCounter
-    )._finishAssertion(request, response, callerTokenBindingId.asJava)
+        override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
+      })
+      .validateSignatureCounter(validateSignatureCounter)
+      .build()
+      ._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
-
-  case class StepWithValidations(a: { def validate(): Unit }) {
-    def validations: Try[Unit] = Try(a.validate())
-  }
-  implicit def toStepWithValidationsMethod(s: { def validate(): Unit }) = StepWithValidations(s)
 
   describe("§7.2. Verifying an authentication assertion") {
 
@@ -168,11 +172,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             allowCredentials = Some(List(new PublicKeyCredentialDescriptor(Array(3, 2, 1, 0))).asJava),
             credentialId = Vector(0, 1, 2, 3)
           )
-          val step: steps.Step1 = steps.begin.next
+          val step: FinishAssertionSteps#Step1 = steps.begin.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if returned credential ID is a requested one.") {
@@ -186,7 +190,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step1 = steps.begin.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if returned no credential IDs were requested.") {
@@ -197,49 +201,58 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step1 = steps.begin.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
       describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
+        object owner {
+          val username = "owner"
+          val userHandle = Vector[Byte](4, 5, 6, 7)
+        }
+        object nonOwner {
+          val username = "non-owner"
+          val userHandle = Vector[Byte](8, 9, 10, 11)
+        }
+
         val credentialRepository = Some(new CredentialRepository {
           override def lookup(id: Base64UrlString, uh: Base64UrlString) = Some(
             new RegisteredCredential(
               Array(0, 1, 2, 3),
-              Array(4, 5, 6, 7),
+              owner.userHandle.toArray,
               Defaults.credentialKey.getPublic,
               0L
             )
           ).asJava
           override def lookupAll(id: Base64UrlString) = ???
           override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
-          override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = getUserHandleIfDefault(username, userHandle = Vector(4, 5, 6, 7))
-          override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
+          override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = Some(U2fB64Encoding.encode((if (username == owner.username) owner.userHandle else nonOwner.userHandle).toArray)).asJava
+          override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = Some(if (U2fB64Encoding.decode(userHandle).toVector == owner.userHandle) owner.username else nonOwner.username).asJava
         })
 
         it("Fails if credential ID is not owned by the given user handle.") {
           val steps = finishAssertion(
             credentialRepository = credentialRepository,
-            userHandleForUser = Vector(4, 5, 6, 7),
-            userHandleForResponse = Some(Vector(8, 9, 10, 11))
+            userHandleForUser = owner.userHandle,
+            userHandleForResponse = nonOwner.userHandle
           )
-          val step: steps.Step2 = steps.begin.next.next
+          val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if credential ID is owned by the given user handle.") {
           val steps = finishAssertion(
             credentialRepository = credentialRepository,
-            userHandleForUser = Vector(4, 5, 6, 7),
-            userHandleForResponse = Some(Vector(4, 5, 6, 7))
+            userHandleForUser = owner.userHandle,
+            userHandleForResponse = owner.userHandle
           )
-          val step: steps.Step2 = steps.begin.next.next
+          val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -257,8 +270,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: steps.Step3 = new steps.Step3(Defaults.username, U2fB64Encoding.encode(Defaults.userHandle.toArray), Nil.asJava)
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if the credential ID is known.") {
@@ -274,13 +287,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             override def lookupAll(id: Base64UrlString) = ???
             override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
             override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = getUserHandleIfDefault(username)
-            override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
+            override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = getUsernameIfDefault(userHandle)
           }))
           val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
           step.validations shouldBe a [Success[_]]
           step.credential.publicKey should equal (Defaults.credentialKey.getPublic)
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -293,7 +306,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.clientData should not be null
           step.authenticatorData should not be null
           step.signature should not be null
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Fails if clientDataJSON is missing.") {
@@ -320,8 +333,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step6 = steps.begin.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe a [JsonParseException]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if cData is valid JSON.") {
@@ -336,7 +349,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           step.validations shouldBe a [Success[_]]
           step.clientData should not be null
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -358,7 +371,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step7 = steps.begin.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
         }
 
         it("""Any value other than "webauthn.get" fails.""") {
@@ -380,8 +393,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         val step: FinishAssertionSteps#Step8 = steps.begin.next.next.next.next.next.next.next.next
 
         step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [AssertionError]
-        step.next shouldBe a [Failure[_]]
+        step.validations.failed.get shouldBe an [IllegalArgumentException]
+        step.tryNext shouldBe a [Failure[_]]
       }
 
       it("9. Verify that the value of C.origin matches the Relying Party's origin.") {
@@ -389,8 +402,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         val step: FinishAssertionSteps#Step9 = steps.begin.next.next.next.next.next.next.next.next.next
 
         step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [AssertionError]
-        step.next shouldBe a [Failure[_]]
+        step.validations.failed.get shouldBe an [IllegalArgumentException]
+        step.tryNext shouldBe a [Failure[_]]
       }
 
       describe("10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.") {
@@ -399,7 +412,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
@@ -408,7 +421,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Verification succeeds if client data specifies token binding is supported, and RP does not use it.") {
@@ -417,7 +430,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Verification fails if client data does not specify token binding status and RP specifies token binding ID.") {
@@ -430,7 +443,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.next shouldBe a [Failure[_]]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Verification succeeds if client data does not specify token binding status and RP does not specify token binding ID.") {
@@ -442,7 +455,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
         it("Verification fails if client data specifies token binding ID but RP does not.") {
           val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
@@ -454,7 +467,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.next shouldBe a [Failure[_]]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         describe("If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.") {
@@ -467,7 +480,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             val step: FinishAssertionSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Verification fails if ID is missing from tokenBinding in client data.") {
@@ -480,7 +493,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Verification fails if RP specifies token binding ID but client does not support it.") {
@@ -493,7 +506,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Verification fails if RP specifies token binding ID but client does not use it.") {
@@ -506,7 +519,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Verification fails if client data and RP specify different token binding IDs.") {
@@ -519,7 +532,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
         }
       }
@@ -530,8 +543,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if RP ID is the same.") {
@@ -539,7 +552,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -555,7 +568,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is discouraged and flag is set.") {
@@ -566,7 +579,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is preferred and flag is not set.") {
@@ -577,7 +590,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is preferred and flag is set.") {
@@ -588,7 +601,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Fails if UV is required and flag is not set.") {
@@ -599,8 +612,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is required and flag is set.") {
@@ -611,7 +624,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -627,8 +640,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is discouraged and flag is set.") {
@@ -639,7 +652,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Fails if UV is preferred and flag is not set.") {
@@ -650,8 +663,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is preferred and flag is set.") {
@@ -662,7 +675,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is required and flag is not set.") {
@@ -673,7 +686,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is required and flag is set.") {
@@ -684,7 +697,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -700,7 +713,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
@@ -711,7 +724,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
 
@@ -727,7 +740,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
 
           }
 
@@ -741,7 +754,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
 
@@ -752,7 +765,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         val step: FinishAssertionSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
         step.validations shouldBe a [Success[_]]
-        step.next shouldBe a [Success[_]]
+        step.tryNext shouldBe a [Success[_]]
         step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.toArray).toVector)
       }
 
@@ -762,7 +775,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
           step.signedBytes should not be null
         }
 
@@ -776,8 +789,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("A test case with a different signed RP ID hash fails.") {
@@ -790,8 +803,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("A test case with a different signed flags field fails.") {
@@ -801,8 +814,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("A test case with a different signed signature counter fails.") {
@@ -812,8 +825,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
       }
 
@@ -832,7 +845,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def lookupAll(id: Base64UrlString) = ???
               override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
               override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = getUserHandleIfDefault(username)
-              override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
+              override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = getUsernameIfDefault(userHandle)
             }
 
             describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
@@ -844,7 +857,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
                 step.next.result.get.isSignatureCounterValid should be (true)
                 step.next.result.get.getSignatureCount should be (1337)
               }
@@ -864,7 +877,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def lookupAll(id: Base64UrlString) = ???
               override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
               override def getUserHandleForUsername(username: String): Optional[Base64UrlString] = getUserHandleIfDefault(username)
-              override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = ???
+              override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] = getUsernameIfDefault(userHandle)
             }
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
@@ -876,7 +889,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
                 step.next.result.get.isSignatureCounterValid should be(false)
                 step.next.result.get.getSignatureCount should be(1337)
               }
@@ -889,8 +902,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Failure[_]]
-                step.validations.failed.get shouldBe an [AssertionError]
-                step.next shouldBe a [Failure[_]]
+                step.validations.failed.get shouldBe an [IllegalArgumentException]
+                step.tryNext shouldBe a [Failure[_]]
               }
             }
           }
@@ -902,8 +915,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         val step: FinishAssertionSteps#Finished = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
         step.validations shouldBe a [Success[_]]
-        steps.run shouldBe a [Success[_]]
-        steps.run.isSuccess should be (true)
+        Try(steps.run) shouldBe a [Success[_]]
 
         step.result.get.isSuccess should be (true)
         step.result.get.getCredentialId should equal (Defaults.credentialId)

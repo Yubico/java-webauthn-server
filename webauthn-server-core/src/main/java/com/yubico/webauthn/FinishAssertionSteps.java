@@ -83,9 +83,9 @@ public class FinishAssertionSteps {
     }
   }
 
-  Step0 begin() { return new Step0(); }
+  public Step0 begin() { return new Step0(); }
 
-  AssertionResult run() { return begin().run(); }
+  public AssertionResult run() { return begin().run(); }
 
   @Value
   public class Step0 implements Step<Step0, Step1> {
@@ -206,7 +206,7 @@ public class FinishAssertionSteps {
         return credentialRepository.lookup(response.getId(), userHandle);
     }
 
-    RegisteredCredential credential() {
+    public RegisteredCredential credential() {
         return maybeCredential().get();
     }
   }
@@ -238,14 +238,14 @@ public class FinishAssertionSteps {
         return new Step5(username, userHandle, credential, allWarnings());
     }
 
-    byte[] authenticatorData() {
+    public byte[] authenticatorData() {
         return response.getResponse().getAuthenticatorData();
     }
 
-    byte[] clientData() {
+    public byte[] clientData() {
         return response.getResponse().getClientDataJSON();
     }
-    byte[] signature() {
+    public byte[] signature() {
         return response.getResponse().getSignature();
     }
   }
@@ -283,7 +283,7 @@ public class FinishAssertionSteps {
         return new Step7(username, userHandle, credential, clientData(), allWarnings());
     }
 
-    CollectedClientData clientData() {
+    public CollectedClientData clientData() {
         try {
             return response.getResponse().getCollectedClientData();
         } catch (IOException e) {
@@ -527,7 +527,7 @@ public class FinishAssertionSteps {
         return new Step16(username, userHandle, credential, clientDataJsonHash(), allWarnings());
       }
 
-        byte[] clientDataJsonHash() {
+        public byte[] clientDataJsonHash() {
             return crypto.hash(response.getResponse().getClientDataJSON());
         }
   }
@@ -557,7 +557,7 @@ public class FinishAssertionSteps {
         return new Step17(username, userHandle, allWarnings());
       }
 
-    byte[] signedBytes() {
+    public byte[] signedBytes() {
         return org.bouncycastle.util.Arrays.concatenate(response.getResponse().getAuthenticatorData(), clientDataJsonHash);
     }
   }

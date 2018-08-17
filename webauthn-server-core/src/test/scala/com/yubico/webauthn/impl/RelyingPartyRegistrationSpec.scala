@@ -6,7 +6,6 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.Optional
 
-import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.upokecenter.cbor.CBORObject
@@ -32,6 +31,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.test.TestAuthenticator
+import com.yubico.webauthn.test.Util.toStepWithUtilities
 import com.yubico.webauthn.util.WebAuthnCodecs
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.x500.X500Name
@@ -67,15 +67,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
-    new RelyingParty(
-      allowUntrustedAttestation = allowUntrustedAttestation,
-      challengeGenerator = null,
-      origins = List(rp.getId).asJava,
-      preferredPubkeyParams = Nil.asJava,
-      rp = rp,
-      credentialRepository = credentialRepository getOrElse null,
-      metadataService = metadataService.asJava
-    )._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
+    RelyingParty.builder()
+      .allowUntrustedAttestation(allowUntrustedAttestation)
+      .challengeGenerator(null)
+      .origins(List(rp.getId).asJava)
+      .preferredPubkeyParams(Nil.asJava)
+      .rp(rp)
+      .credentialRepository(credentialRepository.orNull)
+      .metadataService(metadataService.asJava)
+      .build()
+      ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
   }
 
   describe("§7.1. Registering a new credential") {
@@ -95,11 +96,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request)
             )
           )
-          val step: steps.Step2 = steps.begin.next.get
+          val step: FinishRegistrationSteps#Step2 = steps.begin.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe a [JsonParseException]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if clientDataJson is valid JSON.") {
@@ -114,18 +115,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request)
             )
           )
-          val step: steps.Step2 = steps.begin.next.get
+          val step: FinishRegistrationSteps#Step2 = steps.begin.next
 
           step.validations shouldBe a [Success[_]]
           step.clientData should not be null
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
       describe("3. Verify that the value of C.type is webauthn.create.") {
         it("The default test case succeeds.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-          val step: steps.Step3 = steps.begin.next.get.next.get
+          val step: FinishRegistrationSteps#Step3 = steps.begin.next.next
 
           step.validations shouldBe a [Success[_]]
         }
@@ -135,10 +136,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("type", typeString)
           )
-          val step: steps.Step3 = steps.begin.next.get.next.get
+          val step: FinishRegistrationSteps#Step3 = steps.begin.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
         }
 
         it("""Any value other than "webauthn.create" fails.""") {
@@ -161,51 +162,51 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request.toBuilder.challenge(Array.fill(16)(0: Byte)).build())
           )
         )
-        val step: steps.Step4 = steps.begin.next.get.next.get.next.get
+        val step: FinishRegistrationSteps#Step4 = steps.begin.next.next.next
 
         step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [AssertionError]
-        step.next shouldBe a [Failure[_]]
+        step.validations.failed.get shouldBe an [IllegalArgumentException]
+        step.tryNext shouldBe a [Failure[_]]
       }
 
       it("5. Verify that the value of C.origin matches the Relying Party's origin.") {
         val steps = finishRegistration(
           testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "root.evil")
         )
-        val step: steps.Step5 = steps.begin.next.get.next.get.next.get.next.get
+        val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
 
         step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [AssertionError]
-        step.next shouldBe a [Failure[_]]
+        step.validations.failed.get shouldBe an [IllegalArgumentException]
+        step.tryNext shouldBe a [Failure[_]]
       }
 
       describe("6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.") {
         it("Verification succeeds if neither side uses token binding ID.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation
             .editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
           )
-          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Verification succeeds if client data specifies token binding is supported, and RP does not use it.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation
             .editClientData("tokenBinding", toJson(Map("status" -> "supported")))
           )
-          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Verification fails if client data does not specify token binding status and RP specifies token binding ID.") {
@@ -213,11 +214,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             callerTokenBindingId = Some("YELLOWSUBMARINE"),
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
           )
-          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.next shouldBe a [Failure[_]]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Verification succeeds if client data does not specify token binding status and RP does not specify token binding ID.") {
@@ -225,21 +226,21 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             callerTokenBindingId = None,
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
           )
-          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
         it("Verification fails if client data specifies token binding ID but RP does not.") {
           val steps = finishRegistration(
             callerTokenBindingId = None,
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "present", "id" -> "YELLOWSUBMARINE")))
           )
-          val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.next shouldBe a [Failure[_]]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         describe("If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.") {
@@ -248,10 +249,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "present", "id" -> "YELLOWSUBMARINE")))
             )
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Verification fails if ID is missing from tokenBinding in client data.") {
@@ -259,11 +260,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "present")))
             )
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Verification fails if RP specifies token binding ID but client does not support it.") {
@@ -271,11 +272,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
             )
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Verification fails if RP specifies token binding ID but client does not use it.") {
@@ -283,11 +284,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               callerTokenBindingId = Some("YELLOWSUBMARINE"),
               testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "supported")))
             )
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Verification fails if client data and RP specify different token binding IDs.") {
@@ -295,11 +296,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               callerTokenBindingId = Some("ORANGESUBMARINE"),
               testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "supported", "id" -> "YELLOWSUBMARINE")))
             )
-            val step: steps.Step6 = steps.begin.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
         }
 
@@ -307,19 +308,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       it("7. Compute the hash of response.clientDataJSON using SHA-256.") {
         val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-        val step: steps.Step7 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get
+        val step: FinishRegistrationSteps#Step7 = steps.begin.next.next.next.next.next.next
 
         step.validations shouldBe a [Success[_]]
-        step.next shouldBe a [Success[_]]
+        step.tryNext shouldBe a [Success[_]]
         step.clientDataJsonHash should equal (MessageDigest.getInstance("SHA-256").digest(RegistrationTestData.FidoU2f.BasicAttestation.clientDataJsonBytes.toArray).toVector)
       }
 
       it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
         val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-        val step: steps.Step8 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+        val step: FinishRegistrationSteps#Step8 = steps.begin.next.next.next.next.next.next.next
 
         step.validations shouldBe a [Success[_]]
-        step.next shouldBe a [Success[_]]
+        step.tryNext shouldBe a [Success[_]]
         step.attestation.getFormat should equal ("fido-u2f")
         step.attestation.getAuthenticatorData should not be null
         step.attestation.getAttestationStatement should not be null
@@ -332,19 +333,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               Vector.fill[Byte](32)(0) ++ authData.drop(32)
             }
           )
-          val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step9 = steps.begin.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if RP ID is the same.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-          val step: steps.Step9 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step9 = steps.begin.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -361,10 +362,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOff)
           )
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is discouraged and flag is set.") {
@@ -373,10 +374,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOn)
           )
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is preferred and flag is not set.") {
@@ -385,10 +386,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOff)
           )
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is preferred and flag is set.") {
@@ -397,10 +398,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOn)
           )
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Fails if UV is required and flag is not set.") {
@@ -409,11 +410,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOff)
           )
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is required and flag is set.") {
@@ -422,10 +423,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOn)
           )
-          val step: steps.Step10 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -442,11 +443,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOff)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is discouraged and flag is set.") {
@@ -455,10 +456,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
             ).editAuthenticatorData(flagOn)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Fails if UV is preferred and flag is not set.") {
@@ -467,11 +468,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOff)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is preferred and flag is set.") {
@@ -480,10 +481,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
             ).editAuthenticatorData(flagOn)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is required and flag is not set.") {
@@ -492,10 +493,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOff)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         it("Succeeds if UV is required and flag is set.") {
@@ -504,10 +505,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
             ).editAuthenticatorData(flagOn)
           )
-          val step: steps.Step11 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -521,11 +522,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("Succeeds if clientExtensionResults is empty.") {
@@ -535,10 +536,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 clientExtensionResults = jsonFactory.objectNode()
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Succeeds if clientExtensionResults is empty and requested extensions is an empty object.") {
@@ -548,10 +549,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 clientExtensionResults = jsonFactory.objectNode()
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
@@ -561,10 +562,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
 
@@ -578,11 +579,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
             step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.next shouldBe a [Failure[_]]
+            step.tryNext shouldBe a [Failure[_]]
 
           }
 
@@ -594,10 +595,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 authData => authData.updated(32, (authData(32) & 0x7f).toByte)
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Succeeds if authenticator extensions is empty.") {
@@ -609,10 +610,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode()).toVector
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Succeeds if authenticator extensions is not present and requested extensions is an empty object.") {
@@ -623,10 +624,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 authData => authData.updated(32, (authData(32) & 0x7f).toByte)
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Succeeds if authenticator extensions is empty and requested extensions is an empty object.") {
@@ -638,10 +639,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode()).toVector
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
@@ -653,10 +654,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toVector
               )
             )
-            val step: steps.Step12 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
 
@@ -672,21 +673,21 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         def checkFailure(format: String): Unit = {
           it(s"""Fails if fmt is "${format}".""") {
             val steps = setup(format)
-            val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [AssertionError]
-            step.next shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
           }
         }
 
         def checkSuccess(format: String): Unit = {
           it(s"""Succeeds if fmt is "${format}".""") {
             val steps = setup(format)
-            val step: steps.Step13 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
             step.format should equal (format)
             step.formatSupported should be(true)
           }
@@ -709,20 +710,20 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("For the fido-u2f statement format,") {
           it("the default test case is a valid basic attestation.") {
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.attestationType should equal (AttestationType.BASIC)
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("a test case with self attestation is valid.") {
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.SelfAttestation)
-            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.attestationType should equal (AttestationType.SELF_ATTESTATION)
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           def flipByte(index: Int, bytes: ArrayBuffer): ArrayBuffer = bytes.updated(index, (0xff ^ bytes(index)).toByte)
@@ -730,16 +731,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("a test case with different signed client data is not valid.") {
             val testData = RegistrationTestData.FidoU2f.SelfAttestation
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
-            val step: steps.Step14 = new steps.Step14(
-              attestation = new AttestationObject(testData.attestationObject.toArray),
-              clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.updated(20, (testData.clientDataJsonBytes(20) + 1).toByte).toArray).toVector,
-              attestationStatementVerifier = new FidoU2fAttestationStatementVerifier,
-              warnings = Nil
+            val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+              new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.updated(20, (testData.clientDataJsonBytes(20) + 1).toByte).toArray),
+              new AttestationObject(testData.attestationObject.toArray),
+              new FidoU2fAttestationStatementVerifier,
+              Nil.asJava
             )
 
             step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [AssertionError]
-            step.next shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           def checkByteFlipFails(index: Int): Unit = {
@@ -749,16 +750,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = testData,
               credentialId = Some(Vector.fill[Byte](16)(0))
             )
-            val step: steps.Step14 = new steps.Step14(
-              attestation = new AttestationObject(testData.attestationObject.toArray),
-              clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = new FidoU2fAttestationStatementVerifier,
-              warnings = Nil
+            val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+              new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray),
+              new AttestationObject(testData.attestationObject.toArray),
+              new FidoU2fAttestationStatementVerifier,
+              Nil.asJava
             )
 
             step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [AssertionError]
-            step.next shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           it("a test case with a different signed RP ID hash is not valid.") {
@@ -781,16 +782,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = testData,
               credentialId = Some(Vector.fill[Byte](16)(0))
             )
-            val step: steps.Step14 = new steps.Step14(
-              attestation = new AttestationObject(testData.attestationObject.toArray),
-              clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-              attestationStatementVerifier = new FidoU2fAttestationStatementVerifier,
-              warnings = Nil
+            val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+              new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray),
+              new AttestationObject(testData.attestationObject.toArray),
+              new FidoU2fAttestationStatementVerifier,
+              Nil.asJava
             )
 
             step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [AssertionError]
-            step.next shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
           }
 
           describe("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
@@ -806,7 +807,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 ),
                 credentialId = Some(credential.getRawId.toVector)
               )
-              val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               val standaloneVerification = Try {
                 new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
@@ -817,7 +818,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               step.validations shouldBe a [Failure[_]]
               step.validations.failed.get shouldBe an [IllegalArgumentException]
-              step.next shouldBe a [Failure[_]]
+              step.tryNext shouldBe a [Failure[_]]
 
               standaloneVerification shouldBe a [Failure[_]]
               standaloneVerification.failed.get shouldBe an [IllegalArgumentException]
@@ -833,7 +834,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 ),
                 credentialId = Some(credential.getRawId.toVector)
               )
-              val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               val standaloneVerification = Try {
                 new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
@@ -843,7 +844,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               step.validations shouldBe a [Success[_]]
-              step.next shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
 
               standaloneVerification should equal (Success(true))
             }
@@ -876,26 +877,26 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               val steps = finishRegistration(testData = testData)
-              val step: steps.Step14 = new steps.Step14(
-                attestation = new AttestationObject(testData.attestationObject.toArray),
-                clientDataJsonHash = new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray).toVector,
-                attestationStatementVerifier = new NoneAttestationStatementVerifier,
-                warnings = Nil
+              val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+                new BouncyCastleCrypto().hash(testData.clientDataJsonBytes.toArray),
+                new AttestationObject(testData.attestationObject.toArray),
+                new NoneAttestationStatementVerifier,
+                Nil.asJava
               )
 
               step.validations shouldBe a [Success[_]]
               step.attestationType should equal (AttestationType.NONE)
-              step.next shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
             }
           }
 
           it("the default test case is accepted.") {
             val steps = finishRegistration(testData = RegistrationTestData.NoneAttestation.Default)
-            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.attestationType should equal (AttestationType.NONE)
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           checkByteFlipSucceeds("signature counter", 32 + 1)
@@ -908,9 +909,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           it("the attestation statement verifier implementation is PackedAttestationStatementVerifier.") {
             val steps = finishRegistration(testData = RegistrationTestData.Packed.BasicAttestation)
-            val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.attestationStatementVerifier shouldBe a [PackedAttestationStatementVerifier]
+            step.getAttestationStatementVerifier shouldBe a [PackedAttestationStatementVerifier]
           }
 
           describe("the verification procedure is:") {
@@ -955,10 +956,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             describe("3. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
               it("The attestation type is identified as Basic.") {
                 val steps = finishRegistration(testData = RegistrationTestData.Packed.BasicAttestation)
-                val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.BASIC)
               }
 
@@ -1050,13 +1051,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               it("If successful, return attestation type Basic and trust path x5c.") {
                 val testData = RegistrationTestData.Packed.BasicAttestation
                 val steps = finishRegistration(testData = testData)
-                val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.BASIC)
-                step.attestationTrustPath should not be empty
-                step.attestationTrustPath.get should be (List(testData.packedAttestationCert))
+                step.attestationTrustPath.asScala should not be empty
+                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert))
               }
             }
 
@@ -1075,10 +1076,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               it("The attestation type is identified as SelfAttestation.") {
                 val steps = finishRegistration(testData = testDataBase)
-                val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.SELF_ATTESTATION)
               }
 
@@ -1145,12 +1146,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               it("3. If successful, return attestation type Self and empty trust path.") {
                 val testData = RegistrationTestData.Packed.SelfAttestation
                 val steps = finishRegistration(testData = testData)
-                val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a [Success[_]]
-                step.next shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.SELF_ATTESTATION)
-                step.attestationTrustPath shouldBe empty
+                step.attestationTrustPath.asScala shouldBe empty
               }
             }
           }
@@ -1257,26 +1258,26 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         ignore("The tpm statement format is supported.") {
           val steps = finishRegistration(testData = RegistrationTestData.Tpm.PrivacyCa)
-          val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         ignore("The android-key statement format is supported.") {
           val steps = finishRegistration(testData = RegistrationTestData.AndroidKey.BasicAttestation)
-          val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
 
         ignore("The android-safetynet statement format is supported.") {
           val steps = finishRegistration(testData = RegistrationTestData.AndroidSafetynet.BasicAttestation)
-          val step: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -1286,11 +1287,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           it("with self attestation, no trust anchors are returned.") {
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.SelfAttestation)
-            val step: steps.Step15 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.trustResolver.asScala shouldBe empty
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           it("with basic attestation, a trust resolver is returned.") {
@@ -1300,11 +1301,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = RegistrationTestData.FidoU2f.BasicAttestation,
               metadataService = Some(metadataService)
             )
-            val step: steps.Step15 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.trustResolver.get should not be null
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
         }
@@ -1312,11 +1313,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("For the none statement format") {
           it("no trust anchors are returned.") {
             val steps = finishRegistration(testData = RegistrationTestData.NoneAttestation.Default)
-            val step: steps.Step15 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+            val step: FinishRegistrationSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.trustResolver.asScala shouldBe empty
-            step.next shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
 
@@ -1331,12 +1332,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = RegistrationTestData.NoneAttestation.Default,
                 allowUntrustedAttestation = false
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Failure[_]]
-              step.validations.failed.get shouldBe an [AssertionError]
+              step.validations.failed.get shouldBe an [IllegalArgumentException]
               step.attestationTrusted should be (false)
-              step.next shouldBe a [Failure[_]]
+              step.tryNext shouldBe a [Failure[_]]
             }
 
             it("is accepted if untrusted attestation is allowed.") {
@@ -1344,11 +1345,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = RegistrationTestData.NoneAttestation.Default,
                 allowUntrustedAttestation = true
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Success[_]]
               step.attestationTrusted should be (true)
-              step.next shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
             }
           }
         }
@@ -1361,12 +1362,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = RegistrationTestData.FidoU2f.SelfAttestation,
                 allowUntrustedAttestation = false
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Failure[_]]
-              step.validations.failed.get shouldBe an [AssertionError]
+              step.validations.failed.get shouldBe an [IllegalArgumentException]
               step.attestationTrusted should be (false)
-              step.next shouldBe a [Failure[_]]
+              step.tryNext shouldBe a [Failure[_]]
             }
 
             it("is accepted if untrusted attestation is allowed.") {
@@ -1374,11 +1375,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = RegistrationTestData.FidoU2f.SelfAttestation,
                 allowUntrustedAttestation = true
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Success[_]]
               step.attestationTrusted should be (true)
-              step.next shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
             }
           }
         }
@@ -1398,13 +1399,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = testData,
                 metadataService = Some(metadataService)
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Failure[_]]
               step.attestationTrusted should be (false)
               step.attestationMetadata.asScala should not be empty
               step.attestationMetadata.get.getMetadataIdentifier should be (null)
-              step.next shouldBe a [Failure[_]]
+              step.tryNext shouldBe a [Failure[_]]
             }
 
             it("is accepted if untrusted attestation is allowed and trust cannot be derived from the trust anchors.") {
@@ -1415,13 +1416,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = testData,
                 metadataService = Some(metadataService)
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Success[_]]
               step.attestationTrusted should be (false)
               step.attestationMetadata.asScala should not be empty
               step.attestationMetadata.get.getMetadataIdentifier should be (null)
-              step.next shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
             }
 
             it("is accepted if trust can be derived from the trust anchors.") {
@@ -1444,13 +1445,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 testData = testData,
                 metadataService = Some(metadataService)
               )
-              val step: steps.Step16 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Success[_]]
               step.attestationTrusted should be (true)
               step.attestationMetadata.asScala should not be empty
               step.attestationMetadata.get.getMetadataIdentifier should equal ("Test attestation CA")
-              step.next shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
             }
           }
 
@@ -1514,11 +1515,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             testData = testData,
             credentialRepository = Some(credentialRepository)
           )
-          val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [AssertionError]
-          step.next shouldBe an [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe an [Failure[_]]
         }
 
         it("Registration proceeds if the given credential ID is not already registered.") {
@@ -1535,10 +1536,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             testData = testData,
             credentialRepository = Some(credentialRepository)
           )
-          val step: steps.Step17 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
+          val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.next shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
         }
       }
 
@@ -1556,17 +1557,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       it("(Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
         val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("foo", "bar"))
-        val step14: steps.Step14 = steps.begin.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get.next.get
-        val step15: Try[steps.Step15] = Try(step14.next.get)
+        val step14: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+        val step15: Try[FinishRegistrationSteps#Step15] = Try(step14.next)
 
         step14.validations shouldBe a [Failure[_]]
-        step14.next shouldBe a [Failure[_]]
+        Try(step14.next) shouldBe a [Failure[_]]
 
         step15 shouldBe a [Failure[_]]
-        step15.failed.get shouldBe an [AssertionError]
+        step15.failed.get shouldBe an [IllegalArgumentException]
 
-        steps.run shouldBe a [Failure[_]]
-        steps.run.failed.get shouldBe an [AssertionError]
+        Try(steps.run) shouldBe a [Failure[_]]
+        Try(steps.run).failed.get shouldBe an [IllegalArgumentException]
       }
 
     }

@@ -32,6 +32,7 @@ import org.scalatest.junit.JUnitRunner
 import scala.collection.JavaConverters._
 import scala.util.Success
 import scala.util.Failure
+import scala.util.Try
 
 
 @RunWith(classOf[JUnitRunner])
@@ -104,13 +105,13 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
   describe("The assertion ceremony") {
 
-    val rp = new RelyingParty(
-      allowUntrustedAttestation = false,
-      challengeGenerator = new ChallengeGenerator() { override def generateChallenge(): Array[Byte] = Defaults.challenge.toArray },
-      origins = List(Defaults.rpId.getId).asJava,
-      preferredPubkeyParams = Nil.asJava,
-      rp = Defaults.rpId,
-      credentialRepository = new CredentialRepository {
+    val rp = RelyingParty.builder()
+      .allowUntrustedAttestation(false)
+      .challengeGenerator(new ChallengeGenerator() { override def generateChallenge(): Array[Byte] = Defaults.challenge.toArray })
+      .origins(List(Defaults.rpId.getId).asJava)
+      .preferredPubkeyParams(Nil.asJava)
+      .rp(Defaults.rpId)
+      .credentialRepository(new CredentialRepository {
         override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] =
           if (username == Defaults.username)
             List(new PublicKeyCredentialDescriptor(Defaults.credentialId.toArray)).asJava
@@ -133,50 +134,50 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
           if (username == Defaults.username)
             Some(U2fB64Encoding.encode(Defaults.userHandle.toArray)).asJava
           else
-            ???
+            None.asJava
         override def getUsernameForUserHandle(userHandle: Base64UrlString): Optional[String] =
           if (userHandle == U2fB64Encoding.encode(Defaults.userHandle.toArray))
             Some(Defaults.username).asJava
           else
-            ???
-      },
-      validateSignatureCounter = true
-    )
+            None.asJava
+      })
+      .validateSignatureCounter(true)
+      .build()
 
     it("succeeds for the default test case if a username was given.") {
-      val request = rp.startAssertion(Some(Defaults.username).asJava)
-      val result = rp.finishAssertion(
-        request = request,
-        response = Defaults.publicKeyCredential,
+      val request = rp.startAssertion(Some(Defaults.username).asJava, None.asJava, None.asJava)
+      val result = Try(rp.finishAssertion(
+        request,
+        Defaults.publicKeyCredential,
         None.asJava
-      )
+      ))
 
       result shouldBe a [Success[_]]
     }
 
     it("succeeds if username was not given but userHandle was returned.") {
-      val request = rp.startAssertion(None.asJava)
+      val request = rp.startAssertion(None.asJava, None.asJava, None.asJava)
 
       val response: PublicKeyCredential[AuthenticatorAssertionResponse] = Defaults.defaultPublicKeyCredential(
         userHandle = Some(Defaults.userHandle)
       )
 
-      val result = rp.finishAssertion(
-        request = request,
-        response = response,
+      val result = Try(rp.finishAssertion(
+        request,
+        response,
         None.asJava
-      )
+      ))
 
       result shouldBe a [Success[_]]
     }
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
-      val request = rp.startAssertion(None.asJava)
-      val result = rp.finishAssertion(
-        request = request,
-        response = Defaults.publicKeyCredential,
+      val request = rp.startAssertion(None.asJava, None.asJava, None.asJava)
+      val result = Try(rp.finishAssertion(
+        request,
+        Defaults.publicKeyCredential,
         None.asJava
-      )
+      ))
 
       result shouldBe a [Failure[_]]
     }

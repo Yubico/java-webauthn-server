@@ -101,11 +101,11 @@ public class FinishRegistrationSteps {
     private final Boolean validateTypeAttribute = true;
 
 
-    Step1 begin() {
+    public Step1 begin() {
         return new Step1();
     }
 
-    RegistrationResult run() {
+    public RegistrationResult run() {
         return begin().run();
     }
 
@@ -148,7 +148,7 @@ public class FinishRegistrationSteps {
             return Collections.emptyList();
         }
 
-        private CollectedClientData clientData() {
+        public CollectedClientData clientData() {
             try {
                 return response.getResponse().getCollectedClientData();
             } catch (IOException | U2fBadInputException e) {
@@ -277,7 +277,7 @@ public class FinishRegistrationSteps {
             return new Step8(clientDataJsonHash(), allWarnings());
         }
 
-        private byte[] clientDataJsonHash() {
+        public byte[] clientDataJsonHash() {
             return crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
@@ -297,7 +297,7 @@ public class FinishRegistrationSteps {
             return new Step9(clientDataJsonHash, attestation(), allWarnings());
         }
 
-        private AttestationObject attestation() {
+        public AttestationObject attestation() {
             return response.getResponse().getAttestation();
         }
     }
@@ -405,11 +405,11 @@ public class FinishRegistrationSteps {
             return new Step14(clientDataJsonHash, attestation, attestationStatementVerifier().get(), allWarnings());
         }
 
-        private String format() {
+        public String format() {
             return attestation.getFormat();
         }
 
-        private boolean formatSupported() {
+        public boolean formatSupported() {
             return attestationStatementVerifier().isPresent();
         }
 
@@ -447,7 +447,7 @@ public class FinishRegistrationSteps {
             return new Step15(attestation, attestationStatementVerifier, attestationType(), allWarnings());
         }
 
-        private AttestationType attestationType() {
+        public AttestationType attestationType() {
             try {
                 return attestationStatementVerifier.getAttestationType(attestation);
             } catch (IOException | CoseException | CertificateException e) {
@@ -455,7 +455,7 @@ public class FinishRegistrationSteps {
             }
         }
 
-        Optional<List<X509Certificate>> attestationTrustPath() {
+        public Optional<List<X509Certificate>> attestationTrustPath() {
             if (attestationStatementVerifier instanceof X5cAttestationStatementVerifier) {
                 try {
                     return ((X5cAttestationStatementVerifier) attestationStatementVerifier).getAttestationTrustPath(attestation);
@@ -488,7 +488,7 @@ public class FinishRegistrationSteps {
             return new Step16(attestation, attestationType, trustResolver(), allWarnings());
         }
 
-        private Optional<AttestationTrustResolver> trustResolver() {
+        public Optional<AttestationTrustResolver> trustResolver() {
             switch (attestationType) {
                 case SELF_ATTESTATION:
                     return Optional.empty();
@@ -550,7 +550,7 @@ public class FinishRegistrationSteps {
             return new Step17(attestationType, attestationMetadata(), attestationTrusted(), allWarnings());
         }
 
-        private boolean attestationTrusted() {
+        public boolean attestationTrusted() {
             switch (attestationType) {
                 case SELF_ATTESTATION:
                 case NONE:
@@ -563,7 +563,7 @@ public class FinishRegistrationSteps {
             }
         }
 
-        private Optional<Attestation> attestationMetadata() {
+        public Optional<Attestation> attestationMetadata() {
             return trustResolver.flatMap(tr -> tr.resolveTrustAnchor(attestation));
         }
     }

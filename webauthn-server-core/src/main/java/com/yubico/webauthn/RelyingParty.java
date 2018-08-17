@@ -85,7 +85,7 @@ public class RelyingParty {
       return _finishRegistration(request, response, callerTokenBindingId).run();
   }
 
-  FinishRegistrationSteps _finishRegistration(
+  public FinishRegistrationSteps _finishRegistration(
     PublicKeyCredentialCreationOptions request,
     PublicKeyCredential<AuthenticatorAttestationResponse> response,
     Optional<String> callerTokenBindingId // = Optional.empty()
@@ -137,7 +137,7 @@ public class RelyingParty {
       return _finishAssertion(request, response, callerTokenBindingId).run();
   }
 
-  FinishAssertionSteps _finishAssertion(
+  public FinishAssertionSteps _finishAssertion(
     AssertionRequest request,
     PublicKeyCredential<AuthenticatorAssertionResponse> response,
     Optional<String> callerTokenBindingId // = None.asJava
