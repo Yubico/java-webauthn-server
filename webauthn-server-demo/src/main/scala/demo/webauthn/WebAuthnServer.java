@@ -83,21 +83,21 @@ public class WebAuthnServer {
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
 
-        rp = new RelyingParty(
-            rpIdentity,
-            challengeGenerator,
-            Collections.singletonList(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier( -7L), PublicKeyCredentialType.PUBLIC_KEY)),
-            origins,
-            Optional.of(AttestationConveyancePreference.DIRECT),
-            new BouncyCastleCrypto(),
-            true,
-            true,
-            true,
-            this.userStorage,
-            Optional.of(metadataService),
-            true,
-            false
-        );
+        rp = RelyingParty.builder()
+            .rp(rpIdentity)
+            .challengeGenerator(challengeGenerator)
+            .preferredPubkeyParams(Collections.singletonList(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier( -7L), PublicKeyCredentialType.PUBLIC_KEY)))
+            .origins(origins)
+            .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
+            .crypto(new BouncyCastleCrypto())
+            .credentialRepository(this.userStorage)
+            .metadataService(Optional.of(metadataService))
+            .allowMissingTokenBinding(true)
+            .allowUnrequestedExtensions(true)
+            .allowUntrustedAttestation(true)
+            .validateSignatureCounter(true)
+            .validateTypeAttribute(false)
+            .build();
     }
 
     private static MetadataResolver createExtraMetadataResolver() {
@@ -210,13 +210,13 @@ public class WebAuthnServer {
             logger.debug("fail finishRegistration responseJson: {}", responseJson);
             return Left.apply(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
-            Try<RegistrationResult> registrationTry = rp.finishRegistration(
-                request.getPublicKeyCredentialCreationOptions(),
-                response.getCredential(),
-                Optional.empty()
-            );
+            try {
+                RegistrationResult registration = rp.finishRegistration(
+                    request.getPublicKeyCredentialCreationOptions(),
+                    response.getCredential(),
+                    Optional.empty()
+                );
 
-            if (registrationTry.isSuccess()) {
                 return Right.apply(
                     new SuccessfulRegistrationResult(
                         request,
@@ -226,16 +226,15 @@ public class WebAuthnServer {
                             request.getPublicKeyCredentialCreationOptions().getUser(),
                             request.getCredentialNickname(),
                             response,
-                            registrationTry.get()
+                            registration
                         ),
-                        registrationTry.get().isAttestationTrusted()
+                        registration.isAttestationTrusted()
                     )
                 );
-            } else {
-                logger.debug("fail finishRegistration responseJson: {}", responseJson, registrationTry.failed().get());
-                return Left.apply(Arrays.asList("Registration failed!", registrationTry.failed().get().getMessage()));
+            } catch (Exception e) {
+                logger.debug("fail finishRegistration responseJson: {}", responseJson, e);
+                return Left.apply(Arrays.asList("Registration failed!", e.getMessage()));
             }
-
         }
     }
 
@@ -283,14 +282,12 @@ public class WebAuthnServer {
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
-            Try<AssertionResult> assertionTry = rp.finishAssertion(
-                request,
-                response.getCredential(),
-                Optional.empty()
-            );
-
-            if (assertionTry.isSuccess()) {
-                final AssertionResult result = assertionTry.get();
+            try {
+                AssertionResult result = rp.finishAssertion(
+                    request,
+                    response.getCredential(),
+                    Optional.empty()
+                );
 
                 if (result.isSuccess()) {
                     try {
@@ -315,10 +312,9 @@ public class WebAuthnServer {
                 } else {
                     return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                 }
-
-            } else {
-                logger.debug("Assertion failed", assertionTry.failed().get());
-                return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+            } catch (Exception e) {
+                logger.debug("Assertion failed", e);
+                return Left.apply(Arrays.asList("Assertion failed!", e.getMessage()));
             }
         }
     }
