@@ -88,7 +88,7 @@ public class FinishAssertionSteps {
   AssertionResult run() { return begin().run(); }
 
   @Value
-  class Step0 implements Step<Step0, Step1> {
+  public class Step0 implements Step<Step0, Step1> {
     @Override
     public Step1 nextStep() {
         return new Step1(username().get(), userHandle().get(), allWarnings());
@@ -134,7 +134,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step1 implements Step<Step0, Step2> {
+  public class Step1 implements Step<Step0, Step2> {
       private final String username;
       private final String userHandle;
       private final List<String> prevWarnings;
@@ -157,7 +157,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step2 implements Step<Step1, Step3> {
+  public class Step2 implements Step<Step1, Step3> {
       private final String username;
       private final String userHandle;
     private final List<String> prevWarnings;
@@ -183,7 +183,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step3 implements Step<Step2, Step4> {
+  public class Step3 implements Step<Step2, Step4> {
       private final String username;
         private final String userHandle;
         private final List<String> prevWarnings;
@@ -212,7 +212,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step4 implements Step<Step3, Step5> {
+  public class Step4 implements Step<Step3, Step5> {
 
       private final String username;
     private final String userHandle;
@@ -251,7 +251,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step5 implements Step<Step4, Step6> {
+  public class Step5 implements Step<Step4, Step6> {
       private final String username;
       private final String userHandle;
       private final RegisteredCredential credential;
@@ -266,7 +266,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step6 implements Step<Step5, Step7> {
+  public class Step6 implements Step<Step5, Step7> {
       private final String username;
       private final String userHandle;
       private final RegisteredCredential credential;
@@ -295,7 +295,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step7 implements Step<Step6, Step8> {
+  public class Step7 implements Step<Step6, Step8> {
 
       private final String username;
       private final String userHandle;
@@ -342,7 +342,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step8 implements Step<Step7, Step9> {
+  public class Step8 implements Step<Step7, Step9> {
       private final String username;
       private final String userHandle;
       private final RegisteredCredential credential;
@@ -366,7 +366,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step9 implements Step<Step8, Step10> {
+  public class Step9 implements Step<Step8, Step10> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -393,7 +393,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step10 implements Step<Step9, Step11> {
+  public class Step10 implements Step<Step9, Step11> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -415,7 +415,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step11 implements Step<Step10, Step12> {
+  public class Step11 implements Step<Step10, Step12> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -435,7 +435,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step12 implements Step<Step11, Step13> {
+  public class Step12 implements Step<Step11, Step13> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -458,7 +458,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step13 implements Step<Step12, Step14> {
+  public class Step13 implements Step<Step12, Step14> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -481,7 +481,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step14 implements Step<Step13, Step15> {
+  public class Step14 implements Step<Step13, Step15> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -510,7 +510,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step15 implements Step<Step14, Step16> {
+  public class Step15 implements Step<Step14, Step16> {
       private final String username;
         private final String userHandle;
       private final RegisteredCredential credential;
@@ -533,7 +533,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step16 implements Step<Step15, Step17> {
+  public class Step16 implements Step<Step15, Step17> {
       private final String username;
       private final String userHandle;
       private final RegisteredCredential credential;
@@ -563,7 +563,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Step17 implements Step<Step16, Finished> {
+  public class Step17 implements Step<Step16, Finished> {
       private final String username;
       private final String userHandle;
       private final List<String> prevWarnings;
@@ -602,7 +602,7 @@ public class FinishAssertionSteps {
   }
 
   @Value
-  class Finished implements Step<Step17, Finished> {
+  public class Finished implements Step<Step17, Finished> {
       private final String username;
         private final String userHandle;
       private final long assertionSignatureCount;
