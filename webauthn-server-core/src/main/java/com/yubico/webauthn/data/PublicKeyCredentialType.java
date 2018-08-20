@@ -1,7 +1,12 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
+import com.yubico.webauthn.impl.json.WithStringId;
 import java.util.Optional;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
   * Defines the valid credential types.
@@ -13,17 +18,17 @@ import java.util.stream.Stream;
   *
   * Currently one credential type is defined, namely [[PublicKey]].
   */
-public enum PublicKeyCredentialType {
+@JsonSerialize(using = StringIdJsonSerializer.class)
+@AllArgsConstructor
+public enum PublicKeyCredentialType implements WithStringId {
     PUBLIC_KEY("public-key");
 
+    @Getter
     private final String id;
-
-    PublicKeyCredentialType(String id) {
-        this.id = id;
-    }
 
     public static Optional<PublicKeyCredentialType> fromString(String id) {
         return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
     }
+
 }
 
