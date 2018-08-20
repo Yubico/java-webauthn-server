@@ -6,20 +6,12 @@ import java.util.Optional
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.yubico.webauthn.impl.json.LocalDateJsonSerializer
+import com.yubico.webauthn.meta.Implementation
 
 
 
 
-/**
-  * Description of this version of this library
-  *
-  * @param version The version number of this release of the library.
-  * @param sourceCodeUrl Address to where the source code for this library can be found.
-  */
-case class Implementation(
-  version: Optional[String],
-  sourceCodeUrl: URL
-)
+
 
 /**
   * Reference to a particular version of a specification document.
@@ -57,9 +49,9 @@ object VersionInfo {
   /**
     * Represents the specification this implementation is based on
     */
-  val implementation = Implementation(
-    version = findImplementationVersionInManifest(),
-    sourceCodeUrl = new URL("https://github.com/Yubico/java-webauthn-server")
+  val implementation = new Implementation(
+    findImplementationVersionInManifest(),
+    new URL("https://github.com/Yubico/java-webauthn-server")
   )
 
   private def findImplementationVersionInManifest(): Optional[String] = {
