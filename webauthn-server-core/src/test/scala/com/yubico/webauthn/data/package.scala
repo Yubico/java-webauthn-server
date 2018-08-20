@@ -2,6 +2,7 @@ package com.yubico.webauthn
 
 import com.fasterxml.jackson.databind.JsonNode
 
+
 package object data {
 
   /** An immutable array of bytes. */
