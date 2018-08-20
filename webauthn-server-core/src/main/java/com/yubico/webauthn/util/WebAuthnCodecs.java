@@ -72,7 +72,7 @@ public class WebAuthnCodecs {
         Map<Long, Object> coseKey = new HashMap<>();
 
         coseKey.put(1L, 2L); // Key type: EC
-        coseKey.put(3L, javaAlgorithmNameToCoseAlgorithmIdentifier("ES256").value);
+        coseKey.put(3L, javaAlgorithmNameToCoseAlgorithmIdentifier("ES256").getId());
         coseKey.put(-1L, 1L); // Curve: P-256
         coseKey.put(-2L, Arrays.copyOfRange(key, start, start + 32)); // x
         coseKey.put(-3L, Arrays.copyOfRange(key, start + 32, start + 64)); // y

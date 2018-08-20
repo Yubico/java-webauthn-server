@@ -414,7 +414,7 @@ object TestAuthenticator {
         Map("sig" -> f.binaryNode(signature.toArray))
           ++ (
             selfAttestationKey match {
-              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)).value))
+              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse WebAuthnCodecs.javaAlgorithmNameToCoseAlgorithmIdentifier(key.getAlgorithm)).getId))
               case None => Map("x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)))
             }
           )

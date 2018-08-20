@@ -1,17 +1,19 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.io.IOException;
+import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
+import com.yubico.webauthn.impl.json.WithStringId;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 
 /**
  * Relying Parties may use this to specify their preference regarding
  * attestation conveyance during credential generation.
  */
-@JsonSerialize(using = AttestationConveyancePreference.JsonSerializer.class)
-public enum AttestationConveyancePreference {
+@JsonSerialize(using = StringIdJsonSerializer.class)
+@AllArgsConstructor
+public enum AttestationConveyancePreference implements WithStringId {
     /**
      * Indicates that the Relying Party is not interested in authenticator
      * attestation.
@@ -45,18 +47,9 @@ public enum AttestationConveyancePreference {
      */
     DIRECT("direct");
 
-    private final String value;
-
-    AttestationConveyancePreference(String value) {
-        this.value = value;
-    }
+    @Getter
+    private final String id;
 
     public static AttestationConveyancePreference DEFAULT = NONE;
 
-    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AttestationConveyancePreference> {
-        @Override
-        public void serialize(AttestationConveyancePreference t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-            jsonGenerator.writeString(t.value);
-        }
-    }
 }

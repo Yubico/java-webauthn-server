@@ -1,10 +1,11 @@
 package com.yubico.webauthn.data;
 
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.io.IOException;
+import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
+import com.yubico.webauthn.impl.json.WithStringId;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
   * Authenticators may communicate with Clients using a variety of transports.
@@ -16,8 +17,9 @@ import java.io.IOException;
   * out-of-band mechanism; it is outside the scope of this specification to
   * define that mechanism.
   */
-@JsonSerialize(using = AuthenticatorTransport.JsonSerializer.class)
-public enum AuthenticatorTransport {
+@JsonSerialize(using = StringIdJsonSerializer.class)
+@AllArgsConstructor
+public enum AuthenticatorTransport implements WithStringId {
     /**
      * The respective Authenticator may be contacted over USB.
      */
@@ -35,17 +37,8 @@ public enum AuthenticatorTransport {
      */
     BLE("ble");
 
-    private String id;
+    @Getter
+    private final String id;
 
-    AuthenticatorTransport(String id) {
-        this.id = id;
-    }
-
-    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AuthenticatorTransport> {
-        @Override
-        public void serialize(AuthenticatorTransport t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-            jsonGenerator.writeString(t.id);
-        }
-    }
 }
 
