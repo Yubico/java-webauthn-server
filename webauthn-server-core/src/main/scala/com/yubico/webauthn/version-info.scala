@@ -4,17 +4,11 @@ import java.net.URL
 import java.time.LocalDate
 import java.util.Optional
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.yubico.webauthn.impl.json.LocalDateJsonSerializer
 
 
-private class LocalDateJsonSerializer extends JsonSerializer[LocalDate] {
-  override def serialize(t: LocalDate, jsonGenerator: JsonGenerator, serializerProvider: SerializerProvider): Unit = {
-    jsonGenerator.writeString(t.toString)
-  }
-}
+
 
 /**
   * Description of this version of this library
