@@ -17,7 +17,7 @@ public class Config {
     private static final String DEFAULT_ORIGIN = "https://localhost:8443";
     private static final int DEFAULT_PORT = 8080;
     private static final RelyingPartyIdentity DEFAULT_RP_ID
-        = new RelyingPartyIdentity("Yubico WebAuthn demo", "localhost", Optional.empty());
+        = RelyingPartyIdentity.builder().name("Yubico WebAuthn demo").id("localhost").build();
 
     private final List<String> origins;
     private final int port;
@@ -96,16 +96,16 @@ public class Config {
             logger.debug("RP name or ID not given - using default.");
             result = DEFAULT_RP_ID;
         } else {
-            Optional<URL> iconUrl = Optional.empty();
-            if (icon != null) {
+            if (icon == null) {
+                result = RelyingPartyIdentity.builder().name(name).id(id).build();
+            } else {
                 try {
-                    iconUrl = Optional.of(new URL(icon));
+                result = RelyingPartyIdentity.builder().name(name).id(id).icon(Optional.of(new URL(icon))).build();
                 } catch (MalformedURLException e) {
                     logger.error("Invalid icon URL: {}", icon, e);
                     throw e;
                 }
             }
-            result = new RelyingPartyIdentity(name, id, iconUrl);
         }
 
         logger.info("RP identity: {}", result);

@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.webauthn.VersionInfo$;
+import com.yubico.webauthn.meta.VersionInfo;
 import com.yubico.webauthn.data.AssertionRequest;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.json.ScalaJackson;
@@ -94,7 +94,7 @@ public class WebAuthnRestResource {
     }
 
     private static final class VersionResponse {
-        public final VersionInfo$ version = VersionInfo$.MODULE$;
+        public final VersionInfo version = VersionInfo.getInstance();
     }
     @GET
     @Path("version")
@@ -317,6 +317,7 @@ public class WebAuthnRestResource {
             logger.debug("{} JSON response: {}", operationName, json);
             return Response.ok(json).build();
         } catch (IOException e) {
+            logger.error("Failed to encode response as JSON: {}", request, e);
             return jsonFail();
         }
     }

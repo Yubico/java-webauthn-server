@@ -19,10 +19,12 @@ import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
-import com.yubico.webauthn.data.Direct$;
-import com.yubico.webauthn.data.PublicKey$;
+import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
+import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
+import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
@@ -53,9 +55,9 @@ import scala.util.Try;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
-    private final Cache<String, AssertionRequest> assertRequestStorage = newCache();
-    private final Cache<String, RegistrationRequest> registerRequestStorage = newCache();
-    private final RegistrationStorage userStorage = new InMemoryRegistrationStorage();
+    private final Cache<String, AssertionRequest> assertRequestStorage;
+    private final Cache<String, RegistrationRequest> registerRequestStorage;
+    private final RegistrationStorage userStorage;
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
@@ -70,22 +72,33 @@ public class WebAuthnServer {
     private final Clock clock = Clock.systemDefaultZone();
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
 
+    private final RelyingParty rp;
 
-    private final RelyingParty rp = new RelyingParty(
-        Config.getRpIdentity(),
-        challengeGenerator,
-        Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
-        Config.getOrigins(),
-        Optional.of(Direct$.MODULE$),
-        new BouncyCastleCrypto(),
-        true,
-        true,
-        true,
-        userStorage,
-        Optional.of(metadataService),
-        true,
-        false
-    );
+    public WebAuthnServer() {
+        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins());
+    }
+
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<String, RegistrationRequest> registerRequestStorage, Cache<String, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
+        this.userStorage = userStorage;
+        this.registerRequestStorage = registerRequestStorage;
+        this.assertRequestStorage = assertRequestStorage;
+
+        rp = RelyingParty.builder()
+            .rp(rpIdentity)
+            .challengeGenerator(challengeGenerator)
+            .preferredPubkeyParams(Collections.singletonList(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier( -7L), PublicKeyCredentialType.PUBLIC_KEY)))
+            .origins(origins)
+            .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
+            .crypto(new BouncyCastleCrypto())
+            .credentialRepository(this.userStorage)
+            .metadataService(Optional.of(metadataService))
+            .allowMissingTokenBinding(true)
+            .allowUnrequestedExtensions(true)
+            .allowUntrustedAttestation(true)
+            .validateSignatureCounter(true)
+            .validateTypeAttribute(false)
+            .build();
+    }
 
     private static MetadataResolver createExtraMetadataResolver() {
         SimpleResolver resolver = new SimpleResolverWithEquality();
@@ -119,7 +132,11 @@ public class WebAuthnServer {
                 credentialNickname,
                 U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
                 rp.startRegistration(
-                    new UserIdentity(username, displayName, userId, Optional.empty()),
+                    UserIdentity.builder()
+                        .name(username)
+                        .displayName(displayName)
+                        .id(userId)
+                        .build(),
                     Optional.of(userStorage.getCredentialIdsForUsername(username)),
                     Optional.empty(),
                     requireResidentKey
@@ -193,32 +210,31 @@ public class WebAuthnServer {
             logger.debug("fail finishRegistration responseJson: {}", responseJson);
             return Left.apply(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
-            Try<RegistrationResult> registrationTry = rp.finishRegistration(
-                request.getPublicKeyCredentialCreationOptions(),
-                response.getCredential(),
-                Optional.empty()
-            );
+            try {
+                RegistrationResult registration = rp.finishRegistration(
+                    request.getPublicKeyCredentialCreationOptions(),
+                    response.getCredential(),
+                    Optional.empty()
+                );
 
-            if (registrationTry.isSuccess()) {
                 return Right.apply(
                     new SuccessfulRegistrationResult(
                         request,
                         response,
                         addRegistration(
                             request.getUsername(),
-                            request.getPublicKeyCredentialCreationOptions().user(),
+                            request.getPublicKeyCredentialCreationOptions().getUser(),
                             request.getCredentialNickname(),
                             response,
-                            registrationTry.get()
+                            registration
                         ),
-                        registrationTry.get().attestationTrusted()
+                        registration.isAttestationTrusted()
                     )
                 );
-            } else {
-                logger.debug("fail finishRegistration responseJson: {}", responseJson, registrationTry.failed().get());
-                return Left.apply(Arrays.asList("Registration failed!", registrationTry.failed().get().getMessage()));
+            } catch (Exception e) {
+                logger.debug("fail finishRegistration responseJson: {}", responseJson, e);
+                return Left.apply(Arrays.asList("Registration failed!", e.getMessage()));
             }
-
         }
     }
 
@@ -234,7 +250,7 @@ public class WebAuthnServer {
                 Optional.empty()
             );
 
-            assertRequestStorage.put(request.requestId(), request);
+            assertRequestStorage.put(request.getRequestId(), request);
 
             return Right.apply(request);
         }
@@ -266,23 +282,21 @@ public class WebAuthnServer {
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
-            Try<AssertionResult> assertionTry = rp.finishAssertion(
-                request,
-                response.getCredential(),
-                Optional.empty()
-            );
+            try {
+                AssertionResult result = rp.finishAssertion(
+                    request,
+                    response.getCredential(),
+                    Optional.empty()
+                );
 
-            if (assertionTry.isSuccess()) {
-                final AssertionResult result = assertionTry.get();
-
-                if (result.success()) {
+                if (result.isSuccess()) {
                     try {
                         userStorage.updateSignatureCount(result);
                     } catch (Exception e) {
                         logger.error(
                             "Failed to update signature count for user \"{}\", credential \"{}\"",
-                            result.username(),
-                            response.getCredential().id(),
+                            result.getUsername(),
+                            response.getCredential().getId(),
                             e
                         );
                     }
@@ -291,17 +305,16 @@ public class WebAuthnServer {
                         new SuccessfulAuthenticationResult(
                             request,
                             response,
-                            userStorage.getRegistrationsByUsername(result.username()),
-                            result.warningsAsJava()
+                            userStorage.getRegistrationsByUsername(result.getUsername()),
+                            result.getWarnings()
                         )
                     );
                 } else {
                     return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                 }
-
-            } else {
-                logger.debug("Assertion failed", assertionTry.failed().get());
-                return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+            } catch (Exception e) {
+                logger.debug("Assertion failed", e);
+                return Left.apply(Arrays.asList("Assertion failed!", e.getMessage()));
             }
         }
     }
@@ -324,7 +337,7 @@ public class WebAuthnServer {
                 authenticatedActions.invalidate(result.request);
                 if (action == null) {
                     return com.yubico.util.Either.left(Collections.singletonList(
-                        "No action was associated with assertion request ID: " + result.getRequest().requestId()
+                        "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
                     ));
                 } else {
                     return com.yubico.util.Either.fromScala(action.apply(result));
@@ -381,7 +394,7 @@ public class WebAuthnServer {
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .registration(registration)
-            .signatureCount(response.getCredential().response().attestation().authenticatorData().signatureCounter())
+            .signatureCount(response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter())
             .build();
 
         logger.debug(
@@ -389,8 +402,8 @@ public class WebAuthnServer {
             username,
             nickname,
             registration,
-            registration.keyId().idBase64(),
-            registration.publicKeyCose()
+            registration.getKeyId().getIdBase64(),
+            registration.getPublicKeyCose()
         );
         userStorage.addRegistrationByUsername(username, reg);
         return reg;

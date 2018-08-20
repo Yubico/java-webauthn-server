@@ -16,11 +16,4 @@ package object data {
   /** A hexadecimal-encoded array of bytes. */
   type HexString = String
 
-  /**
-    * A number identifying a cryptographic algorithm. The algorithm identifiers
-    * SHOULD be values registered in the IANA COSE Algorithms registry, for
-    * instance, -7 for "ES256" and -257 for "RS256".
-    */
-  type COSEAlgorithmIdentifier = Long
-
 }
