@@ -13,27 +13,38 @@ import lombok.Value;
 @Builder
 public class RegistrationResult {
 
-    private PublicKeyCredentialDescriptor keyId;
-    private boolean attestationTrusted;
-    private AttestationType attestationType;
-    private Optional<Attestation> attestationMetadata;
-    private ByteArray publicKeyCose;
-    private List<String> warnings;
+    @NonNull
+    private final PublicKeyCredentialDescriptor keyId;
 
-    RegistrationResult(
+    private final boolean attestationTrusted;
+
+    @NonNull
+    private final AttestationType attestationType;
+
+    @NonNull
+    private final ByteArray publicKeyCose;
+
+    @NonNull
+    private final List<String> warnings;
+
+    @NonNull
+    @Builder.Default
+    private final Optional<Attestation> attestationMetadata = Optional.empty();
+
+    private RegistrationResult(
         @NonNull PublicKeyCredentialDescriptor keyId,
         boolean attestationTrusted,
         @NonNull AttestationType attestationType,
-        @NonNull Optional<Attestation> attestationMetadata,
         @NonNull ByteArray publicKeyCose,
-        @NonNull List<String> warnings
+        @NonNull List<String> warnings,
+        @NonNull Optional<Attestation> attestationMetadata
     ) {
         this.keyId = keyId;
         this.attestationTrusted = attestationTrusted;
         this.attestationType = attestationType;
-        this.attestationMetadata = attestationMetadata;
         this.publicKeyCose = publicKeyCose;
         this.warnings = Collections.unmodifiableList(warnings);
+        this.attestationMetadata = attestationMetadata;
     }
 
 }
