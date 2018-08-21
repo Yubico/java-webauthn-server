@@ -6,21 +6,20 @@ import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.exception.HexException;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithStringId;
+import com.yubico.webauthn.impl.json.JsonStringSerializer;
+import com.yubico.webauthn.impl.json.JsonStringSerializable;
 import com.yubico.webauthn.util.BinaryUtil;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  * An immutable byte array with support for encoding/decoding to/from Base64URL encoding.
  */
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
 @ToString(of = { "base64" }, includeFieldNames = false)
-public class ByteArray implements WithStringId {
+public class ByteArray implements JsonStringSerializable {
 
     private final byte[] bytes;
     private final String base64;
@@ -97,7 +96,7 @@ public class ByteArray implements WithStringId {
      * Used by JSON serializer.
      */
     @Override
-    public String getId() {
+    public String toJsonString() {
         return base64;
     }
 

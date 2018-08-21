@@ -1,8 +1,8 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.LongIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithLongId;
+import com.yubico.webauthn.impl.json.JsonLongSerializable;
+import com.yubico.webauthn.impl.json.JsonLongSerializer;
 import lombok.Value;
 
 /**
@@ -10,10 +10,15 @@ import lombok.Value;
  * SHOULD be values registered in the IANA COSE Algorithms registry, for
  * instance, -7 for "ES256" and -257 for "RS256".
  */
-@JsonSerialize(using = LongIdJsonSerializer.class)
+@JsonSerialize(using = JsonLongSerializer.class)
 @Value
-public class COSEAlgorithmIdentifier implements WithLongId {
+public class COSEAlgorithmIdentifier implements JsonLongSerializable {
 
     private final long id;
+
+    @Override
+    public long toJsonNumber() {
+        return id;
+    }
 
 }

@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
-public class StringIdJsonSerializer<T extends WithStringId> extends JsonSerializer<T> {
+public class JsonStringSerializer<T extends JsonStringSerializable> extends JsonSerializer<T> {
 
     @Override
     public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        jsonGenerator.writeString(t.getId());
+        jsonGenerator.writeString(t.toJsonString());
     }
 
 }

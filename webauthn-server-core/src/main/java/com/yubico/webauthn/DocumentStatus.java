@@ -1,18 +1,21 @@
 package com.yubico.webauthn;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithStringId;
+import com.yubico.webauthn.impl.json.JsonStringSerializer;
+import com.yubico.webauthn.impl.json.JsonStringSerializable;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum DocumentStatus implements WithStringId {
+public enum DocumentStatus implements JsonStringSerializable {
     WORKING_DRAFT("working-draft"),
     CANDIDATE_RECOMMENDATION("candidate-recommendation");
 
-    @Getter
     private final String id;
+
+    @Override
+    public String toJsonString() {
+        return id;
+    }
 
 }

@@ -2,8 +2,8 @@ package com.yubico.webauthn.data;
 
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithStringId;
+import com.yubico.webauthn.impl.json.JsonStringSerializer;
+import com.yubico.webauthn.impl.json.JsonStringSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -17,9 +17,9 @@ import lombok.Getter;
   * out-of-band mechanism; it is outside the scope of this specification to
   * define that mechanism.
   */
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum AuthenticatorTransport implements WithStringId {
+public enum AuthenticatorTransport implements JsonStringSerializable {
     /**
      * The respective Authenticator may be contacted over USB.
      */
@@ -39,6 +39,11 @@ public enum AuthenticatorTransport implements WithStringId {
 
     @Getter
     private final String id;
+
+    @Override
+    public String toJsonString() {
+        return id;
+    }
 
 }
 
