@@ -16,7 +16,6 @@ import com.yubico.webauthn.impl.ExtensionsValidation;
 import com.yubico.webauthn.impl.TokenBindingValidator;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +23,8 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+
+import static com.yubico.util.ExceptionUtil.assure;
 
 
 @Builder
@@ -106,23 +107,20 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (!(
-                request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent()
-            )) {
-                throw new IllegalArgumentException("At least one of username and user handle must be given; none was.");
-            }
-            if (!userHandle().isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                    "No user found for username: %s, userHandle: %s",
-                    request.getUsername(), response.getResponse().getUserHandle()
-                ));
-            }
-            if (!username().isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                    "No user found for username: %s, userHandle: %s",
-                    request.getUsername(), response.getResponse().getUserHandle()
-                ));
-            }
+            assure(
+                request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
+                "At least one of username and user handle must be given; none was."
+            );
+            assure(
+                userHandle().isPresent(),
+                "No user found for username: %s, userHandle: %s",
+                request.getUsername(), response.getResponse().getUserHandle()
+            );
+            assure(
+                username().isPresent(),
+                "No user found for username: %s, userHandle: %s",
+                request.getUsername(), response.getResponse().getUserHandle()
+            );
         }
 
         @Override
@@ -157,11 +155,11 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             request.getPublicKeyCredentialRequestOptions().getAllowCredentials().ifPresent(allowed -> {
-                if (!(
-                    allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId()))
-                )) {
-                    throw new IllegalArgumentException("Unrequested credential ID: " + response.getId());
-                }
+                assure(
+                    allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId())),
+                    "Unrequested credential ID: %s",
+                    response.getId()
+                );
             });
         }
     }
@@ -181,14 +179,17 @@ public class FinishAssertionSteps {
         public void validate() {
             Optional<RegisteredCredential> registration = credentialRepository.lookup(response.getId(), userHandle);
 
-            if (!registration.isPresent()) {
-                throw new IllegalArgumentException(String.format("Unknown credential: " + response.getId()));
-            }
+            assure(
+                registration.isPresent(),
+                "Unknown credential: %s",
+                response.getId()
+            );
 
-            if (!userHandle.equals(registration.get().getUserHandle())) {
-                throw new IllegalArgumentException(String.format(
-                    "User handle ${userHandle} does not own credential ${response.getId}", userHandle, response.getId()));
-            }
+            assure(
+                userHandle.equals(registration.get().getUserHandle()),
+                "User handle %s does not own credential %s",
+                userHandle, response.getId()
+            );
         }
     }
 
@@ -205,11 +206,11 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (!maybeCredential().isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                    "Unknown credential. Credential ID: %s, user handle: %s", response.getId(), userHandle
-                ));
-            }
+            assure(
+                maybeCredential().isPresent(),
+                "Unknown credential. Credential ID: %s, user handle: %s",
+                response.getId(), userHandle
+            );
         }
 
         private Optional<RegisteredCredential> maybeCredential() {
@@ -231,17 +232,9 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (clientData().getBytes() == null) {
-                throw new IllegalArgumentException("Missing client data.");
-            }
-
-            if (authenticatorData().getBytes() == null) {
-                throw new IllegalArgumentException("Missing authenticator data.");
-            }
-
-            if (signature().getBytes() == null) {
-                throw new IllegalArgumentException("Missing signature.");
-            }
+            assure(clientData().getBytes() != null, "Missing client data.");
+            assure(authenticatorData().getBytes() != null, "Missing authenticator data.");
+            assure(signature().getBytes() != null, "Missing signature.");
         }
 
         @Override
@@ -289,9 +282,7 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (clientData() == null) {
-                throw new IllegalArgumentException("Missing client data.");
-            }
+            assure(clientData() != null, "Missing client data.");
         }
 
         @Override
@@ -367,9 +358,10 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             try {
-                if (false == request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getCollectedClientData().getChallenge())) {
-                    throw new IllegalArgumentException("Incorrect challenge.");
-                }
+                assure(
+                    request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getCollectedClientData().getChallenge()),
+                    "Incorrect challenge."
+                );
             } catch (Base64UrlException | IOException e) {
                 throw new IllegalArgumentException("Failed to read challenge from client data: " + response.getResponse().getClientDataJSONString());
             }
@@ -439,9 +431,10 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (false == new ByteArray(crypto.hash(rpId)).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash())) {
-                throw new IllegalArgumentException("Wrong RP ID hash.");
-            }
+            assure(
+                new ByteArray(crypto.hash(rpId)).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+                "Wrong RP ID hash."
+            );
         }
 
         @Override
@@ -460,11 +453,10 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             if (request.getPublicKeyCredentialRequestOptions().getUserVerification() == UserVerificationRequirement.REQUIRED) {
-                if (!
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UV
-                    ) {
-                    throw new IllegalArgumentException("User Verification is required.");
-                }
+                assure(
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
+                    "User Verification is required."
+                );
             }
         }
 
@@ -484,11 +476,10 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             if (request.getPublicKeyCredentialRequestOptions().getUserVerification() != UserVerificationRequirement.REQUIRED) {
-                if (!
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UP
-                    ) {
-                    throw new IllegalArgumentException("User Presence is required.");
-                }
+                assure(
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+                    "User Presence is required."
+                );
             }
         }
 
@@ -537,9 +528,7 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (clientDataJsonHash() == null) {
-                throw new IllegalArgumentException("Failed to compute hash of client data");
-            }
+            assure(clientDataJsonHash() != null, "Failed to compute hash of client data");
         }
 
         @Override
@@ -592,12 +581,11 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             if (validateSignatureCounter) {
-                if (!signatureCounterValid()) {
-                    throw new IllegalArgumentException(String.format(
-                        "Signature counter must increase. Stored value: %s, received value: %s",
-                        storedSignatureCountBefore(), assertionSignatureCount()
-                    ));
-                }
+                assure(
+                    signatureCounterValid(),
+                    "Signature counter must increase. Stored value: %s, received value: %s",
+                    storedSignatureCountBefore(), assertionSignatureCount()
+                );
             }
         }
 
