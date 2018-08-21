@@ -21,4 +21,7 @@ public class COSEAlgorithmIdentifier implements JsonLongSerializable {
         return id;
     }
 
+    public static final COSEAlgorithmIdentifier ES256 = new COSEAlgorithmIdentifier(-7);
+    public static final COSEAlgorithmIdentifier RS256 = new COSEAlgorithmIdentifier(-257);
+
 }

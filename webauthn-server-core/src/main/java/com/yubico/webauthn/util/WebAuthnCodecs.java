@@ -104,10 +104,10 @@ public class WebAuthnCodecs {
         switch (alg) {
             case "ECDSA":
             case "ES256":
-                return new COSEAlgorithmIdentifier(-7);
+                return COSEAlgorithmIdentifier.ES256;
 
             case "RS256":
-                return new COSEAlgorithmIdentifier(-257);
+                return COSEAlgorithmIdentifier.RS256;
         }
 
         throw new IllegalArgumentException("Unknown algorithm: " + alg);

@@ -190,7 +190,7 @@ case class RegistrationTestData(
       .rp(rpId)
       .user(userId)
       .challenge(clientData.getChallenge)
-      .pubKeyCredParams(List(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier(-7L))).asJava)
+      .pubKeyCredParams(List(new PublicKeyCredentialParameters(COSEAlgorithmIdentifier.ES256)).asJava)
       .extensions(requestedExtensions.asJava)
       .authenticatorSelection(authenticatorSelection.asJava)
       .build()
