@@ -20,7 +20,7 @@ public class AssertionResult {
     private final String username;
     private final List<String> warnings;
 
-    AssertionResult(
+    private AssertionResult(
         @NonNull ByteArray credentialId,
         @NonNull ByteArray userHandle,
         long signatureCount,
