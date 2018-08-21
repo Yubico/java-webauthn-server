@@ -642,10 +642,10 @@ public class FinishRegistrationSteps {
         }
 
         private PublicKeyCredentialDescriptor keyId() {
-            return new PublicKeyCredentialDescriptor(
-                response.getType(),
-                response.getId()
-            );
+            return PublicKeyCredentialDescriptor.builder()
+                .type(response.getType())
+                .id(response.getId())
+                .build();
         }
     }
 

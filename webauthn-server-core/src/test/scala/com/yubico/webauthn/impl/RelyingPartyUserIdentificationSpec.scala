@@ -114,7 +114,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
       .credentialRepository(new CredentialRepository {
         override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] =
           if (username == Defaults.username)
-            List(new PublicKeyCredentialDescriptor(Defaults.credentialId)).asJava
+            List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava
           else
             Nil.asJava
 

@@ -165,7 +165,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       .credentialNickname(credentialNickname)
       .registrationTime(Instant.parse("2018-07-06T15:07:15Z"))
       .registration(RegistrationResult.builder()
-        .keyId(new PublicKeyCredentialDescriptor(testData.response.getId))
+        .keyId(PublicKeyCredentialDescriptor.builder().id(testData.response.getId).build())
         .attestationTrusted(false)
         .attestationType(AttestationType.BASIC)
         .attestationMetadata(Some(new Attestation(

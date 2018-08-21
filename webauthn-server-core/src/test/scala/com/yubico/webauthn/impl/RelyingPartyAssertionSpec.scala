@@ -89,7 +89,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       ???
 
   def finishAssertion(
-    allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(new PublicKeyCredentialDescriptor(Defaults.credentialId)).asJava),
+    allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
     authenticatorData: ByteArray = Defaults.authenticatorData,
     callerTokenBindingId: Option[ByteArray] = None,
     challenge: ByteArray = Defaults.challenge,
@@ -170,7 +170,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.") {
         it("Fails if returned credential ID is a requested one.") {
           val steps = finishAssertion(
-            allowCredentials = Some(List(new PublicKeyCredentialDescriptor(new ByteArray(Array(3, 2, 1, 0)))).asJava),
+            allowCredentials = Some(List(PublicKeyCredentialDescriptor.builder().id(new ByteArray(Array(3, 2, 1, 0))).build()).asJava),
             credentialId = new ByteArray(Array(0, 1, 2, 3))
           )
           val step: FinishAssertionSteps#Step1 = steps.begin.next
@@ -183,8 +183,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Succeeds if returned credential ID is a requested one.") {
           val steps = finishAssertion(
             allowCredentials = Some(List(
-              new PublicKeyCredentialDescriptor(new ByteArray(Array(0, 1, 2, 3))),
-              new PublicKeyCredentialDescriptor(new ByteArray(Array(4, 5, 6, 7)))
+              PublicKeyCredentialDescriptor.builder().id(new ByteArray(Array(0, 1, 2, 3))).build(),
+              PublicKeyCredentialDescriptor.builder().id(new ByteArray(Array(4, 5, 6, 7))).build()
             ).asJava),
             credentialId = new ByteArray(Array(4, 5, 6, 7))
           )
