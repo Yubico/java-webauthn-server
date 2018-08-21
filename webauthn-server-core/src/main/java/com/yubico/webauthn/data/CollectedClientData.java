@@ -90,9 +90,7 @@ public class CollectedClientData {
                 if (tb.isObject()) {
                     String status = tb.get("status").textValue();
                     return new TokenBindingInfo(
-                        TokenBindingStatus.fromJson(status).orElseGet(() -> {
-                            throw new IllegalArgumentException("Invalid value for tokenBinding.status: " + status);
-                        }),
+                        TokenBindingStatus.fromJsonString(status),
                         Optional.ofNullable(tb.get("id"))
                             .map(JsonNode::textValue)
                             .map(id -> {
