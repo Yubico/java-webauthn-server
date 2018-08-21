@@ -1,7 +1,6 @@
 package com.yubico.webauthn.meta;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.DocumentStatus;
 import com.yubico.webauthn.impl.json.LocalDateJsonSerializer;
 import java.net.URL;
 import java.time.LocalDate;

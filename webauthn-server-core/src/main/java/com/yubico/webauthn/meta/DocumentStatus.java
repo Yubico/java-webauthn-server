@@ -1,4 +1,4 @@
-package com.yubico.webauthn;
+package com.yubico.webauthn.meta;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.webauthn.impl.json.JsonStringSerializer;

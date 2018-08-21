@@ -1,7 +1,6 @@
 package com.yubico.webauthn.meta;
 
 import com.yubico.util.ExceptionUtil;
-import com.yubico.webauthn.DocumentStatus;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
