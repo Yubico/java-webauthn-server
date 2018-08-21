@@ -156,12 +156,12 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
             }
 
             return Optional.of(
-                new RegisteredCredential(
-                    registration.getRegistration().getKeyId().getId(),
-                    registration.getUserIdentity().getId(),
-                    key,
-                    registration.getSignatureCount()
-                )
+                RegisteredCredential.builder()
+                    .credentialId(registration.getRegistration().getKeyId().getId())
+                    .userHandle(registration.getUserIdentity().getId())
+                    .publicKey(key)
+                    .signatureCount(registration.getSignatureCount())
+                    .build()
             );
         });
     }
@@ -174,12 +174,12 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                 .filter(reg -> reg.getRegistration().getKeyId().getId().equals(credentialId))
                 .map(reg -> {
                     try {
-                        return new RegisteredCredential(
-                            reg.getRegistration().getKeyId().getId(),
-                            reg.getUserIdentity().getId(),
-                            WebAuthnCodecs.importCoseP256PublicKey(reg.getRegistration().getPublicKeyCose()),
-                            reg.getSignatureCount()
-                        );
+                        return RegisteredCredential.builder()
+                            .credentialId(reg.getRegistration().getKeyId().getId())
+                            .userHandle(reg.getUserIdentity().getId())
+                            .publicKey(WebAuthnCodecs.importCoseP256PublicKey(reg.getRegistration().getPublicKeyCose()))
+                            .signatureCount(reg.getSignatureCount())
+                            .build();
                     } catch (CoseException | IOException e) {
                         log.error("Failed to read public key {} from storage", reg.getRegistration().getKeyId().getId(), e);
                         throw new RuntimeException(e);

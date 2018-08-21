@@ -145,12 +145,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
           (
             if (credId == credentialId)
-              Some(new RegisteredCredential(
-                credId,
-                userHandleForUser,
-                credentialKey.getPublic,
-                0L
-              ))
+              Some(RegisteredCredential.builder()
+                .credentialId(credId)
+                .userHandle(userHandleForUser)
+                .publicKey(credentialKey.getPublic)
+                .signatureCount(0)
+                .build()
+              )
             else None
           ).asJava
         override def lookupAll(credId: ByteArray) = lookup(credId, null).asScala.toSet.asJava
@@ -218,12 +219,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         val credentialRepository = Some(new CredentialRepository {
           override def lookup(id: ByteArray, uh: ByteArray) = Some(
-            new RegisteredCredential(
-              new ByteArray(Array(0, 1, 2, 3)),
-              owner.userHandle,
-              Defaults.credentialKey.getPublic,
-              0L
-            )
+            RegisteredCredential.builder()
+              .credentialId(new ByteArray(Array(0, 1, 2, 3)))
+              .userHandle(owner.userHandle)
+              .publicKey(Defaults.credentialKey.getPublic)
+              .signatureCount(0)
+              .build()
           ).asJava
           override def lookupAll(id: ByteArray) = ???
           override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
@@ -278,12 +279,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         it("Succeeds if the credential ID is known.") {
           val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
             override def lookup(id: ByteArray, uh: ByteArray) = Some(
-              new RegisteredCredential(
-                id,
-                uh,
-                Defaults.credentialKey.getPublic,
-                0L
-              )
+              RegisteredCredential.builder()
+                .credentialId(id)
+                .userHandle(uh)
+                .publicKey(Defaults.credentialKey.getPublic)
+                .signatureCount(0)
+                .build()
             ).asJava
             override def lookupAll(id: ByteArray) = ???
             override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
@@ -832,12 +833,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = Some(
-                new RegisteredCredential(
-                  id,
-                  uh,
-                  Defaults.credentialKey.getPublic,
-                  1336L
-                )
+                RegisteredCredential.builder()
+                  .credentialId(id)
+                  .userHandle(uh)
+                  .publicKey(Defaults.credentialKey.getPublic)
+                  .signatureCount(1336)
+                  .build()
               ).asJava
               override def lookupAll(id: ByteArray) = ???
               override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
@@ -864,12 +865,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute. ") {
             val credentialRepository = new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = Some(
-                new RegisteredCredential(
-                  id,
-                  uh,
-                  Defaults.credentialKey.getPublic,
-                  1337L
-                )
+                RegisteredCredential.builder()
+                  .credentialId(id)
+                  .userHandle(uh)
+                  .publicKey(Defaults.credentialKey.getPublic)
+                  .signatureCount(1337)
+                  .build()
               ).asJava
               override def lookupAll(id: ByteArray) = ???
               override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???

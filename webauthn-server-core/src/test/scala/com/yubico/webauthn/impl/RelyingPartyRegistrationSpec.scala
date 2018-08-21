@@ -1494,23 +1494,23 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("Registration is aborted if the given credential ID is already registered.") {
           val credentialRepository = new CredentialRepository {
             override def lookup(id: ByteArray, uh: ByteArray) = Some(
-              new RegisteredCredential(
-                id,
-                uh,
-                testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey,
-                1337L
-              )
+              RegisteredCredential.builder()
+                .credentialId(id)
+                .userHandle(uh)
+                .publicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey)
+                .signatureCount(1337)
+                .build()
             ).asJava
 
             override def lookupAll(id: ByteArray) = id match {
               case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId =>
                 Set(
-                  new RegisteredCredential(
-                    id,
-                    testData.request.getUser.getId,
-                    testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey,
-                    1337L
-                  )
+                  RegisteredCredential.builder()
+                    .credentialId(id)
+                    .userHandle(testData.request.getUser.getId)
+                    .publicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey)
+                    .signatureCount(1337)
+                    .build()
                 ).asJava
               case _ => Set.empty.asJava
             }

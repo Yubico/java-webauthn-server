@@ -120,12 +120,13 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
         override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
           if (credId == Defaults.credentialId)
-            Some(new RegisteredCredential(
-              Defaults.credentialId,
-              Defaults.userHandle,
-              Defaults.credentialKey.getPublic,
-              0
-            )).asJava
+            Some(RegisteredCredential.builder()
+              .credentialId(Defaults.credentialId)
+              .userHandle(Defaults.userHandle)
+              .publicKey(Defaults.credentialKey.getPublic)
+              .signatureCount(0)
+              .build()
+            ).asJava
           else
             None.asJava
 

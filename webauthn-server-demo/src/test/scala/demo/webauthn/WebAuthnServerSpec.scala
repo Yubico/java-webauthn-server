@@ -134,12 +134,13 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
         val userStorage = makeUserStorage(testData)
         when(userStorage.getUserHandleForUsername(testData.userId.getName)).thenReturn(Some(testData.userId.getId).asJava)
-        when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(new RegisteredCredential(
-          testData.response.getId,
-          testData.userId.getId,
-          credentialKey.getPublic,
-          0
-        )).asJava)
+        when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(RegisteredCredential.builder()
+          .credentialId(testData.response.getId)
+          .userHandle(testData.userId.getId)
+          .publicKey(credentialKey.getPublic)
+          .signatureCount(0)
+          .build()
+        ).asJava)
 
         new WebAuthnServer(userStorage, newCache(), assertionRequests, rpId, origins)
       }
