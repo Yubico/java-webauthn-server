@@ -18,11 +18,26 @@ public class CollectedClientData {
      */
     private JsonNode clientData;
 
+    /**
+     * The URL-safe Base64 encoded challenge as provided by the RP.
+     */
+    private final transient ByteArray challenge;
+
+    /**
+     * The fully qualified origin of the requester, as identified by the client.
+     */
+    private final transient String origin;
+
+    /**
+     * The type of the requested operation, set by the client.
+     */
+    private final transient String type;
+
     public CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
         this.clientData = clientData;
 
         try {
-            getChallenge();
+            challenge = ByteArray.fromBase64Url(clientData.get("challenge").textValue());
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"challenge\"");
         } catch (Base64UrlException e) {
@@ -30,13 +45,13 @@ public class CollectedClientData {
         }
 
         try {
-            getOrigin();
+            origin = clientData.get("origin").textValue();
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"origin\"");
         }
 
         try {
-            getType();
+            type = clientData.get("type").textValue();
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"type\"");
         }
@@ -50,24 +65,10 @@ public class CollectedClientData {
     }
 
     /**
-     * The URL-safe Base64 encoded challenge as provided by the RP.
-     */
-    public ByteArray getChallenge() throws Base64UrlException {
-        return ByteArray.fromBase64Url(clientData.get("challenge").textValue());
-    }
-
-    /**
      * Input or output values for or from client extensions, if any.
      */
     public Optional<JsonNode> getClientExtensions() {
         return Optional.ofNullable(clientData.get("clientExtensions")).map(WebAuthnCodecs::deepCopy);
-    }
-
-    /**
-     * The fully qualified origin of the requester, as identified by the client.
-     */
-    public String getOrigin() {
-        return clientData.get("origin").asText();
     }
 
     /**
@@ -96,13 +97,6 @@ public class CollectedClientData {
                     throw new IllegalArgumentException("Property \"tokenBinding\" missing from client data.");
                 }
             });
-    }
-
-    /**
-     * The type of the requested operation, set by the client.
-     */
-    public final String getType() {
-        return clientData.get("type").asText();
     }
 
 }

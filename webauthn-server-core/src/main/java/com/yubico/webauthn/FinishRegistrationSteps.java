@@ -207,14 +207,10 @@ public class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            try {
-                assure(
-                    request.getChallenge().equals(clientData.getChallenge()),
-                    "Incorrect challenge."
-                );
-            } catch (Base64UrlException e) {
-                throw new IllegalArgumentException("Challenge is not a valid Bas64URL encoding", e);
-            }
+            assure(
+                request.getChallenge().equals(clientData.getChallenge()),
+                "Incorrect challenge."
+            );
         }
 
         @Override
