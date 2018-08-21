@@ -1,6 +1,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.exception.Base64UrlException;
 import java.io.IOException;
@@ -19,7 +20,11 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
     @NonNull
     @JsonProperty("_attestationObject")
-    private final AttestationObject attestation;
+    private final transient AttestationObject attestation;
+
+    @NonNull
+    @JsonIgnore
+    private final transient CollectedClientData clientData;
 
     @Override
     public ByteArray getAuthenticatorData() {
@@ -35,6 +40,7 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
         this.clientDataJSON = clientDataJSON;
 
         attestation = new AttestationObject(attestationObject);
+        this.clientData = new CollectedClientData(clientDataJSON);
     }
 
 }

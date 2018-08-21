@@ -1,5 +1,6 @@
 package com.yubico.webauthn.impl
 
+import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.KeyPair
@@ -30,6 +31,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import com.yubico.webauthn.impl.util.WebAuthnCodecs
@@ -90,17 +92,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       describe("2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.") {
 
         it("Fails if clientDataJson is not valid JSON.") {
-          val steps = finishRegistration(
-            testData = RegistrationTestData.FidoU2f.BasicAttestation.copy(
-              clientDataJson = "{",
-              overrideRequest = Some(RegistrationTestData.FidoU2f.BasicAttestation.request)
-            )
+          an [IOException] should be thrownBy new CollectedClientData(new ByteArray("{".getBytes(Charset.forName("UTF-8"))))
+          an [IOException] should be thrownBy finishRegistration(
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.copy(clientDataJson = "{")
           )
-          val step: FinishRegistrationSteps#Step2 = steps.begin.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if clientDataJson is valid JSON.") {

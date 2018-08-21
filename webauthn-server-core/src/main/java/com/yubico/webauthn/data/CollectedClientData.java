@@ -3,6 +3,8 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.impl.util.WebAuthnCodecs;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
@@ -32,6 +34,10 @@ public class CollectedClientData {
      * The type of the requested operation, set by the client.
      */
     private final transient String type;
+
+    public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
+        this(WebAuthnCodecs.json().readTree(new ByteArrayInputStream(clientDataJSON.getBytes())));
+    }
 
     public CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
         this.clientData = clientData;

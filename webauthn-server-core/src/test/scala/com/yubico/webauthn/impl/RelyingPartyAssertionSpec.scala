@@ -1,5 +1,6 @@
 package com.yubico.webauthn.impl
 
+import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.KeyPair
@@ -329,12 +330,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("6. Let C, the client data claimed as used for the signature, be the result of running an implementation-specific JSON parser on JSONtext.") {
         it("Fails if cData is not valid JSON.") {
-          val steps = finishAssertion(clientDataJson = "{")
-          val step: FinishAssertionSteps#Step6 = steps.begin.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
+          an [IOException] should be thrownBy new CollectedClientData(new ByteArray("{".getBytes(Charset.forName("UTF-8"))))
+          an [IOException] should be thrownBy finishAssertion(clientDataJson = "{")
         }
 
         it("Succeeds if cData is valid JSON.") {

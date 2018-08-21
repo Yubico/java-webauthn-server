@@ -291,13 +291,7 @@ public class FinishAssertionSteps {
         }
 
         public CollectedClientData clientData() {
-            try {
-                return response.getResponse().getClientData();
-            } catch (IOException e) {
-                throw new IllegalArgumentException("Client data is not valid JSON: " + response.getResponse().getClientDataJSONString());
-            } catch (Base64UrlException e) {
-                throw new IllegalArgumentException("Malformed client data: " + response.getResponse().getClientDataJSONString());
-            }
+            return response.getResponse().getClientData();
         }
     }
 
@@ -357,14 +351,10 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            try {
-                assure(
-                    request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getClientData().getChallenge()),
-                    "Incorrect challenge."
-                );
-            } catch (Base64UrlException | IOException e) {
-                throw new IllegalArgumentException("Failed to read challenge from client data: " + response.getResponse().getClientDataJSONString());
-            }
+            assure(
+                request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getClientData().getChallenge()),
+                "Incorrect challenge."
+            );
         }
 
         @Override
@@ -383,11 +373,7 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             final String responseOrigin;
-            try {
-                responseOrigin = response.getResponse().getClientData().getOrigin();
-            } catch (IOException | Base64UrlException e) {
-                throw new IllegalArgumentException("Failed to read origin from client data: " + response.getResponse().getClientDataJSONString());
-            }
+            responseOrigin = response.getResponse().getClientData().getOrigin();
 
             if (origins.stream().noneMatch(o -> o.equals(responseOrigin))) {
                 throw new IllegalArgumentException("Incorrect origin: " + responseOrigin);
@@ -409,11 +395,7 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            try {
-                TokenBindingValidator.validate(response.getResponse().getClientData().getTokenBinding(), callerTokenBindingId);
-            } catch (IOException | Base64UrlException e) {
-                throw new IllegalArgumentException("Failed to read token binding info from client data" + response.getResponse().getClientDataJSONString());
-            }
+            TokenBindingValidator.validate(response.getResponse().getClientData().getTokenBinding(), callerTokenBindingId);
         }
 
         @Override

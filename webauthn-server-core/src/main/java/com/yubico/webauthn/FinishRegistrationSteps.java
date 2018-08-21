@@ -144,11 +144,7 @@ public class FinishRegistrationSteps {
         }
 
         public CollectedClientData clientData() {
-            try {
-                return response.getResponse().getClientData();
-            } catch (IOException | Base64UrlException e) {
-                throw new IllegalArgumentException("Failed to read client data.");
-            }
+            return response.getResponse().getClientData();
         }
     }
 

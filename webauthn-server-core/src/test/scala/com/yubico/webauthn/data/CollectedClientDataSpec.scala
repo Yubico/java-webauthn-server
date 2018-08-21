@@ -44,10 +44,6 @@ class CollectedClientDataSpec extends FunSpec with Matchers {
 
 
     describe("forbids null value for") {
-      it("contructor parameter: clientData") {
-        a [NullPointerException] should be thrownBy new CollectedClientData(null)
-      }
-
       it("field: challenge") {
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("challenge"))
       }
