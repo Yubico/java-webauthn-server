@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Contains version information for the com.yubico.webauthn package.
  *
- * @see [[Specification]]
+ * @see Specification
  */
 @Slf4j
 public class VersionInfo {
