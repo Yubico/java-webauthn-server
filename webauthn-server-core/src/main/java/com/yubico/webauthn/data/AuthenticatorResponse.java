@@ -25,7 +25,7 @@ public interface AuthenticatorResponse {
      * The `clientData` parsed as a domain object.
      */
     @JsonIgnore
-    default CollectedClientData getCollectedClientData() throws IOException, Base64UrlException {
+    default CollectedClientData getClientData() throws IOException, Base64UrlException {
         JsonNode clientData = WebAuthnCodecs.json().readTree(new ByteArrayInputStream(getClientDataJSON().getBytes()));
         return new CollectedClientData(clientData);
     }

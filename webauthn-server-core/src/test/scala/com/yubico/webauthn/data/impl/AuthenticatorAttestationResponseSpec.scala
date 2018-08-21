@@ -35,7 +35,7 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
     describe("has a clientDataJSON field which") {
 
       it("can be parsed as JSON.") {
-        val clientData = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson).getCollectedClientData
+        val clientData = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson).getClientData
         clientData.getChallenge should equal (challenge)
       }
 
@@ -43,28 +43,28 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
         val response = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson)
 
         it("authenticatorExtensions") {
-          response.getCollectedClientData.getAuthenticatorExtensions.get.get("boo").asText should equal (booExtension)
+          response.getClientData.getAuthenticatorExtensions.get.get("boo").asText should equal (booExtension)
         }
 
         it("challenge") {
-          response.getCollectedClientData.getChallenge should equal (challenge)
+          response.getClientData.getChallenge should equal (challenge)
         }
 
         it("clientExtensions") {
-          response.getCollectedClientData.getClientExtensions.get.get("foo").asText should equal (fooExtension)
+          response.getClientData.getClientExtensions.get.get("foo").asText should equal (fooExtension)
         }
 
         it("origin") {
-          response.getCollectedClientData.getOrigin should equal (origin)
+          response.getClientData.getOrigin should equal (origin)
         }
 
         describe("tokenBinding") {
           it("status") {
-            response.getCollectedClientData.getTokenBinding.get.getStatus should equal (tokenBindingStatus)
+            response.getClientData.getTokenBinding.get.getStatus should equal (tokenBindingStatus)
           }
 
           it("id") {
-            response.getCollectedClientData.getTokenBinding.get.getId.get should equal (tokenBindingId)
+            response.getClientData.getTokenBinding.get.getId.get should equal (tokenBindingId)
           }
         }
 

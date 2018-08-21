@@ -81,7 +81,7 @@ object TestAuthenticator {
     println(credential)
     println(s"Client data: ${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
     println(s"Client data: ${credential.getResponse.getClientDataJSON.getHex}")
-    println(s"Client data: ${credential.getResponse.getCollectedClientData}")
+    println(s"Client data: ${credential.getResponse.getClientData}")
     println(s"Attestation object: ${credential.getResponse.getAttestationObject.getHex}")
     println(s"Attestation object: ${credential.getResponse.getAttestation}")
 

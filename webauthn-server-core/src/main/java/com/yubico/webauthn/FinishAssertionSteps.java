@@ -292,7 +292,7 @@ public class FinishAssertionSteps {
 
         public CollectedClientData clientData() {
             try {
-                return response.getResponse().getCollectedClientData();
+                return response.getResponse().getClientData();
             } catch (IOException e) {
                 throw new IllegalArgumentException("Client data is not valid JSON: " + response.getResponse().getClientDataJSONString());
             } catch (Base64UrlException e) {
@@ -359,7 +359,7 @@ public class FinishAssertionSteps {
         public void validate() {
             try {
                 assure(
-                    request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getCollectedClientData().getChallenge()),
+                    request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getClientData().getChallenge()),
                     "Incorrect challenge."
                 );
             } catch (Base64UrlException | IOException e) {
@@ -384,7 +384,7 @@ public class FinishAssertionSteps {
         public void validate() {
             final String responseOrigin;
             try {
-                responseOrigin = response.getResponse().getCollectedClientData().getOrigin();
+                responseOrigin = response.getResponse().getClientData().getOrigin();
             } catch (IOException | Base64UrlException e) {
                 throw new IllegalArgumentException("Failed to read origin from client data: " + response.getResponse().getClientDataJSONString());
             }
@@ -410,7 +410,7 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             try {
-                TokenBindingValidator.validate(response.getResponse().getCollectedClientData().getTokenBinding(), callerTokenBindingId);
+                TokenBindingValidator.validate(response.getResponse().getClientData().getTokenBinding(), callerTokenBindingId);
             } catch (IOException | Base64UrlException e) {
                 throw new IllegalArgumentException("Failed to read token binding info from client data" + response.getResponse().getClientDataJSONString());
             }
