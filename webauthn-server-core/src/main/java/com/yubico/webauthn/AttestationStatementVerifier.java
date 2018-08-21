@@ -10,7 +10,8 @@ import java.security.cert.CertificateException;
 
 public interface AttestationStatementVerifier {
 
-  AttestationType getAttestationType(AttestationObject attestation) throws IOException, CoseException, CertificateException;
-  boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash);
+    AttestationType getAttestationType(AttestationObject attestation) throws IOException, CoseException, CertificateException;
+
+    boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash);
 
 }

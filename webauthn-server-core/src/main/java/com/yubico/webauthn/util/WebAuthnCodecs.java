@@ -37,6 +37,7 @@ public class WebAuthnCodecs {
     public static CBORObject deepCopy(CBORObject a) {
         return CBORObject.DecodeFromBytes(a.EncodeToBytes());
     }
+
     public static JsonNode deepCopy(JsonNode a) {
         try {
             return json().readTree(json().writeValueAsString(a));
@@ -57,8 +58,8 @@ public class WebAuthnCodecs {
         return new ByteArray(org.bouncycastle.util.Arrays.concatenate(
             new byte[]{ 0x04 },
             org.bouncycastle.util.Arrays.concatenate(
-              xPadding,
-              Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)
+                xPadding,
+                Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)
             ),
             org.bouncycastle.util.Arrays.concatenate(
                 yPadding,

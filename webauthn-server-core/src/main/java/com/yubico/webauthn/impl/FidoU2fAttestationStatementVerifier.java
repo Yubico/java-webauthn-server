@@ -39,7 +39,7 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
     private X509Certificate getAttestationCertificate(AttestationObject attestationObject) throws CertificateException {
         return getX5cAttestationCertificate(attestationObject).map(attestationCertificate -> {
             if ("EC".equals(attestationCertificate.getPublicKey().getAlgorithm())
-                    && isP256(((ECPublicKey) attestationCertificate.getPublicKey()).getParams())
+                && isP256(((ECPublicKey) attestationCertificate.getPublicKey()).getParams())
             ) {
                 return attestationCertificate;
             } else {

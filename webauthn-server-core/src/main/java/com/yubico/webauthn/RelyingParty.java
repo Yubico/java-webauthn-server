@@ -55,12 +55,12 @@ public class RelyingParty {
     @Builder.Default
     private final boolean validateTypeAttribute = true;
 
-  public PublicKeyCredentialCreationOptions startRegistration(
-    UserIdentity user,
-    Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials, // = Optional.empty()
-    Optional<JsonNode> extensions, // = Optional.empty()
-    boolean requireResidentKey // = false
-  ) {
+    public PublicKeyCredentialCreationOptions startRegistration(
+        UserIdentity user,
+        Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials, // = Optional.empty()
+        Optional<JsonNode> extensions, // = Optional.empty()
+        boolean requireResidentKey // = false
+    ) {
         return PublicKeyCredentialCreationOptions.builder()
             .rp(rp)
             .user(user)
@@ -77,84 +77,84 @@ public class RelyingParty {
             .build();
     }
 
-  public RegistrationResult finishRegistration(
-      PublicKeyCredentialCreationOptions request,
-      PublicKeyCredential<AuthenticatorAttestationResponse> response,
-      Optional<ByteArray> callerTokenBindingId // = Optional.empty()
-  ) {
-      return _finishRegistration(request, response, callerTokenBindingId).run();
-  }
-
-  public FinishRegistrationSteps _finishRegistration(
-      PublicKeyCredentialCreationOptions request,
-      PublicKeyCredential<AuthenticatorAttestationResponse> response,
-      Optional<ByteArray> callerTokenBindingId // = Optional.empty()
-  ) {
-    return FinishRegistrationSteps.builder()
-      .request(request)
-      .response(response)
-      .callerTokenBindingId(callerTokenBindingId)
-      .credentialRepository(credentialRepository)
-      .origins(origins)
-      .rpId(rp.getId())
-      .crypto(crypto)
-      .allowMissingTokenBinding(allowMissingTokenBinding)
-      .allowUnrequestedExtensions(allowUnrequestedExtensions)
-      .allowUntrustedAttestation(allowUntrustedAttestation)
-      .metadataService(metadataService)
-      .validateTypeAttribute(validateTypeAttribute)
-        .build();
+    public RegistrationResult finishRegistration(
+        PublicKeyCredentialCreationOptions request,
+        PublicKeyCredential<AuthenticatorAttestationResponse> response,
+        Optional<ByteArray> callerTokenBindingId // = Optional.empty()
+    ) {
+        return _finishRegistration(request, response, callerTokenBindingId).run();
     }
 
-  public AssertionRequest startAssertion(
-    Optional<String> username,
-    Optional<List<PublicKeyCredentialDescriptor>> allowCredentials, // = None.asJava
-    Optional<JsonNode> extensions // = None.asJava
-  ) {
-      return AssertionRequest.builder()
-          .requestId(new ByteArray(challengeGenerator.generateChallenge()))
-          .username(username)
-          .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-              .rpId(Optional.of(rp.getId()))
-              .challenge(new ByteArray(challengeGenerator.generateChallenge()))
-              .allowCredentials(
-                  (allowCredentials.map(Optional::of).orElseGet(() ->
-                      username.map(un ->
-                          credentialRepository.getCredentialIdsForUsername(un))
-                  ))
-              )
-              .extensions(extensions)
-              .build()
-          )
-          .build();
-  }
+    public FinishRegistrationSteps _finishRegistration(
+        PublicKeyCredentialCreationOptions request,
+        PublicKeyCredential<AuthenticatorAttestationResponse> response,
+        Optional<ByteArray> callerTokenBindingId // = Optional.empty()
+    ) {
+        return FinishRegistrationSteps.builder()
+            .request(request)
+            .response(response)
+            .callerTokenBindingId(callerTokenBindingId)
+            .credentialRepository(credentialRepository)
+            .origins(origins)
+            .rpId(rp.getId())
+            .crypto(crypto)
+            .allowMissingTokenBinding(allowMissingTokenBinding)
+            .allowUnrequestedExtensions(allowUnrequestedExtensions)
+            .allowUntrustedAttestation(allowUntrustedAttestation)
+            .metadataService(metadataService)
+            .validateTypeAttribute(validateTypeAttribute)
+            .build();
+    }
 
-  public AssertionResult finishAssertion(
-      AssertionRequest request,
-      PublicKeyCredential<AuthenticatorAssertionResponse> response,
-      Optional<ByteArray> callerTokenBindingId // = None.asJava
-  ) {
-      return _finishAssertion(request, response, callerTokenBindingId).run();
-  }
+    public AssertionRequest startAssertion(
+        Optional<String> username,
+        Optional<List<PublicKeyCredentialDescriptor>> allowCredentials, // = None.asJava
+        Optional<JsonNode> extensions // = None.asJava
+    ) {
+        return AssertionRequest.builder()
+            .requestId(new ByteArray(challengeGenerator.generateChallenge()))
+            .username(username)
+            .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+                .rpId(Optional.of(rp.getId()))
+                .challenge(new ByteArray(challengeGenerator.generateChallenge()))
+                .allowCredentials(
+                    (allowCredentials.map(Optional::of).orElseGet(() ->
+                        username.map(un ->
+                            credentialRepository.getCredentialIdsForUsername(un))
+                    ))
+                )
+                .extensions(extensions)
+                .build()
+            )
+            .build();
+    }
 
-  public FinishAssertionSteps _finishAssertion(
-      AssertionRequest request,
-      PublicKeyCredential<AuthenticatorAssertionResponse> response,
-      Optional<ByteArray> callerTokenBindingId // = None.asJava
-  ) {
-      return FinishAssertionSteps.builder()
-          .request(request)
-          .response(response)
-          .callerTokenBindingId(callerTokenBindingId)
-          .origins(origins)
-          .rpId(rp.getId())
-          .crypto(crypto)
-          .credentialRepository(credentialRepository)
-          .allowMissingTokenBinding(allowMissingTokenBinding)
-          .allowUnrequestedExtensions(allowUnrequestedExtensions)
-          .validateSignatureCounter(validateSignatureCounter)
-          .validateTypeAttribute(validateTypeAttribute)
-          .build();
-  }
+    public AssertionResult finishAssertion(
+        AssertionRequest request,
+        PublicKeyCredential<AuthenticatorAssertionResponse> response,
+        Optional<ByteArray> callerTokenBindingId // = None.asJava
+    ) {
+        return _finishAssertion(request, response, callerTokenBindingId).run();
+    }
+
+    public FinishAssertionSteps _finishAssertion(
+        AssertionRequest request,
+        PublicKeyCredential<AuthenticatorAssertionResponse> response,
+        Optional<ByteArray> callerTokenBindingId // = None.asJava
+    ) {
+        return FinishAssertionSteps.builder()
+            .request(request)
+            .response(response)
+            .callerTokenBindingId(callerTokenBindingId)
+            .origins(origins)
+            .rpId(rp.getId())
+            .crypto(crypto)
+            .credentialRepository(credentialRepository)
+            .allowMissingTokenBinding(allowMissingTokenBinding)
+            .allowUnrequestedExtensions(allowUnrequestedExtensions)
+            .validateSignatureCounter(validateSignatureCounter)
+            .validateTypeAttribute(validateTypeAttribute)
+            .build();
+    }
 
 }

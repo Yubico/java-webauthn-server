@@ -10,10 +10,14 @@ import java.util.Set;
 
 public interface CredentialRepository {
 
-  List<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
-  Optional<ByteArray> getUserHandleForUsername(String username);
-  Optional<String> getUsernameForUserHandle(ByteArray userHandleBase64);
-  Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
-  Set<RegisteredCredential> lookupAll(ByteArray credentialId);
+    List<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
+
+    Optional<ByteArray> getUserHandleForUsername(String username);
+
+    Optional<String> getUsernameForUserHandle(ByteArray userHandleBase64);
+
+    Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
+
+    Set<RegisteredCredential> lookupAll(ByteArray credentialId);
 
 }

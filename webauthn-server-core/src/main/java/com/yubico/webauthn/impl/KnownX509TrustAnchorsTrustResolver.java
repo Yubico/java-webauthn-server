@@ -32,15 +32,15 @@ public class KnownX509TrustAnchorsTrustResolver implements AttestationTrustResol
                         .spliterator(),
                     true
                 )
-                .map(node -> {
-                    try {
-                        return CertificateParser.parseDer(node.binaryValue());
-                    } catch (CertificateException | IOException e) {
-                        log.error("Failed to parse attestation certificate from attestation object: {}", attestationObject, e);
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList())
+                    .map(node -> {
+                        try {
+                            return CertificateParser.parseDer(node.binaryValue());
+                        } catch (CertificateException | IOException e) {
+                            log.error("Failed to parse attestation certificate from attestation object: {}", attestationObject, e);
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList())
             )
         );
     }
