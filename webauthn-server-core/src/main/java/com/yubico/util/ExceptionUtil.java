@@ -12,4 +12,10 @@ public class ExceptionUtil {
         return err;
     }
 
+    public static void assure(boolean condition, String failureMessageTemplate, Object... failureMessageArgs) {
+        if (!condition) {
+            throw new IllegalArgumentException(String.format(failureMessageTemplate, failureMessageArgs));
+        }
+    }
+
 }

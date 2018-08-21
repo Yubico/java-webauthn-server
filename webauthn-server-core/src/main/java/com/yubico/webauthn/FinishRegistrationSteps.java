@@ -35,6 +35,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.yubico.util.ExceptionUtil.assure;
 import static com.yubico.webauthn.data.AttestationType.NONE;
 
 interface Step<A extends Step<?>> {
@@ -107,12 +108,6 @@ public class FinishRegistrationSteps {
 
     public RegistrationResult run() {
         return begin().run();
-    }
-
-    private static void assure(boolean condition, String failureMessageTemplate, Object... failureMessageArgs) {
-        if (!condition) {
-            throw new IllegalArgumentException(String.format(failureMessageTemplate, failureMessageArgs));
-        }
     }
 
     @Value
