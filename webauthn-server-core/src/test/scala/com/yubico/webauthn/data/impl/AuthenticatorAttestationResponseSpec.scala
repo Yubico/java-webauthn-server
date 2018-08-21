@@ -1,6 +1,5 @@
 package com.yubico.webauthn.data.impl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.webauthn.data.TokenBindingStatus
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.ByteArray
@@ -36,10 +35,8 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
     describe("has a clientDataJSON field which") {
 
       it("can be parsed as JSON.") {
-        val clientData: JsonNode = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson).getClientData
-
-        clientData.isObject should be (true)
-        clientData.asInstanceOf[JsonNode].get("challenge").textValue() should equal (challenge.getBase64Url)
+        val clientData = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson).getCollectedClientData
+        clientData.getChallenge should equal (challenge)
       }
 
       describe("defines attributes on the contained CollectedClientData:") {

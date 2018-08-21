@@ -22,19 +22,12 @@ public interface AuthenticatorResponse {
     ByteArray getClientDataJSON();
 
     /**
-     * The [clientDataJSON] parsed as a [[JsonNode]].
-     */
-    @JsonProperty("_clientData")
-    default JsonNode getClientData() throws IOException {
-        return WebAuthnCodecs.json().readTree(new ByteArrayInputStream(getClientDataJSON().getBytes()));
-    }
-
-    /**
      * The `clientData` parsed as a domain object.
      */
     @JsonIgnore
     default CollectedClientData getCollectedClientData() throws IOException, Base64UrlException {
-        return new CollectedClientData(getClientData());
+        JsonNode clientData = WebAuthnCodecs.json().readTree(new ByteArrayInputStream(getClientDataJSON().getBytes()));
+        return new CollectedClientData(clientData);
     }
 
 }
