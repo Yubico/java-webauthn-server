@@ -45,14 +45,17 @@ class CollectedClientDataSpec extends FunSpec with Matchers {
 
     describe("forbids null value for") {
       it("field: challenge") {
+        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("challenge", defaultJson.nullNode()))
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("challenge"))
       }
 
       it("field: origin") {
+        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("origin", defaultJson.nullNode()))
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("origin"))
       }
 
       it("field: type") {
+        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("type", defaultJson.nullNode()))
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("type"))
       }
     }
