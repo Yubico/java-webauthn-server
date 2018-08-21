@@ -50,6 +50,14 @@ public class FinishAssertionSteps {
     @Builder.Default
     private final boolean allowUnrequestedExtensions = false;
 
+    public Step0 begin() {
+        return new Step0();
+    }
+
+    public AssertionResult run() {
+        return begin().run();
+    }
+
     private interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
         B nextStep();
 
@@ -88,14 +96,6 @@ public class FinishAssertionSteps {
                 return next().run();
             }
         }
-    }
-
-    public Step0 begin() {
-        return new Step0();
-    }
-
-    public AssertionResult run() {
-        return begin().run();
     }
 
     @Value
