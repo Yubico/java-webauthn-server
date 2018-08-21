@@ -38,46 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 import static com.yubico.util.ExceptionUtil.assure;
 import static com.yubico.webauthn.data.AttestationType.NONE;
 
-interface Step<A extends Step<?>> {
-    A nextStep();
-
-    void validate();
-
-    List<String> getPrevWarnings();
-
-    default A next() {
-        validate();
-        return nextStep();
-    }
-
-    default boolean isFinished() {
-        return false;
-    }
-
-    default Optional<RegistrationResult> result() {
-        return Optional.empty();
-    }
-
-    default List<String> getWarnings() {
-        return Collections.emptyList();
-    }
-
-    default List<String> allWarnings() {
-        List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
-        result.addAll(getPrevWarnings());
-        result.addAll(getWarnings());
-        return Collections.unmodifiableList(result);
-    }
-
-    default RegistrationResult run() {
-        if (isFinished()) {
-            return result().get();
-        } else {
-            return next().run();
-        }
-    }
-}
-
 @Builder
 @Slf4j
 public class FinishRegistrationSteps {
@@ -108,6 +68,46 @@ public class FinishRegistrationSteps {
 
     public RegistrationResult run() {
         return begin().run();
+    }
+
+    private interface Step<A extends Step<?>> {
+        A nextStep();
+
+        void validate();
+
+        List<String> getPrevWarnings();
+
+        default boolean isFinished() {
+            return false;
+        }
+
+        default Optional<RegistrationResult> result() {
+            return Optional.empty();
+        }
+
+        default List<String> getWarnings() {
+            return Collections.emptyList();
+        }
+
+        default List<String> allWarnings() {
+            List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
+            result.addAll(getPrevWarnings());
+            result.addAll(getWarnings());
+            return Collections.unmodifiableList(result);
+        }
+
+        default A next() {
+            validate();
+            return nextStep();
+        }
+
+        default RegistrationResult run() {
+            if (isFinished()) {
+                return result().get();
+            } else {
+                return next().run();
+            }
+        }
     }
 
     @Value
