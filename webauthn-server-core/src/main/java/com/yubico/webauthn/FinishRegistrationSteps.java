@@ -47,7 +47,7 @@ interface Step<A extends Step<?>> {
     default A next() {
         validate();
         return nextStep();
-    };
+    }
 
     default boolean isFinished() {
         return false;
