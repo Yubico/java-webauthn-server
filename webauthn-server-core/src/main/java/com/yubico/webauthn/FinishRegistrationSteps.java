@@ -643,7 +643,7 @@ public class FinishRegistrationSteps {
 
         private PublicKeyCredentialDescriptor keyId() {
             return new PublicKeyCredentialDescriptor(
-                PublicKeyCredentialType.fromString(response.getType()).get(),
+                response.getType(),
                 response.getId()
             );
         }
