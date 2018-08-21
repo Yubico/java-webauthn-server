@@ -2,7 +2,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.webauthn.exception.Base64UrlException;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.util.WebAuthnCodecs;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;

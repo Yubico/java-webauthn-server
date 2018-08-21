@@ -31,7 +31,7 @@ import com.yubico.u2f.crypto.BouncyCastleCrypto
 import com.yubico.u2f.crypto.Crypto
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
 import com.yubico.u2f.data.messages.key.util.CertificateParser
-import com.yubico.webauthn.util
+import com.yubico.webauthn.impl.util
 import com.yubico.webauthn.data
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.UserIdentity
@@ -43,8 +43,8 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.util.WebAuthnCodecs
-import com.yubico.webauthn.util.BinaryUtil
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name

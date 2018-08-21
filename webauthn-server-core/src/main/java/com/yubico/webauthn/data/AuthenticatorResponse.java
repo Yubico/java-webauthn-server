@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.webauthn.exception.Base64UrlException;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.util.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 

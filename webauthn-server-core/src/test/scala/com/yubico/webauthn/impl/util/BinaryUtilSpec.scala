@@ -1,4 +1,4 @@
-package com.yubico.webauthn.util
+package com.yubico.webauthn.impl.util
 
 import org.junit.runner.RunWith
 import org.scalatest.Matchers

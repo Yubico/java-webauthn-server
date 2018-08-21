@@ -9,7 +9,7 @@ import com.yubico.webauthn.data.AttestationData;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.util.WebAuthnCodecs;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.cert.CertificateException;

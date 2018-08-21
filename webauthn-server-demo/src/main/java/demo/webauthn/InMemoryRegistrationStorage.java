@@ -9,7 +9,7 @@ import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RegisteredCredential;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.util.WebAuthnCodecs;
 import demo.webauthn.data.CredentialRegistration;
 import java.io.IOException;
 import java.security.PublicKey;

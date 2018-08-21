@@ -2,9 +2,6 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.webauthn.util.BinaryUtil;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import lombok.NonNull;

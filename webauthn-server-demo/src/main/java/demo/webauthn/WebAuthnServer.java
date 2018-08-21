@@ -27,7 +27,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.util.WebAuthnCodecs;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;

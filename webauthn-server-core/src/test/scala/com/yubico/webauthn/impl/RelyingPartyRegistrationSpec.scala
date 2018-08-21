@@ -32,7 +32,7 @@ import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith

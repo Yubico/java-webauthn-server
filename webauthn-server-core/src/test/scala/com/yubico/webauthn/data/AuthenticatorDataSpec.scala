@@ -2,8 +2,8 @@ package com.yubico.webauthn.data
 
 import com.upokecenter.cbor.CBORObject
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.util.BinaryUtil
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.BinaryUtil
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

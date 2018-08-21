@@ -8,7 +8,7 @@ import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.exception.HexException;
 import com.yubico.webauthn.impl.json.JsonStringSerializer;
 import com.yubico.webauthn.impl.json.JsonStringSerializable;
-import com.yubico.webauthn.util.BinaryUtil;
+import com.yubico.webauthn.impl.util.BinaryUtil;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.bouncycastle.util.Arrays;

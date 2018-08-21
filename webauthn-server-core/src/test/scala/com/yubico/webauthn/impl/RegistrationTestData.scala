@@ -23,8 +23,8 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.TestAuthenticator
-import com.yubico.webauthn.util.BinaryUtil
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.BinaryUtil
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
 
 import scala.collection.JavaConverters._
 

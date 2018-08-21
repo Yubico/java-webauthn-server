@@ -22,7 +22,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.impl.RegistrationTestData
 import com.yubico.webauthn.test.TestAuthenticator
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse

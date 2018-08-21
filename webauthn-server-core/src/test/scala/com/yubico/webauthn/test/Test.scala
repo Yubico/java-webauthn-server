@@ -4,8 +4,8 @@ import java.util.Base64
 
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticationDataFlags
-import com.yubico.webauthn.util.WebAuthnCodecs
-import com.yubico.webauthn.util.BinaryUtil
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump

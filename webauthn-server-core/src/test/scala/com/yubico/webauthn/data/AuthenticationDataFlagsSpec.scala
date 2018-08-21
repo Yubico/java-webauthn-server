@@ -1,6 +1,6 @@
 package com.yubico.webauthn.data
 
-import com.yubico.webauthn.util.BinaryUtil
+import com.yubico.webauthn.impl.util.BinaryUtil
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

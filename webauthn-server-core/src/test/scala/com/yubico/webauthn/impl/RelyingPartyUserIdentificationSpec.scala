@@ -22,8 +22,8 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.TestAuthenticator
-import com.yubico.webauthn.util.BinaryUtil
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.BinaryUtil
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

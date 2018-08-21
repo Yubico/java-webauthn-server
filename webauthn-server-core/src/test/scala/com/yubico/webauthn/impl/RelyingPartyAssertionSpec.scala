@@ -27,8 +27,8 @@ import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
-import com.yubico.webauthn.util.BinaryUtil
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.util.BinaryUtil
+import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
