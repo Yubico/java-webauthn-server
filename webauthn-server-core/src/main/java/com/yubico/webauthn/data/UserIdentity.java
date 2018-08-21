@@ -1,9 +1,11 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URL;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 
@@ -11,6 +13,7 @@ import lombok.Value;
  * Describes a user account, with which a public key credential is to be associated.
  */
 @Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class UserIdentity implements PublicKeyCredentialEntity {
 
@@ -19,14 +22,14 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * <p>
      * For example: "john.p.smith@example.com" or "+14255551234".
      */
-    @JsonProperty
-    private String name;
+    @NonNull
+    private final String name;
 
     /**
      * A friendly name for the user account (e.g. "Ryan A. Smith").
      */
-    @JsonProperty
-    private String displayName;
+    @NonNull
+    private final String displayName;
 
     /**
      * An identifier for the account, specified by the Relying Party.
@@ -35,16 +38,16 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * credentials - an authenticator will never contain more than one credential for a given Relying Party under the
      * same id.
      */
-    @JsonProperty
-    private ByteArray id;
+    @NonNull
+    private final ByteArray id;
 
     /**
      * A URL which resolves to an image associated with the user account.
      * <p>
      * For example, this could be the user's avatar.
      */
+    @NonNull
     @Builder.Default
-    @JsonProperty
-    private Optional<URL> icon = Optional.empty();
+    private final Optional<URL> icon = Optional.empty();
 
 }
