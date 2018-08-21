@@ -3,7 +3,9 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.webauthn.impl.json.JsonStringSerializer;
 import com.yubico.webauthn.impl.json.JsonStringSerializable;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 
 /**
@@ -11,7 +13,7 @@ import lombok.AllArgsConstructor;
  * attestation conveyance during credential generation.
  */
 @JsonSerialize(using = JsonStringSerializer.class)
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum AttestationConveyancePreference implements JsonStringSerializable {
     /**
      * Indicates that the Relying Party is not interested in authenticator
@@ -46,6 +48,7 @@ public enum AttestationConveyancePreference implements JsonStringSerializable {
      */
     DIRECT("direct");
 
+    @NonNull
     private final String id;
 
     public static AttestationConveyancePreference DEFAULT = NONE;
