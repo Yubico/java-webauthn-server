@@ -4,11 +4,11 @@ import COSE.CoseException;
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
@@ -16,6 +16,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserVerificationRequirement;
+import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.impl.ExtensionsValidation;
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier;
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver;
@@ -27,7 +28,6 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -85,7 +85,7 @@ public class FinishRegistrationSteps {
 
     private final PublicKeyCredentialCreationOptions request;
     private final PublicKeyCredential<AuthenticatorAttestationResponse> response;
-    private final Optional<String> callerTokenBindingId;
+    private final Optional<ByteArray> callerTokenBindingId;
     private final List<String> origins;
     private final String rpId;
     private final Crypto crypto;
@@ -151,7 +151,7 @@ public class FinishRegistrationSteps {
         public CollectedClientData clientData() {
             try {
                 return response.getResponse().getCollectedClientData();
-            } catch (IOException | U2fBadInputException e) {
+            } catch (IOException | Base64UrlException e) {
                 throw new IllegalArgumentException("Failed to read client data.");
             }
         }
@@ -214,11 +214,11 @@ public class FinishRegistrationSteps {
         public void validate() {
             try {
                 assure(
-                    Arrays.equals(clientData.getChallenge(), request.getChallenge()),
+                    request.getChallenge().equals(clientData.getChallenge()),
                     "Incorrect challenge."
                 );
-            } catch (U2fBadInputException e) {
-                throw new IllegalArgumentException("Challenge is not a valid Bas64URL encoding: " + clientData.getChallengeBase64());
+            } catch (Base64UrlException e) {
+                throw new IllegalArgumentException("Challenge is not a valid Bas64URL encoding", e);
             }
         }
 
@@ -277,14 +277,14 @@ public class FinishRegistrationSteps {
             return new Step8(clientDataJsonHash(), allWarnings());
         }
 
-        public byte[] clientDataJsonHash() {
-            return crypto.hash(response.getResponse().getClientDataJSON());
+        public ByteArray clientDataJsonHash() {
+            return new ByteArray(crypto.hash(response.getResponse().getClientDataJSON().getBytes()));
         }
     }
 
     @Value
     public class Step8 implements Step<Step9> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final List<String> prevWarnings;
 
         @Override
@@ -304,14 +304,14 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step9 implements Step<Step10> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
             assure(
-                Arrays.equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash(), crypto.hash(rpId)),
+                new ByteArray(crypto.hash(rpId)).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
                 "Wrong RP ID hash."
             );
         }
@@ -324,7 +324,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step10 implements Step<Step11> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -343,7 +343,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step11 implements Step<Step12> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -362,7 +362,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step12 implements Step<Step13> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -391,7 +391,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step13 implements Step<Step14> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -429,7 +429,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step14 implements Step<Step15> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final AttestationStatementVerifier attestationStatementVerifier;
         private final List<String> prevWarnings;
@@ -648,7 +648,7 @@ public class FinishRegistrationSteps {
                 .attestationTrusted(attestationTrusted)
                 .attestationType(attestationType)
                 .attestationMetadata(attestationMetadata)
-                .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestationData().get().getCredentialPublicKeyBytes())
+                .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestationData().get().getCredentialPublicKey())
                 .warnings(allWarnings())
                 .build()
             );
@@ -657,7 +657,7 @@ public class FinishRegistrationSteps {
         private PublicKeyCredentialDescriptor keyId() {
             return new PublicKeyCredentialDescriptor(
                 PublicKeyCredentialType.fromString(response.getType()).get(),
-                response.getRawId()
+                response.getId()
             );
         }
     }

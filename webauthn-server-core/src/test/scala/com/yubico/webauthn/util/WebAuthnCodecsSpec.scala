@@ -33,7 +33,7 @@ class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenProp
 
     it("outputs the correct x and y values") {
       forAll (minSuccessful(500)) { pubkey: ECPublicKey =>
-        val rawkey = WebAuthnCodecs.ecPublicKeyToRaw(pubkey)
+        val rawkey: Array[Byte] = WebAuthnCodecs.ecPublicKeyToRaw(pubkey).getBytes
 
         rawkey.length should equal (65)
         rawkey(0) should equal (0x04: Byte)

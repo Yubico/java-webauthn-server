@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.yubico.u2f.attestation.Attestation;
 import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.data.messages.key.util.CertificateParser;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.AttestationTrustResolver;
 import com.yubico.webauthn.data.AttestationObject;
 import java.io.IOException;
@@ -37,7 +36,7 @@ public class KnownX509TrustAnchorsTrustResolver implements AttestationTrustResol
                     try {
                         return CertificateParser.parseDer(node.binaryValue());
                     } catch (CertificateException | IOException e) {
-                        log.error("Failed to parse attestation certificate from attestation object: {}", U2fB64Encoding.encode(attestationObject.getBytes()), e);
+                        log.error("Failed to parse attestation certificate from attestation object: {}", attestationObject, e);
                         throw new RuntimeException(e);
                     }
                 })

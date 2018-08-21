@@ -8,7 +8,7 @@ import lombok.Value;
 public class TokenBindingInfo {
 
     private TokenBindingStatus status;
-    private Optional<String> id;
+    private Optional<ByteArray> id;
 
     private TokenBindingInfo(TokenBindingStatus status) {
         this(status, Optional.empty());
@@ -16,13 +16,13 @@ public class TokenBindingInfo {
 
     public TokenBindingInfo(
         @NonNull TokenBindingStatus status,
-        @NonNull Optional<String> id
+        @NonNull Optional<ByteArray> id
     ) {
         this.status = status;
         this.id = id;
     }
 
-    public static TokenBindingInfo present(String id) {
+    public static TokenBindingInfo present(ByteArray id) {
         return new TokenBindingInfo(TokenBindingStatus.PRESENT, Optional.of(id));
     }
 

@@ -1,10 +1,6 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.webauthn.util.BinaryUtil;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,8 +28,7 @@ public class PublicKeyCredentialCreationOptions {
     /**
      * A challenge intended to be used for generating the newly created credential’s attestation object.
      */
-    @JsonIgnore
-    private byte[] challenge;
+    private ByteArray challenge;
 
     /**
      * Information about the desired properties of the credential to be created.
@@ -86,7 +81,7 @@ public class PublicKeyCredentialCreationOptions {
     private PublicKeyCredentialCreationOptions(
         @NonNull RelyingPartyIdentity rp,
         @NonNull UserIdentity user,
-        @NonNull byte[] challenge,
+        @NonNull ByteArray challenge,
         @NonNull List<PublicKeyCredentialParameters> pubKeyCredParams,
         @NonNull Optional<Long> timeout,
         @NonNull Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials,
@@ -96,22 +91,13 @@ public class PublicKeyCredentialCreationOptions {
     ) {
         this.rp = rp;
         this.user = user;
-        this.challenge = BinaryUtil.copy(challenge);
+        this.challenge = challenge;
         this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
         this.timeout = timeout;
         this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableCollection);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
-    }
-
-    public byte[] getChallenge() {
-        return BinaryUtil.copy(challenge);
-    }
-
-    @JsonProperty("challenge")
-    public String getChallengeBase64() {
-        return U2fB64Encoding.encode(challenge);
     }
 
     public Optional<JsonNode> getExtensions() {

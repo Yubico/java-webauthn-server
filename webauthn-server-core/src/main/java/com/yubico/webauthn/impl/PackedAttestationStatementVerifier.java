@@ -5,22 +5,21 @@ import javax.naming.ldap.LdapName;
 
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.upokecenter.cbor.CBORObject;
+import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.util.ExceptionUtil;
+import com.yubico.webauthn.AttestationStatementVerifier;
+import com.yubico.webauthn.data.AttestationObject;
+import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-
-import com.upokecenter.cbor.CBORObject;
-import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.webauthn.AttestationStatementVerifier;
-import com.yubico.webauthn.data.AttestationObject;
-import com.yubico.webauthn.data.AttestationType;
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
-
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -31,10 +30,8 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.util.Arrays;
 
 
 @Slf4j
@@ -52,7 +49,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
     }
 
     @Override
-    public boolean verifyAttestationSignature(AttestationObject attestationObject, byte[] clientDataJsonHash) {
+    public boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
         val signatureNode = attestationObject.getAttestationStatement().get("sig");
 
         if (signatureNode == null || !signatureNode.isBinary()) {
@@ -68,11 +65,11 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
         }
     }
 
-    private boolean verifyEcdaaSignature(AttestationObject attestationObject, byte[] clientDataJsonHash) {
+    private boolean verifyEcdaaSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
         throw new UnsupportedOperationException("ECDAA signature verification is not (yet) implemented.");
     }
 
-    private boolean verifySelfAttestationSignature(AttestationObject attestationObject, byte[] clientDataJsonHash) {
+    private boolean verifySelfAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
         final PublicKey pubkey;
         try {
             pubkey = attestationObject.getAuthenticatorData().getAttestationData().get().getParsedCredentialPublicKey();
@@ -85,7 +82,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
         }
 
         final COSEAlgorithmIdentifier keyAlg = new COSEAlgorithmIdentifier(
-            CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKeyBytes())
+            CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey().getBytes())
                 .get(CBORObject.FromObject(3))
                 .AsInt64());
         final COSEAlgorithmIdentifier sigAlg = new COSEAlgorithmIdentifier(attestationObject.getAttestationStatement().get("alg").asLong());
@@ -95,23 +92,23 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
                 "Key algorithm and signature algorithm must be equal, was: Key: %s, Sig: %s", keyAlg, sigAlg));
         }
 
-        byte[] signedData = Arrays.concatenate(attestationObject.getAuthenticatorData().getBytes(), clientDataJsonHash);
-        byte[] signature;
+        ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
+        ByteArray signature;
         try {
-            signature = attestationObject.getAttestationStatement().get("sig").binaryValue();
+            signature = new ByteArray(attestationObject.getAttestationStatement().get("sig").binaryValue());
         } catch (IOException e) {
             throw ExceptionUtil.wrapAndLog(log, ".binaryValue() of \"sig\" failed", e);
         }
 
         try {
-            new BouncyCastleCrypto().checkSignature(pubkey, signedData, signature);
+            new BouncyCastleCrypto().checkSignature(pubkey, signedData.getBytes(), signature.getBytes());
             return true;
         } catch (U2fBadInputException e) {
             return false;
         }
     }
 
-    private boolean verifyX5cSignature(AttestationObject attestationObject, byte[] clientDataHash) {
+    private boolean verifyX5cSignature(AttestationObject attestationObject, ByteArray clientDataHash) {
         final Optional<X509Certificate> attestationCert;
         try {
             attestationCert = getX5cAttestationCertificate(attestationObject);
@@ -130,14 +127,14 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
             }
 
             if (signatureNode.isBinary()) {
-                byte[] signature;
+                ByteArray signature;
                 try {
-                    signature = signatureNode.binaryValue();
+                    signature = new ByteArray(signatureNode.binaryValue());
                 } catch (IOException e) {
                     throw ExceptionUtil.wrapAndLog(log, "signatureNode.isBinary() was true but signatureNode.binaryValue() failed", e);
                 }
 
-                byte[] signedData = Arrays.concatenate(attestationObject.getAuthenticatorData().getBytes(), clientDataHash);
+                ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataHash);
 
                 // TODO support other signature algorithms
                 Signature ecdsaSignature;
@@ -152,13 +149,13 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
                     throw ExceptionUtil.wrapAndLog(log, "Attestation key is invalid: " + attestationCertificate, e);
                 }
                 try {
-                    ecdsaSignature.update(signedData);
+                    ecdsaSignature.update(signedData.getBytes());
                 } catch (SignatureException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Signature object in invalid state: " + ecdsaSignature, e);
                 }
 
                 try {
-                    return (ecdsaSignature.verify(signature)
+                    return (ecdsaSignature.verify(signature.getBytes())
                         && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData().getAttestationData().get().getAaguid())
                     );
                 } catch (SignatureException e) {
@@ -184,7 +181,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
             .map(i -> i.getValue());
     }
 
-    boolean verifyX5cRequirements(X509Certificate cert, byte[] aaguid) {
+    boolean verifyX5cRequirements(X509Certificate cert, ByteArray aaguid) {
         if (cert.getVersion() != 3) {
             throw new IllegalArgumentException(String.format("Wrong attestation certificate X509 version: %s, expected: 3", cert.getVersion()));
         }
@@ -219,7 +216,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
                 }
             })
             .ifPresent((byte[] value) -> {
-                if (false == java.util.Arrays.equals(value, aaguid)) {
+                if (false == java.util.Arrays.equals(value, aaguid.getBytes())) {
                     throw new IllegalArgumentException("X.509 extension " + idFidoGenCeAaguid + " (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.");
                 }
             });

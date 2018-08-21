@@ -1,8 +1,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.util.Optional;
 import lombok.NonNull;
@@ -19,13 +18,15 @@ public class CollectedClientData {
      */
     private JsonNode clientData;
 
-    public CollectedClientData(@NonNull JsonNode clientData) throws U2fBadInputException {
+    public CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
         this.clientData = clientData;
 
         try {
             getChallenge();
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"challenge\"");
+        } catch (Base64UrlException e) {
+            throw new Base64UrlException("Invalid \"challenge\" value", e);
         }
 
         try {
@@ -51,15 +52,8 @@ public class CollectedClientData {
     /**
      * The URL-safe Base64 encoded challenge as provided by the RP.
      */
-    public String getChallengeBase64() {
-        return clientData.get("challenge").asText();
-    }
-
-    /**
-     * The URL-safe Base64 encoded challenge as provided by the RP.
-     */
-    public byte[] getChallenge() throws U2fBadInputException {
-        return U2fB64Encoding.decode(getChallengeBase64());
+    public ByteArray getChallenge() throws Base64UrlException {
+        return ByteArray.fromBase64Url(clientData.get("challenge").textValue());
     }
 
     /**
@@ -88,7 +82,15 @@ public class CollectedClientData {
                         TokenBindingStatus.fromJson(status).orElseGet(() -> {
                             throw new IllegalArgumentException("Invalid value for tokenBinding.status: " + status);
                         }),
-                        Optional.ofNullable(tb.get("id")).map(JsonNode::textValue)
+                        Optional.ofNullable(tb.get("id"))
+                            .map(JsonNode::textValue)
+                            .map(id -> {
+                                try {
+                                    return ByteArray.fromBase64Url(id);
+                                } catch (Base64UrlException e) {
+                                    throw new IllegalArgumentException("Property \"id\" is not valid Base64Url data", e);
+                                }
+                            })
                     );
                 } else {
                     throw new IllegalArgumentException("Property \"tokenBinding\" missing from client data.");

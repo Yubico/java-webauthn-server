@@ -1,5 +1,6 @@
 package com.yubico.webauthn.impl;
 
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.TokenBindingInfo;
 import java.util.Objects;
 import java.util.Optional;
@@ -7,7 +8,7 @@ import java.util.Optional;
 
 public class TokenBindingValidator {
 
-    public static boolean validate(Optional<TokenBindingInfo> clientTokenBinding, Optional<String> rpTokenBindingId) {
+    public static boolean validate(Optional<TokenBindingInfo> clientTokenBinding, Optional<ByteArray> rpTokenBindingId) {
         return rpTokenBindingId.map(rpToken ->
             clientTokenBinding.map(tbi -> {
                 switch (tbi.getStatus()) {
@@ -17,7 +18,7 @@ public class TokenBindingValidator {
 
                     case PRESENT:
                         return tbi.getId().map(id -> {
-                            if (Objects.equals(rpToken, id)) {
+                            if (id.equals(rpToken)) {
                                 return true;
                             } else {
                                 throw new IllegalArgumentException("Incorrect token binding ID.");

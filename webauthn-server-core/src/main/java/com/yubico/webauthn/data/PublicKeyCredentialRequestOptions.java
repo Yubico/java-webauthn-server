@@ -1,12 +1,7 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.webauthn.util.BinaryUtil;
 import com.yubico.webauthn.util.WebAuthnCodecs;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +23,7 @@ public class PublicKeyCredentialRequestOptions {
      * A challenge that the selected authenticator signs, along with other data, when producing an authentication
      * assertion.
      */
-    @JsonIgnore
-    private final byte[] challenge;
+    private final ByteArray challenge;
 
     /**
      * Specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
@@ -71,7 +65,7 @@ public class PublicKeyCredentialRequestOptions {
     private final Optional<JsonNode> extensions = Optional.empty();
 
     PublicKeyCredentialRequestOptions(
-        @NonNull byte[] challenge,
+        @NonNull ByteArray challenge,
         @NonNull Optional<Long> timeout,
         @NonNull Optional<String> rpId,
         @NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials,
@@ -86,17 +80,8 @@ public class PublicKeyCredentialRequestOptions {
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
     }
 
-    public byte[] getChallenge() {
-        return BinaryUtil.copy(challenge);
-    }
-
     public Optional<JsonNode> getExtensions() {
         return this.extensions.map(WebAuthnCodecs::deepCopy);
-    }
-
-    @JsonProperty("challenge")
-    public String getChallengeBase64() {
-        return U2fB64Encoding.encode(challenge);
     }
 
 }

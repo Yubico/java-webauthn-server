@@ -8,6 +8,7 @@ import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationData;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -15,7 +16,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -65,9 +65,10 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
 
         if (attestationCertificate.getPublicKey() instanceof ECPublicKey
             && validSelfSignature(attestationCertificate)
-            && (Arrays.equals(
-            WebAuthnCodecs.ecPublicKeyToRaw(attestationObject.getAuthenticatorData().getAttestationData().get().getParsedCredentialPublicKey()),
-            WebAuthnCodecs.ecPublicKeyToRaw((ECPublicKey) attestationCertificate.getPublicKey())))
+            && WebAuthnCodecs.ecPublicKeyToRaw(attestationObject.getAuthenticatorData().getAttestationData().get().getParsedCredentialPublicKey())
+                .equals(
+                    WebAuthnCodecs.ecPublicKeyToRaw((ECPublicKey) attestationCertificate.getPublicKey())
+                )
         ) {
             return AttestationType.SELF_ATTESTATION;
         } else {
@@ -76,7 +77,7 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
     }
 
     @Override
-    public boolean verifyAttestationSignature(AttestationObject attestationObject, byte[] clientDataJsonHash) {
+    public boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
         final X509Certificate attestationCertificate;
         try {
             attestationCertificate = getAttestationCertificate(attestationObject);
@@ -101,7 +102,7 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
             JsonNode signature = attestationObject.getAttestationStatement().get("sig");
 
             if (signature.isBinary()) {
-                byte[] userPublicKey;
+                ByteArray userPublicKey;
 
                 try {
                     userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(attestationData.getParsedCredentialPublicKey());
@@ -111,13 +112,13 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
                     throw err;
                 }
 
-                byte[] keyHandle = attestationData.getCredentialId();
+                ByteArray keyHandle = attestationData.getCredentialId();
 
                 RawRegisterResponse u2fRegisterResponse;
                 try {
                     u2fRegisterResponse = new RawRegisterResponse(
-                        userPublicKey,
-                        keyHandle,
+                        userPublicKey.getBytes(),
+                        keyHandle.getBytes(),
                         attestationCertificate,
                         signature.binaryValue()
                     );
@@ -129,8 +130,8 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
 
                 try {
                     u2fRegisterResponse.checkSignature(
-                        attestationObject.getAuthenticatorData().getRpIdHash(),
-                        clientDataJsonHash
+                        attestationObject.getAuthenticatorData().getRpIdHash().getBytes(),
+                        clientDataJsonHash.getBytes()
                     );
                     return true;
                 } catch (U2fBadInputException e) {

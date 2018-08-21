@@ -2,7 +2,7 @@ package com.yubico.webauthn.data;
 
 public interface Credential {
 
-    String getId();
+    ByteArray getId();
     String getType();
 
 }

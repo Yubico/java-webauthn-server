@@ -9,12 +9,12 @@ import lombok.Value;
 @Value
 @Builder
 public class AssertionRequest {
-    private String requestId;
+    private ByteArray requestId;
     private Optional<String> username;
     private PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
 
     private AssertionRequest(
-        @NonNull String requestId,
+        @NonNull ByteArray requestId,
         @NonNull Optional<String> username,
         @NonNull PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions
     ) {

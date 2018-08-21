@@ -1,9 +1,5 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.webauthn.util.BinaryUtil;
 import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
@@ -25,27 +21,17 @@ public class PublicKeyCredentialDescriptor {
     /**
      * The identifier of the credential that the caller is referring to.
      */
-    @JsonIgnore
-    private byte[] id;
+    private ByteArray id;
 
     private Optional<List<AuthenticatorTransport>> transports = Optional.empty();
 
-    public PublicKeyCredentialDescriptor(@NonNull PublicKeyCredentialType type, @NonNull byte[] id) {
+    public PublicKeyCredentialDescriptor(@NonNull PublicKeyCredentialType type, @NonNull ByteArray id) {
         this.type = type;
         this.id = id;
     }
 
-    public PublicKeyCredentialDescriptor(@NonNull byte[] id) {
+    public PublicKeyCredentialDescriptor(@NonNull ByteArray id) {
         this(PublicKeyCredentialType.PUBLIC_KEY, id);
-    }
-
-    public byte[] getId() {
-        return BinaryUtil.copy(id);
-    }
-
-    @JsonProperty("id")
-    public String getIdBase64() {
-        return U2fB64Encoding.encode(id);
     }
 
 }

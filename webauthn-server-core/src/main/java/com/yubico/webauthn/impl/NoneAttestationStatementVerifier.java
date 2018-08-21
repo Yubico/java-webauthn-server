@@ -3,6 +3,7 @@ package com.yubico.webauthn.impl;
 import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.ByteArray;
 
 
 public class NoneAttestationStatementVerifier implements AttestationStatementVerifier {
@@ -13,7 +14,7 @@ public class NoneAttestationStatementVerifier implements AttestationStatementVer
     }
 
     @Override
-    public boolean verifyAttestationSignature(AttestationObject attestationObject, byte[] clientDataJsonHash) {
+    public boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
         return true;
     }
 

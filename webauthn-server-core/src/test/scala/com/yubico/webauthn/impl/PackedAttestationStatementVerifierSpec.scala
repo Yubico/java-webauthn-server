@@ -1,7 +1,7 @@
 package com.yubico.webauthn.impl
 
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.Util
-import com.yubico.webauthn.util.BinaryUtil
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 
@@ -19,7 +19,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
       val cert = Util.importCertFromPem(getClass.getResourceAsStream("klas-cert.pem"))
 
-      val result = Try(verifier.verifyX5cRequirements(cert, BinaryUtil.fromHex("F8A011F38C0A4D15800617111F9EDC7D")))
+      val result = Try(verifier.verifyX5cRequirements(cert, ByteArray.fromHex("F8A011F38C0A4D15800617111F9EDC7D")))
 
       result shouldBe a [Success[_]]
       result.get should be (true)

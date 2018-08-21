@@ -1,10 +1,8 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.util.BinaryUtil;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
@@ -16,8 +14,8 @@ import lombok.Value;
 @Value
 public class AuthenticatorData {
 
-    @JsonIgnore
-    private final byte[] bytes;
+    @JsonProperty("authData")
+    private final ByteArray bytes;
 
     /**
      * The flags byte.
@@ -43,46 +41,39 @@ public class AuthenticatorData {
     private static final int CounterLength = 4;
     private static final int FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength;
 
-    public AuthenticatorData(byte[] bytes) {
-        this.bytes = BinaryUtil.copy(bytes);
-        this.flags = new AuthenticationDataFlags(bytes[32]);
+    public AuthenticatorData(ByteArray bytes) {
+        this.bytes = bytes;
+
+        final byte[] rawBytes = bytes.getBytes();
+
+        this.flags = new AuthenticationDataFlags(rawBytes[32]);
 
         if (flags.AT) {
             VariableLengthParseResult parseResult = parseAttestationData(
                 flags,
-                Arrays.copyOfRange(bytes, FixedLengthPartEndIndex, bytes.length)
+                Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)
             );
             attestationData = parseResult.getAttestationData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
             attestationData = Optional.empty();
-            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(bytes, FixedLengthPartEndIndex, bytes.length)));
+            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)));
         } else {
             attestationData = Optional.empty();
             extensions = Optional.empty();
         }
     }
 
-    public byte[] getBytes() {
-        return BinaryUtil.copy(bytes);
-    }
-
-    @JsonProperty("authData")
-    public String getAuthDataBase64() {
-        return U2fB64Encoding.encode(bytes);
+    public ByteArray getBytes() {
+        return bytes;
     }
 
     /**
      * The SHA-256 hash of the RP ID associated with the credential.
      */
-    @JsonIgnore
-    public byte[] getRpIdHash() {
-        return Arrays.copyOfRange(bytes, 0, RpIdHashLength);
-    }
-
     @JsonProperty("rpIdHash")
-    public String getRpIdHashBase64() {
-        return U2fB64Encoding.encode(getRpIdHash());
+    public ByteArray getRpIdHash() {
+        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), 0, RpIdHashLength));
     }
 
     /**
@@ -91,7 +82,7 @@ public class AuthenticatorData {
     public long getSignatureCounter() {
         final int start = RpIdHashLength + FlagsLength;
         final int end = start + CounterLength;
-        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes, start, end));
+        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), start, end));
     }
 
     private static VariableLengthParseResult parseAttestationData(AuthenticationDataFlags flags, byte[] bytes) {
@@ -132,9 +123,9 @@ public class AuthenticatorData {
 
         return new VariableLengthParseResult(
             Optional.of(AttestationData.builder()
-                .aaguid(Arrays.copyOfRange(bytes, 0, 16))
-                .credentialId(Arrays.copyOfRange(bytes, 16 + 2, 16 + 2 + L))
-                .credentialPublicKey(credentialPublicKey.EncodeToBytes())
+                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, 0, 16)))
+                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, 16 + 2, 16 + 2 + L)))
+                .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
                 .build()),
             extensions
         );

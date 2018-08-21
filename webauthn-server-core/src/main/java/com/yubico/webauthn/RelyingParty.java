@@ -5,13 +5,13 @@ import com.yubico.u2f.attestation.MetadataService;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -64,7 +64,7 @@ public class RelyingParty {
         return PublicKeyCredentialCreationOptions.builder()
             .rp(rp)
             .user(user)
-            .challenge(challengeGenerator.generateChallenge())
+            .challenge(new ByteArray(challengeGenerator.generateChallenge()))
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(excludeCredentials)
             .authenticatorSelection(Optional.of(
@@ -78,17 +78,17 @@ public class RelyingParty {
     }
 
   public RegistrationResult finishRegistration(
-    PublicKeyCredentialCreationOptions request,
-    PublicKeyCredential<AuthenticatorAttestationResponse> response,
-    Optional<String> callerTokenBindingId // = Optional.empty()
+      PublicKeyCredentialCreationOptions request,
+      PublicKeyCredential<AuthenticatorAttestationResponse> response,
+      Optional<ByteArray> callerTokenBindingId // = Optional.empty()
   ) {
       return _finishRegistration(request, response, callerTokenBindingId).run();
   }
 
   public FinishRegistrationSteps _finishRegistration(
-    PublicKeyCredentialCreationOptions request,
-    PublicKeyCredential<AuthenticatorAttestationResponse> response,
-    Optional<String> callerTokenBindingId // = Optional.empty()
+      PublicKeyCredentialCreationOptions request,
+      PublicKeyCredential<AuthenticatorAttestationResponse> response,
+      Optional<ByteArray> callerTokenBindingId // = Optional.empty()
   ) {
     return FinishRegistrationSteps.builder()
       .request(request)
@@ -112,11 +112,11 @@ public class RelyingParty {
     Optional<JsonNode> extensions // = None.asJava
   ) {
       return AssertionRequest.builder()
-          .requestId(U2fB64Encoding.encode(challengeGenerator.generateChallenge()))
+          .requestId(new ByteArray(challengeGenerator.generateChallenge()))
           .username(username)
           .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
               .rpId(Optional.of(rp.getId()))
-              .challenge(challengeGenerator.generateChallenge())
+              .challenge(new ByteArray(challengeGenerator.generateChallenge()))
               .allowCredentials(
                   (allowCredentials.map(Optional::of).orElseGet(() ->
                       username.map(un ->
@@ -130,17 +130,17 @@ public class RelyingParty {
   }
 
   public AssertionResult finishAssertion(
-    AssertionRequest request,
-    PublicKeyCredential<AuthenticatorAssertionResponse> response,
-    Optional<String> callerTokenBindingId // = None.asJava
+      AssertionRequest request,
+      PublicKeyCredential<AuthenticatorAssertionResponse> response,
+      Optional<ByteArray> callerTokenBindingId // = None.asJava
   ) {
       return _finishAssertion(request, response, callerTokenBindingId).run();
   }
 
   public FinishAssertionSteps _finishAssertion(
-    AssertionRequest request,
-    PublicKeyCredential<AuthenticatorAssertionResponse> response,
-    Optional<String> callerTokenBindingId // = None.asJava
+      AssertionRequest request,
+      PublicKeyCredential<AuthenticatorAssertionResponse> response,
+      Optional<ByteArray> callerTokenBindingId // = None.asJava
   ) {
       return FinishAssertionSteps.builder()
           .request(request)

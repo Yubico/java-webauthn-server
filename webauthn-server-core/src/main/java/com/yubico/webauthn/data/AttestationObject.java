@@ -3,9 +3,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.webauthn.util.BinaryUtil;
+import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.io.IOException;
 import lombok.Value;
@@ -14,7 +12,7 @@ import lombok.Value;
 @Value
 public class AttestationObject {
 
-    private final byte[] bytes;
+    private final ByteArray bytes;
 
     private ObjectNode decoded;
 
@@ -27,10 +25,10 @@ public class AttestationObject {
     @JsonProperty
     private final String format;
 
-    public AttestationObject(byte[] bytes) throws IOException, U2fBadInputException {
-        this.bytes = BinaryUtil.copy(bytes);
+    public AttestationObject(ByteArray bytes) throws IOException, Base64UrlException {
+        this.bytes = bytes;
 
-        JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes);
+        JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
         if (decoded.isObject()) {
             this.decoded = (ObjectNode) decoded;
         } else {
@@ -42,16 +40,13 @@ public class AttestationObject {
         format = decoded.get("fmt").textValue();
     }
 
-    private AuthenticatorData parseAuthenticatorData() throws IOException, U2fBadInputException {
+    private AuthenticatorData parseAuthenticatorData() throws IOException, Base64UrlException {
         JsonNode authData = decoded.get("authData");
-        if (authData.isBinary())
-          return new AuthenticatorData(authData.binaryValue());
-        else
-          return new AuthenticatorData(U2fB64Encoding.decode(authData.textValue()));
-    }
-
-    public byte[] getBytes() {
-        return BinaryUtil.copy(this.bytes);
+        if (authData.isBinary()) {
+            return new AuthenticatorData(new ByteArray(authData.binaryValue()));
+        } else {
+            return new AuthenticatorData(ByteArray.fromBase64Url(authData.textValue()));
+        }
     }
 
     @JsonProperty
