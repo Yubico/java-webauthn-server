@@ -147,7 +147,7 @@ object TestAuthenticator {
       .rp(RelyingPartyIdentity.builder().name("Test party").id(rpId).build())
       .user(userId)
       .challenge(challenge)
-      .pubKeyCredParams(List(new PublicKeyCredentialParameters(COSEAlgorithmIdentifier.ES256)).asJava)
+      .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
       .build()
 
     val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
