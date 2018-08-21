@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.util.Either;
 import com.yubico.webauthn.data.AssertionRequest;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.meta.VersionInfo;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.data.RegistrationRequest;
@@ -262,9 +264,19 @@ public class WebAuthnRestResource {
     @POST
     public Response deregisterCredential(
         @FormParam("username") String username,
-        @FormParam("credentialId") String credentialId
+        @FormParam("credentialId") String credentialIdBase64
     ) throws MalformedURLException {
-        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
+        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialIdBase64);
+
+        final ByteArray credentialId;
+        try {
+            credentialId = ByteArray.fromBase64Url(credentialIdBase64);
+        } catch (Base64UrlException e) {
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                "Credential ID is not valid Base64Url data: " + credentialIdBase64
+            );
+        }
 
         Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
             try {

@@ -14,13 +14,13 @@ import com.yubico.u2f.attestation.resolvers.SimpleResolverWithEquality;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.util.Either;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialType;
@@ -52,8 +52,8 @@ import org.slf4j.LoggerFactory;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
-    private final Cache<String, AssertionRequest> assertRequestStorage;
-    private final Cache<String, RegistrationRequest> registerRequestStorage;
+    private final Cache<ByteArray, AssertionRequest> assertRequestStorage;
+    private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
@@ -75,7 +75,7 @@ public class WebAuthnServer {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<String, RegistrationRequest> registerRequestStorage, Cache<String, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -122,12 +122,12 @@ public class WebAuthnServer {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
-            byte[] userId = challengeGenerator.generateChallenge();
+            final ByteArray userId = new ByteArray(challengeGenerator.generateChallenge());
 
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
-                U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+                new ByteArray(challengeGenerator.generateChallenge()),
                 rp.startRegistration(
                     UserIdentity.builder()
                         .name(username)
@@ -164,7 +164,7 @@ public class WebAuthnServer {
                 RegistrationRequest request = new RegistrationRequest(
                     username,
                     credentialNickname,
-                    U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
+                    new ByteArray(challengeGenerator.generateChallenge()),
                     rp.startRegistration(
                         existingUser,
                         Optional.of(userStorage.getCredentialIdsForUsername(username)),
@@ -341,14 +341,14 @@ public class WebAuthnServer {
             });
     }
 
-    public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, String credentialId, Function<CredentialRegistration, T> resultMapper) {
+    public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
             return Either.left(Arrays.asList("Username must not be empty."));
         }
 
-        if (credentialId == null || credentialId.isEmpty()) {
+        if (credentialId == null || credentialId.getBytes().length == 0) {
             return Either.left(Arrays.asList("Credential ID must not be empty."));
         }
 
@@ -397,7 +397,7 @@ public class WebAuthnServer {
             username,
             nickname,
             registration,
-            registration.getKeyId().getIdBase64(),
+            registration.getKeyId().getId(),
             registration.getPublicKeyCose()
         );
         userStorage.addRegistrationByUsername(username, reg);

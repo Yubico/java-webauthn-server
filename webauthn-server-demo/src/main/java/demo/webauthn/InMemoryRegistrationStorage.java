@@ -4,13 +4,11 @@ import COSE.CoseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.AssertionResult;
-import com.yubico.webauthn.data.RegisteredCredential;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.util.BinaryUtil;
+import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.data.CredentialRegistration;
 import java.io.IOException;
@@ -28,7 +26,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.immutable.Vector;
 
 @Slf4j
 public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
@@ -68,35 +65,35 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public Collection<CredentialRegistration> getRegistrationsByUserHandle(String userHandleBase64) {
+    public Collection<CredentialRegistration> getRegistrationsByUserHandle(ByteArray userHandle) {
         return storage.asMap().values().stream()
             .flatMap(Collection::stream)
             .filter(credentialRegistration ->
-                userHandleBase64.equals(credentialRegistration.getUserIdentity().getIdBase64())
+                userHandle.equals(credentialRegistration.getUserIdentity().getId())
             )
             .collect(Collectors.toList());
     }
 
     @Override
-    public Optional<String> getUsernameForUserHandle(String userHandleBase64) {
-        return getRegistrationsByUserHandle(userHandleBase64).stream()
+    public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
+        return getRegistrationsByUserHandle(userHandle).stream()
             .findAny()
             .map(CredentialRegistration::getUsername);
     }
 
     @Override
-    public Optional<String> getUserHandleForUsername(String username) {
+    public Optional<ByteArray> getUserHandleForUsername(String username) {
         return getRegistrationsByUsername(username).stream()
             .findAny()
-            .map(reg -> reg.getUserIdentity().getIdBase64());
+            .map(reg -> reg.getUserIdentity().getId());
     }
 
     @Override
     public void updateSignatureCount(AssertionResult result) {
-        CredentialRegistration registration = getRegistrationByUsernameAndCredentialId(result.getUsername(), result.getCredentialIdBase64())
+        CredentialRegistration registration = getRegistrationByUsernameAndCredentialId(result.getUsername(), result.getCredentialId())
             .orElseThrow(() -> new NoSuchElementException(String.format(
                 "Credential \"%s\" is not registered to user \"%s\"",
-                result.getCredentialIdBase64(), result.getUsername()
+                result.getCredentialId(), result.getUsername()
             )));
 
         Set<CredentialRegistration> regs = storage.getIfPresent(result.getUsername());
@@ -105,10 +102,10 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, String idBase64) {
+    public Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, ByteArray id) {
         try {
             return storage.get(username, HashSet::new).stream()
-                .filter(credReg -> idBase64.equals(credReg.getRegistration().getKeyId().getIdBase64()))
+                .filter(credReg -> id.equals(credReg.getRegistration().getKeyId().getId()))
                 .findFirst();
         } catch (ExecutionException e) {
             logger.error("Registration lookup failed", e);
@@ -133,15 +130,15 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public Optional<RegisteredCredential> lookup(String credentialId, String userHandle) {
+    public Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle) {
         Optional<CredentialRegistration> registrationMaybe = storage.asMap().values().stream()
             .flatMap(Collection::stream)
-            .filter(credReg -> credentialId.equals(credReg.getRegistration().getKeyId().getIdBase64()))
+            .filter(credReg -> credentialId.equals(credReg.getRegistration().getKeyId().getId()))
             .findAny();
 
         logger.debug("lookup credential ID: {}, user handle: {}; result: {}", credentialId, userHandle, registrationMaybe);
         return registrationMaybe.flatMap(registration -> {
-            final byte[] cose = registration.getRegistration().getPublicKeyCose();
+            final ByteArray cose = registration.getRegistration().getPublicKeyCose();
             final PublicKey key;
 
             try {
@@ -149,7 +146,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
             } catch (CoseException | IOException e) {
                 String coseString;
                 try {
-                    coseString = WebAuthnCodecs.json().writeValueAsString(cose);
+                    coseString = WebAuthnCodecs.json().writeValueAsString(cose.getBytes());
                 } catch (JsonProcessingException e2) {
                     coseString = "(Failed to write as string)";
                 }
@@ -158,28 +155,23 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                 return Optional.empty();
             }
 
-            try {
-                return Optional.of(
-                    new RegisteredCredential(
-                        registration.getRegistration().getKeyId().getId(),
-                        U2fB64Encoding.decode(registration.getUserIdentity().getIdBase64()),
-                        key,
-                        registration.getSignatureCount()
-                    )
-                );
-            } catch (U2fBadInputException e) {
-                logger.error("Failed to base64decode user handle: {}", registration.getUserIdentity().getIdBase64(), e);
-                throw new RuntimeException(e);
-            }
+            return Optional.of(
+                new RegisteredCredential(
+                    registration.getRegistration().getKeyId().getId(),
+                    registration.getUserIdentity().getId(),
+                    key,
+                    registration.getSignatureCount()
+                )
+            );
         });
     }
 
     @Override
-    public Set<RegisteredCredential> lookupAll(String credentialId) {
+    public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
         return Collections.unmodifiableSet(
             storage.asMap().values().stream()
                 .flatMap(Collection::stream)
-                .filter(reg -> reg.getRegistration().getKeyId().getIdBase64().equals(credentialId))
+                .filter(reg -> reg.getRegistration().getKeyId().getId().equals(credentialId))
                 .map(reg -> {
                     try {
                         return new RegisteredCredential(
@@ -189,7 +181,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                             reg.getSignatureCount()
                         );
                     } catch (CoseException | IOException e) {
-                        log.error("Failed to read public key {} from storage", reg.getRegistration().getKeyId().getIdBase64(), e);
+                        log.error("Failed to read public key {} from storage", reg.getRegistration().getKeyId().getId(), e);
                         throw new RuntimeException(e);
                     }
                 })
