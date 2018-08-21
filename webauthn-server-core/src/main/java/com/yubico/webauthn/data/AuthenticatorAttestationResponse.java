@@ -4,16 +4,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.exception.Base64UrlException;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
 public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
-    private ByteArray attestationObject;
+    @NonNull
+    private final ByteArray attestationObject;
 
-    private ByteArray clientDataJSON;
+    @NonNull
+    private final ByteArray clientDataJSON;
 
+    @NonNull
     @JsonProperty("_attestationObject")
     private final AttestationObject attestation;
 
@@ -24,8 +28,8 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
     @JsonCreator
     public AuthenticatorAttestationResponse(
-        @JsonProperty("attestationObject") ByteArray attestationObject,
-        @JsonProperty("clientDataJSON") ByteArray clientDataJSON
+        @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
+        @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON
     ) throws IOException, Base64UrlException {
         this.attestationObject = attestationObject;
         this.clientDataJSON = clientDataJSON;
