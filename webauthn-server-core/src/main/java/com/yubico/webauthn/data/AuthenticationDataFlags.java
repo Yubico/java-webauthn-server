@@ -1,6 +1,5 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Value;
 
 
@@ -9,19 +8,15 @@ public class AuthenticationDataFlags {
     public byte value;
 
     /** User present */
-    @JsonProperty
     public final boolean UP;
 
     /** User verified */
-    @JsonProperty
     public final boolean UV;
 
     /** Attestation data present */
-    @JsonProperty
     public final boolean AT;
 
     /** Extension data present */
-    @JsonProperty
     public final boolean ED;
 
     public AuthenticationDataFlags(byte value) {
