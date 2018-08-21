@@ -11,13 +11,17 @@ import lombok.Value;
 @Value
 public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
-    private ByteArray authenticatorData;
+    @NonNull
+    private final ByteArray authenticatorData;
 
-    private ByteArray clientDataJSON;
+    @NonNull
+    private final ByteArray clientDataJSON;
 
-    private ByteArray signature;
+    @NonNull
+    private final ByteArray signature;
 
-    private Optional<ByteArray> userHandle;
+    @NonNull
+    private final Optional<ByteArray> userHandle;
 
     @JsonCreator
     public AuthenticatorAssertionResponse(
