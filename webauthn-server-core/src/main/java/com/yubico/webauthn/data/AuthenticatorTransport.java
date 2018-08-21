@@ -2,10 +2,10 @@ package com.yubico.webauthn.data;
 
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.JsonStringSerializer;
 import com.yubico.webauthn.impl.json.JsonStringSerializable;
+import com.yubico.webauthn.impl.json.JsonStringSerializer;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NonNull;
 
 /**
   * Authenticators may communicate with Clients using a variety of transports.
@@ -37,7 +37,7 @@ public enum AuthenticatorTransport implements JsonStringSerializable {
      */
     BLE("ble");
 
-    @Getter
+    @NonNull
     private final String id;
 
     @Override
@@ -46,4 +46,3 @@ public enum AuthenticatorTransport implements JsonStringSerializable {
     }
 
 }
-
