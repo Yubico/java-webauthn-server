@@ -23,6 +23,7 @@ public class PublicKeyCredentialRequestOptions {
      * A challenge that the selected authenticator signs, along with other data, when producing an authentication
      * assertion.
      */
+    @NonNull
     private final ByteArray challenge;
 
     /**
@@ -30,6 +31,7 @@ public class PublicKeyCredentialRequestOptions {
      * <p>
      * This is treated as a hint, and MAY be overridden by the platform.
      */
+    @NonNull
     @Builder.Default
     private final Optional<Long> timeout = Optional.empty();
 
@@ -38,12 +40,14 @@ public class PublicKeyCredentialRequestOptions {
      * <p>
      * If omitted, its value will be set by the client.
      */
+    @NonNull
     @Builder.Default
     private final Optional<String> rpId = Optional.empty();
 
     /**
      * A list of public key credentials acceptable to the caller, in descending order of the caller’s preference.
      */
+    @NonNull
     @Builder.Default
     private final Optional<List<PublicKeyCredentialDescriptor>> allowCredentials = Optional.empty();
 
@@ -52,6 +56,7 @@ public class PublicKeyCredentialRequestOptions {
      * <p>
      * Eligible authenticators are filtered to only those capable of satisfying this requirement.
      */
+    @NonNull
     @Builder.Default
     private final UserVerificationRequirement userVerification = UserVerificationRequirement.DEFAULT;
 
@@ -61,6 +66,7 @@ public class PublicKeyCredentialRequestOptions {
      * For example, if transaction confirmation is sought from the user, then the prompt string might be included as an
      * extension.
      */
+    @NonNull
     @Builder.Default
     private final Optional<JsonNode> extensions = Optional.empty();
 
