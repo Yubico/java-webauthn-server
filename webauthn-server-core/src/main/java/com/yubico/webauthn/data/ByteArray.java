@@ -10,6 +10,7 @@ import com.yubico.webauthn.impl.json.JsonStringSerializer;
 import com.yubico.webauthn.impl.json.JsonStringSerializable;
 import com.yubico.webauthn.impl.util.BinaryUtil;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
 import org.bouncycastle.util.Arrays;
 
@@ -21,13 +22,16 @@ import org.bouncycastle.util.Arrays;
 @ToString(of = { "base64" }, includeFieldNames = false)
 public class ByteArray implements JsonStringSerializable {
 
+    @NonNull
     private final byte[] bytes;
+
+    @NonNull
     private final String base64;
 
     /**
      * Create a new instance by copying the contents of <code>bytes</code>.
      */
-    public ByteArray(byte[] bytes) {
+    public ByteArray(@NonNull byte[] bytes) {
         this.bytes = BinaryUtil.copy(bytes);
         this.base64 = U2fB64Encoding.encode(this.bytes);
     }
@@ -47,7 +51,7 @@ public class ByteArray implements JsonStringSerializable {
      *
      * @throws Base64UrlException if <code>base64</code> is not valid Base64Url data.
      */
-    public static ByteArray fromBase64Url(final String base64) throws Base64UrlException {
+    public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
         return new ByteArray(base64);
     }
 
@@ -56,7 +60,7 @@ public class ByteArray implements JsonStringSerializable {
      *
      * @throws HexException if <code>hex</code> is not valid hexadecimal data.
      */
-    public static ByteArray fromHex(final String hex) throws HexException {
+    public static ByteArray fromHex(@NonNull final String hex) throws HexException {
         try {
             return new ByteArray(BinaryUtil.fromHex(hex));
         } catch (Exception e) {
@@ -67,7 +71,7 @@ public class ByteArray implements JsonStringSerializable {
     /**
      * @return a new instance containing a copy of this instance followed by a copy of <code>tail</code>.
      */
-    public ByteArray concat(ByteArray tail) {
+    public ByteArray concat(@NonNull ByteArray tail) {
         return new ByteArray(Arrays.concatenate(this.bytes, tail.bytes));
     }
 
