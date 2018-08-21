@@ -87,7 +87,7 @@ public class CollectedClientData {
     public final Optional<TokenBindingInfo> getTokenBinding() {
         return Optional.ofNullable(clientData.get("tokenBinding"))
             .map(tb -> {
-                if (tb != null && tb.isObject()) {
+                if (tb.isObject()) {
                     String status = tb.get("status").textValue();
                     return new TokenBindingInfo(
                         TokenBindingStatus.fromJson(status).orElseGet(() -> {
