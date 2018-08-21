@@ -158,15 +158,7 @@ public class FinishRegistrationSteps {
         public void validate() {
             final String type = clientData.getType();
 
-            if (type == null) {
-                final String message = "Missing \"type\" attribute in client data.";
-
-                if (validateTypeAttribute) {
-                    throw new IllegalArgumentException(message);
-                } else {
-                    warnings.add(message);
-                }
-            } else if (!CLIENT_DATA_TYPE.equals(type)) {
+            if (!CLIENT_DATA_TYPE.equals(type)) {
                 final String message = String.format(
                     "The \"type\" in the client data must be exactly \"%s\", was: %s",
                     CLIENT_DATA_TYPE, clientData.getType()

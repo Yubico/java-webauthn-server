@@ -313,21 +313,12 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            try {
-                if (!
-                    CLIENT_DATA_TYPE.equals(clientData.getType())
-                    ) {
-                    final String message = String.format(
-                        "The \"type\" in the client data must be exactly \"%s\", was: %s", CLIENT_DATA_TYPE, clientData.getType()
-                    );
-                    if (validateTypeAttribute) {
-                        throw new IllegalArgumentException(message);
-                    } else {
-                        warnings.add(message);
-                    }
-                }
-            } catch (NullPointerException e) {
-                final String message = "Missing \"type\" attribute in the client data.";
+            if (!
+                CLIENT_DATA_TYPE.equals(clientData.getType())
+            ) {
+                final String message = String.format(
+                    "The \"type\" in the client data must be exactly \"%s\", was: %s", CLIENT_DATA_TYPE, clientData.getType()
+                );
                 if (validateTypeAttribute) {
                     throw new IllegalArgumentException(message);
                 } else {
