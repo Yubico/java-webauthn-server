@@ -18,21 +18,25 @@ public class CollectedClientData {
     /**
      * @param The client data returned from, or to be sent to, the client.
      */
+    @NonNull
     private JsonNode clientData;
 
     /**
      * The URL-safe Base64 encoded challenge as provided by the RP.
      */
+    @NonNull
     private final transient ByteArray challenge;
 
     /**
      * The fully qualified origin of the requester, as identified by the client.
      */
+    @NonNull
     private final transient String origin;
 
     /**
      * The type of the requested operation, set by the client.
      */
+    @NonNull
     private final transient String type;
 
     public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
