@@ -1549,6 +1549,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           step.validations shouldBe a [Success[_]]
           step.tryNext shouldBe a [Success[_]]
+          step.next.isAttestationTrusted should be (true)
         }
       }
 
