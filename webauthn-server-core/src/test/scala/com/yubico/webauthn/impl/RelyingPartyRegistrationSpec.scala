@@ -1364,7 +1364,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Success[_]]
-              step.attestationTrusted should be (true)
+              step.attestationTrusted should be (false)
               step.tryNext shouldBe a [Success[_]]
             }
           }
@@ -1394,7 +1394,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a [Success[_]]
-              step.attestationTrusted should be (true)
+              step.attestationTrusted should be (false)
               step.tryNext shouldBe a [Success[_]]
             }
           }
@@ -1556,7 +1556,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           step.validations shouldBe a [Success[_]]
           step.tryNext shouldBe a [Success[_]]
-          step.next.isAttestationTrusted should be (true)
         }
       }
 
