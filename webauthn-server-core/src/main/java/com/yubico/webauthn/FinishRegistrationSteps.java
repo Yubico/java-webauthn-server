@@ -13,10 +13,8 @@ import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserVerificationRequirement;
-import com.yubico.webauthn.exception.Base64UrlException;
 import com.yubico.webauthn.impl.ExtensionsValidation;
 import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier;
 import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver;
@@ -533,7 +531,7 @@ public class FinishRegistrationSteps {
             switch (attestationType) {
                 case SELF_ATTESTATION:
                 case NONE:
-                    return allowUntrustedAttestation;
+                    return false;
 
                 case BASIC:
                     return attestationMetadata().filter(Attestation::isTrusted).isPresent();
