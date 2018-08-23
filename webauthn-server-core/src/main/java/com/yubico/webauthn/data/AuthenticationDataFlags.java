@@ -1,11 +1,7 @@
 package com.yubico.webauthn.data;
 
-import lombok.Value;
-
-
-@Value
 public class AuthenticationDataFlags {
-    public byte value;
+    public final byte value;
 
     /** User present */
     public final boolean UP;
