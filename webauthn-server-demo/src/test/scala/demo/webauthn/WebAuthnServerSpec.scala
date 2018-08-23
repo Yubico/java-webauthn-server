@@ -26,14 +26,17 @@ import com.yubico.webauthn.util.WebAuthnCodecs
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
+import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 
 import scala.collection.JavaConverters._
 
 
+@RunWith(classOf[JUnitRunner])
 class WebAuthnServerSpec extends FunSpec with Matchers {
 
   private val jsonMapper = WebAuthnCodecs.json()

@@ -2,13 +2,16 @@ package com.yubico.webauthn.impl
 
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.Util
+import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 
 import scala.util.Success
 import scala.util.Try
 
 
+@RunWith(classOf[JUnitRunner])
 class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
   val verifier = new PackedAttestationStatementVerifier

@@ -4,10 +4,12 @@ import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.impl.RegistrationTestData
 import com.yubico.webauthn.util.WebAuthnCodecs
 import demo.webauthn.data.RegistrationResponse
+import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 
-
+@RunWith(classOf[JUnitRunner])
 class JsonSerializationSpec extends FunSpec with Matchers {
 
   private val jsonMapper = WebAuthnCodecs.json()
