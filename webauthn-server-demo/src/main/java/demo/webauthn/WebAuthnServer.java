@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import lombok.NonNull;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,8 +119,8 @@ public class WebAuthnServer {
     }
 
     public Either<String, RegistrationRequest> startRegistration(
-        String username,
-        String displayName,
+        @NonNull String username,
+        @NonNull String displayName,
         Optional<String> credentialNickname,
         boolean requireResidentKey
     ) {
@@ -151,7 +152,7 @@ public class WebAuthnServer {
     }
 
     public <T> Either<List<String>, AssertionRequest> startAddCredential(
-        String username,
+        @NonNull String username,
         Optional<String> credentialNickname,
         boolean requireResidentKey,
         Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated

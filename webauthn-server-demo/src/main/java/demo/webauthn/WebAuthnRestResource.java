@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -120,8 +121,8 @@ public class WebAuthnRestResource {
     @Path("register")
     @POST
     public Response startRegistration(
-        @FormParam("username") String username,
-        @FormParam("displayName") String displayName,
+        @NonNull @FormParam("username") String username,
+        @NonNull @FormParam("displayName") String displayName,
         @FormParam("credentialNickname") String credentialNickname,
         @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
     ) throws MalformedURLException {
@@ -145,7 +146,7 @@ public class WebAuthnRestResource {
 
     @Path("register/finish")
     @POST
-    public Response finishRegistration(String responseJson) {
+    public Response finishRegistration(@NonNull String responseJson) {
         logger.trace("finishRegistration responseJson: {}", responseJson);
         Either<List<String>, WebAuthnServer.SuccessfulRegistrationResult> result = server.finishRegistration(responseJson);
         return finishResponse(
@@ -185,7 +186,7 @@ public class WebAuthnRestResource {
 
     @Path("authenticate/finish")
     @POST
-    public Response finishAuthentication(String responseJson) {
+    public Response finishAuthentication(@NonNull String responseJson) {
         logger.trace("finishAuthentication responseJson: {}", responseJson);
 
         Either<List<String>, WebAuthnServer.SuccessfulAuthenticationResult> result = server.finishAuthentication(responseJson);
@@ -200,7 +201,10 @@ public class WebAuthnRestResource {
 
     @Path("action/{action}/finish")
     @POST
-    public Response finishAuthenticatedAction(@PathParam("action") String action, String responseJson) {
+    public Response finishAuthenticatedAction(
+        @NonNull @PathParam("action") String action,
+        @NonNull String responseJson
+    ) {
         logger.trace("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
         Either<List<String>, ?> mappedResult = server.finishAuthenticatedAction(responseJson);
 
@@ -229,7 +233,7 @@ public class WebAuthnRestResource {
     @Path("action/add-credential")
     @POST
     public Response addCredential(
-        @FormParam("username") String username,
+        @NonNull @FormParam("username") String username,
         @FormParam("credentialNickname") String credentialNickname,
         @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
     ) throws MalformedURLException {
@@ -256,15 +260,15 @@ public class WebAuthnRestResource {
 
     @Path("action/add-credential/finish/finish")
     @POST
-    public Response finishAddCredential(String responseJson) {
+    public Response finishAddCredential(@NonNull String responseJson) {
         return finishRegistration(responseJson);
     }
 
     @Path("action/deregister")
     @POST
     public Response deregisterCredential(
-        @FormParam("username") String username,
-        @FormParam("credentialId") String credentialIdBase64
+        @NonNull @FormParam("username") String username,
+        @NonNull @FormParam("credentialId") String credentialIdBase64
     ) throws MalformedURLException {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialIdBase64);
 
@@ -302,7 +306,9 @@ public class WebAuthnRestResource {
 
     @Path("delete-account")
     @DELETE
-    public Response deleteAccount(@FormParam("username") String username) {
+    public Response deleteAccount(
+        @NonNull @FormParam("username") String username
+    ) {
         logger.trace("deleteAccount username: {}", username);
 
         Either<List<String>, JsonNode> result = server.deleteAccount(username, () ->
