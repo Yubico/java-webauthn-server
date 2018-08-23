@@ -24,8 +24,8 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
     @JsonCreator
     public AuthenticatorAttestationResponse(
-        @JsonProperty ByteArray attestationObject,
-        @JsonProperty ByteArray clientDataJSON
+        @JsonProperty("attestationObject") ByteArray attestationObject,
+        @JsonProperty("clientDataJSON") ByteArray clientDataJSON
     ) throws IOException, Base64UrlException {
         this.attestationObject = attestationObject;
         this.clientDataJSON = clientDataJSON;

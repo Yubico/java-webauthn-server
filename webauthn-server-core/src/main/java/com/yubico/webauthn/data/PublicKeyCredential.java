@@ -34,9 +34,9 @@ public class PublicKeyCredential<A extends AuthenticatorResponse> implements Cre
 
     @JsonCreator
     public PublicKeyCredential(
-        @JsonProperty ByteArray id,
-        @JsonProperty A response,
-        @JsonProperty JsonNode clientExtensionResults
+        @JsonProperty("id") ByteArray id,
+        @JsonProperty("response") A response,
+        @JsonProperty("clientExtensionResults") JsonNode clientExtensionResults
     ) {
         this.id = id;
         this.response = response;

@@ -1,5 +1,6 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;
@@ -32,6 +33,7 @@ public class ByteArray implements WithStringId {
         this.base64 = U2fB64Encoding.encode(this.bytes);
     }
 
+    @JsonCreator
     private ByteArray(String base64) throws Base64UrlException {
         try {
             this.bytes = U2fB64Encoding.decode(base64);
