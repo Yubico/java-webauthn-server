@@ -57,10 +57,6 @@ public class MetadataObject {
         version = data.get("version").asLong();
     }
 
-    public String toJson() {
-        return data.toString();
-    }
-
     public String getIdentifier() {
         return identifier;
     }
@@ -81,29 +77,4 @@ public class MetadataObject {
         return MoreObjects.firstNonNull(devices, ImmutableList.<JsonNode>of());
     }
 
-    public static List<MetadataObject> parseFromJson(String jsonData) throws U2fBadConfigurationException {
-        JsonNode items;
-        try {
-            items = OBJECT_MAPPER.readValue(jsonData, JsonNode.class);
-            if (!items.isArray()) {
-                items = OBJECT_MAPPER.createArrayNode().add(items);
-            }
-        } catch (IOException e) {
-            throw new U2fBadConfigurationException("Malformed data", e);
-        }
-
-        ImmutableList.Builder<MetadataObject> objects = ImmutableList.builder();
-        for (JsonNode item : items) {
-            objects.add(MetadataObject.fromJson(item.toString()));
-        }
-        return objects.build();
-    }
-
-    public static MetadataObject fromJson(String json) throws U2fBadConfigurationException {
-        try {
-            return OBJECT_MAPPER.readValue(json, MetadataObject.class);
-        } catch (IOException e) {
-            throw new U2fBadConfigurationException("Malformed data", e);
-        }
-    }
 }

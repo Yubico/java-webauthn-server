@@ -102,7 +102,7 @@ public class WebAuthnServer {
         try {
             is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
             resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException | CertificateException | U2fBadConfigurationException e) {
+        } catch (IOException | CertificateException e) {
             logger.error("createDefaultMetadataResolver failed", e);
         } finally {
             Closeables.closeQuietly(is);
