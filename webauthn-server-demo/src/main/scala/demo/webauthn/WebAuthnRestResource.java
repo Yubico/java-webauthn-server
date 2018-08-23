@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.util.Either;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.meta.VersionInfo;
 import com.yubico.webauthn.util.WebAuthnCodecs;
@@ -33,9 +34,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.util.Either;
-import scala.util.Left;
-import scala.util.Right;
 
 @Path("/v1")
 @Produces(MediaType.APPLICATION_JSON)
@@ -237,10 +235,10 @@ public class WebAuthnRestResource {
 
         Either<List<String>, AssertionRequest> result = server.startAddCredential(username, credentialNickname, requireResidentKey, (RegistrationRequest request) -> {
             try {
-                return Right.apply(new StartRegistrationResponse(request));
+                return Either.right(new StartRegistrationResponse(request));
             } catch (MalformedURLException e) {
                 logger.error("Failed to construct registration response", e);
-                return Left.apply(Arrays.asList("Failed to construct response. This is probably a bug in the server."));
+                return Either.left(Arrays.asList("Failed to construct response. This is probably a bug in the server."));
             }
         });
 

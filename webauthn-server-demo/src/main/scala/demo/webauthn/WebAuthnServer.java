@@ -16,6 +16,7 @@ import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
+import com.yubico.util.Either;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
@@ -47,9 +48,6 @@ import java.util.function.Supplier;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.util.Either;
-import scala.util.Left;
-import scala.util.Right;
 
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
@@ -142,9 +140,9 @@ public class WebAuthnServer {
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
-            return Right.apply(request);
+            return Either.right(request);
         } else {
-            return Left.apply("The username \"" + username + "\" is already registered.");
+            return Either.left("The username \"" + username + "\" is already registered.");
         }
     }
 
@@ -152,13 +150,13 @@ public class WebAuthnServer {
         logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
         if (username == null || username.isEmpty()) {
-            return Left.apply(Arrays.asList("username must not be empty."));
+            return Either.left(Arrays.asList("username must not be empty."));
         }
 
         Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
 
         if (registrations.isEmpty()) {
-            return Left.apply(Arrays.asList("The username \"" + username + "\" is not registered."));
+            return Either.left(Arrays.asList("The username \"" + username + "\" is not registered."));
         } else {
             final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
@@ -199,7 +197,7 @@ public class WebAuthnServer {
             response = jsonMapper.readValue(responseJson, RegistrationResponse.class);
         } catch (IOException e) {
             logger.error("JSON error in finishRegistration; responseJson: {}", responseJson, e);
-            return Left.apply(Arrays.asList("Registration failed!", "Failed to decode response object.", e.getMessage()));
+            return Either.left(Arrays.asList("Registration failed!", "Failed to decode response object.", e.getMessage()));
         }
 
         RegistrationRequest request = registerRequestStorage.getIfPresent(response.getRequestId());
@@ -207,7 +205,7 @@ public class WebAuthnServer {
 
         if (request == null) {
             logger.debug("fail finishRegistration responseJson: {}", responseJson);
-            return Left.apply(Arrays.asList("Registration failed!", "No such registration in progress."));
+            return Either.left(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
             try {
                 RegistrationResult registration = rp.finishRegistration(
@@ -216,7 +214,7 @@ public class WebAuthnServer {
                     Optional.empty()
                 );
 
-                return Right.apply(
+                return Either.right(
                     new SuccessfulRegistrationResult(
                         request,
                         response,
@@ -232,7 +230,7 @@ public class WebAuthnServer {
                 );
             } catch (Exception e) {
                 logger.debug("fail finishRegistration responseJson: {}", responseJson, e);
-                return Left.apply(Arrays.asList("Registration failed!", e.getMessage()));
+                return Either.left(Arrays.asList("Registration failed!", e.getMessage()));
             }
         }
     }
@@ -241,7 +239,7 @@ public class WebAuthnServer {
         logger.trace("startAuthentication username: {}", username);
 
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
-            return Left.apply(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
+            return Either.left(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequest request = rp.startAssertion(
                 username,
@@ -251,7 +249,7 @@ public class WebAuthnServer {
 
             assertRequestStorage.put(request.getRequestId(), request);
 
-            return Right.apply(request);
+            return Either.right(request);
         }
     }
 
@@ -272,14 +270,14 @@ public class WebAuthnServer {
             response = jsonMapper.readValue(responseJson, AssertionResponse.class);
         } catch (IOException e) {
             logger.debug("Failed to decode response object", e);
-            return Left.apply(Arrays.asList("Assertion failed!", "Failed to decode response object.", e.getMessage()));
+            return Either.left(Arrays.asList("Assertion failed!", "Failed to decode response object.", e.getMessage()));
         }
 
         AssertionRequest request = assertRequestStorage.getIfPresent(response.getRequestId());
         assertRequestStorage.invalidate(response.getRequestId());
 
         if (request == null) {
-            return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
+            return Either.left(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
             try {
                 AssertionResult result = rp.finishAssertion(
@@ -300,7 +298,7 @@ public class WebAuthnServer {
                         );
                     }
 
-                    return Right.apply(
+                    return Either.right(
                         new SuccessfulAuthenticationResult(
                             request,
                             response,
@@ -309,28 +307,27 @@ public class WebAuthnServer {
                         )
                     );
                 } else {
-                    return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
+                    return Either.left(Arrays.asList("Assertion failed: Invalid assertion."));
                 }
             } catch (Exception e) {
                 logger.debug("Assertion failed", e);
-                return Left.apply(Arrays.asList("Assertion failed!", e.getMessage()));
+                return Either.left(Arrays.asList("Assertion failed!", e.getMessage()));
             }
         }
     }
 
     public Either<List<String>, AssertionRequest> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
-        return com.yubico.util.Either.fromScala(startAuthentication(username))
+        return startAuthentication(username)
             .map(request -> {
                 synchronized (authenticatedActions) {
                     authenticatedActions.put(request, action);
                 }
                 return request;
-            })
-            .toScala();
+            });
     }
 
     public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
-        return com.yubico.util.Either.fromScala(finishAuthentication(responseJson))
+        return finishAuthentication(responseJson)
             .flatMap(result -> {
                 AuthenticatedAction<?> action = authenticatedActions.getIfPresent(result.request);
                 authenticatedActions.invalidate(result.request);
@@ -339,21 +336,20 @@ public class WebAuthnServer {
                         "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
                     ));
                 } else {
-                    return com.yubico.util.Either.fromScala(action.apply(result));
+                    return action.apply(result);
                 }
-            })
-            .toScala();
+            });
     }
 
     public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, String credentialId, Function<CredentialRegistration, T> resultMapper) {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
-            return Left.apply(Arrays.asList("Username must not be empty."));
+            return Either.left(Arrays.asList("Username must not be empty."));
         }
 
         if (credentialId == null || credentialId.isEmpty()) {
-            return Left.apply(Arrays.asList("Credential ID must not be empty."));
+            return Either.left(Arrays.asList("Credential ID must not be empty."));
         }
 
         AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
@@ -361,9 +357,9 @@ public class WebAuthnServer {
 
             if (credReg.isPresent()) {
                 userStorage.removeRegistrationByUsername(username, credReg.get());
-                return Right.apply(resultMapper.apply(credReg.get()));
+                return Either.right(resultMapper.apply(credReg.get()));
             } else {
-                return Left.apply(Arrays.asList("Credential ID not registered:" + credentialId));
+                return Either.left(Arrays.asList("Credential ID not registered:" + credentialId));
             }
         };
 
@@ -374,15 +370,15 @@ public class WebAuthnServer {
         logger.trace("deleteAccount username: {}", username);
 
         if (username == null || username.isEmpty()) {
-            return Left.apply(Arrays.asList("Username must not be empty."));
+            return Either.left(Arrays.asList("Username must not be empty."));
         }
 
         boolean removed = userStorage.removeAllRegistrations(username);
 
         if (removed) {
-            return Right.apply(onSuccess.get());
+            return Either.right(onSuccess.get());
         } else {
-            return Left.apply(Arrays.asList("Username not registered:" + username));
+            return Either.left(Arrays.asList("Username not registered:" + username));
         }
     }
 

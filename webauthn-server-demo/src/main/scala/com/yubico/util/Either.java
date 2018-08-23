@@ -1,9 +1,8 @@
 package com.yubico.util;
 
 
+import java.util.Optional;
 import java.util.function.Function;
-import scala.util.Left;
-import scala.util.Right;
 
 public final class Either<L, R> {
 
@@ -31,17 +30,17 @@ public final class Either<L, R> {
         return isRight;
     }
 
-    public final L left() {
+    public final Optional<L> left() {
         if (isLeft()) {
-            return leftValue;
+            return Optional.of(leftValue);
         } else {
             throw new IllegalStateException("Cannot call left() on a right value.");
         }
     }
 
-    public final R right() {
+    public final Optional<R> right() {
         if (isRight()) {
-            return rightValue;
+            return Optional.of(rightValue);
         } else {
             throw new IllegalStateException("Cannot call right() on a left value.");
         }
@@ -65,22 +64,6 @@ public final class Either<L, R> {
 
     public static <L, R> Either<L, R> right(R value) {
         return new Either<>(value);
-    }
-
-    public static <L, R> Either<L, R> fromScala(scala.util.Either<L, R> scala) {
-        if (scala.isRight()) {
-            return Either.right(scala.right().get());
-        } else {
-            return Either.left(scala.left().get());
-        }
-    }
-
-    public final scala.util.Either<L, R> toScala() {
-        if (isRight()) {
-            return Right.apply(rightValue);
-        } else {
-            return Left.apply(leftValue);
-        }
     }
 
 }
