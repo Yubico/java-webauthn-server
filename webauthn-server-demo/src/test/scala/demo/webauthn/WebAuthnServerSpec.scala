@@ -42,7 +42,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   private val jsonMapper = WebAuthnCodecs.json()
   private val username = "foo-user"
   private val displayName = "Foo User"
-  private val credentialNickname = "My Lovely Credential"
+  private val credentialNickname = Some("My Lovely Credential").asJava
   private val requireResidentKey = false
   private val requestId = ByteArray.fromBase64Url("request1")
   private val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
@@ -161,7 +161,6 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
     val registrations = util.Arrays.asList(CredentialRegistration.builder()
       .signatureCount(testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter)
-      .username(testData.request.getUser.getName)
       .userIdentity(testData.request.getUser)
       .credentialNickname(credentialNickname)
       .registrationTime(Instant.parse("2018-07-06T15:07:15Z"))

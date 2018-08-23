@@ -17,7 +17,6 @@ public class CredentialRegistration {
 
     long signatureCount;
 
-    String username;
     UserIdentity userIdentity;
     Optional<String> credentialNickname;
 
@@ -28,6 +27,10 @@ public class CredentialRegistration {
     @JsonProperty("registrationTime")
     public String getRegistrationTimestamp() {
         return registrationTime.toString();
+    }
+
+    public String getUsername() {
+        return userIdentity.getName();
     }
 
 }

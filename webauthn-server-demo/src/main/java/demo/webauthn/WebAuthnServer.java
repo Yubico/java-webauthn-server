@@ -229,7 +229,6 @@ public class WebAuthnServer {
                         request,
                         response,
                         addRegistration(
-                            request.getUsername(),
                             request.getPublicKeyCredentialCreationOptions().getUser(),
                             request.getCredentialNickname(),
                             response,
@@ -393,14 +392,12 @@ public class WebAuthnServer {
     }
 
     private CredentialRegistration addRegistration(
-        String username,
         UserIdentity userIdentity,
         Optional<String> nickname,
         RegistrationResponse response,
         RegistrationResult registration
     ) {
         CredentialRegistration reg = CredentialRegistration.builder()
-            .username(username)
             .userIdentity(userIdentity)
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
@@ -409,14 +406,14 @@ public class WebAuthnServer {
             .build();
 
         logger.debug(
-            "Adding registration: username: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
-            username,
+            "Adding registration: user: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
+            userIdentity,
             nickname,
             registration,
             registration.getKeyId().getId(),
             registration.getPublicKeyCose()
         );
-        userStorage.addRegistrationByUsername(username, reg);
+        userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
         return reg;
     }
 }
