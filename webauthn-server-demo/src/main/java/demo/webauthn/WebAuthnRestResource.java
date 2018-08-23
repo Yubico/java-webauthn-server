@@ -90,7 +90,7 @@ public class WebAuthnRestResource {
 
     @GET
     public Response index() throws IOException {
-        return Response.ok(jsonMapper.writeValueAsString(new IndexResponse())).build();
+        return Response.ok(writeJson(new IndexResponse())).build();
     }
 
     private static final class VersionResponse {
@@ -99,7 +99,7 @@ public class WebAuthnRestResource {
     @GET
     @Path("version")
     public Response version() throws JsonProcessingException {
-        return Response.ok(jsonMapper.writeValueAsString(new VersionResponse())).build();
+        return Response.ok(writeJson(new VersionResponse())).build();
     }
 
 
@@ -282,7 +282,7 @@ public class WebAuthnRestResource {
             try {
                 return ((ObjectNode) jsonFactory.objectNode()
                         .set("success", jsonFactory.booleanNode(true)))
-                        .set("droppedRegistration", jsonMapper.readTree(jsonMapper.writeValueAsString(credentialRegistration)))
+                        .set("droppedRegistration", jsonMapper.readTree(writeJson(credentialRegistration)))
                 ;
             } catch (IOException e) {
                 logger.error("Failed to write response as JSON", e);
@@ -323,7 +323,7 @@ public class WebAuthnRestResource {
 
     private Response startResponse(String operationName, Object request) {
         try {
-            String json = jsonMapper.writeValueAsString(request);
+            String json = writeJson(request);
             logger.debug("{} JSON response: {}", operationName, json);
             return Response.ok(json).build();
         } catch (IOException e) {
@@ -336,7 +336,7 @@ public class WebAuthnRestResource {
         if (result.isRight()) {
             try {
                 return Response.ok(
-                    jsonMapper.writeValueAsString(result.right().get())
+                    writeJson(result.right().get())
                 ).build();
             } catch (JsonProcessingException e) {
                 logger.error("Failed to encode response as JSON: {}", result.right().get(), e);
@@ -368,7 +368,7 @@ public class WebAuthnRestResource {
         logger.debug("Encoding messages as JSON: {}", messages);
         try {
             return response.entity(
-                jsonMapper.writeValueAsString(
+                writeJson(
                     jsonFactory.objectNode()
                         .set("messages", jsonFactory.arrayNode()
                             .addAll(messages.stream().map(jsonFactory::textNode).collect(Collectors.toList()))
@@ -378,6 +378,14 @@ public class WebAuthnRestResource {
         } catch (JsonProcessingException e) {
             logger.error("Failed to encode messages as JSON: {}", messages, e);
             return jsonFail();
+        }
+    }
+
+    private String writeJson(Object o) throws JsonProcessingException {
+        if (uriInfo.getQueryParameters().keySet().contains("pretty")) {
+            return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+        } else {
+            return jsonMapper.writeValueAsString(o);
         }
     }
 
