@@ -117,7 +117,12 @@ public class WebAuthnServer {
             .build();
     }
 
-    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname, boolean requireResidentKey) {
+    public Either<String, RegistrationRequest> startRegistration(
+        String username,
+        String displayName,
+        Optional<String> credentialNickname,
+        boolean requireResidentKey
+    ) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
@@ -145,7 +150,12 @@ public class WebAuthnServer {
         }
     }
 
-    public <T> Either<List<String>, AssertionRequest> startAddCredential(String username, String credentialNickname, boolean requireResidentKey, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
+    public <T> Either<List<String>, AssertionRequest> startAddCredential(
+        String username,
+        Optional<String> credentialNickname,
+        boolean requireResidentKey,
+        Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated
+    ) {
         logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
         if (username == null || username.isEmpty()) {
@@ -381,7 +391,13 @@ public class WebAuthnServer {
         }
     }
 
-    private CredentialRegistration addRegistration(String username, UserIdentity userIdentity, String nickname, RegistrationResponse response, RegistrationResult registration) {
+    private CredentialRegistration addRegistration(
+        String username,
+        UserIdentity userIdentity,
+        Optional<String> nickname,
+        RegistrationResponse response,
+        RegistrationResult registration
+    ) {
         CredentialRegistration reg = CredentialRegistration.builder()
             .username(username)
             .userIdentity(userIdentity)

@@ -129,7 +129,7 @@ public class WebAuthnRestResource {
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
             displayName,
-            credentialNickname,
+            Optional.ofNullable(credentialNickname),
             requireResidentKey
         );
 
@@ -235,7 +235,7 @@ public class WebAuthnRestResource {
     ) throws MalformedURLException {
         logger.trace("addCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
-        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, credentialNickname, requireResidentKey, (RegistrationRequest request) -> {
+        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, Optional.ofNullable(credentialNickname), requireResidentKey, (RegistrationRequest request) -> {
             try {
                 return Either.right(new StartRegistrationResponse(request));
             } catch (MalformedURLException e) {

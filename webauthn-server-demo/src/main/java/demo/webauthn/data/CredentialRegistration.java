@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Wither;
@@ -18,7 +19,7 @@ public class CredentialRegistration {
 
     String username;
     UserIdentity userIdentity;
-    String credentialNickname;
+    Optional<String> credentialNickname;
 
     @JsonIgnore
     Instant registrationTime;
