@@ -73,8 +73,6 @@ allprojects  {
 evaluationDependsOnChildren()
 
 subprojects {
-  apply plugin: 'info.solidsoft.pitest'
-
   task packageSources(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -147,21 +145,6 @@ subprojects {
         }
       }
     }
-  }
-
-  pitest {
-    pitestVersion = '1.4.2'
-
-    timestampedReports = false
-    outputFormats = ['XML', 'HTML']
-
-    avoidCallsTo = [
-      'java.util.logging',
-      'org.apache.log4j',
-      'org.slf4j',
-      'org.apache.commons.logging',
-      'com.google.common.io.Closeables',
-    ]
   }
 }
 

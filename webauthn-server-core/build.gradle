@@ -1,5 +1,7 @@
 import java.nio.file.Paths
 
+apply plugin: 'info.solidsoft.pitest'
+
 description = 'WebAuthn core'
 
 apply plugin: 'scala'
@@ -50,6 +52,21 @@ jar {
       'Implementation-Vendor': 'Yubico',
     ])
   }
+}
+
+pitest {
+  pitestVersion = '1.4.2'
+
+  timestampedReports = false
+  outputFormats = ['XML', 'HTML']
+
+  avoidCallsTo = [
+    'java.util.logging',
+    'org.apache.log4j',
+    'org.slf4j',
+    'org.apache.commons.logging',
+    'com.google.common.io.Closeables',
+  ]
 }
 
 def scalaReplDistDir = file(Paths.get(project.distsDir.path, 'scala-repl'))
