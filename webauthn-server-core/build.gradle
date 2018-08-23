@@ -18,6 +18,7 @@ dependencies {
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
     [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
     [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
   )
 
   testCompile(

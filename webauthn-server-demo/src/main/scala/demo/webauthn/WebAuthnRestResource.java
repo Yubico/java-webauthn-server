@@ -20,10 +20,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.webauthn.meta.VersionInfo;
 import com.yubico.webauthn.data.AssertionRequest;
+import com.yubico.webauthn.meta.VersionInfo;
+import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.data.RegistrationRequest;
-import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,7 +43,7 @@ public class WebAuthnRestResource {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRestResource.class);
 
     private final WebAuthnServer server;
-    private final ObjectMapper jsonMapper = new ScalaJackson().get();
+    private final ObjectMapper jsonMapper = WebAuthnCodecs.json();
     private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
     public WebAuthnRestResource() {

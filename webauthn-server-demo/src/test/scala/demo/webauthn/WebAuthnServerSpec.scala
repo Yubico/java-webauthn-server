@@ -28,7 +28,6 @@ import com.yubico.webauthn.util.WebAuthnCodecs
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
-import demo.webauthn.json.ScalaJackson
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when
 import org.scalatest.FunSpec
@@ -39,7 +38,7 @@ import scala.collection.JavaConverters._
 
 class WebAuthnServerSpec extends FunSpec with Matchers {
 
-  private val jsonMapper = new ScalaJackson().get
+  private val jsonMapper = WebAuthnCodecs.json()
   private val username = "foo-user"
   private val displayName = "Foo User"
   private val credentialNickname = "My Lovely Credential"

@@ -26,11 +26,11 @@ import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.util.WebAuthnCodecs;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
-import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import scala.util.Either;
 import scala.util.Left;
 import scala.util.Right;
-import scala.util.Try;
 
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
@@ -70,7 +69,7 @@ public class WebAuthnServer {
     );
 
     private final Clock clock = Clock.systemDefaultZone();
-    private final ObjectMapper jsonMapper = new ScalaJackson().get();
+    private final ObjectMapper jsonMapper = WebAuthnCodecs.json();
 
     private final RelyingParty rp;
 

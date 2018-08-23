@@ -2,10 +2,13 @@ package com.yubico.webauthn.util;
 
 import COSE.CoseException;
 import COSE.OneKey;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.Base64Variants;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
@@ -22,7 +25,12 @@ public class WebAuthnCodecs {
     }
 
     public static ObjectMapper json() {
-        return new ObjectMapper().setBase64Variant(Base64Variants.MODIFIED_FOR_URL);
+        return new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+            .setSerializationInclusion(Include.NON_ABSENT)
+            .setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
+            .registerModule(new Jdk8Module())
+        ;
     }
 
     public static CBORObject deepCopy(CBORObject a) {
