@@ -2,6 +2,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.util.ByteArray;
 
 public interface AuthenticatorResponse {
 

@@ -5,13 +5,11 @@ import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.crypto.BouncyCastleCrypto
-import com.yubico.u2f.crypto.Crypto
-import com.yubico.u2f.crypto.ChallengeGenerator
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
+import com.yubico.util.ByteArray
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.CredentialRepository
-import com.yubico.webauthn.data.ArrayBuffer
+import com.yubico.webauthn.ChallengeGenerator
+import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -20,10 +18,8 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.test.TestAuthenticator
-import com.yubico.webauthn.impl.util.BinaryUtil
 import com.yubico.webauthn.impl.util.WebAuthnCodecs
+import com.yubico.webauthn.test.TestAuthenticator
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

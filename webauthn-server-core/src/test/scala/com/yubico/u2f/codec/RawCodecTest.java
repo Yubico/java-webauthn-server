@@ -9,12 +9,12 @@
 
 package com.yubico.u2f.codec;
 
-import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.key.RawRegisterResponse;
+import com.yubico.u2f.RawRegisterResponse;
+import com.yubico.webauthn.Crypto;
+import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import org.junit.Test;
 
-import static com.yubico.u2f.data.messages.key.CodecTestUtils.encodeRegisterResponse;
+import static com.yubico.u2f.CodecTestUtils.encodeRegisterResponse;
 import static com.yubico.u2f.testdata.GnubbyKey.ATTESTATION_CERTIFICATE;
 import static com.yubico.u2f.testdata.TestVectors.APP_ID_ENROLL_SHA256;
 import static com.yubico.u2f.testdata.TestVectors.CLIENT_DATA_ENROLL_SHA256;

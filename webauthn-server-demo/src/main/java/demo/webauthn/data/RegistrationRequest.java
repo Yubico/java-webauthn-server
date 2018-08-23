@@ -1,6 +1,6 @@
 package demo.webauthn.data;
 
-import com.yubico.webauthn.data.ByteArray;
+import com.yubico.util.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import lombok.EqualsAndHashCode;
 import lombok.Value;

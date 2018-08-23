@@ -11,9 +11,9 @@ package com.yubico.u2f.testdata;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestUtils;
-import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.util.U2fB64Encoding;
+import com.yubico.webauthn.Crypto;
+import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import java.util.Set;
 
 final public class TestVectors {

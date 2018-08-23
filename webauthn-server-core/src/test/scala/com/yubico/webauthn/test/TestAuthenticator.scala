@@ -22,17 +22,16 @@ import java.time.Instant
 import java.util.Date
 import java.util.Base64
 
+import com.yubico
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.crypto.BouncyCastleCrypto
-import com.yubico.u2f.crypto.Crypto
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
-import com.yubico.u2f.data.messages.key.util.CertificateParser
-import com.yubico.webauthn.impl.util
+import com.yubico.util.CertificateParser
+import com.yubico.util.BinaryUtil
+import com.yubico.util.ByteArray
 import com.yubico.webauthn.data
+import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -42,9 +41,8 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.impl.BouncyCastleCrypto
 import com.yubico.webauthn.impl.util.WebAuthnCodecs
-import com.yubico.webauthn.impl.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -442,7 +440,7 @@ object TestAuthenticator {
 
     new ByteArray((Vector[Byte]()
       ++ aaguid.getBytes.toVector
-      ++ util.BinaryUtil.fromHex("0020").toVector
+      ++ yubico.util.BinaryUtil.fromHex("0020").toVector
       ++ credentialId.getBytes.toVector
       ++ publicKeyCose.getBytes.toVector
     ).toArray)

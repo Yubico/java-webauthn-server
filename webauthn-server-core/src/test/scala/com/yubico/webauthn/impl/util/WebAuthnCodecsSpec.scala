@@ -2,7 +2,7 @@ package com.yubico.webauthn.impl.util
 
 import java.security.interfaces.ECPublicKey
 
-import com.yubico.u2f.crypto.BouncyCastleCrypto
+import com.yubico.webauthn.impl.BouncyCastleCrypto
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary

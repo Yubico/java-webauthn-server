@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.crypto.BouncyCastleCrypto
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
-import com.yubico.u2f.data.messages.key.util.CertificateParser
+import com.yubico.util.CertificateParser
+import com.yubico.util.BinaryUtil
+import com.yubico.util.ByteArray
 import com.yubico.webauthn.data
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
@@ -21,10 +21,8 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.test.TestAuthenticator
-import com.yubico.webauthn.impl.util.BinaryUtil
 import com.yubico.webauthn.impl.util.WebAuthnCodecs
+import com.yubico.webauthn.test.TestAuthenticator
 
 import scala.collection.JavaConverters._
 

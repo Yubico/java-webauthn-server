@@ -1,17 +1,14 @@
 package com.yubico.webauthn;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.u2f.attestation.MetadataService;
-import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.u2f.crypto.ChallengeGenerator;
-import com.yubico.u2f.crypto.Crypto;
+import com.yubico.attestation.MetadataService;
+import com.yubico.util.ByteArray;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
-import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -20,6 +17,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

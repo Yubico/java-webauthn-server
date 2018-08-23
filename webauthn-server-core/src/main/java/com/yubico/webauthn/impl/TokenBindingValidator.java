@@ -1,8 +1,7 @@
 package com.yubico.webauthn.impl;
 
-import com.yubico.webauthn.data.ByteArray;
+import com.yubico.util.ByteArray;
 import com.yubico.webauthn.data.TokenBindingInfo;
-import java.util.Objects;
 import java.util.Optional;
 
 

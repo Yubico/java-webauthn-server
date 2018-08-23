@@ -1,8 +1,6 @@
-package com.yubico.webauthn.data.impl
+package com.yubico.webauthn.data
 
-import com.yubico.webauthn.data.TokenBindingStatus
-import com.yubico.webauthn.data.AuthenticatorAttestationResponse
-import com.yubico.webauthn.data.ByteArray
+import com.yubico.util.ByteArray
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
 import org.scalatest.FunSpec

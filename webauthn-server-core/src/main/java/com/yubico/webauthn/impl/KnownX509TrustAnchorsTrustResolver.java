@@ -1,9 +1,9 @@
 package com.yubico.webauthn.impl;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.yubico.u2f.attestation.Attestation;
-import com.yubico.u2f.attestation.MetadataService;
-import com.yubico.u2f.data.messages.key.util.CertificateParser;
+import com.yubico.attestation.Attestation;
+import com.yubico.attestation.MetadataService;
+import com.yubico.util.CertificateParser;
 import com.yubico.webauthn.AttestationTrustResolver;
 import com.yubico.webauthn.data.AttestationObject;
 import java.io.IOException;

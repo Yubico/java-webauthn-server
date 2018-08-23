@@ -1,6 +1,6 @@
 package com.yubico.webauthn;
 
-import com.yubico.webauthn.data.ByteArray;
+import com.yubico.util.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RegisteredCredential;
 import java.util.List;

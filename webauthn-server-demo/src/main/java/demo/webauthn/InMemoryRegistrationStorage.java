@@ -6,7 +6,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.AssertionResult;
-import com.yubico.webauthn.data.ByteArray;
+import com.yubico.util.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.impl.util.WebAuthnCodecs;

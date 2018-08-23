@@ -1,5 +1,6 @@
 package com.yubico.webauthn.data;
 
+import com.yubico.util.ByteArray;
 import java.net.URL;
 import java.util.Optional;
 import lombok.AccessLevel;
