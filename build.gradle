@@ -3,7 +3,10 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
+    configurations.maybeCreate('pitest')
+    classpath 'com.cinnober.gradle:semver-git:2.3.1'
+    classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.3.0'
+    pitest 'org.pitest:pitest-command-line:1.4.2' // Transitive dependency from pitest plugin
   }
 }
 plugins {
@@ -24,10 +27,13 @@ if (publishEnabled) {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '4.5.1'
+  gradleVersion = '4.8'
 }
 
 allprojects  {
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT"
+
+  apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'java'
   apply plugin: 'maven'
   apply plugin: 'signing'
@@ -42,10 +48,9 @@ allprojects  {
   }
 
   group = 'com.yubico'
-  version = '0.1.0'
 
-  sourceCompatibility = 1.6
-  targetCompatibility = 1.6
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -59,11 +64,17 @@ allprojects  {
 
 
   idea.module { downloadJavadoc = true }
+
+  test {
+    failFast = true
+  }
 }
 
 evaluationDependsOnChildren()
 
 subprojects {
+  apply plugin: 'info.solidsoft.pitest'
+
   task packageSources(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -79,7 +90,7 @@ subprojects {
 
   dependencies {
 
-    compileOnly 'org.projectlombok:lombok:1.16.18'
+    compileOnly 'org.projectlombok:lombok:1.18.2'
 
     compile(
       'org.slf4j:slf4j-api:1.7.25',
@@ -88,10 +99,6 @@ subprojects {
     testCompile(
       [group: 'junit', name: 'junit', version:'4.12'],
       [group: 'org.mockito', name: 'mockito-core', version:'2.8.47'],
-    )
-
-    testRuntime(
-      'org.slf4j:slf4j-simple:1.7.25',
     )
 
   }
@@ -142,13 +149,9 @@ subprojects {
     }
   }
 
-}
-
-subprojects {
-  apply plugin: 'info.solidsoft.pitest'
-
   pitest {
-    pitestVersion = '1.2.2'
+    pitestVersion = '1.4.2'
+
     timestampedReports = false
     outputFormats = ['XML', 'HTML']
 

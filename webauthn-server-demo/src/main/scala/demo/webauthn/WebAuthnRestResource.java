@@ -1,5 +1,7 @@
 package demo.webauthn;
 
+import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -14,11 +16,12 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.webauthn.VersionInfo$;
-import demo.webauthn.data.AssertionRequest;
+import com.yubico.webauthn.meta.VersionInfo;
+import com.yubico.webauthn.data.AssertionRequest;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
@@ -61,17 +64,19 @@ public class WebAuthnRestResource {
         }
     }
     private final class Index {
-        public final URL register;
-        public final URL authenticate;
-        public final URL deregister;
         public final URL addCredential;
+        public final URL authenticate;
+        public final URL deleteAccount;
+        public final URL deregister;
+        public final URL register;
 
 
         public Index() throws MalformedURLException {
-            register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
-            authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
-            deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
             addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
+            authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
+            deleteAccount = uriInfo.getAbsolutePathBuilder().path("delete-account").build().toURL();
+            deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
+            register = uriInfo.getAbsolutePathBuilder().path("register").build().toURL();
         }
     }
     private final class Info {
@@ -89,7 +94,7 @@ public class WebAuthnRestResource {
     }
 
     private static final class VersionResponse {
-        public final VersionInfo$ version = VersionInfo$.MODULE$;
+        public final VersionInfo version = VersionInfo.getInstance();
     }
     @GET
     @Path("version")
@@ -117,17 +122,19 @@ public class WebAuthnRestResource {
     public Response startRegistration(
         @FormParam("username") String username,
         @FormParam("displayName") String displayName,
-        @FormParam("credentialNickname") String credentialNickname
+        @FormParam("credentialNickname") String credentialNickname,
+        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
     ) throws MalformedURLException {
-        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}", username, displayName, credentialNickname);
+        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}", username, displayName, credentialNickname, requireResidentKey);
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
             displayName,
-            credentialNickname
+            credentialNickname,
+            requireResidentKey
         );
 
         if (result.isRight()) {
-            return startResponse(new StartRegistrationResponse(result.right().get()));
+            return startResponse("startRegistration", new StartRegistrationResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
@@ -164,10 +171,16 @@ public class WebAuthnRestResource {
     }
     @Path("authenticate")
     @POST
-    public Response startAuthentication(@FormParam("username") String username) throws MalformedURLException {
+    public Response startAuthentication(
+        @FormParam("username") String username
+    ) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
-        AssertionRequest request = server.startAuthentication(Optional.ofNullable(username));
-        return startResponse(new StartAuthenticationResponse(request));
+        Either<List<String>, AssertionRequest> request = server.startAuthentication(Optional.ofNullable(username));
+        if (request.isRight()) {
+            return startResponse("startAuthentication", new StartAuthenticationResponse(request.right().get()));
+        } else {
+            return messagesJson(Response.status(Status.BAD_REQUEST), request.left().get());
+        }
     }
 
     @Path("authenticate/finish")
@@ -215,10 +228,14 @@ public class WebAuthnRestResource {
 
     @Path("action/add-credential")
     @POST
-    public Response addCredential(@FormParam("username") String username, @FormParam("credentialNickname") String credentialNickname) throws MalformedURLException {
-        logger.trace("addCredential username: {}, credentialNickname: {}", username, credentialNickname);
+    public Response addCredential(
+        @FormParam("username") String username,
+        @FormParam("credentialNickname") String credentialNickname,
+        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
+    ) throws MalformedURLException {
+        logger.trace("addCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
-        Either<String, AssertionRequest> result = server.startAddCredential(username, credentialNickname, (RegistrationRequest request) -> {
+        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, credentialNickname, requireResidentKey, (RegistrationRequest request) -> {
             try {
                 return Right.apply(new StartRegistrationResponse(request));
             } catch (MalformedURLException e) {
@@ -228,7 +245,7 @@ public class WebAuthnRestResource {
         });
 
         if (result.isRight()) {
-            return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
+            return startResponse("addCredential", new StartAuthenticatedActionResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
@@ -245,7 +262,10 @@ public class WebAuthnRestResource {
 
     @Path("action/deregister")
     @POST
-    public Response deregisterCredential(@FormParam("username") String username, @FormParam("credentialId") String credentialId) throws MalformedURLException {
+    public Response deregisterCredential(
+        @FormParam("username") String username,
+        @FormParam("credentialId") String credentialId
+    ) throws MalformedURLException {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
@@ -261,7 +281,7 @@ public class WebAuthnRestResource {
         }));
 
         if (result.isRight()) {
-            return startResponse(new StartAuthenticatedActionResponse(result.right().get()));
+            return startResponse("deregisterCredential", new StartAuthenticatedActionResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
@@ -270,10 +290,34 @@ public class WebAuthnRestResource {
         }
     }
 
-    private Response startResponse(Object request) {
+    @Path("delete-account")
+    @DELETE
+    public Response deleteAccount(@FormParam("username") String username) {
+        logger.trace("deleteAccount username: {}", username);
+
+        Either<List<String>, JsonNode> result = server.deleteAccount(username, () ->
+            ((ObjectNode) jsonFactory.objectNode()
+                .set("success", jsonFactory.booleanNode(true)))
+                .set("deletedAccount", jsonFactory.textNode(username))
+        );
+
+        if (result.isRight()) {
+            return Response.ok(result.right().get().toString()).build();
+        } else {
+            return messagesJson(
+                Response.status(Status.BAD_REQUEST),
+                result.left().get()
+            );
+        }
+    }
+
+    private Response startResponse(String operationName, Object request) {
         try {
-            return Response.ok(jsonMapper.writeValueAsString(request)).build();
+            String json = jsonMapper.writeValueAsString(request);
+            logger.debug("{} JSON response: {}", operationName, json);
+            return Response.ok(json).build();
         } catch (IOException e) {
+            logger.error("Failed to encode response as JSON: {}", request, e);
             return jsonFail();
         }
     }

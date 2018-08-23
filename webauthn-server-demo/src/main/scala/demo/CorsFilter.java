@@ -13,9 +13,10 @@ public class CorsFilter implements ContainerResponseFilter {
         String origin = requestContext.getHeaderString("origin");
         Config.getOrigins().stream()
             .filter(allowedOrigin -> allowedOrigin.equals(origin))
-            .forEach(allowedOrigin ->
-                responseContext.getHeaders().add("Access-Control-Allow-Origin", allowedOrigin)
-            );
+            .forEach(allowedOrigin -> {
+                responseContext.getHeaders().add("Access-Control-Allow-Origin", allowedOrigin);
+                responseContext.getHeaders().add("Access-Control-Allow-Methods", "GET,POST,DELETE");
+            });
     }
 
 }

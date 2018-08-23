@@ -52,12 +52,12 @@ object Test extends App {
   def runWith(attestationObjectBase64: String): Unit = runWith(U2fB64Encoding.decode(attestationObjectBase64).toVector)
   def runWith(attestationObject: ArrayBuffer): Unit = {
     println(attestationObject)
-    println(BinaryUtil.toHex(attestationObject))
+    println(BinaryUtil.toHex(attestationObject.toArray))
 
-    val parsedAttObj = AttestationObject(attestationObject)
+    val parsedAttObj = new AttestationObject(attestationObject.toArray)
     println(parsedAttObj)
-    println(BinaryUtil.toHex(parsedAttObj.authenticatorData.authData))
-    println(parsedAttObj.authenticatorData.attestationData.get.credentialPublicKey)
+    println(BinaryUtil.toHex(parsedAttObj.getAuthenticatorData.getBytes))
+    println(parsedAttObj.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey)
 
     val attestationObjectCbor = WebAuthnCodecs.cbor.readTree(attestationObject.toArray)
     println(attestationObjectCbor)
@@ -77,7 +77,7 @@ object Test extends App {
   def doAuthData(authDataBytes: ArrayBuffer) = {
     val rpidBytes = authDataBytes.slice(0, 32)
     val flagsByte = authDataBytes(32)
-    val flags = AuthenticationDataFlags(flagsByte)
+    val flags = new AuthenticationDataFlags(flagsByte)
     val counterBytes = authDataBytes.slice(32 + 1, 32 + 1 + 4)
     val attestedCredData = authDataBytes.drop(32 + 1 + 4)
 
@@ -85,11 +85,11 @@ object Test extends App {
     println(s"RP ID: ${rpidBytes}")
     println(s"flags: ${flagsByte.toBinaryString}")
     println(s"flags: AT=${flags.AT}, ED=${flags.ED}")
-    println(s"counter: ${BinaryUtil.getUint32(counterBytes).get}")
+    println(s"counter: ${BinaryUtil.getUint32(counterBytes.toArray)}")
 
     val aaguid = attestedCredData.slice(0, 16)
     val Lbytes = attestedCredData.slice(16, 16 + 2)
-    val L = BinaryUtil.getUint16(Lbytes).get
+    val L = BinaryUtil.getUint16(Lbytes.toArray)
     val credentialIdBytes = attestedCredData.slice(16 + 2, 16 + 2 + L)
     val credentialPublicKeyBytes = attestedCredData.drop(16 + 2 + L)
     val credentialPublicKeyCbor = WebAuthnCodecs.cbor.readTree(credentialPublicKeyBytes.toArray)
@@ -100,8 +100,8 @@ object Test extends App {
     println(s"AAGUID: ${aaguid}")
     println(s"Lbytes: ${Lbytes}")
     println(s"L: ${L}")
-    println(s"credentialId: ${BinaryUtil.toHex(credentialIdBytes)}")
-    println(s"credentialPublicKeyBytes: ${BinaryUtil.toHex(credentialPublicKeyBytes)}")
+    println(s"credentialId: ${BinaryUtil.toHex(credentialIdBytes.toArray)}")
+    println(s"credentialPublicKeyBytes: ${BinaryUtil.toHex(credentialPublicKeyBytes.toArray)}")
     println(s"credentialPublicKeyBytes length: ${credentialPublicKeyBytes.length}")
     println(s"credentialPublicKeyCbor: ${credentialPublicKeyCbor}")
     println(s"credentialPublicKeyCbor2: ${credentialPublicKeyCbor2}")
@@ -124,8 +124,8 @@ object Test extends App {
   }
 
   // doAuthData(authDataBytes)
-  val cbormeAuthDataBytes = BinaryUtil.fromHex("94929A0AB38F2C27476B274DCDF4B2959598F8A57F3F3A2BA96DFD29BF69E66741000000000000000000000000000000000000000000406C329DEF96B758CFCA94C9BEA8D09F4CF65EC52D2E9723BD29F53C71D0B203B86F3B76817073EF53BBAA56D278DFC882124A27F891766417CEEFAE009C0E9DD4A5010203262001215820A8D0EE8BC30C5B179BE237AB5BD7F1652D536090E48C17D1C3DF811D4AC4164B225820411F426127E932C44BA0BF58D400D557FACA1CC4ADA22A54CB08CE72DD20EDC0").get
-  // val cbormeAuthDataBytes = BinaryUtil.fromHex("94929A0AB38F2C27476B274DCDF4B2959598F8A57F3F3A2BA96DFD29BF69E667410000000000000000000000000000000000000000004008B11EF66645D0E9D0384C4C27C1F5D1D017D7EB4E555736A5C6277B467D5574851EA6224F62A006CAE002BD564A31748134E248DE9B004773961ACFC06B67DBA363616C6765455332353661785820FB1122187A3687A8083D0BD853332D6141A7EF2A6CB5288B975BA02BB5AAE2AB61795820A959F5DB9D83C05294CBD7CA03F40FC150547BCFD221A1D7A185262537F63699").get
+  val cbormeAuthDataBytes = BinaryUtil.fromHex("94929A0AB38F2C27476B274DCDF4B2959598F8A57F3F3A2BA96DFD29BF69E66741000000000000000000000000000000000000000000406C329DEF96B758CFCA94C9BEA8D09F4CF65EC52D2E9723BD29F53C71D0B203B86F3B76817073EF53BBAA56D278DFC882124A27F891766417CEEFAE009C0E9DD4A5010203262001215820A8D0EE8BC30C5B179BE237AB5BD7F1652D536090E48C17D1C3DF811D4AC4164B225820411F426127E932C44BA0BF58D400D557FACA1CC4ADA22A54CB08CE72DD20EDC0").toVector
+  // val cbormeAuthDataBytes = BinaryUtil.fromHex("94929A0AB38F2C27476B274DCDF4B2959598F8A57F3F3A2BA96DFD29BF69E667410000000000000000000000000000000000000000004008B11EF66645D0E9D0384C4C27C1F5D1D017D7EB4E555736A5C6277B467D5574851EA6224F62A006CAE002BD564A31748134E248DE9B004773961ACFC06B67DBA363616C6765455332353661785820FB1122187A3687A8083D0BD853332D6141A7EF2A6CB5288B975BA02BB5AAE2AB61795820A959F5DB9D83C05294CBD7CA03F40FC150547BCFD221A1D7A185262537F63699").toVector
   doAuthData(cbormeAuthDataBytes)
 
   // val parsedAuthData = AuthenticatorData(authDataBytes)

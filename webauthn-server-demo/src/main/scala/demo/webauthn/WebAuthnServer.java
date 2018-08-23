@@ -1,28 +1,40 @@
 package demo.webauthn;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Closeables;
+import com.yubico.u2f.attestation.MetadataResolver;
 import com.yubico.u2f.attestation.MetadataService;
+import com.yubico.u2f.attestation.resolvers.CompositeResolver;
+import com.yubico.u2f.attestation.resolvers.SimpleResolver;
+import com.yubico.u2f.attestation.resolvers.SimpleResolverWithEquality;
 import com.yubico.u2f.crypto.BouncyCastleCrypto;
 import com.yubico.u2f.crypto.ChallengeGenerator;
 import com.yubico.u2f.crypto.RandomChallengeGenerator;
 import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
-import com.yubico.webauthn.data.Direct$;
-import com.yubico.webauthn.data.PublicKey$;
+import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
+import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
+import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.util.BinaryUtil;
-import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
 import demo.webauthn.json.ScalaJackson;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.cert.CertificateException;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,43 +55,73 @@ import scala.util.Try;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
-    private final Cache<String, AssertionRequest> assertRequestStorage = newCache();
-    private final Cache<String, RegistrationRequest> registerRequestStorage = newCache();
-    private final InMemoryRegistrationStorage userStorage = new InMemoryRegistrationStorage();
+    private final Cache<String, AssertionRequest> assertRequestStorage;
+    private final Cache<String, RegistrationRequest> registerRequestStorage;
+    private final RegistrationStorage userStorage;
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
-    private final MetadataService metadataService = new MetadataService();
+    private final MetadataService metadataService = new MetadataService(
+        new CompositeResolver(Arrays.asList(
+            MetadataService.createDefaultMetadataResolver(),
+            createExtraMetadataResolver()
+        ))
+    );
 
     private final Clock clock = Clock.systemDefaultZone();
     private final ObjectMapper jsonMapper = new ScalaJackson().get();
 
+    private final RelyingParty rp;
 
-    private final RelyingParty rp = new RelyingParty(
-        Config.getRpIdentity(),
-        challengeGenerator,
-        Collections.singletonList(new PublicKeyCredentialParameters(-7L, PublicKey$.MODULE$)),
-        Config.getOrigins(),
-        Optional.empty(),
-        Optional.of(Direct$.MODULE$),
-        new BouncyCastleCrypto(),
-        true,
-        true,
-        userStorage,
-        Optional.of(metadataService),
-        true,
-        false
-    );
+    public WebAuthnServer() {
+        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins());
+    }
+
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<String, RegistrationRequest> registerRequestStorage, Cache<String, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
+        this.userStorage = userStorage;
+        this.registerRequestStorage = registerRequestStorage;
+        this.assertRequestStorage = assertRequestStorage;
+
+        rp = RelyingParty.builder()
+            .rp(rpIdentity)
+            .challengeGenerator(challengeGenerator)
+            .preferredPubkeyParams(Collections.singletonList(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier( -7L), PublicKeyCredentialType.PUBLIC_KEY)))
+            .origins(origins)
+            .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
+            .crypto(new BouncyCastleCrypto())
+            .credentialRepository(this.userStorage)
+            .metadataService(Optional.of(metadataService))
+            .allowMissingTokenBinding(true)
+            .allowUnrequestedExtensions(true)
+            .allowUntrustedAttestation(true)
+            .validateSignatureCounter(true)
+            .validateTypeAttribute(false)
+            .build();
+    }
+
+    private static MetadataResolver createExtraMetadataResolver() {
+        SimpleResolver resolver = new SimpleResolverWithEquality();
+        InputStream is = null;
+        try {
+            is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
+            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
+        } catch (IOException | CertificateException | U2fBadConfigurationException e) {
+            logger.error("createDefaultMetadataResolver failed", e);
+        } finally {
+            Closeables.closeQuietly(is);
+        }
+        return resolver;
+    }
 
     private static <K, V> Cache<K, V> newCache() {
         return CacheBuilder.newBuilder()
             .maximumSize(100)
-            .expireAfterAccess(1, TimeUnit.HOURS)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
             .build();
     }
 
-    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname) {
+    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname, boolean requireResidentKey) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
@@ -89,29 +132,34 @@ public class WebAuthnServer {
                 credentialNickname,
                 U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
                 rp.startRegistration(
-                    new UserIdentity(username, displayName, userId, Optional.empty()),
+                    UserIdentity.builder()
+                        .name(username)
+                        .displayName(displayName)
+                        .id(userId)
+                        .build(),
                     Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                    Optional.empty()
+                    Optional.empty(),
+                    requireResidentKey
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
-            return new Right(request);
+            return Right.apply(request);
         } else {
-            return new Left("The username \"" + username + "\" is already registered.");
+            return Left.apply("The username \"" + username + "\" is already registered.");
         }
     }
 
-    public <T> Either<String, AssertionRequest> startAddCredential(String username, String credentialNickname, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
-        logger.trace("startAddCredential username: {}, credentialNickname: {}", username, credentialNickname);
+    public <T> Either<List<String>, AssertionRequest> startAddCredential(String username, String credentialNickname, boolean requireResidentKey, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
+        logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
         if (username == null || username.isEmpty()) {
-            return Left.apply("username must not be empty.");
+            return Left.apply(Arrays.asList("username must not be empty."));
         }
 
         Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
 
         if (registrations.isEmpty()) {
-            return new Left("The username \"" + username + "\" is not registered.");
+            return Left.apply(Arrays.asList("The username \"" + username + "\" is not registered."));
         } else {
             final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
@@ -123,7 +171,8 @@ public class WebAuthnServer {
                     rp.startRegistration(
                         existingUser,
                         Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                        Optional.empty()
+                        Optional.empty(),
+                        requireResidentKey
                     )
                 );
                 registerRequestStorage.put(request.getRequestId(), request);
@@ -131,7 +180,7 @@ public class WebAuthnServer {
                 return whenAuthenticated.apply(request);
             };
 
-            return Right.apply(startAuthenticatedAction(Optional.of(username), action));
+            return startAuthenticatedAction(Optional.of(username), action);
         }
     }
 
@@ -161,49 +210,50 @@ public class WebAuthnServer {
             logger.debug("fail finishRegistration responseJson: {}", responseJson);
             return Left.apply(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
-            Try<RegistrationResult> registrationTry = rp.finishRegistration(
-                request.getPublicKeyCredentialCreationOptions(),
-                response.getCredential(),
-                Optional.empty()
-            );
+            try {
+                RegistrationResult registration = rp.finishRegistration(
+                    request.getPublicKeyCredentialCreationOptions(),
+                    response.getCredential(),
+                    Optional.empty()
+                );
 
-            if (registrationTry.isSuccess()) {
                 return Right.apply(
                     new SuccessfulRegistrationResult(
                         request,
                         response,
                         addRegistration(
                             request.getUsername(),
-                            request.getPublicKeyCredentialCreationOptions().user(),
+                            request.getPublicKeyCredentialCreationOptions().getUser(),
                             request.getCredentialNickname(),
                             response,
-                            registrationTry.get()
+                            registration
                         ),
-                        registrationTry.get().attestationTrusted()
+                        registration.isAttestationTrusted()
                     )
                 );
-            } else {
-                logger.debug("fail finishRegistration responseJson: {}", responseJson, registrationTry.failed().get());
-                return Left.apply(Arrays.asList("Registration failed!", registrationTry.failed().get().getMessage()));
+            } catch (Exception e) {
+                logger.debug("fail finishRegistration responseJson: {}", responseJson, e);
+                return Left.apply(Arrays.asList("Registration failed!", e.getMessage()));
             }
-
         }
     }
 
-    public AssertionRequest startAuthentication(Optional<String> username) {
+    public Either<List<String>, AssertionRequest> startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
-        AssertionRequest request = new AssertionRequest(
-            username,
-            U2fB64Encoding.encode(challengeGenerator.generateChallenge()),
-            rp.startAssertion(
-                username.map(userStorage::getCredentialIdsForUsername),
+
+        if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
+            return Left.apply(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
+        } else {
+            AssertionRequest request = rp.startAssertion(
+                username,
+                Optional.empty(),
                 Optional.empty()
-            )
-        );
+            );
 
-        assertRequestStorage.put(request.getRequestId(), request);
+            assertRequestStorage.put(request.getRequestId(), request);
 
-        return request;
+            return Right.apply(request);
+        }
     }
 
     @Value
@@ -212,6 +262,7 @@ public class WebAuthnServer {
         AssertionRequest request;
         AssertionResponse response;
         Collection<CredentialRegistration> registrations;
+        List<String> warnings;
     }
 
     public Either<List<String>, SuccessfulAuthenticationResult> finishAuthentication(String responseJson) {
@@ -231,75 +282,52 @@ public class WebAuthnServer {
         if (request == null) {
             return Left.apply(Arrays.asList("Assertion failed!", "No such assertion in progress."));
         } else {
-            Optional<String> returnedUserHandle = Optional.ofNullable(response.getCredential().response().userHandleBase64());
-
-            final String username;
-            if (request.getUsername().isPresent()) {
-                username = request.getUsername().get();
-            } else {
-                username = userStorage.getUsername(returnedUserHandle.get()).orElse(null);
-            }
-
-            final String userHandle = returnedUserHandle.orElseGet(() ->
-                username == null
-                    ? null
-                    : userStorage.getUserHandle(username)
-                        .map(BinaryUtil::toBase64)
-                        .orElse(null)
-            );
-
-            if (username == null || username.isEmpty() || userHandle == null || userHandle.isEmpty()) {
-                return Left.apply(Arrays.asList("User handle must be returned if username was not supplied in startAuthentication"));
-            } else {
-                Try<AssertionResult> assertionTry = rp.finishAssertion(
-                    request.getPublicKeyCredentialRequestOptions(),
+            try {
+                AssertionResult result = rp.finishAssertion(
+                    request,
                     response.getCredential(),
-                    () -> userHandle,
                     Optional.empty()
                 );
 
-                if (assertionTry.isSuccess()) {
-                    if (assertionTry.get().success()) {
-                        try {
-                            userStorage.updateSignatureCountForUsername(
-                                username,
-                                response.getCredential().id(),
-                                assertionTry.get().signatureCount()
-                            );
-                        } catch (Exception e) {
-                            logger.error(
-                                "Failed to update signature count for user \"{}\", credential \"{}\"",
-                                username,
-                                response.getCredential().id(),
-                                e
-                            );
-                        }
-
-                        return Right.apply(
-                            new SuccessfulAuthenticationResult(
-                                request,
-                                response,
-                                userStorage.getRegistrationsByUsername(username)
-                            )
+                if (result.isSuccess()) {
+                    try {
+                        userStorage.updateSignatureCount(result);
+                    } catch (Exception e) {
+                        logger.error(
+                            "Failed to update signature count for user \"{}\", credential \"{}\"",
+                            result.getUsername(),
+                            response.getCredential().getId(),
+                            e
                         );
-                    } else {
-                        return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                     }
 
+                    return Right.apply(
+                        new SuccessfulAuthenticationResult(
+                            request,
+                            response,
+                            userStorage.getRegistrationsByUsername(result.getUsername()),
+                            result.getWarnings()
+                        )
+                    );
                 } else {
-                    logger.debug("Assertion failed", assertionTry.failed().get());
-                    return Left.apply(Arrays.asList("Assertion failed!", assertionTry.failed().get().getMessage()));
+                    return Left.apply(Arrays.asList("Assertion failed: Invalid assertion."));
                 }
+            } catch (Exception e) {
+                logger.debug("Assertion failed", e);
+                return Left.apply(Arrays.asList("Assertion failed!", e.getMessage()));
             }
         }
     }
 
-    public AssertionRequest startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
-        final AssertionRequest request = startAuthentication(username);
-        synchronized (authenticatedActions) {
-            authenticatedActions.put(request, action);
-        }
-        return request;
+    public Either<List<String>, AssertionRequest> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
+        return com.yubico.util.Either.fromScala(startAuthentication(username))
+            .map(request -> {
+                synchronized (authenticatedActions) {
+                    authenticatedActions.put(request, action);
+                }
+                return request;
+            })
+            .toScala();
     }
 
     public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
@@ -340,7 +368,23 @@ public class WebAuthnServer {
             }
         };
 
-        return Right.apply(startAuthenticatedAction(Optional.of(username), action));
+        return startAuthenticatedAction(Optional.of(username), action);
+    }
+
+    public <T> Either<List<String>, T> deleteAccount(String username, Supplier<T> onSuccess) {
+        logger.trace("deleteAccount username: {}", username);
+
+        if (username == null || username.isEmpty()) {
+            return Left.apply(Arrays.asList("Username must not be empty."));
+        }
+
+        boolean removed = userStorage.removeAllRegistrations(username);
+
+        if (removed) {
+            return Right.apply(onSuccess.get());
+        } else {
+            return Left.apply(Arrays.asList("Username not registered:" + username));
+        }
     }
 
     private CredentialRegistration addRegistration(String username, UserIdentity userIdentity, String nickname, RegistrationResponse response, RegistrationResult registration) {
@@ -350,7 +394,7 @@ public class WebAuthnServer {
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .registration(registration)
-            .signatureCount(response.getCredential().response().attestation().authenticatorData().signatureCounter())
+            .signatureCount(response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter())
             .build();
 
         logger.debug(
@@ -358,8 +402,8 @@ public class WebAuthnServer {
             username,
             nickname,
             registration,
-            registration.keyId().idBase64(),
-            registration.publicKeyCose()
+            registration.getKeyId().getIdBase64(),
+            registration.getPublicKeyCose()
         );
         userStorage.addRegistrationByUsername(username, reg);
         return reg;

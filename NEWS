@@ -1,10 +1,17 @@
+== Version 0.2.0 ==
+
+* Core library now recognises username as an internally relevant concept
+* Source code translated from Scala to Java
+* Too many other changes to count
+
+
 == Version 0.1.0 ==
 
 * First release of https://www.w3.org/TR/webauthn/[Web Authentication] support
 * Merged U2F subprojects into webauthn-server-core and deleted lots of unused code
 
 
-= java-u2flib-server version history =
+== java-u2flib-server version history ==
 
 This project was forked from https://developers.yubico.com/java-u2flib-server/[java-u2flib-server]. Below is the version history from before the fork.
 

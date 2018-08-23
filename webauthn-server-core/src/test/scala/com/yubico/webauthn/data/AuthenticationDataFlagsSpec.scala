@@ -13,7 +13,7 @@ class AuthenticationDataFlagsSpec extends FunSpec with Matchers {
   describe("AuthenticationDataFlags") {
 
     describe("decodes") {
-      def decode(hex: HexString) = AuthenticationDataFlags(BinaryUtil.fromHex(hex).get(0))
+      def decode(hex: HexString) = new AuthenticationDataFlags(BinaryUtil.fromHex(hex).head)
 
       it("0x01 to UP.") {
         val flags = decode("01")
