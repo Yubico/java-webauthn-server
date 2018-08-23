@@ -8,11 +8,11 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
-import com.yubico.u2f.data.messages.json.JsonSerializable;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
-import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.util.WebAuthnCodecs;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +20,9 @@ import lombok.EqualsAndHashCode;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(of = { "data" }, callSuper = false)
-public class MetadataObject extends JsonSerializable {
+public class MetadataObject {
+    private static final ObjectMapper OBJECT_MAPPER = WebAuthnCodecs.json();
+
     private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {
     };
     private static final TypeReference LIST_STRING_TYPE = new TypeReference<List<String>>() {
@@ -55,7 +57,6 @@ public class MetadataObject extends JsonSerializable {
         version = data.get("version").asLong();
     }
 
-    @Override
     public String toJson() {
         return data.toString();
     }
@@ -100,8 +101,8 @@ public class MetadataObject extends JsonSerializable {
 
     public static MetadataObject fromJson(String json) throws U2fBadConfigurationException {
         try {
-            return fromJson(json, MetadataObject.class);
-        } catch (U2fBadInputException e) {
+            return OBJECT_MAPPER.readValue(json, MetadataObject.class);
+        } catch (IOException e) {
             throw new U2fBadConfigurationException("Malformed data", e);
         }
     }
