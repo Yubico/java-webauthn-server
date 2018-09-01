@@ -18,7 +18,6 @@ import com.yubico.attestation.resolvers.SimpleResolver
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.util.ByteArray
 import com.yubico.webauthn.RelyingParty
-import com.yubico.webauthn.FinishRegistrationSteps
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.RelyingPartyIdentity

@@ -1,8 +1,10 @@
-package com.yubico.webauthn;
+package com.yubico.webauthn.impl;
 
 
 import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.util.ByteArray;
+import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;

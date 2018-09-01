@@ -1,9 +1,13 @@
-package com.yubico.webauthn;
+package com.yubico.webauthn.impl;
 
 import COSE.CoseException;
 import com.yubico.attestation.Attestation;
 import com.yubico.attestation.MetadataService;
 import com.yubico.util.ByteArray;
+import com.yubico.webauthn.AttestationStatementVerifier;
+import com.yubico.webauthn.AttestationTrustResolver;
+import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;

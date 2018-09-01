@@ -18,6 +18,8 @@ import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
+import com.yubico.webauthn.impl.FinishAssertionSteps;
+import com.yubico.webauthn.impl.FinishRegistrationSteps;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
