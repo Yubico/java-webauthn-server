@@ -1,11 +1,9 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.util.ByteArray;
-import com.yubico.util.exception.Base64UrlException;
 import com.yubico.webauthn.impl.WebAuthnCodecs;
 import java.io.IOException;
 import lombok.NonNull;
@@ -15,13 +13,11 @@ import lombok.Value;
 @Value
 public class AttestationObject {
 
-    @JsonIgnore
     @NonNull
-    private final ByteArray bytes;
+    private final transient ByteArray bytes;
 
     @NonNull
-    @JsonIgnore
-    private final AuthenticatorData authenticatorData;
+    private final transient AuthenticatorData authenticatorData;
 
     @NonNull
     @JsonProperty("authData")
@@ -38,15 +34,15 @@ public class AttestationObject {
     @JsonProperty("attStmt")
     private final ObjectNode attestationStatement;
 
-    public AttestationObject(@NonNull ByteArray bytes) throws IOException, Base64UrlException {
+    public AttestationObject(@NonNull ByteArray bytes) throws IOException {
         this.bytes = bytes;
 
-        JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
+        final JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
         if (!decoded.isObject()) {
             throw new IllegalArgumentException("Attestation object must be a JSON object.");
         }
 
-        JsonNode authData = decoded.get("authData");
+        final JsonNode authData = decoded.get("authData");
         if (authData == null) {
             throw new IllegalArgumentException("Required property \"authData\" missing from attestation object: " + bytes.getBase64Url());
         } else {
@@ -61,7 +57,7 @@ public class AttestationObject {
             }
         }
 
-        JsonNode format = decoded.get("fmt");
+        final JsonNode format = decoded.get("fmt");
         if (format == null) {
             throw new IllegalArgumentException("Required property \"fmt\" missing from attestation object: " + bytes.getBase64Url());
         } else {
@@ -76,7 +72,7 @@ public class AttestationObject {
             }
         }
 
-        JsonNode attStmt = decoded.get("attStmt");
+        final JsonNode attStmt = decoded.get("attStmt");
         if (attStmt == null) {
             throw new IllegalArgumentException("Required property \"attStmt\" missing from attestation object: " + bytes.getBase64Url());
         } else {
