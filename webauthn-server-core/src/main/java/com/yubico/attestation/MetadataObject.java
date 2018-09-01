@@ -4,9 +4,7 @@ package com.yubico.attestation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
@@ -45,10 +43,6 @@ public class MetadataObject {
             vendorInfo = OBJECT_MAPPER.readValue(data.get("vendorInfo").traverse(), MAP_STRING_STRING_TYPE);
             trustedCertificates = OBJECT_MAPPER.readValue(data.get("trustedCertificates").traverse(), LIST_STRING_TYPE);
             devices = OBJECT_MAPPER.readValue(data.get("devices").traverse(), LIST_JSONNODE_TYPE);
-        } catch (JsonMappingException e) {
-            throw new U2fBadConfigurationException("Invalid JSON data", e);
-        } catch (JsonParseException e) {
-            throw new U2fBadConfigurationException("Invalid JSON data", e);
         } catch (IOException e) {
             throw new U2fBadConfigurationException("Invalid JSON data", e);
         }
