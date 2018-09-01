@@ -1,6 +1,6 @@
 package com.yubico.webauthn.impl
 
-import com.yubico.util.ByteArray
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec

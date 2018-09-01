@@ -16,7 +16,6 @@ import com.yubico.attestation.MetadataObject
 import com.yubico.attestation.MetadataService
 import com.yubico.attestation.resolvers.SimpleResolver
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.util.ByteArray
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.Crypto
@@ -29,6 +28,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal

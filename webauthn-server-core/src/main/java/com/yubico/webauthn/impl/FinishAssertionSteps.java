@@ -2,7 +2,7 @@ package com.yubico.webauthn.impl;
 
 
 import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.util.ByteArray;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.AssertionRequest;
@@ -12,8 +12,6 @@ import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
-import com.yubico.webauthn.impl.ExtensionsValidation;
-import com.yubico.webauthn.impl.TokenBindingValidator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;

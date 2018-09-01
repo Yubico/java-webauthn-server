@@ -9,7 +9,6 @@ import java.util.Optional
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.util.ByteArray
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.Crypto
@@ -23,6 +22,7 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.AssertionRequest
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith

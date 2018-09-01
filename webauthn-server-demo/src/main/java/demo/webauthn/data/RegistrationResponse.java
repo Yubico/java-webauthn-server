@@ -1,12 +1,10 @@
 package demo.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
-import com.yubico.util.ByteArray;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredential;
-import lombok.AllArgsConstructor;
 import lombok.Value;
 
 @Value

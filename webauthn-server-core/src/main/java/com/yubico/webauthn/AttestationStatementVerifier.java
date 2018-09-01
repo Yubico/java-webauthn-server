@@ -1,7 +1,7 @@
 package com.yubico.webauthn;
 
 import COSE.CoseException;
-import com.yubico.util.ByteArray;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import java.io.IOException;

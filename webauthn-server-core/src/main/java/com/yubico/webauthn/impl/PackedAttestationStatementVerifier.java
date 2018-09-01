@@ -7,7 +7,7 @@ import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.util.ByteArray;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.util.ExceptionUtil;
 import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationObject;

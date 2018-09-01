@@ -12,7 +12,7 @@ import COSE.ECPublicKey
 import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
 import com.yubico.util.BinaryUtil
-import com.yubico.util.ByteArray
+import com.yubico.webauthn.data.ByteArray
 
 
 object Test extends App {

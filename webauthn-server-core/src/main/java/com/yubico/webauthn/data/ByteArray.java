@@ -1,10 +1,12 @@
-package com.yubico.util;
+package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.util.exception.Base64UrlException;
-import com.yubico.util.exception.HexException;
+import com.yubico.util.BinaryUtil;
+import com.yubico.util.U2fB64Encoding;
+import com.yubico.webauthn.data.exception.Base64UrlException;
+import com.yubico.webauthn.data.exception.HexException;
 import com.yubico.util.json.JsonStringSerializable;
 import com.yubico.util.json.JsonStringSerializer;
 import lombok.EqualsAndHashCode;

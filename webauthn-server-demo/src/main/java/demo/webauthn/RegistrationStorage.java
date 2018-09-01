@@ -2,7 +2,7 @@ package demo.webauthn;
 
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.AssertionResult;
-import com.yubico.util.ByteArray;
+import com.yubico.webauthn.data.ByteArray;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.Optional;

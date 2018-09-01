@@ -1,6 +1,5 @@
 package com.yubico.webauthn.data;
 
-import com.yubico.util.ByteArray;
 import java.util.Collections;
 import java.util.List;
 import lombok.Builder;

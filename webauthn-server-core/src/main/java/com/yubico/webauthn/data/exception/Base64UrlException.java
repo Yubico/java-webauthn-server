@@ -1,4 +1,4 @@
-package com.yubico.util.exception;
+package com.yubico.webauthn.data.exception;
 
 public class Base64UrlException extends Exception {
 

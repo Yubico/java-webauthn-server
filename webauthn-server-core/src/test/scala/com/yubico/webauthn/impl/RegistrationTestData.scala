@@ -6,21 +6,20 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.util.CertificateParser
 import com.yubico.util.BinaryUtil
-import com.yubico.util.ByteArray
-import com.yubico.webauthn.data
+import com.yubico.util.CertificateParser
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
+import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.AttestationObject
+import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.AuthenticatorAttestationResponse
-import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.test.TestAuthenticator
 
 import scala.collection.JavaConverters._
@@ -30,7 +29,7 @@ object RegistrationTestDataGenerator extends App {
   regenerateTestData()
 
   def printTestDataCode(
-    credential: data.PublicKeyCredential[data.AuthenticatorAttestationResponse],
+    credential: PublicKeyCredential[AuthenticatorAttestationResponse],
     caCert: Option[X509Certificate]
   ): Unit = {
     for { caCert <- caCert } {
@@ -134,7 +133,7 @@ case class RegistrationTestData(
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None
 ) {
-  def regenerate(): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[X509Certificate]) = null
+  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse], Option[X509Certificate]) = null
 
   def clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))

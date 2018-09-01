@@ -11,7 +11,6 @@ import com.google.common.cache.CacheBuilder
 import com.yubico.attestation.Attestation
 import com.yubico.attestation.Transport
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.util.ByteArray
 import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
@@ -20,6 +19,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.impl.RegistrationTestData
 import com.yubico.webauthn.impl.WebAuthnCodecs
 import com.yubico.webauthn.test.TestAuthenticator

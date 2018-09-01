@@ -2,7 +2,7 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.attestation.MetadataService;
-import com.yubico.util.ByteArray;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;

@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.util.CertificateParser
 import com.yubico.util.BinaryUtil
-import com.yubico.util.ByteArray
 import com.yubico.webauthn.data
 import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.AuthenticatorData
@@ -41,6 +40,7 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.impl.BouncyCastleCrypto
 import com.yubico.webauthn.impl.WebAuthnCodecs
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
