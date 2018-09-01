@@ -14,15 +14,15 @@ import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 public interface Crypto {
-    void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes,
-                        byte[] signature) throws U2fBadInputException;
 
-    void checkSignature(PublicKey publicKey, byte[] signedBytes,
-                        byte[] signature) throws U2fBadInputException;
+    boolean verifySignature(X509Certificate attestationCertificate, byte[] signedBytes, byte[] signature);
+
+    boolean verifySignature(PublicKey publicKey, byte[] signedBytes, byte[] signature);
 
     PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fBadInputException;
 
     byte[] hash(byte[] bytes);
 
     byte[] hash(String str);
+
 }

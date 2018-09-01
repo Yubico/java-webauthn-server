@@ -2,7 +2,6 @@ package com.yubico.webauthn.impl;
 
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.u2f.impl.RawRegisterResponse;
 import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationData;
@@ -127,15 +126,10 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
                     throw err;
                 }
 
-                try {
-                    u2fRegisterResponse.checkSignature(
-                        attestationObject.getAuthenticatorData().getRpIdHash().getBytes(),
-                        clientDataJsonHash.getBytes()
-                    );
-                    return true;
-                } catch (U2fBadInputException e) {
-                    return false;
-                }
+                return u2fRegisterResponse.verifySignature(
+                    attestationObject.getAuthenticatorData().getRpIdHash().getBytes(),
+                    clientDataJsonHash.getBytes()
+                );
             } else {
                 throw new IllegalArgumentException("\"sig\" property of fido-u2f attestation statement must be a CBOR byte array value.");
             }

@@ -521,13 +521,13 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            try {
-                crypto.checkSignature(
+            if (!
+                crypto.verifySignature(
                     credential.publicKey,
                     signedBytes().getBytes(),
                     response.getResponse().getSignature().getBytes()
-                );
-            } catch (U2fBadInputException e) {
+                )
+            ) {
                 throw new IllegalArgumentException("Invalid assertion signature.");
             }
         }

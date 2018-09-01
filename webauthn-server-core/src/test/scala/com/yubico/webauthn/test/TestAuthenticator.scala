@@ -486,10 +486,9 @@ object TestAuthenticator {
     val sig: Signature = Signature.getInstance("SHA256withECDSA", javaCryptoProvider)
     sig.initVerify(pubKey)
     sig.update(signedDataBytes.getBytes)
-    val valid = sig.verify(signatureBytes.getBytes)
-    crypto.checkSignature(pubKey, signedDataBytes.getBytes, signatureBytes.getBytes)
 
-    valid
+    sig.verify(signatureBytes.getBytes) &&
+      crypto.verifySignature(pubKey, signedDataBytes.getBytes, signatureBytes.getBytes)
   }
 
   def verifyU2fExampleWithCert(

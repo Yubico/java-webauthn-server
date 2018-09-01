@@ -96,9 +96,9 @@ public class RawRegisterResponse {
         }
     }
 
-    public void checkSignature(byte[] appIdHash, byte[] clientDataHash) throws U2fBadInputException {
+    public boolean verifySignature(byte[] appIdHash, byte[] clientDataHash) {
         byte[] signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
-        crypto.checkSignature(attestationCertificate, signedBytes, signature);
+        return crypto.verifySignature(attestationCertificate, signedBytes, signature);
     }
 
     public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey) {

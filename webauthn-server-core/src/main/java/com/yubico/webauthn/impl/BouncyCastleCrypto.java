@@ -33,26 +33,17 @@ public class BouncyCastleCrypto implements Crypto {
     }
 
     @Override
-    public void checkSignature(X509Certificate attestationCertificate, byte[] signedBytes, byte[] signature)
-            throws U2fBadInputException {
-        checkSignature(attestationCertificate.getPublicKey(), signedBytes, signature);
+    public boolean verifySignature(X509Certificate attestationCertificate, byte[] signedBytes, byte[] signature) {
+        return verifySignature(attestationCertificate.getPublicKey(), signedBytes, signature);
     }
 
     @Override
-    public void checkSignature(PublicKey publicKey, byte[] signedBytes, byte[] signature)
-            throws U2fBadInputException {
+    public boolean verifySignature(PublicKey publicKey, byte[] signedBytes, byte[] signature) {
         try {
             Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA");
             ecdsaSignature.initVerify(publicKey);
             ecdsaSignature.update(signedBytes);
-            if (!ecdsaSignature.verify(signature)) {
-                throw new U2fBadInputException(String.format(
-                    "Signature is invalid. Public key: %s, signed data: %s , signature: %s",
-                    publicKey,
-                    U2fB64Encoding.encode(signedBytes),
-                    U2fB64Encoding.encode(signature)
-                ));
-            }
+            return ecdsaSignature.verify(signature);
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(
                 String.format(

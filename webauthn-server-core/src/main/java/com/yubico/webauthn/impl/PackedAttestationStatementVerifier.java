@@ -99,12 +99,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
             throw ExceptionUtil.wrapAndLog(log, ".binaryValue() of \"sig\" failed", e);
         }
 
-        try {
-            new BouncyCastleCrypto().checkSignature(pubkey, signedData.getBytes(), signature.getBytes());
-            return true;
-        } catch (U2fBadInputException e) {
-            return false;
-        }
+        return new BouncyCastleCrypto().verifySignature(pubkey, signedData.getBytes(), signature.getBytes());
     }
 
     private boolean verifyX5cSignature(AttestationObject attestationObject, ByteArray clientDataHash) {
