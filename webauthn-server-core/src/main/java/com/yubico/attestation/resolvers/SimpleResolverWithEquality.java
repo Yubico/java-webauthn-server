@@ -3,6 +3,10 @@ package com.yubico.attestation.resolvers;
 import com.yubico.attestation.MetadataObject;
 import java.security.cert.X509Certificate;
 
+/**
+ * Resolves a metadata object whose associated certificate has signed the
+ * argument certificate, or is equal to the argument certificate.
+ */
 public class SimpleResolverWithEquality extends SimpleResolver {
 
     @Override

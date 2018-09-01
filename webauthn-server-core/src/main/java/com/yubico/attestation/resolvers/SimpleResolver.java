@@ -20,6 +20,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Resolves a metadata object whose associated certificate has signed the
+ * argument certificate.
+ */
 public class SimpleResolver implements MetadataResolver {
     private static final Logger logger = LoggerFactory.getLogger(SimpleResolver.class);
 
