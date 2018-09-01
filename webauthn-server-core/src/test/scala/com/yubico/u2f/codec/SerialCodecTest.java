@@ -9,8 +9,8 @@
 
 package com.yubico.u2f.codec;
 
-import com.yubico.u2f.CodecTestUtils;
-import com.yubico.u2f.RawRegisterResponse;
+import com.yubico.u2f.impl.CodecTestUtils;
+import com.yubico.u2f.impl.RawRegisterResponse;
 import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import org.junit.Test;

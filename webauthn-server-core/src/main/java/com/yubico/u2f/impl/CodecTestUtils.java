@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f;
+package com.yubico.u2f.impl;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
