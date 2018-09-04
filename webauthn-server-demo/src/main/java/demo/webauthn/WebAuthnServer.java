@@ -129,8 +129,6 @@ public class WebAuthnServer {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
-            final ByteArray userId = new ByteArray(challengeGenerator.generateChallenge());
-
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
@@ -140,7 +138,7 @@ public class WebAuthnServer {
                         .user(UserIdentity.builder()
                             .name(username)
                             .displayName(displayName)
-                            .id(userId)
+                            .id(new ByteArray(challengeGenerator.generateChallenge()))
                             .build()
                         )
                         .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
