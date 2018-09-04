@@ -25,7 +25,6 @@ import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.StartAssertionOptions;
 import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import com.yubico.webauthn.impl.RandomChallengeGenerator;
 import com.yubico.webauthn.impl.WebAuthnCodecs;
 import demo.webauthn.data.AssertionRequest;
@@ -87,7 +86,6 @@ public class WebAuthnServer {
             .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
-            .crypto(new BouncyCastleCrypto())
             .credentialRepository(this.userStorage)
             .metadataService(Optional.of(metadataService))
             .allowMissingTokenBinding(true)
