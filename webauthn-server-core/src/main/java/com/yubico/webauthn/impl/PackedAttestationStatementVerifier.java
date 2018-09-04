@@ -20,6 +20,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
@@ -181,7 +182,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
 
         final String ouValue = "Authenticator Attestation";
         final String idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4";
-        final Set<String> countries = Collections.unmodifiableSet(new HashSet<>(java.util.Arrays.asList(Locale.getISOCountries())));
+        final Set<String> countries = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
 
         if (false == getDnField("C", cert).filter(c -> countries.contains(c)).isPresent()) {
             throw new IllegalArgumentException(String.format(
@@ -209,7 +210,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
                 }
             })
             .ifPresent((byte[] value) -> {
-                if (false == java.util.Arrays.equals(value, aaguid.getBytes())) {
+                if (false == Arrays.equals(value, aaguid.getBytes())) {
                     throw new IllegalArgumentException("X.509 extension " + idFidoGenCeAaguid + " (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.");
                 }
             });
