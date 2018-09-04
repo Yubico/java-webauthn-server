@@ -15,6 +15,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.StartAssertionOptions
+import com.yubico.webauthn.data.FinishAssertionOptions
 import com.yubico.webauthn.impl.WebAuthnCodecs
 import com.yubico.webauthn.impl.BouncyCastleCrypto
 import com.yubico.webauthn.test.TestAuthenticator
@@ -143,10 +144,10 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
       val request = rp.startAssertion(StartAssertionOptions.builder()
           .username(Optional.of(Defaults.username))
           .build())
-      val result = Try(rp.finishAssertion(
-        request,
-        Defaults.publicKeyCredential,
-        None.asJava
+      val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
+          .request(request)
+          .response(Defaults.publicKeyCredential)
+          .build()
       ))
 
       result shouldBe a [Success[_]]
@@ -159,10 +160,10 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
         userHandle = Some(Defaults.userHandle)
       )
 
-      val result = Try(rp.finishAssertion(
-        request,
-        response,
-        None.asJava
+      val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
+          .request(request)
+          .response(response)
+          .build()
       ))
 
       result shouldBe a [Success[_]]
@@ -170,10 +171,10 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
       val request = rp.startAssertion(StartAssertionOptions.builder().build())
-      val result = Try(rp.finishAssertion(
-        request,
-        Defaults.publicKeyCredential,
-        None.asJava
+      val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
+          .request(request)
+          .response(Defaults.publicKeyCredential)
+          .build()
       ))
 
       result shouldBe a [Failure[_]]

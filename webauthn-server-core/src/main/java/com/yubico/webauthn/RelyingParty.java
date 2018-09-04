@@ -8,6 +8,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.FinishAssertionOptions;
 import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
@@ -124,22 +125,17 @@ public class RelyingParty {
             .build();
     }
 
-    public AssertionResult finishAssertion(
-        AssertionRequest request,
-        PublicKeyCredential<AuthenticatorAssertionResponse> response,
-        Optional<ByteArray> callerTokenBindingId // = None.asJava
-    ) {
-        return _finishAssertion(request, response, callerTokenBindingId).run();
+    public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions) {
+        return _finishAssertion(finishAssertionOptions.getRequest(), finishAssertionOptions.getResponse(), finishAssertionOptions.getCallerTokenBindingId()).run();
     }
 
     /**
      * This method is NOT part of the public API.
      *
      * This method is called internally by {@link
-     * #finishAssertion(AssertionRequest, PublicKeyCredential, Optional)}. It is
-     * a separate method to facilitate testing; users should call {@link
-     * #finishAssertion(AssertionRequest, PublicKeyCredential, Optional)}
-     * instead of this method.
+     * #finishAssertion(FinishAssertionOptions)}. It is a separate method to
+     * facilitate testing; users should call {@link
+     * #finishAssertion(FinishAssertionOptions)} instead of this method.
      */
     FinishAssertionSteps _finishAssertion(
         AssertionRequest request,
