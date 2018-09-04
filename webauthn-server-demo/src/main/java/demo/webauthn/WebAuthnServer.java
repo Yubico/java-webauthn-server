@@ -162,13 +162,13 @@ public class WebAuthnServer {
         logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
         if (username == null || username.isEmpty()) {
-            return Either.left(Arrays.asList("username must not be empty."));
+            return Either.left(Collections.singletonList("username must not be empty."));
         }
 
         Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
 
         if (registrations.isEmpty()) {
-            return Either.left(Arrays.asList("The username \"" + username + "\" is not registered."));
+            return Either.left(Collections.singletonList("The username \"" + username + "\" is not registered."));
         } else {
             final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
@@ -252,7 +252,7 @@ public class WebAuthnServer {
         logger.trace("startAuthentication username: {}", username);
 
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
-            return Either.left(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
+            return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequest request = new AssertionRequest(
                 new ByteArray(challengeGenerator.generateChallenge()),
@@ -324,7 +324,7 @@ public class WebAuthnServer {
                         )
                     );
                 } else {
-                    return Either.left(Arrays.asList("Assertion failed: Invalid assertion."));
+                    return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));
                 }
             } catch (Exception e) {
                 logger.debug("Assertion failed", e);
@@ -362,11 +362,11 @@ public class WebAuthnServer {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
-            return Either.left(Arrays.asList("Username must not be empty."));
+            return Either.left(Collections.singletonList("Username must not be empty."));
         }
 
         if (credentialId == null || credentialId.getBytes().length == 0) {
-            return Either.left(Arrays.asList("Credential ID must not be empty."));
+            return Either.left(Collections.singletonList("Credential ID must not be empty."));
         }
 
         AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
@@ -376,7 +376,7 @@ public class WebAuthnServer {
                 userStorage.removeRegistrationByUsername(username, credReg.get());
                 return Either.right(resultMapper.apply(credReg.get()));
             } else {
-                return Either.left(Arrays.asList("Credential ID not registered:" + credentialId));
+                return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
             }
         };
 
@@ -387,7 +387,7 @@ public class WebAuthnServer {
         logger.trace("deleteAccount username: {}", username);
 
         if (username == null || username.isEmpty()) {
-            return Either.left(Arrays.asList("Username must not be empty."));
+            return Either.left(Collections.singletonList("Username must not be empty."));
         }
 
         boolean removed = userStorage.removeAllRegistrations(username);
@@ -395,7 +395,7 @@ public class WebAuthnServer {
         if (removed) {
             return Either.right(onSuccess.get());
         } else {
-            return Either.left(Arrays.asList("Username not registered:" + username));
+            return Either.left(Collections.singletonList("Username not registered:" + username));
         }
     }
 
