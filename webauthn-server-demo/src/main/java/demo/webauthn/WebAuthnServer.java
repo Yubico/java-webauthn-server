@@ -256,14 +256,14 @@ public class WebAuthnServer {
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
             return Either.left(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
         } else {
-            AssertionRequest request = AssertionRequest.builder()
-                .requestId(new ByteArray(challengeGenerator.generateChallenge()))
-                .request(rp.startAssertion(
+            AssertionRequest request = new AssertionRequest(
+                new ByteArray(challengeGenerator.generateChallenge()),
+                rp.startAssertion(
                     StartAssertionOptions.builder()
                         .username(username)
                         .build()
-                ))
-                .build();
+                )
+            );
 
             assertRequestStorage.put(request.getRequestId(), request);
 

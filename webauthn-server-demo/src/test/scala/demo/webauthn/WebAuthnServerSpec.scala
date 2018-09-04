@@ -121,9 +121,9 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       def newServerWithAuthenticationRequest(testData: RegistrationTestData) = {
         val assertionRequests: Cache[ByteArray, AssertionRequest] = newCache()
 
-        assertionRequests.put(requestId, AssertionRequest.builder()
-            .requestId(requestId)
-            .request(com.yubico.webauthn.data.AssertionRequest.builder()
+        assertionRequests.put(requestId, new AssertionRequest(
+            requestId,
+            com.yubico.webauthn.data.AssertionRequest.builder()
                 .username(Some(testData.userId.getName).asJava)
                 .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
                   .challenge(challenge)
@@ -131,9 +131,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
                   .build()
                 )
                 .build()
-            )
-            .build()
-        )
+        ))
 
         val userStorage = makeUserStorage(testData)
         when(userStorage.getUserHandleForUsername(testData.userId.getName)).thenReturn(Some(testData.userId.getId).asJava)
