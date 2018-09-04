@@ -96,6 +96,9 @@ public class WebAuthnServer {
             .build();
     }
 
+    /**
+     * Create a {@link MetadataResolver} with additional metadata for unreleased YubiKey Preview devices.
+     */
     private static MetadataResolver createExtraMetadataResolver() {
         SimpleResolver resolver = new SimpleResolverWithEquality();
         InputStream is = null;
