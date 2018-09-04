@@ -22,6 +22,7 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import com.yubico.webauthn.impl.RandomChallengeGenerator;
@@ -132,14 +133,16 @@ public class WebAuthnServer {
                 credentialNickname,
                 new ByteArray(challengeGenerator.generateChallenge()),
                 rp.startRegistration(
-                    UserIdentity.builder()
-                        .name(username)
-                        .displayName(displayName)
-                        .id(userId)
-                        .build(),
-                    Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                    Optional.empty(),
-                    requireResidentKey
+                    StartRegistrationOptions.builder()
+                        .user(UserIdentity.builder()
+                            .name(username)
+                            .displayName(displayName)
+                            .id(userId)
+                            .build()
+                        )
+                        .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
+                        .requireResidentKey(requireResidentKey)
+                        .build()
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
@@ -174,10 +177,11 @@ public class WebAuthnServer {
                     credentialNickname,
                     new ByteArray(challengeGenerator.generateChallenge()),
                     rp.startRegistration(
-                        existingUser,
-                        Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                        Optional.empty(),
-                        requireResidentKey
+                        StartRegistrationOptions.builder()
+                            .user(existingUser)
+                            .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
+                            .requireResidentKey(requireResidentKey)
+                            .build()
                     )
                 );
                 registerRequestStorage.put(request.getRequestId(), request);
