@@ -9,6 +9,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -72,29 +73,23 @@ public class RelyingParty {
             .build();
     }
 
-    public RegistrationResult finishRegistration(
-        PublicKeyCredentialCreationOptions request,
-        PublicKeyCredential<AuthenticatorAttestationResponse> response,
-        Optional<ByteArray> callerTokenBindingId // = Optional.empty()
-    ) {
-        return _finishRegistration(request, response, callerTokenBindingId).run();
+    public RegistrationResult finishRegistration(FinishRegistrationOptions finishRegistrationOptions) {
+        return _finishRegistration(finishRegistrationOptions.getRequest(), finishRegistrationOptions.getResponse(), finishRegistrationOptions.getCallerTokenBindingId()).run();
     }
 
     /**
      * This method is NOT part of the public API.
      *
      * This method is called internally by {@link
-     * #finishRegistration(PublicKeyCredentialCreationOptions,
-     * PublicKeyCredential, Optional)}. It is a separate method to facilitate
+     * #finishRegistration(FinishRegistrationOptions)}. It is a separate method to facilitate
      * testing; users should call {@link
-     * #finishRegistration(PublicKeyCredentialCreationOptions,
-     * PublicKeyCredential, Optional)} instead of this method.
+     * #finishRegistration(FinishRegistrationOptions)} instead of this method.
      * @return
      */
     FinishRegistrationSteps _finishRegistration(
         PublicKeyCredentialCreationOptions request,
         PublicKeyCredential<AuthenticatorAttestationResponse> response,
-        Optional<ByteArray> callerTokenBindingId // = Optional.empty()
+        Optional<ByteArray> callerTokenBindingId
     ) {
         return FinishRegistrationSteps.builder()
             .request(request)

@@ -19,6 +19,7 @@ import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
+import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
@@ -221,9 +222,10 @@ public class WebAuthnServer {
         } else {
             try {
                 RegistrationResult registration = rp.finishRegistration(
-                    request.getPublicKeyCredentialCreationOptions(),
-                    response.getCredential(),
-                    Optional.empty()
+                    FinishRegistrationOptions.builder()
+                        .request(request.getPublicKeyCredentialCreationOptions())
+                        .response(response.getCredential())
+                        .build()
                 );
 
                 return Either.right(
