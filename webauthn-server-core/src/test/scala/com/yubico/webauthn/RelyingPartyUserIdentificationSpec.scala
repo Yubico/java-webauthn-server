@@ -14,6 +14,7 @@ import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.StartAssertionOptions
 import com.yubico.webauthn.impl.WebAuthnCodecs
 import com.yubico.webauthn.impl.BouncyCastleCrypto
 import com.yubico.webauthn.test.TestAuthenticator
@@ -139,7 +140,9 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
       .build()
 
     it("succeeds for the default test case if a username was given.") {
-      val request = rp.startAssertion(Some(Defaults.username).asJava, None.asJava, None.asJava)
+      val request = rp.startAssertion(StartAssertionOptions.builder()
+          .username(Optional.of(Defaults.username))
+          .build())
       val result = Try(rp.finishAssertion(
         request,
         Defaults.publicKeyCredential,
@@ -150,7 +153,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     }
 
     it("succeeds if username was not given but userHandle was returned.") {
-      val request = rp.startAssertion(None.asJava, None.asJava, None.asJava)
+      val request = rp.startAssertion(StartAssertionOptions.builder().build())
 
       val response: PublicKeyCredential[AuthenticatorAssertionResponse] = Defaults.defaultPublicKeyCredential(
         userHandle = Some(Defaults.userHandle)
@@ -166,7 +169,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     }
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
-      val request = rp.startAssertion(None.asJava, None.asJava, None.asJava)
+      val request = rp.startAssertion(StartAssertionOptions.builder().build())
       val result = Try(rp.finishAssertion(
         request,
         Defaults.publicKeyCredential,

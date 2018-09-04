@@ -22,6 +22,7 @@ import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.StartAssertionOptions;
 import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
@@ -257,9 +258,9 @@ public class WebAuthnServer {
             AssertionRequest request = AssertionRequest.builder()
                 .requestId(new ByteArray(challengeGenerator.generateChallenge()))
                 .request(rp.startAssertion(
-                    username,
-                    Optional.empty(),
-                    Optional.empty()
+                    StartAssertionOptions.builder()
+                        .username(username)
+                        .build()
                 ))
                 .build();
 

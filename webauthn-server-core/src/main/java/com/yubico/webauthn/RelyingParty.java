@@ -1,6 +1,5 @@
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
@@ -12,11 +11,11 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.StartAssertionOptions;
 import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import com.yubico.webauthn.impl.FinishAssertionSteps;
@@ -107,23 +106,19 @@ public class RelyingParty {
             .build();
     }
 
-    public AssertionRequest startAssertion(
-        Optional<String> username,
-        Optional<List<PublicKeyCredentialDescriptor>> allowCredentials, // = None.asJava
-        Optional<JsonNode> extensions // = None.asJava
-    ) {
+    public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
         return AssertionRequest.builder()
-            .username(username)
+            .username(startAssertionOptions.getUsername())
             .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
                 .rpId(Optional.of(rp.getId()))
                 .challenge(new ByteArray(challengeGenerator.generateChallenge()))
                 .allowCredentials(
-                    (allowCredentials.map(Optional::of).orElseGet(() ->
-                        username.map(un ->
+                    (startAssertionOptions.getAllowCredentials().map(Optional::of).orElseGet(() ->
+                        startAssertionOptions.getUsername().map(un ->
                             credentialRepository.getCredentialIdsForUsername(un))
                     ))
                 )
-                .extensions(extensions)
+                .extensions(startAssertionOptions.getExtensions())
                 .build()
             )
             .build();
