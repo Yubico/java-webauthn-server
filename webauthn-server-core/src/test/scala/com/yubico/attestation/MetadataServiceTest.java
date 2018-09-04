@@ -34,8 +34,8 @@ public class MetadataServiceTest {
         Attestation attestation = service.getAttestation(attestationCert);
 
         assertTrue(attestation.isTrusted());
-        assertEquals("Yubico", attestation.getVendorProperties().get("name"));
-        assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get("deviceId"));
+        assertEquals("Yubico", attestation.getVendorProperties().get().get("name"));
+        assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get().get("deviceId"));
     }
 
     @Test
@@ -46,8 +46,8 @@ public class MetadataServiceTest {
         Attestation attestation = service.getAttestation(attestationCert);
 
         assertTrue(attestation.isTrusted());
-        assertEquals("Yubico", attestation.getVendorProperties().get("name"));
-        assertEquals("1.3.6.1.4.1.41482.1.4", attestation.getDeviceProperties().get("deviceId"));
+        assertEquals("Yubico", attestation.getVendorProperties().get().get("name"));
+        assertEquals("1.3.6.1.4.1.41482.1.4", attestation.getDeviceProperties().get().get("deviceId"));
     }
 
     @Test
@@ -57,7 +57,7 @@ public class MetadataServiceTest {
         X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT_WITH_TRANSPORTS);
         Attestation attestation = service.getAttestation(attestationCert);
 
-        assertEquals(EnumSet.of(Transport.USB, Transport.NFC), attestation.getTransports());
+        assertEquals(Optional.of(EnumSet.of(Transport.USB, Transport.NFC)), attestation.getTransports());
     }
 
     @Test
@@ -67,7 +67,7 @@ public class MetadataServiceTest {
         X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT2);
         Attestation attestation = service.getAttestation(attestationCert);
 
-        assertEquals(EnumSet.of(Transport.USB), attestation.getTransports());
+        assertEquals(Optional.of(EnumSet.of(Transport.USB)), attestation.getTransports());
     }
 
     @Test
@@ -84,8 +84,8 @@ public class MetadataServiceTest {
         Attestation attestation = service.getCachedAttestation(certFingerprint);
 
         assertTrue(attestation.isTrusted());
-        assertEquals("Yubico", attestation.getVendorProperties().get("name"));
-        assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get("deviceId"));
+        assertEquals("Yubico", attestation.getVendorProperties().get().get("name"));
+        assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get().get("deviceId"));
     }
 
     @Test

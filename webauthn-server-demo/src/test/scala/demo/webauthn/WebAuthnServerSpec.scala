@@ -169,11 +169,12 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         .keyId(PublicKeyCredentialDescriptor.builder().id(testData.response.getId).build())
         .attestationTrusted(false)
         .attestationType(AttestationType.BASIC)
-        .attestationMetadata(Some(new Attestation(
-          "metadataIdentifier",
-          Map("vendor" -> "properties").asJava,
-          Map("device" -> "properties").asJava,
-          Set(Transport.USB).asJava)
+        .attestationMetadata(Some(Attestation.builder()
+          .metadataIdentifier(Some("metadataIdentifier").asJava)
+          .vendorProperties(Some(Map("vendor" -> "properties").asJava).asJava)
+          .deviceProperties(Some(Map("device" -> "properties").asJava).asJava)
+          .transports(Some(Set(Transport.USB).asJava).asJava)
+          .build()
         ).asJava)
         .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestationData.get.getCredentialPublicKey)
         .warnings(List.empty.asJava)

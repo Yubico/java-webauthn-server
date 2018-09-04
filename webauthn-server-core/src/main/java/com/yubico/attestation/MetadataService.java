@@ -61,7 +61,7 @@ public class MetadataService {
         return resolver;
     }
 
-    private final Attestation unknownAttestation = new Attestation(null, null, null, null);
+    private final Attestation unknownAttestation = Attestation.builder().build();
     private final MetadataResolver resolver;
     private final Map<String, DeviceMatcher> matchers = new HashMap<String, DeviceMatcher>();
     private final Cache<String, Attestation> cache;
@@ -204,7 +204,12 @@ public class MetadataService {
 
         transports |= get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
 
-        return new Attestation(identifier, vendorProperties, deviceProperties, Transport.fromInt(transports));
+        return Attestation.builder()
+            .metadataIdentifier(Optional.ofNullable(identifier))
+            .vendorProperties(Optional.ofNullable(vendorProperties))
+            .deviceProperties(Optional.ofNullable(deviceProperties))
+            .transports(Optional.of(Transport.fromInt(transports)))
+            .build();
     }
 
     private int get_transports(byte[] extensionValue) {

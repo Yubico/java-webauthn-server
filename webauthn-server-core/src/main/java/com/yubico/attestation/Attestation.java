@@ -2,30 +2,39 @@
 
 package com.yubico.attestation;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import lombok.Getter;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 
-@Getter
+@Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Attestation implements Serializable {
-    private final String metadataIdentifier;
-    private final Map<String, String> vendorProperties;
-    private final Map<String, String> deviceProperties;
-    private final Set<Transport> transports;
 
-    public Attestation(String metadataIdentifier, Map<String, String> vendorProperties, Map<String, String> deviceProperties, Set<Transport> transports) {
-        this.metadataIdentifier = metadataIdentifier;
-        this.vendorProperties = vendorProperties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(vendorProperties);
-        this.deviceProperties = deviceProperties == null ? ImmutableMap.<String, String>of() : ImmutableMap.copyOf(deviceProperties);
-        this.transports = Sets.immutableEnumSet(transports == null ? ImmutableSet.<Transport>of() : transports);
-    }
+    @NonNull
+    @Builder.Default
+    private final Optional<String> metadataIdentifier = Optional.empty();
+
+    @NonNull
+    @Builder.Default
+    private final Optional<Map<String, String>> vendorProperties = Optional.empty();
+
+    @NonNull
+    @Builder.Default
+    private final Optional<Map<String, String>> deviceProperties = Optional.empty();
+
+    @NonNull
+    @Builder.Default
+    private final Optional<Set<Transport>> transports = Optional.empty();
 
     public boolean isTrusted() {
-        return metadataIdentifier != null;
+        return metadataIdentifier.isPresent();
     }
 
 }

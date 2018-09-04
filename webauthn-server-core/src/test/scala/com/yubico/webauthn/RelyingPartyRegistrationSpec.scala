@@ -1421,7 +1421,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.validations shouldBe a [Failure[_]]
               step.attestationTrusted should be (false)
               step.attestationMetadata.asScala should not be empty
-              step.attestationMetadata.get.getMetadataIdentifier should be (null)
+              step.attestationMetadata.get.getMetadataIdentifier.asScala shouldBe empty
               step.tryNext shouldBe a [Failure[_]]
             }
 
@@ -1438,7 +1438,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.validations shouldBe a [Success[_]]
               step.attestationTrusted should be (false)
               step.attestationMetadata.asScala should not be empty
-              step.attestationMetadata.get.getMetadataIdentifier should be (null)
+              step.attestationMetadata.get.getMetadataIdentifier.asScala shouldBe empty
               step.tryNext shouldBe a [Success[_]]
             }
 
@@ -1467,7 +1467,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.validations shouldBe a [Success[_]]
               step.attestationTrusted should be (true)
               step.attestationMetadata.asScala should not be empty
-              step.attestationMetadata.get.getMetadataIdentifier should equal ("Test attestation CA")
+              step.attestationMetadata.get.getMetadataIdentifier.asScala should equal (Some("Test attestation CA"))
               step.tryNext shouldBe a [Success[_]]
             }
           }
