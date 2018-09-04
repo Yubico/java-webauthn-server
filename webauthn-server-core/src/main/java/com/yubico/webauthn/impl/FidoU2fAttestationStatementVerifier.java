@@ -92,12 +92,13 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
         }
 
         final Optional<AttestationData> attData = attestationObject.getAuthenticatorData().getAttestationData();
-        if (attData == null) {
-            throw new IllegalArgumentException("fido-u2f attestation statement must have a \"sig\" property set to a DER encoded signature.");
-        }
 
         return attData.map(attestationData -> {
             JsonNode signature = attestationObject.getAttestationStatement().get("sig");
+
+            if (signature == null) {
+                throw new IllegalArgumentException("fido-u2f attestation statement must have a \"sig\" property set to a DER encoded signature.");
+            }
 
             if (signature.isBinary()) {
                 ByteArray userPublicKey;
