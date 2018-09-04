@@ -32,4 +32,14 @@ public class PublicKeyCredentialParameters {
     @Builder.Default
     private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
 
+    /**
+     * Algorithm {@link COSEAlgorithmIdentifier#ES256} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.
+     */
+    public static final PublicKeyCredentialParameters ES256 = builder().alg(COSEAlgorithmIdentifier.ES256).build();
+
+    /**
+     * Algorithm {@link COSEAlgorithmIdentifier#RS256} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.
+     */
+    public static final PublicKeyCredentialParameters RS256 = builder().alg(COSEAlgorithmIdentifier.RS256).build();
+
 }
