@@ -6,7 +6,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Principal;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -44,22 +43,45 @@ public class SimpleResolverTest {
         resolver.addMetadata(METADATA_JSON);
 
         X509Certificate cert = mock(X509Certificate.class);
-        doThrow(
-            new CertificateException("Forced failure"),
-            new NoSuchAlgorithmException("Forced failure"),
-            new InvalidKeyException("Forced failure"),
-            new NoSuchProviderException("Forced failure"),
-            new SignatureException("Forced failure")
-        ).when(cert).verify(ArgumentMatchers.<PublicKey>any());
+        doThrow(new SignatureException("Forced failure")).when(cert).verify(ArgumentMatchers.any());
         Principal issuerDN = mock(Principal.class);
         when(issuerDN.getName()).thenReturn("CN=Yubico U2F Root CA Serial 457200631");
         when(cert.getIssuerDN()).thenReturn(issuerDN);
 
         assertEquals(Optional.empty(), resolver.resolve(cert));
-        assertEquals(Optional.empty(), resolver.resolve(cert));
-        assertEquals(Optional.empty(), resolver.resolve(cert));
-        assertEquals(Optional.empty(), resolver.resolve(cert));
-        assertEquals(Optional.empty(), resolver.resolve(cert));
+    }
+
+    private void resolveThrowsExceptionOnUnexpectedError(Exception thrownException) throws Exception {
+        SimpleResolver resolver = new SimpleResolver();
+        resolver.addMetadata(METADATA_JSON);
+
+        X509Certificate cert = mock(X509Certificate.class);
+        doThrow(thrownException).when(cert).verify(ArgumentMatchers.any());
+        Principal issuerDN = mock(Principal.class);
+        when(issuerDN.getName()).thenReturn("CN=Yubico U2F Root CA Serial 457200631");
+        when(cert.getIssuerDN()).thenReturn(issuerDN);
+
+        resolver.resolve(cert);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void resolveThrowsExceptionOnCertificateException() throws Exception {
+        resolveThrowsExceptionOnUnexpectedError(new CertificateException("Forced failure"));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void resolveThrowsExceptionOnNoSuchAlgorithmException() throws Exception {
+        resolveThrowsExceptionOnUnexpectedError(new NoSuchAlgorithmException("Forced failure"));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void resolveThrowsExceptionOnInvalidKeyException() throws Exception {
+        resolveThrowsExceptionOnUnexpectedError(new InvalidKeyException("Forced failure"));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void resolveThrowsExceptionOnNoSuchProviderException() throws Exception {
+        resolveThrowsExceptionOnUnexpectedError(new NoSuchProviderException("Forced failure"));
     }
 
 }

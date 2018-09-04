@@ -50,16 +50,11 @@ public class SimpleResolver implements MetadataResolver {
             try {
                 attestationCertificate.verify(cert.getPublicKey());
                 return Optional.ofNullable(metadata.get(cert));
-            } catch (CertificateException e) {
-                logger.error("resolve failed", e);
-            } catch (NoSuchAlgorithmException e) {
-                logger.error("resolve failed", e);
-            } catch (InvalidKeyException e) {
-                logger.error("resolve failed", e);
-            } catch (NoSuchProviderException e) {
-                logger.error("resolve failed", e);
+            } catch (CertificateException | NoSuchAlgorithmException | InvalidKeyException | NoSuchProviderException e) {
+                logger.error("Resolve failed", e);
+                throw new RuntimeException("Resolve failed", e);
             } catch (SignatureException e) {
-                logger.error("resolve failed", e);
+                // Signature verification failed
             }
         }
 
