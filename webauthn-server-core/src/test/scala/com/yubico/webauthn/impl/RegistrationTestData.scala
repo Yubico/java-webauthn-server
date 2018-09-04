@@ -137,7 +137,7 @@ case class RegistrationTestData(
 
   def clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
-  def clientDataJsonHash: ByteArray = new ByteArray(new BouncyCastleCrypto().hash(clientDataJsonBytes.getBytes))
+  def clientDataJsonHash: ByteArray = new BouncyCastleCrypto().hash(clientDataJsonBytes)
   def aaguid: ByteArray = new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getAaguid
   def packedAttestationCert: X509Certificate =
     CertificateParser.parseDer(

@@ -251,7 +251,7 @@ public class FinishRegistrationSteps {
         }
 
         public ByteArray clientDataJsonHash() {
-            return new ByteArray(crypto.hash(response.getResponse().getClientDataJSON().getBytes()));
+            return crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
 
@@ -284,7 +284,7 @@ public class FinishRegistrationSteps {
         @Override
         public void validate() {
             assure(
-                new ByteArray(crypto.hash(rpId)).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
+                crypto.hash(rpId).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
                 "Wrong RP ID hash."
             );
         }

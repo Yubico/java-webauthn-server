@@ -11,8 +11,8 @@ package com.yubico.u2f.testdata;
 
 import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestUtils;
-import com.yubico.util.U2fB64Encoding;
 import com.yubico.webauthn.Crypto;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import java.util.Set;
 
@@ -23,9 +23,9 @@ final public class TestVectors {
     public static final int COUNTER_VALUE = 1;
     public static final Set<String> TRUSTED_DOMAINS = ImmutableSet.of("http://example.com");
     public static final String APP_ID_ENROLL = "http://example.com";
-    public static final byte[] APP_ID_ENROLL_SHA256 = crypto.hash(APP_ID_ENROLL);
+    public static final ByteArray APP_ID_ENROLL_SHA256 = crypto.hash(APP_ID_ENROLL);
     public static final String APP_ID_SIGN = "https://gstatic.com/securitykey/a/example.com";
-    public static final byte[] APP_ID_SIGN_SHA256 = crypto.hash(APP_ID_SIGN);
+    public static final ByteArray APP_ID_SIGN_SHA256 = crypto.hash(APP_ID_SIGN);
     public static final String ORIGIN = "http://example.com";
     public static final String SERVER_CHALLENGE_REGISTER_BASE64 =
             "vqrS6WXDe1JUs5_c3i4-LkKIHRr-3XVb3azuA5TifHo";
@@ -47,9 +47,7 @@ final public class TestVectors {
             SERVER_CHALLENGE_REGISTER_BASE64,
             CHANNEL_ID_STRING,
             ORIGIN);
-    public static final String CLIENT_DATA_REGISTRATION_BASE64 = TestUtils.BASE64.encode(CLIENT_DATA_REGISTER.getBytes());
-    public static final byte[] CLIENT_DATA_ENROLL_SHA256 = crypto.hash(CLIENT_DATA_REGISTER
-            .getBytes());
+    public static final ByteArray CLIENT_DATA_ENROLL_SHA256 = crypto.hash(CLIENT_DATA_REGISTER);
     public static final String CLIENT_DATA_SIGN = String.format(
             "{"
                     + "\"typ\":\"navigator.id.getAssertion\","
@@ -59,13 +57,12 @@ final public class TestVectors {
             SERVER_CHALLENGE_SIGN_BASE64,
             CHANNEL_ID_STRING,
             ORIGIN);
-    public static final String CLIENT_DATA_SIGN_BASE64 = U2fB64Encoding.encode(CLIENT_DATA_SIGN.getBytes());
-    public static final byte[] CLIENT_DATA_SIGN_SHA256 = TestUtils.HEX.decode(
-            "ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c4821b3b9dbc57");
-    public static final byte[] REGISTRATION_REQUEST_DATA = TestUtils.HEX.decode(
+    public static final ByteArray CLIENT_DATA_SIGN_SHA256 = new ByteArray(TestUtils.HEX.decode(
+            "ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c4821b3b9dbc57"));
+    public static final ByteArray REGISTRATION_REQUEST_DATA = new ByteArray(TestUtils.HEX.decode(
             "4142d21c00d94ffb9d504ada8f99b721f4b191ae4e37ca0140f696b6983cfacb"
-                    + "f0e6a6a97042a4f1f1c87f5f7d44315b2d852c2df5c7991cc66241bf7072d1c4");
-    public static final byte[] REGISTRATION_RESPONSE_DATA = TestUtils.HEX.decode(
+                    + "f0e6a6a97042a4f1f1c87f5f7d44315b2d852c2df5c7991cc66241bf7072d1c4"));
+    public static final ByteArray REGISTRATION_RESPONSE_DATA = new ByteArray(TestUtils.HEX.decode(
             "0504b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b"
                     + "657c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2"
                     + "f6d9402a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2"
@@ -82,11 +79,9 @@ final public class TestVectors {
                     + "fa0220631b1459f09e6330055722c8d89b7f48883b9089b88d60d1d9795902b3"
                     + "0410df304502201471899bcc3987e62e8202c9b39c33c19033f7340352dba80f"
                     + "cab017db9230e402210082677d673d891933ade6f617e5dbde2e247e70423fd5"
-                    + "ad7804a6d3d3961ef871");
+                    + "ad7804a6d3d3961ef871"));
 
-    public static final String REGISTRATION_DATA_BASE64 = U2fB64Encoding.encode(REGISTRATION_RESPONSE_DATA);
-
-    public static final byte[] REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_APP_ID = TestUtils.HEX.decode(
+    public static final ByteArray REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_APP_ID = new ByteArray(TestUtils.HEX.decode(
                 "0504b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b"
                     + "657c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2"
                     + "f6d9402a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2"
@@ -103,10 +98,9 @@ final public class TestVectors {
                     + "fa0220631b1459f09e6330055722c8d89b7f48883b9089b88d60d1d9795902b3"
                     + "0410df3046022100d2b4702fea46b322c5addd921b3f4f0fb15c69737fe7441e"
                     + "b764c03dc8f49d09022100eef7dcdf6070d8e5a45ed6be18dfc036ebf8b4faaa"
-                    + "ce7287b56e7fac1d2cb552");
-    public static final String REGISTRATION_DATA_WITH_DIFFERENT_APP_ID_BASE64 = U2fB64Encoding.encode(REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_APP_ID);
+                    + "ce7287b56e7fac1d2cb552"));
 
-    public static final byte[] REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_CLIENT_DATA_TYPE = TestUtils.HEX.decode(
+    public static final ByteArray REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_CLIENT_DATA_TYPE = new ByteArray(TestUtils.HEX.decode(
         "0504b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b"
             + "657c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2"
             + "f6d9402a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2"
@@ -123,47 +117,42 @@ final public class TestVectors {
             + "fa0220631b1459f09e6330055722c8d89b7f48883b9089b88d60d1d9795902b3"
             + "0410df30450220176386c89021f4335d953c56a0c831f98380dc198c95794a85"
             + "b08f0c4ba849ff022100a10114749d0c28e13a9ffe6dde6e622c33163b249ac1"
-            + "ffb1c8e25b3cc4907e3c");
-    public static final String REGISTRATION_DATA_WITH_DIFFERENT_CLIENT_DATA_TYPE_BASE64 = U2fB64Encoding.encode(REGISTRATION_RESPONSE_DATA_WITH_DIFFERENT_CLIENT_DATA_TYPE);
+            + "ffb1c8e25b3cc4907e3c"));
 
-    public static final byte[] KEY_HANDLE = TestUtils.HEX.decode(
+    public static final ByteArray KEY_HANDLE = new ByteArray(TestUtils.HEX.decode(
             "2a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2e3925a"
-                    + "6019551bab61d16591659cbaf00b4950f7abfe6660e2e006f76868b772d70c25");
-    public static final String KEY_HANDLE_BASE64 = U2fB64Encoding.encode(KEY_HANDLE);
-    public static final byte[] USER_PUBLIC_KEY_REGISTER_HEX = TestUtils.HEX.decode(
+                    + "6019551bab61d16591659cbaf00b4950f7abfe6660e2e006f76868b772d70c25"));
+    public static final ByteArray USER_PUBLIC_KEY_REGISTER_HEX = new ByteArray(TestUtils.HEX.decode(
             "04b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b65"
                     + "7c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2f6"
-                    + "d9");
-    public static final String USER_PUBLIC_KEY_SIGN_HEX = "BNNo8bZlut48M6IPHkKcd1DVAzZgwBkRnSmqS6erwEqnyApGu-EcqMtWdNdPMfipA_a60QX7ardK7-9NuLACXh0";
-    public static final byte[] SIGN_RESPONSE_DATA = TestUtils.HEX.decode(
+                    + "d9"));
+    public static final ByteArray SIGN_RESPONSE_DATA = new ByteArray(TestUtils.HEX.decode(
             "0100000001304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030c"
                     + "e43d406de870b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f"
-                    + "53c7b22272ec10047a923f");
-    public static final String SIGN_RESPONSE_DATA_BASE64 = U2fB64Encoding.encode(SIGN_RESPONSE_DATA);
-    public static final byte[] EXPECTED_REGISTER_SIGNED_BYTES = TestUtils.HEX.decode(
+                    + "53c7b22272ec10047a923f"));
+    public static final ByteArray EXPECTED_REGISTER_SIGNED_BYTES = new ByteArray(TestUtils.HEX.decode(
             "00f0e6a6a97042a4f1f1c87f5f7d44315b2d852c2df5c7991cc66241bf7072d1"
                     + "c44142d21c00d94ffb9d504ada8f99b721f4b191ae4e37ca0140f696b6983cfa"
                     + "cb2a552dfdb7477ed65fd84133f86196010b2215b57da75d315b7b9e8fe2e392"
                     + "5a6019551bab61d16591659cbaf00b4950f7abfe6660e2e006f76868b772d70c"
                     + "2504b174bc49c7ca254b70d2e5c207cee9cf174820ebd77ea3c65508c26da51b"
                     + "657c1cc6b952f8621697936482da0a6d3d3826a59095daf6cd7c03e2e60385d2"
-                    + "f6d9");
-    public static final byte[] EXPECTED_SIGN_SIGNED_BYTES = TestUtils.HEX.decode(
+                    + "f6d9"));
+    public static final ByteArray EXPECTED_SIGN_SIGNED_BYTES = new ByteArray(TestUtils.HEX.decode(
             "4b0be934baebb5d12d26011b69227fa5e86df94e7d94aa2949a89f2d493992ca"
                     + "0100000001ccd6ee2e47baef244d49a222db496bad0ef5b6f93aa7cc4d30c482"
-                    + "1b3b9dbc57");
-    public static final byte[] SIGNATURE_REGISTER = TestUtils.HEX.decode(
+                    + "1b3b9dbc57"));
+    public static final ByteArray SIGNATURE_REGISTER = new ByteArray(TestUtils.HEX.decode(
             "304502201471899bcc3987e62e8202c9b39c33c19033f7340352dba80fcab017"
                     + "db9230e402210082677d673d891933ade6f617e5dbde2e247e70423fd5ad7804"
-                    + "a6d3d3961ef871");
-    public static final byte[] SIGNATURE_SIGN = TestUtils.HEX.decode(
+                    + "a6d3d3961ef871"));
+    public static final ByteArray SIGNATURE_SIGN = new ByteArray(TestUtils.HEX.decode(
             "304402204b5f0cd17534cedd8c34ee09570ef542a353df4436030ce43d406de8"
                     + "70b847780220267bb998fac9b7266eb60e7cb0b5eabdfd5ba9614f53c7b22272"
-                    + "ec10047a923f");
+                    + "ec10047a923f"));
 
-    public static final byte[] SIGN_RESPONSE_INVALID_USER_PRESENCE = TestUtils.HEX.decode(
+    public static final ByteArray SIGN_RESPONSE_INVALID_USER_PRESENCE = new ByteArray(TestUtils.HEX.decode(
             "00000000013045022100adf3521ceb4e143fb3966d3017510bfbc9085a44ff13c6945aadd8"
                     + "e26ec5cc00022004916d120830f2ee44ab3c6c58c80a3dd6f5a09b01599e686d"
-                    + "ea2e7288903cae");
-    public static final String SIGN_RESPONSE_INVALID_USER_PRESENCE_BASE64 = U2fB64Encoding.encode(SIGN_RESPONSE_INVALID_USER_PRESENCE);
+                    + "ea2e7288903cae"));
 }

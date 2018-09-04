@@ -2,6 +2,7 @@ package com.yubico.webauthn.impl
 
 import java.security.interfaces.ECPublicKey
 
+import com.yubico.webauthn.data.ByteArray
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -23,7 +24,7 @@ class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenProp
     for {
       ySign: Byte <- Gen.oneOf(0x02: Byte, 0x03: Byte)
       rawBytes: Seq[Byte] <- Gen.listOfN[Byte](32, Arbitrary.arbitrary[Byte])
-      key = Try(new BouncyCastleCrypto().decodePublicKey((ySign +: rawBytes).toArray).asInstanceOf[ECPublicKey])
+      key = Try(new BouncyCastleCrypto().decodePublicKey(new ByteArray((ySign +: rawBytes).toArray)).asInstanceOf[ECPublicKey])
       if key.isSuccess
     } yield key.get
   )

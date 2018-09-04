@@ -12,24 +12,25 @@ package com.yubico.u2f.impl;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {
-    public static byte[] encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fBadInputException {
-        byte[] keyHandle = rawRegisterResponse.keyHandle;
-        if (keyHandle.length > 255) {
+    public static ByteArray encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fBadInputException {
+        ByteArray keyHandle = rawRegisterResponse.keyHandle;
+        if (keyHandle.getBytes().length > 255) {
             throw new U2fBadInputException("keyHandle length cannot be longer than 255 bytes!");
         }
 
         try {
             ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
             encoded.write(RawRegisterResponse.REGISTRATION_RESERVED_BYTE_VALUE);
-            encoded.write(rawRegisterResponse.userPublicKey);
-            encoded.write((byte) keyHandle.length);
-            encoded.write(keyHandle);
+            encoded.write(rawRegisterResponse.userPublicKey.getBytes());
+            encoded.write((byte) keyHandle.getBytes().length);
+            encoded.write(keyHandle.getBytes());
             encoded.write(rawRegisterResponse.attestationCertificate.getEncoded());
-            encoded.write(rawRegisterResponse.signature);
-            return encoded.toByteArray();
+            encoded.write(rawRegisterResponse.signature.getBytes());
+            return new ByteArray(encoded.toByteArray());
         } catch (CertificateEncodingException e) {
             throw new U2fBadInputException("Error when encoding attestation certificate.", e);
         }

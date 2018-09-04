@@ -787,7 +787,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("A test case with a different signed RP ID hash fails.") {
           val rpId = "ARGHABLARGHLER"
-          val rpIdHash: ByteArray = new ByteArray(crypto.hash(rpId))
+          val rpIdHash: ByteArray = crypto.hash(rpId)
           val steps = finishAssertion(
             authenticatorData = new ByteArray((rpIdHash.getBytes.toVector ++ Defaults.authenticatorData.getBytes.toVector.drop(32)).toArray),
             rpId = Defaults.rpId.toBuilder.id(rpId).build()

@@ -402,7 +402,7 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             assure(
-                new ByteArray(crypto.hash(rpId)).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+                crypto.hash(rpId).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
                 "Wrong RP ID hash."
             );
         }
@@ -507,7 +507,7 @@ public class FinishAssertionSteps {
         }
 
         public ByteArray clientDataJsonHash() {
-            return new ByteArray(crypto.hash(response.getResponse().getClientDataJSON().getBytes()));
+            return crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
 
@@ -524,8 +524,8 @@ public class FinishAssertionSteps {
             if (!
                 crypto.verifySignature(
                     credential.publicKey,
-                    signedBytes().getBytes(),
-                    response.getResponse().getSignature().getBytes()
+                    signedBytes(),
+                    response.getResponse().getSignature()
                 )
             ) {
                 throw new IllegalArgumentException("Invalid assertion signature.");

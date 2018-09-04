@@ -115,10 +115,10 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
                 RawRegisterResponse u2fRegisterResponse;
                 try {
                     u2fRegisterResponse = new RawRegisterResponse(
-                        userPublicKey.getBytes(),
-                        keyHandle.getBytes(),
+                        userPublicKey,
+                        keyHandle,
                         attestationCertificate,
-                        signature.binaryValue()
+                        new ByteArray(signature.binaryValue())
                     );
                 } catch (IOException e) {
                     RuntimeException err = new RuntimeException("signature.isBinary() was true but signature.binaryValue() failed", e);
@@ -127,8 +127,8 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
                 }
 
                 return u2fRegisterResponse.verifySignature(
-                    attestationObject.getAuthenticatorData().getRpIdHash().getBytes(),
-                    clientDataJsonHash.getBytes()
+                    attestationObject.getAuthenticatorData().getRpIdHash(),
+                    clientDataJsonHash
                 );
             } else {
                 throw new IllegalArgumentException("\"sig\" property of fido-u2f attestation statement must be a CBOR byte array value.");

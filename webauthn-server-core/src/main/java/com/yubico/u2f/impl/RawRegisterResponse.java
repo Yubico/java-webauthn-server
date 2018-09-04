@@ -16,6 +16,7 @@ import com.yubico.util.ByteInputStream;
 import com.yubico.util.CertificateParser;
 import com.yubico.util.U2fB64Encoding;
 import com.yubico.webauthn.Crypto;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import java.io.IOException;
 import java.security.cert.CertificateException;
@@ -39,30 +40,30 @@ public class RawRegisterResponse {
      * The (uncompressed) x,y-representation of a curve point on the P-256
      * NIST elliptic curve.
      */
-    final byte[] userPublicKey;
+    final ByteArray userPublicKey;
 
     /**
      * A handle that allows the U2F token to identify the generated key pair.
      */
-    final byte[] keyHandle;
+    final ByteArray keyHandle;
     final X509Certificate attestationCertificate;
 
     /**
      * A ECDSA signature (on P-256)
      */
-    final byte[] signature;
+    final ByteArray signature;
 
-    public RawRegisterResponse(byte[] userPublicKey,
-                               byte[] keyHandle,
+    public RawRegisterResponse(ByteArray userPublicKey,
+                               ByteArray keyHandle,
                                X509Certificate attestationCertificate,
-                               byte[] signature) {
+                               ByteArray signature) {
         this(userPublicKey, keyHandle, attestationCertificate, signature, new BouncyCastleCrypto());
     }
 
-    public RawRegisterResponse(byte[] userPublicKey,
-                               byte[] keyHandle,
+    public RawRegisterResponse(ByteArray userPublicKey,
+                               ByteArray keyHandle,
                                X509Certificate attestationCertificate,
-                               byte[] signature,
+                               ByteArray signature,
                                Crypto crypto) {
         this.userPublicKey = userPublicKey;
         this.keyHandle = keyHandle;
@@ -83,10 +84,10 @@ public class RawRegisterResponse {
             }
 
             return new RawRegisterResponse(
-                    bytes.read(65),
-                    bytes.read(bytes.readUnsigned()),
+                    new ByteArray(bytes.read(65)),
+                    new ByteArray(bytes.read(bytes.readUnsigned())),
                     CertificateParser.parseDer(bytes),
-                    bytes.readAll(),
+                    new ByteArray(bytes.readAll()),
                     crypto
             );
         } catch (CertificateException e) {
@@ -96,19 +97,19 @@ public class RawRegisterResponse {
         }
     }
 
-    public boolean verifySignature(byte[] appIdHash, byte[] clientDataHash) {
-        byte[] signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
+    public boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
+        ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
         return crypto.verifySignature(attestationCertificate, signedBytes, signature);
     }
 
-    public static byte[] packBytesToSign(byte[] appIdHash, byte[] clientDataHash, byte[] keyHandle, byte[] userPublicKey) {
+    public static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
         ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
         encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
-        encoded.write(appIdHash);
-        encoded.write(clientDataHash);
-        encoded.write(keyHandle);
-        encoded.write(userPublicKey);
-        return encoded.toByteArray();
+        encoded.write(appIdHash.getBytes());
+        encoded.write(clientDataHash.getBytes());
+        encoded.write(keyHandle.getBytes());
+        encoded.write(userPublicKey.getBytes());
+        return new ByteArray(encoded.toByteArray());
     }
 
 }

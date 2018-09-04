@@ -6,12 +6,11 @@ import javax.naming.ldap.LdapName;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.webauthn.data.ByteArray;
 import com.yubico.util.ExceptionUtil;
 import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -99,7 +98,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
             throw ExceptionUtil.wrapAndLog(log, ".binaryValue() of \"sig\" failed", e);
         }
 
-        return new BouncyCastleCrypto().verifySignature(pubkey, signedData.getBytes(), signature.getBytes());
+        return new BouncyCastleCrypto().verifySignature(pubkey, signedData, signature);
     }
 
     private boolean verifyX5cSignature(AttestationObject attestationObject, ByteArray clientDataHash) {

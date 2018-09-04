@@ -303,7 +303,7 @@ object TestAuthenticator {
       clientDataJsonBytes,
       makeAssertionSignature(
         authDataBytes,
-        new ByteArray(crypto.hash(clientDataJsonBytes.getBytes)),
+        crypto.hash(clientDataJsonBytes),
         credentialKey.getPrivate
       ),
       userHandle.orNull
@@ -381,7 +381,7 @@ object TestAuthenticator {
   ): ByteArray = {
     new ByteArray((Vector[Byte](0)
       ++ rpIdHash.getBytes
-      ++ crypto.hash(clientDataJson)
+      ++ crypto.hash(clientDataJson).getBytes
       ++ credentialId.getBytes
       ++ credentialPublicKeyRawBytes.getBytes
     ).toArray)
@@ -399,7 +399,7 @@ object TestAuthenticator {
       case None => attestationCertAndKey getOrElse generateAttestationCertificate()
     }
 
-    val signedData = new ByteArray(authDataBytes.getBytes ++ crypto.hash(clientDataJson))
+    val signedData = new ByteArray(authDataBytes.getBytes ++ crypto.hash(clientDataJson).getBytes)
     val signature = sign(signedData, key)
 
     val f = JsonNodeFactory.instance
@@ -488,7 +488,7 @@ object TestAuthenticator {
     sig.update(signedDataBytes.getBytes)
 
     sig.verify(signatureBytes.getBytes) &&
-      crypto.verifySignature(pubKey, signedDataBytes.getBytes, signatureBytes.getBytes)
+      crypto.verifySignature(pubKey, signedDataBytes, signatureBytes)
   }
 
   def verifyU2fExampleWithCert(

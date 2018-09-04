@@ -10,19 +10,20 @@
 package com.yubico.webauthn;
 
 import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.data.ByteArray;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
 public interface Crypto {
 
-    boolean verifySignature(X509Certificate attestationCertificate, byte[] signedBytes, byte[] signature);
+    boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature);
 
-    boolean verifySignature(PublicKey publicKey, byte[] signedBytes, byte[] signature);
+    boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signature);
 
-    PublicKey decodePublicKey(byte[] encodedPublicKey) throws U2fBadInputException;
+    PublicKey decodePublicKey(ByteArray encodedPublicKey) throws U2fBadInputException;
 
-    byte[] hash(byte[] bytes);
+    ByteArray hash(ByteArray bytes);
 
-    byte[] hash(String str);
+    ByteArray hash(String str);
 
 }
