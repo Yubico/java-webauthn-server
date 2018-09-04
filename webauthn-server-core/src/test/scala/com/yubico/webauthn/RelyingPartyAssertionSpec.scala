@@ -107,7 +107,6 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val clientDataJsonBytes: ByteArray = if (clientDataJson == null) null else new ByteArray(clientDataJson.getBytes("UTF-8"))
 
     val request = AssertionRequest.builder()
-      .requestId(ByteArray.fromBase64Url(""))
       .username(Some(usernameForRequest).asJava)
       .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
         .rpId(Some(rpId.getId).asJava)

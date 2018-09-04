@@ -113,7 +113,6 @@ public class RelyingParty {
         Optional<JsonNode> extensions // = None.asJava
     ) {
         return AssertionRequest.builder()
-            .requestId(new ByteArray(challengeGenerator.generateChallenge()))
             .username(username)
             .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
                 .rpId(Optional.of(rp.getId()))

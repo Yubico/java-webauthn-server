@@ -12,7 +12,6 @@ import com.yubico.attestation.Attestation
 import com.yubico.attestation.Transport
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.data.RegistrationResult
-import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -26,6 +25,7 @@ import com.yubico.webauthn.test.TestAuthenticator
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
+import demo.webauthn.data.AssertionRequest
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when
@@ -122,14 +122,17 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         val assertionRequests: Cache[ByteArray, AssertionRequest] = newCache()
 
         assertionRequests.put(requestId, AssertionRequest.builder()
-          .requestId(requestId)
-          .username(Some(testData.userId.getName).asJava)
-          .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-            .challenge(challenge)
-            .rpId(Some(rpId.getId).asJava)
+            .requestId(requestId)
+            .request(com.yubico.webauthn.data.AssertionRequest.builder()
+                .username(Some(testData.userId.getName).asJava)
+                .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+                  .challenge(challenge)
+                  .rpId(Some(rpId.getId).asJava)
+                  .build()
+                )
+                .build()
+            )
             .build()
-          )
-          .build()
         )
 
         val userStorage = makeUserStorage(testData)

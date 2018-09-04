@@ -14,9 +14,6 @@ import lombok.Value;
 public class AssertionRequest {
 
     @NonNull
-    private final ByteArray requestId;
-
-    @NonNull
     private final PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
 
     @NonNull

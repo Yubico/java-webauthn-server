@@ -14,7 +14,6 @@ import com.yubico.attestation.resolvers.SimpleResolverWithEquality;
 import com.yubico.util.Either;
 import com.yubico.webauthn.ChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
-import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
@@ -28,6 +27,7 @@ import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import com.yubico.webauthn.impl.RandomChallengeGenerator;
 import com.yubico.webauthn.impl.WebAuthnCodecs;
+import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
@@ -254,11 +254,14 @@ public class WebAuthnServer {
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
             return Either.left(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
         } else {
-            AssertionRequest request = rp.startAssertion(
-                username,
-                Optional.empty(),
-                Optional.empty()
-            );
+            AssertionRequest request = AssertionRequest.builder()
+                .requestId(new ByteArray(challengeGenerator.generateChallenge()))
+                .request(rp.startAssertion(
+                    username,
+                    Optional.empty(),
+                    Optional.empty()
+                ))
+                .build();
 
             assertRequestStorage.put(request.getRequestId(), request);
 
@@ -294,7 +297,7 @@ public class WebAuthnServer {
         } else {
             try {
                 AssertionResult result = rp.finishAssertion(
-                    request,
+                    request.getRequest(),
                     response.getCredential(),
                     Optional.empty()
                 );
