@@ -102,7 +102,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     val rp = RelyingParty.builder()
       .allowUntrustedAttestation(false)
-      .challengeGenerator(new ChallengeGenerator() { override def generateChallenge(): Array[Byte] = Defaults.challenge.getBytes })
+      .challengeGenerator(new ChallengeGenerator() { override def generateChallenge(): ByteArray = new ByteArray(Defaults.challenge.getBytes) })
       .origins(List(Defaults.rpId.getId).asJava)
       .preferredPubkeyParams(Nil.asJava)
       .rp(Defaults.rpId)

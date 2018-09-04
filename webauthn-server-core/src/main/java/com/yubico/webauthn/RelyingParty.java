@@ -60,7 +60,7 @@ public class RelyingParty {
         return PublicKeyCredentialCreationOptions.builder()
             .rp(rp)
             .user(startRegistrationOptions.getUser())
-            .challenge(new ByteArray(challengeGenerator.generateChallenge()))
+            .challenge(challengeGenerator.generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(startRegistrationOptions.getExcludeCredentials())
             .authenticatorSelection(Optional.of(
@@ -112,7 +112,7 @@ public class RelyingParty {
             .username(startAssertionOptions.getUsername())
             .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
                 .rpId(Optional.of(rp.getId()))
-                .challenge(new ByteArray(challengeGenerator.generateChallenge()))
+                .challenge(challengeGenerator.generateChallenge())
                 .allowCredentials(
                     (startAssertionOptions.getAllowCredentials().map(Optional::of).orElseGet(() ->
                         startAssertionOptions.getUsername().map(un ->

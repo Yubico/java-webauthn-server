@@ -10,6 +10,7 @@
 package com.yubico.webauthn.impl;
 
 import com.yubico.webauthn.ChallengeGenerator;
+import com.yubico.webauthn.data.ByteArray;
 import java.security.SecureRandom;
 
 public class RandomChallengeGenerator implements ChallengeGenerator {
@@ -17,9 +18,10 @@ public class RandomChallengeGenerator implements ChallengeGenerator {
     private final SecureRandom random = new SecureRandom();
 
     @Override
-    public byte[] generateChallenge() {
+    public ByteArray generateChallenge() {
         byte[] randomBytes = new byte[32];
         random.nextBytes(randomBytes);
-        return randomBytes;
+        return new ByteArray(randomBytes);
     }
+
 }

@@ -9,7 +9,10 @@
 
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.data.ByteArray;
+
 public interface ChallengeGenerator {
 
-    byte[] generateChallenge();
+    ByteArray generateChallenge();
+
 }

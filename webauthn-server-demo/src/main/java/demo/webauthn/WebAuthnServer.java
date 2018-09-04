@@ -132,13 +132,13 @@ public class WebAuthnServer {
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
-                new ByteArray(challengeGenerator.generateChallenge()),
+                challengeGenerator.generateChallenge(),
                 rp.startRegistration(
                     StartRegistrationOptions.builder()
                         .user(UserIdentity.builder()
                             .name(username)
                             .displayName(displayName)
-                            .id(new ByteArray(challengeGenerator.generateChallenge()))
+                            .id(challengeGenerator.generateChallenge())
                             .build()
                         )
                         .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
@@ -176,7 +176,7 @@ public class WebAuthnServer {
                 RegistrationRequest request = new RegistrationRequest(
                     username,
                     credentialNickname,
-                    new ByteArray(challengeGenerator.generateChallenge()),
+                    challengeGenerator.generateChallenge(),
                     rp.startRegistration(
                         StartRegistrationOptions.builder()
                             .user(existingUser)
@@ -255,7 +255,7 @@ public class WebAuthnServer {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequest request = new AssertionRequest(
-                new ByteArray(challengeGenerator.generateChallenge()),
+                challengeGenerator.generateChallenge(),
                 rp.startAssertion(
                     StartAssertionOptions.builder()
                         .username(username)
