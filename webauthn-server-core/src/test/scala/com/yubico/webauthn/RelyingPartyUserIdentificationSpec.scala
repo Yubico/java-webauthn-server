@@ -1,14 +1,10 @@
-package com.yubico.webauthn.impl
+package com.yubico.webauthn
 
 import java.security.KeyPair
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.RelyingParty
-import com.yubico.webauthn.CredentialRepository
-import com.yubico.webauthn.ChallengeGenerator
-import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -18,6 +14,8 @@ import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.impl.WebAuthnCodecs
+import com.yubico.webauthn.impl.BouncyCastleCrypto
 import com.yubico.webauthn.test.TestAuthenticator
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec

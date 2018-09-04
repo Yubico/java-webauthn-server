@@ -175,7 +175,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
             .map(i -> i.getValue());
     }
 
-    boolean verifyX5cRequirements(X509Certificate cert, ByteArray aaguid) {
+    public boolean verifyX5cRequirements(X509Certificate cert, ByteArray aaguid) {
         if (cert.getVersion() != 3) {
             throw new IllegalArgumentException(String.format("Wrong attestation certificate X509 version: %s, expected: 3", cert.getVersion()));
         }
