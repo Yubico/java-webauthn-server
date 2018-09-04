@@ -20,6 +20,7 @@ import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import com.yubico.webauthn.impl.FinishAssertionSteps;
 import com.yubico.webauthn.impl.FinishRegistrationSteps;
+import com.yubico.webauthn.impl.RandomChallengeGenerator;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -32,12 +33,12 @@ import lombok.Value;
 public class RelyingParty {
 
     private final RelyingPartyIdentity rp;
-    private final ChallengeGenerator challengeGenerator;
     private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
     private final List<String> origins;
-
     private final CredentialRepository credentialRepository;
 
+    @Builder.Default
+    private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
     @Builder.Default
     private final Crypto crypto = new BouncyCastleCrypto();
     @Builder.Default
