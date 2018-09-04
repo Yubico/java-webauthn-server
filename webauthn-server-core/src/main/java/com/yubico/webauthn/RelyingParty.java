@@ -85,6 +85,17 @@ public class RelyingParty {
         return _finishRegistration(request, response, callerTokenBindingId).run();
     }
 
+    /**
+     * This method is NOT part of the public API.
+     *
+     * This method is called internally by {@link
+     * #finishRegistration(PublicKeyCredentialCreationOptions,
+     * PublicKeyCredential, Optional)}. It is a separate method to facilitate
+     * testing; users should call {@link
+     * #finishRegistration(PublicKeyCredentialCreationOptions,
+     * PublicKeyCredential, Optional)} instead of this method.
+     * @return
+     */
     FinishRegistrationSteps _finishRegistration(
         PublicKeyCredentialCreationOptions request,
         PublicKeyCredential<AuthenticatorAttestationResponse> response,
@@ -137,6 +148,15 @@ public class RelyingParty {
         return _finishAssertion(request, response, callerTokenBindingId).run();
     }
 
+    /**
+     * This method is NOT part of the public API.
+     *
+     * This method is called internally by {@link
+     * #finishAssertion(AssertionRequest, PublicKeyCredential, Optional)}. It is
+     * a separate method to facilitate testing; users should call {@link
+     * #finishAssertion(AssertionRequest, PublicKeyCredential, Optional)}
+     * instead of this method.
+     */
     FinishAssertionSteps _finishAssertion(
         AssertionRequest request,
         PublicKeyCredential<AuthenticatorAssertionResponse> response,
