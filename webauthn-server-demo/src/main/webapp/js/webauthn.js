@@ -101,6 +101,7 @@
   function responseToObject(response) {
     if (response.response.attestationObject) {
       return {
+        type: response.type,
         id: response.id,
         response: {
           attestationObject: base64url.fromByteArray(response.response.attestationObject),
@@ -109,6 +110,7 @@
       };
     } else {
       return {
+        type: response.type,
         id: response.id,
         response: {
           authenticatorData: base64url.fromByteArray(response.response.authenticatorData),
