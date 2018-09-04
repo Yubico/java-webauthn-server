@@ -85,7 +85,7 @@ public class WebAuthnServer {
 
         rp = RelyingParty.builder()
             .rp(rpIdentity)
-            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.builder().alg(new COSEAlgorithmIdentifier( -7L)).build()))
+            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()))
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .crypto(new BouncyCastleCrypto())
