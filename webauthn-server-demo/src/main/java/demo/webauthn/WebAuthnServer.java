@@ -17,7 +17,6 @@ import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.FinishAssertionOptions;
 import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -85,7 +84,7 @@ public class WebAuthnServer {
 
         rp = RelyingParty.builder()
             .rp(rpIdentity)
-            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()))
+            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .crypto(new BouncyCastleCrypto())
