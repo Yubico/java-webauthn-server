@@ -16,7 +16,6 @@ import com.google.common.io.Closeables;
 import com.yubico.attestation.matchers.ExtensionMatcher;
 import com.yubico.attestation.matchers.FingerprintMatcher;
 import com.yubico.attestation.resolvers.SimpleResolver;
-import com.yubico.u2f.exceptions.U2fBadConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,12 +173,14 @@ public class MetadataService {
     }
 
     private Attestation lookupAttestation(X509Certificate attestationCertificate) {
-        MetadataObject metadata = resolver.resolve(attestationCertificate);
+        Optional<MetadataObject> metadataMaybe = resolver.resolve(attestationCertificate);
         Map<String, String> vendorProperties = null;
         Map<String, String> deviceProperties = null;
         String identifier = null;
         int transports = 0;
-        if (metadata != null) {
+
+        if (metadataMaybe.isPresent()) {
+            MetadataObject metadata = metadataMaybe.get();
             identifier = metadata.getIdentifier();
             vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
             for (JsonNode device : metadata.getDevices()) {

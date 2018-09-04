@@ -5,6 +5,7 @@ import com.yubico.attestation.MetadataResolver;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A {@link MetadataResolver} whose {@link #resolve(X509Certificate)} method
@@ -21,14 +22,14 @@ public class CompositeResolver implements MetadataResolver {
     }
 
     @Override
-    public MetadataObject resolve(X509Certificate attestationCertificate) {
+    public Optional<MetadataObject> resolve(X509Certificate attestationCertificate) {
         for (MetadataResolver resolver : resolvers) {
-            MetadataObject result = resolver.resolve(attestationCertificate);
-            if (result != null) {
+            Optional<MetadataObject> result = resolver.resolve(attestationCertificate);
+            if (result.isPresent()) {
                 return result;
             }
         }
-        return null;
+        return Optional.empty();
     }
 
 }

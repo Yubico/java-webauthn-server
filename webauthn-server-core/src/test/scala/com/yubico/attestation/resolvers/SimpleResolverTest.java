@@ -10,12 +10,12 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Optional;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,14 +32,14 @@ public class SimpleResolverTest {
         resolver.addMetadata(METADATA_JSON);
         X509Certificate certificate = CertificateParser.parseDer(ATTESTATION_CERT);
 
-        MetadataObject metadata = resolver.resolve(certificate);
+        MetadataObject metadata = resolver.resolve(certificate).orElse(null);
 
         assertNotNull(metadata);
         assertEquals("foobar", metadata.getIdentifier());
     }
 
     @Test
-    public void resolveReturnsNullOnUntrustedSignature() throws Exception {
+    public void resolveReturnsEmptyOnUntrustedSignature() throws Exception {
         SimpleResolver resolver = new SimpleResolver();
         resolver.addMetadata(METADATA_JSON);
 
@@ -55,11 +55,11 @@ public class SimpleResolverTest {
         when(issuerDN.getName()).thenReturn("CN=Yubico U2F Root CA Serial 457200631");
         when(cert.getIssuerDN()).thenReturn(issuerDN);
 
-        assertNull(resolver.resolve(cert));
-        assertNull(resolver.resolve(cert));
-        assertNull(resolver.resolve(cert));
-        assertNull(resolver.resolve(cert));
-        assertNull(resolver.resolve(cert));
+        assertEquals(Optional.empty(), resolver.resolve(cert));
+        assertEquals(Optional.empty(), resolver.resolve(cert));
+        assertEquals(Optional.empty(), resolver.resolve(cert));
+        assertEquals(Optional.empty(), resolver.resolve(cert));
+        assertEquals(Optional.empty(), resolver.resolve(cert));
     }
 
 }

@@ -3,7 +3,8 @@
 package com.yubico.attestation;
 
 import java.security.cert.X509Certificate;
+import java.util.Optional;
 
 public interface MetadataResolver {
-    MetadataObject resolve(X509Certificate attestationCertificate);
+    Optional<MetadataObject> resolve(X509Certificate attestationCertificate);
 }

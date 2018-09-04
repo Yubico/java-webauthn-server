@@ -17,6 +17,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +44,12 @@ public class SimpleResolver implements MetadataResolver {
     }
 
     @Override
-    public MetadataObject resolve(X509Certificate attestationCertificate) {
+    public Optional<MetadataObject> resolve(X509Certificate attestationCertificate) {
         String issuer = attestationCertificate.getIssuerDN().getName();
         for (X509Certificate cert : certs.get(issuer)) {
             try {
                 attestationCertificate.verify(cert.getPublicKey());
-                return metadata.get(cert);
+                return Optional.ofNullable(metadata.get(cert));
             } catch (CertificateException e) {
                 logger.error("resolve failed", e);
             } catch (NoSuchAlgorithmException e) {
@@ -62,6 +63,6 @@ public class SimpleResolver implements MetadataResolver {
             }
         }
 
-        return null;
+        return Optional.empty();
     }
 }

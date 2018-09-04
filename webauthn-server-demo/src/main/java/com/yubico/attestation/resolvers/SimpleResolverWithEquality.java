@@ -2,6 +2,7 @@ package com.yubico.attestation.resolvers;
 
 import com.yubico.attestation.MetadataObject;
 import java.security.cert.X509Certificate;
+import java.util.Optional;
 
 /**
  * Resolves a metadata object whose associated certificate has signed the
@@ -10,18 +11,20 @@ import java.security.cert.X509Certificate;
 public class SimpleResolverWithEquality extends SimpleResolver {
 
     @Override
-    public MetadataObject resolve(X509Certificate attestationCertificate) {
-        MetadataObject parentResult = super.resolve(attestationCertificate);
+    public Optional<MetadataObject> resolve(X509Certificate attestationCertificate) {
+        Optional<MetadataObject> parentResult = super.resolve(attestationCertificate);
 
-        if (parentResult == null) {
+        if (parentResult.isPresent()) {
+            return parentResult;
+        } else {
             for (X509Certificate cert : certs.get(attestationCertificate.getSubjectDN().getName())) {
                 if (cert.equals(attestationCertificate)) {
-                    return metadata.get(cert);
+                    return Optional.of(metadata.get(cert));
                 }
             }
-        }
 
-        return null;
+            return Optional.empty();
+        }
     }
 
 }
