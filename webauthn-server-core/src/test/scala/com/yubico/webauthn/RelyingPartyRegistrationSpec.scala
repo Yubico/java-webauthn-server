@@ -1313,7 +1313,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           it("with basic attestation, a trust resolver is returned.") {
             val metadataResolver: MetadataResolver = new SimpleResolver
-            val metadataService: MetadataService = new MetadataService(metadataResolver, null, null)
+            val metadataService: MetadataService = new MetadataService(metadataResolver)
             val steps = finishRegistration(
               testData = RegistrationTestData.FidoU2f.BasicAttestation,
               metadataService = Some(metadataService)
@@ -1410,7 +1410,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           def generateTests(testData: RegistrationTestData): Unit = {
             it("is rejected if untrusted attestation is not allowed and trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
+              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
               val steps = finishRegistration(
                 allowUntrustedAttestation = false,
                 testData = testData,
@@ -1427,7 +1427,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if untrusted attestation is allowed and trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
+              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
               val steps = finishRegistration(
                 allowUntrustedAttestation = true,
                 testData = testData,
@@ -1444,7 +1444,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if trust can be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver, null, null) // Stateful - do not share between tests
+              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
 
               metadataResolver.addMetadata(
                 new MetadataObject(

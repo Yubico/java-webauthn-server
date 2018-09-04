@@ -21,12 +21,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,24 +64,32 @@ public class MetadataService {
 
     private final Attestation unknownAttestation = Attestation.builder().build();
     private final MetadataResolver resolver;
-    private final Map<String, DeviceMatcher> matchers = new HashMap<String, DeviceMatcher>();
+    private final Map<String, DeviceMatcher> matchers;
     private final Cache<String, Attestation> cache;
 
-    public MetadataService(MetadataResolver resolver, Cache<String, Attestation> cache, Map<String, ? extends DeviceMatcher> matchers) {
-        this.resolver = resolver != null ? resolver : createDefaultMetadataResolver();
-        this.cache = cache != null ? cache : CacheBuilder.newBuilder().<String, Attestation>build();
-        if (matchers == null) {
-            matchers = DEFAULT_DEVICE_MATCHERS;
-        }
-        this.matchers.putAll(matchers);
+    public MetadataService(
+        @NonNull
+        MetadataResolver resolver,
+        @NonNull
+        Cache<String, Attestation> cache,
+        @NonNull
+        Map<String, ? extends DeviceMatcher> matchers
+    ) {
+        this.resolver = resolver;
+        this.cache = cache;
+        this.matchers = Collections.unmodifiableMap(matchers);
     }
 
     public MetadataService() {
-        this(null, null, null);
+        this(createDefaultMetadataResolver());
     }
 
     public MetadataService(MetadataResolver resolver) {
-        this(resolver, null, null);
+        this(
+            resolver,
+            CacheBuilder.newBuilder().build(),
+            DEFAULT_DEVICE_MATCHERS
+        );
     }
 
     private boolean deviceMatches(JsonNode selectors, X509Certificate attestationCertificate) {
