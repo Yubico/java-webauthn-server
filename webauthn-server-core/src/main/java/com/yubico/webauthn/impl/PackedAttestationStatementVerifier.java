@@ -202,15 +202,15 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
         Optional.ofNullable(cert.getExtensionValue(idFidoGenCeAaguid))
             .map(ext -> {
                 try {
-                    return ((DEROctetString) ASN1Primitive.fromByteArray(
+                    return new ByteArray(((DEROctetString) ASN1Primitive.fromByteArray(
                         ((DEROctetString) ASN1Primitive.fromByteArray(ext)).getOctets()
-                    )).getOctets();
+                    )).getOctets());
                 } catch (IOException e) {
                     throw new IllegalArgumentException("Failed to read id-fido-gen-ce-aaguid certificate extension value.");
                 }
             })
-            .ifPresent((byte[] value) -> {
-                if (false == Arrays.equals(value, aaguid.getBytes())) {
+            .ifPresent((ByteArray value) -> {
+                if (false == value.equals(aaguid)) {
                     throw new IllegalArgumentException("X.509 extension " + idFidoGenCeAaguid + " (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.");
                 }
             });
