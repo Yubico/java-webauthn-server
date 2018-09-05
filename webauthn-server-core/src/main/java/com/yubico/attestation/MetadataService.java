@@ -147,11 +147,11 @@ public class MetadataService {
      */
     public Attestation getAttestation(List<X509Certificate> attestationCertificateChain) {
 
-        Iterator<X509Certificate> it = attestationCertificateChain.iterator();
-        if (it.hasNext() == false) {
+        if (attestationCertificateChain.isEmpty()) {
             return unknownAttestation;
         }
 
+        Iterator<X509Certificate> it = attestationCertificateChain.iterator();
         X509Certificate cert = it.next();
         Attestation resolvedInitial = getAttestation(cert);
 
