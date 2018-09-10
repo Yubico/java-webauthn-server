@@ -2,7 +2,7 @@ package demo.webauthn
 
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.impl.RegistrationTestData
-import com.yubico.webauthn.impl.util.WebAuthnCodecs
+import com.yubico.webauthn.impl.WebAuthnCodecs
 import demo.webauthn.data.RegistrationResponse
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec

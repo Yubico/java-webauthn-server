@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.util.ByteArray;
 import com.yubico.util.exception.Base64UrlException;
-import com.yubico.webauthn.impl.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.WebAuthnCodecs;
 import java.io.IOException;
 import lombok.NonNull;
 import lombok.Value;

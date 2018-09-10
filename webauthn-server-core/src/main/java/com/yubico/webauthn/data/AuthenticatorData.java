@@ -5,7 +5,7 @@ import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.util.BinaryUtil;
 import com.yubico.util.ByteArray;
-import com.yubico.webauthn.impl.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.Optional;

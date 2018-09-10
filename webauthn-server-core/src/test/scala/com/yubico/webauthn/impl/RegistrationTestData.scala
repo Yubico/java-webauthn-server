@@ -21,7 +21,6 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import com.yubico.webauthn.test.TestAuthenticator
 
 import scala.collection.JavaConverters._

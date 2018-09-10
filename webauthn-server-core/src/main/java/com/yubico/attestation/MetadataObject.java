@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.yubico.u2f.exceptions.U2fBadConfigurationException;
-import com.yubico.webauthn.impl.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.WebAuthnCodecs;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

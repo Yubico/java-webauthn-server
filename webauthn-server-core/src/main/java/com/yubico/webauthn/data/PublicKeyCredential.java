@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.util.ByteArray;
-import com.yubico.webauthn.impl.util.WebAuthnCodecs;
+import com.yubico.webauthn.impl.WebAuthnCodecs;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

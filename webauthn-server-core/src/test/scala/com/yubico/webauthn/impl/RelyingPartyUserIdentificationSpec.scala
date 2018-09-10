@@ -18,7 +18,6 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.impl.util.WebAuthnCodecs
 import com.yubico.webauthn.test.TestAuthenticator
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
