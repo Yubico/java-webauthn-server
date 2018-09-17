@@ -1,6 +1,5 @@
 package com.yubico.webauthn.impl;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.yubico.attestation.Attestation;
 import com.yubico.attestation.MetadataService;
 import com.yubico.util.CertificateParser;
@@ -26,9 +25,9 @@ public class KnownX509TrustAnchorsTrustResolver implements AttestationTrustResol
         return Optional.ofNullable(
             metadataService.getAttestation(
                 StreamSupport.stream(
-                    ((ArrayNode) attestationObject
+                    attestationObject
                         .getAttestationStatement()
-                        .get("x5c"))
+                        .get("x5c")
                         .spliterator(),
                     true
                 )
