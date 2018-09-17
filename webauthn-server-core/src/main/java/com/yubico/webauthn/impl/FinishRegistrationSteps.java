@@ -19,6 +19,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -537,7 +538,26 @@ public class FinishRegistrationSteps {
         }
 
         public Optional<Attestation> attestationMetadata() {
-            return trustResolver.flatMap(tr -> tr.resolveTrustAnchor(attestation));
+            return trustResolver.flatMap(tr -> {
+                try {
+                    return Optional.of(tr.resolveTrustAnchor(attestation));
+                } catch (CertificateEncodingException e) {
+                    log.debug("Failed to resolve trust anchor for attestation: {}", attestation, e);
+                    return Optional.empty();
+                }
+            });
+        }
+
+        @Override
+        public List<String> getWarnings() {
+            return trustResolver.map(tr -> {
+                try {
+                    tr.resolveTrustAnchor(attestation);
+                    return Collections.<String>emptyList();
+                } catch (CertificateEncodingException e) {
+                    return Collections.singletonList("Failed to resolve trust anchor: " + e);
+                }
+            }).orElseGet(Collections::emptyList);
         }
     }
 

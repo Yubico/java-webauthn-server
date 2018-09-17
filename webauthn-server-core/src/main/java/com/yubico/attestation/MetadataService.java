@@ -16,9 +16,11 @@ import com.google.common.io.Closeables;
 import com.yubico.attestation.matchers.ExtensionMatcher;
 import com.yubico.attestation.matchers.FingerprintMatcher;
 import com.yubico.attestation.resolvers.SimpleResolver;
+import com.yubico.util.ExceptionUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -26,7 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +64,7 @@ public class MetadataService {
         return resolver;
     }
 
-    private final Attestation unknownAttestation = Attestation.builder().build();
+    private final Attestation unknownAttestation = Attestation.builder(false).build();
     private final MetadataResolver resolver;
     private final Map<String, DeviceMatcher> matchers;
     private final Cache<String, Attestation> cache;
@@ -92,8 +94,13 @@ public class MetadataService {
         );
     }
 
-    private boolean deviceMatches(JsonNode selectors, X509Certificate attestationCertificate) {
-        if (selectors != null && !selectors.isNull()) {
+    private boolean deviceMatches(
+        JsonNode selectors,
+        @NonNull X509Certificate attestationCertificate
+    ) {
+        if (selectors == null || selectors.isNull()) {
+            return true;
+        } else {
             for (JsonNode selector : selectors) {
                 DeviceMatcher matcher = matchers.get(selector.get(SELECTOR_TYPE).asText());
                 if (matcher != null && matcher.matches(attestationCertificate, selector.get(SELECTOR_PARAMETERS))) {
@@ -102,27 +109,18 @@ public class MetadataService {
             }
             return false;
         }
-        return true; //Match if selectors is null or missing.
     }
 
     public Attestation getCachedAttestation(String attestationCertificateFingerprint) {
         return cache.getIfPresent(attestationCertificateFingerprint);
     }
 
-    public Attestation getAttestation(final X509Certificate attestationCertificate) {
-        if (attestationCertificate == null) {
-            return unknownAttestation;
-        }
+    public Attestation getAttestation(@NonNull final X509Certificate attestationCertificate) throws CertificateEncodingException {
         try {
-            String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
-            return cache.get(fingerprint, new Callable<Attestation>() {
-                @Override
-                public Attestation call() {
-                    return lookupAttestation(attestationCertificate);
-                }
-            });
-        } catch (Exception e) {
-            return unknownAttestation;
+            final String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
+            return cache.get(fingerprint, () -> lookupAttestation(attestationCertificate));
+        } catch (ExecutionException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to look up attestation information for certificate: " + attestationCertificate, e);
         }
     }
 
@@ -139,13 +137,18 @@ public class MetadataService {
      *
      * @param attestationCertificateChain a certificate chain, where each
      *          certificate in the list should be signed by the following certificate.
+     *
+     * @throws CertificateEncodingException if computation of the fingerprint
+     * fails for any element of <code>attestationCertificateChain</code> that
+     * needs to be inspected
+     *
      * @return The first non-unknown result, if any, of calling {@link
      *           #getAttestation(X509Certificate)} for each of the certificates
      *           in the <code>attestationCertificateChain</code>. If the chain
      *           of signatures is broken before finding such a result, an
      *           unknown attestation is returned.
      */
-    public Attestation getAttestation(List<X509Certificate> attestationCertificateChain) {
+    public Attestation getAttestation(List<X509Certificate> attestationCertificateChain) throws CertificateEncodingException {
 
         if (attestationCertificateChain.isEmpty()) {
             return unknownAttestation;
@@ -161,10 +164,10 @@ public class MetadataService {
             while (it.hasNext()) {
                 Attestation resolved = getAttestation(cert);
 
-                if (resolved != null) {
+                if (resolved.isTrusted()) {
                     return resolved;
                 } else {
-                    logger.trace("Could not look up attestation for certificate [{}] - trying next element in certificate chain.", cert);
+                    logger.trace("Could not look up trusted attestation for certificate [{}] - trying next element in certificate chain.", cert);
 
                     X509Certificate signingCert = it.next();
 
@@ -172,31 +175,31 @@ public class MetadataService {
                         cert.verify(signingCert.getPublicKey());
                     } catch (Exception e) {
                         logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
-                        return unknownAttestation;
+                        return resolvedInitial;
                     }
                 }
             }
 
-            return unknownAttestation;
+            return resolvedInitial;
         }
     }
 
     private Attestation lookupAttestation(X509Certificate attestationCertificate) {
-        Optional<MetadataObject> metadataMaybe = resolver.resolve(attestationCertificate);
-        Map<String, String> vendorProperties = null;
-        Map<String, String> deviceProperties = null;
-        String identifier = null;
-        int transports = 0;
+        final int certTransports = get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
 
-        if (metadataMaybe.isPresent()) {
-            MetadataObject metadata = metadataMaybe.get();
+        return resolver.resolve(attestationCertificate).map(metadata -> {
+            Map<String, String> vendorProperties = null;
+            Map<String, String> deviceProperties = null;
+            String identifier = null;
+            int metadataTransports = 0;
+
             identifier = metadata.getIdentifier();
             vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
             for (JsonNode device : metadata.getDevices()) {
                 if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
                     JsonNode transportNode = device.get(TRANSPORTS);
                     if(transportNode != null) {
-                        transports = transportNode.asInt(0);
+                        metadataTransports |= transportNode.asInt(0);
                     }
                     ImmutableMap.Builder<String, String> devicePropertiesBuilder = ImmutableMap.builder();
                     for (Map.Entry<String, JsonNode> deviceEntry : Lists.newArrayList(device.fields())) {
@@ -209,16 +212,18 @@ public class MetadataService {
                     break;
                 }
             }
-        }
 
-        transports |= get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
-
-        return Attestation.builder()
-            .metadataIdentifier(Optional.ofNullable(identifier))
-            .vendorProperties(Optional.ofNullable(vendorProperties))
-            .deviceProperties(Optional.ofNullable(deviceProperties))
-            .transports(Optional.of(Transport.fromInt(transports)))
-            .build();
+            return Attestation.builder(true)
+                .metadataIdentifier(Optional.ofNullable(identifier))
+                .vendorProperties(Optional.ofNullable(vendorProperties))
+                .deviceProperties(Optional.ofNullable(deviceProperties))
+                .transports(Optional.of(Transport.fromInt(certTransports | metadataTransports)))
+                .build();
+        }).orElseGet(() ->
+            Attestation.builder(false)
+                .transports(Optional.of(Transport.fromInt(certTransports)))
+                .build()
+        );
     }
 
     private int get_transports(byte[] extensionValue) {

@@ -17,6 +17,8 @@ import lombok.Value;
 @Builder
 public class Attestation implements Serializable {
 
+    private final boolean trusted;
+
     @NonNull
     @Builder.Default
     private final Optional<String> metadataIdentifier = Optional.empty();
@@ -33,8 +35,8 @@ public class Attestation implements Serializable {
     @Builder.Default
     private final Optional<Set<Transport>> transports = Optional.empty();
 
-    public boolean isTrusted() {
-        return metadataIdentifier.isPresent();
+    public static AttestationBuilder builder(boolean trusted) {
+        return new AttestationBuilder().trusted(trusted);
     }
 
 }

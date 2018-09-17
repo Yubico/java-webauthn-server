@@ -7,6 +7,7 @@ import com.yubico.util.CertificateParser;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Optional;
 import org.junit.Test;
@@ -88,8 +89,8 @@ public class MetadataServiceTest {
         assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get().get("deviceId"));
     }
 
-    @Test
-    public void getAttestationReturnsUnknownIfFingerprintEncodingFails() throws Exception {
+    @Test(expected = CertificateEncodingException.class)
+    public void getAttestationThrowsIfFingerprintEncodingFails() throws Exception {
         MetadataService service = new MetadataService();
 
         final X509Certificate attestationCert = mock(X509Certificate.class);
@@ -104,6 +105,7 @@ public class MetadataServiceTest {
     public void deviceMatchesReturnsTrueIfNoSelectorsAreGiven() throws Exception {
         MetadataResolver resolver = mock(MetadataResolver.class);
         JsonNode device = mock(JsonNode.class);
+        when(device.fields()).thenReturn(Collections.emptyIterator());
         MetadataObject metadata = mock(MetadataObject.class);
         when(metadata.getDevices()).thenReturn(ImmutableList.of(device));
         when(resolver.resolve(ArgumentMatchers.<X509Certificate>any())).thenReturn(Optional.of(metadata));
