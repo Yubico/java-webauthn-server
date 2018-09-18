@@ -14,11 +14,11 @@ import scala.util.Failure
 @RunWith(classOf[JUnitRunner])
 class AuthenticatorDataSpec extends FunSpec with Matchers {
 
-  def jsonToCbor(json: String): ArrayBuffer = CBORObject.FromJSONString(json).EncodeToBytes.toVector
+  def jsonToCbor(json: String): ByteArray = new ByteArray(CBORObject.FromJSONString(json).EncodeToBytes)
 
   describe("AuthenticatorData") {
 
-    def generateTests(authDataHex: HexString, hasAttestation: Boolean = false, hasExtensions: Boolean = false): Unit = {
+    def generateTests(authDataHex: String, hasAttestation: Boolean = false, hasExtensions: Boolean = false): Unit = {
 
       val authData = new AuthenticatorData(ByteArray.fromHex(authDataHex))
 
@@ -55,7 +55,7 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
       if (hasExtensions) {
         it("gets the correct extension data from the raw bytes.") {
           authData.getExtensions.asScala shouldBe defined
-          authData.getExtensions.get.EncodeToBytes().toVector should equal (jsonToCbor("""{ "foo": "bar" }"""))
+          new ByteArray(authData.getExtensions.get.EncodeToBytes()) should equal (jsonToCbor("""{ "foo": "bar" }"""))
         }
       }
     }

@@ -13,7 +13,6 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
-import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
@@ -126,9 +125,9 @@ case class RegistrationTestData(
   attestationObject: ByteArray,
   clientDataJson: String,
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
-  clientExtensionResults: AuthenticationExtensionsClientInputs = RegistrationTestData.jsonFactory.objectNode(),
+  clientExtensionResults: ObjectNode = RegistrationTestData.jsonFactory.objectNode(),
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
-  requestedExtensions: Option[AuthenticationExtensionsClientInputs] = None,
+  requestedExtensions: Option[ObjectNode] = None,
   rpId: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None

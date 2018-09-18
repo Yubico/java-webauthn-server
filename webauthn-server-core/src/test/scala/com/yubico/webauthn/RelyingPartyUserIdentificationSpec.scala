@@ -4,8 +4,8 @@ import java.security.KeyPair
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -57,8 +57,8 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     val clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     val clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
     val challenge: ByteArray = clientData.getChallenge
-    val requestedExtensions: Option[AuthenticationExtensionsClientInputs] = None
-    val clientExtensionResults: AuthenticationExtensionsClientInputs = jsonFactory.objectNode()
+    val requestedExtensions: Option[ObjectNode] = None
+    val clientExtensionResults: ObjectNode = jsonFactory.objectNode()
 
     val request = PublicKeyCredentialRequestOptions.builder()
       .challenge(challenge)

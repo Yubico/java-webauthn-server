@@ -9,7 +9,6 @@ import java.util.Optional
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.data.AuthenticationExtensionsClientInputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -66,8 +65,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     val clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
     val challenge: ByteArray = clientData.getChallenge
-    val requestedExtensions: Option[AuthenticationExtensionsClientInputs] = None
-    val clientExtensionResults: AuthenticationExtensionsClientInputs = jsonFactory.objectNode()
+    val requestedExtensions: Option[ObjectNode] = None
+    val clientExtensionResults: ObjectNode = jsonFactory.objectNode()
 
   }
 
@@ -89,12 +88,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     callerTokenBindingId: Option[ByteArray] = None,
     challenge: ByteArray = Defaults.challenge,
     clientDataJson: String = Defaults.clientDataJson,
-    clientExtensionResults: AuthenticationExtensionsClientInputs = Defaults.clientExtensionResults,
+    clientExtensionResults: ObjectNode = Defaults.clientExtensionResults,
     credentialId: ByteArray = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
     credentialRepository: Option[CredentialRepository] = None,
     origin: String = Defaults.rpId.getId,
-    requestedExtensions: Option[AuthenticationExtensionsClientInputs] = Defaults.requestedExtensions,
+    requestedExtensions: Option[ObjectNode] = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ByteArray = Defaults.signature,
     userHandleForResponse: ByteArray = Defaults.userHandle,
@@ -699,7 +698,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
               requestedExtensions = Some(jsonFactory.objectNode()),
-              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")).asInstanceOf[ObjectNode]
             )
             val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -710,8 +709,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
-              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")).asInstanceOf[ObjectNode]),
+              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")).asInstanceOf[ObjectNode]
             )
             val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -738,7 +737,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
           it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
             val steps = finishAssertion(
-              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
+              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")).asInstanceOf[ObjectNode]),
               authenticatorData = TestAuthenticator.makeAuthDataBytes(
                 extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toArray))
               )

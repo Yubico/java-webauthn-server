@@ -10,6 +10,7 @@ import java.util.Optional
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.attestation.MetadataResolver
 import com.yubico.attestation.MetadataObject
@@ -521,7 +522,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val steps = finishRegistration(
               testData = RegistrationTestData.Packed.BasicAttestation.copy(
                 requestedExtensions = Some(jsonFactory.objectNode()),
-                clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+                clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")).asInstanceOf[ObjectNode]
               )
             )
             val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
@@ -560,8 +561,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
             val steps = finishRegistration(
               testData = RegistrationTestData.Packed.BasicAttestation.copy(
-                requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar"))),
-                clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))
+                requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")).asInstanceOf[ObjectNode]),
+                clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")).asInstanceOf[ObjectNode]
               )
             )
             val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
@@ -656,7 +657,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
             val steps = finishRegistration(
               testData = RegistrationTestData.Packed.BasicAttestation.copy(
-                requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")))
+                requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")).asInstanceOf[ObjectNode])
               ).editAuthenticatorData(
                 authData => new ByteArray(
                   authData.getBytes.updated(32, (authData.getBytes()(32) | 0x80).toByte) ++
