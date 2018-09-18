@@ -9,7 +9,6 @@
 
 package com.yubico.webauthn.impl;
 
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.GeneralSecurityException;
@@ -58,14 +57,17 @@ public class BouncyCastleCrypto implements Crypto {
     }
 
     @Override
-    public PublicKey decodePublicKey(ByteArray encodedPublicKey) throws U2fBadInputException {
+    public PublicKey decodePublicKey(ByteArray encodedPublicKey) {
         try {
             X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
             ECPoint point;
             try {
                 point = curve.getCurve().decodePoint(encodedPublicKey.getBytes());
             } catch (RuntimeException e) {
-                throw new U2fBadInputException("Could not parse user public key", e);
+                throw new IllegalArgumentException(
+                    "Could not parse user public key: " + encodedPublicKey.getBase64Url(),
+                    e
+                );
             }
 
             return KeyFactory.getInstance("ECDSA").generatePublic(
