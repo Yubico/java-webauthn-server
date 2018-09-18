@@ -1,6 +1,5 @@
-package com.yubico.webauthn.internal.util
+package com.yubico.internal.util
 
-import com.yubico.internal.util.BinaryUtil
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
 import org.scalatest.FunSpec

@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.webauthn.internal.u2f.codec;
+package com.yubico.webauthn.internal.u2f;
 
 import com.yubico.u2f.testdata.TestVectors;
 import com.yubico.webauthn.Crypto;
