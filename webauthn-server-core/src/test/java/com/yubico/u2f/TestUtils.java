@@ -9,46 +9,19 @@
 
 package com.yubico.u2f;
 
-import com.google.common.io.BaseEncoding;
-import com.yubico.internal.util.CertificateParser;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Scanner;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 
 public class TestUtils {
-
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
-
-    public static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
-    public static final BaseEncoding BASE64 = BaseEncoding.base64();
-
-    public static X509Certificate fetchCertificate(InputStream resourceAsStream) {
-        Scanner in = new Scanner(resourceAsStream);
-        String base64String = in.nextLine();
-        return parseCertificate(BASE64.decode(base64String));
-    }
-
-    public static X509Certificate parseCertificate(byte[] encodedDerCertificate) {
-        try {
-            return CertificateParser.parseDer(encodedDerCertificate);
-        } catch (CertificateException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static PrivateKey parsePrivateKey(InputStream is) {
         String keyBytesHex = new Scanner(is).nextLine();
