@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableSet;
 import com.yubico.u2f.TestUtils;
 import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.impl.BouncyCastleCrypto;
+import com.yubico.webauthn.internal.BouncyCastleCrypto;
 import java.util.Set;
 
 final public class TestVectors {

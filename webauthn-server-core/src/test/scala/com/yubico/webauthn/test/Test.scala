@@ -4,7 +4,6 @@ import java.util.Base64
 
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticationDataFlags
-import com.yubico.webauthn.impl.WebAuthnCodecs
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
@@ -13,6 +12,7 @@ import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.internal.WebAuthnCodecs
 
 
 object Test extends App {

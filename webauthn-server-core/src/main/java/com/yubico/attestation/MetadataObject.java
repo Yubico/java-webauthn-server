@@ -9,8 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
-import com.yubico.u2f.exceptions.U2fBadConfigurationException;
-import com.yubico.webauthn.impl.WebAuthnCodecs;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -37,14 +36,14 @@ public class MetadataObject {
     private final List<JsonNode> devices;
 
     @JsonCreator
-    public MetadataObject(JsonNode data) throws U2fBadConfigurationException {
+    public MetadataObject(JsonNode data) {
         this.data = data;
         try {
             vendorInfo = OBJECT_MAPPER.readValue(data.get("vendorInfo").traverse(), MAP_STRING_STRING_TYPE);
             trustedCertificates = OBJECT_MAPPER.readValue(data.get("trustedCertificates").traverse(), LIST_STRING_TYPE);
             devices = OBJECT_MAPPER.readValue(data.get("devices").traverse(), LIST_JSONNODE_TYPE);
         } catch (IOException e) {
-            throw new U2fBadConfigurationException("Invalid JSON data", e);
+            throw new IllegalArgumentException("Invalid JSON data", e);
         }
 
         identifier = data.get("identifier").asText();

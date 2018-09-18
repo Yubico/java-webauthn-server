@@ -19,8 +19,8 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.impl.RegistrationTestData
-import com.yubico.webauthn.impl.WebAuthnCodecs
+import com.yubico.webauthn.internal.WebAuthnCodecs
+import com.yubico.webauthn.internal.RegistrationTestData
 import com.yubico.webauthn.test.TestAuthenticator
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest

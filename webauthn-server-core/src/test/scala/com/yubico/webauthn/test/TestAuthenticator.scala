@@ -40,8 +40,8 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.impl.BouncyCastleCrypto
-import com.yubico.webauthn.impl.WebAuthnCodecs
+import com.yubico.webauthn.internal.BouncyCastleCrypto
+import com.yubico.webauthn.internal.WebAuthnCodecs
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.BinaryUtil;
-import com.yubico.webauthn.impl.WebAuthnCodecs;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.Optional;

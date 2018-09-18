@@ -3,7 +3,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.webauthn.impl.WebAuthnCodecs;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

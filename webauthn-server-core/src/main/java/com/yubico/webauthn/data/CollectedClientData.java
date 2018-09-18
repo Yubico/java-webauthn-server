@@ -2,7 +2,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.webauthn.data.exception.Base64UrlException;
-import com.yubico.webauthn.impl.WebAuthnCodecs;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Optional;

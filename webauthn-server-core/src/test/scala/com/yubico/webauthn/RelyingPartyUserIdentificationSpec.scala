@@ -16,8 +16,8 @@ import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.StartAssertionOptions
 import com.yubico.webauthn.data.FinishAssertionOptions
-import com.yubico.webauthn.impl.WebAuthnCodecs
-import com.yubico.webauthn.impl.BouncyCastleCrypto
+import com.yubico.webauthn.internal.BouncyCastleCrypto
+import com.yubico.webauthn.internal.WebAuthnCodecs
 import com.yubico.webauthn.test.TestAuthenticator
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec

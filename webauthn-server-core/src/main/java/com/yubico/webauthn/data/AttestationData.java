@@ -1,7 +1,7 @@
 package com.yubico.webauthn.data;
 
 import COSE.CoseException;
-import com.yubico.webauthn.impl.WebAuthnCodecs;
+import com.yubico.webauthn.internal.webauthn.WebAuthnCodecs;
 import java.io.IOException;
 import java.security.interfaces.ECPublicKey;
 import lombok.AccessLevel;
