@@ -21,7 +21,6 @@ import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.RegisteredCredential
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
@@ -61,7 +60,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
   private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+    override def getCredentialIdsForUsername(username: String) = ???
     override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
     override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
     override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
@@ -1522,7 +1521,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 ).asJava
               case _ => Set.empty.asJava
             }
-            override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+            override def getCredentialIdsForUsername(username: String) = ???
             override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
             override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
           }
@@ -1543,7 +1542,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val credentialRepository = new CredentialRepository {
             override def lookup(id: ByteArray, uh: ByteArray) = None.asJava
             override def lookupAll(id: ByteArray) = Set.empty.asJava
-            override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+            override def getCredentialIdsForUsername(username: String) = ???
             override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
             override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
           }

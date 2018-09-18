@@ -149,7 +149,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             else None
           ).asJava
         override def lookupAll(credId: ByteArray) = lookup(credId, null).asScala.toSet.asJava
-        override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+        override def getCredentialIdsForUsername(username: String) = ???
         override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
         override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
       })
@@ -221,7 +221,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               .build()
           ).asJava
           override def lookupAll(id: ByteArray) = ???
-          override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+          override def getCredentialIdsForUsername(username: String) = ???
           override def getUserHandleForUsername(username: String): Optional[ByteArray] = Some(if (username == owner.username) owner.userHandle else nonOwner.userHandle).asJava
           override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = Some(if (userHandle == owner.userHandle) owner.username else nonOwner.username).asJava
         })
@@ -258,7 +258,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             credentialRepository = Some(new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = None.asJava
               override def lookupAll(id: ByteArray) = Set.empty.asJava
-              override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+              override def getCredentialIdsForUsername(username: String) = ???
               override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
             })
@@ -281,7 +281,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 .build()
             ).asJava
             override def lookupAll(id: ByteArray) = ???
-            override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+            override def getCredentialIdsForUsername(username: String) = ???
             override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
             override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
           }))
@@ -835,7 +835,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   .build()
               ).asJava
               override def lookupAll(id: ByteArray) = ???
-              override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+              override def getCredentialIdsForUsername(username: String) = ???
               override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
             }
@@ -867,7 +867,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   .build()
               ).asJava
               override def lookupAll(id: ByteArray) = ???
-              override def getCredentialIdsForUsername(username: String): java.util.List[PublicKeyCredentialDescriptor] = ???
+              override def getCredentialIdsForUsername(username: String) = ???
               override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
             }

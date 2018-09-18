@@ -2,10 +2,10 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.webauthn.impl.WebAuthnCodecs;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -57,7 +57,7 @@ public class PublicKeyCredentialCreationOptions {
      */
     @NonNull
     @Builder.Default
-    private final Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials = Optional.empty();
+    private final Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials = Optional.empty();
 
     /**
      * Intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the
@@ -93,7 +93,7 @@ public class PublicKeyCredentialCreationOptions {
         @NonNull ByteArray challenge,
         @NonNull List<PublicKeyCredentialParameters> pubKeyCredParams,
         @NonNull Optional<Long> timeout,
-        @NonNull Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials,
+        @NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
         @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection,
         @NonNull AttestationConveyancePreference attestation,
         @NonNull Optional<JsonNode> extensions
@@ -103,7 +103,7 @@ public class PublicKeyCredentialCreationOptions {
         this.challenge = challenge;
         this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
         this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableCollection);
+        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);

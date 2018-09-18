@@ -22,6 +22,7 @@ import com.yubico.webauthn.impl.BouncyCastleCrypto;
 import com.yubico.webauthn.impl.FinishAssertionSteps;
 import com.yubico.webauthn.impl.FinishRegistrationSteps;
 import com.yubico.webauthn.impl.RandomChallengeGenerator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -116,7 +117,7 @@ public class RelyingParty {
                 .allowCredentials(
                     (startAssertionOptions.getAllowCredentials().map(Optional::of).orElseGet(() ->
                         startAssertionOptions.getUsername().map(un ->
-                            credentialRepository.getCredentialIdsForUsername(un))
+                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
                     ))
                 )
                 .extensions(startAssertionOptions.getExtensions())

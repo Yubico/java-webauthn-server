@@ -16,7 +16,6 @@ import java.security.PublicKey;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
@@ -48,10 +47,10 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
     }
 
     @Override
-    public List<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
+    public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
         return getRegistrationsByUsername(username).stream()
             .map(registration -> registration.getRegistration().getKeyId())
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
     }
 
     @Override

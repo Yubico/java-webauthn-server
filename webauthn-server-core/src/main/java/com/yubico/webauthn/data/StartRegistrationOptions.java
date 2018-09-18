@@ -1,8 +1,9 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -15,7 +16,7 @@ public class StartRegistrationOptions {
     private final UserIdentity user;
 
     @NonNull
-    private final Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials;
+    private final Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials;
 
     @NonNull
     @Builder.Default
@@ -23,5 +24,17 @@ public class StartRegistrationOptions {
 
     @Builder.Default
     private final boolean requireResidentKey = false;
+
+    public StartRegistrationOptions(
+        UserIdentity user,
+        Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
+        Optional<JsonNode> extensions,
+        boolean requireResidentKey
+    ) {
+        this.user = user;
+        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableSet);
+        this.extensions = extensions;
+        this.requireResidentKey = requireResidentKey;
+    }
 
 }
