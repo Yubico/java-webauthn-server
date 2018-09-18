@@ -1,4 +1,4 @@
-package com.yubico.attestation.resolvers;
+package com.yubico.attestation.resolver;
 
 import com.yubico.attestation.MetadataObject;
 import com.yubico.attestation.MetadataResolver;

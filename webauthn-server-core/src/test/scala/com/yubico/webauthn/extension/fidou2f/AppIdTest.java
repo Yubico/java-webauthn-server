@@ -1,7 +1,6 @@
-package com.yubico.webauthn.extensions.fidou2f;
+package com.yubico.webauthn.extension.fidou2f;
 
-import com.yubico.webauthn.exceptions.BadConfigurationException;
-import com.yubico.webauthn.extensions.fidou2f.AppId;
+import com.yubico.webauthn.exception.BadConfigurationException;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;

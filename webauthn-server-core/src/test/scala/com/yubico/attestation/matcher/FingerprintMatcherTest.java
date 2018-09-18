@@ -1,4 +1,4 @@
-package com.yubico.attestation.matchers;
+package com.yubico.attestation.matcher;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;

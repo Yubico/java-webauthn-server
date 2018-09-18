@@ -1,7 +1,7 @@
-package com.yubico.webauthn.extensions.fidou2f;
+package com.yubico.webauthn.extension.fidou2f;
 
 import com.google.common.net.InetAddresses;
-import com.yubico.webauthn.exceptions.BadConfigurationException;
+import com.yubico.webauthn.exception.BadConfigurationException;
 import java.net.URI;
 import java.net.URISyntaxException;
 

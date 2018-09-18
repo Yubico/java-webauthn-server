@@ -14,7 +14,7 @@ import com.upokecenter.cbor.CBORObject
 import com.yubico.attestation.MetadataResolver
 import com.yubico.attestation.MetadataObject
 import com.yubico.attestation.MetadataService
-import com.yubico.attestation.resolvers.SimpleResolver
+import com.yubico.attestation.resolver.SimpleResolver
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria

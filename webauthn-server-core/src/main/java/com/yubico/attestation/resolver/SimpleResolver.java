@@ -1,6 +1,6 @@
 /* Copyright 2015 Yubico */
 
-package com.yubico.attestation.resolvers;
+package com.yubico.attestation.resolver;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;

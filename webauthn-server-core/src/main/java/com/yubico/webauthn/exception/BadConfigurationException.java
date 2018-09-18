@@ -1,4 +1,4 @@
-package com.yubico.webauthn.exceptions;
+package com.yubico.webauthn.exception;
 
 /**
  * Thrown when invalid data is given to the server's internal configuration.
