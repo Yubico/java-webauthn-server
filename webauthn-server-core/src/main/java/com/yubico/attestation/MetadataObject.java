@@ -67,7 +67,7 @@ public class MetadataObject {
     }
 
     public List<JsonNode> getDevices() {
-        return MoreObjects.firstNonNull(devices, ImmutableList.<JsonNode>of());
+        return MoreObjects.firstNonNull(devices, ImmutableList.of());
     }
 
 }

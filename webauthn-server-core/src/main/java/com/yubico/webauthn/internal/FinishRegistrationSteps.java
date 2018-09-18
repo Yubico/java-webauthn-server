@@ -471,11 +471,7 @@ public class FinishRegistrationSteps {
                     switch (attestation.getFormat()) {
                         case "fido-u2f":
                         case "packed":
-                            try {
-                                return Optional.of(new KnownX509TrustAnchorsTrustResolver(metadataService.get()));
-                            } catch (Exception e) {
-                                return Optional.empty();
-                            }
+                            return metadataService.map(KnownX509TrustAnchorsTrustResolver::new);
                         default:
                             throw new UnsupportedOperationException(String.format(
                                 "Attestation type %s is not supported for attestation statement format \"%s\".",

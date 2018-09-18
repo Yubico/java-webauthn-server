@@ -13,9 +13,9 @@ import lombok.experimental.UtilityClass;
 
 
 @UtilityClass
-public class ExtensionsValidation {
+class ExtensionsValidation {
 
-    public static boolean validate(Optional<JsonNode> requested, PublicKeyCredential<? extends AuthenticatorResponse> response) {
+    static boolean validate(Optional<JsonNode> requested, PublicKeyCredential<? extends AuthenticatorResponse> response) {
         if (requested.isPresent() && !requested.get().isObject()) {
             throw new IllegalArgumentException(String.format(
                 "Requested extensions must be a JSON object, was: %s",

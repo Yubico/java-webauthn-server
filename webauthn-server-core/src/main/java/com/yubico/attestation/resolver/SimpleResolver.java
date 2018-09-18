@@ -29,7 +29,7 @@ public class SimpleResolver implements MetadataResolver {
     private static final Logger logger = LoggerFactory.getLogger(SimpleResolver.class);
 
     final Multimap<String, X509Certificate> certs = ArrayListMultimap.create();
-    final Map<X509Certificate, MetadataObject> metadata = new HashMap<X509Certificate, MetadataObject>();
+    final Map<X509Certificate, MetadataObject> metadata = new HashMap<>();
 
     public void addMetadata(String jsonData) throws CertificateException, IOException {
         addMetadata(WebAuthnCodecs.json().readValue(jsonData, MetadataObject.class));

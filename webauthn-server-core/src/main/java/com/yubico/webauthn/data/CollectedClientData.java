@@ -16,7 +16,7 @@ import lombok.Value;
 public class CollectedClientData {
 
     /**
-     * @param The client data returned from, or to be sent to, the client.
+     * The client data returned from, or to be sent to, the client.
      */
     @NonNull
     private JsonNode clientData;

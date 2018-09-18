@@ -2,6 +2,7 @@ package com.yubico.webauthn.internal;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -174,7 +175,7 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
         return ldap.getRdns().stream()
             .filter(rdn -> Objects.equals(rdn.getType(), field))
             .findAny()
-            .map(i -> i.getValue());
+            .map(Rdn::getValue);
     }
 
     public boolean verifyX5cRequirements(X509Certificate cert, ByteArray aaguid) {
@@ -186,20 +187,22 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
         final String idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4";
         final Set<String> countries = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
 
-        if (false == getDnField("C", cert).filter(c -> countries.contains(c)).isPresent()) {
-            throw new IllegalArgumentException(String.format(
-                "Invalid attestation certificate country code: %s", getDnField("C", cert)));
-        }
+        ExceptionUtil.assure(
+            getDnField("C", cert).filter(countries::contains).isPresent(),
+            "Invalid attestation certificate country code: %s",
+            getDnField("C", cert)
+        );
 
-        if (false == getDnField("O", cert).filter(o -> !((String) o).isEmpty()).isPresent()) {
-            throw new IllegalArgumentException("Organization (O) field of attestation certificate DN must be present.");
-        }
+        ExceptionUtil.assure(
+            getDnField("O", cert).filter(o -> !((String) o).isEmpty()).isPresent(),
+            "Organization (O) field of attestation certificate DN must be present."
+        );
 
-        if (false == getDnField("OU", cert).filter(ou -> ouValue.equals(ou)).isPresent()) {
-            throw new IllegalArgumentException(String.format(
-                "Organization Unit (OU) field of attestation certificate DN must be exactly \"%s\", was: %s",
-                ouValue, getDnField("OU", cert)));
-        }
+        ExceptionUtil.assure(
+            getDnField("OU", cert).filter(ouValue::equals).isPresent(),
+            "Organization Unit (OU) field of attestation certificate DN must be exactly \"%s\", was: %s",
+            ouValue, getDnField("OU", cert)
+        );
 
         Optional.ofNullable(cert.getExtensionValue(idFidoGenCeAaguid))
             .map(ext -> {
@@ -212,14 +215,17 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
                 }
             })
             .ifPresent((ByteArray value) -> {
-                if (false == value.equals(aaguid)) {
-                    throw new IllegalArgumentException("X.509 extension " + idFidoGenCeAaguid + " (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.");
-                }
+                ExceptionUtil.assure(
+                    value.equals(aaguid),
+                    "X.509 extension %s (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.",
+                idFidoGenCeAaguid
+                );
             });
 
-        if (cert.getBasicConstraints() != -1) {
-            throw new IllegalArgumentException("Attestation certificate must not be a CA certificate.");
-        }
+        ExceptionUtil.assure(
+            cert.getBasicConstraints() == -1,
+            "Attestation certificate must not be a CA certificate."
+        );
 
         return true;
     }

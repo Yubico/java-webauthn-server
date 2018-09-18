@@ -30,8 +30,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class RawRegisterResponse {
-    public static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
-    public static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
+    static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
+    private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
     @EqualsAndHashCode.Exclude
     private transient final Crypto crypto;
@@ -72,7 +72,7 @@ public class RawRegisterResponse {
         this.crypto = crypto;
     }
 
-    public static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
+    static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
         ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
         try {
             byte reservedByte = bytes.readSigned();
@@ -102,7 +102,7 @@ public class RawRegisterResponse {
         return crypto.verifySignature(attestationCertificate, signedBytes, signature);
     }
 
-    public static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
+    static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
         ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
         encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
         encoded.write(appIdHash.getBytes());

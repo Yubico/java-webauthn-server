@@ -21,7 +21,7 @@ public enum TokenBindingStatus implements JsonStringSerializable {
     private final String id;
 
     public static Optional<TokenBindingStatus> fromString(@NonNull String value) {
-        return Arrays.asList(values()).stream()
+        return Arrays.stream(values())
             .filter(v -> v.id.equals(value))
             .findAny();
     }

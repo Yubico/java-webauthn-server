@@ -51,7 +51,7 @@ public enum AttestationConveyancePreference implements JsonStringSerializable {
     @NonNull
     private final String id;
 
-    public static AttestationConveyancePreference DEFAULT = NONE;
+    public static final AttestationConveyancePreference DEFAULT = NONE;
 
     @Override
     public String toJsonString() {

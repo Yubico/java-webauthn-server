@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 
-public interface X5cAttestationStatementVerifier {
+interface X5cAttestationStatementVerifier {
 
     default Optional<X509Certificate> getX5cAttestationCertificate(AttestationObject attestationObject) throws CertificateException {
         return getAttestationTrustPath(attestationObject).flatMap(certs -> certs.stream().findFirst());

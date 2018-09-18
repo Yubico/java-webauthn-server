@@ -52,7 +52,7 @@ public class VersionInfo {
         new URL("https://github.com/Yubico/java-webauthn-server")
     );
 
-    public VersionInfo() throws IOException {
+    private VersionInfo() throws IOException {
     }
 
     private Optional<String> findImplementationVersionInManifest() throws IOException {

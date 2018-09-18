@@ -4,7 +4,6 @@ package com.yubico.attestation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
-import com.google.common.base.Predicates;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import lombok.NonNull;
@@ -36,14 +36,14 @@ import org.slf4j.LoggerFactory;
 public class MetadataService {
     private static final Logger logger = LoggerFactory.getLogger(MetadataService.class);
 
-    public static final String SELECTORS = "selectors";
+    private static final String SELECTORS = "selectors";
     private static final String SELECTOR_TYPE = "type";
     private static final String SELECTOR_PARAMETERS = "parameters";
 
     private static final String TRANSPORTS = "transports";
     private static final String TRANSPORTS_EXT_OID = "1.3.6.1.4.1.45724.2.1.1";
 
-    public static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableMap.of(
+    private static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableMap.of(
             ExtensionMatcher.SELECTOR_TYPE, new ExtensionMatcher(),
             FingerprintMatcher.SELECTOR_TYPE, new FingerprintMatcher()
     );
@@ -54,9 +54,7 @@ public class MetadataService {
         try {
             is = MetadataService.class.getResourceAsStream("/metadata.json");
             resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException e) {
-            logger.error("createDefaultMetadataResolver failed", e);
-        } catch (CertificateException e) {
+        } catch (IOException | CertificateException e) {
             logger.error("createDefaultMetadataResolver failed", e);
         } finally {
             Closeables.closeQuietly(is);
@@ -188,13 +186,13 @@ public class MetadataService {
         final int certTransports = get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
 
         return resolver.resolve(attestationCertificate).map(metadata -> {
-            Map<String, String> vendorProperties = null;
+            Map<String, String> vendorProperties;
             Map<String, String> deviceProperties = null;
-            String identifier = null;
+            String identifier;
             int metadataTransports = 0;
 
             identifier = metadata.getIdentifier();
-            vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Predicates.notNull());
+            vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Objects::nonNull);
             for (JsonNode device : metadata.getDevices()) {
                 if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
                     JsonNode transportNode = device.get(TRANSPORTS);
@@ -215,7 +213,7 @@ public class MetadataService {
 
             return Attestation.builder(true)
                 .metadataIdentifier(Optional.ofNullable(identifier))
-                .vendorProperties(Optional.ofNullable(vendorProperties))
+                .vendorProperties(Optional.of(vendorProperties))
                 .deviceProperties(Optional.ofNullable(deviceProperties))
                 .transports(Optional.of(Transport.fromInt(certTransports | metadataTransports)))
                 .build();

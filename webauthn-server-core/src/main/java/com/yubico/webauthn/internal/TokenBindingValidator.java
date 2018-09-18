@@ -5,9 +5,9 @@ import com.yubico.webauthn.data.TokenBindingInfo;
 import java.util.Optional;
 
 
-public class TokenBindingValidator {
+class TokenBindingValidator {
 
-    public static boolean validate(Optional<TokenBindingInfo> clientTokenBinding, Optional<ByteArray> rpTokenBindingId) {
+    static boolean validate(Optional<TokenBindingInfo> clientTokenBinding, Optional<ByteArray> rpTokenBindingId) {
         return rpTokenBindingId.map(rpToken ->
             clientTokenBinding.map(tbi -> {
                 switch (tbi.getStatus()) {

@@ -6,5 +6,5 @@ public enum AttestationType {
     SELF_ATTESTATION,
     PRIVACY_CA,
     ECDAA,
-    NONE;
+    NONE
 }

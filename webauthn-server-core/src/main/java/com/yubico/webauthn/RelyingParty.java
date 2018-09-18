@@ -84,7 +84,6 @@ public class RelyingParty {
      * #finishRegistration(FinishRegistrationOptions)}. It is a separate method to facilitate
      * testing; users should call {@link
      * #finishRegistration(FinishRegistrationOptions)} instead of this method.
-     * @return
      */
     FinishRegistrationSteps _finishRegistration(
         PublicKeyCredentialCreationOptions request,

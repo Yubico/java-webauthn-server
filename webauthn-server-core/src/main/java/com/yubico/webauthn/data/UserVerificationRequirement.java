@@ -17,7 +17,7 @@ public enum UserVerificationRequirement implements JsonStringSerializable {
     @NonNull
     private final String id;
 
-    public static UserVerificationRequirement DEFAULT = PREFERRED;
+    public static final UserVerificationRequirement DEFAULT = PREFERRED;
 
     @Override
     public String toJsonString() {
