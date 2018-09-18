@@ -7,11 +7,11 @@ import java.net.URISyntaxException;
 
 public class AppId {
 
-    public final String value;
+    public final String id;
 
     public AppId(String appId) throws BadConfigurationException {
         checkIsValid(appId);
-        this.value = appId;
+        this.id = appId;
     }
 
     /**
