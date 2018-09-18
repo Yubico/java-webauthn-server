@@ -71,7 +71,9 @@ public class PackedAttestationStatementVerifier implements AttestationStatementV
     private boolean verifySelfAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
         final PublicKey pubkey;
         try {
-            pubkey = attestationObject.getAuthenticatorData().getAttestationData().get().getParsedCredentialPublicKey();
+            pubkey = WebAuthnCodecs.importCoseP256PublicKey(
+                attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey()
+            );
         } catch (IOException | CoseException e) {
             throw ExceptionUtil.wrapAndLog(
                 log,

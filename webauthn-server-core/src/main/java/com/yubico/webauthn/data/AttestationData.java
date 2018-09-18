@@ -1,9 +1,5 @@
 package com.yubico.webauthn.data;
 
-import COSE.CoseException;
-import com.yubico.webauthn.internal.webauthn.WebAuthnCodecs;
-import java.io.IOException;
-import java.security.interfaces.ECPublicKey;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,9 +30,5 @@ public class AttestationData {
      */
     @NonNull
     private final ByteArray credentialPublicKey;
-
-    public ECPublicKey getParsedCredentialPublicKey() throws IOException, CoseException {
-        return WebAuthnCodecs.importCoseP256PublicKey(credentialPublicKey);
-    }
 
 }

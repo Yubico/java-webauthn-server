@@ -63,7 +63,11 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
 
         if (attestationCertificate.getPublicKey() instanceof ECPublicKey
             && validSelfSignature(attestationCertificate)
-            && WebAuthnCodecs.ecPublicKeyToRaw(attestationObject.getAuthenticatorData().getAttestationData().get().getParsedCredentialPublicKey())
+            && WebAuthnCodecs.ecPublicKeyToRaw(
+                WebAuthnCodecs.importCoseP256PublicKey(
+                    attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey()
+                )
+               )
                 .equals(
                     WebAuthnCodecs.ecPublicKeyToRaw((ECPublicKey) attestationCertificate.getPublicKey())
                 )
@@ -104,7 +108,11 @@ public class FidoU2fAttestationStatementVerifier implements AttestationStatement
                 ByteArray userPublicKey;
 
                 try {
-                    userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(attestationData.getParsedCredentialPublicKey());
+                    userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(
+                        WebAuthnCodecs.importCoseP256PublicKey(
+                            attestationData.getCredentialPublicKey()
+                        )
+                    );
                 } catch (IOException | CoseException e) {
                     RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestationData));
                     log.error(err.getMessage(), err);
