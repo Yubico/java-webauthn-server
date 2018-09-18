@@ -4,10 +4,12 @@ import com.google.common.net.InetAddresses;
 import com.yubico.webauthn.exception.BadConfigurationException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import lombok.Value;
 
+@Value
 public class AppId {
 
-    public final String id;
+    private final String id;
 
     public AppId(String appId) throws BadConfigurationException {
         checkIsValid(appId);
