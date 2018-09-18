@@ -25,7 +25,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.StartAssertionOptions;
 import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.internal.RandomChallengeGenerator;
+import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.internal.WebAuthnCodecs;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;

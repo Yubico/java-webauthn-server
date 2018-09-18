@@ -21,7 +21,6 @@ import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.internal.BouncyCastleCrypto;
 import com.yubico.webauthn.internal.FinishAssertionSteps;
 import com.yubico.webauthn.internal.FinishRegistrationSteps;
-import com.yubico.webauthn.internal.RandomChallengeGenerator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
