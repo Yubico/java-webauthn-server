@@ -1,4 +1,4 @@
-package com.yubico.util.json;
+package com.yubico.internal.util.json;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;

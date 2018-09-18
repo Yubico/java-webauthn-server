@@ -1,8 +1,8 @@
 package com.yubico.webauthn.meta;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.util.json.JsonStringSerializable;
-import com.yubico.util.json.JsonStringSerializer;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
 import lombok.AllArgsConstructor;
 
 @JsonSerialize(using = JsonStringSerializer.class)

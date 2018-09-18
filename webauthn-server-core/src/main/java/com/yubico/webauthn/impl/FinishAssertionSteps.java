@@ -1,7 +1,6 @@
 package com.yubico.webauthn.impl;
 
 
-import com.yubico.u2f.exceptions.U2fBadInputException;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.Crypto;
@@ -21,7 +20,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.yubico.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assure;
 
 
 @Builder

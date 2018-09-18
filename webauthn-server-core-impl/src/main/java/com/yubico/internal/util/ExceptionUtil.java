@@ -1,4 +1,4 @@
-package com.yubico.util;
+package com.yubico.internal.util;
 
 import lombok.experimental.UtilityClass;
 import org.slf4j.Logger;

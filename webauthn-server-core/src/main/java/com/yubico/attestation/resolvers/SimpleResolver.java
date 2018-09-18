@@ -6,7 +6,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.yubico.attestation.MetadataObject;
 import com.yubico.attestation.MetadataResolver;
-import com.yubico.util.CertificateParser;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.impl.WebAuthnCodecs;
 import java.io.IOException;
 import java.security.InvalidKeyException;

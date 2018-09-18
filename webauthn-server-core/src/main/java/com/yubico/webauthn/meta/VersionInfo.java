@@ -1,6 +1,6 @@
 package com.yubico.webauthn.meta;
 
-import com.yubico.util.ExceptionUtil;
+import com.yubico.internal.util.ExceptionUtil;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;

@@ -1,7 +1,7 @@
 package com.yubico.webauthn.meta;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.util.json.LocalDateJsonSerializer;
+import com.yubico.internal.util.json.LocalDateJsonSerializer;
 import java.net.URL;
 import java.time.LocalDate;
 import lombok.Builder;

@@ -16,7 +16,7 @@ import com.google.common.io.Closeables;
 import com.yubico.attestation.matchers.ExtensionMatcher;
 import com.yubico.attestation.matchers.FingerprintMatcher;
 import com.yubico.attestation.resolvers.SimpleResolver;
-import com.yubico.util.ExceptionUtil;
+import com.yubico.internal.util.ExceptionUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

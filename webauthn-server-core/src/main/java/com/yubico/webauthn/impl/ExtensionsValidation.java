@@ -2,7 +2,7 @@ package com.yubico.webauthn.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.util.StreamUtil;
+import com.yubico.internal.util.StreamUtil;
 import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import java.util.HashSet;

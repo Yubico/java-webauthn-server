@@ -1,4 +1,4 @@
-package com.yubico.util;
+package com.yubico.internal.util;
 
 import java.util.Collections;
 import java.util.Iterator;

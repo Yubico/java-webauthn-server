@@ -1,7 +1,7 @@
 package com.yubico.u2f.data.messages.key.util;
 
 import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.util.U2fB64Encoding;
+import com.yubico.internal.util.U2fB64Encoding;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

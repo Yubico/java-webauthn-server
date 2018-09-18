@@ -1,4 +1,4 @@
-package com.yubico.util;
+package com.yubico.internal.util;
 
 import com.google.common.io.BaseEncoding;
 import com.yubico.u2f.exceptions.U2fBadInputException;

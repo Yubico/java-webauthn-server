@@ -1,4 +1,4 @@
-package com.yubico.util.json;
+package com.yubico.internal.util.json;
 
 public interface JsonLongSerializable {
 

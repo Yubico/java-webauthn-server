@@ -10,7 +10,7 @@
 package com.yubico.u2f;
 
 import com.google.common.io.BaseEncoding;
-import com.yubico.util.CertificateParser;
+import com.yubico.internal.util.CertificateParser;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyFactory;

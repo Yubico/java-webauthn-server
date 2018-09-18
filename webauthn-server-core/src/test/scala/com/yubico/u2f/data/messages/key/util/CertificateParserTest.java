@@ -1,6 +1,6 @@
 package com.yubico.u2f.data.messages.key.util;
 
-import com.yubico.util.CertificateParser;
+import com.yubico.internal.util.CertificateParser;
 import java.security.cert.CertificateException;
 import org.junit.Test;
 

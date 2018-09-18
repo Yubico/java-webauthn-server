@@ -349,7 +349,7 @@ public class WebAuthnServer {
                 AuthenticatedAction<?> action = authenticatedActions.getIfPresent(result.request);
                 authenticatedActions.invalidate(result.request);
                 if (action == null) {
-                    return com.yubico.util.Either.left(Collections.singletonList(
+                    return Either.left(Collections.singletonList(
                         "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
                     ));
                 } else {

@@ -5,9 +5,9 @@ import java.security.cert.X509Certificate
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.yubico.internal.util.BinaryUtil
+import com.yubico.internal.util.CertificateParser
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.util.BinaryUtil
-import com.yubico.util.CertificateParser
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.ByteArray

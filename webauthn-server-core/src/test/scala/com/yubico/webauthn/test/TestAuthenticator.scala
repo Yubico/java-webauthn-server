@@ -22,13 +22,12 @@ import java.time.Instant
 import java.util.Date
 import java.util.Base64
 
-import com.yubico
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.util.CertificateParser
-import com.yubico.util.BinaryUtil
+import com.yubico.internal.util.BinaryUtil
+import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.data
 import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.AuthenticatorData
@@ -440,7 +439,7 @@ object TestAuthenticator {
 
     new ByteArray((Vector[Byte]()
       ++ aaguid.getBytes.toVector
-      ++ yubico.util.BinaryUtil.fromHex("0020").toVector
+      ++ BinaryUtil.fromHex("0020").toVector
       ++ credentialId.getBytes.toVector
       ++ publicKeyCose.getBytes.toVector
     ).toArray)

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.hash.Hashing;
-import com.yubico.util.CertificateParser;
+import com.yubico.internal.util.CertificateParser;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import org.junit.Test;

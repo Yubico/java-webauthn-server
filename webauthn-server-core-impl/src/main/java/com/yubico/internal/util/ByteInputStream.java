@@ -5,7 +5,7 @@
  * license that can be found in the LICENSE file.
  */
 
-package com.yubico.util;
+package com.yubico.internal.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;

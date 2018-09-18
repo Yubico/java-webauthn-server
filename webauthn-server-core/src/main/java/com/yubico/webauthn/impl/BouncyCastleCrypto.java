@@ -10,7 +10,6 @@
 package com.yubico.webauthn.impl;
 
 import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.util.U2fB64Encoding;
 import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.GeneralSecurityException;

@@ -3,7 +3,7 @@ package com.yubico.attestation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
-import com.yubico.util.CertificateParser;
+import com.yubico.internal.util.CertificateParser;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;

@@ -11,7 +11,7 @@ import org.bouncycastle.asn1.util.ASN1Dump
 import COSE.ECPublicKey
 import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
-import com.yubico.util.BinaryUtil
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.webauthn.data.ByteArray
 
 

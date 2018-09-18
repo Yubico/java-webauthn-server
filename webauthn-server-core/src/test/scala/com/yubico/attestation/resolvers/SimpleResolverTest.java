@@ -1,7 +1,7 @@
 package com.yubico.attestation.resolvers;
 
 import com.yubico.attestation.MetadataObject;
-import com.yubico.util.CertificateParser;
+import com.yubico.internal.util.CertificateParser;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;

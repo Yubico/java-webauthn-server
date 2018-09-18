@@ -30,7 +30,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.yubico.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assure;
 import static com.yubico.webauthn.data.AttestationType.NONE;
 
 @Builder

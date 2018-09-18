@@ -4,7 +4,7 @@ import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
 
-import static com.yubico.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assure;
 
 @Value
 public class TokenBindingInfo {

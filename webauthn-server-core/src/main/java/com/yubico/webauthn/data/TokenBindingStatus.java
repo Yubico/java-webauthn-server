@@ -2,8 +2,8 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.util.json.JsonStringSerializable;
-import com.yubico.util.json.JsonStringSerializer;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
