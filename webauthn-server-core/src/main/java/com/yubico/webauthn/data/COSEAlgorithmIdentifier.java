@@ -3,6 +3,10 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonLongSerializable;
 import com.yubico.internal.util.json.JsonLongSerializer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Value;
 
 /**
@@ -23,5 +27,12 @@ public class COSEAlgorithmIdentifier implements JsonLongSerializable {
 
     public static final COSEAlgorithmIdentifier ES256 = new COSEAlgorithmIdentifier(-7);
     public static final COSEAlgorithmIdentifier RS256 = new COSEAlgorithmIdentifier(-257);
+
+    static final Set<COSEAlgorithmIdentifier> values() {
+        return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            ES256,
+            RS256
+        )));
+    }
 
 }
