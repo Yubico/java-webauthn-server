@@ -18,6 +18,8 @@ import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.StartAssertionOptions;
 import com.yubico.webauthn.data.StartRegistrationOptions;
+import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.internal.BouncyCastleCrypto;
 import com.yubico.webauthn.internal.FinishAssertionSteps;
 import com.yubico.webauthn.internal.FinishRegistrationSteps;
@@ -73,8 +75,12 @@ public class RelyingParty {
             .build();
     }
 
-    public RegistrationResult finishRegistration(FinishRegistrationOptions finishRegistrationOptions) {
-        return _finishRegistration(finishRegistrationOptions.getRequest(), finishRegistrationOptions.getResponse(), finishRegistrationOptions.getCallerTokenBindingId()).run();
+    public RegistrationResult finishRegistration(FinishRegistrationOptions finishRegistrationOptions) throws RegistrationFailedException {
+        try {
+            return _finishRegistration(finishRegistrationOptions.getRequest(), finishRegistrationOptions.getResponse(), finishRegistrationOptions.getCallerTokenBindingId()).run();
+        } catch (IllegalArgumentException e) {
+            throw new RegistrationFailedException(e);
+        }
     }
 
     /**
@@ -124,8 +130,12 @@ public class RelyingParty {
             .build();
     }
 
-    public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions) {
-        return _finishAssertion(finishAssertionOptions.getRequest(), finishAssertionOptions.getResponse(), finishAssertionOptions.getCallerTokenBindingId()).run();
+    public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions) throws AssertionFailedException {
+        try {
+            return _finishAssertion(finishAssertionOptions.getRequest(), finishAssertionOptions.getResponse(), finishAssertionOptions.getCallerTokenBindingId()).run();
+        } catch (IllegalArgumentException e) {
+            throw new AssertionFailedException(e);
+        }
     }
 
     /**

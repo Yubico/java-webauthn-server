@@ -26,6 +26,8 @@ import com.yubico.webauthn.data.StartAssertionOptions;
 import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.RandomChallengeGenerator;
+import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.internal.WebAuthnCodecs;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
@@ -241,9 +243,12 @@ public class WebAuthnServer {
                         registration.isAttestationTrusted()
                     )
                 );
-            } catch (Exception e) {
+            } catch (RegistrationFailedException e) {
                 logger.debug("fail finishRegistration responseJson: {}", responseJson, e);
                 return Either.left(Arrays.asList("Registration failed!", e.getMessage()));
+            } catch (Exception e) {
+                logger.error("fail finishRegistration responseJson: {}", responseJson, e);
+                return Either.left(Arrays.asList("Registration failed unexpectedly; this is likely a bug.", e.getMessage()));
             }
         }
     }
@@ -326,9 +331,12 @@ public class WebAuthnServer {
                 } else {
                     return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));
                 }
-            } catch (Exception e) {
+            } catch (AssertionFailedException e) {
                 logger.debug("Assertion failed", e);
                 return Either.left(Arrays.asList("Assertion failed!", e.getMessage()));
+            } catch (Exception e) {
+                logger.error("Assertion failed", e);
+                return Either.left(Arrays.asList("Assertion failed unexpectedly; this is likely a bug.", e.getMessage()));
             }
         }
     }
