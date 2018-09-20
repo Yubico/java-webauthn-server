@@ -110,7 +110,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       it("has a finish method which accepts and outputs JSON.") {
         val server = newServerWithAuthenticationRequest(RegistrationTestData.FidoU2f.BasicAttestation)
         val authenticatorAssertionResponseJson = s"""{"authenticatorData":"${authenticatorData.getBase64Url}","signature":"${signature.getBase64Url}","clientDataJSON":"${clientDataJsonBytes.getBase64Url}"}"""
-        val publicKeyCredentialJson = s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson},"type":"public-key"}"""
+        val publicKeyCredentialJson = s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
         val responseJson = s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
         val request = server.finishAuthentication(responseJson)
         val json = jsonMapper.writeValueAsString(request.right.get)

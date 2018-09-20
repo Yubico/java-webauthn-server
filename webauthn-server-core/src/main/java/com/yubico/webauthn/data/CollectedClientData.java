@@ -1,6 +1,8 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
@@ -19,7 +21,7 @@ public class CollectedClientData {
      * The client data returned from, or to be sent to, the client.
      */
     @NonNull
-    private JsonNode clientData;
+    private ObjectNode clientData;
 
     /**
      * The URL-safe Base64 encoded challenge as provided by the RP.
@@ -39,12 +41,29 @@ public class CollectedClientData {
     @NonNull
     private final transient String type;
 
+    /**
+     * Input or output values for or from authenticator extensions, if any.
+     */
+    @NonNull
+    private final transient Optional<ObjectNode> authenticatorExtensions;
+
+    /**
+     * Input or output values for or from client extensions, if any.
+     */
+    @NonNull
+    private final transient Optional<ObjectNode> clientExtensions;
+
     public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
         this(WebAuthnCodecs.json().readTree(new ByteArrayInputStream(clientDataJSON.getBytes())));
     }
 
     public CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
-        this.clientData = clientData;
+        ExceptionUtil.assure(
+            clientData != null && clientData.isObject(),
+            "Collected client data must be JSON object."
+        );
+
+        this.clientData = (ObjectNode) clientData;
 
         try {
             challenge = ByteArray.fromBase64Url(clientData.get("challenge").textValue());
@@ -65,20 +84,24 @@ public class CollectedClientData {
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"type\"");
         }
-    }
 
-    /**
-     * Input or output values for or from authenticator extensions, if any.
-     */
-    public Optional<JsonNode> getAuthenticatorExtensions() {
-        return Optional.ofNullable(clientData.get("authenticatorExtensions")).map(WebAuthnCodecs::deepCopy);
-    }
+        final JsonNode authenticatorExtensions = clientData.get("authenticatorExtensions");
+        if (authenticatorExtensions == null) {
+            this.authenticatorExtensions = Optional.empty();
+        } else if (authenticatorExtensions.isObject()) {
+            this.authenticatorExtensions = Optional.of(WebAuthnCodecs.deepCopy((ObjectNode) authenticatorExtensions));
+        } else {
+            throw new IllegalArgumentException("Field \"authenticatorExtensions\" must be an object if present.");
+        }
 
-    /**
-     * Input or output values for or from client extensions, if any.
-     */
-    public Optional<JsonNode> getClientExtensions() {
-        return Optional.ofNullable(clientData.get("clientExtensions")).map(WebAuthnCodecs::deepCopy);
+        final JsonNode clientExtensions = clientData.get("clientExtensions");
+        if (clientExtensions == null) {
+            this.clientExtensions = Optional.empty();
+        } else if (clientExtensions.isObject()) {
+            this.clientExtensions = Optional.of(WebAuthnCodecs.deepCopy((ObjectNode) clientExtensions));
+        } else {
+            throw new IllegalArgumentException("Field \"clientExtensions\" must be an object if present.");
+        }
     }
 
     /**

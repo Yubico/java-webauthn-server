@@ -1,6 +1,6 @@
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +22,7 @@ public class StartAssertionOptions {
 
     @NonNull
     @Builder.Default
-    private final Optional<JsonNode> extensions = Optional.empty();
+    private final Optional<ObjectNode> extensions = Optional.empty();
+
 
 }

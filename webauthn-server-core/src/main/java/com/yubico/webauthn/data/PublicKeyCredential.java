@@ -2,7 +2,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.WebAuthnCodecs;
 import lombok.Builder;
 import lombok.NonNull;
@@ -36,7 +36,7 @@ public class PublicKeyCredential<A extends AuthenticatorResponse> implements Cre
      * extension processing.
      */
     @NonNull
-    private final JsonNode clientExtensionResults;
+    private final ObjectNode clientExtensionResults;
 
     /**
      * The PublicKeyCredential's type value is the string "public-key".
@@ -47,7 +47,7 @@ public class PublicKeyCredential<A extends AuthenticatorResponse> implements Cre
     public PublicKeyCredential(
         @NonNull ByteArray id,
         @NonNull A response,
-        @NonNull JsonNode clientExtensionResults
+        @NonNull ObjectNode clientExtensionResults
     ) {
         this(id, response, clientExtensionResults, PublicKeyCredentialType.PUBLIC_KEY);
     }
@@ -56,17 +56,13 @@ public class PublicKeyCredential<A extends AuthenticatorResponse> implements Cre
     private PublicKeyCredential(
         @NonNull @JsonProperty("id") ByteArray id,
         @NonNull @JsonProperty("response") A response,
-        @NonNull @JsonProperty("clientExtensionResults") JsonNode clientExtensionResults,
+        @NonNull @JsonProperty("clientExtensionResults") ObjectNode clientExtensionResults,
         @NonNull @JsonProperty("type") PublicKeyCredentialType type
     ) {
         this.id = id;
         this.response = response;
-        this.clientExtensionResults = clientExtensionResults;
+        this.clientExtensionResults = WebAuthnCodecs.deepCopy(clientExtensionResults);
         this.type = type;
-    }
-
-    public JsonNode getClientExtensionResults() {
-        return WebAuthnCodecs.deepCopy(clientExtensionResults);
     }
 
 }

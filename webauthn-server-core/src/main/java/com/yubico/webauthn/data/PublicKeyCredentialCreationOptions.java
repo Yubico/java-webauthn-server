@@ -1,6 +1,6 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +85,7 @@ public class PublicKeyCredentialCreationOptions {
      */
     @NonNull
     @Builder.Default
-    private final Optional<JsonNode> extensions = Optional.empty();
+    private final Optional<ObjectNode> extensions = Optional.empty();
 
     private PublicKeyCredentialCreationOptions(
         @NonNull RelyingPartyIdentity rp,
@@ -96,7 +96,7 @@ public class PublicKeyCredentialCreationOptions {
         @NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
         @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection,
         @NonNull AttestationConveyancePreference attestation,
-        @NonNull Optional<JsonNode> extensions
+        @NonNull Optional<ObjectNode> extensions
     ) {
         this.rp = rp;
         this.user = user;
@@ -109,7 +109,7 @@ public class PublicKeyCredentialCreationOptions {
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
     }
 
-    public Optional<JsonNode> getExtensions() {
+    public Optional<ObjectNode> getExtensions() {
         return this.extensions.map(WebAuthnCodecs::deepCopy);
     }
 
