@@ -1,5 +1,8 @@
 package com.yubico.webauthn.data;
 
+import lombok.ToString;
+
+@ToString
 public class AuthenticationDataFlags {
     public final byte value;
 
