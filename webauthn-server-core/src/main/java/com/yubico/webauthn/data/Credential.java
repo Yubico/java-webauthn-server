@@ -4,6 +4,6 @@ public interface Credential {
 
     ByteArray getId();
 
-    String getType();
+    PublicKeyCredentialType getType();
 
 }

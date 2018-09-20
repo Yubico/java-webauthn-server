@@ -2,9 +2,10 @@ package com.yubico.webauthn.data;
 
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NonNull;
 
 /**
  * Clients may communicate with authenticators using a variety of mechanisms.
@@ -31,9 +32,9 @@ import lombok.Getter;
  * first time, they may be required to use a roaming authenticator which was
  * originally registered with the Relying Party using a different client.
  */
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum AuthenticatorAttachment {
+public enum AuthenticatorAttachment implements JsonStringSerializable {
     /**
      * The respective authenticator is attached using cross-platform transports.
      *
@@ -50,8 +51,13 @@ public enum AuthenticatorAttachment {
      */
     PLATFORM("platform");
 
-    @Getter
+    @NonNull
     private final String id;
+
+    @Override
+    public String toJsonString() {
+        return id;
+    }
 
 }
 

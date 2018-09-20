@@ -1,7 +1,7 @@
 package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.internal.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -44,19 +44,18 @@ class CollectedClientDataSpec extends FunSpec with Matchers {
 
 
     describe("forbids null value for") {
-      it("contructor parameter: clientData") {
-        a [NullPointerException] should be thrownBy new CollectedClientData(null)
-      }
-
       it("field: challenge") {
+        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("challenge", defaultJson.nullNode()))
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("challenge"))
       }
 
       it("field: origin") {
+        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("origin", defaultJson.nullNode()))
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("origin"))
       }
 
       it("field: type") {
+        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("type", defaultJson.nullNode()))
         an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("type"))
       }
     }

@@ -2,7 +2,7 @@ import java.nio.file.Paths
 
 apply plugin: 'info.solidsoft.pitest'
 
-description = 'WebAuthn core'
+description = 'WebAuthn core API'
 
 apply plugin: 'scala'
 
@@ -13,6 +13,7 @@ configurations {
 dependencies {
 
   compile(
+    project(':webauthn-server-core-impl'),
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
     [group: 'com.google.guava', name: 'guava', version:'19.0'],

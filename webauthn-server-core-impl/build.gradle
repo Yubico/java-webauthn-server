@@ -1,0 +1,68 @@
+import java.nio.file.Paths
+
+description = 'WebAuthn core implementation'
+
+apply plugin: 'scala'
+
+configurations {
+  scalaRepl { extendsFrom testRuntime }
+}
+
+dependencies {
+
+  compileOnly(
+    'org.scala-lang:scala-library:2.11.3',
+  )
+
+  compile(
+    [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
+    'com.augustcellars.cose:cose-java:0.9.4',
+    [group: 'com.google.guava', name: 'guava', version:'19.0'],
+    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
+    [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
+  )
+
+  testCompile(
+    'commons-io:commons-io:2.5',
+    'org.mockito:mockito-core:2.10.0',
+    'org.scala-lang:scala-library:2.11.3',
+    'org.scalatest:scalatest_2.11:3.0.4',
+    'org.scalacheck:scalacheck_2.11:1.13.5',
+  )
+
+  scalaRepl(
+    'org.scala-lang:scala-compiler:2.11.3',
+    jar.outputs.files,
+  )
+
+}
+
+
+jar {
+  manifest {
+    attributes([
+      'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
+      'Specification-Version': 'Level 1 Candidate Recommendation 2018-03-20',
+      'Specification-Vendor': 'World Wide Web Consortium',
+      'Implementation-Id': 'java-webauthn-server',
+      'Implementation-Title': 'Yubico Web Authentication server library',
+      'Implementation-Version': project.version,
+      'Implementation-Vendor': 'Yubico',
+    ])
+  }
+}
+
+def scalaReplDistDir = file(Paths.get(project.distsDir.path, 'scala-repl'))
+task scalaReplClasspath(type: Sync) {
+  from configurations.scalaRepl
+  destinationDir = file(Paths.get(scalaReplDistDir.path, 'lib'))
+}
+
+task makeScalaReplScripts(type: CreateStartScripts) {
+  inputs.files tasks.scalaReplClasspath.outputs
+
+  applicationName = 'scala-repl'
+  classpath = configurations.scalaRepl
+  mainClassName = "scala.tools.nsc.MainGenericRunner"
+  outputDir = file(Paths.get(scalaReplDistDir.path, 'bin'))
+}

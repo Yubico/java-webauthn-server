@@ -2,8 +2,7 @@ package com.yubico.webauthn.data
 
 import com.upokecenter.cbor.CBORObject
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.webauthn.util.BinaryUtil
-import com.yubico.webauthn.util.WebAuthnCodecs
+import com.yubico.webauthn.internal.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -15,11 +14,11 @@ import scala.util.Failure
 @RunWith(classOf[JUnitRunner])
 class AuthenticatorDataSpec extends FunSpec with Matchers {
 
-  def jsonToCbor(json: String): ArrayBuffer = CBORObject.FromJSONString(json).EncodeToBytes.toVector
+  def jsonToCbor(json: String): ByteArray = new ByteArray(CBORObject.FromJSONString(json).EncodeToBytes)
 
   describe("AuthenticatorData") {
 
-    def generateTests(authDataHex: HexString, hasAttestation: Boolean = false, hasExtensions: Boolean = false): Unit = {
+    def generateTests(authDataHex: String, hasAttestation: Boolean = false, hasExtensions: Boolean = false): Unit = {
 
       val authData = new AuthenticatorData(ByteArray.fromHex(authDataHex))
 
@@ -48,7 +47,7 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
           authData.getAttestationData.get.getAaguid.getHex should equal ("000102030405060708090a0b0c0d0e0f")
           authData.getAttestationData.get.getCredentialId.getHex should equal ("7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec")
 
-          val pubkey: ByteArray = WebAuthnCodecs.ecPublicKeyToRaw(authData.getAttestationData.get.getParsedCredentialPublicKey)
+          val pubkey: ByteArray = WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(authData.getAttestationData.get.getCredentialPublicKey))
           pubkey should equal (ByteArray.fromHex("04DAFE0DE5312BA080A5CCDF6B483B10EF19A2454D1E17A8350311A0B7FF0566EF8EC6324D2C81398D2E80BC985B910B26970A0F408C9DE19BECCF39899A41674D"))
         }
       }
@@ -56,7 +55,7 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
       if (hasExtensions) {
         it("gets the correct extension data from the raw bytes.") {
           authData.getExtensions.asScala shouldBe defined
-          authData.getExtensions.get.EncodeToBytes().toVector should equal (jsonToCbor("""{ "foo": "bar" }"""))
+          new ByteArray(authData.getExtensions.get.EncodeToBytes()) should equal (jsonToCbor("""{ "foo": "bar" }"""))
         }
       }
     }

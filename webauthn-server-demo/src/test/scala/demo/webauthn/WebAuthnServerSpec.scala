@@ -8,11 +8,10 @@ import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
+import com.yubico.attestation.Attestation
+import com.yubico.attestation.Transport
 import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.attestation.Attestation
-import com.yubico.u2f.attestation.Transport
 import com.yubico.webauthn.data.RegistrationResult
-import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -20,12 +19,13 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.impl.RegistrationTestData
+import com.yubico.webauthn.internal.WebAuthnCodecs
+import com.yubico.webauthn.internal.RegistrationTestData
 import com.yubico.webauthn.test.TestAuthenticator
-import com.yubico.webauthn.util.WebAuthnCodecs
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
+import demo.webauthn.data.AssertionRequest
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when
@@ -42,7 +42,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   private val jsonMapper = WebAuthnCodecs.json()
   private val username = "foo-user"
   private val displayName = "Foo User"
-  private val credentialNickname = "My Lovely Credential"
+  private val credentialNickname = Some("My Lovely Credential").asJava
   private val requireResidentKey = false
   private val requestId = ByteArray.fromBase64Url("request1")
   private val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
@@ -71,7 +71,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         )
 
         val authenticationAttestationResponseJson = """{"attestationObject":"v2hhdXRoRGF0YVikSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NBAAAFOQABAgMEBQYHCAkKCwwNDg8AIIjjhj6nH3qL2QF3tkUogilFykuaXjJTw35O4m-0NSX0pSJYIA5Nt8eYkLco-NQfKPXaA6dD9UfX_SHaYo-L-YQb78HsAyYBAiFYIOuzRl1o1Hem2jVRYhjkbSeIydhqLln9iltAgsDYjXRTIAFjZm10aGZpZG8tdTJmZ2F0dFN0bXS_Y3g1Y59ZAekwggHlMIIBjKADAgECAgIFOTAKBggqhkjOPQQDAjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTAeFw0xODA5MDYxNzQyMDBaFw0xODA5MDYxNzQyMDBaMGcxIzAhBgNVBAMMGll1YmljbyBXZWJBdXRobiB1bml0IHRlc3RzMQ8wDQYDVQQKDAZZdWJpY28xIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0ZXN0YXRpb24xCzAJBgNVBAYTAlNFMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEJ-8bFED9TnFhaArujgB0foNaV4gQIulP1mC5DO1wvSByw4eOyXujpPHkTw9y5e5J2J3N9coSReZJgBRpvFzYD6MlMCMwIQYLKwYBBAGC5RwBAQQEEgQQAAECAwQFBgcICQoLDA0ODzAKBggqhkjOPQQDAgNHADBEAiB4bL25EH06vPBOVnReObXrS910ARVOLJPPnKNoZbe64gIgX1Rg5oydH45zEMEVDjNPStwv6Z3nE_isMeY-szlQhv3_Y3NpZ1hHMEUCIQDBs1nbSuuKQ6yoHMQoRp8eCT_HZvR45F_aVP6qFX_wKgIgMCL58bv-crkLwTwiEL9ibCV4nDYM-DZuW5_BFCJbcxn__w","clientDataJSON":"eyJjaGFsbGVuZ2UiOiJBQUVCQWdNRkNBMFZJamRaRUdsNVlscyIsIm9yaWdpbiI6ImxvY2FsaG9zdCIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUiLCJ0b2tlbkJpbmRpbmciOnsic3RhdHVzIjoic3VwcG9ydGVkIn19"}"""
-        val publicKeyCredentialJson = s"""{"id":"iOOGPqcfeovZAXe2RSiCKUXKS5peMlPDfk7ib7Q1JfQ","response":${authenticationAttestationResponseJson},"clientExtensionResults":{}}"""
+        val publicKeyCredentialJson = s"""{"id":"iOOGPqcfeovZAXe2RSiCKUXKS5peMlPDfk7ib7Q1JfQ","response":${authenticationAttestationResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
         val responseJson = s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
 
         val request = server.finishRegistration(responseJson)
@@ -110,7 +110,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       it("has a finish method which accepts and outputs JSON.") {
         val server = newServerWithAuthenticationRequest(RegistrationTestData.FidoU2f.BasicAttestation)
         val authenticatorAssertionResponseJson = s"""{"authenticatorData":"${authenticatorData.getBase64Url}","signature":"${signature.getBase64Url}","clientDataJSON":"${clientDataJsonBytes.getBase64Url}"}"""
-        val publicKeyCredentialJson = s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson}}"""
+        val publicKeyCredentialJson = s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson},"type":"public-key"}"""
         val responseJson = s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
         val request = server.finishAuthentication(responseJson)
         val json = jsonMapper.writeValueAsString(request.right.get)
@@ -121,25 +121,27 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       def newServerWithAuthenticationRequest(testData: RegistrationTestData) = {
         val assertionRequests: Cache[ByteArray, AssertionRequest] = newCache()
 
-        assertionRequests.put(requestId, AssertionRequest.builder()
-          .requestId(requestId)
-          .username(Some(testData.userId.getName).asJava)
-          .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-            .challenge(challenge)
-            .rpId(Some(rpId.getId).asJava)
-            .build()
-          )
-          .build()
-        )
+        assertionRequests.put(requestId, new AssertionRequest(
+            requestId,
+            com.yubico.webauthn.data.AssertionRequest.builder()
+                .username(Some(testData.userId.getName).asJava)
+                .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+                  .challenge(challenge)
+                  .rpId(Some(rpId.getId).asJava)
+                  .build()
+                )
+                .build()
+        ))
 
         val userStorage = makeUserStorage(testData)
         when(userStorage.getUserHandleForUsername(testData.userId.getName)).thenReturn(Some(testData.userId.getId).asJava)
-        when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(new RegisteredCredential(
-          testData.response.getId,
-          testData.userId.getId,
-          credentialKey.getPublic,
-          0
-        )).asJava)
+        when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(RegisteredCredential.builder()
+          .credentialId(testData.response.getId)
+          .userHandle(testData.userId.getId)
+          .publicKey(credentialKey.getPublic)
+          .signatureCount(0)
+          .build()
+        ).asJava)
 
         new WebAuthnServer(userStorage, newCache(), assertionRequests, rpId, origins)
       }
@@ -160,19 +162,19 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
     val registrations = util.Arrays.asList(CredentialRegistration.builder()
       .signatureCount(testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter)
-      .username(testData.request.getUser.getName)
       .userIdentity(testData.request.getUser)
       .credentialNickname(credentialNickname)
       .registrationTime(Instant.parse("2018-07-06T15:07:15Z"))
       .registration(RegistrationResult.builder()
-        .keyId(new PublicKeyCredentialDescriptor(testData.response.getId))
+        .keyId(PublicKeyCredentialDescriptor.builder().id(testData.response.getId).build())
         .attestationTrusted(false)
         .attestationType(AttestationType.BASIC)
-        .attestationMetadata(Some(new Attestation(
-          "metadataIdentifier",
-          Map("vendor" -> "properties").asJava,
-          Map("device" -> "properties").asJava,
-          Set(Transport.USB).asJava)
+        .attestationMetadata(Some(Attestation.builder(false)
+          .metadataIdentifier(Some("metadataIdentifier").asJava)
+          .vendorProperties(Some(Map("vendor" -> "properties").asJava).asJava)
+          .deviceProperties(Some(Map("device" -> "properties").asJava).asJava)
+          .transports(Some(Set(Transport.USB).asJava).asJava)
+          .build()
         ).asJava)
         .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestationData.get.getCredentialPublicKey)
         .warnings(List.empty.asJava)

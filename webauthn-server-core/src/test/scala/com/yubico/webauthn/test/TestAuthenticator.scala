@@ -26,13 +26,10 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.scala.util.JavaConverters._
-import com.yubico.u2f.crypto.BouncyCastleCrypto
-import com.yubico.u2f.crypto.Crypto
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding
-import com.yubico.u2f.data.messages.key.util.CertificateParser
-import com.yubico.webauthn.util
+import com.yubico.internal.util.BinaryUtil
+import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.data
+import com.yubico.webauthn.Crypto
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -43,8 +40,8 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.util.WebAuthnCodecs
-import com.yubico.webauthn.util.BinaryUtil
+import com.yubico.webauthn.internal.BouncyCastleCrypto
+import com.yubico.webauthn.internal.WebAuthnCodecs
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -81,7 +78,7 @@ object TestAuthenticator {
     println(credential)
     println(s"Client data: ${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
     println(s"Client data: ${credential.getResponse.getClientDataJSON.getHex}")
-    println(s"Client data: ${credential.getResponse.getCollectedClientData}")
+    println(s"Client data: ${credential.getResponse.getClientData}")
     println(s"Attestation object: ${credential.getResponse.getAttestationObject.getHex}")
     println(s"Attestation object: ${credential.getResponse.getAttestation}")
 
@@ -147,7 +144,7 @@ object TestAuthenticator {
       .rp(RelyingPartyIdentity.builder().name("Test party").id(rpId).build())
       .user(userId)
       .challenge(challenge)
-      .pubKeyCredParams(List(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier(-7))).asJava)
+      .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
       .build()
 
     val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
@@ -305,7 +302,7 @@ object TestAuthenticator {
       clientDataJsonBytes,
       makeAssertionSignature(
         authDataBytes,
-        new ByteArray(crypto.hash(clientDataJsonBytes.getBytes)),
+        crypto.hash(clientDataJsonBytes),
         credentialKey.getPrivate
       ),
       userHandle.orNull
@@ -383,7 +380,7 @@ object TestAuthenticator {
   ): ByteArray = {
     new ByteArray((Vector[Byte](0)
       ++ rpIdHash.getBytes
-      ++ crypto.hash(clientDataJson)
+      ++ crypto.hash(clientDataJson).getBytes
       ++ credentialId.getBytes
       ++ credentialPublicKeyRawBytes.getBytes
     ).toArray)
@@ -401,7 +398,7 @@ object TestAuthenticator {
       case None => attestationCertAndKey getOrElse generateAttestationCertificate()
     }
 
-    val signedData = new ByteArray(authDataBytes.getBytes ++ crypto.hash(clientDataJson))
+    val signedData = new ByteArray(authDataBytes.getBytes ++ crypto.hash(clientDataJson).getBytes)
     val signature = sign(signedData, key)
 
     val f = JsonNodeFactory.instance
@@ -442,7 +439,7 @@ object TestAuthenticator {
 
     new ByteArray((Vector[Byte]()
       ++ aaguid.getBytes.toVector
-      ++ util.BinaryUtil.fromHex("0020").toVector
+      ++ BinaryUtil.fromHex("0020").toVector
       ++ credentialId.getBytes.toVector
       ++ publicKeyCose.getBytes.toVector
     ).toArray)
@@ -488,10 +485,9 @@ object TestAuthenticator {
     val sig: Signature = Signature.getInstance("SHA256withECDSA", javaCryptoProvider)
     sig.initVerify(pubKey)
     sig.update(signedDataBytes.getBytes)
-    val valid = sig.verify(signatureBytes.getBytes)
-    crypto.checkSignature(pubKey, signedDataBytes.getBytes, signatureBytes.getBytes)
 
-    valid
+    sig.verify(signatureBytes.getBytes) &&
+      crypto.verifySignature(pubKey, signedDataBytes, signatureBytes)
   }
 
   def verifyU2fExampleWithCert(

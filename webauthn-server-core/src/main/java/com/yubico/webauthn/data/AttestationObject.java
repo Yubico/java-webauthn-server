@@ -3,59 +3,90 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.webauthn.exception.Base64UrlException;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
 public class AttestationObject {
 
-    private final ByteArray bytes;
+    @NonNull
+    private final transient ByteArray bytes;
 
-    private ObjectNode decoded;
+    @NonNull
+    private final transient AuthenticatorData authenticatorData;
 
-    @JsonProperty
-    private AuthenticatorData authenticatorData;
+    @NonNull
+    @JsonProperty("authData")
+    private final ByteArray authData;
 
     /**
      * The ''attestation statement format'' of this attestation object.
      */
-    @JsonProperty
+    @NonNull
+    @JsonProperty("fmt")
     private final String format;
 
-    public AttestationObject(ByteArray bytes) throws IOException, Base64UrlException {
+    @NonNull
+    @JsonProperty("attStmt")
+    private final ObjectNode attestationStatement;
+
+    public AttestationObject(@NonNull ByteArray bytes) throws IOException {
         this.bytes = bytes;
 
-        JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
-        if (decoded.isObject()) {
-            this.decoded = (ObjectNode) decoded;
-        } else {
+        final JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
+        if (!decoded.isObject()) {
             throw new IllegalArgumentException("Attestation object must be a JSON object.");
         }
 
-        authenticatorData = parseAuthenticatorData();
-
-        format = decoded.get("fmt").textValue();
-    }
-
-    private AuthenticatorData parseAuthenticatorData() throws IOException, Base64UrlException {
-        JsonNode authData = decoded.get("authData");
-        if (authData.isBinary()) {
-            return new AuthenticatorData(new ByteArray(authData.binaryValue()));
+        final JsonNode authData = decoded.get("authData");
+        if (authData == null) {
+            throw new IllegalArgumentException("Required property \"authData\" missing from attestation object: " + bytes.getBase64Url());
         } else {
-            return new AuthenticatorData(ByteArray.fromBase64Url(authData.textValue()));
+            if (authData.isBinary()) {
+                this.authData = new ByteArray(authData.binaryValue());
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Property \"authData\" of attestation object must be a CBOR byte array, was: %s. Attestation object: %s",
+                    authData.getNodeType(),
+                    bytes.getBase64Url()
+                ));
+            }
         }
-    }
 
-    @JsonProperty
-    public JsonNode getAttestationStatement() {
-        return decoded.get("attStmt");
-    }
+        final JsonNode format = decoded.get("fmt");
+        if (format == null) {
+            throw new IllegalArgumentException("Required property \"fmt\" missing from attestation object: " + bytes.getBase64Url());
+        } else {
+            if (format.isTextual()) {
+                this.format = decoded.get("fmt").textValue();
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Property \"fmt\" of attestation object must be a CBOR text value, was: %s. Attestation object: %s",
+                    format.getNodeType(),
+                    bytes.getBase64Url()
+                ));
+            }
+        }
 
-    public ObjectNode getDecoded() {
-        return (ObjectNode) WebAuthnCodecs.deepCopy(this.decoded);
+        final JsonNode attStmt = decoded.get("attStmt");
+        if (attStmt == null) {
+            throw new IllegalArgumentException("Required property \"attStmt\" missing from attestation object: " + bytes.getBase64Url());
+        } else {
+            if (attStmt.isObject()) {
+                this.attestationStatement = (ObjectNode) attStmt;
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Property \"attStmt\" of attestation object must be a CBOR map, was: %s. Attestation object: %s",
+                    attStmt.getNodeType(),
+                    bytes.getBase64Url()
+                ));
+            }
+        }
+
+        authenticatorData = new AuthenticatorData(this.authData);
     }
 
 }

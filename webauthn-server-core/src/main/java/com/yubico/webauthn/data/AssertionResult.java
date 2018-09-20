@@ -11,16 +11,25 @@ import lombok.Value;
 @Builder
 public class AssertionResult {
 
+    @NonNull
     private final ByteArray credentialId;
+
+    @NonNull
     private final ByteArray userHandle;
 
     private final long signatureCount;
+
     private final boolean signatureCounterValid;
+
     private final boolean success;
+
+    @NonNull
     private final String username;
+
+    @NonNull
     private final List<String> warnings;
 
-    AssertionResult(
+    private AssertionResult(
         @NonNull ByteArray credentialId,
         @NonNull ByteArray userHandle,
         long signatureCount,

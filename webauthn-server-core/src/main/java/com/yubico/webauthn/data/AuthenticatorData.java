@@ -3,23 +3,26 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.webauthn.util.BinaryUtil;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.internal.util.BinaryUtil;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.Optional;
+import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
 public class AuthenticatorData {
 
+    @NonNull
     @JsonProperty("authData")
     private final ByteArray bytes;
 
     /**
      * The flags byte.
      */
+    @NonNull
     private final AuthenticationDataFlags flags;
 
     /**
@@ -27,6 +30,7 @@ public class AuthenticatorData {
      * <p>
      * See ''§5.3.1 Attestation data'' of [[com.yubico.webauthn.VersionInfo]] for details.
      */
+    @NonNull
     private final Optional<AttestationData> attestationData;
 
     /**
@@ -34,6 +38,7 @@ public class AuthenticatorData {
      * <p>
      * See ''§8 WebAuthn Extensions'' of [[com.yubico.webauthn.VersionInfo]] for details.
      */
+    @NonNull
     private final Optional<CBORObject> extensions;
 
     private static final int RpIdHashLength = 32;
@@ -41,7 +46,7 @@ public class AuthenticatorData {
     private static final int CounterLength = 4;
     private static final int FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength;
 
-    public AuthenticatorData(ByteArray bytes) {
+    public AuthenticatorData(@NonNull ByteArray bytes) {
         this.bytes = bytes;
 
         final byte[] rawBytes = bytes.getBytes();
@@ -62,10 +67,6 @@ public class AuthenticatorData {
             attestationData = Optional.empty();
             extensions = Optional.empty();
         }
-    }
-
-    public ByteArray getBytes() {
-        return bytes;
     }
 
     /**

@@ -1,3 +1,4 @@
 rootProject.name = 'webauthn-server-parent'
 include ':webauthn-server-core'
+include ':webauthn-server-core-impl'
 include ':webauthn-server-demo'

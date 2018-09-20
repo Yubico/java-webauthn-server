@@ -1,6 +1,8 @@
 package com.yubico.webauthn.data;
 
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -13,6 +15,7 @@ import lombok.Value;
  * message to the authenticator, which may be sent over a low-bandwidth link.
  */
 @Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class AuthenticatorSelectionCriteria {
 
@@ -20,8 +23,9 @@ public class AuthenticatorSelectionCriteria {
      * If present, eligible authenticators are filtered to only authenticators attached with the specified §4.4.4
      * Authenticator Attachment enumeration.
      */
+    @NonNull
     @Builder.Default
-    private Optional<AuthenticatorAttachment> authenticatorAttachment = Optional.empty();
+    private final Optional<AuthenticatorAttachment> authenticatorAttachment = Optional.empty();
 
     /**
      * requireResidentKey Describes the Relying Party's requirements regarding availability of the Client-side-resident
@@ -29,7 +33,7 @@ public class AuthenticatorSelectionCriteria {
      * Credential Private Key when creating a public key credential.
      */
     @Builder.Default
-    private boolean requireResidentKey = false;
+    private final boolean requireResidentKey = false;
 
     /**
      * requireUserVerification
@@ -37,16 +41,8 @@ public class AuthenticatorSelectionCriteria {
      * This member describes the Relying Party's requirements regarding user verification for the create() operation.
      * Eligible authenticators are filtered to only those capable of satisfying this requirement.
      */
+    @NonNull
     @Builder.Default
     private UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
 
-    public AuthenticatorSelectionCriteria(
-        @NonNull Optional<AuthenticatorAttachment> authenticatorAttachment,
-        boolean requireResidentKey,
-        @NonNull UserVerificationRequirement userVerification
-    ) {
-        this.authenticatorAttachment = authenticatorAttachment;
-        this.requireResidentKey = requireResidentKey;
-        this.userVerification = userVerification;
-    }
 }

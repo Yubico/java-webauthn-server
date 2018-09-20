@@ -4,15 +4,15 @@ import java.util.Base64
 
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticationDataFlags
-import com.yubico.webauthn.util.WebAuthnCodecs
-import com.yubico.webauthn.util.BinaryUtil
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
 import COSE.ECPublicKey
 import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.internal.WebAuthnCodecs
 
 
 object Test extends App {
@@ -55,7 +55,7 @@ object Test extends App {
     val parsedAttObj = new AttestationObject(attestationObject)
     println(parsedAttObj)
     println(parsedAttObj.getAuthenticatorData.getBytes.getHex)
-    println(parsedAttObj.getAuthenticatorData.getAttestationData.get.getParsedCredentialPublicKey)
+    println(WebAuthnCodecs.importCoseP256PublicKey(parsedAttObj.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
 
     val attestationObjectCbor = WebAuthnCodecs.cbor.readTree(attestationObject.getBytes)
     println(attestationObjectCbor)

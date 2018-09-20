@@ -1,12 +1,13 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithStringId;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NonNull;
 
 /**
   * Defines the valid credential types.
@@ -18,16 +19,28 @@ import lombok.Getter;
   *
   * Currently one credential type is defined, namely [[PublicKey]].
   */
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum PublicKeyCredentialType implements WithStringId {
+public enum PublicKeyCredentialType implements JsonStringSerializable {
     PUBLIC_KEY("public-key");
 
-    @Getter
+    @NonNull
     private final String id;
 
-    public static Optional<PublicKeyCredentialType> fromString(String id) {
+    public static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
         return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+    }
+
+    @JsonCreator
+    private static PublicKeyCredentialType fromJsonString(@NonNull String id) {
+        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
+            "Unknown %s value: %s", PublicKeyCredentialType.class.getSimpleName(), id
+        )));
+    }
+
+    @Override
+    public String toJsonString() {
+        return id;
     }
 
 }

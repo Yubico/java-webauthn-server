@@ -2,33 +2,36 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.webauthn.exception.Base64UrlException;
-import com.yubico.webauthn.exception.HexException;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithStringId;
-import com.yubico.webauthn.util.BinaryUtil;
+import com.yubico.internal.util.BinaryUtil;
+import com.yubico.internal.util.U2fB64Encoding;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
+import com.yubico.webauthn.data.exception.Base64UrlException;
+import com.yubico.webauthn.data.exception.HexException;
+import com.yubico.webauthn.internal.u2f.exceptions.U2fBadInputException;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 
 /**
  * An immutable byte array with support for encoding/decoding to/from Base64URL encoding.
  */
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
 @ToString(of = { "base64" }, includeFieldNames = false)
-public class ByteArray implements WithStringId {
+public class ByteArray implements JsonStringSerializable {
 
+    @NonNull
     private final byte[] bytes;
+
+    @NonNull
     private final String base64;
 
     /**
      * Create a new instance by copying the contents of <code>bytes</code>.
      */
-    public ByteArray(byte[] bytes) {
+    public ByteArray(@NonNull byte[] bytes) {
         this.bytes = BinaryUtil.copy(bytes);
         this.base64 = U2fB64Encoding.encode(this.bytes);
     }
@@ -48,7 +51,7 @@ public class ByteArray implements WithStringId {
      *
      * @throws Base64UrlException if <code>base64</code> is not valid Base64Url data.
      */
-    public static ByteArray fromBase64Url(final String base64) throws Base64UrlException {
+    public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
         return new ByteArray(base64);
     }
 
@@ -57,7 +60,7 @@ public class ByteArray implements WithStringId {
      *
      * @throws HexException if <code>hex</code> is not valid hexadecimal data.
      */
-    public static ByteArray fromHex(final String hex) throws HexException {
+    public static ByteArray fromHex(@NonNull final String hex) throws HexException {
         try {
             return new ByteArray(BinaryUtil.fromHex(hex));
         } catch (Exception e) {
@@ -68,7 +71,7 @@ public class ByteArray implements WithStringId {
     /**
      * @return a new instance containing a copy of this instance followed by a copy of <code>tail</code>.
      */
-    public ByteArray concat(ByteArray tail) {
+    public ByteArray concat(@NonNull ByteArray tail) {
         return new ByteArray(Arrays.concatenate(this.bytes, tail.bytes));
     }
 
@@ -97,7 +100,7 @@ public class ByteArray implements WithStringId {
      * Used by JSON serializer.
      */
     @Override
-    public String getId() {
+    public String toJsonString() {
         return base64;
     }
 

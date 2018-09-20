@@ -1,8 +1,10 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.webauthn.exception.Base64UrlException;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.data.exception.Base64UrlException;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
@@ -14,15 +16,38 @@ import lombok.Value;
 public class CollectedClientData {
 
     /**
-     * @param The client data returned from, or to be sent to, the client.
+     * The client data returned from, or to be sent to, the client.
      */
+    @NonNull
     private JsonNode clientData;
+
+    /**
+     * The URL-safe Base64 encoded challenge as provided by the RP.
+     */
+    @NonNull
+    private final transient ByteArray challenge;
+
+    /**
+     * The fully qualified origin of the requester, as identified by the client.
+     */
+    @NonNull
+    private final transient String origin;
+
+    /**
+     * The type of the requested operation, set by the client.
+     */
+    @NonNull
+    private final transient String type;
+
+    public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
+        this(WebAuthnCodecs.json().readTree(new ByteArrayInputStream(clientDataJSON.getBytes())));
+    }
 
     public CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
         this.clientData = clientData;
 
         try {
-            getChallenge();
+            challenge = ByteArray.fromBase64Url(clientData.get("challenge").textValue());
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"challenge\"");
         } catch (Base64UrlException e) {
@@ -30,13 +55,13 @@ public class CollectedClientData {
         }
 
         try {
-            getOrigin();
+            origin = clientData.get("origin").textValue();
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"origin\"");
         }
 
         try {
-            getType();
+            type = clientData.get("type").textValue();
         } catch (NullPointerException e) {
             throw new IllegalArgumentException("Missing field: \"type\"");
         }
@@ -50,24 +75,10 @@ public class CollectedClientData {
     }
 
     /**
-     * The URL-safe Base64 encoded challenge as provided by the RP.
-     */
-    public ByteArray getChallenge() throws Base64UrlException {
-        return ByteArray.fromBase64Url(clientData.get("challenge").textValue());
-    }
-
-    /**
      * Input or output values for or from client extensions, if any.
      */
     public Optional<JsonNode> getClientExtensions() {
         return Optional.ofNullable(clientData.get("clientExtensions")).map(WebAuthnCodecs::deepCopy);
-    }
-
-    /**
-     * The fully qualified origin of the requester, as identified by the client.
-     */
-    public String getOrigin() {
-        return clientData.get("origin").asText();
     }
 
     /**
@@ -76,12 +87,10 @@ public class CollectedClientData {
     public final Optional<TokenBindingInfo> getTokenBinding() {
         return Optional.ofNullable(clientData.get("tokenBinding"))
             .map(tb -> {
-                if (tb != null && tb.isObject()) {
+                if (tb.isObject()) {
                     String status = tb.get("status").textValue();
                     return new TokenBindingInfo(
-                        TokenBindingStatus.fromJson(status).orElseGet(() -> {
-                            throw new IllegalArgumentException("Invalid value for tokenBinding.status: " + status);
-                        }),
+                        TokenBindingStatus.fromJsonString(status),
                         Optional.ofNullable(tb.get("id"))
                             .map(JsonNode::textValue)
                             .map(id -> {
@@ -96,13 +105,6 @@ public class CollectedClientData {
                     throw new IllegalArgumentException("Property \"tokenBinding\" missing from client data.");
                 }
             });
-    }
-
-    /**
-     * The type of the requested operation, set by the client.
-     */
-    public final String getType() {
-        return clientData.get("type").asText();
     }
 
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
 import java.time.Instant;
+import java.util.Optional;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Wither;
@@ -16,9 +17,8 @@ public class CredentialRegistration {
 
     long signatureCount;
 
-    String username;
     UserIdentity userIdentity;
-    String credentialNickname;
+    Optional<String> credentialNickname;
 
     @JsonIgnore
     Instant registrationTime;
@@ -27,6 +27,10 @@ public class CredentialRegistration {
     @JsonProperty("registrationTime")
     public String getRegistrationTimestamp() {
         return registrationTime.toString();
+    }
+
+    public String getUsername() {
+        return userIdentity.getName();
     }
 
 }

@@ -6,28 +6,30 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
-import com.yubico.u2f.attestation.MetadataResolver;
-import com.yubico.u2f.attestation.MetadataService;
-import com.yubico.u2f.attestation.resolvers.CompositeResolver;
-import com.yubico.u2f.attestation.resolvers.SimpleResolver;
-import com.yubico.u2f.attestation.resolvers.SimpleResolverWithEquality;
-import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.u2f.crypto.ChallengeGenerator;
-import com.yubico.u2f.crypto.RandomChallengeGenerator;
-import com.yubico.u2f.exceptions.U2fBadConfigurationException;
+import com.yubico.attestation.MetadataResolver;
+import com.yubico.attestation.MetadataService;
+import com.yubico.attestation.resolver.CompositeResolver;
+import com.yubico.attestation.resolver.SimpleResolver;
+import com.yubico.attestation.resolver.SimpleResolverWithEquality;
 import com.yubico.util.Either;
+import com.yubico.webauthn.ChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
-import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
+import com.yubico.webauthn.data.FinishAssertionOptions;
+import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
-import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.StartAssertionOptions;
+import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.webauthn.RandomChallengeGenerator;
+import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.RegistrationFailedException;
+import com.yubico.webauthn.internal.WebAuthnCodecs;
+import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
@@ -45,6 +47,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import lombok.NonNull;
 import lombok.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,11 +85,9 @@ public class WebAuthnServer {
 
         rp = RelyingParty.builder()
             .rp(rpIdentity)
-            .challengeGenerator(challengeGenerator)
-            .preferredPubkeyParams(Collections.singletonList(new PublicKeyCredentialParameters(new COSEAlgorithmIdentifier( -7L), PublicKeyCredentialType.PUBLIC_KEY)))
+            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
-            .crypto(new BouncyCastleCrypto())
             .credentialRepository(this.userStorage)
             .metadataService(Optional.of(metadataService))
             .allowMissingTokenBinding(true)
@@ -97,13 +98,16 @@ public class WebAuthnServer {
             .build();
     }
 
+    /**
+     * Create a {@link MetadataResolver} with additional metadata for unreleased YubiKey Preview devices.
+     */
     private static MetadataResolver createExtraMetadataResolver() {
         SimpleResolver resolver = new SimpleResolverWithEquality();
         InputStream is = null;
         try {
             is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
             resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException | CertificateException | U2fBadConfigurationException e) {
+        } catch (IOException | CertificateException e) {
             logger.error("createDefaultMetadataResolver failed", e);
         } finally {
             Closeables.closeQuietly(is);
@@ -118,25 +122,30 @@ public class WebAuthnServer {
             .build();
     }
 
-    public Either<String, RegistrationRequest> startRegistration(String username, String displayName, String credentialNickname, boolean requireResidentKey) {
+    public Either<String, RegistrationRequest> startRegistration(
+        @NonNull String username,
+        @NonNull String displayName,
+        Optional<String> credentialNickname,
+        boolean requireResidentKey
+    ) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
-            final ByteArray userId = new ByteArray(challengeGenerator.generateChallenge());
-
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
-                new ByteArray(challengeGenerator.generateChallenge()),
+                challengeGenerator.generateChallenge(),
                 rp.startRegistration(
-                    UserIdentity.builder()
-                        .name(username)
-                        .displayName(displayName)
-                        .id(userId)
-                        .build(),
-                    Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                    Optional.empty(),
-                    requireResidentKey
+                    StartRegistrationOptions.builder()
+                        .user(UserIdentity.builder()
+                            .name(username)
+                            .displayName(displayName)
+                            .id(challengeGenerator.generateChallenge())
+                            .build()
+                        )
+                        .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
+                        .requireResidentKey(requireResidentKey)
+                        .build()
                 )
             );
             registerRequestStorage.put(request.getRequestId(), request);
@@ -146,17 +155,22 @@ public class WebAuthnServer {
         }
     }
 
-    public <T> Either<List<String>, AssertionRequest> startAddCredential(String username, String credentialNickname, boolean requireResidentKey, Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated) {
+    public <T> Either<List<String>, AssertionRequest> startAddCredential(
+        @NonNull String username,
+        Optional<String> credentialNickname,
+        boolean requireResidentKey,
+        Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated
+    ) {
         logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
         if (username == null || username.isEmpty()) {
-            return Either.left(Arrays.asList("username must not be empty."));
+            return Either.left(Collections.singletonList("username must not be empty."));
         }
 
         Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
 
         if (registrations.isEmpty()) {
-            return Either.left(Arrays.asList("The username \"" + username + "\" is not registered."));
+            return Either.left(Collections.singletonList("The username \"" + username + "\" is not registered."));
         } else {
             final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
@@ -164,12 +178,13 @@ public class WebAuthnServer {
                 RegistrationRequest request = new RegistrationRequest(
                     username,
                     credentialNickname,
-                    new ByteArray(challengeGenerator.generateChallenge()),
+                    challengeGenerator.generateChallenge(),
                     rp.startRegistration(
-                        existingUser,
-                        Optional.of(userStorage.getCredentialIdsForUsername(username)),
-                        Optional.empty(),
-                        requireResidentKey
+                        StartRegistrationOptions.builder()
+                            .user(existingUser)
+                            .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
+                            .requireResidentKey(requireResidentKey)
+                            .build()
                     )
                 );
                 registerRequestStorage.put(request.getRequestId(), request);
@@ -209,9 +224,10 @@ public class WebAuthnServer {
         } else {
             try {
                 RegistrationResult registration = rp.finishRegistration(
-                    request.getPublicKeyCredentialCreationOptions(),
-                    response.getCredential(),
-                    Optional.empty()
+                    FinishRegistrationOptions.builder()
+                        .request(request.getPublicKeyCredentialCreationOptions())
+                        .response(response.getCredential())
+                        .build()
                 );
 
                 return Either.right(
@@ -219,7 +235,6 @@ public class WebAuthnServer {
                         request,
                         response,
                         addRegistration(
-                            request.getUsername(),
                             request.getPublicKeyCredentialCreationOptions().getUser(),
                             request.getCredentialNickname(),
                             response,
@@ -228,9 +243,12 @@ public class WebAuthnServer {
                         registration.isAttestationTrusted()
                     )
                 );
-            } catch (Exception e) {
+            } catch (RegistrationFailedException e) {
                 logger.debug("fail finishRegistration responseJson: {}", responseJson, e);
                 return Either.left(Arrays.asList("Registration failed!", e.getMessage()));
+            } catch (Exception e) {
+                logger.error("fail finishRegistration responseJson: {}", responseJson, e);
+                return Either.left(Arrays.asList("Registration failed unexpectedly; this is likely a bug.", e.getMessage()));
             }
         }
     }
@@ -239,12 +257,15 @@ public class WebAuthnServer {
         logger.trace("startAuthentication username: {}", username);
 
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
-            return Either.left(Arrays.asList("The username \"" + username.get() + "\" is not registered."));
+            return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
-            AssertionRequest request = rp.startAssertion(
-                username,
-                Optional.empty(),
-                Optional.empty()
+            AssertionRequest request = new AssertionRequest(
+                challengeGenerator.generateChallenge(),
+                rp.startAssertion(
+                    StartAssertionOptions.builder()
+                        .username(username)
+                        .build()
+                )
             );
 
             assertRequestStorage.put(request.getRequestId(), request);
@@ -281,9 +302,10 @@ public class WebAuthnServer {
         } else {
             try {
                 AssertionResult result = rp.finishAssertion(
-                    request,
-                    response.getCredential(),
-                    Optional.empty()
+                    FinishAssertionOptions.builder()
+                        .request(request.getRequest())
+                        .response(response.getCredential())
+                        .build()
                 );
 
                 if (result.isSuccess()) {
@@ -307,11 +329,14 @@ public class WebAuthnServer {
                         )
                     );
                 } else {
-                    return Either.left(Arrays.asList("Assertion failed: Invalid assertion."));
+                    return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));
                 }
-            } catch (Exception e) {
+            } catch (AssertionFailedException e) {
                 logger.debug("Assertion failed", e);
                 return Either.left(Arrays.asList("Assertion failed!", e.getMessage()));
+            } catch (Exception e) {
+                logger.error("Assertion failed", e);
+                return Either.left(Arrays.asList("Assertion failed unexpectedly; this is likely a bug.", e.getMessage()));
             }
         }
     }
@@ -332,7 +357,7 @@ public class WebAuthnServer {
                 AuthenticatedAction<?> action = authenticatedActions.getIfPresent(result.request);
                 authenticatedActions.invalidate(result.request);
                 if (action == null) {
-                    return com.yubico.util.Either.left(Collections.singletonList(
+                    return Either.left(Collections.singletonList(
                         "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
                     ));
                 } else {
@@ -345,11 +370,11 @@ public class WebAuthnServer {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
-            return Either.left(Arrays.asList("Username must not be empty."));
+            return Either.left(Collections.singletonList("Username must not be empty."));
         }
 
         if (credentialId == null || credentialId.getBytes().length == 0) {
-            return Either.left(Arrays.asList("Credential ID must not be empty."));
+            return Either.left(Collections.singletonList("Credential ID must not be empty."));
         }
 
         AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
@@ -359,7 +384,7 @@ public class WebAuthnServer {
                 userStorage.removeRegistrationByUsername(username, credReg.get());
                 return Either.right(resultMapper.apply(credReg.get()));
             } else {
-                return Either.left(Arrays.asList("Credential ID not registered:" + credentialId));
+                return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
             }
         };
 
@@ -370,7 +395,7 @@ public class WebAuthnServer {
         logger.trace("deleteAccount username: {}", username);
 
         if (username == null || username.isEmpty()) {
-            return Either.left(Arrays.asList("Username must not be empty."));
+            return Either.left(Collections.singletonList("Username must not be empty."));
         }
 
         boolean removed = userStorage.removeAllRegistrations(username);
@@ -378,13 +403,17 @@ public class WebAuthnServer {
         if (removed) {
             return Either.right(onSuccess.get());
         } else {
-            return Either.left(Arrays.asList("Username not registered:" + username));
+            return Either.left(Collections.singletonList("Username not registered:" + username));
         }
     }
 
-    private CredentialRegistration addRegistration(String username, UserIdentity userIdentity, String nickname, RegistrationResponse response, RegistrationResult registration) {
+    private CredentialRegistration addRegistration(
+        UserIdentity userIdentity,
+        Optional<String> nickname,
+        RegistrationResponse response,
+        RegistrationResult registration
+    ) {
         CredentialRegistration reg = CredentialRegistration.builder()
-            .username(username)
             .userIdentity(userIdentity)
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
@@ -393,14 +422,14 @@ public class WebAuthnServer {
             .build();
 
         logger.debug(
-            "Adding registration: username: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
-            username,
+            "Adding registration: user: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
+            userIdentity,
             nickname,
             registration,
             registration.getKeyId().getId(),
             registration.getPublicKeyCose()
         );
-        userStorage.addRegistrationByUsername(username, reg);
+        userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
         return reg;
     }
 }
