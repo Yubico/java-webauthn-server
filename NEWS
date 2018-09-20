@@ -1,3 +1,30 @@
+== Version 0.3.0 (unreleased) ==
+
+* Major API overhaul; public API changes include but are not limited to:
+ ** Reorganised package structure
+ ** `CredentialRepository.getCredentialIdsForUsername(String)` now returns `Set`
+    instead of `List`
+ ** Most data classes now expose a builder instead of a public constructor
+ ** Shortcut constants added to `COSEAlgorithmIdentifier` and
+    `PublicKeyCredentialParameters`
+ ** Exception `U2fBadConfigurationException` renamed to
+    `BadConfigurationException`
+ ** `RelyingParty.startRegistration` now accepts one `StartRegistrationOptions`
+    parameter instead of several parameters
+ ** `RelyingParty.finishRegistration` now accepts one
+    `FinishRegistrationOptions` parameter instead of several parameters
+ ** `RelyingParty.startAssertion` now accepts one `StartAssertionOptions`
+    parameter instead of several parameters
+ ** `RelyingParty.finishAssertion` now accepts one `FinishAssertionOptions`
+    parameter instead of several parameters
+ ** `RelyingParty.finishRegistration` now throws checked
+    `RegistrationFailedException` instead of `IllegalArgumentException` on most
+    failures
+ ** `RelyingParty.finishAssertion` now throws checked
+    `AssertionFailedException` instead of `IllegalArgumentException` on most
+    failures
+
+
 == Version 0.2.0 ==
 
 * Core library now recognises username as an internally relevant concept
