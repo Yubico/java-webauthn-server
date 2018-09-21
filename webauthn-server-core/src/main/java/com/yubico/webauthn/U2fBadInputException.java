@@ -13,7 +13,7 @@ package com.yubico.webauthn;
  * Thrown when invalid data is given to the server by an external caller.
  */
 @SuppressWarnings("serial")
-public class U2fBadInputException extends Exception {
+class U2fBadInputException extends Exception {
 
     public U2fBadInputException(String message) {
         super(message);
