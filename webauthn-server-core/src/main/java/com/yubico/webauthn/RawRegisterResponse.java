@@ -13,8 +13,8 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.internal.util.ByteInputStream;
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.internal.util.U2fB64Encoding;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -69,8 +69,8 @@ class RawRegisterResponse {
         this.crypto = crypto;
     }
 
-    static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException {
-        ByteInputStream bytes = new ByteInputStream(U2fB64Encoding.decode(rawDataBase64));
+    static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException, Base64UrlException {
+        ByteInputStream bytes = new ByteInputStream(ByteArray.fromBase64Url(rawDataBase64).getBytes());
         try {
             byte reservedByte = bytes.readSigned();
             if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
