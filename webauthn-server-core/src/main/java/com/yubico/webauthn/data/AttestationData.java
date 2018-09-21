@@ -1,13 +1,12 @@
 package com.yubico.webauthn.data;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class AttestationData {
 
@@ -30,5 +29,16 @@ public class AttestationData {
      */
     @NonNull
     private final ByteArray credentialPublicKey;
+
+    @JsonCreator
+    private AttestationData(
+        @NonNull @JsonProperty("aaguid") ByteArray aaguid,
+        @NonNull @JsonProperty("credentialId") ByteArray credentialId,
+        @NonNull @JsonProperty("credentialPublicKey") ByteArray credentialPublicKey
+    ) {
+        this.aaguid = aaguid;
+        this.credentialId = credentialId;
+        this.credentialPublicKey = credentialPublicKey;
+    }
 
 }
