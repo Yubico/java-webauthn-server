@@ -8,6 +8,7 @@ import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.attestation.MetadataResolver;
 import com.yubico.attestation.MetadataService;
+import com.yubico.attestation.StandardMetadataService;
 import com.yubico.attestation.resolver.CompositeResolver;
 import com.yubico.attestation.resolver.SimpleResolver;
 import com.yubico.attestation.resolver.SimpleResolverWithEquality;
@@ -62,9 +63,9 @@ public class WebAuthnServer {
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
-    private final MetadataService metadataService = new MetadataService(
+    private final MetadataService metadataService = new StandardMetadataService(
         new CompositeResolver(Arrays.asList(
-            MetadataService.createDefaultMetadataResolver(),
+            StandardMetadataService.createDefaultMetadataResolver(),
             createExtraMetadataResolver()
         ))
     );

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.attestation.MetadataResolver
 import com.yubico.attestation.MetadataObject
+import com.yubico.attestation.StandardMetadataService
 import com.yubico.attestation.MetadataService
 import com.yubico.attestation.resolver.SimpleResolver
 import com.yubico.scala.util.JavaConverters._
@@ -1305,7 +1306,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           it("with basic attestation, a trust resolver is returned.") {
             val metadataResolver: MetadataResolver = new SimpleResolver
-            val metadataService: MetadataService = new MetadataService(metadataResolver)
+            val metadataService: MetadataService = new StandardMetadataService(metadataResolver)
             val steps = finishRegistration(
               testData = RegistrationTestData.FidoU2f.BasicAttestation,
               metadataService = Some(metadataService)
@@ -1402,7 +1403,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           def generateTests(testData: RegistrationTestData): Unit = {
             it("is rejected if untrusted attestation is not allowed and trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
+              val metadataService: MetadataService = new StandardMetadataService(metadataResolver) // Stateful - do not share between tests
               val steps = finishRegistration(
                 allowUntrustedAttestation = false,
                 testData = testData,
@@ -1419,7 +1420,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if untrusted attestation is allowed and trust cannot be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
+              val metadataService: MetadataService = new StandardMetadataService(metadataResolver) // Stateful - do not share between tests
               val steps = finishRegistration(
                 allowUntrustedAttestation = true,
                 testData = testData,
@@ -1436,7 +1437,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if trust can be derived from the trust anchors.") {
               val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
+              val metadataService: MetadataService = new StandardMetadataService(metadataResolver) // Stateful - do not share between tests
 
               metadataResolver.addMetadata(
                 new MetadataObject(
@@ -1557,7 +1558,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val testData = RegistrationTestData.FidoU2f.BasicAttestation
           val steps = finishRegistration(
             testData = testData,
-            metadataService = Some(new MetadataService({
+            metadataService = Some(new StandardMetadataService({
               val resolver = new SimpleResolver()
               resolver.addMetadata(new MetadataObject(WebAuthnCodecs.json().readTree(s"""{
                 "identifier": "76885d09-d231-4814-b87c-3c27859cb17d",
