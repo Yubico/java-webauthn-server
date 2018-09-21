@@ -15,7 +15,7 @@ import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {
-    public static ByteArray encodeRegisterResponse(RawRegisterResponse rawRegisterResponse) throws U2fBadInputException {
+    public static ByteArray encodeRegisterResponse(U2fRawRegisterResponse rawRegisterResponse) throws U2fBadInputException {
         ByteArray keyHandle = rawRegisterResponse.keyHandle;
         if (keyHandle.getBytes().length > 255) {
             throw new U2fBadInputException("keyHandle length cannot be longer than 255 bytes!");
@@ -23,7 +23,7 @@ public class CodecTestUtils {
 
         try {
             ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
-            encoded.write(RawRegisterResponse.REGISTRATION_RESERVED_BYTE_VALUE);
+            encoded.write(U2fRawRegisterResponse.REGISTRATION_RESERVED_BYTE_VALUE);
             encoded.write(rawRegisterResponse.userPublicKey.getBytes());
             encoded.write((byte) keyHandle.getBytes().length);
             encoded.write(keyHandle.getBytes());

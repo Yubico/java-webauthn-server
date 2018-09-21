@@ -119,9 +119,9 @@ class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifie
 
                 ByteArray keyHandle = attestationData.getCredentialId();
 
-                RawRegisterResponse u2fRegisterResponse;
+                U2fRawRegisterResponse u2fRegisterResponse;
                 try {
-                    u2fRegisterResponse = new RawRegisterResponse(
+                    u2fRegisterResponse = new U2fRawRegisterResponse(
                         userPublicKey,
                         keyHandle,
                         attestationCertificate,

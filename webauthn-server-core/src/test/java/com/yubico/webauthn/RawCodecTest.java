@@ -22,7 +22,7 @@ public class RawCodecTest {
 
     @Test
     public void testEncodeRegisterResponse() throws Exception {
-        RawRegisterResponse rawRegisterResponse = new RawRegisterResponse(TestVectors.USER_PUBLIC_KEY_REGISTER_HEX,
+        U2fRawRegisterResponse rawRegisterResponse = new U2fRawRegisterResponse(TestVectors.USER_PUBLIC_KEY_REGISTER_HEX,
                 TestVectors.KEY_HANDLE, GnubbyKey.ATTESTATION_CERTIFICATE, TestVectors.SIGNATURE_REGISTER);
         ByteArray encodedBytes = CodecTestUtils.encodeRegisterResponse(rawRegisterResponse);
         Assert.assertEquals(TestVectors.REGISTRATION_RESPONSE_DATA, encodedBytes);
@@ -30,17 +30,17 @@ public class RawCodecTest {
 
     @Test
     public void testEncodeRegisterSignedBytes() {
-        ByteArray encodedBytes = RawRegisterResponse.packBytesToSign(TestVectors.APP_ID_ENROLL_SHA256,
+        ByteArray encodedBytes = U2fRawRegisterResponse.packBytesToSign(TestVectors.APP_ID_ENROLL_SHA256,
                 TestVectors.CLIENT_DATA_ENROLL_SHA256, TestVectors.KEY_HANDLE, TestVectors.USER_PUBLIC_KEY_REGISTER_HEX);
         Assert.assertEquals(TestVectors.EXPECTED_REGISTER_SIGNED_BYTES, encodedBytes);
     }
 
     @Test
     public void testDecodeRegisterResponse() throws Exception {
-        RawRegisterResponse rawRegisterResponse =
-                RawRegisterResponse.fromBase64(TestVectors.REGISTRATION_RESPONSE_DATA.getBase64Url(), crypto);
+        U2fRawRegisterResponse rawRegisterResponse =
+                U2fRawRegisterResponse.fromBase64(TestVectors.REGISTRATION_RESPONSE_DATA.getBase64Url(), crypto);
 
-        assertEquals(new RawRegisterResponse(TestVectors.USER_PUBLIC_KEY_REGISTER_HEX,
+        assertEquals(new U2fRawRegisterResponse(TestVectors.USER_PUBLIC_KEY_REGISTER_HEX,
                 TestVectors.KEY_HANDLE, GnubbyKey.ATTESTATION_CERTIFICATE, TestVectors.SIGNATURE_REGISTER), rawRegisterResponse);
     }
 

@@ -26,7 +26,7 @@ import lombok.ToString;
  */
 @EqualsAndHashCode
 @ToString
-class RawRegisterResponse {
+class U2fRawRegisterResponse {
     static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
@@ -50,18 +50,18 @@ class RawRegisterResponse {
      */
     final ByteArray signature;
 
-    public RawRegisterResponse(ByteArray userPublicKey,
-                               ByteArray keyHandle,
-                               X509Certificate attestationCertificate,
-                               ByteArray signature) {
+    public U2fRawRegisterResponse(ByteArray userPublicKey,
+                                  ByteArray keyHandle,
+                                  X509Certificate attestationCertificate,
+                                  ByteArray signature) {
         this(userPublicKey, keyHandle, attestationCertificate, signature, new BouncyCastleCrypto());
     }
 
-    public RawRegisterResponse(ByteArray userPublicKey,
-                               ByteArray keyHandle,
-                               X509Certificate attestationCertificate,
-                               ByteArray signature,
-                               Crypto crypto) {
+    public U2fRawRegisterResponse(ByteArray userPublicKey,
+                                  ByteArray keyHandle,
+                                  X509Certificate attestationCertificate,
+                                  ByteArray signature,
+                                  Crypto crypto) {
         this.userPublicKey = userPublicKey;
         this.keyHandle = keyHandle;
         this.attestationCertificate = attestationCertificate;
@@ -69,7 +69,7 @@ class RawRegisterResponse {
         this.crypto = crypto;
     }
 
-    static RawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException, Base64UrlException {
+    static U2fRawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException, Base64UrlException {
         ByteInputStream bytes = new ByteInputStream(ByteArray.fromBase64Url(rawDataBase64).getBytes());
         try {
             byte reservedByte = bytes.readSigned();
@@ -80,7 +80,7 @@ class RawRegisterResponse {
                 );
             }
 
-            return new RawRegisterResponse(
+            return new U2fRawRegisterResponse(
                     new ByteArray(bytes.read(65)),
                     new ByteArray(bytes.read(bytes.readUnsigned())),
                     CertificateParser.parseDer(bytes),
