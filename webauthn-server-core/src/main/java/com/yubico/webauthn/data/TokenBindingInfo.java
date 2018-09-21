@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
@@ -35,6 +37,14 @@ public class TokenBindingInfo {
 
         this.status = status;
         this.id = id;
+    }
+
+    @JsonCreator
+    private TokenBindingInfo(
+        @NonNull @JsonProperty("status") TokenBindingStatus status,
+        @JsonProperty("id") ByteArray id
+    ) {
+        this(status, Optional.ofNullable(id));
     }
 
     public static TokenBindingInfo present(@NonNull ByteArray id) {
