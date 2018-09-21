@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,5 +21,13 @@ public class AssertionRequest {
     @NonNull
     @Builder.Default
     private final Optional<String> username = Optional.empty();
+
+    @JsonCreator
+    private AssertionRequest(
+        @NonNull @JsonProperty("publicKeyCredentialRequestOptions") PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
+        @JsonProperty("username") String username
+    ) {
+        this(publicKeyCredentialRequestOptions, Optional.ofNullable(username));
+    }
 
 }
