@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URL;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -49,5 +51,15 @@ public class UserIdentity implements PublicKeyCredentialEntity {
     @NonNull
     @Builder.Default
     private final Optional<URL> icon = Optional.empty();
+
+    @JsonCreator
+    private UserIdentity(
+        @NonNull @JsonProperty("name") String name,
+        @NonNull @JsonProperty("displayName") String displayName,
+        @NonNull @JsonProperty("id") ByteArray id,
+        @JsonProperty("icon") URL icon
+    ) {
+        this(name, displayName, id, Optional.ofNullable(icon));
+    }
 
 }
