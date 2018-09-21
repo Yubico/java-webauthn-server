@@ -1,6 +1,8 @@
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.UserIdentity;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;

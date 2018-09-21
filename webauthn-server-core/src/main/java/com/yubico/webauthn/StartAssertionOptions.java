@@ -1,6 +1,7 @@
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;

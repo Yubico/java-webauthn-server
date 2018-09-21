@@ -14,8 +14,6 @@ import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.StartAssertionOptions
-import com.yubico.webauthn.data.FinishAssertionOptions
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

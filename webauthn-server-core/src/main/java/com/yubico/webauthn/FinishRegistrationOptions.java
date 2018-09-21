@@ -1,5 +1,9 @@
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredential;
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
