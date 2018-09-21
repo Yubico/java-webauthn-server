@@ -23,6 +23,7 @@ dependencies {
   )
 
   testCompile(
+    project(':yubico-util-scala'),
     'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
     'org.scala-lang:scala-library:2.11.3',
