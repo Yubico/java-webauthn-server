@@ -23,6 +23,7 @@
  ** `RelyingParty.finishAssertion` now throws checked
     `AssertionFailedException` instead of `IllegalArgumentException` on most
     failures
+ ** Class `MetadataResolver` replaced with interface
 
 
 == Version 0.2.0 ==
