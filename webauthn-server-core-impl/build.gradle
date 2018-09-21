@@ -41,11 +41,8 @@ dependencies {
 jar {
   manifest {
     attributes([
-      'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
-      'Specification-Version': 'Level 1 Candidate Recommendation 2018-03-20',
-      'Specification-Vendor': 'World Wide Web Consortium',
-      'Implementation-Id': 'java-webauthn-server',
-      'Implementation-Title': 'Yubico Web Authentication server library',
+      'Implementation-Id': 'java-webauthn-server-core-impl',
+      'Implementation-Title': 'Yubico Web Authentication internal classes',
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
     ])
