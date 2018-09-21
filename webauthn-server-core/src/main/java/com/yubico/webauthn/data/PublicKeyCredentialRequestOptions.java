@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.util.Collections;
@@ -84,6 +86,25 @@ public class PublicKeyCredentialRequestOptions {
         this.allowCredentials = allowCredentials.map(Collections::unmodifiableList);
         this.userVerification = userVerification;
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
+    }
+
+    @JsonCreator
+    private PublicKeyCredentialRequestOptions(
+        @NonNull @JsonProperty("challenge") ByteArray challenge,
+        @JsonProperty("timeout") Long timeout,
+        @JsonProperty("rpId") String rpId,
+        @JsonProperty("allowCredentials") List<PublicKeyCredentialDescriptor> allowCredentials,
+        @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification,
+        @JsonProperty("extensions") ObjectNode extensions
+    ) {
+        this(
+            challenge,
+            Optional.ofNullable(timeout),
+            Optional.ofNullable(rpId),
+            Optional.ofNullable(allowCredentials),
+            userVerification,
+            Optional.ofNullable(extensions)
+        );
     }
 
     public Optional<ObjectNode> getExtensions() {
