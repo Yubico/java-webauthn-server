@@ -20,7 +20,7 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
 
 @Slf4j
-public class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
+class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     private static boolean isP256(ECParameterSpec params) {
         ECNamedCurveParameterSpec p256 = ECNamedCurveTable.getParameterSpec("P-256");

@@ -34,7 +34,7 @@ import org.bouncycastle.asn1.DEROctetString;
 
 
 @Slf4j
-public class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
+class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {

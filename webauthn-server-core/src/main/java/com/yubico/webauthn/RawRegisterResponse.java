@@ -26,7 +26,7 @@ import lombok.ToString;
  */
 @EqualsAndHashCode
 @ToString
-public class RawRegisterResponse {
+class RawRegisterResponse {
     static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 

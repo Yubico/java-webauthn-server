@@ -31,7 +31,7 @@ import static com.yubico.webauthn.data.AttestationType.NONE;
 
 @Builder
 @Slf4j
-public class FinishRegistrationSteps {
+class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
 

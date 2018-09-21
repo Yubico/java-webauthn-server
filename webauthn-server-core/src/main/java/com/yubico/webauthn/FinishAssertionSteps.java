@@ -23,7 +23,7 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 
 @Builder
 @Slf4j
-public class FinishAssertionSteps {
+class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
 

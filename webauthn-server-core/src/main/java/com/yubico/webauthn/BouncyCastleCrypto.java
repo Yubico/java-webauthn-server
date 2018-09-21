@@ -25,7 +25,7 @@ import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 
-public class BouncyCastleCrypto implements Crypto {
+class BouncyCastleCrypto implements Crypto {
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
