@@ -1,6 +1,6 @@
 /* Copyright 2015 Yubico */
 
-package com.yubico.attestation;
+package com.yubico.webauthn.attestation;
 
 import java.io.Serializable;
 import java.util.Map;

@@ -8,12 +8,12 @@ import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import com.yubico.attestation.Attestation
-import com.yubico.attestation.Transport
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
+import com.yubico.webauthn.attestation.Attestation
+import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RegisteredCredential

@@ -1,13 +1,13 @@
 /* Copyright 2015 Yubico */
 
-package com.yubico.attestation.resolver;
+package com.yubico.webauthn.attestation.resolver;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.yubico.attestation.MetadataObject;
-import com.yubico.attestation.MetadataResolver;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.webauthn.attestation.MetadataObject;
+import com.yubico.webauthn.attestation.MetadataResolver;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

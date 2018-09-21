@@ -1,6 +1,6 @@
 /* Copyright 2015 Yubico */
 
-package com.yubico.attestation;
+package com.yubico.webauthn.attestation;
 
 import java.security.cert.X509Certificate;
 import java.util.Optional;

@@ -12,11 +12,11 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
-import com.yubico.attestation.MetadataResolver
-import com.yubico.attestation.MetadataObject
-import com.yubico.attestation.StandardMetadataService
-import com.yubico.attestation.MetadataService
-import com.yubico.attestation.resolver.SimpleResolver
+import com.yubico.webauthn.attestation.MetadataResolver
+import com.yubico.webauthn.attestation.MetadataObject
+import com.yubico.webauthn.attestation.StandardMetadataService
+import com.yubico.webauthn.attestation.MetadataService
+import com.yubico.webauthn.attestation.resolver.SimpleResolver
 import com.yubico.scala.util.JavaConverters._
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria

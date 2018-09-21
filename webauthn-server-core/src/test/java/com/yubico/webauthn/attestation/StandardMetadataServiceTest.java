@@ -1,4 +1,4 @@
-package com.yubico.attestation;
+package com.yubico.webauthn.attestation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;

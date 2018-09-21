@@ -1,6 +1,6 @@
-package com.yubico.attestation.resolver;
+package com.yubico.webauthn.attestation.resolver;
 
-import com.yubico.attestation.MetadataObject;
+import com.yubico.webauthn.attestation.MetadataObject;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
 

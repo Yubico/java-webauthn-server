@@ -1,4 +1,4 @@
-package com.yubico.attestation;
+package com.yubico.webauthn.attestation;
 
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;

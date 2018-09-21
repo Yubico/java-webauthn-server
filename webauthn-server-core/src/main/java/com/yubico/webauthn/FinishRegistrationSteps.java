@@ -1,8 +1,8 @@
 package com.yubico.webauthn;
 
 import COSE.CoseException;
-import com.yubico.attestation.Attestation;
-import com.yubico.attestation.MetadataService;
+import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;

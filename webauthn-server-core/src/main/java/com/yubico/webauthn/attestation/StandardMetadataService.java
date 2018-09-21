@@ -1,6 +1,6 @@
 /* Copyright 2015 Yubico */
 
-package com.yubico.attestation;
+package com.yubico.webauthn.attestation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
@@ -12,10 +12,10 @@ import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
-import com.yubico.attestation.matcher.ExtensionMatcher;
-import com.yubico.attestation.matcher.FingerprintMatcher;
-import com.yubico.attestation.resolver.SimpleResolver;
 import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
+import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
+import com.yubico.webauthn.attestation.resolver.SimpleResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

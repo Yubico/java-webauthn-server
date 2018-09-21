@@ -1,9 +1,9 @@
 /* Copyright 2015 Yubico */
 
-package com.yubico.attestation.matcher;
+package com.yubico.webauthn.attestation.matcher;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.attestation.DeviceMatcher;
+import com.yubico.webauthn.attestation.DeviceMatcher;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import org.bouncycastle.util.Strings;

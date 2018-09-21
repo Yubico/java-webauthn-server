@@ -1,4 +1,4 @@
-package com.yubico.attestation;
+package com.yubico.webauthn.attestation;
 
 import java.util.Arrays;
 import java.util.EnumSet;
