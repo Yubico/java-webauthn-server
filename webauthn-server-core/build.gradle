@@ -13,7 +13,7 @@ configurations {
 dependencies {
 
   compile(
-    project(':webauthn-server-core-impl'),
+    project(':yubico-util'),
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
