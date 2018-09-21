@@ -1,4 +1,4 @@
-package com.yubico.scala.util
+package com.yubico.internal.util.scala
 
 import java.util.Optional
 import java.util.function.Supplier

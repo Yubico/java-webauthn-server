@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import com.yubico.scala.util.JavaConverters._
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
