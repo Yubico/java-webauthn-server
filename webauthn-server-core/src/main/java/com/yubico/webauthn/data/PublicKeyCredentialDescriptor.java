@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +43,15 @@ public class PublicKeyCredentialDescriptor {
         this.type = type;
         this.id = id;
         this.transports = transports.map(Collections::unmodifiableList);
+    }
+
+    @JsonCreator
+    private PublicKeyCredentialDescriptor(
+        @NonNull @JsonProperty("type") PublicKeyCredentialType type,
+        @NonNull @JsonProperty("id") ByteArray id,
+        @JsonProperty("transports") List<AuthenticatorTransport> transports
+    ) {
+        this(type, id, Optional.ofNullable(transports));
     }
 
 }
