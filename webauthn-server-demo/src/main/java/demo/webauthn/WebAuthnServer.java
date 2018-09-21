@@ -6,29 +6,30 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
-import com.yubico.attestation.MetadataResolver;
-import com.yubico.attestation.MetadataService;
-import com.yubico.attestation.resolver.CompositeResolver;
-import com.yubico.attestation.resolver.SimpleResolver;
-import com.yubico.attestation.resolver.SimpleResolverWithEquality;
 import com.yubico.util.Either;
 import com.yubico.webauthn.ChallengeGenerator;
+import com.yubico.webauthn.FinishAssertionOptions;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartAssertionOptions;
+import com.yubico.webauthn.StartRegistrationOptions;
+import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.webauthn.attestation.MetadataResolver;
+import com.yubico.webauthn.attestation.MetadataService;
+import com.yubico.webauthn.attestation.StandardMetadataService;
+import com.yubico.webauthn.attestation.resolver.CompositeResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleResolverWithEquality;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.FinishAssertionOptions;
-import com.yubico.webauthn.data.FinishRegistrationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
-import com.yubico.webauthn.data.StartAssertionOptions;
-import com.yubico.webauthn.data.StartRegistrationOptions;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
-import com.yubico.webauthn.internal.WebAuthnCodecs;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
@@ -62,9 +63,9 @@ public class WebAuthnServer {
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
-    private final MetadataService metadataService = new MetadataService(
+    private final MetadataService metadataService = new StandardMetadataService(
         new CompositeResolver(Arrays.asList(
-            MetadataService.createDefaultMetadataResolver(),
+            StandardMetadataService.createDefaultMetadataResolver(),
             createExtraMetadataResolver()
         ))
     );

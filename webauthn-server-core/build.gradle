@@ -13,7 +13,7 @@ configurations {
 dependencies {
 
   compile(
-    project(':webauthn-server-core-impl'),
+    project(':yubico-util'),
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
@@ -23,6 +23,7 @@ dependencies {
   )
 
   testCompile(
+    project(':yubico-util-scala'),
     'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
     'org.scala-lang:scala-library:2.11.3',

@@ -1,7 +1,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.webauthn.internal.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

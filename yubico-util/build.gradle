@@ -1,0 +1,31 @@
+description = 'Yubico internal utilities'
+
+apply plugin: 'scala'
+
+dependencies {
+
+  compile(
+    [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
+    [group: 'com.google.guava', name: 'guava', version:'19.0'],
+    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
+  )
+
+  testCompile(
+    'org.scala-lang:scala-library:2.11.3',
+    'org.scalatest:scalatest_2.11:3.0.4',
+    'org.scalacheck:scalacheck_2.11:1.13.5',
+  )
+}
+
+
+jar {
+  manifest {
+    attributes([
+      'Implementation-Id': 'yubico-util',
+      'Implementation-Title': project.description,
+      'Implementation-Version': project.version,
+      'Implementation-Vendor': 'Yubico',
+    ])
+  }
+}
+

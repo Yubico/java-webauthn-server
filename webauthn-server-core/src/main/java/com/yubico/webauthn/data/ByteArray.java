@@ -2,13 +2,12 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.io.BaseEncoding;
 import com.yubico.internal.util.BinaryUtil;
-import com.yubico.internal.util.U2fB64Encoding;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
-import com.yubico.webauthn.internal.u2f.exceptions.U2fBadInputException;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
@@ -22,6 +21,9 @@ import org.bouncycastle.util.Arrays;
 @ToString(of = { "base64" }, includeFieldNames = false)
 public class ByteArray implements JsonStringSerializable {
 
+    private final static BaseEncoding BASE64_ENCODER = BaseEncoding.base64Url().omitPadding();
+    private final static BaseEncoding BASE64_DECODER = BaseEncoding.base64Url();
+
     @NonNull
     private final byte[] bytes;
 
@@ -33,14 +35,14 @@ public class ByteArray implements JsonStringSerializable {
      */
     public ByteArray(@NonNull byte[] bytes) {
         this.bytes = BinaryUtil.copy(bytes);
-        this.base64 = U2fB64Encoding.encode(this.bytes);
+        this.base64 = BASE64_ENCODER.encode(this.bytes);
     }
 
     @JsonCreator
     private ByteArray(String base64) throws Base64UrlException {
         try {
-            this.bytes = U2fB64Encoding.decode(base64);
-        } catch (U2fBadInputException e) {
+            this.bytes = BASE64_DECODER.decode(base64);
+        } catch (IllegalArgumentException e) {
             throw new Base64UrlException("Invalid Base64Url encoding: " + base64, e);
         }
         this.base64 = base64;

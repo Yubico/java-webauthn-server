@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 
 
-public interface AttestationStatementVerifier {
+interface AttestationStatementVerifier {
 
     AttestationType getAttestationType(AttestationObject attestation) throws IOException, CoseException, CertificateException;
 

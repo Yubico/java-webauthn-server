@@ -12,11 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
-import com.yubico.attestation.MetadataResolver
-import com.yubico.attestation.MetadataObject
-import com.yubico.attestation.MetadataService
-import com.yubico.attestation.resolver.SimpleResolver
-import com.yubico.scala.util.JavaConverters._
+import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.webauthn.attestation.MetadataService
+import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
@@ -26,14 +24,6 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.internal.BouncyCastleCrypto
-import com.yubico.webauthn.internal.FidoU2fAttestationStatementVerifier
-import com.yubico.webauthn.internal.FinishRegistrationSteps
-import com.yubico.webauthn.internal.NoneAttestationStatementVerifier
-import com.yubico.webauthn.internal.PackedAttestationStatementVerifier
-import com.yubico.webauthn.internal.WebAuthnCodecs
-import com.yubico.webauthn.internal.RegistrationTestData
-import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.x500.X500Name
@@ -87,6 +77,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       .metadataService(metadataService.asJava)
       .build()
       ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
+  }
+
+  class TestMetadataService(private val attestation: Option[Attestation] = None) extends MetadataService {
+    override def getAttestation(attestationCertificateChain: java.util.List[X509Certificate]): Attestation = attestation match {
+      case None => Attestation.builder(false).build()
+      case Some(a) => a
+    }
   }
 
   describe("§7.1. Registering a new credential") {
@@ -1312,8 +1309,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           it("with basic attestation, a trust resolver is returned.") {
-            val metadataResolver: MetadataResolver = new SimpleResolver
-            val metadataService: MetadataService = new MetadataService(metadataResolver)
+            val metadataService: MetadataService = new TestMetadataService()
             val steps = finishRegistration(
               testData = RegistrationTestData.FidoU2f.BasicAttestation,
               metadataService = Some(metadataService)
@@ -1408,9 +1404,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.") {
 
           def generateTests(testData: RegistrationTestData): Unit = {
-            it("is rejected if untrusted attestation is not allowed and trust cannot be derived from the trust anchors.") {
-              val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
+            it("is rejected if untrusted attestation is not allowed and the metadata service does not trust it.") {
+              val metadataService: MetadataService = new TestMetadataService()
               val steps = finishRegistration(
                 allowUntrustedAttestation = false,
                 testData = testData,
@@ -1425,9 +1420,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.tryNext shouldBe a [Failure[_]]
             }
 
-            it("is accepted if untrusted attestation is allowed and trust cannot be derived from the trust anchors.") {
-              val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
+            it("is accepted if untrusted attestation is allowed and the metadata service does not trust it.") {
+              val metadataService: MetadataService = new TestMetadataService()
               val steps = finishRegistration(
                 allowUntrustedAttestation = true,
                 testData = testData,
@@ -1442,19 +1436,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               step.tryNext shouldBe a [Success[_]]
             }
 
-            it("is accepted if trust can be derived from the trust anchors.") {
-              val metadataResolver = new SimpleResolver
-              val metadataService: MetadataService = new MetadataService(metadataResolver) // Stateful - do not share between tests
-
-              metadataResolver.addMetadata(
-                new MetadataObject(
-                  toJsonObject(Map(
-                    "vendorInfo" -> jsonFactory.objectNode(),
-                    "trustedCertificates" -> jsonFactory.arrayNode().add(jsonFactory.textNode(TestAuthenticator.toPem(testData.attestationCaCert.get))),
-                    "devices" -> jsonFactory.arrayNode(),
-                    "identifier" -> jsonFactory.textNode("Test attestation CA"),
-                    "version" -> jsonFactory.numberNode(42)
-                  ))
+            it("is accepted if the metadata service trusts it.") {
+              val metadataService: MetadataService = new TestMetadataService(Some(
+                Attestation.builder(true)
+                    .metadataIdentifier(Some("Test attestation CA").asJava)
+                    .build()
                 )
               )
 
@@ -1565,19 +1551,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val testData = RegistrationTestData.FidoU2f.BasicAttestation
           val steps = finishRegistration(
             testData = testData,
-            metadataService = Some(new MetadataService({
-              val resolver = new SimpleResolver()
-              resolver.addMetadata(new MetadataObject(WebAuthnCodecs.json().readTree(s"""{
-                "identifier": "76885d09-d231-4814-b87c-3c27859cb17d",
-                "version": 1,
-                "vendorInfo": {},
-                "trustedCertificates": [
-                  ${WebAuthnCodecs.json().writeValueAsString(TestAuthenticator.toPem(testData.attestationCaCert.get))}
-                ],
-                "devices": []
-              }""")))
-              resolver
-            })),
+            metadataService = Some(new TestMetadataService(Some(Attestation.builder(true).build()))),
             credentialRepository = Some(emptyCredentialRepository)
           )
           steps.run.getKeyId.getId should be (testData.response.getId)

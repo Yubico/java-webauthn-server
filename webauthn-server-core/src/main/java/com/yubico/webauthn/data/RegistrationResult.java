@@ -1,6 +1,6 @@
 package com.yubico.webauthn.data;
 
-import com.yubico.attestation.Attestation;
+import com.yubico.webauthn.attestation.Attestation;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

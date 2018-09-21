@@ -1,4 +1,6 @@
 rootProject.name = 'webauthn-server-parent'
+include ':webauthn-server-attestation'
 include ':webauthn-server-core'
-include ':webauthn-server-core-impl'
 include ':webauthn-server-demo'
+include ':yubico-util'
+include ':yubico-util-scala'
