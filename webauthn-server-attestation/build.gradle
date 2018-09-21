@@ -1,0 +1,30 @@
+description = 'Yubico WebAuthn attestation subsystem'
+
+apply plugin: 'java'
+
+dependencies {
+
+  compile(
+    project(':webauthn-server-core'),
+    'org.bouncycastle:bcpkix-jdk15on:1.54',
+    'com.google.guava:guava:19.0',
+  )
+
+  testCompile(
+    'org.mockito:mockito-core:2.10.0',
+  )
+
+}
+
+
+jar {
+  manifest {
+    attributes([
+      'Implementation-Id': 'java-webauthn-server-attestation',
+      'Implementation-Title': project.description,
+      'Implementation-Version': project.version,
+      'Implementation-Vendor': 'Yubico',
+    ])
+  }
+}
+
