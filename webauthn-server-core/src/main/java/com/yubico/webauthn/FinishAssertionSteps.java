@@ -1,8 +1,6 @@
-package com.yubico.webauthn.internal;
+package com.yubico.webauthn;
 
 
-import com.yubico.webauthn.CredentialRepository;
-import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;

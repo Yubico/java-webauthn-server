@@ -1,13 +1,11 @@
-package com.yubico.webauthn.internal;
+package com.yubico.webauthn;
 
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationData;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.internal.u2f.RawRegisterResponse;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.cert.CertificateException;

@@ -26,14 +26,6 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.internal.BouncyCastleCrypto
-import com.yubico.webauthn.internal.FidoU2fAttestationStatementVerifier
-import com.yubico.webauthn.internal.FinishRegistrationSteps
-import com.yubico.webauthn.internal.NoneAttestationStatementVerifier
-import com.yubico.webauthn.internal.PackedAttestationStatementVerifier
-import com.yubico.webauthn.internal.WebAuthnCodecs
-import com.yubico.webauthn.internal.RegistrationTestData
-import com.yubico.webauthn.test.TestAuthenticator
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.x500.X500Name

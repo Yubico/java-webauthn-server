@@ -7,13 +7,11 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f.testdata;
+package com.yubico.webauthn;
 
 import com.google.common.collect.ImmutableSet;
-import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.HexException;
-import com.yubico.webauthn.internal.BouncyCastleCrypto;
 import java.util.Set;
 
 final public class TestVectors {

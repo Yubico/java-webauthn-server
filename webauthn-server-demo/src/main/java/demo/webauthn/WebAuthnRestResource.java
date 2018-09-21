@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.util.Either;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
-import com.yubico.webauthn.internal.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.webauthn.meta.VersionInfo;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.RegistrationRequest;

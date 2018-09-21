@@ -1,47 +1,44 @@
-package com.yubico.webauthn.test
+package com.yubico.webauthn
 
+import java.io.InputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.InputStream
 import java.math.BigInteger
-import java.security.MessageDigest
-import java.security.KeyFactory
+import java.security.PrivateKey
+import java.security.Signature
 import java.security.KeyPairGenerator
 import java.security.SecureRandom
+import java.security.KeyFactory
+import java.security.MessageDigest
 import java.security.KeyPair
 import java.security.PublicKey
-import java.security.Signature
-import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.spec.ECPublicKeySpec
-import java.security.spec.ECPoint
 import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.ECPoint
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
-import java.util.Date
 import java.util.Base64
+import java.util.Date
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
-import com.yubico.webauthn.data
-import com.yubico.webauthn.Crypto
+import com.yubico.internal.util.BinaryUtil
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.data.AuthenticatorAssertionResponse
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
-import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.internal.BouncyCastleCrypto
-import com.yubico.webauthn.internal.WebAuthnCodecs
+import com.yubico.webauthn.data.UserIdentity
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -53,12 +50,13 @@ import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
-import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.PEMKeyPair
+import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
+
 
 object TestAuthenticator {
 

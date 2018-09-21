@@ -1,4 +1,4 @@
-package com.yubico.webauthn.internal;
+package com.yubico.webauthn;
 
 import COSE.CoseException;
 import COSE.OneKey;

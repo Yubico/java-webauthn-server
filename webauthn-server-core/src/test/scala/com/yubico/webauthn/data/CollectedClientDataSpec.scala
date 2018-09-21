@@ -1,7 +1,7 @@
 package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.webauthn.internal.WebAuthnCodecs
+import com.yubico.webauthn.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

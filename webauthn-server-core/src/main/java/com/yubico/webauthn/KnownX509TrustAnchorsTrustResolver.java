@@ -1,9 +1,8 @@
-package com.yubico.webauthn.internal;
+package com.yubico.webauthn;
 
 import com.yubico.attestation.Attestation;
 import com.yubico.attestation.MetadataService;
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.webauthn.AttestationTrustResolver;
 import com.yubico.webauthn.data.AttestationObject;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;

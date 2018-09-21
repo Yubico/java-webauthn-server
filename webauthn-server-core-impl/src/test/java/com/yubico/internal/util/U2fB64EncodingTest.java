@@ -1,6 +1,6 @@
 package com.yubico.internal.util;
 
-import com.yubico.webauthn.internal.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.U2fBadInputException;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

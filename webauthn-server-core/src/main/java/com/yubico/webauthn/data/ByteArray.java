@@ -8,7 +8,7 @@ import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
-import com.yubico.webauthn.internal.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.U2fBadInputException;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;

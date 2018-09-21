@@ -7,12 +7,11 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.webauthn.internal.u2f;
+package com.yubico.webauthn;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.internal.u2f.exceptions.U2fBadInputException;
 import java.security.cert.CertificateEncodingException;
 
 public class CodecTestUtils {

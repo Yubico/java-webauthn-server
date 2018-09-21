@@ -1,7 +1,7 @@
 package com.yubico.internal.util;
 
 import com.google.common.io.BaseEncoding;
-import com.yubico.webauthn.internal.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.U2fBadInputException;
 
 public class U2fB64Encoding {
     private final static BaseEncoding BASE64_ENCODER = BaseEncoding.base64Url().omitPadding();

@@ -1,4 +1,4 @@
-package com.yubico.webauthn.internal
+package com.yubico.webauthn
 
 import java.security.interfaces.ECPublicKey
 

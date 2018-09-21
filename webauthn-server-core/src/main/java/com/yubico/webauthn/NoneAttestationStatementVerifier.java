@@ -1,6 +1,5 @@
-package com.yubico.webauthn.internal;
+package com.yubico.webauthn;
 
-import com.yubico.webauthn.AttestationStatementVerifier;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;

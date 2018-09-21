@@ -28,7 +28,7 @@ import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
-import com.yubico.webauthn.internal.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;

@@ -1,4 +1,4 @@
-package com.yubico.webauthn.internal
+package com.yubico.webauthn
 
 import java.security.cert.X509Certificate
 
@@ -19,7 +19,6 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.test.TestAuthenticator
 
 import scala.collection.JavaConverters._
 

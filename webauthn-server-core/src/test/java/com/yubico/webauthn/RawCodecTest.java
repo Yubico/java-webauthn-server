@@ -7,15 +7,10 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.webauthn.internal.u2f;
+package com.yubico.webauthn;
 
 import com.yubico.u2f.testdata.GnubbyKey;
-import com.yubico.u2f.testdata.TestVectors;
-import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.internal.u2f.CodecTestUtils;
-import com.yubico.webauthn.internal.u2f.RawRegisterResponse;
-import com.yubico.webauthn.internal.BouncyCastleCrypto;
 import org.junit.Assert;
 import org.junit.Test;
 

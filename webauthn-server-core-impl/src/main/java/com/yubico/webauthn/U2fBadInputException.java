@@ -7,7 +7,7 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.webauthn.internal.u2f.exceptions;
+package com.yubico.webauthn;
 
 /**
  * Thrown when invalid data is given to the server by an external caller.

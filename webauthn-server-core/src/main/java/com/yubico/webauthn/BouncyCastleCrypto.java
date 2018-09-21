@@ -7,9 +7,8 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.webauthn.internal;
+package com.yubico.webauthn;
 
-import com.yubico.webauthn.Crypto;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
