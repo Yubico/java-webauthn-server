@@ -11,6 +11,7 @@ targetCompatibility = '1.8'
 dependencies {
 
   compile(
+    project(':webauthn-server-attestation'),
     project(':webauthn-server-core'),
 
     'com.fasterxml.jackson.core:jackson-core:2.9.6',
