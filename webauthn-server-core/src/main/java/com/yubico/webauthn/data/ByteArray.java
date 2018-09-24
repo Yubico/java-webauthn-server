@@ -14,7 +14,7 @@ import lombok.ToString;
 import org.bouncycastle.util.Arrays;
 
 /**
- * An immutable byte array with support for encoding/decoding to/from Base64URL encoding.
+ * An immutable byte array with support for encoding/decoding to/from various encodings.
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
