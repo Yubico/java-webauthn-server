@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -105,7 +106,7 @@ public class PublicKeyCredentialCreationOptions {
         this.challenge = challenge;
         this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
         this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);

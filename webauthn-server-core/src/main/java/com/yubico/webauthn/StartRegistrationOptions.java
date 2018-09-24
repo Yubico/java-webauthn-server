@@ -6,6 +6,7 @@ import com.yubico.webauthn.data.UserIdentity;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -34,7 +35,7 @@ public class StartRegistrationOptions {
         boolean requireResidentKey
     ) {
         this.user = user;
-        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
         this.extensions = extensions;
         this.requireResidentKey = requireResidentKey;
     }
