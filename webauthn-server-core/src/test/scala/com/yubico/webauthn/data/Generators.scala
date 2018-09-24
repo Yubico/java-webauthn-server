@@ -1,14 +1,17 @@
 package com.yubico.webauthn.data
 
 import java.net.URL
+import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.WebAuthnCodecs
+import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
 import org.scalacheck.Arbitrary
@@ -49,14 +52,23 @@ object Generators {
     .build())
 
   implicit val arbitraryAttestationData: Arbitrary[AttestationData] = Arbitrary(for {
-    aaguid <- arbitrary[ByteArray]
+    aaguid <- byteArray(16)
     credentialId <- arbitrary[ByteArray]
-    credentialPublicKey <- arbitrary[ByteArray]
+    credentialPublicKey <- Gen.delay(Gen.const(TestAuthenticator.generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]))
+    credentialPublicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialPublicKey)
   } yield AttestationData.builder()
     .aaguid(aaguid)
     .credentialId(credentialId)
-    .credentialPublicKey(credentialPublicKey)
+    .credentialPublicKey(credentialPublicKeyCose)
     .build())
+  def attestationDataBytes: Gen[ByteArray] = for {
+    attestationData <- arbitrary[AttestationData]
+  } yield new ByteArray(
+    attestationData.getAaguid.getBytes
+    ++ BinaryUtil.encodeUint16(attestationData.getCredentialId.getBytes.length)
+    ++ attestationData.getCredentialId.getBytes
+    ++ attestationData.getCredentialPublicKey.getBytes
+  )
 
   implicit val arbitraryAttestationObject: Arbitrary[AttestationObject] = Arbitrary(for {
     bytes <- arbitrary[ByteArray]
@@ -98,6 +110,7 @@ object Generators {
     .build())
 
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
+  def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
   implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(for {
     jsonBase <- arbitrary[ObjectNode]
