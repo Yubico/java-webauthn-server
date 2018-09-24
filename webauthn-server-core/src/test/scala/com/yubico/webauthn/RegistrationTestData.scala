@@ -133,8 +133,8 @@ case class RegistrationTestData(
 ) {
   def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse], Option[X509Certificate]) = null
 
-  def clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
+  def clientData = new CollectedClientData(clientDataJsonBytes)
   def clientDataJsonHash: ByteArray = new BouncyCastleCrypto().hash(clientDataJsonBytes)
   def aaguid: ByteArray = new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getAaguid
   def packedAttestationCert: X509Certificate =

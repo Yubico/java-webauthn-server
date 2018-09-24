@@ -56,7 +56,7 @@ public class CollectedClientData {
         this(WebAuthnCodecs.json().readTree(clientDataJSON.getBytes()));
     }
 
-    public CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
+    private CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
         ExceptionUtil.assure(
             clientData != null && clientData.isObject(),
             "Collected client data must be JSON object."

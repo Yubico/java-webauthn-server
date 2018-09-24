@@ -97,7 +97,7 @@ object Generators {
 
   implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(for {
     json <- arbitrary[ObjectNode]
-  } yield new CollectedClientData(json))
+  } yield new CollectedClientData(new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json))))
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values().asScala.toSeq))
 
