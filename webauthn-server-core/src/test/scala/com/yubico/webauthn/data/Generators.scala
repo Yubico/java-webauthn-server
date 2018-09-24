@@ -4,6 +4,8 @@ import java.net.URL
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.WebAuthnCodecs
@@ -17,6 +19,8 @@ import scala.collection.JavaConverters._
 
 
 object Generators {
+
+  private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
     publicKeyCredentialRequestOptions <- arbitrary[PublicKeyCredentialRequestOptions]
@@ -96,7 +100,33 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
 
   implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(for {
-    json <- arbitrary[ObjectNode]
+    jsonBase <- arbitrary[ObjectNode]
+    challenge <- arbitrary[ByteArray]
+    origin <- arbitrary[URL]
+    tpe <- Gen.alphaNumStr
+    tokenBinding <- arbitrary[Optional[TokenBindingInfo]]
+    authenticatorExtensions <- arbitrary[Optional[ObjectNode]]
+    clientExtensions <- arbitrary[Optional[ObjectNode]]
+    json = {
+      val json = jsonBase
+        .set("challenge", jsonFactory.textNode(challenge.getBase64Url)).asInstanceOf[ObjectNode]
+        .set("origin", jsonFactory.textNode(origin.toExternalForm)).asInstanceOf[ObjectNode]
+        .set("type", jsonFactory.textNode(tpe)).asInstanceOf[ObjectNode]
+
+      tokenBinding.asScala foreach { tb =>
+        json.set("tokenBinding", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(tb)))
+      }
+
+      authenticatorExtensions.asScala foreach { ae =>
+        json.set("authenticatorExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(ae)))
+      }
+
+      clientExtensions.asScala foreach { ce =>
+        json.set("clientExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(ce)))
+      }
+
+      json
+    }
   } yield new CollectedClientData(new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json))))
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values().asScala.toSeq))
