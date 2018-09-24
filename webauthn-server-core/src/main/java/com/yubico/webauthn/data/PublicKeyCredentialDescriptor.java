@@ -3,8 +3,10 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -33,23 +35,23 @@ public class PublicKeyCredentialDescriptor {
 
     @NonNull
     @Builder.Default
-    private final Optional<List<AuthenticatorTransport>> transports = Optional.empty();
+    private final Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
 
     public PublicKeyCredentialDescriptor(
         @NonNull PublicKeyCredentialType type,
         @NonNull ByteArray id,
-        @NonNull Optional<List<AuthenticatorTransport>> transports
+        @NonNull Optional<Set<AuthenticatorTransport>> transports
     ) {
         this.type = type;
         this.id = id;
-        this.transports = transports.map(Collections::unmodifiableList);
+        this.transports = transports.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
     }
 
     @JsonCreator
     private PublicKeyCredentialDescriptor(
         @NonNull @JsonProperty("type") PublicKeyCredentialType type,
         @NonNull @JsonProperty("id") ByteArray id,
-        @JsonProperty("transports") List<AuthenticatorTransport> transports
+        @JsonProperty("transports") Set<AuthenticatorTransport> transports
     ) {
         this(type, id, Optional.ofNullable(transports));
     }

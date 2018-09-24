@@ -6,6 +6,7 @@ import java.util.Optional
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
+import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
 import org.scalacheck.Arbitrary
@@ -136,7 +137,7 @@ object Generators {
 
   implicit val arbitraryPublicKeyCredentialDescriptor: Arbitrary[PublicKeyCredentialDescriptor] = Arbitrary(for {
     id <- arbitrary[ByteArray]
-    transports <- arbitrary[Optional[java.util.List[AuthenticatorTransport]]]
+    transports <- arbitrary[Optional[java.util.Set[AuthenticatorTransport]]]
     tpe <- arbitrary[PublicKeyCredentialType]
   } yield PublicKeyCredentialDescriptor.builder()
     .id(id)
