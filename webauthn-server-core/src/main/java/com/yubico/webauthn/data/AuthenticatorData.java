@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.BinaryUtil;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
@@ -47,6 +48,15 @@ public class AuthenticatorData {
     private static final int FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength;
 
     public AuthenticatorData(@NonNull ByteArray bytes) {
+        ExceptionUtil.assure(
+            bytes.size() >= FixedLengthPartEndIndex,
+            "%s byte array must be at least %d bytes, was %d: %s",
+            AuthenticatorData.class.getSimpleName(),
+            FixedLengthPartEndIndex,
+            bytes.size(),
+            bytes.getBase64Url()
+        );
+
         this.bytes = bytes;
 
         final byte[] rawBytes = bytes.getBytes();
