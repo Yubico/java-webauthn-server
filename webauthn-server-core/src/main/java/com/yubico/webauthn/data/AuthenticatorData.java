@@ -1,6 +1,8 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.BinaryUtil;
@@ -77,6 +79,18 @@ public class AuthenticatorData {
             attestationData = Optional.empty();
             extensions = Optional.empty();
         }
+    }
+
+    @JsonCreator
+    private AuthenticatorData(
+        @NonNull @JsonProperty("authData") ByteArray bytes,
+        @JsonProperty("flags") JsonNode flags,
+        @JsonProperty("signatureCounter") JsonNode signatureCounter,
+        @JsonProperty("rpIdHash") JsonNode rpIdHash,
+        @JsonProperty("attestationData") JsonNode attestationData,
+        @JsonProperty("extensions") JsonNode extensions
+    ) {
+        this(bytes);
     }
 
     /**
