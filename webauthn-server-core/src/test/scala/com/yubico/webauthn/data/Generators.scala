@@ -6,6 +6,8 @@ import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.upokecenter.cbor.CBORObject
+import com.upokecenter.cbor.CBOREncodeOptions
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JacksonGenerators._
@@ -24,6 +26,12 @@ import scala.collection.JavaConverters._
 object Generators {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+
+  private def setFlag(flags: Byte, mask: Byte, value: Boolean): Byte =
+    if (value)
+      (flags | (mask & (-0x01).toByte)).toByte
+    else
+      (flags & (mask ^ (-0x01).toByte)).toByte
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
     publicKeyCredentialRequestOptions <- arbitrary[PublicKeyCredentialRequestOptions]
@@ -95,9 +103,21 @@ object Generators {
     clientDataJSON <- arbitrary[ByteArray]
   } yield new AuthenticatorAttestationResponse(attestationObject, clientDataJSON))
 
-  implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] = Arbitrary(for {
-    bytes <- arbitrary[ByteArray]
-  } yield new AuthenticatorData(bytes))
+  implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] = Arbitrary(authenticatorDataBytes map (new AuthenticatorData(_)))
+  def authenticatorDataBytes: Gen[ByteArray] = for {
+    fixedBytes <- byteArray(37)
+    attestationDataBytes <- Gen.option(attestationDataBytes)
+    extensions <- arbitrary[Option[CBORObject]]
+
+    extensionsBytes = extensions map { exts => new ByteArray(exts.EncodeToBytes(CBOREncodeOptions.NoDuplicateKeys.And(CBOREncodeOptions.NoIndefLengthStrings))) }
+    atFlag = attestationDataBytes.isDefined
+    edFlag = extensionsBytes.isDefined
+    flagsByte: Byte = setFlag(setFlag(fixedBytes.getBytes()(32), 0x40, atFlag), BinaryUtil.singleFromHex("80"), edFlag)
+  } yield new ByteArray(
+    fixedBytes.getBytes.updated(32, flagsByte)
+      ++ attestationDataBytes.map(_.getBytes).getOrElse(Array.empty)
+      ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
+  )
 
   implicit val arbitraryAuthenticatorSelectionCriteria: Arbitrary[AuthenticatorSelectionCriteria] = Arbitrary(for {
     authenticatorAttachment <- arbitrary[Optional[AuthenticatorAttachment]]
