@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -20,7 +22,8 @@ public final class AuthenticationDataFlags {
     /** Extension data present */
     public final boolean ED;
 
-    public AuthenticationDataFlags(byte value) {
+    @JsonCreator
+    public AuthenticationDataFlags(@JsonProperty("value") byte value) {
         this.value = value;
 
         UP = (value & 0x01) > 0;
