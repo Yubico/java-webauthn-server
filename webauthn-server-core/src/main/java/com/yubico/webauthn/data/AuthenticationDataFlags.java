@@ -1,9 +1,11 @@
 package com.yubico.webauthn.data;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @ToString
-public class AuthenticationDataFlags {
+@EqualsAndHashCode
+public final class AuthenticationDataFlags {
     public final byte value;
 
     /** User present */
