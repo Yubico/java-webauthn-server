@@ -112,7 +112,8 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
   def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
-  implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(for {
+  implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(clientDataJsonBytes map (new CollectedClientData(_)))
+  def clientDataJsonBytes: Gen[ByteArray] = for {
     jsonBase <- arbitrary[ObjectNode]
     challenge <- arbitrary[ByteArray]
     origin <- arbitrary[URL]
@@ -140,7 +141,7 @@ object Generators {
 
       json
     }
-  } yield new CollectedClientData(new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json))))
+  } yield new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json))
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values().asScala.toSeq))
 
