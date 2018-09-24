@@ -77,6 +77,10 @@ public class ByteArray implements JsonStringSerializable {
         return new ByteArray(Arrays.concatenate(this.bytes, tail.bytes));
     }
 
+    public int size() {
+        return this.bytes.length;
+    }
+
     /**
      * @return a copy of the raw byte contents.
      */
