@@ -19,7 +19,7 @@ import org.bouncycastle.util.Arrays;
 @JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
 @ToString(of = { "base64" }, includeFieldNames = false)
-public class ByteArray implements JsonStringSerializable {
+public class ByteArray implements Comparable<ByteArray>, JsonStringSerializable {
 
     private final static BaseEncoding BASE64_ENCODER = BaseEncoding.base64Url().omitPadding();
     private final static BaseEncoding BASE64_DECODER = BaseEncoding.base64Url();
@@ -108,6 +108,21 @@ public class ByteArray implements JsonStringSerializable {
     @Override
     public String toJsonString() {
         return base64;
+    }
+
+    @Override
+    public int compareTo(ByteArray other) {
+        if (bytes.length != other.bytes.length) {
+            return bytes.length - other.bytes.length;
+        }
+
+        for (int i = 0; i < bytes.length; ++i) {
+            if (bytes[i] != other.bytes[i]) {
+                return bytes[i] - other.bytes[i];
+            }
+        }
+
+        return 0;
     }
 
 }

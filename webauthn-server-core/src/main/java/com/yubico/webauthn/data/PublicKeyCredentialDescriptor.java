@@ -18,7 +18,7 @@ import lombok.Value;
  */
 @Value
 @Builder
-public class PublicKeyCredentialDescriptor {
+public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCredentialDescriptor> {
 
     /**
      * The type of the credential the caller is referring to.
@@ -56,4 +56,17 @@ public class PublicKeyCredentialDescriptor {
         this(type, id, Optional.ofNullable(transports));
     }
 
+    @Override
+    public int compareTo(PublicKeyCredentialDescriptor other) {
+        int idComparison = id.compareTo(other.id);
+        if (idComparison != 0) {
+            return idComparison;
+        }
+
+        if (type.compareTo(other.type) != 0) {
+            return type.compareTo(other.type);
+        }
+
+        return hashCode() - other.hashCode();
+    }
 }
