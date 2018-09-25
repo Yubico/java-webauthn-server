@@ -1,6 +1,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
         this.clientData = new CollectedClientData(clientDataJSON);
     }
 
+    @JsonIgnore
     public String getClientDataJSONString() {
         return new String(clientDataJSON.getBytes(), Charset.forName("UTF-8"));
     }
