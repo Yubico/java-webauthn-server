@@ -79,8 +79,42 @@ object Generators {
   )
 
   implicit val arbitraryAttestationObject: Arbitrary[AttestationObject] = Arbitrary(for {
-    bytes <- arbitrary[ByteArray]
+    bytes <- attestationObjectBytes
   } yield new AttestationObject(bytes))
+  def attestationObjectBytes: Gen[ByteArray] = Gen.oneOf(packedAttestationObject, fidoU2fAttestationObject)
+
+  def packedAttestationObject: Gen[ByteArray] = for {
+    authData <- authenticatorDataBytes
+    alg <- arbitrary[COSEAlgorithmIdentifier]
+    sig <- arbitrary[ByteArray]
+    x5c <- arbitrary[List[ByteArray]]
+    attStmt = jsonFactory.objectNode().setAll(Map(
+      "alg" -> jsonFactory.numberNode(alg.getId),
+      "sig" -> jsonFactory.binaryNode(sig.getBytes),
+      "x5c" -> jsonFactory.arrayNode().addAll(x5c.map(cert => jsonFactory.binaryNode(cert.getBytes)).asJava)
+    ).asJava)
+    attObj = jsonFactory.objectNode().setAll(Map(
+      "authData" -> jsonFactory.binaryNode(authData.getBytes),
+      "fmt" -> jsonFactory.textNode("packed"),
+      "attStmt" -> attStmt
+    ).asJava)
+  } yield new ByteArray(WebAuthnCodecs.cbor().writeValueAsBytes(attObj))
+
+  def fidoU2fAttestationObject: Gen[ByteArray] = for {
+    authData <- authenticatorDataBytes
+    alg <- arbitrary[COSEAlgorithmIdentifier]
+    sig <- arbitrary[ByteArray]
+    x5c <- arbitrary[List[ByteArray]]
+    attStmt = jsonFactory.objectNode().setAll(Map(
+      "sig" -> jsonFactory.binaryNode(sig.getBytes),
+      "x5c" -> jsonFactory.arrayNode().addAll(x5c.map(cert => jsonFactory.binaryNode(cert.getBytes)).asJava)
+    ).asJava)
+    attObj = jsonFactory.objectNode().setAll(Map(
+      "authData" -> jsonFactory.binaryNode(authData.getBytes),
+      "fmt" -> jsonFactory.textNode("fido-u2f"),
+      "attStmt" -> attStmt
+    ).asJava)
+  } yield new ByteArray(WebAuthnCodecs.cbor().writeValueAsBytes(attObj))
 
   implicit val arbitraryAuthenticationDataFlags: Arbitrary[AuthenticationDataFlags] = Arbitrary(for {
     value <- arbitrary[Byte]
