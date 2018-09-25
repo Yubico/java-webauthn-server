@@ -121,8 +121,8 @@ object Generators {
   } yield new AuthenticationDataFlags(value))
 
   implicit val arbitraryAuthenticatorAssertionResponse: Arbitrary[AuthenticatorAssertionResponse] = Arbitrary(for {
-    authenticatorData <- arbitrary[ByteArray]
-    clientDataJson <- arbitrary[ByteArray]
+    authenticatorData <- authenticatorDataBytes
+    clientDataJson <- clientDataJsonBytes
     signature <- arbitrary[ByteArray]
     userHandle <- arbitrary[Option[ByteArray]]
   } yield new AuthenticatorAssertionResponse(
