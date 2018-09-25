@@ -270,12 +270,14 @@ object Generators {
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] = Arbitrary(for {
     attestationMetadata <- arbitrary[Optional[Attestation]]
     attestationTrusted <- arbitrary[Boolean]
+    attestationType <- arbitrary[AttestationType]
     keyId <- arbitrary[PublicKeyCredentialDescriptor]
     publicKeyCose <- arbitrary[ByteArray]
     warnings <- arbitrary[java.util.List[String]]
   } yield RegistrationResult.builder()
     .attestationMetadata(attestationMetadata)
     .attestationTrusted(attestationTrusted)
+    .attestationType(attestationType)
     .keyId(keyId)
     .publicKeyCose(publicKeyCose)
     .warnings(warnings)

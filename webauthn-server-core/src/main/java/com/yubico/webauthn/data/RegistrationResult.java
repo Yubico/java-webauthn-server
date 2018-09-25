@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.attestation.Attestation;
 import java.util.Collections;
 import java.util.List;
@@ -31,13 +33,14 @@ public class RegistrationResult {
     @Builder.Default
     private final Optional<Attestation> attestationMetadata = Optional.empty();
 
+    @JsonCreator
     private RegistrationResult(
-        @NonNull PublicKeyCredentialDescriptor keyId,
-        boolean attestationTrusted,
-        @NonNull AttestationType attestationType,
-        @NonNull ByteArray publicKeyCose,
-        @NonNull List<String> warnings,
-        @NonNull Optional<Attestation> attestationMetadata
+        @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
+        @JsonProperty("attestationTrusted") boolean attestationTrusted,
+        @NonNull @JsonProperty("attestationType") AttestationType attestationType,
+        @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+        @NonNull @JsonProperty("warnings") List<String> warnings,
+        @NonNull @JsonProperty("attestationMetadata") Optional<Attestation> attestationMetadata
     ) {
         this.keyId = keyId;
         this.attestationTrusted = attestationTrusted;
