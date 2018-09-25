@@ -1,5 +1,6 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.core.`type`.TypeReference
 import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.data.Generators._
 import org.junit.runner.RunWith
@@ -15,8 +16,8 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
 
   describe("The class") {
 
-    def test[A](clazz: Class[A], className: Option[String] = None)(implicit a: Arbitrary[A]) = {
-      val cn = className getOrElse clazz.getSimpleName
+    def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+      val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
         it("can be serialized to JSON.") {
           forAll { value: A =>
@@ -29,7 +30,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
         it("can be deserialized from JSON.") {
           forAll { value: A =>
             val encoded: String = WebAuthnCodecs.json().writeValueAsString(value)
-            val decoded: A = WebAuthnCodecs.json().readValue(encoded, clazz)
+            val decoded: A = WebAuthnCodecs.json().readValue(encoded, tpe)
 
             decoded should equal (value)
           }
@@ -38,7 +39,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
         it("is identical after multiple serialization round-trips..") {
           forAll { value: A =>
             val encoded: String = WebAuthnCodecs.json().writeValueAsString(value)
-            val decoded: A = WebAuthnCodecs.json().readValue(encoded, clazz)
+            val decoded: A = WebAuthnCodecs.json().readValue(encoded, tpe)
             val recoded: String = WebAuthnCodecs.json().writeValueAsString(decoded)
 
             decoded should equal (value)
@@ -48,34 +49,34 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
       }
     }
 
-    test(classOf[AssertionRequest])
-    test(classOf[AssertionResult])
-    test(classOf[AttestationConveyancePreference])
-    test(classOf[AttestationData])
-    test(classOf[AttestationObject])
-    test(classOf[AttestationType])
-    test(classOf[AuthenticationDataFlags])
-    test(classOf[AuthenticatorAssertionResponse])
-    test(classOf[AuthenticatorAttachment])
-    test(classOf[AuthenticatorAttestationResponse])
-    test(classOf[AuthenticatorData])
-    test(classOf[AuthenticatorSelectionCriteria])
-    test(classOf[AuthenticatorTransport])
-    test(classOf[COSEAlgorithmIdentifier])
-    test(classOf[CollectedClientData])
-    test(classOf[PublicKeyCredential[AuthenticatorAssertionResponse]], Some("PublicKeyCredential[AuthenticatorAssertionResponse]"))
-    test(classOf[PublicKeyCredential[AuthenticatorAttestationResponse]], Some("PublicKeyCredential[AuthenticatorAttestationResponse]"))
-    test(classOf[PublicKeyCredentialCreationOptions])
-    test(classOf[PublicKeyCredentialDescriptor])
-    test(classOf[PublicKeyCredentialParameters])
-    test(classOf[PublicKeyCredentialRequestOptions])
-    test(classOf[PublicKeyCredentialType])
-    test(classOf[RegistrationResult])
-    test(classOf[RelyingPartyIdentity])
-    test(classOf[TokenBindingInfo])
-    test(classOf[TokenBindingStatus])
-    test(classOf[UserIdentity])
-    test(classOf[UserVerificationRequirement])
+    test(new TypeReference[AssertionRequest]() {})
+    test(new TypeReference[AssertionResult]() {})
+    test(new TypeReference[AttestationConveyancePreference]() {})
+    test(new TypeReference[AttestationData]() {})
+    test(new TypeReference[AttestationObject]() {})
+    test(new TypeReference[AttestationType]() {})
+    test(new TypeReference[AuthenticationDataFlags]() {})
+    test(new TypeReference[AuthenticatorAssertionResponse]() {})
+    test(new TypeReference[AuthenticatorAttachment]() {})
+    test(new TypeReference[AuthenticatorAttestationResponse]() {})
+    test(new TypeReference[AuthenticatorData]() {})
+    test(new TypeReference[AuthenticatorSelectionCriteria]() {})
+    test(new TypeReference[AuthenticatorTransport]() {})
+    test(new TypeReference[COSEAlgorithmIdentifier]() {})
+    test(new TypeReference[CollectedClientData]() {})
+    test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse]]() {})
+    test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse]]() {})
+    test(new TypeReference[PublicKeyCredentialCreationOptions]() {})
+    test(new TypeReference[PublicKeyCredentialDescriptor]() {})
+    test(new TypeReference[PublicKeyCredentialParameters]() {})
+    test(new TypeReference[PublicKeyCredentialRequestOptions]() {})
+    test(new TypeReference[PublicKeyCredentialType]() {})
+    test(new TypeReference[RegistrationResult]() {})
+    test(new TypeReference[RelyingPartyIdentity]() {})
+    test(new TypeReference[TokenBindingInfo]() {})
+    test(new TypeReference[TokenBindingStatus]() {})
+    test(new TypeReference[UserIdentity]() {})
+    test(new TypeReference[UserVerificationRequirement]() {})
   }
 
 }
