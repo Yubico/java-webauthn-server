@@ -1,12 +1,18 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -14,13 +20,19 @@ import lombok.Value;
  * High-level API for reading W3C specified values out of client data.
  */
 @Value
+@JsonSerialize(using = CollectedClientData.JsonSerializer.class)
 public class CollectedClientData {
 
     /**
      * The client data returned from, or to be sent to, the client.
      */
     @NonNull
-    private ObjectNode clientData;
+    @Getter(AccessLevel.NONE)
+    private final ByteArray clientDataJson;
+
+    @NonNull
+    @Getter(AccessLevel.NONE)
+    private final ObjectNode clientData;
 
     /**
      * The URL-safe Base64 encoded challenge as provided by the RP.
@@ -52,16 +64,16 @@ public class CollectedClientData {
     @NonNull
     private final transient Optional<ObjectNode> clientExtensions;
 
+    @JsonCreator
     public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
-        this(WebAuthnCodecs.json().readTree(clientDataJSON.getBytes()));
-    }
+        JsonNode clientData = WebAuthnCodecs.json().readTree(clientDataJSON.getBytes());
 
-    private CollectedClientData(@NonNull JsonNode clientData) throws Base64UrlException {
         ExceptionUtil.assure(
             clientData != null && clientData.isObject(),
             "Collected client data must be JSON object."
         );
 
+        this.clientDataJson = clientDataJSON;
         this.clientData = (ObjectNode) clientData;
 
         try {
@@ -127,6 +139,13 @@ public class CollectedClientData {
                     throw new IllegalArgumentException("Property \"tokenBinding\" missing from client data.");
                 }
             });
+    }
+
+    public static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<CollectedClientData> {
+        @Override
+        public void serialize(CollectedClientData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeString(value.clientDataJson.getBase64Url());
+        }
     }
 
 }
