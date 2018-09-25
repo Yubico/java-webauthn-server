@@ -3,6 +3,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.io.IOException;
 import lombok.NonNull;
@@ -37,6 +38,13 @@ public class AttestationObject {
         this.bytes = bytes;
 
         final JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
+
+        ExceptionUtil.assure(
+            decoded != null,
+            "Failed to parse attestation object from bytes: %s",
+            bytes.getBase64Url()
+        );
+
         if (!decoded.isObject()) {
             throw new IllegalArgumentException("Attestation object must be a JSON object.");
         }
