@@ -1,6 +1,6 @@
 {
   "identifier": "2fb54029-7613-4f1d-94f1-fb876c14a6fe",
-  "version": 4,
+  "version": 5,
   "vendorInfo": {
     "url": "https://yubico.com",
     "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
@@ -104,6 +104,44 @@
           "parameters": {
             "value": "1.3.6.1.4.1.41482.1.5",
             "key": "1.3.6.1.4.1.41482.2"
+          }
+        }
+      ]
+    },
+    {
+      "deviceId": "1.3.6.1.4.1.41482.1.7",
+      "displayName": "YubiKey 5 NFC",
+      "transports": 12,
+      "deviceUrl": "https://www.yubico.com/products/yubikey-5-overview/",
+      "imageUrl": "https://developers.yubico.com/U2F/Images/YK5.png",
+      "selectors": [
+        {
+          "type": "x509Extension",
+          "parameters": {
+            "key": "1.3.6.1.4.1.45724.1.1.4",
+            "value": {
+              "type": "hex",
+              "value": "fa2b99dc9e3942578f924a30d23c4118"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "deviceId": "1.3.6.1.4.1.41482.1.7",
+      "displayName": "YubiKey 5 Series security key",
+      "transports": 4,
+      "deviceUrl": "https://www.yubico.com/products/yubikey-5-overview/",
+      "imageUrl": "https://developers.yubico.com/U2F/Images/YK5-series.png",
+      "selectors": [
+        {
+          "type": "x509Extension",
+          "parameters": {
+            "key": "1.3.6.1.4.1.45724.1.1.4",
+            "value": {
+              "type": "hex",
+              "value": "cb69481e8ff7403993ec0a2729a154a8"
+            }
           }
         }
       ]
