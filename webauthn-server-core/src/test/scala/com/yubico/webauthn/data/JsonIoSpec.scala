@@ -1,7 +1,10 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.`type`.TypeReference
-import com.yubico.webauthn.WebAuthnCodecs
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.webauthn.data.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -14,6 +17,11 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 @RunWith(classOf[JUnitRunner])
 class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
+  val json: ObjectMapper = new ObjectMapper()
+    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+    .setSerializationInclusion(Include.NON_ABSENT)
+    .registerModule(new Jdk8Module())
+
   describe("The class") {
 
     def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
@@ -21,7 +29,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
       describe(s"${cn}") {
         it("can be serialized to JSON.") {
           forAll { value: A =>
-            val encoded: String = WebAuthnCodecs.json().writeValueAsString(value)
+            val encoded: String = json.writeValueAsString(value)
 
             encoded should not be empty
           }
@@ -29,8 +37,8 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
 
         it("can be deserialized from JSON.") {
           forAll { value: A =>
-            val encoded: String = WebAuthnCodecs.json().writeValueAsString(value)
-            val decoded: A = WebAuthnCodecs.json().readValue(encoded, tpe)
+            val encoded: String = json.writeValueAsString(value)
+            val decoded: A = json.readValue(encoded, tpe)
 
             decoded should equal (value)
           }
@@ -38,9 +46,9 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
 
         it("is identical after multiple serialization round-trips..") {
           forAll { value: A =>
-            val encoded: String = WebAuthnCodecs.json().writeValueAsString(value)
-            val decoded: A = WebAuthnCodecs.json().readValue(encoded, tpe)
-            val recoded: String = WebAuthnCodecs.json().writeValueAsString(decoded)
+            val encoded: String = json.writeValueAsString(value)
+            val decoded: A = json.readValue(encoded, tpe)
+            val recoded: String = json.writeValueAsString(decoded)
 
             decoded should equal (value)
             recoded should equal (encoded)
