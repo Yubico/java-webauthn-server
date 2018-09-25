@@ -47,7 +47,7 @@ public class Attestation implements Serializable {
         this.metadataIdentifier = metadataIdentifier;
         this.vendorProperties = vendorProperties;
         this.deviceProperties = deviceProperties;
-        this.transports = transports;
+        this.transports = transports.map(TreeSet::new);
     }
 
     public static AttestationBuilder builder(boolean trusted) {
