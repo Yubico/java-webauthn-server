@@ -77,6 +77,10 @@ public class ByteArray implements Comparable<ByteArray>, JsonStringSerializable 
         return new ByteArray(Arrays.concatenate(this.bytes, tail.bytes));
     }
 
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
     public int size() {
         return this.bytes.length;
     }
