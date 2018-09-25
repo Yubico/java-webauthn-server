@@ -39,52 +39,11 @@ public class ExtensionMatcher implements DeviceMatcher {
                     final ASN1Primitive value = ASN1Primitive.fromByteArray(extensionValue);
 
                     if (matchValue.isObject()) {
-                        final String extensionValueType = matchValue.get(EXTENSION_VALUE_TYPE).textValue();
-                        switch (extensionValueType) {
-                            case EXTENSION_VALUE_TYPE_HEX:
-                                final ASN1Primitive innerValue;
-
-                                if (value instanceof DEROctetString) {
-                                    innerValue = ASN1Primitive.fromByteArray(((DEROctetString) value).getOctets());
-                                } else {
-                                    log.debug("Expected ASN.1 bit string value for extension {}, was: {}", matchKey, value);
-                                    return false;
-                                }
-
-                                final String matchValueString = matchValue.get(EXTENSION_VALUE_VALUE).textValue();
-                                final ByteArray matchBytes;
-                                try {
-                                    matchBytes = ByteArray.fromHex(matchValueString);
-                                } catch (HexException e) {
-                                    throw new IllegalArgumentException(String.format(
-                                        "Bad hex value in extension %s: %s",
-                                        matchKey,
-                                        matchValueString
-                                    ));
-                                }
-
-                                final ByteArray readBytes = new ByteArray(((DEROctetString) innerValue).getOctets());
-                                if (matchBytes.equals(readBytes)) {
-                                    return true;
-                                }
-                                break;
-
-                            default:
-                                throw new IllegalArgumentException(String.format(
-                                    "Unknown extension value type \"%s\" for extension \"%s\"",
-                                    extensionValueType,
-                                    matchKey
-                                ));
+                        if (matchTypedValue(matchKey, matchValue, value)) {
+                            return true;
                         }
                     } else if (matchValue.isTextual()) {
-                        if (value instanceof DEROctetString) {
-                            final String readValue = new String(((DEROctetString) value).getOctets(), CHARSET);
-                            if (matchValue.asText().equals(readValue)) {
-                                return true;
-                            }
-                        } else {
-                            log.debug("Expected text string value for extension {}, was: {}", matchKey, value);
-                        }
+                        if (matchStringValue(matchKey, matchValue, value)) return true;
                     }
                 } catch (IOException e) {
                     log.error("Failed to parse extension value as ASN1: {}", new ByteArray(extensionValue).getHex(), e);
@@ -93,4 +52,65 @@ public class ExtensionMatcher implements DeviceMatcher {
         }
         return false;
     }
+
+    private boolean matchStringValue(String matchKey, JsonNode matchValue, ASN1Primitive value) {
+        if (value instanceof DEROctetString) {
+            final String readValue = new String(((DEROctetString) value).getOctets(), CHARSET);
+            return matchValue.asText().equals(readValue);
+        } else {
+            log.debug("Expected text string value for extension {}, was: {}", matchKey, value);
+            return false;
+        }
+    }
+
+    private boolean matchTypedValue(String matchKey, JsonNode matchValue, ASN1Primitive value) {
+        final String extensionValueType = matchValue.get(EXTENSION_VALUE_TYPE).textValue();
+        switch (extensionValueType) {
+            case EXTENSION_VALUE_TYPE_HEX:
+                return matchHex(matchKey, matchValue, value);
+
+            default:
+                throw new IllegalArgumentException(String.format(
+                    "Unknown extension value type \"%s\" for extension \"%s\"",
+                    extensionValueType,
+                    matchKey
+                ));
+        }
+    }
+
+    private boolean matchHex(String matchKey, JsonNode matchValue, ASN1Primitive value) {
+        final String matchValueString = matchValue.get(EXTENSION_VALUE_VALUE).textValue();
+        final ByteArray matchBytes;
+        try {
+            matchBytes = ByteArray.fromHex(matchValueString);
+        } catch (HexException e) {
+            throw new IllegalArgumentException(String.format(
+                "Bad hex value in extension %s: %s",
+                matchKey,
+                matchValueString
+            ));
+        }
+
+        final ASN1Primitive innerValue;
+        if (value instanceof DEROctetString) {
+            try {
+                innerValue = ASN1Primitive.fromByteArray(((DEROctetString) value).getOctets());
+            } catch (IOException e) {
+                log.debug("Failed to parse {} extension value as ASN1: {}", matchKey, value);
+                return false;
+            }
+        } else {
+            log.debug("Expected nested bit string value for extension {}, was: {}", matchKey, value);
+            return false;
+        }
+
+        if (innerValue instanceof DEROctetString) {
+            final ByteArray readBytes = new ByteArray(((DEROctetString) innerValue).getOctets());
+            return matchBytes.equals(readBytes);
+        } else {
+            log.debug("Expected nested bit string value for extension {}, was: {}", matchKey, value);
+            return false;
+        }
+    }
+
 }
