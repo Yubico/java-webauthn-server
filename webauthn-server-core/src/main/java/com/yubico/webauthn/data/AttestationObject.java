@@ -1,7 +1,11 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.WebAuthnCodecs;
@@ -11,6 +15,7 @@ import lombok.Value;
 
 
 @Value
+@JsonSerialize(using = AttestationObject.JsonSerializer.class)
 public class AttestationObject {
 
     @NonNull
@@ -34,6 +39,7 @@ public class AttestationObject {
     @JsonProperty("attStmt")
     private final ObjectNode attestationStatement;
 
+    @JsonCreator
     public AttestationObject(@NonNull ByteArray bytes) throws IOException {
         this.bytes = bytes;
 
@@ -95,6 +101,13 @@ public class AttestationObject {
         }
 
         authenticatorData = new AuthenticatorData(this.authData);
+    }
+
+    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AttestationObject> {
+        @Override
+        public void serialize(AttestationObject value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeString(value.getBytes().getBase64Url());
+        }
     }
 
 }
