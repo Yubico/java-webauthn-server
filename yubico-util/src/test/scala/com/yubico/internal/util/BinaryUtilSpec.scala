@@ -4,10 +4,12 @@ import org.junit.runner.RunWith
 import org.scalatest.Matchers
 import org.scalatest.FunSpec
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalacheck.Arbitrary.arbitrary
 
 
 @RunWith(classOf[JUnitRunner])
-class BinaryUtilSpec extends FunSpec with Matchers {
+class BinaryUtilSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   describe("BinaryUtil.fromHex") {
 
@@ -80,6 +82,35 @@ class BinaryUtilSpec extends FunSpec with Matchers {
       BinaryUtil.getUint32(BinaryUtil.fromHex("ffffffff")) should equal (4294967295L)
     }
 
+  }
+
+  describe("BinaryUtil.encodeUint16") {
+
+    it("returns 0x0000 for 0.") {
+      BinaryUtil.encodeUint16(0) should equal (Array(0, 0))
+    }
+
+    it("returns 0xEFFF for 32767.") {
+      BinaryUtil.getUint32(BinaryUtil.fromHex("00010000")) should equal (65536)
+    }
+
+    it("returns a value that getUint16 can reverse.") {
+      forAll(arbitrary[Int] suchThat { i => i < 65536 && i >= 0 }) { i =>
+        BinaryUtil.getUint16(BinaryUtil.encodeUint16(i)) == i
+      }
+    }
+
+    it("rejects negative inputs.") {
+      forAll(arbitrary[Int] suchThat (_ < 0)) { i =>
+        an [IllegalArgumentException] shouldBe thrownBy (BinaryUtil.encodeUint16(i))
+      }
+    }
+
+    it("rejects too large inputs.") {
+      forAll(arbitrary[Int] suchThat (_ >= 65536)) { i =>
+        an [IllegalArgumentException] shouldBe thrownBy (BinaryUtil.encodeUint16(i))
+      }
+    }
   }
 
 }

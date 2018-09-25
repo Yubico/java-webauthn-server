@@ -1,5 +1,7 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -44,5 +46,14 @@ public class AuthenticatorSelectionCriteria {
     @NonNull
     @Builder.Default
     private UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
+
+    @JsonCreator
+    private AuthenticatorSelectionCriteria(
+        @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
+        @JsonProperty("requireResidentKey") boolean requireResidentKey,
+        @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification
+    ) {
+        this(Optional.ofNullable(authenticatorAttachment), requireResidentKey, userVerification);
+    }
 
 }

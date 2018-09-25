@@ -1,11 +1,14 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -85,7 +88,7 @@ public class PublicKeyCredentialCreationOptions {
      */
     @NonNull
     @Builder.Default
-    private final Optional<JsonNode> extensions = Optional.empty();
+    private final Optional<ObjectNode> extensions = Optional.empty();
 
     private PublicKeyCredentialCreationOptions(
         @NonNull RelyingPartyIdentity rp,
@@ -96,20 +99,45 @@ public class PublicKeyCredentialCreationOptions {
         @NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
         @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection,
         @NonNull AttestationConveyancePreference attestation,
-        @NonNull Optional<JsonNode> extensions
+        @NonNull Optional<ObjectNode> extensions
     ) {
         this.rp = rp;
         this.user = user;
         this.challenge = challenge;
         this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
         this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
     }
 
-    public Optional<JsonNode> getExtensions() {
+    @JsonCreator
+    private PublicKeyCredentialCreationOptions(
+        @NonNull @JsonProperty("rp") RelyingPartyIdentity rp,
+        @NonNull @JsonProperty("user") UserIdentity user,
+        @NonNull @JsonProperty("challenge") ByteArray challenge,
+        @NonNull @JsonProperty("pubKeyCredParams") List<PublicKeyCredentialParameters> pubKeyCredParams,
+        @JsonProperty("timeout") Long timeout,
+        @JsonProperty("excludeCredentials") Set<PublicKeyCredentialDescriptor> excludeCredentials,
+        @JsonProperty("authenticatorSelection") AuthenticatorSelectionCriteria authenticatorSelection,
+        @NonNull @JsonProperty("attestation") AttestationConveyancePreference attestation,
+        @JsonProperty("extensions") ObjectNode extensions
+    ) {
+        this(
+            rp,
+            user,
+            challenge,
+            Collections.unmodifiableList(pubKeyCredParams),
+            Optional.ofNullable(timeout),
+            Optional.ofNullable(excludeCredentials),
+            Optional.ofNullable(authenticatorSelection),
+            attestation,
+            Optional.ofNullable(extensions)
+        );
+    }
+
+    public Optional<ObjectNode> getExtensions() {
         return this.extensions.map(WebAuthnCodecs::deepCopy);
     }
 

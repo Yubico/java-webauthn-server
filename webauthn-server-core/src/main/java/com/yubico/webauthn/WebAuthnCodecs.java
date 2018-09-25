@@ -5,8 +5,8 @@ import COSE.OneKey;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.upokecenter.cbor.CBORObject;
@@ -38,9 +38,9 @@ public class WebAuthnCodecs {
         return CBORObject.DecodeFromBytes(a.EncodeToBytes());
     }
 
-    public static JsonNode deepCopy(JsonNode a) {
+    public static ObjectNode deepCopy(ObjectNode a) {
         try {
-            return json().readTree(json().writeValueAsString(a));
+            return (ObjectNode) json().readTree(json().writeValueAsString(a));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

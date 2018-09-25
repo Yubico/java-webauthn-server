@@ -14,12 +14,12 @@ import lombok.ToString;
 import org.bouncycastle.util.Arrays;
 
 /**
- * An immutable byte array with support for encoding/decoding to/from Base64URL encoding.
+ * An immutable byte array with support for encoding/decoding to/from various encodings.
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
 @ToString(of = { "base64" }, includeFieldNames = false)
-public class ByteArray implements JsonStringSerializable {
+public class ByteArray implements Comparable<ByteArray>, JsonStringSerializable {
 
     private final static BaseEncoding BASE64_ENCODER = BaseEncoding.base64Url().omitPadding();
     private final static BaseEncoding BASE64_DECODER = BaseEncoding.base64Url();
@@ -77,6 +77,14 @@ public class ByteArray implements JsonStringSerializable {
         return new ByteArray(Arrays.concatenate(this.bytes, tail.bytes));
     }
 
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    public int size() {
+        return this.bytes.length;
+    }
+
     /**
      * @return a copy of the raw byte contents.
      */
@@ -104,6 +112,21 @@ public class ByteArray implements JsonStringSerializable {
     @Override
     public String toJsonString() {
         return base64;
+    }
+
+    @Override
+    public int compareTo(ByteArray other) {
+        if (bytes.length != other.bytes.length) {
+            return bytes.length - other.bytes.length;
+        }
+
+        for (int i = 0; i < bytes.length; ++i) {
+            if (bytes[i] != other.bytes[i]) {
+                return bytes[i] - other.bytes[i];
+            }
+        }
+
+        return 0;
     }
 
 }

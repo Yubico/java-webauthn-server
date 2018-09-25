@@ -197,7 +197,7 @@ object TestAuthenticator {
     new PublicKeyCredential(
       response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId,
       response,
-      WebAuthnCodecs.json.readTree("{}")
+      WebAuthnCodecs.json.readTree("{}").asInstanceOf[ObjectNode]
     )
   }
 

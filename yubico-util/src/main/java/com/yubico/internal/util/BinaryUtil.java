@@ -29,12 +29,23 @@ public class BinaryUtil {
     }
 
     /**
-     * Read one byte as an unsigned 8-bit integer.
-     * <p>
-     * Result is of type Short because Java don't have unsigned types.
+     * Parse a single byte from two hexadecimal characters.
      *
-     * @return A value between 0 and 255, inclusive.
+     * @param hex
+     *     String of hexadecimal digits to decode as bytes.
      */
+    public static byte singleFromHex(String hex) {
+        ExceptionUtil.assure(hex.length() == 2, "Argument must be exactly 2 hexadecimal characters, was: %s", hex);
+        return fromHex(hex)[0];
+    }
+
+        /**
+         * Read one byte as an unsigned 8-bit integer.
+         * <p>
+         * Result is of type Short because Java don't have unsigned types.
+         *
+         * @return A value between 0 and 255, inclusive.
+         */
     public static short getUint8(byte b) {
         // Prepend a zero so we can parse it as a signed int16 instead of a signed int8
         return ByteBuffer.wrap(new byte[]{ 0, b })
@@ -78,6 +89,17 @@ public class BinaryUtil {
         } else {
             throw new IllegalArgumentException("Argument must be 4 bytes, was: " + bytes.length);
         }
+    }
+
+    public static byte[] encodeUint16(int value) {
+        ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
+        ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^15=65536, was: %d", value);
+
+        ByteBuffer b = ByteBuffer.allocate(4);
+        b.order(ByteOrder.BIG_ENDIAN);
+        b.putInt(value);
+        b.rewind();
+        return Arrays.copyOfRange(b.array(), 2, 4);
     }
 
 }

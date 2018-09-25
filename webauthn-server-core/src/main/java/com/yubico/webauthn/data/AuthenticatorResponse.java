@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public interface AuthenticatorResponse {
 
-    @JsonProperty("authenticatorData")
     ByteArray getAuthenticatorData();
 
+    @JsonIgnore
     @JsonProperty("_authenticatorData")
     default AuthenticatorData getParsedAuthenticatorData() {
         return new AuthenticatorData(getAuthenticatorData());

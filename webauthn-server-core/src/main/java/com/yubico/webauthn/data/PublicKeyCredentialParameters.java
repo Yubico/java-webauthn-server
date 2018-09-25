@@ -1,7 +1,6 @@
 package com.yubico.webauthn.data;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -11,7 +10,6 @@ import lombok.Value;
  * Used to supply additional parameters when creating a new credential.
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class PublicKeyCredentialParameters {
 
@@ -31,6 +29,14 @@ public class PublicKeyCredentialParameters {
     @NonNull
     @Builder.Default
     private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
+
+    private PublicKeyCredentialParameters(
+        @NonNull @JsonProperty("alg") COSEAlgorithmIdentifier alg,
+        @NonNull @JsonProperty("type") PublicKeyCredentialType type
+    ) {
+        this.alg = alg;
+        this.type = type;
+    }
 
     /**
      * Algorithm {@link COSEAlgorithmIdentifier#ES256} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.

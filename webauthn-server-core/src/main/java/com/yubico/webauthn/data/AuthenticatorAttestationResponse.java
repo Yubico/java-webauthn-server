@@ -19,7 +19,6 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
     private final ByteArray clientDataJSON;
 
     @NonNull
-    @JsonProperty("_attestationObject")
     private final transient AttestationObject attestation;
 
     @NonNull
@@ -27,6 +26,7 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
     private final transient CollectedClientData clientData;
 
     @Override
+    @JsonIgnore
     public ByteArray getAuthenticatorData() {
         return attestation.getAuthenticatorData().getBytes();
     }

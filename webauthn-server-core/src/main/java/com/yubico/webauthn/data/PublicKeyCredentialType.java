@@ -27,7 +27,7 @@ public enum PublicKeyCredentialType implements JsonStringSerializable {
     @NonNull
     private final String id;
 
-    public static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
+    private static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
         return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
     }
 

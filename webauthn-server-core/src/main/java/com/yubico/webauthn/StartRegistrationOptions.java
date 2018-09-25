@@ -1,11 +1,12 @@
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -22,7 +23,7 @@ public class StartRegistrationOptions {
 
     @NonNull
     @Builder.Default
-    private final Optional<JsonNode> extensions = Optional.empty();
+    private final Optional<ObjectNode> extensions = Optional.empty();
 
     @Builder.Default
     private final boolean requireResidentKey = false;
@@ -30,11 +31,11 @@ public class StartRegistrationOptions {
     public StartRegistrationOptions(
         UserIdentity user,
         Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
-        Optional<JsonNode> extensions,
+        Optional<ObjectNode> extensions,
         boolean requireResidentKey
     ) {
         this.user = user;
-        this.excludeCredentials = excludeCredentials.map(Collections::unmodifiableSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
         this.extensions = extensions;
         this.requireResidentKey = requireResidentKey;
     }

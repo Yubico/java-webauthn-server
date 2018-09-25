@@ -91,8 +91,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       val signature: ByteArray = ByteArray.fromHex("30450221008d478e4c24894d261c7fd3790363ba9687facf4dd1d59610933a2c292cffc3d902205069264c167833d239d6af4c7bf7326c4883fb8c3517a2c86318aa3060d8b441")
 
       // These values are defined by the attestationObject and clientDataJson above
-      val clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
       val clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
+      val clientData = new CollectedClientData(clientDataJsonBytes)
       val challenge: ByteArray = clientData.getChallenge
       val credentialKey: KeyPair = TestAuthenticator.importEcKeypair(
         privateBytes = ByteArray.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d0301070479307702010104206a88f478910df685bc0cfcc2077e64fb3a8ba770fb23fbbcd1f6572ce35cf360a00a06082a8648ce3d030107a14403420004d8020a2ec718c2c595bb890fcdaf9b81cc742118efdbb8812ac4a9dd5ace2990ec22a48faf1544df0fe5fe0e2e7a69720e63a83d7f46aa022f1323eaf7967762"),
@@ -110,7 +110,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       it("has a finish method which accepts and outputs JSON.") {
         val server = newServerWithAuthenticationRequest(RegistrationTestData.FidoU2f.BasicAttestation)
         val authenticatorAssertionResponseJson = s"""{"authenticatorData":"${authenticatorData.getBase64Url}","signature":"${signature.getBase64Url}","clientDataJSON":"${clientDataJsonBytes.getBase64Url}"}"""
-        val publicKeyCredentialJson = s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson},"type":"public-key"}"""
+        val publicKeyCredentialJson = s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
         val responseJson = s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
         val request = server.finishAuthentication(responseJson)
         val json = jsonMapper.writeValueAsString(request.right.get)

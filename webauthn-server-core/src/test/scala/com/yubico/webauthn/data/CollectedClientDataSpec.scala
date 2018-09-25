@@ -1,5 +1,6 @@
 package com.yubico.webauthn.data
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.webauthn.WebAuthnCodecs
 import org.junit.runner.RunWith
@@ -10,6 +11,8 @@ import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class CollectedClientDataSpec extends FunSpec with Matchers {
+
+  def parse(json: JsonNode): CollectedClientData = new CollectedClientData(new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json)))
 
   describe("CollectedClientData") {
 
@@ -30,7 +33,7 @@ class CollectedClientDataSpec extends FunSpec with Matchers {
       }""").asInstanceOf[ObjectNode]
 
     it("can be parsed from JSON.") {
-      val cd = new CollectedClientData(defaultJson)
+      val cd = parse(defaultJson)
 
       cd.getChallenge.getBase64Url should equal ("aaaa")
       cd.getOrigin should equal ("example.org")
@@ -45,18 +48,18 @@ class CollectedClientDataSpec extends FunSpec with Matchers {
 
     describe("forbids null value for") {
       it("field: challenge") {
-        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("challenge", defaultJson.nullNode()))
-        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("challenge"))
+        an [IllegalArgumentException] should be thrownBy parse(defaultJson.set("challenge", defaultJson.nullNode()))
+        an [IllegalArgumentException] should be thrownBy parse(defaultJson.remove("challenge"))
       }
 
       it("field: origin") {
-        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("origin", defaultJson.nullNode()))
-        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("origin"))
+        an [IllegalArgumentException] should be thrownBy parse(defaultJson.set("origin", defaultJson.nullNode()))
+        an [IllegalArgumentException] should be thrownBy parse(defaultJson.remove("origin"))
       }
 
       it("field: type") {
-        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.set("type", defaultJson.nullNode()))
-        an [IllegalArgumentException] should be thrownBy new CollectedClientData(defaultJson.remove("type"))
+        an [IllegalArgumentException] should be thrownBy parse(defaultJson.set("type", defaultJson.nullNode()))
+        an [IllegalArgumentException] should be thrownBy parse(defaultJson.remove("type"))
       }
     }
   }

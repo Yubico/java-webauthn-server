@@ -49,8 +49,8 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     val userHandle: ByteArray = ByteArray.fromHex("6d8972d9603ce4f3fa5d520ce6d024bf")
 
     // These values are defined by the attestationObject and clientDataJson above
-    val clientData = new CollectedClientData(WebAuthnCodecs.json.readTree(clientDataJson))
     val clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
+    val clientData = new CollectedClientData(clientDataJsonBytes)
     val challenge: ByteArray = clientData.getChallenge
     val requestedExtensions: Option[ObjectNode] = None
     val clientExtensionResults: ObjectNode = jsonFactory.objectNode()

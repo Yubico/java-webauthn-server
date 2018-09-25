@@ -1,6 +1,8 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.webauthn.WebAuthnCodecs;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +70,7 @@ public class PublicKeyCredentialRequestOptions {
      */
     @NonNull
     @Builder.Default
-    private final Optional<JsonNode> extensions = Optional.empty();
+    private final Optional<ObjectNode> extensions = Optional.empty();
 
     PublicKeyCredentialRequestOptions(
         @NonNull ByteArray challenge,
@@ -76,7 +78,7 @@ public class PublicKeyCredentialRequestOptions {
         @NonNull Optional<String> rpId,
         @NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials,
         @NonNull UserVerificationRequirement userVerification,
-        @NonNull Optional<JsonNode> extensions
+        @NonNull Optional<ObjectNode> extensions
     ) {
         this.challenge = challenge;
         this.timeout = timeout;
@@ -86,7 +88,26 @@ public class PublicKeyCredentialRequestOptions {
         this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
     }
 
-    public Optional<JsonNode> getExtensions() {
+    @JsonCreator
+    private PublicKeyCredentialRequestOptions(
+        @NonNull @JsonProperty("challenge") ByteArray challenge,
+        @JsonProperty("timeout") Long timeout,
+        @JsonProperty("rpId") String rpId,
+        @JsonProperty("allowCredentials") List<PublicKeyCredentialDescriptor> allowCredentials,
+        @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification,
+        @JsonProperty("extensions") ObjectNode extensions
+    ) {
+        this(
+            challenge,
+            Optional.ofNullable(timeout),
+            Optional.ofNullable(rpId),
+            Optional.ofNullable(allowCredentials),
+            userVerification,
+            Optional.ofNullable(extensions)
+        );
+    }
+
+    public Optional<ObjectNode> getExtensions() {
         return this.extensions.map(WebAuthnCodecs::deepCopy);
     }
 
