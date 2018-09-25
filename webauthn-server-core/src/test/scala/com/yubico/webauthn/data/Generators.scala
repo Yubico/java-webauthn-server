@@ -133,8 +133,8 @@ object Generators {
   ))
 
   implicit val arbitraryAuthenticatorAttestationResponse: Arbitrary[AuthenticatorAttestationResponse] = Arbitrary(for {
-    attestationObject <- arbitrary[ByteArray]
-    clientDataJSON <- arbitrary[ByteArray]
+    attestationObject <- attestationObjectBytes
+    clientDataJSON <- clientDataJsonBytes
   } yield new AuthenticatorAttestationResponse(attestationObject, clientDataJSON))
 
   implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] = Arbitrary(authenticatorDataBytes map (new AuthenticatorData(_)))
