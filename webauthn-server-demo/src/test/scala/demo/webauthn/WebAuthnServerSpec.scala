@@ -12,11 +12,11 @@ import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
+import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AttestationType

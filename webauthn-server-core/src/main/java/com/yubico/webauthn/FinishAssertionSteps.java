@@ -7,7 +7,6 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
-import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.util.ArrayList;
 import java.util.Collections;

@@ -19,7 +19,6 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.RegisteredCredential
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
