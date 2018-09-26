@@ -141,7 +141,7 @@ public class CollectedClientData {
             });
     }
 
-    public static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<CollectedClientData> {
+    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<CollectedClientData> {
         @Override
         public void serialize(CollectedClientData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeString(value.clientDataJson.getBase64Url());
