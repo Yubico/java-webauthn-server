@@ -1,11 +1,13 @@
 package demo.webauthn;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.util.Either;
 import com.yubico.webauthn.ChallengeGenerator;
 import com.yubico.webauthn.FinishAssertionOptions;
@@ -39,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
@@ -204,6 +207,46 @@ public class WebAuthnServer {
         RegistrationResponse response;
         CredentialRegistration registration;
         boolean attestationTrusted;
+        Optional<AttestationCertInfo> attestationCert;
+
+        public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted) {
+            this.request = request;
+            this.response = response;
+            this.registration = registration;
+            this.attestationTrusted = attestationTrusted;
+            attestationCert = Optional.ofNullable(
+                response.getCredential().getResponse().getAttestation().getAttestationStatement().get("x5c")
+            ).map(certs -> certs.get(0))
+            .flatMap((JsonNode certDer) -> {
+                try {
+                    return Optional.of(new ByteArray(certDer.binaryValue()));
+                } catch (IOException e) {
+                    logger.error("Failed to get binary value from x5c element: {}", certDer, e);
+                    return Optional.empty();
+                }
+            })
+            .map(AttestationCertInfo::new);
+        }
+    }
+
+    @Value
+    public static class AttestationCertInfo {
+        final ByteArray der;
+        final String text;
+        public AttestationCertInfo(ByteArray certDer) {
+            der = certDer;
+            X509Certificate cert = null;
+            try {
+                cert = CertificateParser.parseDer(certDer.getBytes());
+            } catch (CertificateException e) {
+                logger.error("Failed to parse attestation certificate");
+            }
+            if (cert == null) {
+                text = null;
+            } else {
+                text = cert.toString();
+            }
+        }
     }
 
     public Either<List<String>, SuccessfulRegistrationResult> finishRegistration(String responseJson) {
