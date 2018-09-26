@@ -57,7 +57,9 @@ public class RelyingParty {
             .user(startRegistrationOptions.getUser())
             .challenge(challengeGenerator.generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
-            .excludeCredentials(startRegistrationOptions.getExcludeCredentials())
+            .excludeCredentials(
+                Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
+            )
             .authenticatorSelection(Optional.of(
                 AuthenticatorSelectionCriteria.builder()
                     .requireResidentKey(startRegistrationOptions.isRequireResidentKey())

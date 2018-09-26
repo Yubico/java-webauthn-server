@@ -147,7 +147,6 @@ public class WebAuthnServer {
                             .id(challengeGenerator.generateChallenge())
                             .build()
                         )
-                        .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
                         .requireResidentKey(requireResidentKey)
                         .build()
                 )
