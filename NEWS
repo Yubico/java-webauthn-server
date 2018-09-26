@@ -42,6 +42,12 @@
       `AuthenticatorAttestationResponse`
 * New methods `ByteArray.size(): int` and `.isEmpty(): boolean`
 * `ByteArray` is now `Comparable` to itself
+* Parameters `StartRegistrationOptions.excludeCredentials` and
+  `StartAssertionOptions.allowCredentials` deleted; they are now discovered
+  automatically from the `CredentialRepository`. If custom control over
+  `excludeCredentials` or `allowCredentials` is needed, modify the
+  `PublicKeyCredentialCreationOptions` or `PublicKeyCredentialRequestOptions`
+  object manually.
 
 
 == Version 0.2.0 ==
