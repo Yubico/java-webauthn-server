@@ -197,7 +197,7 @@ object Generators {
     }
   } yield new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json))
 
-  implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values().asScala.toSeq))
+  implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values()))
 
   implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse]] = Arbitrary(for {
     id <- arbitrary[ByteArray]

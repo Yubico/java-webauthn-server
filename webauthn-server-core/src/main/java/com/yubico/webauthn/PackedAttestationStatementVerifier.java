@@ -82,11 +82,15 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
             );
         }
 
-        final COSEAlgorithmIdentifier keyAlg = new COSEAlgorithmIdentifier(
-            CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey().getBytes())
+        final Long keyAlgId = CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey().getBytes())
                 .get(CBORObject.FromObject(3))
-                .AsInt64());
-        final COSEAlgorithmIdentifier sigAlg = new COSEAlgorithmIdentifier(attestationObject.getAttestationStatement().get("alg").asLong());
+                .AsInt64();
+        final COSEAlgorithmIdentifier keyAlg = COSEAlgorithmIdentifier.fromId(keyAlgId)
+            .orElseThrow(() -> new IllegalArgumentException("Unsupported COSE algorithm identifier: " + keyAlgId));
+
+        final Long sigAlgId = attestationObject.getAttestationStatement().get("alg").asLong();
+        final COSEAlgorithmIdentifier sigAlg = COSEAlgorithmIdentifier.fromId(sigAlgId)
+            .orElseThrow(() -> new IllegalArgumentException("Unsupported COSE algorithm identifier: " + sigAlgId));
 
         if (!Objects.equals(keyAlg, sigAlg)) {
             throw new IllegalArgumentException(String.format(

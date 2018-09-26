@@ -113,7 +113,7 @@ object RegistrationTestData {
     val SelfAttestationWithWrongAlgValue = new RegistrationTestData(
       attestationObject = ByteArray.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020924bdf8eb58991edbae660c21ac2bf2c71a70c711b354ffabd4e59105c3db9e7a5225820d8ac44b2ebaa675781265b232a73387916181bdc13bc4dd0d9adaa7f85747d6503260102215820afdd3af235ce10ea6c777a1c1d121135d42ec72f914d7209988e272e45709095200163666d74667061636b65646761747453746d74bf6373696758473045022100a7ab74706daed3107824e529b79e067dc63f6dbce777453258592cba2e2822ff02201aa7016a3a8eed64bc9c73be41593a3895f4edb6ad421abd883e23968eb64e1463616c6727ffff"),
       clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}"""
-    ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed", alg = Some(new COSEAlgorithmIdentifier(-8L))) }
+    ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed", alg = Some(COSEAlgorithmIdentifier.RS256)) }
   }
   object Tpm {
     val PrivacyCa: RegistrationTestData = Packed.SelfAttestation.editAttestationObject("fmt", "tpm")

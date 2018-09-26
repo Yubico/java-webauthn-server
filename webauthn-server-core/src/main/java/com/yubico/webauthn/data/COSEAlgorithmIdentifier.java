@@ -1,13 +1,12 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonLongSerializable;
 import com.yubico.internal.util.json.JsonLongSerializer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import lombok.Value;
+import java.util.Optional;
+import java.util.stream.Stream;
+import lombok.Getter;
 
 /**
  * A number identifying a cryptographic algorithm. The algorithm identifiers
@@ -15,24 +14,29 @@ import lombok.Value;
  * instance, -7 for "ES256" and -257 for "RS256".
  */
 @JsonSerialize(using = JsonLongSerializer.class)
-@Value
-public class COSEAlgorithmIdentifier implements JsonLongSerializable {
+public enum COSEAlgorithmIdentifier implements JsonLongSerializable {
+    ES256(-7),
+    RS256(-257);
 
+    @Getter
     private final long id;
+
+    COSEAlgorithmIdentifier(long id) {
+        this.id = id;
+    }
+
+    public static Optional<COSEAlgorithmIdentifier> fromId(long id) {
+        return Stream.of(values()).filter(v -> v.id == id).findAny();
+    }
+
+    @JsonCreator
+    private static COSEAlgorithmIdentifier fromJson(long id) {
+        return fromId(id).orElseThrow(() -> new IllegalArgumentException("Unknown COSE algorithm identifier: " + id));
+    }
 
     @Override
     public long toJsonNumber() {
         return id;
-    }
-
-    public static final COSEAlgorithmIdentifier ES256 = new COSEAlgorithmIdentifier(-7);
-    public static final COSEAlgorithmIdentifier RS256 = new COSEAlgorithmIdentifier(-257);
-
-    static final Set<COSEAlgorithmIdentifier> values() {
-        return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            ES256,
-            RS256
-        )));
     }
 
 }

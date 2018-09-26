@@ -48,6 +48,7 @@
   `excludeCredentials` or `allowCredentials` is needed, modify the
   `PublicKeyCredentialCreationOptions` or `PublicKeyCredentialRequestOptions`
   object manually.
+* `COSEAlgorithmIdentifier` is now an actual enum
 
 
 == Version 0.2.0 ==
