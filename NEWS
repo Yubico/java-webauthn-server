@@ -24,6 +24,24 @@
     `AssertionFailedException` instead of `IllegalArgumentException` on most
     failures
  ** Class `MetadataResolver` replaced with interface
+ ** Constructor `CollectedClientData(JsonNode)` deleted
+ ** Type of fields `StartAssertionOptions.extensions`,
+    `StartRegistrationOptions.extensions` and
+    `PublicKeyCredential.clientExtensionOutputs` narrowed from `JsonNode` to
+    `ObjectNode`
+* Fixed a bug in `AuthenticatorDataFlags` that caused the `ED` (0x80) flag to
+  never be set
+* All classes in `com.yubico.webauthn.data` can now be serialized and
+  deserialized using Jackson
+ ** JSON output has been slightly changed:
+  *** `AttestationObject`, `AuthenticatorData` and `CollectedClientData` now serialize back to
+    Base64Url encoded bytes instead of to JSON objects
+  *** Member `_attestationObject` removed from serialized
+      `AuthenticatorAttestationResponse`
+  *** Member `authenticatorData` removed from serialized
+      `AuthenticatorAttestationResponse`
+* New methods `ByteArray.size(): int` and `.isEmpty(): boolean`
+* `ByteArray` is now `Comparable` to itself
 
 
 == Version 0.2.0 ==
