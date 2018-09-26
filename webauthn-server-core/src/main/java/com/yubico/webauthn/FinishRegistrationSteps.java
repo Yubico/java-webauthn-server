@@ -414,7 +414,7 @@ class FinishRegistrationSteps {
 
         @Override
         public Step15 nextStep() {
-            return new Step15(attestation, attestationStatementVerifier, attestationType(), allWarnings());
+            return new Step15(attestation, attestationType(), allWarnings());
         }
 
         public AttestationType attestationType() {
@@ -441,7 +441,6 @@ class FinishRegistrationSteps {
     @Value
     public class Step15 implements Step<Step16> {
         private final AttestationObject attestation;
-        private final AttestationStatementVerifier attestationStatementVerifier;
         private final AttestationType attestationType;
         private final List<String> prevWarnings;
 
