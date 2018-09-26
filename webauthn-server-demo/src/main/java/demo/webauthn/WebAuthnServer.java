@@ -185,7 +185,6 @@ public class WebAuthnServer {
                     rp.startRegistration(
                         StartRegistrationOptions.builder()
                             .user(existingUser)
-                            .excludeCredentials(Optional.of(userStorage.getCredentialIdsForUsername(username)))
                             .requireResidentKey(requireResidentKey)
                             .build()
                     )

@@ -114,10 +114,8 @@ public class RelyingParty {
                 .rpId(Optional.of(rp.getId()))
                 .challenge(challengeGenerator.generateChallenge())
                 .allowCredentials(
-                    (startAssertionOptions.getAllowCredentials().map(Optional::of).orElseGet(() ->
-                        startAssertionOptions.getUsername().map(un ->
-                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
-                    ))
+                    startAssertionOptions.getUsername().map(un ->
+                        new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
                 )
                 .extensions(startAssertionOptions.getExtensions())
                 .build()

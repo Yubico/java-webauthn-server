@@ -82,7 +82,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
           .build()
         )
 
-        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala.map(_.asScala) should equal (Some(credentials))
+        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala.map(_.asScala.toSet) should equal (Some(credentials))
       }
     }
 
