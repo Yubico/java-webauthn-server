@@ -1,6 +1,5 @@
-package com.yubico.webauthn.extension.fidou2f;
+package com.yubico.webauthn.extension.appid;
 
-import com.yubico.webauthn.exception.BadConfigurationException;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -50,7 +49,7 @@ public class AppIdTest {
         try {
             new AppId(appId);
             return true;
-        } catch (BadConfigurationException e) {
+        } catch (InvalidAppIdException e) {
             return false;
         }
 

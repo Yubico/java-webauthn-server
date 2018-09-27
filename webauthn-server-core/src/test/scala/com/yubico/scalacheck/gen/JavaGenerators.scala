@@ -30,6 +30,7 @@ object JavaGenerators {
     path <- path
   } yield new URL(s"${scheme}://${host}${if (path.isEmpty) "" else "/"}${path}")
 
+  implicit val arbitraryBoolean: Arbitrary[java.lang.Boolean] = Arbitrary(arbitrary[Boolean].map((a: Boolean) => a))
   implicit val arbitraryLong: Arbitrary[java.lang.Long] = Arbitrary(arbitrary[Long].map((a: Long) => a))
 
 }

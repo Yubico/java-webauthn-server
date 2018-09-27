@@ -22,6 +22,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
@@ -40,6 +41,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private val crypto = new BouncyCastleCrypto()
+
+  private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
+  private def sha256(data: String): ByteArray = sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
 
   private object Defaults {
 
@@ -543,6 +547,44 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.validations shouldBe a [Success[_]]
           step.tryNext shouldBe a [Success[_]]
         }
+
+        describe("When using the appid extension, it") {
+          val appid = new AppId("https://test.example.org/foo")
+          val extensions = AssertionExtensionInputs.builder()
+            .appid(Some(appid).asJava)
+            .build()
+
+          it("fails if RP ID is different.") {
+            val steps = finishAssertion(
+              requestedExtensions = extensions,
+              authenticatorData = new ByteArray(Array.fill[Byte](32)(0) ++ Defaults.authenticatorData.getBytes.drop(32))
+            )
+            val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+
+          it("succeeds if RP ID is the SHA-256 hash of the standard RP ID.") {
+            val steps = finishAssertion(requestedExtensions = extensions)
+            val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
+
+          it("succeeds if RP ID is the SHA-256 hash of the appid.") {
+            val steps = finishAssertion(
+              requestedExtensions = extensions,
+              authenticatorData = new ByteArray(sha256(appid.getId).getBytes ++ Defaults.authenticatorData.getBytes.drop(32))
+            )
+            val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
+        }
       }
 
       describe("12. If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.") {
@@ -693,7 +735,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("14. Verify that the values of the") {
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-          ignore("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+          it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
             forAll(anyAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
               whenever (clientExtensionOutputs.getExtensionIds.asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
                 val steps = finishAssertion(

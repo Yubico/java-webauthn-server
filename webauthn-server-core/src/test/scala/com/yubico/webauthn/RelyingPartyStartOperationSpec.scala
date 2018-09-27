@@ -3,12 +3,15 @@ package com.yubico.webauthn
 import java.util.Optional
 
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary._
 import org.scalatest.FunSpec
@@ -31,11 +34,13 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
   }
 
   def relyingParty(
+    appId: Optional[AppId] = None.asJava,
     credentials: Set[PublicKeyCredentialDescriptor] = Set.empty
   ): RelyingParty = RelyingParty.builder()
     .rp(rpId)
     .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
     .credentialRepository(credRepo(credentials))
+    .appId(appId)
     .build()
 
   val rpId = RelyingPartyIdentity.builder()
@@ -85,6 +90,18 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
         )
 
         result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala.map(_.asScala.toSet) should equal (Some(credentials))
+      }
+    }
+
+    it("sets the appid extension if the RP instance is given an AppId.") {
+      forAll { appId: Optional[AppId] =>
+        val rp = relyingParty(appId = appId)
+        val result = rp.startAssertion(StartAssertionOptions.builder()
+          .username(Some(userId.getName).asJava)
+          .build()
+        )
+
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid should equal (appId)
       }
     }
 

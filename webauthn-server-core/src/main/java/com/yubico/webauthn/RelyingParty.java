@@ -18,6 +18,7 @@ import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
+import com.yubico.webauthn.extension.appid.AppId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +38,8 @@ public class RelyingParty {
     private final List<String> origins;
     private final CredentialRepository credentialRepository;
 
+    @Builder.Default
+    private final Optional<AppId> appId = Optional.empty();
     @Builder.Default
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
     @Builder.Default

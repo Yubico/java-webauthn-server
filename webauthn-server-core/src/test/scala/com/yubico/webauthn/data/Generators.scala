@@ -17,6 +17,8 @@ import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
+import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.extension.appid.Generators._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
@@ -34,7 +36,11 @@ object Generators {
     else
       (flags & (mask ^ (-0x01).toByte)).toByte
 
-  implicit val arbitraryAssertionExtensionInputs: Arbitrary[AssertionExtensionInputs] = Arbitrary(Gen.const(AssertionExtensionInputs.builder().build()))
+  implicit val arbitraryAssertionExtensionInputs: Arbitrary[AssertionExtensionInputs] = Arbitrary(for {
+    appid <- arbitrary[Optional[AppId]]
+  } yield AssertionExtensionInputs.builder()
+    .appid(appid)
+    .build())
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
     publicKeyCredentialRequestOptions <- arbitrary[PublicKeyCredentialRequestOptions]
@@ -169,7 +175,18 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
   def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
-  implicit val arbitraryClientAssertionExtensionOutputs: Arbitrary[ClientAssertionExtensionOutputs] = Arbitrary(Gen.const(ClientAssertionExtensionOutputs.builder().build()))
+  implicit val arbitraryClientAssertionExtensionOutputs: Arbitrary[ClientAssertionExtensionOutputs] = Arbitrary(for {
+    appid <- arbitrary[Optional[java.lang.Boolean]]
+  } yield ClientAssertionExtensionOutputs.builder()
+    .appid(appid)
+    .build())
+  def clientAssertionExtensionOutputs(
+    appid: Gen[Optional[java.lang.Boolean]] = arbitrary[Optional[java.lang.Boolean]]
+  ): Gen[ClientAssertionExtensionOutputs] = for {
+    appid <- appid
+  } yield ClientAssertionExtensionOutputs.builder()
+    .appid(appid)
+    .build()
 
   implicit val arbitraryClientRegistrationExtensionOutputs: Arbitrary[ClientRegistrationExtensionOutputs] = Arbitrary(Gen.const(ClientRegistrationExtensionOutputs.builder().build()))
 
@@ -360,7 +377,9 @@ object Generators {
   def subsetAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
     for {
       requested <- arbitrary[AssertionExtensionInputs]
-      returned <- arbitrary[ClientAssertionExtensionOutputs]
+      returned <- clientAssertionExtensionOutputs(
+        appid = if (requested.getAppid.isPresent) arbitrary[Optional[java.lang.Boolean]] else Gen.const(Optional.empty[java.lang.Boolean])
+      )
     } yield {
       (requested, returned)
     }
