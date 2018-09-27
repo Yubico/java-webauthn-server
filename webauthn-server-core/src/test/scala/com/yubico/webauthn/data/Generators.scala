@@ -11,6 +11,7 @@ import com.upokecenter.cbor.CBOREncodeOptions
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
@@ -32,6 +33,8 @@ object Generators {
       (flags | (mask & (-0x01).toByte)).toByte
     else
       (flags & (mask ^ (-0x01).toByte)).toByte
+
+  implicit val arbitraryAssertionExtensionInputs: Arbitrary[AssertionExtensionInputs] = Arbitrary(Gen.const(AssertionExtensionInputs.builder().build()))
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
     publicKeyCredentialRequestOptions <- arbitrary[PublicKeyCredentialRequestOptions]
@@ -216,7 +219,7 @@ object Generators {
     authenticatorSelection <- arbitrary[Optional[AuthenticatorSelectionCriteria]]
     challenge <- arbitrary[ByteArray]
     excludeCredentials <- arbitrary[Optional[java.util.Set[PublicKeyCredentialDescriptor]]]
-    extensions <- arbitrary[Optional[ObjectNode]]
+    extensions <- arbitrary[RegistrationExtensionInputs]
     pubKeyCredParams <- arbitrary[java.util.List[PublicKeyCredentialParameters]]
     rp <- arbitrary[RelyingPartyIdentity]
     timeout <- arbitrary[Optional[java.lang.Long]]
@@ -254,7 +257,7 @@ object Generators {
   implicit val arbitraryPublicKeyCredentialRequestOptions: Arbitrary[PublicKeyCredentialRequestOptions] = Arbitrary(for {
     allowCredentials <- arbitrary[Optional[java.util.List[PublicKeyCredentialDescriptor]]]
     challenge <- arbitrary[ByteArray]
-    extensions <- arbitrary[Optional[ObjectNode]]
+    extensions <- arbitrary[AssertionExtensionInputs]
     rpId <- arbitrary[Optional[String]]
     timeout <- arbitrary[Optional[java.lang.Long]]
     userVerification <- arbitrary[UserVerificationRequirement]
@@ -266,6 +269,8 @@ object Generators {
     .timeout(timeout)
     .userVerification(userVerification)
     .build())
+
+  implicit val arbitraryRegistrationExtensionInputs: Arbitrary[RegistrationExtensionInputs] = Arbitrary(Gen.const(RegistrationExtensionInputs.builder().build()))
 
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] = Arbitrary(for {
     attestationMetadata <- arbitrary[Optional[Attestation]]
@@ -311,5 +316,29 @@ object Generators {
     .id(id)
     .name(name)
     .build())
+
+  def knownExtensionId: Gen[String] = Gen.oneOf("appid", "txAuthSimple", "txAuthGeneric", "authnSel", "exts", "uvi", "loc", "uvm", "biometricPerfBounds")
+
+  def anyExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
+    for {
+      requested <- arbitrary[A]
+      returned: ObjectNode <- JacksonGenerators.objectNode(names = Gen.oneOf(knownExtensionId, Gen.alphaNumStr))
+    } yield (requested, returned)
+
+  def subsetExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
+    for {
+      requested <- arbitrary[A]
+      returned: ObjectNode <- JacksonGenerators.objectNode(names = Gen.oneOf(knownExtensionId, Gen.alphaNumStr))
+    } yield {
+      val toRemove: Set[String] = returned.fieldNames().asScala.filter({ extId: String =>
+        (requested.getExtensionIds contains extId) == false
+      }).toSet
+
+      for { extId <- toRemove } {
+        returned.remove(extId)
+      }
+
+      (requested, returned)
+    }
 
 }

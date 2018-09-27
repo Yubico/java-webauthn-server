@@ -1,6 +1,6 @@
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.webauthn.data.AssertionExtensionInputs;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -16,7 +16,7 @@ public class StartAssertionOptions {
 
     @NonNull
     @Builder.Default
-    private final Optional<ObjectNode> extensions = Optional.empty();
+    private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
 
 }

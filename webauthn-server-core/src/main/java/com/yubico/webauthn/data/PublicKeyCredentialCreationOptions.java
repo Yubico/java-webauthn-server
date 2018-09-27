@@ -2,8 +2,6 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.internal.util.WebAuthnCodecs;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -88,7 +86,7 @@ public class PublicKeyCredentialCreationOptions {
      */
     @NonNull
     @Builder.Default
-    private final Optional<ObjectNode> extensions = Optional.empty();
+    private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
 
     private PublicKeyCredentialCreationOptions(
         @NonNull RelyingPartyIdentity rp,
@@ -99,7 +97,7 @@ public class PublicKeyCredentialCreationOptions {
         @NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
         @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection,
         @NonNull AttestationConveyancePreference attestation,
-        @NonNull Optional<ObjectNode> extensions
+        @NonNull RegistrationExtensionInputs extensions
     ) {
         this.rp = rp;
         this.user = user;
@@ -109,7 +107,7 @@ public class PublicKeyCredentialCreationOptions {
         this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
-        this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
+        this.extensions = extensions;
     }
 
     @JsonCreator
@@ -122,7 +120,7 @@ public class PublicKeyCredentialCreationOptions {
         @JsonProperty("excludeCredentials") Set<PublicKeyCredentialDescriptor> excludeCredentials,
         @JsonProperty("authenticatorSelection") AuthenticatorSelectionCriteria authenticatorSelection,
         @NonNull @JsonProperty("attestation") AttestationConveyancePreference attestation,
-        @JsonProperty("extensions") ObjectNode extensions
+        @JsonProperty("extensions") RegistrationExtensionInputs extensions
     ) {
         this(
             rp,
@@ -133,12 +131,8 @@ public class PublicKeyCredentialCreationOptions {
             Optional.ofNullable(excludeCredentials),
             Optional.ofNullable(authenticatorSelection),
             attestation,
-            Optional.ofNullable(extensions)
+            Optional.ofNullable(extensions).orElseGet(() -> RegistrationExtensionInputs.builder().build())
         );
-    }
-
-    public Optional<ObjectNode> getExtensions() {
-        return this.extensions.map(WebAuthnCodecs::deepCopy);
     }
 
 }

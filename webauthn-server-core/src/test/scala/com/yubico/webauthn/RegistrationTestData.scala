@@ -20,6 +20,7 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.RegistrationExtensionInputs
 
 import scala.collection.JavaConverters._
 
@@ -127,7 +128,7 @@ case class RegistrationTestData(
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
   clientExtensionResults: ObjectNode = RegistrationTestData.jsonFactory.objectNode(),
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
-  requestedExtensions: Option[ObjectNode] = None,
+  requestedExtensions: RegistrationExtensionInputs = RegistrationExtensionInputs.builder().build(),
   rpId: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None
@@ -186,7 +187,7 @@ case class RegistrationTestData(
       .user(userId)
       .challenge(clientData.getChallenge)
       .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
-      .extensions(requestedExtensions.asJava)
+      .extensions(requestedExtensions)
       .authenticatorSelection(authenticatorSelection.asJava)
       .build()
 

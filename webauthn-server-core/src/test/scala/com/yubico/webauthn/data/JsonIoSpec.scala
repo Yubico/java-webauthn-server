@@ -57,6 +57,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
       }
     }
 
+    test(new TypeReference[AssertionExtensionInputs]() {})
     test(new TypeReference[AssertionRequest]() {})
     test(new TypeReference[AssertionResult]() {})
     test(new TypeReference[AttestationConveyancePreference]() {})
@@ -79,6 +80,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[PublicKeyCredentialParameters]() {})
     test(new TypeReference[PublicKeyCredentialRequestOptions]() {})
     test(new TypeReference[PublicKeyCredentialType]() {})
+    test(new TypeReference[RegistrationExtensionInputs]() {})
     test(new TypeReference[RegistrationResult]() {})
     test(new TypeReference[RelyingPartyIdentity]() {})
     test(new TypeReference[TokenBindingInfo]() {})
