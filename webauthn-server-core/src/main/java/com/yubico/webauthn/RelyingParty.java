@@ -8,6 +8,8 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -91,7 +93,7 @@ public class RelyingParty {
      */
     FinishRegistrationSteps _finishRegistration(
         PublicKeyCredentialCreationOptions request,
-        PublicKeyCredential<AuthenticatorAttestationResponse> response,
+        PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response,
         Optional<ByteArray> callerTokenBindingId
     ) {
         return FinishRegistrationSteps.builder()
@@ -144,7 +146,7 @@ public class RelyingParty {
      */
     FinishAssertionSteps _finishAssertion(
         AssertionRequest request,
-        PublicKeyCredential<AuthenticatorAssertionResponse> response,
+        PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response,
         Optional<ByteArray> callerTokenBindingId // = None.asJava
     ) {
         return FinishAssertionSteps.builder()

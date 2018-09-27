@@ -2,8 +2,6 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.internal.util.WebAuthnCodecs;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -11,7 +9,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class PublicKeyCredential<A extends AuthenticatorResponse> implements Credential {
+public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> implements Credential {
 
     /**
      * This attribute is inherited from `Credential`, though PublicKeyCredential overrides `Credential`'s getter,
@@ -36,32 +34,25 @@ public class PublicKeyCredential<A extends AuthenticatorResponse> implements Cre
      * extension processing.
      */
     @NonNull
-    private final ObjectNode clientExtensionResults;
+    private final B clientExtensionResults;
 
     /**
      * The PublicKeyCredential's type value is the string "public-key".
      */
     @NonNull
-    private final PublicKeyCredentialType type;
-
-    public PublicKeyCredential(
-        @NonNull ByteArray id,
-        @NonNull A response,
-        @NonNull ObjectNode clientExtensionResults
-    ) {
-        this(id, response, clientExtensionResults, PublicKeyCredentialType.PUBLIC_KEY);
-    }
+    @Builder.Default
+    private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
 
     @JsonCreator
     private PublicKeyCredential(
         @NonNull @JsonProperty("id") ByteArray id,
         @NonNull @JsonProperty("response") A response,
-        @NonNull @JsonProperty("clientExtensionResults") ObjectNode clientExtensionResults,
+        @NonNull @JsonProperty("clientExtensionResults") B clientExtensionResults,
         @NonNull @JsonProperty("type") PublicKeyCredentialType type
     ) {
         this.id = id;
         this.response = response;
-        this.clientExtensionResults = WebAuthnCodecs.deepCopy(clientExtensionResults);
+        this.clientExtensionResults = clientExtensionResults;
         this.type = type;
     }
 

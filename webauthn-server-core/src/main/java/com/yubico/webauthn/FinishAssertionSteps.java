@@ -5,6 +5,7 @@ import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
@@ -27,7 +28,7 @@ class FinishAssertionSteps {
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
 
     private final AssertionRequest request;
-    private final PublicKeyCredential<AuthenticatorAssertionResponse> response;
+    private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
     private final List<String> origins;
     private final String rpId;

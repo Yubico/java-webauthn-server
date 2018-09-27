@@ -169,6 +169,10 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
   def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
+  implicit val arbitraryClientAssertionExtensionOutputs: Arbitrary[ClientAssertionExtensionOutputs] = Arbitrary(Gen.const(ClientAssertionExtensionOutputs.builder().build()))
+
+  implicit val arbitraryClientRegistrationExtensionOutputs: Arbitrary[ClientRegistrationExtensionOutputs] = Arbitrary(Gen.const(ClientRegistrationExtensionOutputs.builder().build()))
+
   implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(clientDataJsonBytes map (new CollectedClientData(_)))
   def clientDataJsonBytes: Gen[ByteArray] = for {
     jsonBase <- arbitrary[ObjectNode]
@@ -202,17 +206,17 @@ object Generators {
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values()))
 
-  implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse]] = Arbitrary(for {
+  implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]] = Arbitrary(for {
     id <- arbitrary[ByteArray]
     response <- arbitrary[AuthenticatorAssertionResponse]
-    clientExtensionResults <- arbitrary[ObjectNode]
-  } yield new PublicKeyCredential(id, response, clientExtensionResults))
+    clientExtensionResults <- arbitrary[ClientAssertionExtensionOutputs]
+  } yield PublicKeyCredential.builder().id(id).response(response).clientExtensionResults(clientExtensionResults).build())
 
-  implicit val arbitraryPublicKeyCredentialWithAttestation: Arbitrary[PublicKeyCredential[AuthenticatorAttestationResponse]] = Arbitrary(for {
+  implicit val arbitraryPublicKeyCredentialWithAttestation: Arbitrary[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]] = Arbitrary(for {
     id <- arbitrary[ByteArray]
     response <- arbitrary[AuthenticatorAttestationResponse]
-    clientExtensionResults <- arbitrary[ObjectNode]
-  } yield new PublicKeyCredential(id, response, clientExtensionResults))
+    clientExtensionResults <- arbitrary[ClientRegistrationExtensionOutputs]
+  } yield PublicKeyCredential.builder().id(id).response(response).clientExtensionResults(clientExtensionResults).build())
 
   implicit val arbitraryPublicKeyCredentialCreationOptions: Arbitrary[PublicKeyCredentialCreationOptions] = Arbitrary(for {
     attestation <- arbitrary[AttestationConveyancePreference]
@@ -319,13 +323,13 @@ object Generators {
 
   def knownExtensionId: Gen[String] = Gen.oneOf("appid", "txAuthSimple", "txAuthGeneric", "authnSel", "exts", "uvi", "loc", "uvm", "biometricPerfBounds")
 
-  def anyExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
+  def anyAuthenticatorExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
     for {
       requested <- arbitrary[A]
       returned: ObjectNode <- JacksonGenerators.objectNode(names = Gen.oneOf(knownExtensionId, Gen.alphaNumStr))
     } yield (requested, returned)
 
-  def subsetExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
+  def subsetAuthenticatorExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
     for {
       requested <- arbitrary[A]
       returned: ObjectNode <- JacksonGenerators.objectNode(names = Gen.oneOf(knownExtensionId, Gen.alphaNumStr))
@@ -338,6 +342,34 @@ object Generators {
         returned.remove(extId)
       }
 
+      (requested, returned)
+    }
+
+  def anyAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
+    for {
+      requested <- arbitrary[AssertionExtensionInputs]
+      returned <- arbitrary[ClientAssertionExtensionOutputs]
+    } yield (requested, returned)
+
+  def anyRegistrationExtensions: Gen[(RegistrationExtensionInputs, ClientRegistrationExtensionOutputs)] =
+    for {
+      requested <- arbitrary[RegistrationExtensionInputs]
+      returned <- arbitrary[ClientRegistrationExtensionOutputs]
+    } yield (requested, returned)
+
+  def subsetAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
+    for {
+      requested <- arbitrary[AssertionExtensionInputs]
+      returned <- arbitrary[ClientAssertionExtensionOutputs]
+    } yield {
+      (requested, returned)
+    }
+
+  def subsetRegistrationExtensions: Gen[(RegistrationExtensionInputs, ClientRegistrationExtensionOutputs)] =
+    for {
+      requested <- arbitrary[RegistrationExtensionInputs]
+      returned <- arbitrary[ClientRegistrationExtensionOutputs]
+    } yield {
       (requested, returned)
     }
 

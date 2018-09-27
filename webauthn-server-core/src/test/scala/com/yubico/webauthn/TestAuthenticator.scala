@@ -39,6 +39,8 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
@@ -115,7 +117,7 @@ object TestAuthenticator {
   private def sha256(s: String): ByteArray = sha256(toBytes(s))
   private def sha256(b: ByteArray): ByteArray = new ByteArray(MessageDigest.getInstance("SHA-256", javaCryptoProvider).digest(b.getBytes))
 
-  def makeCreateCredentialExample(publicKeyCredential: PublicKeyCredential[AuthenticatorAttestationResponse]): String =
+  def makeCreateCredentialExample(publicKeyCredential: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]): String =
     s"""Attestation object: ${publicKeyCredential.getResponse.getAttestationObject.getHex}
       |Client data: ${publicKeyCredential.getResponse.getClientDataJSON.getHex}
     """.stripMargin
@@ -128,7 +130,7 @@ object TestAuthenticator {
     authenticatorExtensions: Option[JsonNode] = None,
     challenge: ByteArray = Defaults.challenge,
     clientData: Option[JsonNode] = None,
-    clientExtensions: Option[JsonNode] = None,
+    clientExtensions: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
     credentialKeypair: Option[KeyPair] = None,
     origin: String = Defaults.rpId,
     rpId: String = Defaults.rpId,
@@ -136,7 +138,7 @@ object TestAuthenticator {
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
     userId: UserIdentity = UserIdentity.builder().name("Test").displayName("Test").id(new ByteArray(Array(42, 13, 37))).build(),
     useSelfAttestation: Boolean = false
-  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse] = {
+  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = {
 
     val options = PublicKeyCredentialCreationOptions.builder()
       .rp(RelyingPartyIdentity.builder().name("Test party").id(rpId).build())
@@ -164,7 +166,7 @@ object TestAuthenticator {
         }
       )
 
-      clientExtensions foreach { extensions => json.set("clientExtensions", extensions) }
+      json.set("clientExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(clientExtensions)))
       authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
 
       json
@@ -194,18 +196,18 @@ object TestAuthenticator {
       clientDataJsonBytes
     )
 
-    new PublicKeyCredential(
-      response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId,
-      response,
-      WebAuthnCodecs.json.readTree("{}").asInstanceOf[ObjectNode]
-    )
+    PublicKeyCredential.builder()
+      .id(response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId)
+      .response(response)
+      .clientExtensionResults(clientExtensions)
+      .build()
   }
 
   def createBasicAttestedCredential(
     aaguid: ByteArray = Defaults.aaguid,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f"
-  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[X509Certificate]) = {
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = {
     val (caCert, generatedAttestationCertAndKey) = attestationCertAndKey match {
       case None =>
         val (caCert, caKey) = generateAttestationCaCertificate()
@@ -226,7 +228,7 @@ object TestAuthenticator {
   def createSelfAttestedCredential(
     attestationStatementFormat: String = "fido-u2f",
     alg: Option[COSEAlgorithmIdentifier] = None
-  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse], Option[Nothing]) = {
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[Nothing]) = {
     val keypair = generateEcKeypair()
     (
       attestationStatementFormat match {
@@ -250,14 +252,14 @@ object TestAuthenticator {
     )
   }
 
-  def createUnattestedCredential(): (PublicKeyCredential[AuthenticatorAttestationResponse], Option[X509Certificate]) =
+  def createUnattestedCredential(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) =
     (createCredential(attestationStatementFormat = "none"), None)
 
   def createAssertion(
     authenticatorExtensions: Option[JsonNode] = None,
     challenge: ByteArray = Defaults.challenge,
     clientData: Option[JsonNode] = None,
-    clientExtensions: Option[JsonNode] = None,
+    clientExtensions: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build(),
     credentialId: ByteArray = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
     origin: String = Defaults.rpId,
@@ -265,7 +267,7 @@ object TestAuthenticator {
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
     userHandle: Option[ByteArray] = None
-  ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse] = {
+  ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = {
 
     val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
       val json: ObjectNode = jsonFactory.objectNode()
@@ -286,7 +288,7 @@ object TestAuthenticator {
         }
       )
 
-      clientExtensions foreach { extensions => json.set("clientExtensions", extensions) }
+      json.set("clientExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(clientExtensions)))
       authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
 
       json
@@ -306,12 +308,11 @@ object TestAuthenticator {
       userHandle.orNull
     )
 
-    new PublicKeyCredential(
-      credentialId,
-      response,
-      jsonFactory.objectNode()
-    )
-
+    PublicKeyCredential.builder()
+      .id(credentialId)
+      .response(response)
+      .clientExtensionResults(clientExtensions)
+      .build()
   }
 
   def makeAttestationObjectBytes(

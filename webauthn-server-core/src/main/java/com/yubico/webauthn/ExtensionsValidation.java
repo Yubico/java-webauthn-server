@@ -1,8 +1,8 @@
 package com.yubico.webauthn;
 
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.internal.util.StreamUtil;
 import com.yubico.webauthn.data.AuthenticatorResponse;
+import com.yubico.webauthn.data.ClientExtensionOutputs;
 import com.yubico.webauthn.data.ExtensionInputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import java.util.HashSet;
@@ -14,9 +14,9 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 class ExtensionsValidation {
 
-    static boolean validate(ExtensionInputs requested, PublicKeyCredential<? extends AuthenticatorResponse> response) {
+    static boolean validate(ExtensionInputs requested, PublicKeyCredential<? extends AuthenticatorResponse, ? extends ClientExtensionOutputs> response) {
         Set<String> requestedExtensionIds = requested.getExtensionIds();
-        Set<String> clientExtensionIds = StreamUtil.toSet(response.getClientExtensionResults().fieldNames());
+        Set<String> clientExtensionIds = response.getClientExtensionResults().getExtensionIds();
 
         if (!requestedExtensionIds.containsAll(clientExtensionIds)) {
             throw new IllegalArgumentException(String.format(
