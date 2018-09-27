@@ -19,11 +19,14 @@ import com.yubico.webauthn.exception.RegistrationFailedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
 
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Value
 public class RelyingParty {
 
