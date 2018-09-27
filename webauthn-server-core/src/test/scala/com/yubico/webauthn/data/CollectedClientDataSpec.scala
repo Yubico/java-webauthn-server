@@ -38,10 +38,6 @@ class CollectedClientDataSpec extends FunSpec with Matchers {
       cd.getChallenge.getBase64Url should equal ("aaaa")
       cd.getOrigin should equal ("example.org")
       cd.getType should equal ("webauthn.create")
-      cd.getAuthenticatorExtensions.get.size should equal (1)
-      cd.getAuthenticatorExtensions.get.get("foo").textValue() should equal ("bar")
-      cd.getClientExtensions.get.size should equal (1)
-      cd.getClientExtensions.get.get("boo").textValue() should equal ("far")
       cd.getTokenBinding.get should equal (TokenBindingInfo.present(ByteArray.fromBase64Url("bbbb")))
     }
 

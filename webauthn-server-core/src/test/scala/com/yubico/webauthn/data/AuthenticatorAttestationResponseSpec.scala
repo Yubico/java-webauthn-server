@@ -39,16 +39,8 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
       describe("defines attributes on the contained CollectedClientData:") {
         val response = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson)
 
-        it("authenticatorExtensions") {
-          response.getClientData.getAuthenticatorExtensions.get.get("boo").asText should equal (booExtension)
-        }
-
         it("challenge") {
           response.getClientData.getChallenge should equal (challenge)
-        }
-
-        it("clientExtensions") {
-          response.getClientData.getClientExtensions.get.get("foo").asText should equal (fooExtension)
         }
 
         it("origin") {
