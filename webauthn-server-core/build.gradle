@@ -31,10 +31,6 @@ dependencies {
     'org.scalacheck:scalacheck_2.11:1.13.5',
   )
 
-  testRuntime(
-    'org.slf4j:slf4j-simple:1.7.25',
-  )
-
   scalaRepl(
     'org.scala-lang:scala-compiler:2.11.3',
     jar.outputs.files,
