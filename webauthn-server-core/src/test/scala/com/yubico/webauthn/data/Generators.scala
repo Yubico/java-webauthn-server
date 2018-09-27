@@ -9,10 +9,10 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.upokecenter.cbor.CBORObject
 import com.upokecenter.cbor.CBOREncodeOptions
 import com.yubico.internal.util.BinaryUtil
+import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
-import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._

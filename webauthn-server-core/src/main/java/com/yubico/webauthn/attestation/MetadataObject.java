@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
-import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.internal.util.WebAuthnCodecs;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

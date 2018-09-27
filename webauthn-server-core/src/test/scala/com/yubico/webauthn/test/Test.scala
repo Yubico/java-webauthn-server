@@ -11,7 +11,7 @@ import COSE.ECPublicKey
 import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.webauthn.WebAuthnCodecs
+import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.webauthn.data.ByteArray
 
 

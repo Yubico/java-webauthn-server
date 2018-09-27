@@ -1,7 +1,7 @@
 package com.yubico.webauthn.attestation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.internal.util.WebAuthnCodecs;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

@@ -2,6 +2,7 @@ package com.yubico.webauthn
 
 import java.security.interfaces.ECPublicKey
 
+import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.webauthn.data.ByteArray
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith

@@ -1,6 +1,6 @@
 package demo.webauthn
 
-import com.yubico.webauthn.WebAuthnCodecs
+import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import demo.webauthn.data.RegistrationResponse

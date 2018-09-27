@@ -16,7 +16,7 @@ import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
-import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.MetadataResolver;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
