@@ -125,7 +125,12 @@ public class RelyingParty {
                     startAssertionOptions.getUsername().map(un ->
                         new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
                 )
-                .extensions(startAssertionOptions.getExtensions())
+                .extensions(
+                    startAssertionOptions.getExtensions()
+                        .toBuilder()
+                        .appid(appId)
+                        .build()
+                )
                 .build()
             )
             .build();
