@@ -30,7 +30,9 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
     override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
   }
 
-  def relyingParty(credentials: Set[PublicKeyCredentialDescriptor]): RelyingParty = RelyingParty.builder()
+  def relyingParty(
+    credentials: Set[PublicKeyCredentialDescriptor] = Set.empty
+  ): RelyingParty = RelyingParty.builder()
     .rp(rpId)
     .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
     .credentialRepository(credRepo(credentials))
@@ -51,7 +53,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
 
     it("sets excludeCredentials automatically.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
-        val rp = relyingParty(credentials)
+        val rp = relyingParty(credentials = credentials)
         val result = rp.startRegistration(StartRegistrationOptions.builder()
           .user(userId)
           .build()
@@ -67,7 +69,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
 
     it("sets allowCredentials to empty if not given a username.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
-        val rp = relyingParty(credentials)
+        val rp = relyingParty(credentials = credentials)
         val result = rp.startAssertion(StartAssertionOptions.builder().build())
 
         result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala shouldBe empty
@@ -76,7 +78,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
 
     it("sets allowCredentials automatically if given a username.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
-        val rp = relyingParty(credentials)
+        val rp = relyingParty(credentials = credentials)
         val result = rp.startAssertion(StartAssertionOptions.builder()
           .username(Some(userId.getName).asJava)
           .build()
