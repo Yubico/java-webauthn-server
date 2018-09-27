@@ -17,7 +17,7 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 @RunWith(classOf[JUnitRunner])
 class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
-  val json: ObjectMapper = new ObjectMapper()
+  def json: ObjectMapper = new ObjectMapper()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
     .setSerializationInclusion(Include.NON_ABSENT)
     .registerModule(new Jdk8Module())
