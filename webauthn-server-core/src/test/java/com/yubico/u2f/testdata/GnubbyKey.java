@@ -5,7 +5,7 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-import static com.yubico.u2f.TestUtils.parsePrivateKey;
+import static com.yubico.webauthn.TestUtils.parsePrivateKey;
 
 public class GnubbyKey {
 

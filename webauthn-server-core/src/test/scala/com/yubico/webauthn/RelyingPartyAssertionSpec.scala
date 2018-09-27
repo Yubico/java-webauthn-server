@@ -37,7 +37,7 @@ import scala.util.Try
 class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  private val crypto: Crypto = new BouncyCastleCrypto()
+  private val crypto = new BouncyCastleCrypto()
 
   private object Defaults {
 
@@ -753,7 +753,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         step.validations shouldBe a [Success[_]]
         step.tryNext shouldBe a [Success[_]]
-        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.getBytes)))
+        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(Defaults.clientDataJsonBytes.getBytes)))
       }
 
       describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.") {

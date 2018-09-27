@@ -49,7 +49,6 @@ import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jce.ECNamedCurveTable
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
@@ -94,8 +93,8 @@ object TestAuthenticator {
     println(s"Client data: ${new String(assertion.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
   }
 
-  val crypto: Crypto = new BouncyCastleCrypto
-  val javaCryptoProvider: java.security.Provider = new BouncyCastleProvider()
+  val crypto = new BouncyCastleCrypto
+  val javaCryptoProvider: java.security.Provider = crypto.getProvider
 
   object Defaults {
     val aaguid: ByteArray = new ByteArray(Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
@@ -114,7 +113,7 @@ object TestAuthenticator {
   private def toBytes(s: String): ByteArray = new ByteArray(s.getBytes("UTF-8"))
   private def toJson(node: JsonNode): String = new ObjectMapper().writeValueAsString(node)
   private def sha256(s: String): ByteArray = sha256(toBytes(s))
-  private def sha256(b: ByteArray): ByteArray = new ByteArray(MessageDigest.getInstance("SHA-256").digest(b.getBytes))
+  private def sha256(b: ByteArray): ByteArray = new ByteArray(MessageDigest.getInstance("SHA-256", javaCryptoProvider).digest(b.getBytes))
 
   def makeCreateCredentialExample(publicKeyCredential: PublicKeyCredential[AuthenticatorAttestationResponse]): String =
     s"""Attestation object: ${publicKeyCredential.getResponse.getAttestationObject.getHex}
@@ -573,7 +572,7 @@ object TestAuthenticator {
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
       }
 
-      builder.build(new JcaContentSignerBuilder("SHA256with" + signingKey.getAlgorithm).build(signingKey)).getEncoded
+      builder.build(new JcaContentSignerBuilder("SHA256with" + signingKey.getAlgorithm).setProvider(javaCryptoProvider).build(signingKey)).getEncoded
     })
   }
 
@@ -586,7 +585,7 @@ object TestAuthenticator {
     val priKeyParser = new PEMParser(new BufferedReader(new InputStreamReader(keyPem)))
     priKeyParser.readObject() // Throw away the EC params part
 
-    val key: PrivateKey = new JcaPEMKeyConverter().setProvider(new BouncyCastleProvider)
+    val key: PrivateKey = new JcaPEMKeyConverter().setProvider(javaCryptoProvider)
       .getKeyPair(
         priKeyParser.readObject()
           .asInstanceOf[PEMKeyPair]

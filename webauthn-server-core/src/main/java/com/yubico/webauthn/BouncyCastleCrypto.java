@@ -14,8 +14,8 @@ import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
@@ -26,8 +26,11 @@ import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 
 class BouncyCastleCrypto implements Crypto {
-    static {
-        Security.addProvider(new BouncyCastleProvider());
+
+    private static final Provider provider = new BouncyCastleProvider();
+
+    public Provider getProvider() {
+        return provider;
     }
 
     @Override
@@ -38,7 +41,7 @@ class BouncyCastleCrypto implements Crypto {
     @Override
     public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signature) {
         try {
-            Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA");
+            Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA", provider);
             ecdsaSignature.initVerify(publicKey);
             ecdsaSignature.update(signedBytes.getBytes());
             return ecdsaSignature.verify(signature.getBytes());
@@ -69,7 +72,7 @@ class BouncyCastleCrypto implements Crypto {
                 );
             }
 
-            return KeyFactory.getInstance("ECDSA").generatePublic(
+            return KeyFactory.getInstance("ECDSA", provider).generatePublic(
                     new ECPublicKeySpec(point,
                             new ECParameterSpec(
                                     curve.getCurve(),
@@ -90,7 +93,7 @@ class BouncyCastleCrypto implements Crypto {
     @Override
     public ByteArray hash(ByteArray bytes) {
         try {
-            return new ByteArray(MessageDigest.getInstance("SHA-256").digest(bytes.getBytes()));
+            return new ByteArray(MessageDigest.getInstance("SHA-256", provider).digest(bytes.getBytes()));
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }

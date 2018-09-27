@@ -47,7 +47,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private def toJsonObject(obj: Map[String, JsonNode]): JsonNode = jsonFactory.objectNode().setAll(obj.asJava)
   private def toJson(obj: Map[String, String]): JsonNode = toJsonObject(obj.mapValues(jsonFactory.textNode))
 
-  private val crypto: Crypto = new BouncyCastleCrypto
+  private val crypto = new BouncyCastleCrypto
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
   private val emptyCredentialRepository = new CredentialRepository {
@@ -312,7 +312,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         step.validations shouldBe a [Success[_]]
         step.tryNext shouldBe a [Success[_]]
-        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256").digest(RegistrationTestData.FidoU2f.BasicAttestation.clientDataJsonBytes.getBytes)))
+        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(RegistrationTestData.FidoU2f.BasicAttestation.clientDataJsonBytes.getBytes)))
       }
 
       it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
@@ -955,7 +955,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
               val testData = RegistrationTestData.Packed.BasicAttestation
               val authenticatorData: AuthenticatorData = new AttestationObject(testData.attestationObject).getAuthenticatorData
-              val clientDataHash = MessageDigest.getInstance("SHA-256").digest(testData.clientDataJson.getBytes("UTF-8"))
+              val clientDataHash = MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(testData.clientDataJson.getBytes("UTF-8"))
 
               authenticatorData should not be null
               clientDataHash should not be null

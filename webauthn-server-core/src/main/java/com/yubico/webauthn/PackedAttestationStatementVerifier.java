@@ -37,6 +37,8 @@ import org.bouncycastle.asn1.DEROctetString;
 @Slf4j
 class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
+    private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
+
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {
         if (attestation.getAttestationStatement().hasNonNull("x5c")) {
@@ -106,7 +108,7 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
             throw ExceptionUtil.wrapAndLog(log, ".binaryValue() of \"sig\" failed", e);
         }
 
-        return new BouncyCastleCrypto().verifySignature(pubkey, signedData, signature);
+        return crypto.verifySignature(pubkey, signedData, signature);
     }
 
     private boolean verifyX5cSignature(AttestationObject attestationObject, ByteArray clientDataHash) {
@@ -140,7 +142,7 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
                 // TODO support other signature algorithms
                 Signature ecdsaSignature;
                 try {
-                    ecdsaSignature = Signature.getInstance("SHA256withECDSA");
+                    ecdsaSignature = Signature.getInstance("SHA256withECDSA", crypto.getProvider());
                 } catch (NoSuchAlgorithmException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for SHA256withECDSA", e);
                 }

@@ -7,13 +7,14 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-package com.yubico.u2f;
+package com.yubico.webauthn;
 
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Scanner;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
@@ -23,6 +24,8 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 
 public class TestUtils {
 
+    private static final Provider provider = new BouncyCastleCrypto().getProvider();
+
     public static PrivateKey parsePrivateKey(InputStream is) {
         String keyBytesHex = new Scanner(is).nextLine();
         return parsePrivateKey(keyBytesHex);
@@ -30,7 +33,7 @@ public class TestUtils {
 
     public static PrivateKey parsePrivateKey(String keyBytesHex) {
         try {
-            KeyFactory fac = KeyFactory.getInstance("ECDSA");
+            KeyFactory fac = KeyFactory.getInstance("ECDSA", provider);
             X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
             ECParameterSpec curveSpec = new ECParameterSpec(
                     curve.getCurve(), curve.getG(), curve.getN(), curve.getH());
