@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 
 object JavaGenerators {
 
-  implicit def arbitraryOptional[A](implicit a: Arbitrary[Option[A]]): Arbitrary[Optional[A]] = Arbitrary(a.arbitrary map (_.asJava))
+  implicit def arbitraryOptional[A](implicit a: Arbitrary[A]): Arbitrary[Optional[A]] = Arbitrary(Gen.option(a.arbitrary).map(_.asJava))
 
   implicit def arbitraryList[A](implicit a: Arbitrary[List[A]]): Arbitrary[java.util.List[A]] = Arbitrary(a.arbitrary map (_.asJava))
   implicit def arbitraryMap[A, B](implicit a: Arbitrary[Map[A, B]]): Arbitrary[java.util.Map[A, B]] = Arbitrary(a.arbitrary map (_.asJava))
