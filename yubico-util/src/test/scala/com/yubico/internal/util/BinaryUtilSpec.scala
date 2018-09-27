@@ -1,11 +1,11 @@
 package com.yubico.internal.util
 
 import org.junit.runner.RunWith
+import org.scalacheck.Gen
 import org.scalatest.Matchers
 import org.scalatest.FunSpec
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import org.scalacheck.Arbitrary.arbitrary
 
 
 @RunWith(classOf[JUnitRunner])
@@ -95,19 +95,19 @@ class BinaryUtilSpec extends FunSpec with Matchers with GeneratorDrivenPropertyC
     }
 
     it("returns a value that getUint16 can reverse.") {
-      forAll(arbitrary[Int] suchThat { i => i < 65536 && i >= 0 }) { i =>
+      forAll(Gen.choose(0, 65536)) { i =>
         BinaryUtil.getUint16(BinaryUtil.encodeUint16(i)) == i
       }
     }
 
     it("rejects negative inputs.") {
-      forAll(arbitrary[Int] suchThat (_ < 0)) { i =>
+      forAll(Gen.choose(Int.MinValue, -1)) { i =>
         an [IllegalArgumentException] shouldBe thrownBy (BinaryUtil.encodeUint16(i))
       }
     }
 
     it("rejects too large inputs.") {
-      forAll(arbitrary[Int] suchThat (_ >= 65536)) { i =>
+      forAll(Gen.choose(65536, Int.MaxValue)) { i =>
         an [IllegalArgumentException] shouldBe thrownBy (BinaryUtil.encodeUint16(i))
       }
     }
