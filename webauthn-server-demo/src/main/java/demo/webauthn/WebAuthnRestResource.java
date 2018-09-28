@@ -24,6 +24,7 @@ import com.yubico.util.Either;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.RegistrationRequest;
@@ -47,7 +48,7 @@ public class WebAuthnRestResource {
     private final ObjectMapper jsonMapper = WebAuthnCodecs.json();
     private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
-    public WebAuthnRestResource() {
+    public WebAuthnRestResource() throws InvalidAppIdException {
         this(new WebAuthnServer());
     }
 

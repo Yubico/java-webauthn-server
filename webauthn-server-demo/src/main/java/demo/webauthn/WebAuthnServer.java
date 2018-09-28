@@ -8,6 +8,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.ChallengeGenerator;
 import com.yubico.webauthn.FinishAssertionOptions;
@@ -16,7 +17,6 @@ import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.MetadataResolver;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
@@ -32,6 +32,8 @@ import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
+import com.yubico.webauthn.extension.appid.AppId;
+import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
@@ -78,11 +80,11 @@ public class WebAuthnServer {
 
     private final RelyingParty rp;
 
-    public WebAuthnServer() {
-        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins());
+    public WebAuthnServer() throws InvalidAppIdException {
+        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -99,6 +101,7 @@ public class WebAuthnServer {
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
             .validateTypeAttribute(false)
+            .appId(appId)
             .build();
     }
 
