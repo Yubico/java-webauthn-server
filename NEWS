@@ -29,6 +29,18 @@
     `StartRegistrationOptions.extensions` and
     `PublicKeyCredential.clientExtensionOutputs` narrowed from `JsonNode` to
     `ObjectNode`
+ ** Parameters `StartRegistrationOptions.excludeCredentials` and
+    `StartAssertionOptions.allowCredentials` deleted; they are now discovered
+    automatically from the `CredentialRepository`. If custom control over
+    `excludeCredentials` or `allowCredentials` is needed, modify the
+    `PublicKeyCredentialCreationOptions` or `PublicKeyCredentialRequestOptions`
+    object manually.
+ ** `COSEAlgorithmIdentifier` is now an actual enum
+ ** Extensions are now passed and returned as domain objects instead of as Jackson
+    types
+ ** Type parameter added to `PublicKeyCredential` to express extensions type
+ ** Fields `CollectedClientData.authenticatorExtensions` and `.clientExtensions`
+    deleted
 * Fixed a bug in `AuthenticatorDataFlags` that caused the `ED` (0x80) flag to
   never be set
 * All classes in `com.yubico.webauthn.data` can now be serialized and
@@ -42,18 +54,6 @@
       `AuthenticatorAttestationResponse`
 * New methods `ByteArray.size(): int` and `.isEmpty(): boolean`
 * `ByteArray` is now `Comparable` to itself
-* Parameters `StartRegistrationOptions.excludeCredentials` and
-  `StartAssertionOptions.allowCredentials` deleted; they are now discovered
-  automatically from the `CredentialRepository`. If custom control over
-  `excludeCredentials` or `allowCredentials` is needed, modify the
-  `PublicKeyCredentialCreationOptions` or `PublicKeyCredentialRequestOptions`
-  object manually.
-* `COSEAlgorithmIdentifier` is now an actual enum
-* Extensions are now passed and returned as domain objects instead of as Jackson
-  types
-* Type parameter added to `PublicKeyCredential` to express extensions type
-* Fields `CollectedClientData.authenticatorExtensions` and `.clientExtensions`
-  deleted
 * Added support for `appid` extension
 
 
