@@ -115,6 +115,7 @@ public class WebAuthnRestResource {
     }
     private final class StartRegistrationActions {
         public final URL finish = uriInfo.getAbsolutePathBuilder().path("finish").build().toURL();
+        public final URL finishU2f = uriInfo.getAbsolutePathBuilder().path("finish-u2f").build().toURL();
         private StartRegistrationActions() throws MalformedURLException {
         }
     }
@@ -154,6 +155,19 @@ public class WebAuthnRestResource {
             result,
             "Attestation verification failed; further error message(s) were unfortunately lost to an internal server error.",
             "finishRegistration",
+            responseJson
+        );
+    }
+
+    @Path("register/finish-u2f")
+    @POST
+    public Response finishU2fRegistration(@NonNull String responseJson) {
+        logger.trace("finishRegistration responseJson: {}", responseJson);
+        Either<List<String>, WebAuthnServer.SuccessfulU2fRegistrationResult> result = server.insecureFinishU2fRegistration(responseJson);
+        return finishResponse(
+            result,
+            "U2F registration failed; further error message(s) were unfortunately lost to an internal server error.",
+            "finishU2fRegistration",
             responseJson
         );
     }
