@@ -13,6 +13,7 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -52,23 +53,24 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     val clientData = new CollectedClientData(clientDataJsonBytes)
     val challenge: ByteArray = clientData.getChallenge
     val requestedExtensions: Option[ObjectNode] = None
-    val clientExtensionResults: ObjectNode = jsonFactory.objectNode()
+    val clientExtensionResults: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build()
 
     val request = PublicKeyCredentialRequestOptions.builder()
       .challenge(challenge)
       .rpId(Some(rpId.getId).asJava)
       .build()
 
-    val publicKeyCredential: PublicKeyCredential[AuthenticatorAssertionResponse] = new PublicKeyCredential(
-      credentialId,
-      new AuthenticatorAssertionResponse(
+    val publicKeyCredential: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = PublicKeyCredential.builder()
+      .id(credentialId)
+      .response(new AuthenticatorAssertionResponse(
         authenticatorData,
         clientDataJsonBytes,
         signature,
         null
-      ),
-      jsonFactory.objectNode()
-    )
+      ))
+      .clientExtensionResults(clientExtensionResults)
+      .build()
+
     val username = "foo-user"
 
     def defaultResponse(
@@ -84,12 +86,12 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
       credentialId: ByteArray = Defaults.credentialId,
       response: Option[AuthenticatorAssertionResponse] = None,
       userHandle: Option[ByteArray] = None
-    ): PublicKeyCredential[AuthenticatorAssertionResponse] =
-      new PublicKeyCredential(
-        credentialId,
-        response getOrElse defaultResponse(userHandle = userHandle),
-        jsonFactory.objectNode()
-      )
+    ): PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] =
+      PublicKeyCredential.builder()
+        .id(credentialId)
+        .response(response getOrElse defaultResponse(userHandle = userHandle))
+        .clientExtensionResults(clientExtensionResults)
+        .build()
   }
 
   describe("The assertion ceremony") {
@@ -150,7 +152,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     it("succeeds if username was not given but userHandle was returned.") {
       val request = rp.startAssertion(StartAssertionOptions.builder().build())
 
-      val response: PublicKeyCredential[AuthenticatorAssertionResponse] = Defaults.defaultPublicKeyCredential(
+      val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = Defaults.defaultPublicKeyCredential(
         userHandle = Some(Defaults.userHandle)
       )
 

@@ -19,12 +19,18 @@ object JavaGenerators {
   implicit def arbitraryMap[A, B](implicit a: Arbitrary[Map[A, B]]): Arbitrary[java.util.Map[A, B]] = Arbitrary(a.arbitrary map (_.asJava))
   implicit def arbitrarySet[A](implicit a: Arbitrary[Set[A]]): Arbitrary[java.util.Set[A]] = Arbitrary(a.arbitrary map (_.asJava))
 
-  implicit val arbitraryUrl: Arbitrary[URL] = Arbitrary(for {
-    scheme <- Gen.oneOf("http", "https")
-    host <- Gen.alphaNumStr
-    path <- Gen.alphaNumStr
-  } yield new URL(s"${scheme}://${host}/${path}"))
+  implicit val arbitraryUrl: Arbitrary[URL] = Arbitrary(url())
+  def url(
+    scheme: Gen[String] = Gen.oneOf("http", "https"),
+    host: Gen[String] = Gen.alphaNumStr,
+    path: Gen[String] = Gen.alphaNumStr
+  ): Gen[URL] = for {
+    scheme <- scheme
+    host <- host
+    path <- path
+  } yield new URL(s"${scheme}://${host}${if (path.isEmpty) "" else "/"}${path}")
 
+  implicit val arbitraryBoolean: Arbitrary[java.lang.Boolean] = Arbitrary(arbitrary[Boolean].map((a: Boolean) => a))
   implicit val arbitraryLong: Arbitrary[java.lang.Long] = Arbitrary(arbitrary[Long].map((a: Long) => a))
 
 }

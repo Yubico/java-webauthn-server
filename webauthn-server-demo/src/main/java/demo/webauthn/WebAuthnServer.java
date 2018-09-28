@@ -8,6 +8,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.ChallengeGenerator;
 import com.yubico.webauthn.FinishAssertionOptions;
@@ -16,7 +17,7 @@ import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataResolver;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
@@ -25,21 +26,27 @@ import com.yubico.webauthn.attestation.resolver.SimpleResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleResolverWithEquality;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
+import com.yubico.webauthn.extension.appid.AppId;
+import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import demo.webauthn.data.AssertionRequest;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
+import demo.webauthn.data.U2fRegistrationResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
@@ -78,11 +85,11 @@ public class WebAuthnServer {
 
     private final RelyingParty rp;
 
-    public WebAuthnServer() {
-        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins());
+    public WebAuthnServer() throws InvalidAppIdException {
+        this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins) {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -99,6 +106,7 @@ public class WebAuthnServer {
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
             .validateTypeAttribute(false)
+            .appId(appId)
             .build();
     }
 
@@ -228,6 +236,16 @@ public class WebAuthnServer {
     }
 
     @Value
+    public class SuccessfulU2fRegistrationResult {
+        final boolean success = true;
+        final RegistrationRequest request;
+        final U2fRegistrationResponse response;
+        final CredentialRegistration registration;
+        boolean attestationTrusted;
+        Optional<AttestationCertInfo> attestationCert;
+    }
+
+    @Value
     public static class AttestationCertInfo {
         final ByteArray der;
         final String text;
@@ -292,6 +310,76 @@ public class WebAuthnServer {
                 logger.error("fail finishRegistration responseJson: {}", responseJson, e);
                 return Either.left(Arrays.asList("Registration failed unexpectedly; this is likely a bug.", e.getMessage()));
             }
+        }
+    }
+
+    /**
+     * NOTE: This method does not validate the result. This sole purpose of
+     * this feature is to enable testing that the "appid" extension works. This
+     * requires a credential registered via the U2F API instead of the WebAuthn
+     * API. Since WebAuthn is backwards compatible only with U2F
+     * authentication, not registration, this method is used to sidestep the
+     * WebAuthn module and just add the credential to the database of
+     * registrations.
+     *
+     * This is NOT an example of good code. DO NOT base any code off this as an
+     * example.
+     */
+    public Either<List<String>, SuccessfulU2fRegistrationResult> insecureFinishU2fRegistration(String responseJson) {
+        logger.trace("insecureFinishU2fRegistration responseJson: {}", responseJson);
+        U2fRegistrationResponse response = null;
+        try {
+            response = jsonMapper.readValue(responseJson, U2fRegistrationResponse.class);
+        } catch (IOException e) {
+            logger.error("JSON error in insecureFinishU2fRegistration; responseJson: {}", responseJson, e);
+            return Either.left(Arrays.asList("Registration failed!", "Failed to decode response object.", e.getMessage()));
+        }
+
+        RegistrationRequest request = registerRequestStorage.getIfPresent(response.getRequestId());
+        registerRequestStorage.invalidate(response.getRequestId());
+
+        if (request == null) {
+            logger.debug("fail insecureFinishU2fRegistration responseJson: {}", responseJson);
+            return Either.left(Arrays.asList("Registration failed!", "No such registration in progress."));
+        } else {
+            X509Certificate attestationCert = null;
+            try {
+                attestationCert = CertificateParser.parseDer(response.getCredential().getU2fResponse().getAttestationCert().getBytes());
+            } catch (CertificateException e) {
+                logger.error("Failed to parse attestation certificate: {}", response.getCredential().getU2fResponse().getAttestationCert(), e);
+            }
+
+            Optional<Attestation> attestation = Optional.empty();
+            try {
+                if (attestationCert != null) {
+                    attestation = Optional.of(metadataService.getAttestation(Collections.singletonList(attestationCert)));
+                }
+            } catch (CertificateEncodingException e) {
+                logger.error("Failed to resolve attestation", e);
+            }
+
+            final RegistrationResult result = RegistrationResult.builder()
+                .attestationMetadata(attestation)
+                .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
+                .attestationType(AttestationType.BASIC)
+                .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
+                .publicKeyCose(WebAuthnCodecs.rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
+                .build();
+
+            return Either.right(
+                new SuccessfulU2fRegistrationResult(
+                    request,
+                    response,
+                    addRegistration(
+                        request.getPublicKeyCredentialCreationOptions().getUser(),
+                        request.getCredentialNickname(),
+                        0,
+                        result
+                    ),
+                    result.isAttestationTrusted(),
+                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCert()))
+                )
+            );
         }
     }
 
@@ -455,12 +543,26 @@ public class WebAuthnServer {
         RegistrationResponse response,
         RegistrationResult registration
     ) {
+        return addRegistration(
+            userIdentity,
+            nickname,
+            response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter(),
+            registration
+        );
+    }
+
+    private CredentialRegistration addRegistration(
+        UserIdentity userIdentity,
+        Optional<String> nickname,
+        long signatureCount,
+        RegistrationResult registration
+    ) {
         CredentialRegistration reg = CredentialRegistration.builder()
             .userIdentity(userIdentity)
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .registration(registration)
-            .signatureCount(response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter())
+            .signatureCount(signatureCount)
             .build();
 
         logger.debug(
@@ -474,4 +576,5 @@ public class WebAuthnServer {
         userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
         return reg;
     }
+
 }

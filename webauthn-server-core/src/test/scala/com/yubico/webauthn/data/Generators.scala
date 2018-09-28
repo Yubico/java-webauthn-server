@@ -11,11 +11,14 @@ import com.upokecenter.cbor.CBOREncodeOptions
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
+import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.extension.appid.Generators._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
@@ -32,6 +35,12 @@ object Generators {
       (flags | (mask & (-0x01).toByte)).toByte
     else
       (flags & (mask ^ (-0x01).toByte)).toByte
+
+  implicit val arbitraryAssertionExtensionInputs: Arbitrary[AssertionExtensionInputs] = Arbitrary(for {
+    appid <- arbitrary[Optional[AppId]]
+  } yield AssertionExtensionInputs.builder()
+    .appid(appid)
+    .build())
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
     publicKeyCredentialRequestOptions <- arbitrary[PublicKeyCredentialRequestOptions]
@@ -166,6 +175,21 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
   def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
+  implicit val arbitraryClientAssertionExtensionOutputs: Arbitrary[ClientAssertionExtensionOutputs] = Arbitrary(for {
+    appid <- arbitrary[Optional[java.lang.Boolean]]
+  } yield ClientAssertionExtensionOutputs.builder()
+    .appid(appid)
+    .build())
+  def clientAssertionExtensionOutputs(
+    appid: Gen[Optional[java.lang.Boolean]] = arbitrary[Optional[java.lang.Boolean]]
+  ): Gen[ClientAssertionExtensionOutputs] = for {
+    appid <- appid
+  } yield ClientAssertionExtensionOutputs.builder()
+    .appid(appid)
+    .build()
+
+  implicit val arbitraryClientRegistrationExtensionOutputs: Arbitrary[ClientRegistrationExtensionOutputs] = Arbitrary(Gen.const(ClientRegistrationExtensionOutputs.builder().build()))
+
   implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] = Arbitrary(clientDataJsonBytes map (new CollectedClientData(_)))
   def clientDataJsonBytes: Gen[ByteArray] = for {
     jsonBase <- arbitrary[ObjectNode]
@@ -199,24 +223,24 @@ object Generators {
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values()))
 
-  implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse]] = Arbitrary(for {
+  implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]] = Arbitrary(for {
     id <- arbitrary[ByteArray]
     response <- arbitrary[AuthenticatorAssertionResponse]
-    clientExtensionResults <- arbitrary[ObjectNode]
-  } yield new PublicKeyCredential(id, response, clientExtensionResults))
+    clientExtensionResults <- arbitrary[ClientAssertionExtensionOutputs]
+  } yield PublicKeyCredential.builder().id(id).response(response).clientExtensionResults(clientExtensionResults).build())
 
-  implicit val arbitraryPublicKeyCredentialWithAttestation: Arbitrary[PublicKeyCredential[AuthenticatorAttestationResponse]] = Arbitrary(for {
+  implicit val arbitraryPublicKeyCredentialWithAttestation: Arbitrary[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]] = Arbitrary(for {
     id <- arbitrary[ByteArray]
     response <- arbitrary[AuthenticatorAttestationResponse]
-    clientExtensionResults <- arbitrary[ObjectNode]
-  } yield new PublicKeyCredential(id, response, clientExtensionResults))
+    clientExtensionResults <- arbitrary[ClientRegistrationExtensionOutputs]
+  } yield PublicKeyCredential.builder().id(id).response(response).clientExtensionResults(clientExtensionResults).build())
 
   implicit val arbitraryPublicKeyCredentialCreationOptions: Arbitrary[PublicKeyCredentialCreationOptions] = Arbitrary(for {
     attestation <- arbitrary[AttestationConveyancePreference]
     authenticatorSelection <- arbitrary[Optional[AuthenticatorSelectionCriteria]]
     challenge <- arbitrary[ByteArray]
     excludeCredentials <- arbitrary[Optional[java.util.Set[PublicKeyCredentialDescriptor]]]
-    extensions <- arbitrary[Optional[ObjectNode]]
+    extensions <- arbitrary[RegistrationExtensionInputs]
     pubKeyCredParams <- arbitrary[java.util.List[PublicKeyCredentialParameters]]
     rp <- arbitrary[RelyingPartyIdentity]
     timeout <- arbitrary[Optional[java.lang.Long]]
@@ -254,7 +278,7 @@ object Generators {
   implicit val arbitraryPublicKeyCredentialRequestOptions: Arbitrary[PublicKeyCredentialRequestOptions] = Arbitrary(for {
     allowCredentials <- arbitrary[Optional[java.util.List[PublicKeyCredentialDescriptor]]]
     challenge <- arbitrary[ByteArray]
-    extensions <- arbitrary[Optional[ObjectNode]]
+    extensions <- arbitrary[AssertionExtensionInputs]
     rpId <- arbitrary[Optional[String]]
     timeout <- arbitrary[Optional[java.lang.Long]]
     userVerification <- arbitrary[UserVerificationRequirement]
@@ -266,6 +290,8 @@ object Generators {
     .timeout(timeout)
     .userVerification(userVerification)
     .build())
+
+  implicit val arbitraryRegistrationExtensionInputs: Arbitrary[RegistrationExtensionInputs] = Arbitrary(Gen.const(RegistrationExtensionInputs.builder().build()))
 
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] = Arbitrary(for {
     attestationMetadata <- arbitrary[Optional[Attestation]]
@@ -311,5 +337,59 @@ object Generators {
     .id(id)
     .name(name)
     .build())
+
+  def knownExtensionId: Gen[String] = Gen.oneOf("appid", "txAuthSimple", "txAuthGeneric", "authnSel", "exts", "uvi", "loc", "uvm", "biometricPerfBounds")
+
+  def anyAuthenticatorExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
+    for {
+      requested <- arbitrary[A]
+      returned: ObjectNode <- JacksonGenerators.objectNode(names = Gen.oneOf(knownExtensionId, Gen.alphaNumStr))
+    } yield (requested, returned)
+
+  def subsetAuthenticatorExtensions[A <: ExtensionInputs](implicit a: Arbitrary[A]): Gen[(A, ObjectNode)] =
+    for {
+      requested <- arbitrary[A]
+      returned: ObjectNode <- JacksonGenerators.objectNode(names = Gen.oneOf(knownExtensionId, Gen.alphaNumStr))
+    } yield {
+      val toRemove: Set[String] = returned.fieldNames().asScala.filter({ extId: String =>
+        (requested.getExtensionIds contains extId) == false
+      }).toSet
+
+      for { extId <- toRemove } {
+        returned.remove(extId)
+      }
+
+      (requested, returned)
+    }
+
+  def anyAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
+    for {
+      requested <- arbitrary[AssertionExtensionInputs]
+      returned <- arbitrary[ClientAssertionExtensionOutputs]
+    } yield (requested, returned)
+
+  def anyRegistrationExtensions: Gen[(RegistrationExtensionInputs, ClientRegistrationExtensionOutputs)] =
+    for {
+      requested <- arbitrary[RegistrationExtensionInputs]
+      returned <- arbitrary[ClientRegistrationExtensionOutputs]
+    } yield (requested, returned)
+
+  def subsetAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
+    for {
+      requested <- arbitrary[AssertionExtensionInputs]
+      returned <- clientAssertionExtensionOutputs(
+        appid = if (requested.getAppid.isPresent) arbitrary[Optional[java.lang.Boolean]] else Gen.const(Optional.empty[java.lang.Boolean])
+      )
+    } yield {
+      (requested, returned)
+    }
+
+  def subsetRegistrationExtensions: Gen[(RegistrationExtensionInputs, ClientRegistrationExtensionOutputs)] =
+    for {
+      requested <- arbitrary[RegistrationExtensionInputs]
+      returned <- arbitrary[ClientRegistrationExtensionOutputs]
+    } yield {
+      (requested, returned)
+    }
 
 }

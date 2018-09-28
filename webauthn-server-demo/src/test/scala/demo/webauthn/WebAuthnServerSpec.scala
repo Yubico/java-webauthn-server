@@ -22,6 +22,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.extension.appid.AppId
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
@@ -47,6 +48,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   private val requestId = ByteArray.fromBase64Url("request1")
   private val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
   private val origins = List("localhost").asJava
+  private val appId = Optional.empty[AppId]
 
   describe("WebAuthnServer") {
 
@@ -143,7 +145,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
           .build()
         ).asJava)
 
-        new WebAuthnServer(userStorage, newCache(), assertionRequests, rpId, origins)
+        new WebAuthnServer(userStorage, newCache(), assertionRequests, rpId, origins, appId)
       }
     }
 
@@ -154,7 +156,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   private def newServerWithUser(testData: RegistrationTestData) = {
     val userStorage: RegistrationStorage = makeUserStorage(testData)
 
-    new WebAuthnServer(userStorage, newCache(), newCache(), rpId, origins)
+    new WebAuthnServer(userStorage, newCache(), newCache(), rpId, origins, appId)
   }
 
   private def makeUserStorage(testData: RegistrationTestData) = {
@@ -197,7 +199,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       testData.request
     ))
 
-    new WebAuthnServer(new InMemoryRegistrationStorage, registrationRequests, newCache(), rpId, origins)
+    new WebAuthnServer(new InMemoryRegistrationStorage, registrationRequests, newCache(), rpId, origins, appId)
   }
 
   private def newCache[K <: Object, V <: Object](): Cache[K, V] =

@@ -8,6 +8,7 @@ import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
@@ -36,7 +37,7 @@ class FinishRegistrationSteps {
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
 
     private final PublicKeyCredentialCreationOptions request;
-    private final PublicKeyCredential<AuthenticatorAttestationResponse> response;
+    private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
     private final List<String> origins;
     private final String rpId;

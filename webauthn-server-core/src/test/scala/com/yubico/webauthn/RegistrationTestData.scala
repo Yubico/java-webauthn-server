@@ -20,6 +20,8 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.RegistrationExtensionInputs
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 
 import scala.collection.JavaConverters._
 
@@ -28,7 +30,7 @@ object RegistrationTestDataGenerator extends App {
   regenerateTestData()
 
   def printTestDataCode(
-    credential: PublicKeyCredential[AuthenticatorAttestationResponse],
+    credential: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs],
     caCert: Option[X509Certificate]
   ): Unit = {
     for { caCert <- caCert } {
@@ -125,14 +127,14 @@ case class RegistrationTestData(
   attestationObject: ByteArray,
   clientDataJson: String,
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
-  clientExtensionResults: ObjectNode = RegistrationTestData.jsonFactory.objectNode(),
+  clientExtensionResults: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
-  requestedExtensions: Option[ObjectNode] = None,
+  requestedExtensions: RegistrationExtensionInputs = RegistrationExtensionInputs.builder().build(),
   rpId: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None
 ) {
-  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse], Option[X509Certificate]) = null
+  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = null
 
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
   def clientData = new CollectedClientData(clientDataJsonBytes)
@@ -186,13 +188,13 @@ case class RegistrationTestData(
       .user(userId)
       .challenge(clientData.getChallenge)
       .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
-      .extensions(requestedExtensions.asJava)
+      .extensions(requestedExtensions)
       .authenticatorSelection(authenticatorSelection.asJava)
       .build()
 
-  def response = new PublicKeyCredential(
-    new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialId,
-    new AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes),
-    clientExtensionResults
-  )
+  def response: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = PublicKeyCredential.builder()
+    .id(new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialId)
+    .response(new AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes))
+    .clientExtensionResults(clientExtensionResults)
+    .build()
 }

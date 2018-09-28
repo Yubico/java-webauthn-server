@@ -19,6 +19,10 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.AssertionExtensionInputs
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
+import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
@@ -32,12 +36,14 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private val crypto = new BouncyCastleCrypto()
+
+  private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
+  private def sha256(data: String): ByteArray = sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
 
   private object Defaults {
 
@@ -61,8 +67,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
     val clientData = new CollectedClientData(clientDataJsonBytes)
     val challenge: ByteArray = clientData.getChallenge
-    val requestedExtensions: Option[ObjectNode] = None
-    val clientExtensionResults: ObjectNode = jsonFactory.objectNode()
+    val requestedExtensions = AssertionExtensionInputs.builder().build()
+    val clientExtensionResults: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build()
 
   }
 
@@ -84,12 +90,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     callerTokenBindingId: Option[ByteArray] = None,
     challenge: ByteArray = Defaults.challenge,
     clientDataJson: String = Defaults.clientDataJson,
-    clientExtensionResults: ObjectNode = Defaults.clientExtensionResults,
+    clientExtensionResults: ClientAssertionExtensionOutputs = Defaults.clientExtensionResults,
     credentialId: ByteArray = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
     credentialRepository: Option[CredentialRepository] = None,
     origin: String = Defaults.rpId.getId,
-    requestedExtensions: Option[ObjectNode] = Defaults.requestedExtensions,
+    requestedExtensions: AssertionExtensionInputs = Defaults.requestedExtensions,
     rpId: RelyingPartyIdentity = Defaults.rpId,
     signature: ByteArray = Defaults.signature,
     userHandleForResponse: ByteArray = Defaults.userHandle,
@@ -108,21 +114,21 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         .challenge(challenge)
         .allowCredentials(allowCredentials.asJava)
         .userVerification(userVerificationRequirement)
-        .extensions(requestedExtensions.asJava)
+        .extensions(requestedExtensions)
         .build()
       )
       .build()
 
-    val response = new PublicKeyCredential(
-      credentialId,
-      new AuthenticatorAssertionResponse(
+    val response = PublicKeyCredential.builder()
+      .id(credentialId)
+      .response(new AuthenticatorAssertionResponse(
         if (authenticatorData == null) null else authenticatorData,
         if (clientDataJsonBytes == null) null else clientDataJsonBytes,
         if (signature == null) null else signature,
         userHandleForResponse
-      ),
-      clientExtensionResults
-    )
+      ))
+      .clientExtensionResults(clientExtensionResults)
+      .build()
 
     RelyingParty.builder()
       .allowUntrustedAttestation(false)
@@ -541,6 +547,44 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.validations shouldBe a [Success[_]]
           step.tryNext shouldBe a [Success[_]]
         }
+
+        describe("When using the appid extension, it") {
+          val appid = new AppId("https://test.example.org/foo")
+          val extensions = AssertionExtensionInputs.builder()
+            .appid(Some(appid).asJava)
+            .build()
+
+          it("fails if RP ID is different.") {
+            val steps = finishAssertion(
+              requestedExtensions = extensions,
+              authenticatorData = new ByteArray(Array.fill[Byte](32)(0) ++ Defaults.authenticatorData.getBytes.drop(32))
+            )
+            val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+
+          it("succeeds if RP ID is the SHA-256 hash of the standard RP ID.") {
+            val steps = finishAssertion(requestedExtensions = extensions)
+            val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
+
+          it("succeeds if RP ID is the SHA-256 hash of the appid.") {
+            val steps = finishAssertion(
+              requestedExtensions = extensions,
+              authenticatorData = new ByteArray(sha256(appid.getId).getBytes ++ Defaults.authenticatorData.getBytes.drop(32))
+            )
+            val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
+        }
       }
 
       describe("12. If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.") {
@@ -692,56 +736,67 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-            val steps = finishAssertion(
-              requestedExtensions = Some(jsonFactory.objectNode()),
-              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")).asInstanceOf[ObjectNode]
-            )
-            val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            forAll(anyAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
+              whenever (clientExtensionOutputs.getExtensionIds.asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
+                val steps = finishAssertion(
+                  requestedExtensions = extensionInputs,
+                  clientExtensionResults = clientExtensionOutputs
+                )
+                val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.tryNext shouldBe a [Failure[_]]
+                step.validations shouldBe a [Failure[_]]
+                step.validations.failed.get shouldBe an [IllegalArgumentException]
+                step.tryNext shouldBe a [Failure[_]]
+              }
+            }
           }
 
           it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
-            val steps = finishAssertion(
-              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")).asInstanceOf[ObjectNode]),
-              clientExtensionResults = jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")).asInstanceOf[ObjectNode]
-            )
-            val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            forAll(subsetAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
+              val steps = finishAssertion(
+                requestedExtensions = extensionInputs,
+                clientExtensionResults = clientExtensionOutputs
+              )
+              val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.validations shouldBe a [Success[_]]
-            step.tryNext shouldBe a [Success[_]]
+              step.validations shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
+            }
           }
         }
 
         describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
-            val steps = finishAssertion(
-              requestedExtensions = Some(jsonFactory.objectNode()),
-              authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo")))))
-              )
-            )
-            val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            forAll(anyAuthenticatorExtensions[AssertionExtensionInputs]) { case (extensionInputs: AssertionExtensionInputs, authenticatorExtensionOutputs: ObjectNode) =>
+              whenever(authenticatorExtensionOutputs.fieldNames().asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
+                val steps = finishAssertion(
+                  requestedExtensions = extensionInputs,
+                  authenticatorData = TestAuthenticator.makeAuthDataBytes(
+                    extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                  )
+                )
+                val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.tryNext shouldBe a [Failure[_]]
-
+                step.validations shouldBe a [Failure[_]]
+                step.validations.failed.get shouldBe an [IllegalArgumentException]
+                step.tryNext shouldBe a [Failure[_]]
+              }
+            }
           }
 
           it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
-            val steps = finishAssertion(
-              requestedExtensions = Some(jsonFactory.objectNode().set("foo", jsonFactory.textNode("bar")).asInstanceOf[ObjectNode]),
-              authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(jsonFactory.objectNode().set("foo", jsonFactory.textNode("boo"))).toArray))
+            forAll(subsetAuthenticatorExtensions[AssertionExtensionInputs]) { case (extensionInputs: AssertionExtensionInputs, authenticatorExtensionOutputs: ObjectNode) =>
+              val steps = finishAssertion(
+                requestedExtensions = extensionInputs,
+                authenticatorData = TestAuthenticator.makeAuthDataBytes(
+                  extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                )
               )
-            )
-            val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.validations shouldBe a [Success[_]]
-            step.tryNext shouldBe a [Success[_]]
+              step.validations shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
+            }
           }
         }
 

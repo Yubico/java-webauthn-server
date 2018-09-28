@@ -2,8 +2,6 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.internal.util.WebAuthnCodecs;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -70,7 +68,7 @@ public class PublicKeyCredentialRequestOptions {
      */
     @NonNull
     @Builder.Default
-    private final Optional<ObjectNode> extensions = Optional.empty();
+    private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
     PublicKeyCredentialRequestOptions(
         @NonNull ByteArray challenge,
@@ -78,14 +76,14 @@ public class PublicKeyCredentialRequestOptions {
         @NonNull Optional<String> rpId,
         @NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials,
         @NonNull UserVerificationRequirement userVerification,
-        @NonNull Optional<ObjectNode> extensions
+        @NonNull AssertionExtensionInputs extensions
     ) {
         this.challenge = challenge;
         this.timeout = timeout;
         this.rpId = rpId;
         this.allowCredentials = allowCredentials.map(Collections::unmodifiableList);
         this.userVerification = userVerification;
-        this.extensions = extensions.map(WebAuthnCodecs::deepCopy);
+        this.extensions = extensions;
     }
 
     @JsonCreator
@@ -95,7 +93,7 @@ public class PublicKeyCredentialRequestOptions {
         @JsonProperty("rpId") String rpId,
         @JsonProperty("allowCredentials") List<PublicKeyCredentialDescriptor> allowCredentials,
         @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification,
-        @JsonProperty("extensions") ObjectNode extensions
+        @JsonProperty("extensions") AssertionExtensionInputs extensions
     ) {
         this(
             challenge,
@@ -103,12 +101,8 @@ public class PublicKeyCredentialRequestOptions {
             Optional.ofNullable(rpId),
             Optional.ofNullable(allowCredentials),
             userVerification,
-            Optional.ofNullable(extensions)
+            Optional.ofNullable(extensions).orElseGet(() -> AssertionExtensionInputs.builder().build())
         );
-    }
-
-    public Optional<ObjectNode> getExtensions() {
-        return this.extensions.map(WebAuthnCodecs::deepCopy);
     }
 
 }

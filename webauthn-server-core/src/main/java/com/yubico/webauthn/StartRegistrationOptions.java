@@ -1,8 +1,7 @@
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import com.yubico.webauthn.data.UserIdentity;
-import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -16,7 +15,7 @@ public class StartRegistrationOptions {
 
     @NonNull
     @Builder.Default
-    private final Optional<ObjectNode> extensions = Optional.empty();
+    private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
 
     @Builder.Default
     private final boolean requireResidentKey = false;

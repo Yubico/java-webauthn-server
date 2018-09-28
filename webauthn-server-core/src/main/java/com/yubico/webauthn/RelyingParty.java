@@ -8,6 +8,8 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -16,6 +18,7 @@ import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
+import com.yubico.webauthn.extension.appid.AppId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +38,8 @@ public class RelyingParty {
     private final List<String> origins;
     private final CredentialRepository credentialRepository;
 
+    @Builder.Default
+    private final Optional<AppId> appId = Optional.empty();
     @Builder.Default
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
     @Builder.Default
@@ -91,7 +96,7 @@ public class RelyingParty {
      */
     FinishRegistrationSteps _finishRegistration(
         PublicKeyCredentialCreationOptions request,
-        PublicKeyCredential<AuthenticatorAttestationResponse> response,
+        PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response,
         Optional<ByteArray> callerTokenBindingId
     ) {
         return FinishRegistrationSteps.builder()
@@ -120,7 +125,12 @@ public class RelyingParty {
                     startAssertionOptions.getUsername().map(un ->
                         new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
                 )
-                .extensions(startAssertionOptions.getExtensions())
+                .extensions(
+                    startAssertionOptions.getExtensions()
+                        .toBuilder()
+                        .appid(appId)
+                        .build()
+                )
                 .build()
             )
             .build();
@@ -144,7 +154,7 @@ public class RelyingParty {
      */
     FinishAssertionSteps _finishAssertion(
         AssertionRequest request,
-        PublicKeyCredential<AuthenticatorAssertionResponse> response,
+        PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response,
         Optional<ByteArray> callerTokenBindingId // = None.asJava
     ) {
         return FinishAssertionSteps.builder()

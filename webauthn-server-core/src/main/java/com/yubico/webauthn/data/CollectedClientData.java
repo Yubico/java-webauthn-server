@@ -52,18 +52,6 @@ public class CollectedClientData {
     @NonNull
     private final transient String type;
 
-    /**
-     * Input or output values for or from authenticator extensions, if any.
-     */
-    @NonNull
-    private final transient Optional<ObjectNode> authenticatorExtensions;
-
-    /**
-     * Input or output values for or from client extensions, if any.
-     */
-    @NonNull
-    private final transient Optional<ObjectNode> clientExtensions;
-
     @JsonCreator
     public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
         JsonNode clientData = WebAuthnCodecs.json().readTree(clientDataJSON.getBytes());
@@ -97,20 +85,12 @@ public class CollectedClientData {
         }
 
         final JsonNode authenticatorExtensions = clientData.get("authenticatorExtensions");
-        if (authenticatorExtensions == null) {
-            this.authenticatorExtensions = Optional.empty();
-        } else if (authenticatorExtensions.isObject()) {
-            this.authenticatorExtensions = Optional.of(WebAuthnCodecs.deepCopy((ObjectNode) authenticatorExtensions));
-        } else {
+        if (authenticatorExtensions != null && !authenticatorExtensions.isObject()) {
             throw new IllegalArgumentException("Field \"authenticatorExtensions\" must be an object if present.");
         }
 
         final JsonNode clientExtensions = clientData.get("clientExtensions");
-        if (clientExtensions == null) {
-            this.clientExtensions = Optional.empty();
-        } else if (clientExtensions.isObject()) {
-            this.clientExtensions = Optional.of(WebAuthnCodecs.deepCopy((ObjectNode) clientExtensions));
-        } else {
+        if (clientExtensions != null && !clientExtensions.isObject()) {
             throw new IllegalArgumentException("Field \"clientExtensions\" must be an object if present.");
         }
     }
