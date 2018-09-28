@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -27,7 +28,8 @@ public class RegistrationResult {
     private final ByteArray publicKeyCose;
 
     @NonNull
-    private final List<String> warnings;
+    @Builder.Default
+    private final List<String> warnings = Collections.emptyList();
 
     @NonNull
     @Builder.Default
