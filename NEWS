@@ -49,6 +49,12 @@
   `PublicKeyCredentialCreationOptions` or `PublicKeyCredentialRequestOptions`
   object manually.
 * `COSEAlgorithmIdentifier` is now an actual enum
+* Extensions are now passed and returned as domain objects instead of as Jackson
+  types
+* Type parameter added to `PublicKeyCredential` to express extensions type
+* Fields `CollectedClientData.authenticatorExtensions` and `.clientExtensions`
+  deleted
+* Added support for `appid` extension
 
 
 == Version 0.2.0 ==
