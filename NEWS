@@ -25,10 +25,6 @@
     failures
  ** Class `MetadataResolver` replaced with interface
  ** Constructor `CollectedClientData(JsonNode)` deleted
- ** Type of fields `StartAssertionOptions.extensions`,
-    `StartRegistrationOptions.extensions` and
-    `PublicKeyCredential.clientExtensionOutputs` narrowed from `JsonNode` to
-    `ObjectNode`
  ** Parameters `StartRegistrationOptions.excludeCredentials` and
     `StartAssertionOptions.allowCredentials` deleted; they are now discovered
     automatically from the `CredentialRepository`. If custom control over
