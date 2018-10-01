@@ -7,9 +7,9 @@ one can build on API to enable advanced features like *authenticated actions*,
 such as adding an additional authenticator or deregistering a credential.
 
 The central part is the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnServer.java[WebAuthnServer]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[WebAuthnServer]
 class, and the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnRestResource.java[WebAuthnRestResource]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnRestResource.java[WebAuthnRestResource]
 class which provides the REST API on top of it.
 
 
@@ -20,21 +20,21 @@ https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/
 library:
 
 - The front end interacts with the server via a *REST API*, implemented in
-  https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnRestResource.java[WebAuthnRestResource].
+  https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnRestResource.java[WebAuthnRestResource].
 +
 This layer manages translation between JSON request/response payloads and domain
 objects, and most methods simply call into analogous methods in the server
 layer.
 
 - The REST API then delegates to the *server layer*, implemented in
-  https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/WebAuthnServer.java[WebAuthnServer].
+  https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[WebAuthnServer].
 +
 This layer manages the general architecture of the system, and is where most
 business logic and integration code would go. The demo server implements the
 "persistent" storage of users and credential registrations - the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/scala/com/yubico/webauthn/CredentialRepository.scala[CredentialRepository]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/java/com/yubico/webauthn/CredentialRepository.java[CredentialRepository]
 integration point - as the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/scala/demo/webauthn/InMemoryRegistrationStorage.java[InMemoryRegistrationStorage]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[InMemoryRegistrationStorage]
 class, which simply keeps them stored in memory for a limited time. The
 transient storage of pending challenges is also kept in memory, but for a
 shorter duration.
@@ -46,7 +46,7 @@ would be specific to a particular Relying Party (RP) would go in this layer.
 - The server layer in turn calls the *library layer*, which is where the
   https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/[`webauthn-server-core`]
   library gets involved. The entry point into the library is the
-  https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/scala/com/yubico/webauthn/RelyingParty.scala[RelyingParty]
+  https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/java/com/yubico/webauthn/RelyingParty.java[RelyingParty]
   class.
 +
 This layer implements the Web Authentication
@@ -57,11 +57,11 @@ and exposes integration points for storage of challenges and credentials. Some
 notable integration points are:
 +
 ** The library user must provide an implementation of the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/scala/com/yubico/webauthn/CredentialRepository.scala[CredentialRepository]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/java/com/yubico/webauthn/CredentialRepository.java[CredentialRepository]
 interface to use for looking up stored public keys, user handles and signature
 counters.
 ** The library user can optionally provide an instance of the
-https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/scala/com/yubico/u2f/attestation/MetadataService.java[MetadataService]
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/java/com/yubico/webauthn/attestation/MetadataService.java[MetadataService]
 class to enable identification and validation of authenticator models. This
 instance is then used to look up trusted attestation root certificates.
 
