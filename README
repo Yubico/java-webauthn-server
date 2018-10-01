@@ -1,8 +1,8 @@
 == java-webauthn-server
 
 _Note: This is a work in progress. The https://www.w3.org/TR/webauthn/[Web
-Authentication standard] is not yet finished, and any part of this project may
-change at any time._
+Authentication standard] is not yet finished, and additional pre-1.0 releases of
+this library may introduce breaking API changes._
 
 image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
