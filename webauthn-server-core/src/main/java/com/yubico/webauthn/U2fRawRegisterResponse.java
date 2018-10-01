@@ -11,12 +11,7 @@ package com.yubico.webauthn;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.yubico.internal.util.ByteInputStream;
-import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.exception.Base64UrlException;
-import java.io.IOException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,7 +22,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 class U2fRawRegisterResponse {
-    static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
     @EqualsAndHashCode.Exclude
@@ -67,31 +61,6 @@ class U2fRawRegisterResponse {
         this.attestationCertificate = attestationCertificate;
         this.signature = signature;
         this.crypto = crypto;
-    }
-
-    static U2fRawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException, Base64UrlException {
-        ByteInputStream bytes = new ByteInputStream(ByteArray.fromBase64Url(rawDataBase64).getBytes());
-        try {
-            byte reservedByte = bytes.readSigned();
-            if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
-                throw new U2fBadInputException(
-                        "Incorrect value of reserved byte. Expected: " + REGISTRATION_RESERVED_BYTE_VALUE +
-                                ". Was: " + reservedByte
-                );
-            }
-
-            return new U2fRawRegisterResponse(
-                    new ByteArray(bytes.read(65)),
-                    new ByteArray(bytes.read(bytes.readUnsigned())),
-                    CertificateParser.parseDer(bytes),
-                    new ByteArray(bytes.readAll()),
-                    crypto
-            );
-        } catch (CertificateException e) {
-            throw new U2fBadInputException("Malformed attestation certificate", e);
-        } catch (IOException e) {
-            throw new U2fBadInputException("Truncated registration data", e);
-        }
     }
 
     public boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
