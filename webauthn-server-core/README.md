@@ -1,7 +1,7 @@
-Web Authentication server library (EXPERIMENTAL)
+Web Authentication server library
 ===
 
-This is a prototype implementation of a Web Authentication Relying Party (RP).
+This is an implementation of a Web Authentication Relying Party (RP).
 
 
 Running
