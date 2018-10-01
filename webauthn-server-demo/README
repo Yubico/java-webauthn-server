@@ -62,8 +62,11 @@ interface to use for looking up stored public keys, user handles and signature
 counters.
 ** The library user can optionally provide an instance of the
 https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-core/src/main/java/com/yubico/webauthn/attestation/MetadataService.java[MetadataService]
-class to enable identification and validation of authenticator models. This
-instance is then used to look up trusted attestation root certificates.
+interface to enable identification and validation of authenticator models. This
+instance is then used to look up trusted attestation root certificates. The
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-attestation/[`webauthn-server-attestation`]
+sibling library provides implementations of this interface that are pre-seeded
+with Yubico device metadata.
 
 
 == Usage
