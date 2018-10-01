@@ -1,43 +1,47 @@
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.yubico.u2f.attestation.MetadataService;
-import com.yubico.u2f.crypto.BouncyCastleCrypto;
-import com.yubico.u2f.crypto.ChallengeGenerator;
-import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
+import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
-import com.yubico.webauthn.data.UserIdentity;
-import java.util.Collection;
+import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.RegistrationFailedException;
+import com.yubico.webauthn.extension.appid.AppId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
 
 @Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Value
 public class RelyingParty {
 
     private final RelyingPartyIdentity rp;
-    private final ChallengeGenerator challengeGenerator;
     private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
     private final List<String> origins;
-
     private final CredentialRepository credentialRepository;
 
+    @Builder.Default
+    private final Optional<AppId> appId = Optional.empty();
+    @Builder.Default
+    private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
     @Builder.Default
     private final Crypto crypto = new BouncyCastleCrypto();
     @Builder.Default
@@ -55,106 +59,117 @@ public class RelyingParty {
     @Builder.Default
     private final boolean validateTypeAttribute = true;
 
-  public PublicKeyCredentialCreationOptions startRegistration(
-    UserIdentity user,
-    Optional<Collection<PublicKeyCredentialDescriptor>> excludeCredentials, // = Optional.empty()
-    Optional<JsonNode> extensions, // = Optional.empty()
-    boolean requireResidentKey // = false
-  ) {
+    public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
         return PublicKeyCredentialCreationOptions.builder()
             .rp(rp)
-            .user(user)
+            .user(startRegistrationOptions.getUser())
             .challenge(challengeGenerator.generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
-            .excludeCredentials(excludeCredentials)
+            .excludeCredentials(
+                Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
+            )
             .authenticatorSelection(Optional.of(
                 AuthenticatorSelectionCriteria.builder()
-                    .requireResidentKey(requireResidentKey)
+                    .requireResidentKey(startRegistrationOptions.isRequireResidentKey())
                     .build()
             ))
             .attestation(attestationConveyancePreference.orElse(AttestationConveyancePreference.DEFAULT))
-            .extensions(extensions)
+            .extensions(startRegistrationOptions.getExtensions())
             .build();
     }
 
-  public RegistrationResult finishRegistration(
-    PublicKeyCredentialCreationOptions request,
-    PublicKeyCredential<AuthenticatorAttestationResponse> response,
-    Optional<String> callerTokenBindingId // = Optional.empty()
-  ) {
-      return _finishRegistration(request, response, callerTokenBindingId).run();
-  }
-
-  public FinishRegistrationSteps _finishRegistration(
-    PublicKeyCredentialCreationOptions request,
-    PublicKeyCredential<AuthenticatorAttestationResponse> response,
-    Optional<String> callerTokenBindingId // = Optional.empty()
-  ) {
-    return FinishRegistrationSteps.builder()
-      .request(request)
-      .response(response)
-      .callerTokenBindingId(callerTokenBindingId)
-      .credentialRepository(credentialRepository)
-      .origins(origins)
-      .rpId(rp.getId())
-      .crypto(crypto)
-      .allowMissingTokenBinding(allowMissingTokenBinding)
-      .allowUnrequestedExtensions(allowUnrequestedExtensions)
-      .allowUntrustedAttestation(allowUntrustedAttestation)
-      .metadataService(metadataService)
-      .validateTypeAttribute(validateTypeAttribute)
-        .build();
+    public RegistrationResult finishRegistration(FinishRegistrationOptions finishRegistrationOptions) throws RegistrationFailedException {
+        try {
+            return _finishRegistration(finishRegistrationOptions.getRequest(), finishRegistrationOptions.getResponse(), finishRegistrationOptions.getCallerTokenBindingId()).run();
+        } catch (IllegalArgumentException e) {
+            throw new RegistrationFailedException(e);
+        }
     }
 
-  public AssertionRequest startAssertion(
-    Optional<String> username,
-    Optional<List<PublicKeyCredentialDescriptor>> allowCredentials, // = None.asJava
-    Optional<JsonNode> extensions // = None.asJava
-  ) {
-      return AssertionRequest.builder()
-          .requestId(U2fB64Encoding.encode(challengeGenerator.generateChallenge()))
-          .username(username)
-          .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-              .rpId(Optional.of(rp.getId()))
-              .challenge(challengeGenerator.generateChallenge())
-              .allowCredentials(
-                  (allowCredentials.map(Optional::of).orElseGet(() ->
-                      username.map(un ->
-                          credentialRepository.getCredentialIdsForUsername(un))
-                  ))
-              )
-              .extensions(extensions)
-              .build()
-          )
-          .build();
-  }
+    /**
+     * This method is NOT part of the public API.
+     *
+     * This method is called internally by {@link
+     * #finishRegistration(FinishRegistrationOptions)}. It is a separate method to facilitate
+     * testing; users should call {@link
+     * #finishRegistration(FinishRegistrationOptions)} instead of this method.
+     */
+    FinishRegistrationSteps _finishRegistration(
+        PublicKeyCredentialCreationOptions request,
+        PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response,
+        Optional<ByteArray> callerTokenBindingId
+    ) {
+        return FinishRegistrationSteps.builder()
+            .request(request)
+            .response(response)
+            .callerTokenBindingId(callerTokenBindingId)
+            .credentialRepository(credentialRepository)
+            .origins(origins)
+            .rpId(rp.getId())
+            .crypto(crypto)
+            .allowMissingTokenBinding(allowMissingTokenBinding)
+            .allowUnrequestedExtensions(allowUnrequestedExtensions)
+            .allowUntrustedAttestation(allowUntrustedAttestation)
+            .metadataService(metadataService)
+            .validateTypeAttribute(validateTypeAttribute)
+            .build();
+    }
 
-  public AssertionResult finishAssertion(
-    AssertionRequest request,
-    PublicKeyCredential<AuthenticatorAssertionResponse> response,
-    Optional<String> callerTokenBindingId // = None.asJava
-  ) {
-      return _finishAssertion(request, response, callerTokenBindingId).run();
-  }
+    public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
+        return AssertionRequest.builder()
+            .username(startAssertionOptions.getUsername())
+            .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+                .rpId(Optional.of(rp.getId()))
+                .challenge(challengeGenerator.generateChallenge())
+                .allowCredentials(
+                    startAssertionOptions.getUsername().map(un ->
+                        new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
+                )
+                .extensions(
+                    startAssertionOptions.getExtensions()
+                        .toBuilder()
+                        .appid(appId)
+                        .build()
+                )
+                .build()
+            )
+            .build();
+    }
 
-  public FinishAssertionSteps _finishAssertion(
-    AssertionRequest request,
-    PublicKeyCredential<AuthenticatorAssertionResponse> response,
-    Optional<String> callerTokenBindingId // = None.asJava
-  ) {
-      return FinishAssertionSteps.builder()
-          .request(request)
-          .response(response)
-          .callerTokenBindingId(callerTokenBindingId)
-          .origins(origins)
-          .rpId(rp.getId())
-          .crypto(crypto)
-          .credentialRepository(credentialRepository)
-          .allowMissingTokenBinding(allowMissingTokenBinding)
-          .allowUnrequestedExtensions(allowUnrequestedExtensions)
-          .validateSignatureCounter(validateSignatureCounter)
-          .validateTypeAttribute(validateTypeAttribute)
-          .build();
-  }
+    public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions) throws AssertionFailedException {
+        try {
+            return _finishAssertion(finishAssertionOptions.getRequest(), finishAssertionOptions.getResponse(), finishAssertionOptions.getCallerTokenBindingId()).run();
+        } catch (IllegalArgumentException e) {
+            throw new AssertionFailedException(e);
+        }
+    }
+
+    /**
+     * This method is NOT part of the public API.
+     *
+     * This method is called internally by {@link
+     * #finishAssertion(FinishAssertionOptions)}. It is a separate method to
+     * facilitate testing; users should call {@link
+     * #finishAssertion(FinishAssertionOptions)} instead of this method.
+     */
+    FinishAssertionSteps _finishAssertion(
+        AssertionRequest request,
+        PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response,
+        Optional<ByteArray> callerTokenBindingId // = None.asJava
+    ) {
+        return FinishAssertionSteps.builder()
+            .request(request)
+            .response(response)
+            .callerTokenBindingId(callerTokenBindingId)
+            .origins(origins)
+            .rpId(rp.getId())
+            .crypto(crypto)
+            .credentialRepository(credentialRepository)
+            .allowMissingTokenBinding(allowMissingTokenBinding)
+            .allowUnrequestedExtensions(allowUnrequestedExtensions)
+            .validateSignatureCounter(validateSignatureCounter)
+            .validateTypeAttribute(validateTypeAttribute)
+            .build();
+    }
 
 }

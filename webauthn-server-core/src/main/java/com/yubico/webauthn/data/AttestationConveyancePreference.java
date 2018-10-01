@@ -1,19 +1,23 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
-import com.yubico.webauthn.impl.json.WithStringId;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
+import java.util.Optional;
+import java.util.stream.Stream;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NonNull;
 
 
 /**
  * Relying Parties may use this to specify their preference regarding
  * attestation conveyance during credential generation.
  */
-@JsonSerialize(using = StringIdJsonSerializer.class)
-@AllArgsConstructor
-public enum AttestationConveyancePreference implements WithStringId {
+@JsonSerialize(using = JsonStringSerializer.class)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public enum AttestationConveyancePreference implements JsonStringSerializable {
     /**
      * Indicates that the Relying Party is not interested in authenticator
      * attestation.
@@ -47,9 +51,25 @@ public enum AttestationConveyancePreference implements WithStringId {
      */
     DIRECT("direct");
 
-    @Getter
+    @NonNull
     private final String id;
 
-    public static AttestationConveyancePreference DEFAULT = NONE;
+    public static final AttestationConveyancePreference DEFAULT = NONE;
+
+    private static Optional<AttestationConveyancePreference> fromString(@NonNull String id) {
+        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+    }
+
+    @JsonCreator
+    private static AttestationConveyancePreference fromJsonString(@NonNull String id) {
+        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
+            "Unknown %s value: %s", AttestationConveyancePreference.class.getSimpleName(), id
+        )));
+    }
+
+    @Override
+    public String toJsonString() {
+        return id;
+    }
 
 }

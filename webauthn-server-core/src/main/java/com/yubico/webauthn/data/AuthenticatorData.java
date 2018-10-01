@@ -1,88 +1,96 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.webauthn.util.BinaryUtil;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.internal.util.BinaryUtil;
+import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
+import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
+@JsonSerialize(using = AuthenticatorData.JsonSerializer.class)
 public class AuthenticatorData {
 
-    @JsonIgnore
-    private final byte[] bytes;
+    @NonNull
+    private final ByteArray bytes;
 
     /**
      * The flags byte.
      */
-    private final AuthenticationDataFlags flags;
+    @NonNull
+    private final transient AuthenticationDataFlags flags;
 
     /**
      * Attestation data, if present.
      * <p>
      * See ''§5.3.1 Attestation data'' of [[com.yubico.webauthn.VersionInfo]] for details.
      */
-    private final Optional<AttestationData> attestationData;
+    @NonNull
+    private final transient Optional<AttestationData> attestationData;
 
     /**
      * Extension-defined authenticator data, if present.
      * <p>
      * See ''§8 WebAuthn Extensions'' of [[com.yubico.webauthn.VersionInfo]] for details.
      */
-    private final Optional<CBORObject> extensions;
+    @NonNull
+    private final transient Optional<CBORObject> extensions;
 
     private static final int RpIdHashLength = 32;
     private static final int FlagsLength = 1;
     private static final int CounterLength = 4;
     private static final int FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength;
 
-    public AuthenticatorData(byte[] bytes) {
-        this.bytes = BinaryUtil.copy(bytes);
-        this.flags = new AuthenticationDataFlags(bytes[32]);
+    @JsonCreator
+    public AuthenticatorData(@NonNull ByteArray bytes) {
+        ExceptionUtil.assure(
+            bytes.size() >= FixedLengthPartEndIndex,
+            "%s byte array must be at least %d bytes, was %d: %s",
+            AuthenticatorData.class.getSimpleName(),
+            FixedLengthPartEndIndex,
+            bytes.size(),
+            bytes.getBase64Url()
+        );
+
+        this.bytes = bytes;
+
+        final byte[] rawBytes = bytes.getBytes();
+
+        this.flags = new AuthenticationDataFlags(rawBytes[32]);
 
         if (flags.AT) {
             VariableLengthParseResult parseResult = parseAttestationData(
                 flags,
-                Arrays.copyOfRange(bytes, FixedLengthPartEndIndex, bytes.length)
+                Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)
             );
             attestationData = parseResult.getAttestationData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
             attestationData = Optional.empty();
-            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(bytes, FixedLengthPartEndIndex, bytes.length)));
+            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)));
         } else {
             attestationData = Optional.empty();
             extensions = Optional.empty();
         }
     }
 
-    public byte[] getBytes() {
-        return BinaryUtil.copy(bytes);
-    }
-
-    @JsonProperty("authData")
-    public String getAuthDataBase64() {
-        return U2fB64Encoding.encode(bytes);
-    }
-
     /**
      * The SHA-256 hash of the RP ID associated with the credential.
      */
-    @JsonIgnore
-    public byte[] getRpIdHash() {
-        return Arrays.copyOfRange(bytes, 0, RpIdHashLength);
-    }
-
     @JsonProperty("rpIdHash")
-    public String getRpIdHashBase64() {
-        return U2fB64Encoding.encode(getRpIdHash());
+    public ByteArray getRpIdHash() {
+        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), 0, RpIdHashLength));
     }
 
     /**
@@ -91,7 +99,7 @@ public class AuthenticatorData {
     public long getSignatureCounter() {
         final int start = RpIdHashLength + FlagsLength;
         final int end = start + CounterLength;
-        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes, start, end));
+        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), start, end));
     }
 
     private static VariableLengthParseResult parseAttestationData(AuthenticationDataFlags flags, byte[] bytes) {
@@ -132,9 +140,9 @@ public class AuthenticatorData {
 
         return new VariableLengthParseResult(
             Optional.of(AttestationData.builder()
-                .aaguid(Arrays.copyOfRange(bytes, 0, 16))
-                .credentialId(Arrays.copyOfRange(bytes, 16 + 2, 16 + 2 + L))
-                .credentialPublicKey(credentialPublicKey.EncodeToBytes())
+                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, 0, 16)))
+                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, 16 + 2, 16 + 2 + L)))
+                .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
                 .build()),
             extensions
         );
@@ -156,6 +164,13 @@ public class AuthenticatorData {
 
     public Optional<CBORObject> getExtensions() {
         return extensions.map(WebAuthnCodecs::deepCopy);
+    }
+
+    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AuthenticatorData> {
+        @Override
+        public void serialize(AuthenticatorData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeString(value.getBytes().getBase64Url());
+        }
     }
 
 }

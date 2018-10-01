@@ -1,10 +1,14 @@
 package com.yubico.webauthn.data;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.webauthn.impl.json.StringIdJsonSerializer;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
+import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NonNull;
 
 /**
  * Clients may communicate with authenticators using a variety of mechanisms.
@@ -31,9 +35,9 @@ import lombok.Getter;
  * first time, they may be required to use a roaming authenticator which was
  * originally registered with the Relying Party using a different client.
  */
-@JsonSerialize(using = StringIdJsonSerializer.class)
+@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum AuthenticatorAttachment {
+public enum AuthenticatorAttachment implements JsonStringSerializable {
     /**
      * The respective authenticator is attached using cross-platform transports.
      *
@@ -50,8 +54,24 @@ public enum AuthenticatorAttachment {
      */
     PLATFORM("platform");
 
-    @Getter
+    @NonNull
     private final String id;
+
+    private static Optional<AuthenticatorAttachment> fromString(@NonNull String id) {
+        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+    }
+
+    @JsonCreator
+    private static AuthenticatorAttachment fromJsonString(@NonNull String id) {
+        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
+            "Unknown %s value: %s", AuthenticatorAttachment.class.getSimpleName(), id
+        )));
+    }
+
+    @Override
+    public String toJsonString() {
+        return id;
+    }
 
 }
 

@@ -11,17 +11,15 @@ targetCompatibility = '1.8'
 dependencies {
 
   compile(
+    project(':webauthn-server-attestation'),
     project(':webauthn-server-core'),
 
     'com.fasterxml.jackson.core:jackson-core:2.9.6',
     'com.fasterxml.jackson.core:jackson-databind:2.9.6',
-    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
-    'com.fasterxml.jackson.module:jackson-module-scala_2.11:2.9.6',
     'com.google.guava:guava:24.1-jre',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
     'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
-    'org.scala-lang:scala-library:2.11.3',
   )
 
   runtime(
@@ -32,9 +30,11 @@ dependencies {
 
   testCompile(
     project(':webauthn-server-core').sourceSets.test.output,
+    project(':yubico-util-scala'),
 
     'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
+    'org.scala-lang:scala-library:2.11.3',
     'org.scalatest:scalatest_2.11:3.0.4',
     'org.scalacheck:scalacheck_2.11:1.13.5',
   )

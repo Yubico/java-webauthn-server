@@ -1,13 +1,13 @@
 package com.yubico.webauthn.meta;
 
-import com.yubico.util.ExceptionUtil;
-import com.yubico.webauthn.DocumentStatus;
+import com.yubico.internal.util.ExceptionUtil;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.jar.Manifest;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  * @see Specification
  */
 @Slf4j
+@Value
 public class VersionInfo {
 
     private static VersionInfo instance;
@@ -51,7 +52,7 @@ public class VersionInfo {
         new URL("https://github.com/Yubico/java-webauthn-server")
     );
 
-    public VersionInfo() throws IOException {
+    private VersionInfo() throws IOException {
     }
 
     private Optional<String> findImplementationVersionInManifest() throws IOException {

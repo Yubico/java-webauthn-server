@@ -1,41 +1,48 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Value;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-
-@Value
-public class AuthenticationDataFlags {
-    public byte value;
+@ToString
+@EqualsAndHashCode
+public final class AuthenticationDataFlags {
+    public final byte value;
 
     /** User present */
-    @JsonProperty
     public final boolean UP;
 
     /** User verified */
-    @JsonProperty
     public final boolean UV;
 
     /** Attestation data present */
-    @JsonProperty
     public final boolean AT;
 
     /** Extension data present */
-    @JsonProperty
     public final boolean ED;
 
-    public AuthenticationDataFlags(byte value) {
+    @JsonCreator
+    public AuthenticationDataFlags(@JsonProperty("value") byte value) {
         this.value = value;
 
-        UP = (value & 0x01) > 0;
-        UV = (value & 0x04) > 0;
-        AT = (value & 0x40) > 0;
-        ED = (value & 0x80) > 0;
+        UP = (value & Bitmasks.UP) != 0;
+        UV = (value & Bitmasks.UV) != 0;
+        AT = (value & Bitmasks.AT) != 0;
+        ED = (value & Bitmasks.ED) != 0;
     }
 
-    /* Reserved bits */
-    // public final boolean RFU1 = (value & 0x02) > 0;
-    // public final boolean RFU2_1 = (value & 0x08) > 0;
-    // public final boolean RFU2_2 = (value & 0x10) > 0;
-    // public final boolean RFU2_3 = (value & 0x20) > 0;
+    private static final class Bitmasks {
+        static final byte UP = 0x01;
+        static final byte UV = 0x04;
+        static final byte AT = 0x40;
+        static final byte ED = -0x80;
+
+        /* Reserved bits */
+        // final boolean RFU1 = (value & 0x02) > 0;
+        // final boolean RFU2_1 = (value & 0x08) > 0;
+        // final boolean RFU2_2 = (value & 0x10) > 0;
+        // static final boolean RFU2_3 = (value & 0x20) > 0;
+    }
+
 }

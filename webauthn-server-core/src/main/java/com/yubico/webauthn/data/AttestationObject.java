@@ -1,66 +1,113 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.webauthn.util.BinaryUtil;
-import com.yubico.webauthn.util.WebAuthnCodecs;
+import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
+@JsonSerialize(using = AttestationObject.JsonSerializer.class)
 public class AttestationObject {
 
-    private final byte[] bytes;
+    @NonNull
+    private final transient ByteArray bytes;
 
-    private ObjectNode decoded;
+    @NonNull
+    private final transient AuthenticatorData authenticatorData;
 
-    @JsonProperty
-    private AuthenticatorData authenticatorData;
+    @NonNull
+    @JsonProperty("authData")
+    private final ByteArray authData;
 
     /**
      * The ''attestation statement format'' of this attestation object.
      */
-    @JsonProperty
+    @NonNull
+    @JsonProperty("fmt")
     private final String format;
 
-    public AttestationObject(byte[] bytes) throws IOException, U2fBadInputException {
-        this.bytes = BinaryUtil.copy(bytes);
+    @NonNull
+    @JsonProperty("attStmt")
+    private final ObjectNode attestationStatement;
 
-        JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes);
-        if (decoded.isObject()) {
-            this.decoded = (ObjectNode) decoded;
-        } else {
+    @JsonCreator
+    public AttestationObject(@NonNull ByteArray bytes) throws IOException {
+        this.bytes = bytes;
+
+        final JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
+
+        ExceptionUtil.assure(
+            decoded != null,
+            "Failed to parse attestation object from bytes: %s",
+            bytes.getBase64Url()
+        );
+
+        if (!decoded.isObject()) {
             throw new IllegalArgumentException("Attestation object must be a JSON object.");
         }
 
-        authenticatorData = parseAuthenticatorData();
+        final JsonNode authData = decoded.get("authData");
+        if (authData == null) {
+            throw new IllegalArgumentException("Required property \"authData\" missing from attestation object: " + bytes.getBase64Url());
+        } else {
+            if (authData.isBinary()) {
+                this.authData = new ByteArray(authData.binaryValue());
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Property \"authData\" of attestation object must be a CBOR byte array, was: %s. Attestation object: %s",
+                    authData.getNodeType(),
+                    bytes.getBase64Url()
+                ));
+            }
+        }
 
-        format = decoded.get("fmt").textValue();
+        final JsonNode format = decoded.get("fmt");
+        if (format == null) {
+            throw new IllegalArgumentException("Required property \"fmt\" missing from attestation object: " + bytes.getBase64Url());
+        } else {
+            if (format.isTextual()) {
+                this.format = decoded.get("fmt").textValue();
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Property \"fmt\" of attestation object must be a CBOR text value, was: %s. Attestation object: %s",
+                    format.getNodeType(),
+                    bytes.getBase64Url()
+                ));
+            }
+        }
+
+        final JsonNode attStmt = decoded.get("attStmt");
+        if (attStmt == null) {
+            throw new IllegalArgumentException("Required property \"attStmt\" missing from attestation object: " + bytes.getBase64Url());
+        } else {
+            if (attStmt.isObject()) {
+                this.attestationStatement = (ObjectNode) attStmt;
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Property \"attStmt\" of attestation object must be a CBOR map, was: %s. Attestation object: %s",
+                    attStmt.getNodeType(),
+                    bytes.getBase64Url()
+                ));
+            }
+        }
+
+        authenticatorData = new AuthenticatorData(this.authData);
     }
 
-    private AuthenticatorData parseAuthenticatorData() throws IOException, U2fBadInputException {
-        JsonNode authData = decoded.get("authData");
-        if (authData.isBinary())
-          return new AuthenticatorData(authData.binaryValue());
-        else
-          return new AuthenticatorData(U2fB64Encoding.decode(authData.textValue()));
-    }
-
-    public byte[] getBytes() {
-        return BinaryUtil.copy(this.bytes);
-    }
-
-    @JsonProperty
-    public JsonNode getAttestationStatement() {
-        return decoded.get("attStmt");
-    }
-
-    public ObjectNode getDecoded() {
-        return (ObjectNode) WebAuthnCodecs.deepCopy(this.decoded);
+    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AttestationObject> {
+        @Override
+        public void serialize(AttestationObject value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeString(value.getBytes().getBase64Url());
+        }
     }
 
 }

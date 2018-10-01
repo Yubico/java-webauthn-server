@@ -1,12 +1,12 @@
 package com.yubico.webauthn;
 
-import com.yubico.u2f.attestation.Attestation;
+import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationObject;
-import java.util.Optional;
+import java.security.cert.CertificateEncodingException;
 
 
-public interface AttestationTrustResolver {
+interface AttestationTrustResolver {
 
-  Optional<Attestation> resolveTrustAnchor(AttestationObject attestationObject);
+  Attestation resolveTrustAnchor(AttestationObject attestationObject) throws CertificateEncodingException;
 
 }

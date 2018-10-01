@@ -1,37 +1,62 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
 
+import static com.yubico.internal.util.ExceptionUtil.assure;
+
 @Value
 public class TokenBindingInfo {
 
-    private TokenBindingStatus status;
-    private Optional<String> id;
+    @NonNull
+    private final TokenBindingStatus status;
 
-    private TokenBindingInfo(TokenBindingStatus status) {
-        this(status, Optional.empty());
-    }
+    @NonNull
+    private final Optional<ByteArray> id;
 
-    public TokenBindingInfo(
+    TokenBindingInfo(
         @NonNull TokenBindingStatus status,
-        @NonNull Optional<String> id
+        @NonNull Optional<ByteArray> id
     ) {
+        if (status == TokenBindingStatus.PRESENT) {
+            assure(
+                id.isPresent(),
+                "Token binding ID must be present if status is \"%s\".",
+                TokenBindingStatus.PRESENT
+            );
+        } else {
+            assure(
+                !id.isPresent(),
+                "Token binding ID must not be present if status is not \"%s\".",
+                TokenBindingStatus.PRESENT
+            );
+        }
+
         this.status = status;
         this.id = id;
     }
 
-    public static TokenBindingInfo present(String id) {
+    @JsonCreator
+    private TokenBindingInfo(
+        @NonNull @JsonProperty("status") TokenBindingStatus status,
+        @JsonProperty("id") ByteArray id
+    ) {
+        this(status, Optional.ofNullable(id));
+    }
+
+    public static TokenBindingInfo present(@NonNull ByteArray id) {
         return new TokenBindingInfo(TokenBindingStatus.PRESENT, Optional.of(id));
     }
 
     public static TokenBindingInfo supported() {
-        return new TokenBindingInfo(TokenBindingStatus.SUPPORTED);
+        return new TokenBindingInfo(TokenBindingStatus.SUPPORTED, Optional.empty());
     }
 
     public static TokenBindingInfo notSupported() {
-        return new TokenBindingInfo(TokenBindingStatus.NOT_SUPPORTED);
+        return new TokenBindingInfo(TokenBindingStatus.NOT_SUPPORTED, Optional.empty());
     }
 
 }

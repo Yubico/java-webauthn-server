@@ -1,28 +1,41 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.yubico.internal.util.json.JsonStringSerializable;
+import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Arrays;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
-public enum TokenBindingStatus {
+@AllArgsConstructor
+@JsonSerialize(using = JsonStringSerializer.class)
+public enum TokenBindingStatus implements JsonStringSerializable {
 
     NOT_SUPPORTED("not-supported"),
     PRESENT("present"),
     SUPPORTED("supported");
 
-    private String jsonValue;
+    @NonNull
+    private final String id;
 
-    TokenBindingStatus(String jsonValue) {
-        this.jsonValue = jsonValue;
-    }
-
-    public static Optional<TokenBindingStatus> fromJson(String value) {
-        return Arrays.asList(values()).stream()
-            .filter(v -> v.jsonValue.equals(value))
+    private static Optional<TokenBindingStatus> fromString(@NonNull String value) {
+        return Arrays.stream(values())
+            .filter(v -> v.id.equals(value))
             .findAny();
     }
 
-    public String toJson() {
-        return jsonValue;
+    @JsonCreator
+    public static TokenBindingStatus fromJsonString(@NonNull String id) {
+        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
+            "Unknown %s value: %s", TokenBindingStatus.class.getSimpleName(), id
+        )));
+    }
+
+    @Override
+    public String toJsonString() {
+        return id;
     }
 
 }

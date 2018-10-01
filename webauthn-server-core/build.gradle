@@ -1,6 +1,8 @@
 import java.nio.file.Paths
 
-description = 'WebAuthn core'
+apply plugin: 'info.solidsoft.pitest'
+
+description = 'WebAuthn core API'
 
 apply plugin: 'scala'
 
@@ -11,23 +13,22 @@ configurations {
 dependencies {
 
   compile(
+    project(':yubico-util'),
     [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
     [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
     [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
   )
 
   testCompile(
+    project(':yubico-util-scala'),
     'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
     'org.scala-lang:scala-library:2.11.3',
     'org.scalatest:scalatest_2.11:3.0.4',
     'org.scalacheck:scalacheck_2.11:1.13.5',
-  )
-
-  testRuntime(
-    'org.slf4j:slf4j-simple:1.7.25',
   )
 
   scalaRepl(
@@ -50,6 +51,21 @@ jar {
       'Implementation-Vendor': 'Yubico',
     ])
   }
+}
+
+pitest {
+  pitestVersion = '1.4.2'
+
+  timestampedReports = false
+  outputFormats = ['XML', 'HTML']
+
+  avoidCallsTo = [
+    'java.util.logging',
+    'org.apache.log4j',
+    'org.slf4j',
+    'org.apache.commons.logging',
+    'com.google.common.io.Closeables',
+  ]
 }
 
 def scalaReplDistDir = file(Paths.get(project.distsDir.path, 'scala-repl'))

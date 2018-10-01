@@ -1,10 +1,10 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.webauthn.util.BinaryUtil;
+import com.yubico.webauthn.data.exception.Base64UrlException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import lombok.NonNull;
@@ -14,57 +14,38 @@ import lombok.Value;
 @Value
 public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
-    private byte[] authenticatorData;
-    private byte[] clientDataJSON;
-    private byte[] signature;
-    private Optional<byte[]> userHandle;
+    @NonNull
+    private final ByteArray authenticatorData;
+
+    @NonNull
+    private final ByteArray clientDataJSON;
+
+    @NonNull
+    private final ByteArray signature;
+
+    @NonNull
+    private final Optional<ByteArray> userHandle;
+
+    @NonNull
+    private final transient CollectedClientData clientData;
 
     @JsonCreator
     public AuthenticatorAssertionResponse(
-        @NonNull @JsonProperty("authenticatorData") String authenticatorDataBase64,
-        @NonNull @JsonProperty("clientDataJSON") String clientDataJsonBase64,
-        @NonNull @JsonProperty("signature") String signatureBase64,
-        @JsonProperty("userHandle") String userHandleBase64
-    ) throws U2fBadInputException {
-        authenticatorData = U2fB64Encoding.decode(authenticatorDataBase64);
-        clientDataJSON = U2fB64Encoding.decode(clientDataJsonBase64);
-        signature = U2fB64Encoding.decode(signatureBase64);
-
-        if (userHandleBase64 == null) {
-            userHandle = Optional.empty();
-        } else {
-            userHandle = Optional.of(U2fB64Encoding.decode(userHandleBase64));
-        }
+        @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
+        @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJson,
+        @NonNull @JsonProperty("signature") final ByteArray signature,
+        @JsonProperty("userHandle") final ByteArray userHandle
+    ) throws IOException, Base64UrlException {
+        this.authenticatorData = authenticatorData;
+        this.clientDataJSON = clientDataJson;
+        this.signature = signature;
+        this.userHandle = Optional.ofNullable(userHandle);
+        this.clientData = new CollectedClientData(clientDataJSON);
     }
 
-    public byte[] getAuthenticatorData() {
-        return BinaryUtil.copy(authenticatorData);
-    }
-
-    public byte[] getClientDataJSON() {
-        return BinaryUtil.copy(clientDataJSON);
-    }
-
+    @JsonIgnore
     public String getClientDataJSONString() {
-        return new String(clientDataJSON, Charset.forName("UTF-8"));
-    }
-
-    public byte[] getSignature() {
-        return BinaryUtil.copy(signature);
-    }
-
-    public Optional<byte[]> getUserHandle() {
-        return userHandle.map(BinaryUtil::copy);
-    }
-
-    @JsonProperty("signature")
-    public String getSignatureBase64() {
-        return U2fB64Encoding.encode(signature);
-    }
-
-    @JsonProperty("userHandle")
-    public String getUserHandleBase64() {
-        return userHandle.map(U2fB64Encoding::encode).orElse(null);
+        return new String(clientDataJSON.getBytes(), Charset.forName("UTF-8"));
     }
 
 }

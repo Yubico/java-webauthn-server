@@ -1,50 +1,46 @@
 package com.yubico.webauthn.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
 public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
-    @JsonIgnore
-    private byte[] attestationObject;
+    @NonNull
+    private final ByteArray attestationObject;
 
-    @JsonIgnore
-    private byte[] clientDataJSON;
+    @NonNull
+    private final ByteArray clientDataJSON;
 
-    @JsonProperty("_attestationObject")
-    private final AttestationObject attestation;
+    @NonNull
+    private final transient AttestationObject attestation;
+
+    @NonNull
+    @JsonIgnore
+    private final transient CollectedClientData clientData;
 
     @Override
-    public byte[] getAuthenticatorData() {
+    @JsonIgnore
+    public ByteArray getAuthenticatorData() {
         return attestation.getAuthenticatorData().getBytes();
     }
 
     @JsonCreator
     public AuthenticatorAttestationResponse(
-        @JsonProperty("attestationObject") String attestationObjectBase64,
-        @JsonProperty("clientDataJSON") String clientDataJsonBase64
-    ) throws U2fBadInputException, IOException {
-        attestationObject = U2fB64Encoding.decode(attestationObjectBase64);
-        clientDataJSON = U2fB64Encoding.decode(clientDataJsonBase64);
+        @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
+        @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON
+    ) throws IOException, Base64UrlException {
+        this.attestationObject = attestationObject;
+        this.clientDataJSON = clientDataJSON;
 
         attestation = new AttestationObject(attestationObject);
-    }
-
-    @JsonProperty("attestationObject")
-    public String getAttestationObjectBase64() {
-        return U2fB64Encoding.encode(attestationObject);
-    }
-
-    @JsonProperty("clientDataJSON")
-    public String getClientDataJSONBase64() {
-        return U2fB64Encoding.encode(clientDataJSON);
+        this.clientData = new CollectedClientData(clientDataJSON);
     }
 
 }

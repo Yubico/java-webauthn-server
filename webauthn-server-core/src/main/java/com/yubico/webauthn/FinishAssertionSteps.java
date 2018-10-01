@@ -1,42 +1,36 @@
 package com.yubico.webauthn;
 
 
-import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.u2f.exceptions.U2fBadInputException;
-import com.yubico.util.ExceptionUtil;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
-import com.yubico.webauthn.data.RegisteredCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
-import com.yubico.webauthn.impl.ExtensionsValidation;
-import com.yubico.webauthn.impl.TokenBindingValidator;
-import java.io.IOException;
+import com.yubico.webauthn.extension.appid.AppId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+
+import static com.yubico.internal.util.ExceptionUtil.assure;
 
 
 @Builder
 @Slf4j
-public class FinishAssertionSteps {
+class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
 
     private final AssertionRequest request;
-    private final PublicKeyCredential<AuthenticatorAssertionResponse> response;
-    private final Optional<String> callerTokenBindingId;
+    private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
+    private final Optional<ByteArray> callerTokenBindingId;
     private final List<String> origins;
     private final String rpId;
     private final Crypto crypto;
@@ -50,6 +44,14 @@ public class FinishAssertionSteps {
     private final boolean validateSignatureCounter = true;
     @Builder.Default
     private final boolean allowUnrequestedExtensions = false;
+
+    public Step0 begin() {
+        return new Step0();
+    }
+
+    public AssertionResult run() {
+        return begin().run();
+    }
 
     private interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
         B nextStep();
@@ -91,14 +93,6 @@ public class FinishAssertionSteps {
         }
     }
 
-    public Step0 begin() {
-        return new Step0();
-    }
-
-    public AssertionResult run() {
-        return begin().run();
-    }
-
     @Value
     public class Step0 implements Step<Step0, Step1> {
         @Override
@@ -108,23 +102,20 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (!(
-                request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent()
-            )) {
-                throw new IllegalArgumentException("At least one of username and user handle must be given; none was.");
-            }
-            if (!userHandle().isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                    "No user found for username: %s, userHandle: %s",
-                    request.getUsername(), response.getResponse().getUserHandleBase64()
-                ));
-            }
-            if (!username().isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                    "No user found for username: %s, userHandle: %s",
-                    request.getUsername(), response.getResponse().getUserHandleBase64()
-                ));
-            }
+            assure(
+                request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
+                "At least one of username and user handle must be given; none was."
+            );
+            assure(
+                userHandle().isPresent(),
+                "No user found for username: %s, userHandle: %s",
+                request.getUsername(), response.getResponse().getUserHandle()
+            );
+            assure(
+                username().isPresent(),
+                "No user found for username: %s, userHandle: %s",
+                request.getUsername(), response.getResponse().getUserHandle()
+            );
         }
 
         @Override
@@ -132,8 +123,8 @@ public class FinishAssertionSteps {
             return Collections.emptyList();
         }
 
-        private Optional<String> userHandle() {
-            return Optional.ofNullable(response.getResponse().getUserHandleBase64())
+        private Optional<ByteArray> userHandle() {
+            return response.getResponse().getUserHandle()
                 .map(Optional::of)
                 .orElseGet(() -> credentialRepository.getUserHandleForUsername(request.getUsername().get()));
         }
@@ -141,14 +132,14 @@ public class FinishAssertionSteps {
         private Optional<String> username() {
             return request.getUsername()
                 .map(Optional::of)
-                .orElseGet(() -> credentialRepository.getUsernameForUserHandle(response.getResponse().getUserHandleBase64()));
+                .orElseGet(() -> credentialRepository.getUsernameForUserHandle(response.getResponse().getUserHandle().get()));
         }
     }
 
     @Value
     public class Step1 implements Step<Step0, Step2> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final List<String> prevWarnings;
 
         @Override
@@ -159,11 +150,11 @@ public class FinishAssertionSteps {
         @Override
         public void validate() {
             request.getPublicKeyCredentialRequestOptions().getAllowCredentials().ifPresent(allowed -> {
-                if (!(
-                    allowed.stream().anyMatch(allow -> Arrays.equals(allow.getId(), response.getRawId()))
-                )) {
-                    throw new IllegalArgumentException("Unrequested credential ID: " + response.getId());
-                }
+                assure(
+                    allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId())),
+                    "Unrequested credential ID: %s",
+                    response.getId()
+                );
             });
         }
     }
@@ -171,7 +162,7 @@ public class FinishAssertionSteps {
     @Value
     public class Step2 implements Step<Step1, Step3> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final List<String> prevWarnings;
 
         @Override
@@ -183,21 +174,24 @@ public class FinishAssertionSteps {
         public void validate() {
             Optional<RegisteredCredential> registration = credentialRepository.lookup(response.getId(), userHandle);
 
-            if (!registration.isPresent()) {
-                throw new IllegalArgumentException(String.format("Unknown credential: " + response.getId()));
-            }
+            assure(
+                registration.isPresent(),
+                "Unknown credential: %s",
+                response.getId()
+            );
 
-            if (!Objects.equals(registration.get().getUserHandleBase64(), userHandle)) {
-                throw new IllegalArgumentException(String.format(
-                    "User handle ${userHandle} does not own credential ${response.getId}", userHandle, response.getId()));
-            }
+            assure(
+                userHandle.equals(registration.get().getUserHandle()),
+                "User handle %s does not own credential %s",
+                userHandle, response.getId()
+            );
         }
     }
 
     @Value
     public class Step3 implements Step<Step2, Step4> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final List<String> prevWarnings;
 
         @Override
@@ -207,11 +201,11 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (!maybeCredential().isPresent()) {
-                throw new IllegalArgumentException(String.format(
-                    "Unknown credential. Credential ID: %s, user handle: %s", response.getId(), userHandle
-                ));
-            }
+            assure(
+                maybeCredential().isPresent(),
+                "Unknown credential. Credential ID: %s, user handle: %s",
+                response.getId(), userHandle
+            );
         }
 
         private Optional<RegisteredCredential> maybeCredential() {
@@ -227,23 +221,15 @@ public class FinishAssertionSteps {
     public class Step4 implements Step<Step3, Step5> {
 
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            if (clientData().length == 0) {
-                throw new IllegalArgumentException("Missing client data.");
-            }
-
-            if (authenticatorData().length == 0) {
-                throw new IllegalArgumentException("Missing authenticator data.");
-            }
-
-            if (signature().length == 0) {
-                throw new IllegalArgumentException("Missing signature.");
-            }
+            assure(clientData().getBytes() != null, "Missing client data.");
+            assure(authenticatorData().getBytes() != null, "Missing authenticator data.");
+            assure(signature().getBytes() != null, "Missing signature.");
         }
 
         @Override
@@ -251,15 +237,15 @@ public class FinishAssertionSteps {
             return new Step5(username, userHandle, credential, allWarnings());
         }
 
-        public byte[] authenticatorData() {
+        public ByteArray authenticatorData() {
             return response.getResponse().getAuthenticatorData();
         }
 
-        public byte[] clientData() {
+        public ByteArray clientData() {
             return response.getResponse().getClientDataJSON();
         }
 
-        public byte[] signature() {
+        public ByteArray signature() {
             return response.getResponse().getSignature();
         }
     }
@@ -267,7 +253,7 @@ public class FinishAssertionSteps {
     @Value
     public class Step5 implements Step<Step4, Step6> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
@@ -285,15 +271,13 @@ public class FinishAssertionSteps {
     @Value
     public class Step6 implements Step<Step5, Step7> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            if (clientData() == null) {
-                throw new IllegalArgumentException("Missing client data.");
-            }
+            assure(clientData() != null, "Missing client data.");
         }
 
         @Override
@@ -302,13 +286,7 @@ public class FinishAssertionSteps {
         }
 
         public CollectedClientData clientData() {
-            try {
-                return response.getResponse().getCollectedClientData();
-            } catch (IOException e) {
-                throw new IllegalArgumentException("Client data is not valid JSON: " + response.getResponse().getClientDataJSONString());
-            } catch (U2fBadInputException e) {
-                throw new IllegalArgumentException("Malformed client data: " + response.getResponse().getClientDataJSONString());
-            }
+            return response.getResponse().getClientData();
         }
     }
 
@@ -316,7 +294,7 @@ public class FinishAssertionSteps {
     public class Step7 implements Step<Step6, Step8> {
 
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final CollectedClientData clientData;
         private final List<String> prevWarnings;
@@ -330,23 +308,12 @@ public class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            try {
-                if (!
-                    CLIENT_DATA_TYPE.equals(clientData.getType())
-                    ) {
-                    final String message = String.format(
-                        "The \"type\" in the client data must be exactly \"%s\", was: %s",
-                        CLIENT_DATA_TYPE,
-                        clientData.getType()
-                    );
-                    if (validateTypeAttribute) {
-                        throw new IllegalArgumentException(message);
-                    } else {
-                        warnings.add(message);
-                    }
-                }
-            } catch (NullPointerException e) {
-                final String message = "Missing \"type\" attribute in the client data.";
+            if (!
+                CLIENT_DATA_TYPE.equals(clientData.getType())
+            ) {
+                final String message = String.format(
+                    "The \"type\" in the client data must be exactly \"%s\", was: %s", CLIENT_DATA_TYPE, clientData.getType()
+                );
                 if (validateTypeAttribute) {
                     throw new IllegalArgumentException(message);
                 } else {
@@ -364,22 +331,16 @@ public class FinishAssertionSteps {
     @Value
     public class Step8 implements Step<Step7, Step9> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            try {
-                if (false == Arrays.equals(
-                    response.getResponse().getCollectedClientData().getChallenge(),
-                    request.getPublicKeyCredentialRequestOptions().getChallenge())
-                ) {
-                    throw new IllegalArgumentException("Incorrect challenge.");
-                }
-            } catch (U2fBadInputException | IOException e) {
-                throw new IllegalArgumentException("Failed to read challenge from client data: " + response.getResponse().getClientDataJSONString());
-            }
+            assure(
+                request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getClientData().getChallenge()),
+                "Incorrect challenge."
+            );
         }
 
         @Override
@@ -391,18 +352,14 @@ public class FinishAssertionSteps {
     @Value
     public class Step9 implements Step<Step8, Step10> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
             final String responseOrigin;
-            try {
-                responseOrigin = response.getResponse().getCollectedClientData().getOrigin();
-            } catch (IOException | U2fBadInputException e) {
-                throw new IllegalArgumentException("Failed to read origin from client data: " + response.getResponse().getClientDataJSONString());
-            }
+            responseOrigin = response.getResponse().getClientData().getOrigin();
 
             if (origins.stream().noneMatch(o -> o.equals(responseOrigin))) {
                 throw new IllegalArgumentException("Incorrect origin: " + responseOrigin);
@@ -418,17 +375,13 @@ public class FinishAssertionSteps {
     @Value
     public class Step10 implements Step<Step9, Step11> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            try {
-                TokenBindingValidator.validate(response.getResponse().getCollectedClientData().getTokenBinding(), callerTokenBindingId);
-            } catch (IOException | U2fBadInputException e) {
-                throw new IllegalArgumentException("Failed to read token binding info from client data" + response.getResponse().getClientDataJSONString());
-            }
+            TokenBindingValidator.validate(response.getResponse().getClientData().getTokenBinding(), callerTokenBindingId);
         }
 
         @Override
@@ -440,14 +393,27 @@ public class FinishAssertionSteps {
     @Value
     public class Step11 implements Step<Step10, Step12> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            if (false == Arrays.equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash(), crypto.hash(rpId))) {
-                throw new IllegalArgumentException("Wrong RP ID hash.");
+            try {
+                assure(
+                    crypto.hash(rpId).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+                    "Wrong RP ID hash."
+                );
+            } catch (IllegalArgumentException e) {
+                Optional<AppId> appid = request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
+                if (appid.isPresent()) {
+                    assure(
+                        crypto.hash(appid.get().getId()).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+                        "Wrong RP ID hash."
+                    );
+                } else {
+                    throw e;
+                }
             }
         }
 
@@ -460,18 +426,17 @@ public class FinishAssertionSteps {
     @Value
     public class Step12 implements Step<Step11, Step13> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
             if (request.getPublicKeyCredentialRequestOptions().getUserVerification() == UserVerificationRequirement.REQUIRED) {
-                if (!
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UV
-                ) {
-                    throw new IllegalArgumentException("User Verification is required.");
-                }
+                assure(
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
+                    "User Verification is required."
+                );
             }
         }
 
@@ -484,18 +449,17 @@ public class FinishAssertionSteps {
     @Value
     public class Step13 implements Step<Step12, Step14> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
             if (request.getPublicKeyCredentialRequestOptions().getUserVerification() != UserVerificationRequirement.REQUIRED) {
-                if (!
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UP
-                ) {
-                    throw new IllegalArgumentException("User Presence is required.");
-                }
+                assure(
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+                    "User Presence is required."
+                );
             }
         }
 
@@ -508,7 +472,7 @@ public class FinishAssertionSteps {
     @Value
     public class Step14 implements Step<Step13, Step15> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
@@ -538,15 +502,13 @@ public class FinishAssertionSteps {
     @Value
     public class Step15 implements Step<Step14, Step16> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            if (clientDataJsonHash() == null) {
-                throw new IllegalArgumentException("Failed to compute hash of client data");
-            }
+            assure(clientDataJsonHash() != null, "Failed to compute hash of client data");
         }
 
         @Override
@@ -554,7 +516,7 @@ public class FinishAssertionSteps {
             return new Step16(username, userHandle, credential, clientDataJsonHash(), allWarnings());
         }
 
-        public byte[] clientDataJsonHash() {
+        public ByteArray clientDataJsonHash() {
             return crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
@@ -562,20 +524,20 @@ public class FinishAssertionSteps {
     @Value
     public class Step16 implements Step<Step15, Step17> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final RegisteredCredential credential;
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            try {
-                crypto.checkSignature(
+            if (!
+                crypto.verifySignature(
                     credential.publicKey,
                     signedBytes(),
                     response.getResponse().getSignature()
-                );
-            } catch (U2fBadInputException e) {
+                )
+            ) {
                 throw new IllegalArgumentException("Invalid assertion signature.");
             }
         }
@@ -585,26 +547,25 @@ public class FinishAssertionSteps {
             return new Step17(username, userHandle, allWarnings());
         }
 
-        public byte[] signedBytes() {
-            return org.bouncycastle.util.Arrays.concatenate(response.getResponse().getAuthenticatorData(), clientDataJsonHash);
+        public ByteArray signedBytes() {
+            return response.getResponse().getAuthenticatorData().concat(clientDataJsonHash);
         }
     }
 
     @Value
     public class Step17 implements Step<Step16, Finished> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
             if (validateSignatureCounter) {
-                if (!signatureCounterValid()) {
-                    throw new IllegalArgumentException(String.format(
-                        "Signature counter must increase. Stored value: %s, received value: %s",
-                        storedSignatureCountBefore(), assertionSignatureCount()
-                    ));
-                }
+                assure(
+                    signatureCounterValid(),
+                    "Signature counter must increase. Stored value: %s, received value: %s",
+                    storedSignatureCountBefore(), assertionSignatureCount()
+                );
             }
         }
 
@@ -632,7 +593,7 @@ public class FinishAssertionSteps {
     @Value
     public class Finished implements Step<Step17, Finished> {
         private final String username;
-        private final String userHandle;
+        private final ByteArray userHandle;
         private final long assertionSignatureCount;
         private final boolean signatureCounterValid;
         private final List<String> prevWarnings;
@@ -652,20 +613,16 @@ public class FinishAssertionSteps {
 
         @Override
         public Optional<AssertionResult> result() {
-            try {
-                return Optional.of(AssertionResult.builder()
-                    .credentialId(response.getRawId())
-                    .signatureCount(assertionSignatureCount)
-                    .signatureCounterValid(signatureCounterValid)
-                    .success(true)
-                    .username(username)
-                    .userHandle(U2fB64Encoding.decode(userHandle))
-                    .warnings(allWarnings())
-                    .build()
-                );
-            } catch (U2fBadInputException e) {
-                throw ExceptionUtil.wrapAndLog(log, "Failed to decode user handle to bytes: " + userHandle, e);
-            }
+            return Optional.of(AssertionResult.builder()
+                .credentialId(response.getId())
+                .signatureCount(assertionSignatureCount)
+                .signatureCounterValid(signatureCounterValid)
+                .success(true)
+                .username(username)
+                .userHandle(userHandle)
+                .warnings(allWarnings())
+                .build()
+            );
         }
 
     }

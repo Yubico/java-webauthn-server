@@ -1,33 +1,25 @@
 package com.yubico.webauthn;
 
 import COSE.CoseException;
-import com.yubico.u2f.attestation.Attestation;
-import com.yubico.u2f.attestation.MetadataService;
-import com.yubico.u2f.crypto.Crypto;
-import com.yubico.u2f.exceptions.U2fBadInputException;
+import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserVerificationRequirement;
-import com.yubico.webauthn.impl.ExtensionsValidation;
-import com.yubico.webauthn.impl.FidoU2fAttestationStatementVerifier;
-import com.yubico.webauthn.impl.KnownX509TrustAnchorsTrustResolver;
-import com.yubico.webauthn.impl.NoneAttestationStatementVerifier;
-import com.yubico.webauthn.impl.PackedAttestationStatementVerifier;
-import com.yubico.webauthn.impl.TokenBindingValidator;
-import com.yubico.webauthn.impl.X5cAttestationStatementVerifier;
 import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,57 +27,18 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import static com.yubico.internal.util.ExceptionUtil.assure;
 import static com.yubico.webauthn.data.AttestationType.NONE;
-
-interface Step<A extends Step<?>> {
-    A nextStep();
-
-    void validate();
-
-    List<String> getPrevWarnings();
-
-    default A next() {
-        validate();
-        return nextStep();
-    }
-
-    default boolean isFinished() {
-        return false;
-    }
-
-    default Optional<RegistrationResult> result() {
-        return Optional.empty();
-    }
-
-    default List<String> getWarnings() {
-        return Collections.emptyList();
-    }
-
-    default List<String> allWarnings() {
-        List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
-        result.addAll(getPrevWarnings());
-        result.addAll(getWarnings());
-        return Collections.unmodifiableList(result);
-    }
-
-    default RegistrationResult run() {
-        if (isFinished()) {
-            return result().get();
-        } else {
-            return next().run();
-        }
-    }
-}
 
 @Builder
 @Slf4j
-public class FinishRegistrationSteps {
+class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
 
     private final PublicKeyCredentialCreationOptions request;
-    private final PublicKeyCredential<AuthenticatorAttestationResponse> response;
-    private final Optional<String> callerTokenBindingId;
+    private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
+    private final Optional<ByteArray> callerTokenBindingId;
     private final List<String> origins;
     private final String rpId;
     private final Crypto crypto;
@@ -109,9 +62,43 @@ public class FinishRegistrationSteps {
         return begin().run();
     }
 
-    private static void assure(boolean condition, String failureMessageTemplate, Object... failureMessageArgs) {
-        if (!condition) {
-            throw new IllegalArgumentException(String.format(failureMessageTemplate, failureMessageArgs));
+    private interface Step<A extends Step<?>> {
+        A nextStep();
+
+        void validate();
+
+        List<String> getPrevWarnings();
+
+        default boolean isFinished() {
+            return false;
+        }
+
+        default Optional<RegistrationResult> result() {
+            return Optional.empty();
+        }
+
+        default List<String> getWarnings() {
+            return Collections.emptyList();
+        }
+
+        default List<String> allWarnings() {
+            List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
+            result.addAll(getPrevWarnings());
+            result.addAll(getWarnings());
+            return Collections.unmodifiableList(result);
+        }
+
+        default A next() {
+            validate();
+            return nextStep();
+        }
+
+        default RegistrationResult run() {
+            if (isFinished()) {
+                return result().get();
+            } else {
+                return next().run();
+            }
         }
     }
 
@@ -149,11 +136,7 @@ public class FinishRegistrationSteps {
         }
 
         public CollectedClientData clientData() {
-            try {
-                return response.getResponse().getCollectedClientData();
-            } catch (IOException | U2fBadInputException e) {
-                throw new IllegalArgumentException("Failed to read client data.");
-            }
+            return response.getResponse().getClientData();
         }
     }
 
@@ -167,15 +150,7 @@ public class FinishRegistrationSteps {
         public void validate() {
             final String type = clientData.getType();
 
-            if (type == null) {
-                final String message = "Missing \"type\" attribute in client data.";
-
-                if (validateTypeAttribute) {
-                    throw new IllegalArgumentException(message);
-                } else {
-                    warnings.add(message);
-                }
-            } else if (!CLIENT_DATA_TYPE.equals(type)) {
+            if (!CLIENT_DATA_TYPE.equals(type)) {
                 final String message = String.format(
                     "The \"type\" in the client data must be exactly \"%s\", was: %s",
                     CLIENT_DATA_TYPE, clientData.getType()
@@ -212,14 +187,10 @@ public class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            try {
-                assure(
-                    Arrays.equals(clientData.getChallenge(), request.getChallenge()),
-                    "Incorrect challenge."
-                );
-            } catch (U2fBadInputException e) {
-                throw new IllegalArgumentException("Challenge is not a valid Bas64URL encoding: " + clientData.getChallengeBase64());
-            }
+            assure(
+                request.getChallenge().equals(clientData.getChallenge()),
+                "Incorrect challenge."
+            );
         }
 
         @Override
@@ -277,14 +248,14 @@ public class FinishRegistrationSteps {
             return new Step8(clientDataJsonHash(), allWarnings());
         }
 
-        public byte[] clientDataJsonHash() {
+        public ByteArray clientDataJsonHash() {
             return crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
 
     @Value
     public class Step8 implements Step<Step9> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final List<String> prevWarnings;
 
         @Override
@@ -304,14 +275,14 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step9 implements Step<Step10> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
             assure(
-                Arrays.equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash(), crypto.hash(rpId)),
+                crypto.hash(rpId).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
                 "Wrong RP ID hash."
             );
         }
@@ -324,7 +295,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step10 implements Step<Step11> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -343,7 +314,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step11 implements Step<Step12> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -362,7 +333,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step12 implements Step<Step13> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -391,7 +362,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step13 implements Step<Step14> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
 
@@ -429,7 +400,7 @@ public class FinishRegistrationSteps {
 
     @Value
     public class Step14 implements Step<Step15> {
-        private final byte[] clientDataJsonHash;
+        private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final AttestationStatementVerifier attestationStatementVerifier;
         private final List<String> prevWarnings;
@@ -444,7 +415,7 @@ public class FinishRegistrationSteps {
 
         @Override
         public Step15 nextStep() {
-            return new Step15(attestation, attestationStatementVerifier, attestationType(), allWarnings());
+            return new Step15(attestation, attestationType(), allWarnings());
         }
 
         public AttestationType attestationType() {
@@ -471,7 +442,6 @@ public class FinishRegistrationSteps {
     @Value
     public class Step15 implements Step<Step16> {
         private final AttestationObject attestation;
-        private final AttestationStatementVerifier attestationStatementVerifier;
         private final AttestationType attestationType;
         private final List<String> prevWarnings;
 
@@ -497,11 +467,7 @@ public class FinishRegistrationSteps {
                     switch (attestation.getFormat()) {
                         case "fido-u2f":
                         case "packed":
-                            try {
-                                return Optional.of(new KnownX509TrustAnchorsTrustResolver(metadataService.get()));
-                            } catch (Exception e) {
-                                return Optional.empty();
-                            }
+                            return metadataService.map(KnownX509TrustAnchorsTrustResolver::new);
                         default:
                             throw new UnsupportedOperationException(String.format(
                                 "Attestation type %s is not supported for attestation statement format \"%s\".",
@@ -554,7 +520,7 @@ public class FinishRegistrationSteps {
             switch (attestationType) {
                 case SELF_ATTESTATION:
                 case NONE:
-                    return allowUntrustedAttestation;
+                    return false;
 
                 case BASIC:
                     return attestationMetadata().filter(Attestation::isTrusted).isPresent();
@@ -564,7 +530,26 @@ public class FinishRegistrationSteps {
         }
 
         public Optional<Attestation> attestationMetadata() {
-            return trustResolver.flatMap(tr -> tr.resolveTrustAnchor(attestation));
+            return trustResolver.flatMap(tr -> {
+                try {
+                    return Optional.of(tr.resolveTrustAnchor(attestation));
+                } catch (CertificateEncodingException e) {
+                    log.debug("Failed to resolve trust anchor for attestation: {}", attestation, e);
+                    return Optional.empty();
+                }
+            });
+        }
+
+        @Override
+        public List<String> getWarnings() {
+            return trustResolver.map(tr -> {
+                try {
+                    tr.resolveTrustAnchor(attestation);
+                    return Collections.<String>emptyList();
+                } catch (CertificateEncodingException e) {
+                    return Collections.singletonList("Failed to resolve trust anchor: " + e);
+                }
+            }).orElseGet(Collections::emptyList);
         }
     }
 
@@ -648,17 +633,17 @@ public class FinishRegistrationSteps {
                 .attestationTrusted(attestationTrusted)
                 .attestationType(attestationType)
                 .attestationMetadata(attestationMetadata)
-                .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestationData().get().getCredentialPublicKeyBytes())
+                .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestationData().get().getCredentialPublicKey())
                 .warnings(allWarnings())
                 .build()
             );
         }
 
         private PublicKeyCredentialDescriptor keyId() {
-            return new PublicKeyCredentialDescriptor(
-                PublicKeyCredentialType.fromString(response.getType()).get(),
-                response.getRawId()
-            );
+            return PublicKeyCredentialDescriptor.builder()
+                .type(response.getType())
+                .id(response.getId())
+                .build();
         }
     }
 

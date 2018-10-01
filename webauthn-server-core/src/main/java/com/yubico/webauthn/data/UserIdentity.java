@@ -1,13 +1,13 @@
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.u2f.data.messages.key.util.U2fB64Encoding;
-import com.yubico.webauthn.util.BinaryUtil;
 import java.net.URL;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.NonNull;
 import lombok.Value;
 
 
@@ -15,6 +15,7 @@ import lombok.Value;
  * Describes a user account, with which a public key credential is to be associated.
  */
 @Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class UserIdentity implements PublicKeyCredentialEntity {
 
@@ -23,12 +24,14 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * <p>
      * For example: "john.p.smith@example.com" or "+14255551234".
      */
-    private String name;
+    @NonNull
+    private final String name;
 
     /**
      * A friendly name for the user account (e.g. "Ryan A. Smith").
      */
-    private String displayName;
+    @NonNull
+    private final String displayName;
 
     /**
      * An identifier for the account, specified by the Relying Party.
@@ -37,24 +40,26 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * credentials - an authenticator will never contain more than one credential for a given Relying Party under the
      * same id.
      */
-    @JsonIgnore
-    private byte[] id;
+    @NonNull
+    private final ByteArray id;
 
     /**
      * A URL which resolves to an image associated with the user account.
      * <p>
      * For example, this could be the user's avatar.
      */
+    @NonNull
     @Builder.Default
-    private Optional<URL> icon = Optional.empty();
+    private final Optional<URL> icon = Optional.empty();
 
-    public byte[] getId() {
-        return BinaryUtil.copy(id);
-    }
-
-    @JsonProperty("id")
-    public String getIdBase64() {
-        return U2fB64Encoding.encode(id);
+    @JsonCreator
+    private UserIdentity(
+        @NonNull @JsonProperty("name") String name,
+        @NonNull @JsonProperty("displayName") String displayName,
+        @NonNull @JsonProperty("id") ByteArray id,
+        @JsonProperty("icon") URL icon
+    ) {
+        this(name, displayName, id, Optional.ofNullable(icon));
     }
 
 }
