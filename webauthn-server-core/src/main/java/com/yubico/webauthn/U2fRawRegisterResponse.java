@@ -31,31 +31,31 @@ class U2fRawRegisterResponse {
      * The (uncompressed) x,y-representation of a curve point on the P-256
      * NIST elliptic curve.
      */
-    final ByteArray userPublicKey;
+    private final ByteArray userPublicKey;
 
     /**
      * A handle that allows the U2F token to identify the generated key pair.
      */
-    final ByteArray keyHandle;
-    final X509Certificate attestationCertificate;
+    private final ByteArray keyHandle;
+    private final X509Certificate attestationCertificate;
 
     /**
      * A ECDSA signature (on P-256)
      */
-    final ByteArray signature;
+    private final ByteArray signature;
 
-    public U2fRawRegisterResponse(ByteArray userPublicKey,
-                                  ByteArray keyHandle,
-                                  X509Certificate attestationCertificate,
-                                  ByteArray signature) {
+    U2fRawRegisterResponse(ByteArray userPublicKey,
+                           ByteArray keyHandle,
+                           X509Certificate attestationCertificate,
+                           ByteArray signature) {
         this(userPublicKey, keyHandle, attestationCertificate, signature, new BouncyCastleCrypto());
     }
 
-    public U2fRawRegisterResponse(ByteArray userPublicKey,
-                                  ByteArray keyHandle,
-                                  X509Certificate attestationCertificate,
-                                  ByteArray signature,
-                                  Crypto crypto) {
+    private U2fRawRegisterResponse(ByteArray userPublicKey,
+                                   ByteArray keyHandle,
+                                   X509Certificate attestationCertificate,
+                                   ByteArray signature,
+                                   Crypto crypto) {
         this.userPublicKey = userPublicKey;
         this.keyHandle = keyHandle;
         this.attestationCertificate = attestationCertificate;
@@ -63,12 +63,12 @@ class U2fRawRegisterResponse {
         this.crypto = crypto;
     }
 
-    public boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
+    boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
         ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
         return crypto.verifySignature(attestationCertificate, signedBytes, signature);
     }
 
-    static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
+    private static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
         ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
         encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
         encoded.write(appIdHash.getBytes());
