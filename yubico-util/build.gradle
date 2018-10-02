@@ -2,6 +2,8 @@ description = 'Yubico internal utilities'
 
 apply plugin: 'scala'
 
+project.ext.publishMe = true
+
 dependencies {
 
   compile(
