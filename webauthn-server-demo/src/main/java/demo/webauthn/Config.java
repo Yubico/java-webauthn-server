@@ -100,26 +100,33 @@ public class Config {
         logger.debug("RP ID: {}", id);
         logger.debug("RP icon: {}", icon);
 
-        final RelyingPartyIdentity result;
+        RelyingPartyIdentity.RelyingPartyIdentityBuilder resultBuilder = DEFAULT_RP_ID.toBuilder();
 
-        if (name == null || id == null) {
-            logger.debug("RP name or ID not given - using default.");
-            result = DEFAULT_RP_ID;
+        if (name == null) {
+            logger.debug("RP name not given - using default.");
         } else {
-            if (icon == null) {
-                result = RelyingPartyIdentity.builder().name(name).id(id).build();
-            } else {
-                try {
-                result = RelyingPartyIdentity.builder().name(name).id(id).icon(Optional.of(new URL(icon))).build();
-                } catch (MalformedURLException e) {
-                    logger.error("Invalid icon URL: {}", icon, e);
-                    throw e;
-                }
+            resultBuilder.name(name);
+        }
+
+        if (id == null) {
+            logger.debug("RP ID not given - using default.");
+        } else {
+            resultBuilder.id(id);
+        }
+
+        if (icon == null) {
+            logger.debug("RP icon not given - using none.");
+        } else {
+            try {
+            resultBuilder.icon(Optional.of(new URL(icon)));
+            } catch (MalformedURLException e) {
+                logger.error("Invalid icon URL: {}", icon, e);
+                throw e;
             }
         }
 
+        final RelyingPartyIdentity result = resultBuilder.build();
         logger.info("RP identity: {}", result);
-
         return result;
     }
 
