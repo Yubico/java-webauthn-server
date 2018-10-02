@@ -16,7 +16,8 @@ plugins {
 }
 
 
-project.ext.publishEnabled = System.env.CI != 'true' && project.hasProperty('ossrhUsername')
+project.ext.publishEnabled = System.env.CI != 'true' &&
+  project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 
 if (publishEnabled) {
   nexusStaging {
@@ -35,17 +36,7 @@ allprojects  {
 
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'java'
-  apply plugin: 'maven'
-  apply plugin: 'signing'
   apply plugin: 'idea'
-
-  if (publishEnabled) {
-    signing {
-      useGpgCmd()
-      sign configurations.archives
-    }
-    signArchives.dependsOn check
-  }
 
   group = 'com.yubico'
 
@@ -102,6 +93,15 @@ subprojects {
   }
 
   if (publishEnabled) {
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    signing {
+      useGpgCmd()
+      sign configurations.archives
+    }
+    signArchives.dependsOn check
+
     uploadArchives {
       repositories {
         mavenDeployer {
