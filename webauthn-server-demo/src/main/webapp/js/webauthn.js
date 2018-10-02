@@ -126,6 +126,7 @@
           authenticatorData: base64url.fromByteArray(response.response.authenticatorData),
           clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
           signature: base64url.fromByteArray(response.response.signature),
+          userHandle: response.response.userHandle && base64url.fromByteArray(response.response.userHandle),
         },
         clientExtensionResults,
       };
