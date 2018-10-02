@@ -68,6 +68,7 @@ gretty {
 
 task dockerPrepare(type: Sync) {
   from file('docker')
+  from file('keystore.jks')
   from(war.outputs) {
     rename ~/${war.baseName}.*\.${war.extension}/, "${war.baseName}.${war.extension}"
   }
