@@ -10,6 +10,10 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
+/**
+ * Standalone Java application launcher that runs the demo server with the API
+ * but no static resources (i.e., no web GUI)
+ */
 public class EmbeddedServer {
 
     public static void main(String[] args) throws Exception {
