@@ -17,6 +17,7 @@ plugins {
 
 
 project.ext.publishEnabled = System.env.CI != 'true' &&
+  project.hasProperty('yubicoPublish') && project.yubicoPublish &&
   project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 
 if (publishEnabled) {
