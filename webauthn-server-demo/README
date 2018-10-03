@@ -71,48 +71,88 @@ with Yubico device metadata.
 
 == Usage
 
-=== 1. Clone
- git clone https://github.com/Yubico/java-webauthn-server.git
+This subproject includes two ways to run the demo server:
 
-=== 2. Run
- ./gradlew :webauthn-server-demo:appRun
+- As a `.war` archive to be deployed in any Java web server
+- As a standalone Java executable
 
-=== 3. Try it out
-Then point a WebAuthn compatible web browser to
-link:https://localhost:8443/webauthn/[https://localhost:8443/webauthn/].
+
+=== `.war` archive
+
+The `.war` archive includes a simple web GUI hosted at `/`, relative to the
+context root of the deployed `.war` application, which communicates with the
+server via a REST API served at `/api/v1/`.
+
+To build it, run
+
+  $ ../gradlew war
+
+To build and run it via Gradle, run
+
+  $ ../gradlew appRun
+
+This will serve the application under `https://localhost:8443/webauthn/` by
+default.
 
 NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
 certificate. This will cause your browser to show a warning, which is safe to
-bypass.
+bypass. The dummy certificate is not included in the `.war` artifact; it is only
+used when running via Gradle.
 
 
-== Standalone REST server
+=== Standalone Java executable
 
- 1. Build the standalone REST server distribution:
+The standalone Java executable has the main class
+link:src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
+This server serves only the REST API at `/v1/`, and does not include the web
+GUI.
 
-     ../gradlew distTar
+To build it, run one of the following:
 
- 2. Unpack `build/distributions/webauthn-server-demo-X.Y.Z.tar` somewhere
+  $ ../gradlew distTar
+  $ ../gradlew distZip
 
- 3. Run `webauthn-server-demo-X.Y.Z/bin/webauthn-server-demo`. You should also
-    set the following environment variables:
+This will build an archive which can be unpacked and run anywhere with a Java
+environment as:
 
-    - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
-      `YUBICO_WEBAUTHN_PORT=8081`
+  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo
+  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo.bat
 
-    - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
-      server will accept requests for. Example:
-      `YUBICO_WEBAUTHN_ALLOWED_ORIGINS=http://demo.yubico.com:8080`
+To build and run it via Gradle, run:
 
-    - `YUBICO_WEBAUTHN_RP_ID`: The https://www.w3.org/TR/webauthn/#rp-id[RP ID]
-      the server will report.  Example: `YUBICO_WEBAUTHN_RP_ID=demo.yubico.com`
+  $ ./gradlew run
 
-    - `YUBICO_WEBAUTHN_RP_NAME`: The human-readable
-      https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP
-      name] the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
-      Authentication demo'`
+This will serve the application under `http://localhost:8080/` by default.
 
-    - `YUBICO_WEBAUTHN_RP_ICON`: An optional URL to an
-      https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-icon[icon]
-      to represent this Relying Party. Example:
-      `YUBICO_WEBAUTHN_RP_ICON='https://www.yubico.com/wp-content/uploads/2014/09/favicon.ico'`
+HTTPS support for this mode is not yet implemented.
+
+
+=== Configuration
+
+Both modes of running the server accept the following environment variables for
+configuration. Note that if running via Gradle, you may need to disable the
+Gradle daemon (`--no-daemon`) in order for the server process to have the
+correct environment.
+
+  - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
+    `YUBICO_WEBAUTHN_PORT=8081`
+
+    This is ignored when running as a `.war` artifact, since the port is
+    controlled by the parent web server.
+
+  - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
+    server will accept requests for. Example:
+    `YUBICO_WEBAUTHN_ALLOWED_ORIGINS=http://demo.yubico.com:8080`
+
+  - `YUBICO_WEBAUTHN_RP_ID`: The https://www.w3.org/TR/webauthn/#rp-id[RP ID]
+    the server will report.  Example: `YUBICO_WEBAUTHN_RP_ID=demo.yubico.com`
+
+  - `YUBICO_WEBAUTHN_RP_NAME`: The human-readable
+    https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP name]
+    the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
+    Authentication demo'`
+
+  - `YUBICO_WEBAUTHN_RP_ICON`: An optional URL to an
+    https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-icon[icon] to
+    represent this Relying Party. Example:
+    `YUBICO_WEBAUTHN_RP_ICON='https://www.yubico.com/wp-content/uploads/2014/09/favicon.ico'`
