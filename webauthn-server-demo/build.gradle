@@ -17,6 +17,10 @@ apply from: 'gretty-2.0.0.plugin'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
+configurations {
+  forJdk10
+}
+
 dependencies {
 
   compile(
@@ -31,7 +35,13 @@ dependencies {
     'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
   )
 
+  forJdk10(
+    'javax.activation:activation:1.1.1',
+    'javax.xml.bind:jaxb-api:2.3.0',
+  )
+
   runtime(
+    configurations.forJdk10,
     'ch.qos.logback:logback-classic:1.2.3',
     'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
     'org.glassfish.jersey.inject:jersey-hk2:2.26',
