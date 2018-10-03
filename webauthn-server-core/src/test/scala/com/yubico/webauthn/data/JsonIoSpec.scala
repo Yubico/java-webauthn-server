@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
@@ -21,6 +22,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
 
   def json: ObjectMapper = new ObjectMapper()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+    .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
     .setSerializationInclusion(Include.NON_ABSENT)
     .registerModule(new Jdk8Module())
 

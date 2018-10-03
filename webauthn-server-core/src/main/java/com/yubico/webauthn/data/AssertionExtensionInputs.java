@@ -26,7 +26,6 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     }
 
     @Override
-    @JsonIgnore
     public Set<String> getExtensionIds() {
         Set<String> ids = new HashSet<>();
 
