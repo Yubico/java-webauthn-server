@@ -163,7 +163,7 @@ public class WebAuthnRestResource {
     @POST
     public Response finishU2fRegistration(@NonNull String responseJson) {
         logger.trace("finishRegistration responseJson: {}", responseJson);
-        Either<List<String>, WebAuthnServer.SuccessfulU2fRegistrationResult> result = server.insecureFinishU2fRegistration(responseJson);
+        Either<List<String>, WebAuthnServer.SuccessfulU2fRegistrationResult> result = server.finishU2fRegistration(responseJson);
         return finishResponse(
             result,
             "U2F registration failed; further error message(s) were unfortunately lost to an internal server error.",

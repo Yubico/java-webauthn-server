@@ -8,6 +8,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.ChallengeGenerator;
@@ -17,6 +18,7 @@ import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
+import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataResolver;
 import com.yubico.webauthn.attestation.MetadataService;
@@ -313,25 +315,13 @@ public class WebAuthnServer {
         }
     }
 
-    /**
-     * NOTE: This method does not validate the result. This sole purpose of
-     * this feature is to enable testing that the "appid" extension works. This
-     * requires a credential registered via the U2F API instead of the WebAuthn
-     * API. Since WebAuthn is backwards compatible only with U2F
-     * authentication, not registration, this method is used to sidestep the
-     * WebAuthn module and just add the credential to the database of
-     * registrations.
-     *
-     * This is NOT an example of good code. DO NOT base any code off this as an
-     * example.
-     */
-    public Either<List<String>, SuccessfulU2fRegistrationResult> insecureFinishU2fRegistration(String responseJson) {
-        logger.trace("insecureFinishU2fRegistration responseJson: {}", responseJson);
+    public Either<List<String>, SuccessfulU2fRegistrationResult> finishU2fRegistration(String responseJson) {
+        logger.trace("finishU2fRegistration responseJson: {}", responseJson);
         U2fRegistrationResponse response = null;
         try {
             response = jsonMapper.readValue(responseJson, U2fRegistrationResponse.class);
         } catch (IOException e) {
-            logger.error("JSON error in insecureFinishU2fRegistration; responseJson: {}", responseJson, e);
+            logger.error("JSON error in finishU2fRegistration; responseJson: {}", responseJson, e);
             return Either.left(Arrays.asList("Registration failed!", "Failed to decode response object.", e.getMessage()));
         }
 
@@ -339,14 +329,24 @@ public class WebAuthnServer {
         registerRequestStorage.invalidate(response.getRequestId());
 
         if (request == null) {
-            logger.debug("fail insecureFinishU2fRegistration responseJson: {}", responseJson);
+            logger.debug("fail finishU2fRegistration responseJson: {}", responseJson);
             return Either.left(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
+
+            try {
+                ExceptionUtil.assure(
+                    U2fVerifier.verify(rp.getAppId().get(), request, response),
+                    "Failed to verify signature."
+                );
+            } catch (Exception e) {
+                return Either.left(Arrays.asList("Failed to verify signature.", e.getMessage()));
+            }
+
             X509Certificate attestationCert = null;
             try {
-                attestationCert = CertificateParser.parseDer(response.getCredential().getU2fResponse().getAttestationCert().getBytes());
+                attestationCert = CertificateParser.parseDer(response.getCredential().getU2fResponse().getAttestationCertAndSignature().getBytes());
             } catch (CertificateException e) {
-                logger.error("Failed to parse attestation certificate: {}", response.getCredential().getU2fResponse().getAttestationCert(), e);
+                logger.error("Failed to parse attestation certificate: {}", response.getCredential().getU2fResponse().getAttestationCertAndSignature(), e);
             }
 
             Optional<Attestation> attestation = Optional.empty();
@@ -377,7 +377,7 @@ public class WebAuthnServer {
                         result
                     ),
                     result.isAttestationTrusted(),
-                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCert()))
+                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCertAndSignature()))
                 )
             );
         }
