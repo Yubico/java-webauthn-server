@@ -241,6 +241,7 @@ public class WebAuthnRestResource {
     }
     private final class StartAuthenticatedActionActions {
         public final URL finish = uriInfo.getAbsolutePathBuilder().path("finish").build().toURL();
+        public final URL finishU2f = uriInfo.getAbsolutePathBuilder().path("finish-u2f").build().toURL();
         private StartAuthenticatedActionActions() throws MalformedURLException {
         }
     }
@@ -277,6 +278,12 @@ public class WebAuthnRestResource {
     @POST
     public Response finishAddCredential(@NonNull String responseJson) {
         return finishRegistration(responseJson);
+    }
+
+    @Path("action/add-credential/finish/finish-u2f")
+    @POST
+    public Response finishU2fAddCredential(@NonNull String responseJson) {
+        return finishU2fRegistration(responseJson);
     }
 
     @Path("action/deregister")
