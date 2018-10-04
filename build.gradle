@@ -15,8 +15,9 @@ plugins {
   id 'net.researchgate.release' version '2.4.0'
 }
 
+project.ext.isCiBuild = System.env.CI == 'true'
 
-project.ext.publishEnabled = System.env.CI != 'true' &&
+project.ext.publishEnabled = !isCiBuild &&
   project.hasProperty('yubicoPublish') && project.yubicoPublish &&
   project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 
