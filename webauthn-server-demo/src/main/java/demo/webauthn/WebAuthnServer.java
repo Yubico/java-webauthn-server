@@ -339,6 +339,7 @@ public class WebAuthnServer {
                     "Failed to verify signature."
                 );
             } catch (Exception e) {
+                logger.debug("Failed to verify U2F signature.", e);
                 return Either.left(Arrays.asList("Failed to verify signature.", e.getMessage()));
             }
 
