@@ -103,7 +103,7 @@ used when running via Gradle.
 === Standalone Java executable
 
 The standalone Java executable has the main class
-link:src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
 This server serves only the REST API at `/v1/`, and does not include the web
 GUI.
 
