@@ -61,6 +61,10 @@ allprojects  {
 
   test {
     failFast = true
+
+    testLogging {
+      showStandardStreams = isCiBuild
+    }
   }
 }
 
