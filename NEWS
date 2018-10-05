@@ -1,3 +1,11 @@
+== Version 0.4.0 (unreleased) ==
+
+Breaking changes:
+
+* Field `StartRegistrationOptions.requireResidentKey: boolean` replaced with
+  field `authenticatorSelection: Optional<AuthenticatorSelectionCriteria>`
+
+
 == Version 0.3.0 ==
 
 * Major API overhaul; public API changes include but are not limited to:

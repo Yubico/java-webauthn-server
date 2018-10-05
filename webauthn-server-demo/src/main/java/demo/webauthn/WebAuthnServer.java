@@ -29,6 +29,7 @@ import com.yubico.webauthn.attestation.resolver.SimpleResolverWithEquality;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -157,7 +158,10 @@ public class WebAuthnServer {
                             .id(challengeGenerator.generateChallenge())
                             .build()
                         )
-                        .requireResidentKey(requireResidentKey)
+                        .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
+                            .requireResidentKey(requireResidentKey)
+                            .build()
+                        ))
                         .build()
                 )
             );
@@ -195,7 +199,10 @@ public class WebAuthnServer {
                     rp.startRegistration(
                         StartRegistrationOptions.builder()
                             .user(existingUser)
-                            .requireResidentKey(requireResidentKey)
+                            .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
+                                .requireResidentKey(requireResidentKey)
+                                .build()
+                            ))
                             .build()
                     )
                 );
