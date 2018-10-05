@@ -1,3 +1,11 @@
+== Version 0.4.0 ==
+
+Breaking changes:
+
+* Field `StartRegistrationOptions.requireResidentKey: boolean` replaced with
+  field `authenticatorSelection: Optional<AuthenticatorSelectionCriteria>`
+
+
 == Version 0.3.0 ==
 
 * Major API overhaul; public API changes include but are not limited to:
@@ -25,10 +33,6 @@
     failures
  ** Class `MetadataResolver` replaced with interface
  ** Constructor `CollectedClientData(JsonNode)` deleted
- ** Type of fields `StartAssertionOptions.extensions`,
-    `StartRegistrationOptions.extensions` and
-    `PublicKeyCredential.clientExtensionOutputs` narrowed from `JsonNode` to
-    `ObjectNode`
  ** Parameters `StartRegistrationOptions.excludeCredentials` and
     `StartAssertionOptions.allowCredentials` deleted; they are now discovered
     automatically from the `CredentialRepository`. If custom control over

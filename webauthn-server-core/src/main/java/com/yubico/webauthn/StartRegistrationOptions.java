@@ -1,7 +1,9 @@
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import com.yubico.webauthn.data.UserIdentity;
+import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -15,9 +17,10 @@ public class StartRegistrationOptions {
 
     @NonNull
     @Builder.Default
-    private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
+    private final Optional<AuthenticatorSelectionCriteria> authenticatorSelection = Optional.empty();
 
+    @NonNull
     @Builder.Default
-    private final boolean requireResidentKey = false;
+    private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
 
 }

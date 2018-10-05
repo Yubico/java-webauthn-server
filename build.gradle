@@ -4,7 +4,7 @@ buildscript {
   }
   dependencies {
     configurations.maybeCreate('pitest')
-    classpath 'com.cinnober.gradle:semver-git:2.3.1'
+    classpath 'com.cinnober.gradle:semver-git:2.4.0'
     classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.3.0'
     pitest 'org.pitest:pitest-command-line:1.4.2' // Transitive dependency from pitest plugin
   }
@@ -15,8 +15,11 @@ plugins {
   id 'net.researchgate.release' version '2.4.0'
 }
 
+project.ext.isCiBuild = System.env.CI == 'true'
 
-project.ext.publishEnabled = System.env.CI != 'true' && project.hasProperty('ossrhUsername')
+project.ext.publishEnabled = !isCiBuild &&
+  project.hasProperty('yubicoPublish') && project.yubicoPublish &&
+  project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 
 if (publishEnabled) {
   nexusStaging {
@@ -31,21 +34,12 @@ task wrapper(type: Wrapper) {
 }
 
 allprojects  {
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT"
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+  ext.dirtyMarker = "-DIRTY"
 
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'java'
-  apply plugin: 'maven'
-  apply plugin: 'signing'
   apply plugin: 'idea'
-
-  if (publishEnabled) {
-    signing {
-      useGpgCmd()
-      sign configurations.archives
-    }
-    signArchives.dependsOn check
-  }
 
   group = 'com.yubico'
 
@@ -67,6 +61,10 @@ allprojects  {
 
   test {
     failFast = true
+
+    testLogging {
+      showStandardStreams = isCiBuild
+    }
   }
 }
 
@@ -101,7 +99,17 @@ subprojects {
 
   }
 
-  if (publishEnabled) {
+  if (publishEnabled && project.hasProperty('publishMe') && project.publishMe) {
+
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    signing {
+      useGpgCmd()
+      sign configurations.archives
+    }
+    signArchives.dependsOn check
+
     uploadArchives {
       repositories {
         mavenDeployer {

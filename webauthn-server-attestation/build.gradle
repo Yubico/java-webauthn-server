@@ -2,6 +2,8 @@ description = 'Yubico WebAuthn attestation subsystem'
 
 apply plugin: 'java'
 
+project.ext.publishMe = true
+
 dependencies {
 
   compile(

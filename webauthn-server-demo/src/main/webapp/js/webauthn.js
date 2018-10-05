@@ -99,6 +99,15 @@
 
   /** Turn a PublicKeyCredential object into a plain object with base64url encoded binary values */
   function responseToObject(response) {
+
+    let clientExtensionResults = {};
+
+    try {
+      clientExtensionResults = response.getClientExtensionResults();
+    } catch (e) {
+      console.error('getClientExtensionResults failed', e);
+    }
+
     if (response.response.attestationObject) {
       return {
         type: response.type,
@@ -107,6 +116,7 @@
           attestationObject: base64url.fromByteArray(response.response.attestationObject),
           clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
         },
+        clientExtensionResults,
       };
     } else {
       return {
@@ -116,7 +126,9 @@
           authenticatorData: base64url.fromByteArray(response.response.authenticatorData),
           clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
           signature: base64url.fromByteArray(response.response.signature),
+          userHandle: response.response.userHandle && base64url.fromByteArray(response.response.userHandle),
         },
+        clientExtensionResults,
       };
     }
   }

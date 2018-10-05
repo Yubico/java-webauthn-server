@@ -19,6 +19,7 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
     private final ByteArray clientDataJSON;
 
     @NonNull
+    @JsonIgnore
     private final transient AttestationObject attestation;
 
     @NonNull

@@ -1,8 +1,8 @@
 == java-webauthn-server
 
 _Note: This is a work in progress. The https://www.w3.org/TR/webauthn/[Web
-Authentication standard] is not yet finished, and any part of this project may
-change at any time._
+Authentication standard] is not yet finished, and additional pre-1.0 releases of
+this library may introduce breaking API changes._
 
 image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
@@ -18,3 +18,39 @@ authenticators and authenticating registered authenticators.
 
 See link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo
 server, which stores authenticator registrations temporarily in memory.
+
+
+=== Building
+
+Use the included
+https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle wrapper] to
+build the `.jar` artifact:
+
+```
+$ ./gradlew :webauthn-server-core:jar
+```
+
+The output is built in the `webauthn-server-core/build/libs/` directory, and the
+version is derived from the most recent Git tag. Builds done on a tagged commit
+will have a plain `x.y.z` version number, while a build on any other commit will
+result in a version number containing the abbreviated commit hash.
+
+Although the `.jar` artifact of this project can be used in JDK version 8 or
+later, the project as a whole currently builds only in JDK 8. This is because
+most tests are written in Scala, which
+https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-9\--up-compatibility-notes[currently
+only supports JDK 8]. Therefore compiling the tests can currently only be done
+in JDK 8, and so `./gradlew build` and similar tasks will fail in JDKs other
+than 8.
+
+To run the tests (requires JDK 8):
+
+```
+$ ./gradlew check
+```
+
+To run the http://pitest.org/[PIT mutation tests] (requires JDK 8):
+
+```
+$ ./gradlew pitest
+```

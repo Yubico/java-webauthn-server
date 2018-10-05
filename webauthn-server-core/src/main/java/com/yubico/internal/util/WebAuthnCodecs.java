@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -28,6 +29,7 @@ public class WebAuthnCodecs {
     public static ObjectMapper json() {
         return new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
             .setSerializationInclusion(Include.NON_ABSENT)
             .setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
             .registerModule(new Jdk8Module())
@@ -84,7 +86,7 @@ public class WebAuthnCodecs {
         Map<Long, Object> coseKey = new HashMap<>();
 
         coseKey.put(1L, 2L); // Key type: EC
-        coseKey.put(3L, javaAlgorithmNameToCoseAlgorithmIdentifier("ES256").getId());
+        coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId());
         coseKey.put(-1L, 1L); // Curve: P-256
         coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + 32)); // x
         coseKey.put(-3L, Arrays.copyOfRange(keyBytes, start + 32, start + 64)); // y
@@ -98,19 +100,6 @@ public class WebAuthnCodecs {
 
     public static ECPublicKey importCoseP256PublicKey(ByteArray key) throws CoseException, IOException {
         return new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.getBytes())));
-    }
-
-    public static COSEAlgorithmIdentifier javaAlgorithmNameToCoseAlgorithmIdentifier(String alg) {
-        switch (alg) {
-            case "ECDSA":
-            case "ES256":
-                return COSEAlgorithmIdentifier.ES256;
-
-            case "RS256":
-                return COSEAlgorithmIdentifier.RS256;
-        }
-
-        throw new IllegalArgumentException("Unknown algorithm: " + alg);
     }
 
 }

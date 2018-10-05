@@ -11,17 +11,20 @@ public class U2fCredentialResponse {
 
     private final ByteArray keyHandle;
     private final ByteArray publicKey;
-    private final ByteArray attestationCert;
+    private final ByteArray attestationCertAndSignature;
+    private final ByteArray clientDataJSON;
 
     @JsonCreator
     public U2fCredentialResponse(
         @NonNull @JsonProperty("keyHandle") ByteArray keyHandle,
         @NonNull@JsonProperty("publicKey") ByteArray publicKey,
-        @NonNull@JsonProperty("attestationCert") ByteArray attestationCert
+        @NonNull@JsonProperty("attestationCertAndSignature") ByteArray attestationCertAndSignature,
+        @NonNull@JsonProperty("clientDataJSON") ByteArray clientDataJSON
     ) {
         this.keyHandle = keyHandle;
         this.publicKey = publicKey;
-        this.attestationCert = attestationCert;
+        this.attestationCertAndSignature = attestationCertAndSignature;
+        this.clientDataJSON = clientDataJSON;
     }
 
 }

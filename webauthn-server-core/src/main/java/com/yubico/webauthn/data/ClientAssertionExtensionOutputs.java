@@ -26,7 +26,6 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     }
 
     @Override
-    @JsonIgnore
     public Set<String> getExtensionIds() {
         Set<String> ids = new HashSet<>();
 

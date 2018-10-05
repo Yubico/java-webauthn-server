@@ -6,7 +6,6 @@ import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
-import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
@@ -68,11 +67,7 @@ public class RelyingParty {
             .excludeCredentials(
                 Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
             )
-            .authenticatorSelection(Optional.of(
-                AuthenticatorSelectionCriteria.builder()
-                    .requireResidentKey(startRegistrationOptions.isRequireResidentKey())
-                    .build()
-            ))
+            .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .attestation(attestationConveyancePreference.orElse(AttestationConveyancePreference.DEFAULT))
             .extensions(startRegistrationOptions.getExtensions())
             .build();

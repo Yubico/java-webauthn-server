@@ -11,12 +11,7 @@ package com.yubico.webauthn;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
-import com.yubico.internal.util.ByteInputStream;
-import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.exception.Base64UrlException;
-import java.io.IOException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,7 +22,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 class U2fRawRegisterResponse {
-    static final byte REGISTRATION_RESERVED_BYTE_VALUE = (byte) 0x05;
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
     @EqualsAndHashCode.Exclude
@@ -37,31 +31,31 @@ class U2fRawRegisterResponse {
      * The (uncompressed) x,y-representation of a curve point on the P-256
      * NIST elliptic curve.
      */
-    final ByteArray userPublicKey;
+    private final ByteArray userPublicKey;
 
     /**
      * A handle that allows the U2F token to identify the generated key pair.
      */
-    final ByteArray keyHandle;
-    final X509Certificate attestationCertificate;
+    private final ByteArray keyHandle;
+    private final X509Certificate attestationCertificate;
 
     /**
      * A ECDSA signature (on P-256)
      */
-    final ByteArray signature;
+    private final ByteArray signature;
 
-    public U2fRawRegisterResponse(ByteArray userPublicKey,
-                                  ByteArray keyHandle,
-                                  X509Certificate attestationCertificate,
-                                  ByteArray signature) {
+    U2fRawRegisterResponse(ByteArray userPublicKey,
+                           ByteArray keyHandle,
+                           X509Certificate attestationCertificate,
+                           ByteArray signature) {
         this(userPublicKey, keyHandle, attestationCertificate, signature, new BouncyCastleCrypto());
     }
 
-    public U2fRawRegisterResponse(ByteArray userPublicKey,
-                                  ByteArray keyHandle,
-                                  X509Certificate attestationCertificate,
-                                  ByteArray signature,
-                                  Crypto crypto) {
+    private U2fRawRegisterResponse(ByteArray userPublicKey,
+                                   ByteArray keyHandle,
+                                   X509Certificate attestationCertificate,
+                                   ByteArray signature,
+                                   Crypto crypto) {
         this.userPublicKey = userPublicKey;
         this.keyHandle = keyHandle;
         this.attestationCertificate = attestationCertificate;
@@ -69,37 +63,12 @@ class U2fRawRegisterResponse {
         this.crypto = crypto;
     }
 
-    static U2fRawRegisterResponse fromBase64(String rawDataBase64, Crypto crypto) throws U2fBadInputException, Base64UrlException {
-        ByteInputStream bytes = new ByteInputStream(ByteArray.fromBase64Url(rawDataBase64).getBytes());
-        try {
-            byte reservedByte = bytes.readSigned();
-            if (reservedByte != REGISTRATION_RESERVED_BYTE_VALUE) {
-                throw new U2fBadInputException(
-                        "Incorrect value of reserved byte. Expected: " + REGISTRATION_RESERVED_BYTE_VALUE +
-                                ". Was: " + reservedByte
-                );
-            }
-
-            return new U2fRawRegisterResponse(
-                    new ByteArray(bytes.read(65)),
-                    new ByteArray(bytes.read(bytes.readUnsigned())),
-                    CertificateParser.parseDer(bytes),
-                    new ByteArray(bytes.readAll()),
-                    crypto
-            );
-        } catch (CertificateException e) {
-            throw new U2fBadInputException("Malformed attestation certificate", e);
-        } catch (IOException e) {
-            throw new U2fBadInputException("Truncated registration data", e);
-        }
-    }
-
-    public boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
+    boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
         ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
         return crypto.verifySignature(attestationCertificate, signedBytes, signature);
     }
 
-    static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
+    private static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
         ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
         encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
         encoded.write(appIdHash.getBytes());
