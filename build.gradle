@@ -29,7 +29,7 @@ if (publishEnabled) {
   }
 }
 
-task wrapper(type: Wrapper) {
+wrapper {
   gradleVersion = '4.8'
 }
 
