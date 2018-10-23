@@ -47,18 +47,18 @@ public class AuthenticatorData {
     @NonNull
     private final transient Optional<CBORObject> extensions;
 
-    private static final int RpIdHashLength = 32;
-    private static final int FlagsLength = 1;
-    private static final int CounterLength = 4;
-    private static final int FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength;
+    private static final int RP_ID_HASH_LENGTH = 32;
+    private static final int FLAGS_LENGTH = 1;
+    private static final int COUNTER_LENGTH = 4;
+    private static final int FIXED_LENGTH_PART_END_INDEX = RP_ID_HASH_LENGTH + FLAGS_LENGTH + COUNTER_LENGTH;
 
     @JsonCreator
     public AuthenticatorData(@NonNull ByteArray bytes) {
         ExceptionUtil.assure(
-            bytes.size() >= FixedLengthPartEndIndex,
+            bytes.size() >= FIXED_LENGTH_PART_END_INDEX,
             "%s byte array must be at least %d bytes, was %d: %s",
             AuthenticatorData.class.getSimpleName(),
-            FixedLengthPartEndIndex,
+            FIXED_LENGTH_PART_END_INDEX,
             bytes.size(),
             bytes.getBase64Url()
         );
@@ -72,13 +72,13 @@ public class AuthenticatorData {
         if (flags.AT) {
             VariableLengthParseResult parseResult = parseAttestationData(
                 flags,
-                Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)
+                Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)
             );
             attestationData = parseResult.getAttestationData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
             attestationData = Optional.empty();
-            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)));
+            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)));
         } else {
             attestationData = Optional.empty();
             extensions = Optional.empty();
@@ -90,15 +90,15 @@ public class AuthenticatorData {
      */
     @JsonProperty("rpIdHash")
     public ByteArray getRpIdHash() {
-        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), 0, RpIdHashLength));
+        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), 0, RP_ID_HASH_LENGTH));
     }
 
     /**
      * The 32-bit unsigned signature counter.
      */
     public long getSignatureCounter() {
-        final int start = RpIdHashLength + FlagsLength;
-        final int end = start + CounterLength;
+        final int start = RP_ID_HASH_LENGTH + FLAGS_LENGTH;
+        final int end = start + COUNTER_LENGTH;
         return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), start, end));
     }
 
