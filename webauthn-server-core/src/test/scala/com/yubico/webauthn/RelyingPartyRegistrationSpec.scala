@@ -1150,8 +1150,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
                 }
 
-                it("Subject-CN: No stipulation.") {
-                  // Nothing to test
+                describe("Subject-CN: No stipulation.") {
+                  it("Nothing to test") {}
                 }
               }
 
