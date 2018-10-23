@@ -47,10 +47,16 @@ public class AuthenticatorData {
     @NonNull
     private final transient Optional<CBORObject> extensions;
 
-    private static final int RP_ID_HASH_LENGTH = 32;
-    private static final int FLAGS_LENGTH = 1;
-    private static final int COUNTER_LENGTH = 4;
-    private static final int FIXED_LENGTH_PART_END_INDEX = RP_ID_HASH_LENGTH + FLAGS_LENGTH + COUNTER_LENGTH;
+    private static final int RP_ID_HASH_INDEX = 0;
+    private static final int RP_ID_HASH_END = RP_ID_HASH_INDEX + 32;
+
+    private static final int FLAGS_INDEX = RP_ID_HASH_END;
+    private static final int FLAGS_END = FLAGS_INDEX + 1;
+
+    private static final int COUNTER_INDEX = FLAGS_END;
+    private static final int COUNTER_END = COUNTER_INDEX + 4;
+
+    private static final int FIXED_LENGTH_PART_END_INDEX = COUNTER_END;
 
     @JsonCreator
     public AuthenticatorData(@NonNull ByteArray bytes) {
@@ -67,7 +73,7 @@ public class AuthenticatorData {
 
         final byte[] rawBytes = bytes.getBytes();
 
-        this.flags = new AuthenticationDataFlags(rawBytes[32]);
+        this.flags = new AuthenticationDataFlags(rawBytes[FLAGS_INDEX]);
 
         if (flags.AT) {
             VariableLengthParseResult parseResult = parseAttestationData(
@@ -90,20 +96,24 @@ public class AuthenticatorData {
      */
     @JsonProperty("rpIdHash")
     public ByteArray getRpIdHash() {
-        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), 0, RP_ID_HASH_LENGTH));
+        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), RP_ID_HASH_INDEX, RP_ID_HASH_END));
     }
 
     /**
      * The 32-bit unsigned signature counter.
      */
     public long getSignatureCounter() {
-        final int start = RP_ID_HASH_LENGTH + FLAGS_LENGTH;
-        final int end = start + COUNTER_LENGTH;
-        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), start, end));
+        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), COUNTER_INDEX, COUNTER_END));
     }
 
     private static VariableLengthParseResult parseAttestationData(AuthenticationDataFlags flags, byte[] bytes) {
-        byte[] credentialIdLengthBytes = Arrays.copyOfRange(bytes, 16, 16 + 2);
+        final int AAGUID_INDEX = 0;
+        final int AAGUID_END = AAGUID_INDEX + 16;
+
+        final int CREDENTIAL_ID_LENGTH_INDEX = AAGUID_END;
+        final int CREDENTIAL_ID_LENGTH_END = CREDENTIAL_ID_LENGTH_INDEX + 2;
+
+        byte[] credentialIdLengthBytes = Arrays.copyOfRange(bytes, CREDENTIAL_ID_LENGTH_INDEX, CREDENTIAL_ID_LENGTH_END);
 
         final int L;
         try {
@@ -112,8 +122,14 @@ public class AuthenticatorData {
             throw new IllegalArgumentException("Invalid credential ID length bytes: " + Arrays.asList(credentialIdLengthBytes), e);
         }
 
+        final int CREDENTIAL_ID_INDEX = CREDENTIAL_ID_LENGTH_END;
+        final int CREDENTIAL_ID_END = CREDENTIAL_ID_INDEX + L;
+
+        final int CREDENTIAL_PUBLIC_KEY_INDEX = CREDENTIAL_ID_END;
+        final int CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END = bytes.length;
+
         ByteArrayInputStream indefiniteLengthBytes = new ByteArrayInputStream(
-            Arrays.copyOfRange(bytes, 16 + 2 + L, bytes.length)
+            Arrays.copyOfRange(bytes, CREDENTIAL_PUBLIC_KEY_INDEX, CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END)
         );
 
         final CBORObject credentialPublicKey = CBORObject.Read(indefiniteLengthBytes);
@@ -140,8 +156,8 @@ public class AuthenticatorData {
 
         return new VariableLengthParseResult(
             Optional.of(AttestationData.builder()
-                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, 0, 16)))
-                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, 16 + 2, 16 + 2 + L)))
+                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
+                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
                 .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
                 .build()),
             extensions
