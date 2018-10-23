@@ -4,9 +4,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * Created by Dain on 2016-02-18.
- */
 public enum Transport {
     BT_CLASSIC(1),
     BLE(2),

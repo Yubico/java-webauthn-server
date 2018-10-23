@@ -5,9 +5,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by Dain on 2016-02-18.
- */
 public class TransportTest {
 
     @Test
