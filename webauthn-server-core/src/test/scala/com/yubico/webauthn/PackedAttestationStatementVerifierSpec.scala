@@ -16,16 +16,20 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
   val verifier = new PackedAttestationStatementVerifier
 
-  describe("The X.509 certificate requirements") {
+  describe("PackedAttestationStatementVerifier") {
 
-    it("pass Klas's attestation certificate.") {
+    describe("verify the X.509 certificate requirements") {
 
-      val cert = Util.importCertFromPem(getClass.getResourceAsStream("klas-cert.pem"))
+      it("which pass Klas's attestation certificate.") {
 
-      val result = Try(verifier.verifyX5cRequirements(cert, ByteArray.fromHex("F8A011F38C0A4D15800617111F9EDC7D")))
+        val cert = Util.importCertFromPem(getClass.getResourceAsStream("klas-cert.pem"))
 
-      result shouldBe a [Success[_]]
-      result.get should be (true)
+        val result = Try(verifier.verifyX5cRequirements(cert, ByteArray.fromHex("F8A011F38C0A4D15800617111F9EDC7D")))
+
+        result shouldBe a [Success[_]]
+        result.get should be (true)
+      }
+
     }
 
   }
