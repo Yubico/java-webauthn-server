@@ -42,7 +42,7 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {
         if (attestation.getAttestationStatement().hasNonNull("x5c")) {
-            return AttestationType.BASIC; // TODO or Privacy CA
+            return AttestationType.BASIC;
         } else if (attestation.getAttestationStatement().hasNonNull("ecdaaKeyId")) {
             return AttestationType.ECDAA;
         } else {
@@ -139,7 +139,6 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
 
                 ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataHash);
 
-                // TODO support other signature algorithms
                 Signature ecdsaSignature;
                 try {
                     ecdsaSignature = Signature.getInstance("SHA256withECDSA", crypto.getProvider());
