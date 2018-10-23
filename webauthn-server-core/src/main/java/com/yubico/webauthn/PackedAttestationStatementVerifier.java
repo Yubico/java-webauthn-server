@@ -139,25 +139,26 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
 
                 ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataHash);
 
-                Signature ecdsaSignature;
+                final String signatureAlgorithmName = "SHA256with" + WebAuthnCodecs.getSignatureAlgorithmName(attestationCertificate.getPublicKey());
+                Signature signatureVerifier;
                 try {
-                    ecdsaSignature = Signature.getInstance("SHA256withECDSA", crypto.getProvider());
+                    signatureVerifier = Signature.getInstance(signatureAlgorithmName, crypto.getProvider());
                 } catch (NoSuchAlgorithmException e) {
-                    throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for SHA256withECDSA", e);
+                    throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
                 }
                 try {
-                    ecdsaSignature.initVerify(attestationCertificate.getPublicKey());
+                    signatureVerifier.initVerify(attestationCertificate.getPublicKey());
                 } catch (InvalidKeyException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Attestation key is invalid: " + attestationCertificate, e);
                 }
                 try {
-                    ecdsaSignature.update(signedData.getBytes());
+                    signatureVerifier.update(signedData.getBytes());
                 } catch (SignatureException e) {
-                    throw ExceptionUtil.wrapAndLog(log, "Signature object in invalid state: " + ecdsaSignature, e);
+                    throw ExceptionUtil.wrapAndLog(log, "Signature object in invalid state: " + signatureVerifier, e);
                 }
 
                 try {
-                    return (ecdsaSignature.verify(signature.getBytes())
+                    return (signatureVerifier.verify(signature.getBytes())
                         && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData().getAttestationData().get().getAaguid())
                     );
                 } catch (SignatureException e) {

@@ -14,6 +14,7 @@ import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
+import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -100,6 +101,14 @@ public class WebAuthnCodecs {
 
     public static ECPublicKey importCoseP256PublicKey(ByteArray key) throws CoseException, IOException {
         return new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.getBytes())));
+    }
+
+    public static String getSignatureAlgorithmName(PublicKey key) {
+        if (key.getAlgorithm().equals("EC")) {
+            return "ECDSA";
+        } else {
+            return key.getAlgorithm();
+        }
     }
 
 }
