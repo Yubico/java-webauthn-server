@@ -113,6 +113,14 @@ public class AuthenticatorData {
         final int CREDENTIAL_ID_LENGTH_INDEX = AAGUID_END;
         final int CREDENTIAL_ID_LENGTH_END = CREDENTIAL_ID_LENGTH_INDEX + 2;
 
+        ExceptionUtil.assure(
+            bytes.length >= CREDENTIAL_ID_LENGTH_END,
+            "Attestation data must contain at least %d bytes, was %d: %s",
+            CREDENTIAL_ID_LENGTH_END,
+            bytes.length,
+            new ByteArray(bytes).getHex()
+        );
+
         byte[] credentialIdLengthBytes = Arrays.copyOfRange(bytes, CREDENTIAL_ID_LENGTH_INDEX, CREDENTIAL_ID_LENGTH_END);
 
         final int L;
@@ -127,6 +135,14 @@ public class AuthenticatorData {
 
         final int CREDENTIAL_PUBLIC_KEY_INDEX = CREDENTIAL_ID_END;
         final int CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END = bytes.length;
+
+        ExceptionUtil.assure(
+            bytes.length >= CREDENTIAL_ID_END,
+            "Expected credential ID of length %d, but attestation data and extension data is only %d bytes: %s",
+            CREDENTIAL_ID_END,
+            bytes.length,
+            new ByteArray(bytes).getHex()
+        );
 
         ByteArrayInputStream indefiniteLengthBytes = new ByteArrayInputStream(
             Arrays.copyOfRange(bytes, CREDENTIAL_PUBLIC_KEY_INDEX, CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END)
