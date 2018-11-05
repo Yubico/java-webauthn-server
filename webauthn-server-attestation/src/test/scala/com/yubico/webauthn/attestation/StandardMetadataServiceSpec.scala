@@ -1,16 +1,17 @@
 package com.yubico.webauthn.attestation
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.resolver.SimpleResolver
 import com.yubico.webauthn.data.ByteArray
+import org.bouncycastle.asn1.x500.X500Name
+import org.junit.runner.RunWith
 import org.scalatest.Matchers
 import org.scalatest.FunSpec
+import org.scalatest.junit.JUnitRunner
 
 import scala.collection.JavaConverters._
-import com.yubico.internal.util.scala.JavaConverters._
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
 
 
 @RunWith(classOf[JUnitRunner])
@@ -26,16 +27,33 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
     describe("has a getAttestation method which") {
 
-      val (caCert, caKey) = TestAuthenticator.generateAttestationCaCertificate()
+      val cacaca = TestAuthenticator.generateAttestationCaCertificate(
+        name = new X500Name("CN=CA CA CA"),
+        extensions = List((ooidB, false, new ByteArray(Array())))
+      )
+      val caca = TestAuthenticator.generateAttestationCaCertificate(
+        name = new X500Name("CN=CA CA"),
+        superCa = Some(cacaca),
+        extensions = List((ooidB, false, new ByteArray(Array())))
+      )
+      val (caCert, caKey) = TestAuthenticator.generateAttestationCaCertificate(
+        name = new X500Name("CN=CA"),
+        superCa = Some(caca),
+        extensions = List((ooidB, false, new ByteArray(Array())))
+      )
+
       val (certA, _) = TestAuthenticator.generateAttestationCertificate(
+        name = new X500Name("CN=Cert A"),
         caCertAndKey = Some((caCert, caKey)),
         extensions = List((ooidA, false, new ByteArray(Array())))
       )
       val (certB, _) = TestAuthenticator.generateAttestationCertificate(
+        name = new X500Name("CN=Cert B"),
         caCertAndKey = Some((caCert, caKey)),
         extensions = List((ooidB, false, new ByteArray(Array())))
       )
       val (unknownCert, _) = TestAuthenticator.generateAttestationCertificate(
+        name = new X500Name("CN=Unknown Cert"),
         extensions = List((ooidA, false, new ByteArray(Array())))
       )
 
@@ -95,7 +113,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         attestation.getDeviceProperties.asScala shouldBe empty
       }
 
-      it("returns the first cert in the chain if it is signed by a trusted certificate.") {
+      it("returns the trusted attestation matching the first cert in the chain if it is signed by a trusted certificate.") {
         val attestationA: Attestation = service.getAttestation(List(certA, certB).asJava)
         val attestationB: Attestation = service.getAttestation(List(certB, certA).asJava)
 
@@ -104,6 +122,39 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
         attestationB.isTrusted should be (true)
         attestationB.getDeviceProperties.get.get("deviceId") should be ("DevB")
+      }
+
+      it("returns the trusted attestation matching the first cert in the chain if the chain resolves to a trusted certificate.") {
+        val metadataJson =
+          s"""{
+          "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
+          "version": 1,
+          "trustedCertificates": ["${TestAuthenticator.toPem(cacaca._1).lines.mkString(raw"\n")}"],
+          "vendorInfo": {},
+          "devices": [
+            {
+              "deviceId": "DevA",
+              "displayName": "Device A",
+              "selectors": [
+                {
+                  "type": "x509Extension",
+                  "parameters": {
+                    "key": "${ooidA}"
+                  }
+                }
+              ]
+            }
+          ]
+        }"""
+        val resolver = new SimpleResolver()
+        resolver.addMetadata(metadataJson)
+
+        val service: StandardMetadataService  = new StandardMetadataService(resolver)
+
+        val attestation: Attestation = service.getAttestation(List(certA, caCert, caca._1).asJava)
+
+        attestation.isTrusted should be (true)
+        attestation.getDeviceProperties.get.get("deviceId") should be ("DevA")
       }
 
     }

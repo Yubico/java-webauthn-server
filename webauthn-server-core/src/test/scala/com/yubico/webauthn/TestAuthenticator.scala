@@ -514,15 +514,18 @@ object TestAuthenticator {
 
   def generateAttestationCaCertificate(
     keypair: KeyPair = generateEcKeypair(),
-    name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE")
+    name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE"),
+    superCa: Option[(X509Certificate, PrivateKey)] = None,
+    extensions: Iterable[(String, Boolean, ByteArray)] = Nil
   ): (X509Certificate, PrivateKey) = {
     (
       buildCertificate(
         publicKey = keypair.getPublic,
-        issuerName = name,
+        issuerName = superCa map (_._1) map JcaX500NameUtil.getSubject getOrElse name,
         subjectName = name,
-        signingKey = keypair.getPrivate,
-        isCa = true
+        signingKey = superCa map (_._2) getOrElse keypair.getPrivate,
+        isCa = true,
+        extensions = extensions
       ),
       keypair.getPrivate
     )
