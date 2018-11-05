@@ -161,21 +161,23 @@ public class StandardMetadataService implements MetadataService {
             return resolvedInitial;
         } else {
             while (it.hasNext()) {
-                Attestation resolved = getAttestation(cert);
+                X509Certificate signingCert = it.next();
 
+                try {
+                    cert.verify(signingCert.getPublicKey());
+                    cert = signingCert;
+                } catch (Exception e) {
+                    logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
+                    return resolvedInitial;
+                }
+
+                Attestation resolved = getAttestation(signingCert);
                 if (resolved.isTrusted()) {
                     return resolved;
-                } else {
+                } else if (it.hasNext()) {
                     logger.trace("Could not look up trusted attestation for certificate [{}] - trying next element in certificate chain.", cert);
-
-                    X509Certificate signingCert = it.next();
-
-                    try {
-                        cert.verify(signingCert.getPublicKey());
-                    } catch (Exception e) {
-                        logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
-                        return resolvedInitial;
-                    }
+                } else {
+                    logger.trace("Could not look up trusted attestation for certificate [{}] - no more elements in certificate chain.", cert);
                 }
             }
 
