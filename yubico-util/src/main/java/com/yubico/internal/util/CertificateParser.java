@@ -24,6 +24,7 @@ public class CertificateParser {
             "CN=Yubico U2F EE Serial 14803321578"
     );
 
+    private static final int UNUSED_BITS_BYTE_INDEX_FROM_END = 257;
 
     public static X509Certificate parsePem(String pemEncodedCert) throws CertificateException {
         return parseDer(pemEncodedCert.replaceAll("-----BEGIN CERTIFICATE-----", "").replaceAll("-----END CERTIFICATE-----", "").replaceAll("\n", ""));
@@ -42,7 +43,7 @@ public class CertificateParser {
         //Some known certs have an incorrect "unused bits" value, which causes problems on newer versions of BouncyCastle.
         if(FIXSIG.contains(cert.getSubjectDN().getName())) {
             byte[] encoded = cert.getEncoded();
-            encoded[encoded.length-257] = 0;  // Fix the "unused bits" field (should always be 0).
+            encoded[encoded.length - UNUSED_BITS_BYTE_INDEX_FROM_END] = 0;  // Fix the "unused bits" field (should always be 0).
             cert = (X509Certificate) CertificateFactory.getInstance("X.509", BC_PROVIDER).generateCertificate(new ByteArrayInputStream(encoded));
         }
         return cert;
