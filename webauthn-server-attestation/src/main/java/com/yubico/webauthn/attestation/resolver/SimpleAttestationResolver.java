@@ -44,12 +44,9 @@ public class SimpleAttestationResolver implements AttestationResolver {
     private final Map<String, DeviceMatcher> matchers;
 
     public SimpleAttestationResolver(
-        @NonNull
-        Collection<MetadataObject> objects,
-        @NonNull
-        TrustResolver trustResolver,
-        @NonNull
-        Map<String, DeviceMatcher> matchers
+        @NonNull Collection<MetadataObject> objects,
+        @NonNull TrustResolver trustResolver,
+        @NonNull Map<String, DeviceMatcher> matchers
     ) throws CertificateException {
         for (MetadataObject object : objects) {
             for (String caPem : object.getTrustedCertificates()) {
