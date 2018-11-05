@@ -2,10 +2,8 @@ package demo.webauthn;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
@@ -20,12 +18,15 @@ import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.MetadataResolver;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
-import com.yubico.webauthn.attestation.resolver.CompositeResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleResolverWithEquality;
+import com.yubico.webauthn.attestation.TrustResolver;
+import com.yubico.webauthn.attestation.resolver.CompositeMetadataResolver;
+import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleMetadataResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AttestationType;
@@ -48,7 +49,6 @@ import demo.webauthn.data.RegistrationResponse;
 import demo.webauthn.data.U2fRegistrationResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -69,6 +69,8 @@ import org.slf4j.LoggerFactory;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
+    private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
+
     private final Cache<ByteArray, AssertionRequest> assertRequestStorage;
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
@@ -77,7 +79,11 @@ public class WebAuthnServer {
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
     private final MetadataService metadataService = new StandardMetadataService(
-        new CompositeResolver(Arrays.asList(
+        new CompositeTrustResolver(Arrays.asList(
+            StandardMetadataService.createDefaultTrustResolver(),
+            createExtraTrustResolver()
+        )),
+        new CompositeMetadataResolver(Arrays.asList(
             StandardMetadataService.createDefaultMetadataResolver(),
             createExtraMetadataResolver()
         ))
@@ -88,11 +94,11 @@ public class WebAuthnServer {
 
     private final RelyingParty rp;
 
-    public WebAuthnServer() throws InvalidAppIdException {
+    public WebAuthnServer() throws InvalidAppIdException, CertificateException {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -113,21 +119,39 @@ public class WebAuthnServer {
             .build();
     }
 
+    private static MetadataObject readPreviewMetadata() {
+        InputStream is = WebAuthnServer.class.getResourceAsStream(PREVIEW_METADATA_PATH);
+        try {
+            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
+        } catch (IOException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata from " + PREVIEW_METADATA_PATH, e);
+        } finally {
+            Closeables.closeQuietly(is);
+        }
+    }
+
+    /**
+     * Create a {@link TrustResolver} that accepts attestation certificates that are directly recognised as trust anchors.
+     */
+    private static TrustResolver createExtraTrustResolver() {
+        try {
+            MetadataObject metadata = readPreviewMetadata();
+            return new SimpleTrustResolverWithEquality(metadata.getParsedTrustedCertificates());
+        } catch (CertificateException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
+        }
+    }
+
     /**
      * Create a {@link MetadataResolver} with additional metadata for unreleased YubiKey Preview devices.
      */
     private static MetadataResolver createExtraMetadataResolver() {
-        SimpleResolver resolver = new SimpleResolverWithEquality();
-        InputStream is = null;
         try {
-            is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
-            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException | CertificateException e) {
-            logger.error("createDefaultMetadataResolver failed", e);
-        } finally {
-            Closeables.closeQuietly(is);
+            MetadataObject metadata = readPreviewMetadata();
+            return new SimpleMetadataResolver(Collections.singleton(metadata));
+        } catch (CertificateException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
         }
-        return resolver;
     }
 
     private static <K, V> Cache<K, V> newCache() {

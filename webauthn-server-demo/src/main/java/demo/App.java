@@ -4,6 +4,7 @@ import javax.ws.rs.core.Application;
 
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import demo.webauthn.WebAuthnRestResource;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class App extends Application {
             return new HashSet<>(Arrays.asList(
                 new WebAuthnRestResource()
             ));
-        } catch (InvalidAppIdException e) {
+        } catch (InvalidAppIdException | CertificateException e) {
             throw new RuntimeException(e);
         }
     }

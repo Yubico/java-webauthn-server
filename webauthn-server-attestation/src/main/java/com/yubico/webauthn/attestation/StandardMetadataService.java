@@ -3,27 +3,26 @@
 package com.yubico.webauthn.attestation;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
 import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
-import com.yubico.webauthn.attestation.resolver.SimpleResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleMetadataResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,47 +47,78 @@ public class StandardMetadataService implements MetadataService {
             FingerprintMatcher.SELECTOR_TYPE, new FingerprintMatcher()
     );
 
-    public static MetadataResolver createDefaultMetadataResolver() {
-        SimpleResolver resolver = new SimpleResolver();
-        InputStream is = null;
+    private static MetadataObject readDefaultMetadata() {
+        InputStream is = StandardMetadataService.class.getResourceAsStream("/metadata.json");
         try {
-            is = StandardMetadataService.class.getResourceAsStream("/metadata.json");
-            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException | CertificateException e) {
-            logger.error("createDefaultMetadataResolver failed", e);
+            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
+        } catch (IOException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read default metadata", e);
         } finally {
             Closeables.closeQuietly(is);
         }
-        return resolver;
+    }
+
+    public static TrustResolver createDefaultTrustResolver() throws CertificateException {
+        return SimpleTrustResolver.fromMetadata(Collections.singleton(readDefaultMetadata()));
+    }
+
+    public static MetadataResolver createDefaultMetadataResolver() throws CertificateException {
+        return new SimpleMetadataResolver(Collections.singleton(readDefaultMetadata()));
+    }
+
+    private static StandardMetadataService usingMetadata(Collection<MetadataObject> metadata) throws CertificateException {
+        return new StandardMetadataService(
+            SimpleTrustResolver.fromMetadata(metadata),
+            new SimpleMetadataResolver(metadata)
+        );
+    }
+
+    static StandardMetadataService usingMetadataJson(String metadataJson) throws CertificateException {
+        Collection<MetadataObject> metadata;
+        try {
+            metadata = Collections.singleton(WebAuthnCodecs.json().readValue(metadataJson, MetadataObject.class));
+        } catch (IOException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata object from json: " + metadataJson, e);
+        }
+
+        return usingMetadata(metadata);
     }
 
     private final Attestation unknownAttestation = Attestation.builder(false).build();
-    private final MetadataResolver resolver;
+    private final TrustResolver trustResolver;
+    private final MetadataResolver metadataResolver;
     private final Map<String, DeviceMatcher> matchers;
     private final Cache<String, Attestation> cache;
 
-    public StandardMetadataService(
+    private StandardMetadataService(
         @NonNull
-        MetadataResolver resolver,
+        TrustResolver trustResolver,
+        @NonNull
+        MetadataResolver metadataResolver,
         @NonNull
         Cache<String, Attestation> cache,
         @NonNull
         Map<String, ? extends DeviceMatcher> matchers
     ) {
-        this.resolver = resolver;
+        this.trustResolver = trustResolver;
+        this.metadataResolver = metadataResolver;
         this.cache = cache;
         this.matchers = Collections.unmodifiableMap(matchers);
     }
 
-    public StandardMetadataService() {
-        this(createDefaultMetadataResolver());
-    }
-
-    public StandardMetadataService(MetadataResolver resolver) {
+    public StandardMetadataService(TrustResolver trustResolver, MetadataResolver metadataResolver) {
         this(
-            resolver,
+            trustResolver,
+            metadataResolver,
             CacheBuilder.newBuilder().build(),
             DEFAULT_DEVICE_MATCHERS
+        );
+    }
+
+    public StandardMetadataService() throws CertificateException {
+        this(
+            createDefaultTrustResolver(),
+            createDefaultMetadataResolver()
         );
     }
 
@@ -113,24 +143,32 @@ public class StandardMetadataService implements MetadataService {
         return cache.getIfPresent(attestationCertificateFingerprint);
     }
 
-    public Attestation getAttestation(@NonNull final X509Certificate attestationCertificate) throws CertificateEncodingException {
-        try {
-            final String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
-            return cache.get(fingerprint, () -> lookupAttestation(attestationCertificate));
-        } catch (ExecutionException e) {
-            throw ExceptionUtil.wrapAndLog(logger, "Failed to look up attestation information for certificate: " + attestationCertificate, e);
-        }
-    }
-
     /**
      * Attempt to look up attestation for a chain of certificates
      *
      * <p>
-     * This method will return the first non-unknown result, if any, of calling
-     * {@link #getAttestation(X509Certificate)} with each of the certificates
-     * in <code>attestationCertificateChain</code> in order, while also
-     * verifying that the next attempted certificate has signed the previous
-     * certificate.
+     * If there is a signature path from any trusted certificate to the first
+     * certificate in <code>attestationCertificateChain</code>, then the first
+     * certificate in <code>attestationCertificateChain</code> is matched
+     * against the metadata registry to look up metadata for the device.
+     * </p>
+     *
+     * <p>
+     * If the certificate chain is trusted but no metadata exists in the
+     * registry, the method returns a trusted attestation populated with
+     * information found embedded in the attestation certificate.
+     * </p>
+     *
+     * <p>
+     * If there is no signature path from any trusted certificate to the first
+     * certificate in <code>attestationCertificateChain</code>, the method
+     * returns an untrusted attestation populated with information found
+     * embedded in the attestation certificate.
+     * </p>
+     *
+     * <p>
+     * If <code>attestationCertificateChain</code> is empty, an untrusted empty
+     * attestation is returned.
      * </p>
      *
      * @param attestationCertificateChain a certificate chain, where each
@@ -140,55 +178,31 @@ public class StandardMetadataService implements MetadataService {
      * fails for any element of <code>attestationCertificateChain</code> that
      * needs to be inspected
      *
-     * @return The first non-unknown result, if any, of calling {@link
-     *           #getAttestation(X509Certificate)} for each of the certificates
-     *           in the <code>attestationCertificateChain</code>. If the chain
-     *           of signatures is broken before finding such a result, an
-     *           unknown attestation is returned.
+     * @return An attestation as described above.
      */
     @Override
-    public Attestation getAttestation(List<X509Certificate> attestationCertificateChain) throws CertificateEncodingException {
-
+    public Attestation getAttestation(@NonNull List<X509Certificate> attestationCertificateChain) throws CertificateEncodingException {
         if (attestationCertificateChain.isEmpty()) {
             return unknownAttestation;
         }
 
-        Iterator<X509Certificate> it = attestationCertificateChain.iterator();
-        X509Certificate cert = it.next();
-        Attestation resolvedInitial = getAttestation(cert);
+        X509Certificate attestationCertificate = attestationCertificateChain.get(0);
+        List<X509Certificate> certificateChain = attestationCertificateChain.subList(1, attestationCertificateChain.size());
 
-        if (resolvedInitial.isTrusted()) {
-            return resolvedInitial;
-        } else {
-            while (it.hasNext()) {
-                X509Certificate signingCert = it.next();
+        Optional<X509Certificate> trustAnchor = trustResolver.resolveTrustAnchor(attestationCertificate, certificateChain);
 
-                try {
-                    cert.verify(signingCert.getPublicKey());
-                    cert = signingCert;
-                } catch (Exception e) {
-                    logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
-                    return resolvedInitial;
-                }
-
-                Attestation resolved = getAttestation(signingCert);
-                if (resolved.isTrusted()) {
-                    return resolved;
-                } else if (it.hasNext()) {
-                    logger.trace("Could not look up trusted attestation for certificate [{}] - trying next element in certificate chain.", cert);
-                } else {
-                    logger.trace("Could not look up trusted attestation for certificate [{}] - no more elements in certificate chain.", cert);
-                }
-            }
-
-            return resolvedInitial;
+        try {
+            final String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
+            return cache.get(fingerprint, () -> lookupMetadata(attestationCertificate, trustAnchor));
+        } catch (ExecutionException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to look up attestation information for certificate: " + attestationCertificate, e);
         }
     }
 
-    private Attestation lookupAttestation(X509Certificate attestationCertificate) {
+    private Attestation lookupMetadata(X509Certificate attestationCertificate, Optional<X509Certificate> trustAnchor) {
         final int certTransports = get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
 
-        return resolver.resolve(attestationCertificate).map(metadata -> {
+        return trustAnchor.flatMap(metadataResolver::resolve).map(metadata -> {
             Map<String, String> vendorProperties;
             Map<String, String> deviceProperties = null;
             String identifier;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
 import com.yubico.internal.util.CertificateParser;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -14,7 +13,6 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -32,7 +30,7 @@ public class StandardMetadataServiceTest {
         StandardMetadataService service = new StandardMetadataService();
 
         X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT);
-        Attestation attestation = service.getAttestation(attestationCert);
+        Attestation attestation = service.getAttestation(Collections.singletonList(attestationCert));
 
         assertTrue(attestation.isTrusted());
         assertEquals("Yubico", attestation.getVendorProperties().get().get("name"));
@@ -44,7 +42,7 @@ public class StandardMetadataServiceTest {
         StandardMetadataService service = new StandardMetadataService();
 
         X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT2);
-        Attestation attestation = service.getAttestation(attestationCert);
+        Attestation attestation = service.getAttestation(Collections.singletonList(attestationCert));
 
         assertTrue(attestation.isTrusted());
         assertEquals("Yubico", attestation.getVendorProperties().get().get("name"));
@@ -53,10 +51,10 @@ public class StandardMetadataServiceTest {
 
     @Test
     public void testGetTransportsFromCertificate() throws CertificateException {
-        StandardMetadataService service = new StandardMetadataService(mock(MetadataResolver.class));
+        StandardMetadataService service = new StandardMetadataService(StandardMetadataService.createDefaultTrustResolver(), mock(MetadataResolver.class));
 
         X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT_WITH_TRANSPORTS);
-        Attestation attestation = service.getAttestation(attestationCert);
+        Attestation attestation = service.getAttestation(Collections.singletonList(attestationCert));
 
         assertEquals(Optional.of(EnumSet.of(Transport.USB, Transport.NFC)), attestation.getTransports());
     }
@@ -66,7 +64,7 @@ public class StandardMetadataServiceTest {
         StandardMetadataService service = new StandardMetadataService();
 
         X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT2);
-        Attestation attestation = service.getAttestation(attestationCert);
+        Attestation attestation = service.getAttestation(Collections.singletonList(attestationCert));
 
         assertEquals(Optional.of(EnumSet.of(Transport.USB)), attestation.getTransports());
     }
@@ -80,25 +78,13 @@ public class StandardMetadataServiceTest {
 
         assertNull(service.getCachedAttestation(certFingerprint));
 
-        service.getAttestation(attestationCert);
+        service.getAttestation(Collections.singletonList(attestationCert));
 
         Attestation attestation = service.getCachedAttestation(certFingerprint);
 
         assertTrue(attestation.isTrusted());
         assertEquals("Yubico", attestation.getVendorProperties().get().get("name"));
         assertEquals("1.3.6.1.4.1.41482.1.2", attestation.getDeviceProperties().get().get("deviceId"));
-    }
-
-    @Test(expected = CertificateEncodingException.class)
-    public void getAttestationThrowsIfFingerprintEncodingFails() throws Exception {
-        StandardMetadataService service = new StandardMetadataService();
-
-        final X509Certificate attestationCert = mock(X509Certificate.class);
-        when(attestationCert.getEncoded()).thenThrow(new CertificateEncodingException("Forced failure"));
-
-        Attestation attestation = service.getAttestation(attestationCert);
-
-        assertFalse(attestation.isTrusted());
     }
 
     @Test
@@ -110,11 +96,11 @@ public class StandardMetadataServiceTest {
         when(metadata.getDevices()).thenReturn(ImmutableList.of(device));
         when(resolver.resolve(ArgumentMatchers.<X509Certificate>any())).thenReturn(Optional.of(metadata));
 
-        StandardMetadataService service = new StandardMetadataService(resolver);
+        StandardMetadataService service = new StandardMetadataService(StandardMetadataService.createDefaultTrustResolver(), resolver);
 
         final X509Certificate attestationCert = CertificateParser.parsePem(ATTESTATION_CERT);
 
-        Attestation attestation = service.getAttestation(attestationCert);
+        Attestation attestation = service.getAttestation(Collections.singletonList(attestationCert));
 
         verify(device, times(1)).get("transports");
     }

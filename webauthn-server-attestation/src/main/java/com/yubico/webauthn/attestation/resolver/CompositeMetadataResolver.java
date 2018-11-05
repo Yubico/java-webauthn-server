@@ -13,11 +13,11 @@ import java.util.Optional;
  * subordinate {@link MetadataResolver}s in turn, and returns the first
  * non-<code>null</code> result.
  */
-public class CompositeResolver implements MetadataResolver {
+public class CompositeMetadataResolver implements MetadataResolver {
 
     private final List<MetadataResolver> resolvers;
 
-    public CompositeResolver(List<MetadataResolver> resolvers) {
+    public CompositeMetadataResolver(List<MetadataResolver> resolvers) {
         this.resolvers = Collections.unmodifiableList(resolvers);
     }
 

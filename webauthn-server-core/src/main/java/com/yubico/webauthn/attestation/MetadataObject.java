@@ -3,14 +3,19 @@
 package com.yubico.webauthn.attestation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.WebAuthnCodecs;
 import java.io.IOException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.EqualsAndHashCode;
@@ -64,6 +69,16 @@ public class MetadataObject {
 
     public List<String> getTrustedCertificates() {
         return trustedCertificates;
+    }
+
+    @JsonIgnore
+    public List<X509Certificate> getParsedTrustedCertificates() throws CertificateException {
+        List<X509Certificate> list = new ArrayList<>();
+        for (String trustedCertificate : trustedCertificates) {
+            X509Certificate x509Certificate = CertificateParser.parsePem(trustedCertificate);
+            list.add(x509Certificate);
+        }
+        return list;
     }
 
     public List<JsonNode> getDevices() {

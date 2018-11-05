@@ -3,7 +3,6 @@ package com.yubico.webauthn.attestation
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
-import com.yubico.webauthn.attestation.resolver.SimpleResolver
 import com.yubico.webauthn.data.ByteArray
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
@@ -23,7 +22,6 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
   private val ooidB = "1.3.6.1.4.1.41482.1.2"
 
   describe("StandardMetadataService") {
-
 
     describe("has a getAttestation method which") {
 
@@ -90,14 +88,11 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
             }
           ]
         }"""
-      val resolver = new SimpleResolver()
-      resolver.addMetadata(metadataJson)
-
-      val service: StandardMetadataService  = new StandardMetadataService(resolver)
+      val service: StandardMetadataService  = StandardMetadataService.usingMetadataJson(metadataJson)
 
       it("returns the trusted attestation matching the single cert passed, if it is signed by a trusted certificate.") {
-        val attestationA: Attestation = service.getAttestation(certA)
-        val attestationB: Attestation = service.getAttestation(certB)
+        val attestationA: Attestation = service.getAttestation(List(certA).asJava)
+        val attestationB: Attestation = service.getAttestation(List(certB).asJava)
 
         attestationA.isTrusted should be (true)
         attestationA.getDeviceProperties.get.get("deviceId") should be ("DevA")
@@ -107,7 +102,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
       }
 
       it("returns an unknown attestation if the passed cert is not signed by a trusted certificate.") {
-        val attestation: Attestation = service.getAttestation(unknownCert)
+        val attestation: Attestation = service.getAttestation(List(unknownCert).asJava)
 
         attestation.isTrusted should be (false)
         attestation.getDeviceProperties.asScala shouldBe empty
@@ -146,10 +141,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
             }
           ]
         }"""
-        val resolver = new SimpleResolver()
-        resolver.addMetadata(metadataJson)
-
-        val service: StandardMetadataService  = new StandardMetadataService(resolver)
+        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
 
         val attestation: Attestation = service.getAttestation(List(certA, caCert, caca._1).asJava)
 

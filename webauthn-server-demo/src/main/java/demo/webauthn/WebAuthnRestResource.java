@@ -31,6 +31,7 @@ import demo.webauthn.data.RegistrationRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +49,7 @@ public class WebAuthnRestResource {
     private final ObjectMapper jsonMapper = WebAuthnCodecs.json();
     private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
-    public WebAuthnRestResource() throws InvalidAppIdException {
+    public WebAuthnRestResource() throws InvalidAppIdException, CertificateException {
         this(new WebAuthnServer());
     }
 
