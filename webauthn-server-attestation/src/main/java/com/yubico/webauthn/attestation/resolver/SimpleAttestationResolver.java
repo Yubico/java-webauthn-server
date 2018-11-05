@@ -63,13 +63,6 @@ public class SimpleAttestationResolver implements AttestationResolver {
         this(objects, trustResolver, DEFAULT_DEVICE_MATCHERS);
     }
 
-    public static SimpleAttestationResolver fromMetadata(MetadataObject metadata) throws CertificateException {
-        return new SimpleAttestationResolver(
-            Collections.singleton(metadata),
-            SimpleTrustResolver.fromMetadata(Collections.singleton(metadata))
-        );
-    }
-
     private Optional<MetadataObject> lookupTrustAnchor(X509Certificate trustAnchor) {
         return Optional.ofNullable(metadata.get(trustAnchor));
     }

@@ -26,9 +26,16 @@ public class SimpleAttestationResolverTest {
     public SimpleAttestationResolverTest() throws IOException, CertificateException {
     }
 
+    private static SimpleAttestationResolver createAttestationResolver(MetadataObject metadata) throws CertificateException {
+        return new SimpleAttestationResolver(
+            Collections.singleton(metadata),
+            SimpleTrustResolver.fromMetadata(Collections.singleton(metadata))
+        );
+    }
+
     @Test
     public void testResolve() throws Exception {
-        final SimpleAttestationResolver resolver = SimpleAttestationResolver.fromMetadata(metadata);
+        final SimpleAttestationResolver resolver = createAttestationResolver(metadata);
         Attestation metadata = resolver.resolve(attestationCertificate).orElse(null);
 
         assertNotNull(metadata);
