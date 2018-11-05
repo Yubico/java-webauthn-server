@@ -38,4 +38,5 @@ public enum Transport {
     public static int toInt(Transport...transports) {
         return toInt(Arrays.asList(transports));
     }
+
 }

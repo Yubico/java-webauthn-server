@@ -19,13 +19,13 @@ import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataObject;
-import com.yubico.webauthn.attestation.MetadataResolver;
+import com.yubico.webauthn.attestation.AttestationResolver;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
 import com.yubico.webauthn.attestation.TrustResolver;
-import com.yubico.webauthn.attestation.resolver.CompositeMetadataResolver;
+import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleMetadataResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -83,7 +83,7 @@ public class WebAuthnServer {
             StandardMetadataService.createDefaultTrustResolver(),
             createExtraTrustResolver()
         )),
-        new CompositeMetadataResolver(Arrays.asList(
+        new CompositeAttestationResolver(Arrays.asList(
             StandardMetadataService.createDefaultMetadataResolver(),
             createExtraMetadataResolver()
         ))
@@ -143,12 +143,12 @@ public class WebAuthnServer {
     }
 
     /**
-     * Create a {@link MetadataResolver} with additional metadata for unreleased YubiKey Preview devices.
+     * Create a {@link AttestationResolver} with additional metadata for unreleased YubiKey Preview devices.
      */
-    private static MetadataResolver createExtraMetadataResolver() {
+    private static AttestationResolver createExtraMetadataResolver() {
         try {
             MetadataObject metadata = readPreviewMetadata();
-            return new SimpleMetadataResolver(Collections.singleton(metadata));
+            return new SimpleAttestationResolver(Collections.singleton(metadata));
         } catch (CertificateException e) {
             throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
         }

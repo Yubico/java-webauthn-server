@@ -149,6 +149,28 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         attestation.getDeviceProperties.get.get("deviceId") should be ("DevA")
       }
 
+      it("matches any certificate to a device with no selectors.") {
+        val metadataJson =
+          s"""{
+          "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
+          "version": 1,
+          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).lines.mkString(raw"\n")}"],
+          "vendorInfo": {},
+          "devices": [
+            {
+              "deviceId": "DevA",
+              "displayName": "Device A"
+            }
+          ]
+        }"""
+        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+
+        val resultA = service.getAttestation(List(certA).asJava)
+        val resultB = service.getAttestation(List(certB).asJava)
+        resultA.getDeviceProperties.get.get("deviceId") should be ("DevA")
+        resultB.getDeviceProperties.get.get("deviceId") should be ("DevA")
+      }
+
     }
 
   }
