@@ -43,7 +43,18 @@ public class CertificateParser {
         //Some known certs have an incorrect "unused bits" value, which causes problems on newer versions of BouncyCastle.
         if(FIXSIG.contains(cert.getSubjectDN().getName())) {
             byte[] encoded = cert.getEncoded();
-            encoded[encoded.length - UNUSED_BITS_BYTE_INDEX_FROM_END] = 0;  // Fix the "unused bits" field (should always be 0).
+
+            if (encoded.length >= UNUSED_BITS_BYTE_INDEX_FROM_END) {
+                encoded[encoded.length - UNUSED_BITS_BYTE_INDEX_FROM_END] = 0;  // Fix the "unused bits" field (should always be 0).
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Expected DER encoded cert to be at least %d bytes, was %d: %s",
+                    UNUSED_BITS_BYTE_INDEX_FROM_END,
+                    encoded.length,
+                    cert
+                ));
+            }
+
             cert = (X509Certificate) CertificateFactory.getInstance("X.509", BC_PROVIDER).generateCertificate(new ByteArrayInputStream(encoded));
         }
         return cert;
