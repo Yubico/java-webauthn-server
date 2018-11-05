@@ -1,6 +1,6 @@
 description = 'Yubico WebAuthn attestation subsystem'
 
-apply plugin: 'java'
+apply plugin: 'scala'
 
 project.ext.publishMe = true
 
@@ -13,9 +13,14 @@ dependencies {
   )
 
   testCompile(
+    project(':webauthn-server-core').sourceSets.test.output,
+    project(':yubico-util-scala'),
+    'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
+    'org.scala-lang:scala-library:2.11.3',
+    'org.scalacheck:scalacheck_2.11:1.13.5',
+    'org.scalatest:scalatest_2.11:3.0.4',
   )
-
 }
 
 
