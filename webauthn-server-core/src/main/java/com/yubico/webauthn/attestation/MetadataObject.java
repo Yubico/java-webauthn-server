@@ -10,16 +10,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(of = { "data" }, callSuper = false)
 public class MetadataObject {
@@ -53,6 +58,17 @@ public class MetadataObject {
 
         identifier = data.get("identifier").asText();
         version = data.get("version").asLong();
+    }
+
+    public static MetadataObject readDefault() {
+        InputStream is = MetadataObject.class.getResourceAsStream("/metadata.json");
+        try {
+            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
+        } catch (IOException e) {
+            throw ExceptionUtil.wrapAndLog(log, "Failed to read default metadata", e);
+        } finally {
+            Closeables.closeQuietly(is);
+        }
     }
 
     public String getIdentifier() {

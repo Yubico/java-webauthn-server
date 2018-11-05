@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * An {@link AttestationResolver} whose {@link #resolve(X509Certificate,
- * Optional)} method calls {@link AttestationResolver#resolve(X509Certificate,
- * Optional)} on each of the subordinate {@link AttestationResolver}s in turn,
- * and returns the first non-<code>null</code> result.
+ * An {@link AttestationResolver} whose {@link #resolve(X509Certificate, List)}
+ * method calls {@link AttestationResolver#resolve(X509Certificate, List)} on
+ * each of the subordinate {@link AttestationResolver}s in turn, and returns
+ * the first non-<code>null</code> result.
  */
 public class CompositeAttestationResolver implements AttestationResolver {
 
@@ -22,9 +22,9 @@ public class CompositeAttestationResolver implements AttestationResolver {
     }
 
     @Override
-    public Optional<Attestation> resolve(X509Certificate attestationCertificate, Optional<X509Certificate> trustAnchor) {
+    public Optional<Attestation> resolve(X509Certificate attestationCertificate, List<X509Certificate> certificateChain) {
         for (AttestationResolver resolver : resolvers) {
-            Optional<Attestation> result = resolver.resolve(attestationCertificate, trustAnchor);
+            Optional<Attestation> result = resolver.resolve(attestationCertificate, certificateChain);
             if (result.isPresent()) {
                 return result;
             }

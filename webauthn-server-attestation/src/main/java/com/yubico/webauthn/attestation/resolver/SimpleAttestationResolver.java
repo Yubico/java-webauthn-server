@@ -5,20 +5,20 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.AttestationResolver;
 import com.yubico.webauthn.attestation.DeviceMatcher;
 import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.Transport;
+import com.yubico.webauthn.attestation.TrustResolver;
 import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
 import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
-import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,29 +40,36 @@ public class SimpleAttestationResolver implements AttestationResolver {
     );
 
     private final Map<X509Certificate, MetadataObject> metadata = new HashMap<>();
+    private final TrustResolver trustResolver;
     private final Map<String, DeviceMatcher> matchers;
 
     public SimpleAttestationResolver(
+        @NonNull
         Collection<MetadataObject> objects,
+        @NonNull
+        TrustResolver trustResolver,
+        @NonNull
         Map<String, DeviceMatcher> matchers
     ) throws CertificateException {
-        this.matchers = Collections.unmodifiableMap(matchers);
-
         for (MetadataObject object : objects) {
             for (String caPem : object.getTrustedCertificates()) {
                 X509Certificate trustAnchor = CertificateParser.parsePem(caPem);
                 metadata.put(trustAnchor, object);
             }
         }
+
+        this.trustResolver = trustResolver;
+        this.matchers = Collections.unmodifiableMap(matchers);
     }
 
-    public SimpleAttestationResolver(Collection<MetadataObject> objects) throws CertificateException {
-        this(objects, DEFAULT_DEVICE_MATCHERS);
+    public SimpleAttestationResolver(Collection<MetadataObject> objects, TrustResolver trustResolver) throws CertificateException {
+        this(objects, trustResolver, DEFAULT_DEVICE_MATCHERS);
     }
 
-    public static SimpleAttestationResolver fromMetadataJson(String metadataObjectJson) throws IOException, CertificateException {
+    public static SimpleAttestationResolver fromMetadata(MetadataObject metadata) throws CertificateException {
         return new SimpleAttestationResolver(
-            Collections.singleton(WebAuthnCodecs.json().readValue(metadataObjectJson, MetadataObject.class))
+            Collections.singleton(metadata),
+            SimpleTrustResolver.fromMetadata(Collections.singleton(metadata))
         );
     }
 
@@ -71,7 +78,9 @@ public class SimpleAttestationResolver implements AttestationResolver {
     }
 
     @Override
-    public Optional<Attestation> resolve(X509Certificate attestationCertificate, Optional<X509Certificate> trustAnchor) {
+    public Optional<Attestation> resolve(X509Certificate attestationCertificate, List<X509Certificate> certificateChain) {
+        Optional<X509Certificate> trustAnchor = trustResolver.resolveTrustAnchor(attestationCertificate, certificateChain);
+
         return trustAnchor.flatMap(this::lookupTrustAnchor).map(metadata -> {
             Map<String, String> vendorProperties;
             Map<String, String> deviceProperties = null;

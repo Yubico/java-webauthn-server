@@ -5,20 +5,17 @@ package com.yubico.webauthn.attestation;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Closeables;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import lombok.NonNull;
 import org.slf4j.Logger;
@@ -27,29 +24,24 @@ import org.slf4j.LoggerFactory;
 public class StandardMetadataService implements MetadataService {
     private static final Logger logger = LoggerFactory.getLogger(StandardMetadataService.class);
 
-    private static MetadataObject readDefaultMetadata() {
-        InputStream is = StandardMetadataService.class.getResourceAsStream("/metadata.json");
-        try {
-            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
-        } catch (IOException e) {
-            throw ExceptionUtil.wrapAndLog(logger, "Failed to read default metadata", e);
-        } finally {
-            Closeables.closeQuietly(is);
-        }
-    }
-
     public static TrustResolver createDefaultTrustResolver() throws CertificateException {
-        return SimpleTrustResolver.fromMetadata(Collections.singleton(readDefaultMetadata()));
+        return SimpleTrustResolver.fromMetadata(Collections.singleton(MetadataObject.readDefault()));
     }
 
-    public static AttestationResolver createDefaultMetadataResolver() throws CertificateException {
-        return new SimpleAttestationResolver(Collections.singleton(readDefaultMetadata()));
+    public static AttestationResolver createDefaultAttestationResolver(TrustResolver trustResolver) throws CertificateException {
+        return new SimpleAttestationResolver(
+            Collections.singleton(MetadataObject.readDefault()),
+            trustResolver
+        );
+    }
+
+    public static AttestationResolver createDefaultAttestationResolver() throws CertificateException {
+        return createDefaultAttestationResolver(createDefaultTrustResolver());
     }
 
     private static StandardMetadataService usingMetadata(Collection<MetadataObject> metadata) throws CertificateException {
         return new StandardMetadataService(
-            SimpleTrustResolver.fromMetadata(metadata),
-            new SimpleAttestationResolver(metadata)
+            new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
         );
     }
 
@@ -65,36 +57,28 @@ public class StandardMetadataService implements MetadataService {
     }
 
     private final Attestation unknownAttestation = Attestation.builder(false).build();
-    private final TrustResolver trustResolver;
     private final AttestationResolver attestationResolver;
     private final Cache<String, Attestation> cache;
 
     private StandardMetadataService(
         @NonNull
-        TrustResolver trustResolver,
-        @NonNull
-            AttestationResolver attestationResolver,
+        AttestationResolver attestationResolver,
         @NonNull
         Cache<String, Attestation> cache
     ) {
-        this.trustResolver = trustResolver;
         this.attestationResolver = attestationResolver;
         this.cache = cache;
     }
 
-    public StandardMetadataService(TrustResolver trustResolver, AttestationResolver attestationResolver) {
+    public StandardMetadataService(AttestationResolver attestationResolver) {
         this(
-            trustResolver,
             attestationResolver,
             CacheBuilder.newBuilder().build()
         );
     }
 
     public StandardMetadataService() throws CertificateException {
-        this(
-            createDefaultTrustResolver(),
-            createDefaultMetadataResolver()
-        );
+        this(createDefaultAttestationResolver());
     }
 
     public Attestation getCachedAttestation(String attestationCertificateFingerprint) {
@@ -147,14 +131,12 @@ public class StandardMetadataService implements MetadataService {
         X509Certificate attestationCertificate = attestationCertificateChain.get(0);
         List<X509Certificate> certificateChain = attestationCertificateChain.subList(1, attestationCertificateChain.size());
 
-        Optional<X509Certificate> trustAnchor = trustResolver.resolveTrustAnchor(attestationCertificate, certificateChain);
-
         try {
             final String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
             return cache.get(
                 fingerprint,
                 () ->
-                    attestationResolver.resolve(attestationCertificate, trustAnchor)
+                    attestationResolver.resolve(attestationCertificate, certificateChain)
                         .orElseGet(() -> attestationResolver.untrustedFromCertificate(attestationCertificate))
             );
         } catch (ExecutionException e) {

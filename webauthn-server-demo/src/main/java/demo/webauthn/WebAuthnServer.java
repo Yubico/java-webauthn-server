@@ -78,14 +78,15 @@ public class WebAuthnServer {
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
+    private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
+        StandardMetadataService.createDefaultTrustResolver(),
+        createExtraTrustResolver()
+    ));
+
     private final MetadataService metadataService = new StandardMetadataService(
-        new CompositeTrustResolver(Arrays.asList(
-            StandardMetadataService.createDefaultTrustResolver(),
-            createExtraTrustResolver()
-        )),
         new CompositeAttestationResolver(Arrays.asList(
-            StandardMetadataService.createDefaultMetadataResolver(),
-            createExtraMetadataResolver()
+            StandardMetadataService.createDefaultAttestationResolver(trustResolver),
+            createExtraMetadataResolver(trustResolver)
         ))
     );
 
@@ -145,10 +146,10 @@ public class WebAuthnServer {
     /**
      * Create a {@link AttestationResolver} with additional metadata for unreleased YubiKey Preview devices.
      */
-    private static AttestationResolver createExtraMetadataResolver() {
+    private static AttestationResolver createExtraMetadataResolver(TrustResolver trustResolver) {
         try {
             MetadataObject metadata = readPreviewMetadata();
-            return new SimpleAttestationResolver(Collections.singleton(metadata));
+            return new SimpleAttestationResolver(Collections.singleton(metadata), trustResolver);
         } catch (CertificateException e) {
             throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
         }
