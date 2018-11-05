@@ -34,7 +34,6 @@ public class ExtensionMatcher implements DeviceMatcher {
             if (matchValue == null) {
                 return true;
             } else {
-                //TODO: Handle long lengths? Verify length?
                 try {
                     final ASN1Primitive value = ASN1Primitive.fromByteArray(extensionValue);
 
