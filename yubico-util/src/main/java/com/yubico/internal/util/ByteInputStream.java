@@ -1,8 +1,8 @@
 /*
- * Copyright 2014 Yubico.
+ * Copyright 2014-2018 Yubico.
  *
  * Use of this source code is governed by a BSD-style
- * license that can be found in the LICENSE file.
+ * license that can be found in the COPYING file.
  */
 
 package com.yubico.internal.util;
