@@ -1,3 +1,31 @@
+== Version 0.5.0 (unreleased) ==
+
+=== `webauthn-server-core` ===
+
+New features:
+
+* `PackedAttestationStatementVerifier` now supports SHA256WithRSA signatures
+
+Bug fixes:
+
+* `PublicKeyCredentialDescriptor.compareTo` is now consistent with equals
+* `AuthenticatorData` constructor should now throw more descriptive exceptions
+  instead of raw `ArrayIndexOutOfBoundsException`s
+
+
+=== `webauthn-server-attestation` ===
+
+* Interface `MetadataResolver` replaced with interfaces `AttestationResolver`
+  and `TrustResolver`
+ ** Class `SimpleResolver` split into `SimpleAttestationResolver` and
+    `SimpleTrustResolver`
+  *** Both of these classes now take the metadata as a constructor parameter
+      instead of exposing `addMetadata` methods
+ ** Class `CompositeResolver` split into `CompositeAttestationResolver` and
+    `CompositeTrustResolver`
+* Class `StandardMetadataService` overhauled
+
+
 == Version 0.4.0 ==
 
 Breaking changes:
