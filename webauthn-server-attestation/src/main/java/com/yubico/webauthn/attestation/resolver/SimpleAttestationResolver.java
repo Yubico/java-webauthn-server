@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.AttestationResolver;
 import com.yubico.webauthn.attestation.DeviceMatcher;
@@ -129,6 +130,12 @@ public class SimpleAttestationResolver implements AttestationResolver {
         if(extensionValue == null) {
             return 0;
         }
+
+        ExceptionUtil.assure(
+            extensionValue.length >= 4,
+            "Transports extension value must be at least 4 bytes (2 bytes octet string header, 2 bytes bit string header), was: %d",
+            extensionValue.length
+        );
 
         // Mask out unused bits (shouldn't be needed as they should already be 0).
         int unusedBitMask = 0xff;
