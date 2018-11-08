@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERBitString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
@@ -17,6 +18,8 @@ import scala.collection.JavaConverters._
 class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+
+  private val TRANSPORTS_EXT_OID = "1.3.6.1.4.1.45724.2.1.1"
 
   private val ooidA = "1.3.6.1.4.1.41482.1.1"
   private val ooidB = "1.3.6.1.4.1.41482.1.2"
@@ -43,7 +46,10 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
       val (certA, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Cert A"),
         caCertAndKey = Some((caCert, caKey)),
-        extensions = List((ooidA, false, new DEROctetString(Array[Byte]())))
+        extensions = List(
+          (ooidA, false, new DEROctetString(Array[Byte]())),
+          (TRANSPORTS_EXT_OID, false, new DERBitString(Array[Byte](0x60)))
+        )
       )
       val (certB, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Cert B"),
@@ -117,6 +123,25 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
         attestationB.isTrusted should be (true)
         attestationB.getDeviceProperties.get.get("deviceId") should be ("DevB")
+      }
+
+      it("returns a trusted best-effort attestation if the certificate is trusted but matches no known metadata.") {
+        val metadataJson =
+          s"""{
+          "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
+          "version": 1,
+          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).lines.mkString(raw"\n")}"],
+          "vendorInfo": {},
+          "devices": []
+        }"""
+        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+
+        val attestation: Attestation = service.getAttestation(List(certA).asJava)
+
+        attestation.isTrusted should be (true)
+        attestation.getDeviceProperties.asScala shouldBe empty
+        attestation.getTransports.get.asScala should contain (Transport.BLE)
+        attestation.getTransports.get.asScala should contain (Transport.USB)
       }
 
       it("returns the trusted attestation matching the first cert in the chain if the chain resolves to a trusted certificate.") {
