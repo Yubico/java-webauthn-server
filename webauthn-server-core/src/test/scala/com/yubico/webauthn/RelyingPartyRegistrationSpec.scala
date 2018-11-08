@@ -28,6 +28,7 @@ import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
+import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.mockito.Mockito
@@ -1160,7 +1161,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
-                  extensions = List((idFidoGenCeAaguid, false, new ByteArray(Array(0, 1, 2, 3))))
+                  extensions = List((idFidoGenCeAaguid, false, new DEROctetString(Array[Byte](0, 1, 2, 3))))
                 )._1
                 val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid))
 

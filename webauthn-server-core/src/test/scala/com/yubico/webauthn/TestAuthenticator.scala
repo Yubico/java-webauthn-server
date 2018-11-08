@@ -44,6 +44,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.asn1.x509.BasicConstraints
@@ -516,7 +517,7 @@ object TestAuthenticator {
     keypair: KeyPair = generateEcKeypair(),
     name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE"),
     superCa: Option[(X509Certificate, PrivateKey)] = None,
-    extensions: Iterable[(String, Boolean, ByteArray)] = Nil
+    extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil
   ): (X509Certificate, PrivateKey) = {
     (
       buildCertificate(
@@ -534,7 +535,7 @@ object TestAuthenticator {
   def generateAttestationCertificate(
     keypair: KeyPair = generateEcKeypair(),
     name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"),
-    extensions: Iterable[(String, Boolean, ByteArray)] = List(("1.3.6.1.4.1.45724.1.1.4", false, Defaults.aaguid)),
+    extensions: Iterable[(String, Boolean, ASN1Primitive)] = List(("1.3.6.1.4.1.45724.1.1.4", false, new DEROctetString(Defaults.aaguid.getBytes))),
     caCertAndKey: Option[(X509Certificate, PrivateKey)] = None
   ): (X509Certificate, PrivateKey) = {
     (
@@ -556,7 +557,7 @@ object TestAuthenticator {
     subjectName: X500Name,
     signingKey: PrivateKey,
     isCa: Boolean = false,
-    extensions: Iterable[(String, Boolean, ByteArray)] = Nil
+    extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil
   ): X509Certificate = {
     CertificateParser.parseDer({
       val builder = new X509v3CertificateBuilder(
@@ -569,7 +570,7 @@ object TestAuthenticator {
       )
 
       for { (oid, critical, value) <- extensions } {
-        builder.addExtension(new ASN1ObjectIdentifier(oid), critical, new DEROctetString(value.getBytes))
+        builder.addExtension(new ASN1ObjectIdentifier(oid), critical, value)
       }
 
       if (isCa) {

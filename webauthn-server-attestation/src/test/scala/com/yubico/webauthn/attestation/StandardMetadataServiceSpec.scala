@@ -3,7 +3,7 @@ package com.yubico.webauthn.attestation
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
-import com.yubico.webauthn.data.ByteArray
+import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
@@ -27,32 +27,32 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
       val cacaca = TestAuthenticator.generateAttestationCaCertificate(
         name = new X500Name("CN=CA CA CA"),
-        extensions = List((ooidB, false, new ByteArray(Array())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
       )
       val caca = TestAuthenticator.generateAttestationCaCertificate(
         name = new X500Name("CN=CA CA"),
         superCa = Some(cacaca),
-        extensions = List((ooidB, false, new ByteArray(Array())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
       )
       val (caCert, caKey) = TestAuthenticator.generateAttestationCaCertificate(
         name = new X500Name("CN=CA"),
         superCa = Some(caca),
-        extensions = List((ooidB, false, new ByteArray(Array())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
       )
 
       val (certA, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Cert A"),
         caCertAndKey = Some((caCert, caKey)),
-        extensions = List((ooidA, false, new ByteArray(Array())))
+        extensions = List((ooidA, false, new DEROctetString(Array[Byte]())))
       )
       val (certB, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Cert B"),
         caCertAndKey = Some((caCert, caKey)),
-        extensions = List((ooidB, false, new ByteArray(Array())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
       )
       val (unknownCert, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Unknown Cert"),
-        extensions = List((ooidA, false, new ByteArray(Array())))
+        extensions = List((ooidA, false, new DEROctetString(Array[Byte]())))
       )
 
       val metadataJson =
