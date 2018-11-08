@@ -102,15 +102,14 @@ public class StandardMetadataService implements MetadataService {
      * </p>
      *
      * <p>
-     * If there is no signature path from any trusted certificate to the first
-     * certificate in <code>attestationCertificateChain</code>, the method
-     * returns an untrusted attestation populated with information found
-     * embedded in the attestation certificate.
+     * If the certificate chain is not trusted, the method returns an untrusted
+     * attestation populated with transports information found embedded in the
+     * attestation certificate.
      * </p>
      *
      * <p>
-     * If <code>attestationCertificateChain</code> is empty, an untrusted empty
-     * attestation is returned.
+     * If the certificate chain is empty, an untrusted empty attestation is
+     * returned.
      * </p>
      *
      * @param attestationCertificateChain a certificate chain, where each
