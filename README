@@ -14,6 +14,13 @@ for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
 
+=== Planned breaking changes
+
+* Update spec version from Candidate Recommendation 2018-03-20 to Proposed
+  Recommendation 2018-11-??. This will involve renaming a couple of classes
+  and methods.
+
+
 === Example Usage
 
 See link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo
