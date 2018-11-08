@@ -133,8 +133,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
         attestation.isTrusted should be (true)
         attestation.getDeviceProperties.asScala shouldBe empty
-        attestation.getTransports.get.asScala should contain (Transport.BLE)
-        attestation.getTransports.get.asScala should contain (Transport.USB)
+        attestation.getTransports.get.asScala should equal (Set(Transport.BLE, Transport.USB))
       }
 
       it("returns an untrusted attestation with transports if the certificate is not trusted.") {
@@ -154,8 +153,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         attestation.getMetadataIdentifier.asScala shouldBe empty
         attestation.getVendorProperties.asScala shouldBe empty
         attestation.getDeviceProperties.asScala shouldBe empty
-        attestation.getTransports.get.asScala should contain (Transport.BLE)
-        attestation.getTransports.get.asScala should contain (Transport.USB)
+        attestation.getTransports.get.asScala should equal (Set(Transport.BLE, Transport.USB))
       }
 
       it("returns the trusted attestation matching the first cert in the chain if the chain resolves to a trusted certificate.") {
