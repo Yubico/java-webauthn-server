@@ -6,14 +6,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.Hashing;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver;
-import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -47,23 +44,6 @@ public class StandardMetadataService implements MetadataService {
 
     public StandardMetadataService() throws CertificateException {
         this(createDefaultAttestationResolver());
-    }
-
-    private static StandardMetadataService usingMetadata(Collection<MetadataObject> metadata) throws CertificateException {
-        return new StandardMetadataService(
-            new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
-        );
-    }
-
-    static StandardMetadataService usingMetadataJson(String metadataJson) throws CertificateException {
-        Collection<MetadataObject> metadata;
-        try {
-            metadata = Collections.singleton(WebAuthnCodecs.json().readValue(metadataJson, MetadataObject.class));
-        } catch (IOException e) {
-            throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata object from json: " + metadataJson, e);
-        }
-
-        return usingMetadata(metadata);
     }
 
     public static TrustResolver createDefaultTrustResolver() throws CertificateException {

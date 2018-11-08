@@ -1,8 +1,13 @@
 package com.yubico.webauthn.attestation
 
+import java.util.Collections
+
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
+import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERBitString
 import org.bouncycastle.asn1.x500.X500Name
@@ -23,6 +28,13 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
   private val ooidA = "1.3.6.1.4.1.41482.1.1"
   private val ooidB = "1.3.6.1.4.1.41482.1.2"
+
+  def metadataService(metadataJson: String): StandardMetadataService = {
+    val metadata = Collections.singleton(WebAuthnCodecs.json().readValue(metadataJson, classOf[MetadataObject]))
+    new StandardMetadataService(
+      new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
+    )
+  }
 
   describe("StandardMetadataService") {
 
@@ -94,7 +106,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
             }
           ]
         }"""
-      val service: StandardMetadataService  = StandardMetadataService.usingMetadataJson(metadataJson)
+      val service  = metadataService(metadataJson)
 
       it("returns the trusted attestation matching the single cert passed, if it is signed by a trusted certificate.") {
         val attestationA: Attestation = service.getAttestation(List(certA).asJava)
@@ -127,7 +139,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           "vendorInfo": {},
           "devices": []
         }"""
-        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+        val service = metadataService(metadataJson)
 
         val attestation: Attestation = service.getAttestation(List(certA).asJava)
 
@@ -145,7 +157,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           "vendorInfo": {},
           "devices": []
         }"""
-        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+        val service = metadataService(metadataJson)
 
         val attestation: Attestation = service.getAttestation(List(certA).asJava)
 
@@ -178,7 +190,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
             }
           ]
         }"""
-        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+        val service = metadataService(metadataJson)
 
         val attestation: Attestation = service.getAttestation(List(certA, caCert, caca._1).asJava)
 
@@ -200,7 +212,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
             }
           ]
         }"""
-        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+        val service = metadataService(metadataJson)
 
         val resultA = service.getAttestation(List(certA).asJava)
         val resultB = service.getAttestation(List(certB).asJava)
