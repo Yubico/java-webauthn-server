@@ -107,13 +107,6 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         attestationB.getDeviceProperties.get.get("deviceId") should be ("DevB")
       }
 
-      it("returns an unknown attestation if the passed cert is not signed by a trusted certificate.") {
-        val attestation: Attestation = service.getAttestation(List(unknownCert).asJava)
-
-        attestation.isTrusted should be (false)
-        attestation.getDeviceProperties.asScala shouldBe empty
-      }
-
       it("returns the trusted attestation matching the first cert in the chain if it is signed by a trusted certificate.") {
         val attestationA: Attestation = service.getAttestation(List(certA, certB).asJava)
         val attestationB: Attestation = service.getAttestation(List(certB, certA).asJava)
@@ -139,6 +132,27 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         val attestation: Attestation = service.getAttestation(List(certA).asJava)
 
         attestation.isTrusted should be (true)
+        attestation.getDeviceProperties.asScala shouldBe empty
+        attestation.getTransports.get.asScala should contain (Transport.BLE)
+        attestation.getTransports.get.asScala should contain (Transport.USB)
+      }
+
+      it("returns an untrusted attestation with transports if the certificate is not trusted.") {
+        val metadataJson =
+          s"""{
+          "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
+          "version": 1,
+          "trustedCertificates": [],
+          "vendorInfo": {},
+          "devices": []
+        }"""
+        val service: StandardMetadataService = StandardMetadataService.usingMetadataJson(metadataJson)
+
+        val attestation: Attestation = service.getAttestation(List(certA).asJava)
+
+        attestation.isTrusted should be (false)
+        attestation.getMetadataIdentifier.asScala shouldBe empty
+        attestation.getVendorProperties.asScala shouldBe empty
         attestation.getDeviceProperties.asScala shouldBe empty
         attestation.getTransports.get.asScala should contain (Transport.BLE)
         attestation.getTransports.get.asScala should contain (Transport.USB)
