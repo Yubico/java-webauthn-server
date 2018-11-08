@@ -24,38 +24,6 @@ import org.slf4j.LoggerFactory;
 public class StandardMetadataService implements MetadataService {
     private static final Logger logger = LoggerFactory.getLogger(StandardMetadataService.class);
 
-    public static TrustResolver createDefaultTrustResolver() throws CertificateException {
-        return SimpleTrustResolver.fromMetadata(Collections.singleton(MetadataObject.readDefault()));
-    }
-
-    public static AttestationResolver createDefaultAttestationResolver(TrustResolver trustResolver) throws CertificateException {
-        return new SimpleAttestationResolver(
-            Collections.singleton(MetadataObject.readDefault()),
-            trustResolver
-        );
-    }
-
-    public static AttestationResolver createDefaultAttestationResolver() throws CertificateException {
-        return createDefaultAttestationResolver(createDefaultTrustResolver());
-    }
-
-    private static StandardMetadataService usingMetadata(Collection<MetadataObject> metadata) throws CertificateException {
-        return new StandardMetadataService(
-            new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
-        );
-    }
-
-    static StandardMetadataService usingMetadataJson(String metadataJson) throws CertificateException {
-        Collection<MetadataObject> metadata;
-        try {
-            metadata = Collections.singleton(WebAuthnCodecs.json().readValue(metadataJson, MetadataObject.class));
-        } catch (IOException e) {
-            throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata object from json: " + metadataJson, e);
-        }
-
-        return usingMetadata(metadata);
-    }
-
     private final Attestation unknownAttestation = Attestation.builder(false).build();
     private final AttestationResolver attestationResolver;
     private final Cache<String, Attestation> cache;
@@ -79,6 +47,38 @@ public class StandardMetadataService implements MetadataService {
 
     public StandardMetadataService() throws CertificateException {
         this(createDefaultAttestationResolver());
+    }
+
+    private static StandardMetadataService usingMetadata(Collection<MetadataObject> metadata) throws CertificateException {
+        return new StandardMetadataService(
+            new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
+        );
+    }
+
+    static StandardMetadataService usingMetadataJson(String metadataJson) throws CertificateException {
+        Collection<MetadataObject> metadata;
+        try {
+            metadata = Collections.singleton(WebAuthnCodecs.json().readValue(metadataJson, MetadataObject.class));
+        } catch (IOException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata object from json: " + metadataJson, e);
+        }
+
+        return usingMetadata(metadata);
+    }
+
+    public static TrustResolver createDefaultTrustResolver() throws CertificateException {
+        return SimpleTrustResolver.fromMetadata(Collections.singleton(MetadataObject.readDefault()));
+    }
+
+    public static AttestationResolver createDefaultAttestationResolver(TrustResolver trustResolver) throws CertificateException {
+        return new SimpleAttestationResolver(
+            Collections.singleton(MetadataObject.readDefault()),
+            trustResolver
+        );
+    }
+
+    public static AttestationResolver createDefaultAttestationResolver() throws CertificateException {
+        return createDefaultAttestationResolver(createDefaultTrustResolver());
     }
 
     public Attestation getCachedAttestation(String attestationCertificateFingerprint) {
