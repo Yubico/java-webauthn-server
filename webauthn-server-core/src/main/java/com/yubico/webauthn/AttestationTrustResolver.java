@@ -7,6 +7,6 @@ import java.security.cert.CertificateEncodingException;
 
 interface AttestationTrustResolver {
 
-  Attestation resolveTrustAnchor(AttestationObject attestationObject) throws CertificateEncodingException;
+    Attestation resolveTrustAnchor(AttestationObject attestationObject) throws CertificateEncodingException;
 
 }
