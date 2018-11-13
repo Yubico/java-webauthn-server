@@ -760,18 +760,16 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-            forAll(anyAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
-              whenever (clientExtensionOutputs.getExtensionIds.asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
-                val steps = finishAssertion(
-                  requestedExtensions = extensionInputs,
-                  clientExtensionResults = clientExtensionOutputs
-                )
-                val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            forAll(unrequestedAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
+              val steps = finishAssertion(
+                requestedExtensions = extensionInputs,
+                clientExtensionResults = clientExtensionOutputs
+              )
+              val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-                step.validations shouldBe a [Failure[_]]
-                step.validations.failed.get shouldBe an [IllegalArgumentException]
-                step.tryNext shouldBe a [Failure[_]]
-              }
+              step.validations shouldBe a [Failure[_]]
+              step.validations.failed.get shouldBe an [IllegalArgumentException]
+              step.tryNext shouldBe a [Failure[_]]
             }
           }
 

@@ -398,6 +398,16 @@ object Generators {
       returned <- arbitrary[ClientRegistrationExtensionOutputs]
     } yield (requested, returned)
 
+  def unrequestedAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
+    for {
+      requested <- arbitrary[AssertionExtensionInputs]
+      returned <- arbitrary[ClientAssertionExtensionOutputs].filter(returned =>
+        returned.getExtensionIds.asScala.exists(id => !requested.getExtensionIds.contains(id))
+      )
+    } yield {
+      (requested, returned)
+    }
+
   def subsetAssertionExtensions: Gen[(AssertionExtensionInputs, ClientAssertionExtensionOutputs)] =
     for {
       requested <- arbitrary[AssertionExtensionInputs]
