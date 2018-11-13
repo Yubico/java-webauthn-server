@@ -1,3 +1,27 @@
+// Copyright (c) 2018, Yubico AB
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,18 +71,24 @@ public class AuthenticatorData {
     @NonNull
     private final transient Optional<CBORObject> extensions;
 
-    private static final int RpIdHashLength = 32;
-    private static final int FlagsLength = 1;
-    private static final int CounterLength = 4;
-    private static final int FixedLengthPartEndIndex = RpIdHashLength + FlagsLength + CounterLength;
+    private static final int RP_ID_HASH_INDEX = 0;
+    private static final int RP_ID_HASH_END = RP_ID_HASH_INDEX + 32;
+
+    private static final int FLAGS_INDEX = RP_ID_HASH_END;
+    private static final int FLAGS_END = FLAGS_INDEX + 1;
+
+    private static final int COUNTER_INDEX = FLAGS_END;
+    private static final int COUNTER_END = COUNTER_INDEX + 4;
+
+    private static final int FIXED_LENGTH_PART_END_INDEX = COUNTER_END;
 
     @JsonCreator
     public AuthenticatorData(@NonNull ByteArray bytes) {
         ExceptionUtil.assure(
-            bytes.size() >= FixedLengthPartEndIndex,
+            bytes.size() >= FIXED_LENGTH_PART_END_INDEX,
             "%s byte array must be at least %d bytes, was %d: %s",
             AuthenticatorData.class.getSimpleName(),
-            FixedLengthPartEndIndex,
+            FIXED_LENGTH_PART_END_INDEX,
             bytes.size(),
             bytes.getBase64Url()
         );
@@ -67,18 +97,18 @@ public class AuthenticatorData {
 
         final byte[] rawBytes = bytes.getBytes();
 
-        this.flags = new AuthenticationDataFlags(rawBytes[32]);
+        this.flags = new AuthenticationDataFlags(rawBytes[FLAGS_INDEX]);
 
         if (flags.AT) {
             VariableLengthParseResult parseResult = parseAttestationData(
                 flags,
-                Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)
+                Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)
             );
             attestationData = parseResult.getAttestationData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
             attestationData = Optional.empty();
-            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FixedLengthPartEndIndex, rawBytes.length)));
+            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)));
         } else {
             attestationData = Optional.empty();
             extensions = Optional.empty();
@@ -90,20 +120,32 @@ public class AuthenticatorData {
      */
     @JsonProperty("rpIdHash")
     public ByteArray getRpIdHash() {
-        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), 0, RpIdHashLength));
+        return new ByteArray(Arrays.copyOfRange(bytes.getBytes(), RP_ID_HASH_INDEX, RP_ID_HASH_END));
     }
 
     /**
      * The 32-bit unsigned signature counter.
      */
     public long getSignatureCounter() {
-        final int start = RpIdHashLength + FlagsLength;
-        final int end = start + CounterLength;
-        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), start, end));
+        return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), COUNTER_INDEX, COUNTER_END));
     }
 
     private static VariableLengthParseResult parseAttestationData(AuthenticationDataFlags flags, byte[] bytes) {
-        byte[] credentialIdLengthBytes = Arrays.copyOfRange(bytes, 16, 16 + 2);
+        final int AAGUID_INDEX = 0;
+        final int AAGUID_END = AAGUID_INDEX + 16;
+
+        final int CREDENTIAL_ID_LENGTH_INDEX = AAGUID_END;
+        final int CREDENTIAL_ID_LENGTH_END = CREDENTIAL_ID_LENGTH_INDEX + 2;
+
+        ExceptionUtil.assure(
+            bytes.length >= CREDENTIAL_ID_LENGTH_END,
+            "Attestation data must contain at least %d bytes, was %d: %s",
+            CREDENTIAL_ID_LENGTH_END,
+            bytes.length,
+            new ByteArray(bytes).getHex()
+        );
+
+        byte[] credentialIdLengthBytes = Arrays.copyOfRange(bytes, CREDENTIAL_ID_LENGTH_INDEX, CREDENTIAL_ID_LENGTH_END);
 
         final int L;
         try {
@@ -112,8 +154,22 @@ public class AuthenticatorData {
             throw new IllegalArgumentException("Invalid credential ID length bytes: " + Arrays.asList(credentialIdLengthBytes), e);
         }
 
+        final int CREDENTIAL_ID_INDEX = CREDENTIAL_ID_LENGTH_END;
+        final int CREDENTIAL_ID_END = CREDENTIAL_ID_INDEX + L;
+
+        final int CREDENTIAL_PUBLIC_KEY_INDEX = CREDENTIAL_ID_END;
+        final int CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END = bytes.length;
+
+        ExceptionUtil.assure(
+            bytes.length >= CREDENTIAL_ID_END,
+            "Expected credential ID of length %d, but attestation data and extension data is only %d bytes: %s",
+            CREDENTIAL_ID_END,
+            bytes.length,
+            new ByteArray(bytes).getHex()
+        );
+
         ByteArrayInputStream indefiniteLengthBytes = new ByteArrayInputStream(
-            Arrays.copyOfRange(bytes, 16 + 2 + L, bytes.length)
+            Arrays.copyOfRange(bytes, CREDENTIAL_PUBLIC_KEY_INDEX, CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END)
         );
 
         final CBORObject credentialPublicKey = CBORObject.Read(indefiniteLengthBytes);
@@ -140,8 +196,8 @@ public class AuthenticatorData {
 
         return new VariableLengthParseResult(
             Optional.of(AttestationData.builder()
-                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, 0, 16)))
-                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, 16 + 2, 16 + 2 + L)))
+                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
+                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
                 .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
                 .build()),
             extensions

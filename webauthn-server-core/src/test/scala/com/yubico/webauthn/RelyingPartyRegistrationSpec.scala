@@ -1,3 +1,27 @@
+// Copyright (c) 2018, Yubico AB
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 package com.yubico.webauthn
 
 import java.io.IOException
@@ -28,6 +52,7 @@ import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
+import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.mockito.Mockito
@@ -1150,8 +1175,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
                 }
 
-                it("Subject-CN: No stipulation.") {
-                  // Nothing to test
+                describe("Subject-CN: No stipulation.") {
+                  it("Nothing to test") {}
                 }
               }
 
@@ -1160,7 +1185,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
-                  extensions = List((idFidoGenCeAaguid, false, new ByteArray(Array(0, 1, 2, 3))))
+                  extensions = List((idFidoGenCeAaguid, false, new DEROctetString(Array[Byte](0, 1, 2, 3))))
                 )._1
                 val result = Try(verifier.verifyX5cRequirements(badCert, testDataBase.aaguid))
 

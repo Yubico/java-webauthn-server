@@ -29,8 +29,8 @@ if (publishEnabled) {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '4.8'
+wrapper {
+  gradleVersion = '4.10'
 }
 
 allprojects  {
@@ -48,6 +48,10 @@ allprojects  {
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+  }
+
+  tasks.withType(AbstractArchiveTask) {
+    from(rootProject.file('COPYING'))
   }
 
   repositories {

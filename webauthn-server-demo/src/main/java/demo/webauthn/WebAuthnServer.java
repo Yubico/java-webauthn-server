@@ -1,11 +1,33 @@
+// Copyright (c) 2018, Yubico AB
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 package demo.webauthn;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
@@ -20,12 +42,15 @@ import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.attestation.MetadataResolver;
+import com.yubico.webauthn.attestation.MetadataObject;
+import com.yubico.webauthn.attestation.AttestationResolver;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
-import com.yubico.webauthn.attestation.resolver.CompositeResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleResolverWithEquality;
+import com.yubico.webauthn.attestation.TrustResolver;
+import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
+import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AttestationType;
@@ -48,7 +73,6 @@ import demo.webauthn.data.RegistrationResponse;
 import demo.webauthn.data.U2fRegistrationResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -69,6 +93,8 @@ import org.slf4j.LoggerFactory;
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
 
+    private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
+
     private final Cache<ByteArray, AssertionRequest> assertRequestStorage;
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
@@ -76,10 +102,15 @@ public class WebAuthnServer {
 
     private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
+    private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
+        StandardMetadataService.createDefaultTrustResolver(),
+        createExtraTrustResolver()
+    ));
+
     private final MetadataService metadataService = new StandardMetadataService(
-        new CompositeResolver(Arrays.asList(
-            StandardMetadataService.createDefaultMetadataResolver(),
-            createExtraMetadataResolver()
+        new CompositeAttestationResolver(Arrays.asList(
+            StandardMetadataService.createDefaultAttestationResolver(trustResolver),
+            createExtraMetadataResolver(trustResolver)
         ))
     );
 
@@ -88,11 +119,11 @@ public class WebAuthnServer {
 
     private final RelyingParty rp;
 
-    public WebAuthnServer() throws InvalidAppIdException {
+    public WebAuthnServer() throws InvalidAppIdException, CertificateException {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -113,21 +144,39 @@ public class WebAuthnServer {
             .build();
     }
 
-    /**
-     * Create a {@link MetadataResolver} with additional metadata for unreleased YubiKey Preview devices.
-     */
-    private static MetadataResolver createExtraMetadataResolver() {
-        SimpleResolver resolver = new SimpleResolverWithEquality();
-        InputStream is = null;
+    private static MetadataObject readPreviewMetadata() {
+        InputStream is = WebAuthnServer.class.getResourceAsStream(PREVIEW_METADATA_PATH);
         try {
-            is = WebAuthnServer.class.getResourceAsStream("/preview-metadata.json");
-            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException | CertificateException e) {
-            logger.error("createDefaultMetadataResolver failed", e);
+            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
+        } catch (IOException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata from " + PREVIEW_METADATA_PATH, e);
         } finally {
             Closeables.closeQuietly(is);
         }
-        return resolver;
+    }
+
+    /**
+     * Create a {@link TrustResolver} that accepts attestation certificates that are directly recognised as trust anchors.
+     */
+    private static TrustResolver createExtraTrustResolver() {
+        try {
+            MetadataObject metadata = readPreviewMetadata();
+            return new SimpleTrustResolverWithEquality(metadata.getParsedTrustedCertificates());
+        } catch (CertificateException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
+        }
+    }
+
+    /**
+     * Create a {@link AttestationResolver} with additional metadata for unreleased YubiKey Preview devices.
+     */
+    private static AttestationResolver createExtraMetadataResolver(TrustResolver trustResolver) {
+        try {
+            MetadataObject metadata = readPreviewMetadata();
+            return new SimpleAttestationResolver(Collections.singleton(metadata), trustResolver);
+        } catch (CertificateException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
+        }
     }
 
     private static <K, V> Cache<K, V> newCache() {

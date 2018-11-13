@@ -1,33 +1,40 @@
-/* Copyright 2015 Yubico */
+// Copyright (c) 2015-2018, Yubico AB
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.yubico.webauthn.attestation;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Charsets;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Closeables;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
-import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
-import com.yubico.webauthn.attestation.resolver.SimpleResolver;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import lombok.NonNull;
 import org.slf4j.Logger;
@@ -36,101 +43,75 @@ import org.slf4j.LoggerFactory;
 public class StandardMetadataService implements MetadataService {
     private static final Logger logger = LoggerFactory.getLogger(StandardMetadataService.class);
 
-    private static final String SELECTORS = "selectors";
-    private static final String SELECTOR_TYPE = "type";
-    private static final String SELECTOR_PARAMETERS = "parameters";
-
-    private static final String TRANSPORTS = "transports";
-    private static final String TRANSPORTS_EXT_OID = "1.3.6.1.4.1.45724.2.1.1";
-
-    private static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS = ImmutableMap.of(
-            ExtensionMatcher.SELECTOR_TYPE, new ExtensionMatcher(),
-            FingerprintMatcher.SELECTOR_TYPE, new FingerprintMatcher()
-    );
-
-    public static MetadataResolver createDefaultMetadataResolver() {
-        SimpleResolver resolver = new SimpleResolver();
-        InputStream is = null;
-        try {
-            is = StandardMetadataService.class.getResourceAsStream("/metadata.json");
-            resolver.addMetadata(CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8)));
-        } catch (IOException | CertificateException e) {
-            logger.error("createDefaultMetadataResolver failed", e);
-        } finally {
-            Closeables.closeQuietly(is);
-        }
-        return resolver;
-    }
-
     private final Attestation unknownAttestation = Attestation.builder(false).build();
-    private final MetadataResolver resolver;
-    private final Map<String, DeviceMatcher> matchers;
+    private final AttestationResolver attestationResolver;
     private final Cache<String, Attestation> cache;
 
-    public StandardMetadataService(
+    private StandardMetadataService(
         @NonNull
-        MetadataResolver resolver,
+        AttestationResolver attestationResolver,
         @NonNull
-        Cache<String, Attestation> cache,
-        @NonNull
-        Map<String, ? extends DeviceMatcher> matchers
+        Cache<String, Attestation> cache
     ) {
-        this.resolver = resolver;
+        this.attestationResolver = attestationResolver;
         this.cache = cache;
-        this.matchers = Collections.unmodifiableMap(matchers);
     }
 
-    public StandardMetadataService() {
-        this(createDefaultMetadataResolver());
-    }
-
-    public StandardMetadataService(MetadataResolver resolver) {
+    public StandardMetadataService(AttestationResolver attestationResolver) {
         this(
-            resolver,
-            CacheBuilder.newBuilder().build(),
-            DEFAULT_DEVICE_MATCHERS
+            attestationResolver,
+            CacheBuilder.newBuilder().build()
         );
     }
 
-    private boolean deviceMatches(
-        JsonNode selectors,
-        @NonNull X509Certificate attestationCertificate
-    ) {
-        if (selectors == null || selectors.isNull()) {
-            return true;
-        } else {
-            for (JsonNode selector : selectors) {
-                DeviceMatcher matcher = matchers.get(selector.get(SELECTOR_TYPE).asText());
-                if (matcher != null && matcher.matches(attestationCertificate, selector.get(SELECTOR_PARAMETERS))) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    public StandardMetadataService() throws CertificateException {
+        this(createDefaultAttestationResolver());
+    }
+
+    public static TrustResolver createDefaultTrustResolver() throws CertificateException {
+        return SimpleTrustResolver.fromMetadata(Collections.singleton(MetadataObject.readDefault()));
+    }
+
+    public static AttestationResolver createDefaultAttestationResolver(TrustResolver trustResolver) throws CertificateException {
+        return new SimpleAttestationResolver(
+            Collections.singleton(MetadataObject.readDefault()),
+            trustResolver
+        );
+    }
+
+    public static AttestationResolver createDefaultAttestationResolver() throws CertificateException {
+        return createDefaultAttestationResolver(createDefaultTrustResolver());
     }
 
     public Attestation getCachedAttestation(String attestationCertificateFingerprint) {
         return cache.getIfPresent(attestationCertificateFingerprint);
     }
 
-    public Attestation getAttestation(@NonNull final X509Certificate attestationCertificate) throws CertificateEncodingException {
-        try {
-            final String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
-            return cache.get(fingerprint, () -> lookupAttestation(attestationCertificate));
-        } catch (ExecutionException e) {
-            throw ExceptionUtil.wrapAndLog(logger, "Failed to look up attestation information for certificate: " + attestationCertificate, e);
-        }
-    }
-
     /**
      * Attempt to look up attestation for a chain of certificates
      *
      * <p>
-     * This method will return the first non-unknown result, if any, of calling
-     * {@link #getAttestation(X509Certificate)} with each of the certificates
-     * in <code>attestationCertificateChain</code> in order, while also
-     * verifying that the next attempted certificate has signed the previous
-     * certificate.
+     * If there is a signature path from any trusted certificate to the first
+     * certificate in <code>attestationCertificateChain</code>, then the first
+     * certificate in <code>attestationCertificateChain</code> is matched
+     * against the metadata registry to look up metadata for the device.
+     * </p>
+     *
+     * <p>
+     * If the certificate chain is trusted but no metadata exists in the
+     * registry, the method returns a trusted attestation populated with
+     * information found embedded in the attestation certificate.
+     * </p>
+     *
+     * <p>
+     * If the certificate chain is not trusted, the method returns an untrusted
+     * attestation populated with transports information found embedded in the
+     * attestation certificate.
+     * </p>
+     *
+     * <p>
+     * If the certificate chain is empty, an untrusted empty attestation is
+     * returned.
      * </p>
      *
      * @param attestationCertificateChain a certificate chain, where each
@@ -140,112 +121,28 @@ public class StandardMetadataService implements MetadataService {
      * fails for any element of <code>attestationCertificateChain</code> that
      * needs to be inspected
      *
-     * @return The first non-unknown result, if any, of calling {@link
-     *           #getAttestation(X509Certificate)} for each of the certificates
-     *           in the <code>attestationCertificateChain</code>. If the chain
-     *           of signatures is broken before finding such a result, an
-     *           unknown attestation is returned.
+     * @return An attestation as described above.
      */
     @Override
-    public Attestation getAttestation(List<X509Certificate> attestationCertificateChain) throws CertificateEncodingException {
-
+    public Attestation getAttestation(@NonNull List<X509Certificate> attestationCertificateChain) throws CertificateEncodingException {
         if (attestationCertificateChain.isEmpty()) {
             return unknownAttestation;
         }
 
-        Iterator<X509Certificate> it = attestationCertificateChain.iterator();
-        X509Certificate cert = it.next();
-        Attestation resolvedInitial = getAttestation(cert);
+        X509Certificate attestationCertificate = attestationCertificateChain.get(0);
+        List<X509Certificate> certificateChain = attestationCertificateChain.subList(1, attestationCertificateChain.size());
 
-        if (resolvedInitial.isTrusted()) {
-            return resolvedInitial;
-        } else {
-            while (it.hasNext()) {
-                Attestation resolved = getAttestation(cert);
-
-                if (resolved.isTrusted()) {
-                    return resolved;
-                } else {
-                    logger.trace("Could not look up trusted attestation for certificate [{}] - trying next element in certificate chain.", cert);
-
-                    X509Certificate signingCert = it.next();
-
-                    try {
-                        cert.verify(signingCert.getPublicKey());
-                    } catch (Exception e) {
-                        logger.debug("Failed to verify that certificate [{}] was signed by certificate [{}].", cert, signingCert, e);
-                        return resolvedInitial;
-                    }
-                }
-            }
-
-            return resolvedInitial;
+        try {
+            final String fingerprint = Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString();
+            return cache.get(
+                fingerprint,
+                () ->
+                    attestationResolver.resolve(attestationCertificate, certificateChain)
+                        .orElseGet(() -> attestationResolver.untrustedFromCertificate(attestationCertificate))
+            );
+        } catch (ExecutionException e) {
+            throw ExceptionUtil.wrapAndLog(logger, "Failed to look up attestation information for certificate: " + attestationCertificate, e);
         }
     }
 
-    private Attestation lookupAttestation(X509Certificate attestationCertificate) {
-        final int certTransports = get_transports(attestationCertificate.getExtensionValue(TRANSPORTS_EXT_OID));
-
-        return resolver.resolve(attestationCertificate).map(metadata -> {
-            Map<String, String> vendorProperties;
-            Map<String, String> deviceProperties = null;
-            String identifier;
-            int metadataTransports = 0;
-
-            identifier = metadata.getIdentifier();
-            vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Objects::nonNull);
-            for (JsonNode device : metadata.getDevices()) {
-                if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
-                    JsonNode transportNode = device.get(TRANSPORTS);
-                    if(transportNode != null) {
-                        metadataTransports |= transportNode.asInt(0);
-                    }
-                    ImmutableMap.Builder<String, String> devicePropertiesBuilder = ImmutableMap.builder();
-                    for (Map.Entry<String, JsonNode> deviceEntry : Lists.newArrayList(device.fields())) {
-                        JsonNode value = deviceEntry.getValue();
-                        if (value.isTextual()) {
-                            devicePropertiesBuilder.put(deviceEntry.getKey(), value.asText());
-                        }
-                    }
-                    deviceProperties = devicePropertiesBuilder.build();
-                    break;
-                }
-            }
-
-            return Attestation.builder(true)
-                .metadataIdentifier(Optional.ofNullable(identifier))
-                .vendorProperties(Optional.of(vendorProperties))
-                .deviceProperties(Optional.ofNullable(deviceProperties))
-                .transports(Optional.of(Transport.fromInt(certTransports | metadataTransports)))
-                .build();
-        }).orElseGet(() ->
-            Attestation.builder(false)
-                .transports(Optional.of(Transport.fromInt(certTransports)))
-                .build()
-        );
-    }
-
-    private int get_transports(byte[] extensionValue) {
-        if(extensionValue == null) {
-            return 0;
-        }
-
-        // Mask out unused bits (shouldn't be needed as they should already be 0).
-        int unusedBitMask = 0xff;
-        for(int i=0; i < extensionValue[3]; i++) {
-            unusedBitMask <<= 1;
-        }
-        extensionValue[extensionValue.length-1] &= unusedBitMask;
-
-        int transports = 0;
-        for(int i=extensionValue.length - 1; i >= 5; i--) {
-            byte b = extensionValue[i];
-            for(int bi=0; bi < 8; bi++) {
-                transports = (transports << 1) | (b & 1);
-                b >>= 1;
-            }
-        }
-
-        return transports;
-    }
 }
