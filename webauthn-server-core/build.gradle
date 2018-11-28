@@ -15,7 +15,9 @@ dependencies {
     [group: 'com.google.guava', name: 'guava', version:'19.0'],
     [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
     [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
-    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
+    [group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version:'2.9.6'],
+    [group: 'com.google.http-client', name: 'google-http-client-jackson2', version:'1.22.0'],
+    [group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.2'],
   )
 
   testCompile(
