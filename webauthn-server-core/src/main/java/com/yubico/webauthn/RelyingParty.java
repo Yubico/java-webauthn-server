@@ -64,7 +64,6 @@ public class RelyingParty {
 
     @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
     @Builder.Default @NonNull private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
-    @Builder.Default @NonNull private final Crypto crypto = new BouncyCastleCrypto();
     @Builder.Default @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
     @Builder.Default @NonNull private final Optional<MetadataService> metadataService = Optional.empty();
     @Builder.Default private final boolean allowMissingTokenBinding = false;
@@ -130,7 +129,6 @@ public class RelyingParty {
             .credentialRepository(credentialRepository)
             .origins(origins)
             .rpId(identity.getId())
-            .crypto(crypto)
             .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
@@ -188,7 +186,6 @@ public class RelyingParty {
             .callerTokenBindingId(callerTokenBindingId)
             .origins(origins)
             .rpId(identity.getId())
-            .crypto(crypto)
             .credentialRepository(credentialRepository)
             .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)

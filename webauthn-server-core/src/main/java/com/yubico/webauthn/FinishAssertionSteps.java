@@ -51,13 +51,13 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
+    private static final Crypto crypto = new BouncyCastleCrypto();
 
     private final AssertionRequest request;
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
     private final List<String> origins;
     private final String rpId;
-    private final Crypto crypto;
     private final CredentialRepository credentialRepository;
 
     @Builder.Default
