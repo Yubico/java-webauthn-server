@@ -31,6 +31,7 @@ import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -53,18 +54,49 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     @NonNull
     private final transient CollectedClientData clientData;
 
+    @Builder
     @JsonCreator
     public AuthenticatorAssertionResponse(
         @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
-        @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJson,
+        @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJSON,
         @NonNull @JsonProperty("signature") final ByteArray signature,
         @JsonProperty("userHandle") final ByteArray userHandle
     ) throws IOException, Base64UrlException {
         this.authenticatorData = authenticatorData;
-        this.clientDataJSON = clientDataJson;
+        this.clientDataJSON = clientDataJSON;
         this.signature = signature;
         this.userHandle = Optional.ofNullable(userHandle);
-        this.clientData = new CollectedClientData(clientDataJSON);
+        this.clientData = new CollectedClientData(this.clientDataJSON);
+    }
+
+    public static AuthenticatorAssertionResponseBuilder.MandatoryStages builder() {
+        return new AuthenticatorAssertionResponseBuilder.MandatoryStages();
+    }
+
+    public static class AuthenticatorAssertionResponseBuilder {
+        private Optional<ByteArray> userHandle = Optional.empty();
+
+        public static class MandatoryStages {
+            private final AuthenticatorAssertionResponseBuilder builder = new AuthenticatorAssertionResponseBuilder();
+
+            public Step2 authenticatorData(ByteArray authenticatorData) {
+                builder.authenticatorData(authenticatorData);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 clientDataJSON(ByteArray clientDataJSON) {
+                    builder.clientDataJSON(clientDataJSON);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public AuthenticatorAssertionResponseBuilder signature(ByteArray signature) {
+                    return builder.signature(signature);
+                }
+            }
+        }
     }
 
     @JsonIgnore
