@@ -128,12 +128,14 @@ public class WebAuthnServer {
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
 
-        rp = RelyingParty.builder()
-            .rp(rpIdentity)
-            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
-            .origins(origins)
+        rp = RelyingParty
+            .builder(
+                rpIdentity,
+                Collections.singletonList(PublicKeyCredentialParameters.ES256),
+                origins,
+                this.userStorage
+            )
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
-            .credentialRepository(this.userStorage)
             .metadataService(Optional.of(metadataService))
             .allowMissingTokenBinding(true)
             .allowUnrequestedExtensions(true)

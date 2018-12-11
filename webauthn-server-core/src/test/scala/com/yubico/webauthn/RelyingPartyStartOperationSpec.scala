@@ -60,10 +60,13 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
   def relyingParty(
     appId: Optional[AppId] = None.asJava,
     credentials: Set[PublicKeyCredentialDescriptor] = Set.empty
-  ): RelyingParty = RelyingParty.builder()
-    .rp(rpId)
-    .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
-    .credentialRepository(credRepo(credentials))
+  ): RelyingParty = RelyingParty
+    .builder(
+      rpId,
+      List(PublicKeyCredentialParameters.ES256).asJava,
+      Nil.asJava,
+      credRepo(credentials)
+    )
     .appId(appId)
     .build()
 

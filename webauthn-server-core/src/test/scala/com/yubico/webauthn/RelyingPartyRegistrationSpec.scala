@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import java.util
 import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
@@ -49,6 +50,7 @@ import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.RegistrationExtensionInputs
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
@@ -85,6 +87,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
   }
 
+  private val unimplementedCredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): util.Set[PublicKeyCredentialDescriptor] = ???
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
+    override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
+    override def lookupAll(credentialId: ByteArray): util.Set[RegisteredCredential] = ???
+  }
+
   private def finishRegistration(
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
@@ -94,13 +104,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
-    RelyingParty.builder()
+    RelyingParty
+      .builder(
+        rp,
+        Nil.asJava,
+        List(rp.getId).asJava,
+        credentialRepository.getOrElse(unimplementedCredentialRepository)
+      )
       .allowUntrustedAttestation(allowUntrustedAttestation)
-      .challengeGenerator(null)
-      .origins(List(rp.getId).asJava)
-      .preferredPubkeyParams(Nil.asJava)
-      .rp(rp)
-      .credentialRepository(credentialRepository.orNull)
       .metadataService(metadataService.asJava)
       .build()
       ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)

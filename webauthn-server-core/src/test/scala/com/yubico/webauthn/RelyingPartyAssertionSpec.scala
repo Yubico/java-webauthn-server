@@ -154,30 +154,31 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       .clientExtensionResults(clientExtensionResults)
       .build()
 
-    RelyingParty.builder()
+    RelyingParty
+      .builder(
+        rpId,
+        Nil.asJava,
+        List(origin).asJava,
+        credentialRepository getOrElse new CredentialRepository {
+          override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
+            (
+              if (credId == credentialId)
+                Some(RegisteredCredential.builder()
+                  .credentialId(credId)
+                  .userHandle(userHandleForUser)
+                  .publicKey(credentialKey.getPublic)
+                  .signatureCount(0)
+                  .build()
+                )
+              else None
+            ).asJava
+          override def lookupAll(credId: ByteArray) = lookup(credId, null).asScala.toSet.asJava
+          override def getCredentialIdsForUsername(username: String) = ???
+          override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
+          override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
+        }
+      )
       .allowUntrustedAttestation(false)
-      .challengeGenerator(null)
-      .origins(List(origin).asJava)
-      .preferredPubkeyParams(Nil.asJava)
-      .rp(rpId)
-      .credentialRepository(credentialRepository getOrElse new CredentialRepository {
-        override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
-          (
-            if (credId == credentialId)
-              Some(RegisteredCredential.builder()
-                .credentialId(credId)
-                .userHandle(userHandleForUser)
-                .publicKey(credentialKey.getPublic)
-                .signatureCount(0)
-                .build()
-              )
-            else None
-          ).asJava
-        override def lookupAll(credId: ByteArray) = lookup(credId, null).asScala.toSet.asJava
-        override def getCredentialIdsForUsername(username: String) = ???
-        override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
-        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
-      })
       .validateSignatureCounter(validateSignatureCounter)
       .build()
       ._finishAssertion(request, response, callerTokenBindingId.asJava)

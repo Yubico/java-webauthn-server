@@ -48,6 +48,7 @@ import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 
@@ -56,31 +57,35 @@ import lombok.Value;
 @Value
 public class RelyingParty {
 
-    private final RelyingPartyIdentity rp;
-    private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
-    private final List<String> origins;
-    private final CredentialRepository credentialRepository;
+    @NonNull private final RelyingPartyIdentity rp;
+    @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
+    @NonNull private final List<String> origins;
+    @NonNull private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final Optional<AppId> appId = Optional.empty();
-    @Builder.Default
-    private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
-    @Builder.Default
-    private final Crypto crypto = new BouncyCastleCrypto();
-    @Builder.Default
-    private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
-    @Builder.Default
-    private final Optional<MetadataService> metadataService = Optional.empty();
-    @Builder.Default
-    private final boolean allowMissingTokenBinding = false;
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
-    @Builder.Default
-    private final boolean allowUntrustedAttestation = false;
-    @Builder.Default
-    private final boolean validateSignatureCounter = true;
-    @Builder.Default
-    private final boolean validateTypeAttribute = true;
+    @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
+    @Builder.Default @NonNull private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
+    @Builder.Default @NonNull private final Crypto crypto = new BouncyCastleCrypto();
+    @Builder.Default @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
+    @Builder.Default @NonNull private final Optional<MetadataService> metadataService = Optional.empty();
+    @Builder.Default private final boolean allowMissingTokenBinding = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowUntrustedAttestation = false;
+    @Builder.Default private final boolean validateSignatureCounter = true;
+    @Builder.Default private final boolean validateTypeAttribute = true;
+
+    public static RelyingPartyBuilder builder(
+        @NonNull RelyingPartyIdentity rp,
+        @NonNull List<PublicKeyCredentialParameters> preferredPubkeyParams,
+        @NonNull List<String> origins,
+        @NonNull CredentialRepository credentialRepository
+    ) {
+        return new RelyingPartyBuilder()
+            .rp(rp)
+            .preferredPubkeyParams(preferredPubkeyParams)
+            .origins(origins)
+            .credentialRepository(credentialRepository)
+        ;
+    }
 
     public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
         return PublicKeyCredentialCreationOptions.builder()

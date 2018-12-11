@@ -120,43 +120,45 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
   describe("The assertion ceremony") {
 
-    val rp = RelyingParty.builder()
+    val rp = RelyingParty
+      .builder(
+        Defaults.rpId,
+        Nil.asJava,
+        List(Defaults.rpId.getId).asJava,
+        new CredentialRepository {
+          override def getCredentialIdsForUsername(username: String) =
+            if (username == Defaults.username)
+              Set(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava
+            else
+              Set.empty.asJava
+
+          override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
+            if (credId == Defaults.credentialId)
+              Some(RegisteredCredential.builder()
+                .credentialId(Defaults.credentialId)
+                .userHandle(Defaults.userHandle)
+                .publicKey(Defaults.credentialKey.getPublic)
+                .signatureCount(0)
+                .build()
+              ).asJava
+            else
+              None.asJava
+
+          override def lookupAll(credId: ByteArray) = ???
+          override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+            if (username == Defaults.username)
+              Some(Defaults.userHandle).asJava
+            else
+              None.asJava
+          override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
+            if (userHandle == Defaults.userHandle)
+              Some(Defaults.username).asJava
+            else
+              None.asJava
+        }
+      )
       .allowUntrustedAttestation(false)
       .challengeGenerator(new ChallengeGenerator() { override def generateChallenge(): ByteArray = new ByteArray(Defaults.challenge.getBytes) })
-      .origins(List(Defaults.rpId.getId).asJava)
-      .preferredPubkeyParams(Nil.asJava)
-      .rp(Defaults.rpId)
-      .credentialRepository(new CredentialRepository {
-        override def getCredentialIdsForUsername(username: String) =
-          if (username == Defaults.username)
-            Set(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava
-          else
-            Set.empty.asJava
-
-        override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
-          if (credId == Defaults.credentialId)
-            Some(RegisteredCredential.builder()
-              .credentialId(Defaults.credentialId)
-              .userHandle(Defaults.userHandle)
-              .publicKey(Defaults.credentialKey.getPublic)
-              .signatureCount(0)
-              .build()
-            ).asJava
-          else
-            None.asJava
-
-        override def lookupAll(credId: ByteArray) = ???
-        override def getUserHandleForUsername(username: String): Optional[ByteArray] =
-          if (username == Defaults.username)
-            Some(Defaults.userHandle).asJava
-          else
-            None.asJava
-        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
-          if (userHandle == Defaults.userHandle)
-            Some(Defaults.username).asJava
-          else
-            None.asJava
-      })
       .validateSignatureCounter(true)
       .build()
 
