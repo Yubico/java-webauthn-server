@@ -57,7 +57,7 @@ import lombok.Value;
 @Value
 public class RelyingParty {
 
-    @NonNull private final RelyingPartyIdentity rp;
+    @NonNull private final RelyingPartyIdentity identity;
     @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
     @NonNull private final List<String> origins;
     @NonNull private final CredentialRepository credentialRepository;
@@ -74,13 +74,13 @@ public class RelyingParty {
     @Builder.Default private final boolean validateTypeAttribute = true;
 
     public static RelyingPartyBuilder builder(
-        @NonNull RelyingPartyIdentity rp,
+        @NonNull RelyingPartyIdentity identity,
         @NonNull List<PublicKeyCredentialParameters> preferredPubkeyParams,
         @NonNull List<String> origins,
         @NonNull CredentialRepository credentialRepository
     ) {
         return new RelyingPartyBuilder()
-            .rp(rp)
+            .identity(identity)
             .preferredPubkeyParams(preferredPubkeyParams)
             .origins(origins)
             .credentialRepository(credentialRepository)
@@ -89,7 +89,7 @@ public class RelyingParty {
 
     public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
         return PublicKeyCredentialCreationOptions.builder()
-            .rp(rp)
+            .rp(identity)
             .user(startRegistrationOptions.getUser())
             .challenge(challengeGenerator.generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
@@ -129,7 +129,7 @@ public class RelyingParty {
             .callerTokenBindingId(callerTokenBindingId)
             .credentialRepository(credentialRepository)
             .origins(origins)
-            .rpId(rp.getId())
+            .rpId(identity.getId())
             .crypto(crypto)
             .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
@@ -143,7 +143,7 @@ public class RelyingParty {
         return AssertionRequest.builder()
             .username(startAssertionOptions.getUsername())
             .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-                .rpId(Optional.of(rp.getId()))
+                .rpId(Optional.of(identity.getId()))
                 .challenge(challengeGenerator.generateChallenge())
                 .allowCredentials(
                     startAssertionOptions.getUsername().map(un ->
@@ -186,7 +186,7 @@ public class RelyingParty {
             .response(response)
             .callerTokenBindingId(callerTokenBindingId)
             .origins(origins)
-            .rpId(rp.getId())
+            .rpId(identity.getId())
             .crypto(crypto)
             .credentialRepository(credentialRepository)
             .allowMissingTokenBinding(allowMissingTokenBinding)
