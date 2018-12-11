@@ -65,4 +65,10 @@ public class AttestationData {
         this.credentialPublicKey = credentialPublicKey;
     }
 
+    static AttestationDataBuilder builder() {
+        return new AttestationDataBuilder();
+    }
+
+    static class AttestationDataBuilder {}
+
 }
