@@ -74,5 +74,61 @@ public class AssertionResult {
         this.warnings = Collections.unmodifiableList(warnings);
     }
 
+    public static AssertionResultBuilder.MandatoryStages builder() {
+        return new AssertionResultBuilder.MandatoryStages();
+    }
+
+    public static class AssertionResultBuilder {
+        public static class MandatoryStages {
+            private final AssertionResultBuilder builder = new AssertionResultBuilder();
+
+            public Step2 success(boolean success) {
+                builder.success(success);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 credentialId(ByteArray credentialId) {
+                    builder.credentialId(credentialId);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 userHandle(ByteArray userHandle) {
+                    builder.userHandle(userHandle);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public Step5 username(String username) {
+                    builder.username(username);
+                    return new Step5();
+                }
+            }
+
+            public class Step5 {
+                public Step6 signatureCount(long signatureCount) {
+                    builder.signatureCount(signatureCount);
+                    return new Step6();
+                }
+            }
+
+            public class Step6 {
+                public Step7 signatureCounterValid(boolean signatureCounterValid) {
+                    builder.signatureCounterValid(signatureCounterValid);
+                    return new Step7();
+                }
+            }
+
+            public class Step7 {
+                public AssertionResultBuilder warnings(List<String> warnings) {
+                    return builder.warnings(warnings);
+                }
+            }
+        }
+    }
+
 }
 

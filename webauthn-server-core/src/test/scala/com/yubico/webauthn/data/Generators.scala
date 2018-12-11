@@ -85,12 +85,12 @@ object Generators {
     username <- arbitrary[String]
     warnings <- arbitrary[java.util.List[String]]
   } yield AssertionResult.builder()
-    .credentialId(credentialId)
-    .signatureCount(signatureCount)
-    .signatureCounterValid(signatureCounterValid)
     .success(success)
+    .credentialId(credentialId)
     .userHandle(userHandle)
     .username(username)
+    .signatureCount(signatureCount)
+    .signatureCounterValid(signatureCounterValid)
     .warnings(warnings)
     .build())
 

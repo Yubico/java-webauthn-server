@@ -638,12 +638,12 @@ class FinishAssertionSteps {
         @Override
         public Optional<AssertionResult> result() {
             return Optional.of(AssertionResult.builder()
+                .success(true)
                 .credentialId(response.getId())
+                .userHandle(userHandle)
+                .username(username)
                 .signatureCount(assertionSignatureCount)
                 .signatureCounterValid(signatureCounterValid)
-                .success(true)
-                .username(username)
-                .userHandle(userHandle)
                 .warnings(allWarnings())
                 .build()
             );
