@@ -86,8 +86,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
     it("sets excludeCredentials automatically.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
         val rp = relyingParty(credentials = credentials)
-        val result = rp.startRegistration(StartRegistrationOptions.builder()
-          .user(userId)
+        val result = rp.startRegistration(StartRegistrationOptions.builder(userId)
           .build()
         )
 

@@ -202,12 +202,13 @@ public class WebAuthnServer {
                 credentialNickname,
                 challengeGenerator.generateChallenge(),
                 rp.startRegistration(
-                    StartRegistrationOptions.builder()
-                        .user(UserIdentity.builder()
-                            .name(username)
-                            .displayName(displayName)
-                            .id(challengeGenerator.generateChallenge())
-                            .build()
+                    StartRegistrationOptions
+                        .builder(
+                            UserIdentity.builder()
+                                .name(username)
+                                .displayName(displayName)
+                                .id(challengeGenerator.generateChallenge())
+                                .build()
                         )
                         .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
                             .requireResidentKey(requireResidentKey)
@@ -248,8 +249,8 @@ public class WebAuthnServer {
                     credentialNickname,
                     challengeGenerator.generateChallenge(),
                     rp.startRegistration(
-                        StartRegistrationOptions.builder()
-                            .user(existingUser)
+                        StartRegistrationOptions
+                            .builder(existingUser)
                             .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
                                 .requireResidentKey(requireResidentKey)
                                 .build()

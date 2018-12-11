@@ -47,4 +47,10 @@ public class StartRegistrationOptions {
     @Builder.Default
     private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
 
+    public static StartRegistrationOptionsBuilder builder(UserIdentity user) {
+        return new StartRegistrationOptionsBuilder()
+            .user(user)
+        ;
+    }
+
 }
