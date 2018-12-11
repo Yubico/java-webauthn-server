@@ -149,14 +149,15 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
         assertionRequests.put(requestId, new AssertionRequest(
             requestId,
-            com.yubico.webauthn.data.AssertionRequest.builder()
-                .username(Some(testData.userId.getName).asJava)
-                .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+            com.yubico.webauthn.data.AssertionRequest
+              .builder(
+                PublicKeyCredentialRequestOptions.builder()
                   .challenge(challenge)
                   .rpId(Some(rpId.getId).asJava)
                   .build()
-                )
-                .build()
+              )
+              .username(Some(testData.userId.getName).asJava)
+              .build()
         ))
 
         val userStorage = makeUserStorage(testData)

@@ -140,23 +140,24 @@ public class RelyingParty {
     }
 
     public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
-        return AssertionRequest.builder()
-            .username(startAssertionOptions.getUsername())
-            .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-                .rpId(Optional.of(identity.getId()))
-                .challenge(challengeGenerator.generateChallenge())
-                .allowCredentials(
-                    startAssertionOptions.getUsername().map(un ->
-                        new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
-                )
-                .extensions(
-                    startAssertionOptions.getExtensions()
-                        .toBuilder()
-                        .appid(appId)
-                        .build()
-                )
-                .build()
+        return AssertionRequest
+            .builder(
+                PublicKeyCredentialRequestOptions.builder()
+                    .rpId(Optional.of(identity.getId()))
+                    .challenge(challengeGenerator.generateChallenge())
+                    .allowCredentials(
+                        startAssertionOptions.getUsername().map(un ->
+                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
+                    )
+                    .extensions(
+                        startAssertionOptions.getExtensions()
+                            .toBuilder()
+                            .appid(appId)
+                            .build()
+                    )
+                    .build()
             )
+            .username(startAssertionOptions.getUsername())
             .build();
     }
 

@@ -69,8 +69,10 @@ object Generators {
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
     publicKeyCredentialRequestOptions <- arbitrary[PublicKeyCredentialRequestOptions]
     username <- arbitrary[Optional[String]]
-  } yield AssertionRequest.builder()
-    .publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions)
+  } yield AssertionRequest
+    .builder(
+      publicKeyCredentialRequestOptions
+    )
     .username(username)
     .build())
 

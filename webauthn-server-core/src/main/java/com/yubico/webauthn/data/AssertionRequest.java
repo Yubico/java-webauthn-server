@@ -46,6 +46,15 @@ public class AssertionRequest {
     @Builder.Default
     private final Optional<String> username = Optional.empty();
 
+    public static AssertionRequestBuilder builder(
+        @NonNull
+        PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions
+    ) {
+        return new AssertionRequestBuilder()
+            .publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions)
+        ;
+    }
+
     @JsonCreator
     private AssertionRequest(
         @NonNull @JsonProperty("publicKeyCredentialRequestOptions") PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
