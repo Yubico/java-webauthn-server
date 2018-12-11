@@ -33,17 +33,15 @@ import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.util.Either;
-import com.yubico.webauthn.ChallengeGenerator;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.FinishRegistrationOptions;
-import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.AttestationResolver;
+import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
 import com.yubico.webauthn.attestation.TrustResolver;
@@ -73,6 +71,7 @@ import demo.webauthn.data.RegistrationResponse;
 import demo.webauthn.data.U2fRegistrationResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -92,6 +91,7 @@ import org.slf4j.LoggerFactory;
 
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
+    private static final SecureRandom random = new SecureRandom();
 
     private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
 
@@ -100,7 +100,6 @@ public class WebAuthnServer {
     private final RegistrationStorage userStorage;
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
-    private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
     private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
         StandardMetadataService.createDefaultTrustResolver(),
@@ -144,6 +143,12 @@ public class WebAuthnServer {
             .validateTypeAttribute(false)
             .appId(appId)
             .build();
+    }
+
+    private static ByteArray generateRandom(int length) {
+        byte[] bytes = new byte[length];
+        random.nextBytes(bytes);
+        return new ByteArray(bytes);
     }
 
     private static MetadataObject readPreviewMetadata() {
@@ -200,14 +205,14 @@ public class WebAuthnServer {
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
-                challengeGenerator.generateChallenge(),
+                generateRandom(32),
                 rp.startRegistration(
                     StartRegistrationOptions
                         .builder(
                             UserIdentity.builder()
                                 .name(username)
                                 .displayName(displayName)
-                                .id(challengeGenerator.generateChallenge())
+                                .id(generateRandom(32))
                                 .build()
                         )
                         .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
@@ -247,7 +252,7 @@ public class WebAuthnServer {
                 RegistrationRequest request = new RegistrationRequest(
                     username,
                     credentialNickname,
-                    challengeGenerator.generateChallenge(),
+                    generateRandom(32),
                     rp.startRegistration(
                         StartRegistrationOptions
                             .builder(existingUser)
@@ -452,7 +457,7 @@ public class WebAuthnServer {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequest request = new AssertionRequest(
-                challengeGenerator.generateChallenge(),
+                generateRandom(32),
                 rp.startAssertion(
                     StartAssertionOptions.builder()
                         .username(username)

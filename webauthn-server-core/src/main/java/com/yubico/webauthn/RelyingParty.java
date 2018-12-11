@@ -42,6 +42,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -57,7 +58,7 @@ import lombok.Value;
 @Value
 public class RelyingParty {
 
-    private static final RandomChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
+    private static final SecureRandom random = new SecureRandom();
 
     @NonNull private final RelyingPartyIdentity identity;
     @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
@@ -87,11 +88,17 @@ public class RelyingParty {
         ;
     }
 
+    private static ByteArray generateChallenge() {
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return new ByteArray(bytes);
+    }
+
     public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
         return PublicKeyCredentialCreationOptions.builder()
             .rp(identity)
             .user(startRegistrationOptions.getUser())
-            .challenge(challengeGenerator.generateChallenge())
+            .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
                 Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
@@ -143,7 +150,7 @@ public class RelyingParty {
             .builder(
                 PublicKeyCredentialRequestOptions.builder()
                     .rpId(Optional.of(identity.getId()))
-                    .challenge(challengeGenerator.generateChallenge())
+                    .challenge(generateChallenge())
                     .allowCredentials(
                         startAssertionOptions.getUsername().map(un ->
                             new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
