@@ -40,7 +40,7 @@ import lombok.Value;
  * Its `challenge` member must be present, while its other members are optional.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialRequestOptions {
 
     /**
