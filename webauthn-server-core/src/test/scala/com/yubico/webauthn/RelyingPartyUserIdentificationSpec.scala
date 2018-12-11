@@ -86,12 +86,13 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     val publicKeyCredential: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = PublicKeyCredential.builder()
       .id(credentialId)
-      .response(new AuthenticatorAssertionResponse(
-        authenticatorData,
-        clientDataJsonBytes,
-        signature,
-        null
-      ))
+      .response(
+        AuthenticatorAssertionResponse.builder()
+          .authenticatorData(authenticatorData)
+          .clientDataJSON(clientDataJsonBytes)
+          .signature(signature)
+          .build()
+      )
       .clientExtensionResults(clientExtensionResults)
       .build()
 
@@ -99,12 +100,13 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     def defaultResponse(
       userHandle: Option[ByteArray] = None
-    ): AuthenticatorAssertionResponse = new AuthenticatorAssertionResponse(
-      authenticatorData,
-      clientDataJsonBytes,
-      signature,
-      userHandle.orNull
-    )
+    ): AuthenticatorAssertionResponse =
+      AuthenticatorAssertionResponse.builder()
+        .authenticatorData(authenticatorData)
+        .clientDataJSON(clientDataJsonBytes)
+        .signature(signature)
+        .userHandle(userHandle.asJava)
+        .build()
 
     def defaultPublicKeyCredential(
       credentialId: ByteArray = Defaults.credentialId,

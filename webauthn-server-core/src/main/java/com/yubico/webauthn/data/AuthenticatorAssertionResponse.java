@@ -55,18 +55,32 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     private final transient CollectedClientData clientData;
 
     @Builder
+    private AuthenticatorAssertionResponse(
+        @NonNull final ByteArray authenticatorData,
+        @NonNull final ByteArray clientDataJSON,
+        @NonNull final ByteArray signature,
+        @NonNull final Optional<ByteArray> userHandle
+    ) throws IOException, Base64UrlException {
+        this.authenticatorData = authenticatorData;
+        this.clientDataJSON = clientDataJSON;
+        this.signature = signature;
+        this.userHandle = userHandle;
+        this.clientData = new CollectedClientData(this.clientDataJSON);
+    }
+
     @JsonCreator
-    public AuthenticatorAssertionResponse(
+    private AuthenticatorAssertionResponse(
         @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
         @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJSON,
         @NonNull @JsonProperty("signature") final ByteArray signature,
         @JsonProperty("userHandle") final ByteArray userHandle
     ) throws IOException, Base64UrlException {
-        this.authenticatorData = authenticatorData;
-        this.clientDataJSON = clientDataJSON;
-        this.signature = signature;
-        this.userHandle = Optional.ofNullable(userHandle);
-        this.clientData = new CollectedClientData(this.clientDataJSON);
+        this(
+            authenticatorData,
+            clientDataJSON,
+            signature,
+            Optional.ofNullable(userHandle)
+        );
     }
 
     public static AuthenticatorAssertionResponseBuilder.MandatoryStages builder() {

@@ -160,12 +160,13 @@ object Generators {
     clientDataJson <- clientDataJsonBytes
     signature <- arbitrary[ByteArray]
     userHandle <- arbitrary[Option[ByteArray]]
-  } yield new AuthenticatorAssertionResponse(
-    authenticatorData,
-    clientDataJson,
-    signature,
-    userHandle.orNull
-  ))
+  } yield AuthenticatorAssertionResponse.builder()
+    .authenticatorData(authenticatorData)
+    .clientDataJSON(clientDataJson)
+    .signature(signature)
+    .userHandle(userHandle.asJava)
+    .build()
+  )
 
   implicit val arbitraryAuthenticatorAttestationResponse: Arbitrary[AuthenticatorAttestationResponse] = Arbitrary(for {
     attestationObject <- attestationObjectBytes

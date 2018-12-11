@@ -53,6 +53,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -322,16 +323,18 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray = makeAuthDataBytes(rpId = Defaults.rpId)
 
-    val response = new AuthenticatorAssertionResponse(
-      authDataBytes,
-      clientDataJsonBytes,
-      makeAssertionSignature(
-        authDataBytes,
-        crypto.hash(clientDataJsonBytes),
-        credentialKey.getPrivate
-      ),
-      userHandle.orNull
-    )
+    val response = AuthenticatorAssertionResponse.builder()
+      .authenticatorData(authDataBytes)
+      .clientDataJSON(clientDataJsonBytes)
+      .signature(
+        makeAssertionSignature(
+          authDataBytes,
+          crypto.hash(clientDataJsonBytes),
+          credentialKey.getPrivate
+        )
+      )
+      .userHandle(userHandle.asJava)
+      .build()
 
     PublicKeyCredential.builder()
       .id(credentialId)

@@ -146,12 +146,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
     val response = PublicKeyCredential.builder()
       .id(credentialId)
-      .response(new AuthenticatorAssertionResponse(
-        if (authenticatorData == null) null else authenticatorData,
-        if (clientDataJsonBytes == null) null else clientDataJsonBytes,
-        if (signature == null) null else signature,
-        userHandleForResponse
-      ))
+      .response(
+        AuthenticatorAssertionResponse.builder()
+          .authenticatorData(if (authenticatorData == null) null else authenticatorData)
+          .clientDataJSON(if (clientDataJsonBytes == null) null else clientDataJsonBytes)
+          .signature(if (signature == null) null else signature)
+          .userHandle(Optional.of(userHandleForResponse))
+          .build()
+      )
       .clientExtensionResults(clientExtensionResults)
       .build()
 
