@@ -344,9 +344,11 @@ public class WebAuthnServer {
         } else {
             try {
                 RegistrationResult registration = rp.finishRegistration(
-                    FinishRegistrationOptions.builder()
-                        .request(request.getPublicKeyCredentialCreationOptions())
-                        .response(response.getCredential())
+                    FinishRegistrationOptions
+                        .builder(
+                            request.getPublicKeyCredentialCreationOptions(),
+                            response.getCredential()
+                        )
                         .build()
                 );
 

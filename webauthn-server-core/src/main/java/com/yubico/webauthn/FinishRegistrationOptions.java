@@ -47,4 +47,14 @@ public class FinishRegistrationOptions {
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
 
+    public static FinishRegistrationOptionsBuilder builder(
+        PublicKeyCredentialCreationOptions request,
+        PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response
+    ) {
+        return new FinishRegistrationOptionsBuilder()
+            .request(request)
+            .response(response)
+        ;
+    }
+
 }
