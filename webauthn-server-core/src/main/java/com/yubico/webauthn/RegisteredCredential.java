@@ -47,7 +47,8 @@ public class RegisteredCredential {
     @NonNull
     public final PublicKey publicKey;
 
-    public final long signatureCount;
+    @Builder.Default
+    public final long signatureCount = 0;
 
     public static RegisteredCredentialBuilder.MandatoryStages builder() {
         return new RegisteredCredentialBuilder.MandatoryStages();
