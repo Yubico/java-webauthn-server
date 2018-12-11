@@ -94,6 +94,17 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       }
     }
 
+    it("sets challenge randomly.") {
+      val rp = relyingParty()
+
+      val request1 = rp.startRegistration(StartRegistrationOptions.builder(userId).build())
+      val request2 = rp.startRegistration(StartRegistrationOptions.builder(userId).build())
+
+      request1.getChallenge should not equal request2.getChallenge
+      request1.getChallenge.size should be >= 32
+      request2.getChallenge.size should be >= 32
+    }
+
   }
 
   describe("RelyingParty.startAssertion") {
@@ -117,6 +128,17 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
 
         result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala.map(_.asScala.toSet) should equal (Some(credentials))
       }
+    }
+
+    it("sets challenge randomly.") {
+      val rp = relyingParty()
+
+      val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
+      val request2 = rp.startAssertion(StartAssertionOptions.builder().build())
+
+      request1.getPublicKeyCredentialRequestOptions.getChallenge should not equal request2.getPublicKeyCredentialRequestOptions.getChallenge
+      request1.getPublicKeyCredentialRequestOptions.getChallenge.size should be >= 32
+      request2.getPublicKeyCredentialRequestOptions.getChallenge.size should be >= 32
     }
 
     it("sets the appid extension if the RP instance is given an AppId.") {
