@@ -57,13 +57,14 @@ import lombok.Value;
 @Value
 public class RelyingParty {
 
+    private static final RandomChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
+
     @NonNull private final RelyingPartyIdentity identity;
     @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
     @NonNull private final List<String> origins;
     @NonNull private final CredentialRepository credentialRepository;
 
     @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
-    @Builder.Default @NonNull private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
     @Builder.Default @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
     @Builder.Default @NonNull private final Optional<MetadataService> metadataService = Optional.empty();
     @Builder.Default private final boolean allowMissingTokenBinding = false;
