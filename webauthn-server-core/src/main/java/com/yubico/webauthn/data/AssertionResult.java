@@ -37,40 +37,40 @@ import lombok.Value;
 @Builder
 public class AssertionResult {
 
+    private final boolean success;
+
     @NonNull
     private final ByteArray credentialId;
 
     @NonNull
     private final ByteArray userHandle;
 
+    @NonNull
+    private final String username;
+
     private final long signatureCount;
 
     private final boolean signatureCounterValid;
-
-    private final boolean success;
-
-    @NonNull
-    private final String username;
 
     @NonNull
     private final List<String> warnings;
 
     @JsonCreator
     private AssertionResult(
+        @JsonProperty("success") boolean success,
         @NonNull @JsonProperty("credentialId") ByteArray credentialId,
         @NonNull @JsonProperty("userHandle") ByteArray userHandle,
+        @NonNull @JsonProperty("username") String username,
         @JsonProperty("signatureCount") long signatureCount,
         @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
-        @JsonProperty("success") boolean success,
-        @NonNull @JsonProperty("username") String username,
         @NonNull @JsonProperty("warnings") List<String> warnings
     ) {
+        this.success = success;
         this.credentialId = credentialId;
         this.userHandle = userHandle;
+        this.username = username;
         this.signatureCount = signatureCount;
         this.signatureCounterValid = signatureCounterValid;
-        this.success = success;
-        this.username = username;
         this.warnings = Collections.unmodifiableList(warnings);
     }
 
