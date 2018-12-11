@@ -45,7 +45,7 @@ import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 
-class BouncyCastleCrypto implements Crypto {
+class BouncyCastleCrypto {
 
     private static final Provider provider = new BouncyCastleProvider();
 
@@ -53,12 +53,10 @@ class BouncyCastleCrypto implements Crypto {
         return provider;
     }
 
-    @Override
     public boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature) {
         return verifySignature(attestationCertificate.getPublicKey(), signedBytes, signature);
     }
 
-    @Override
     public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signature) {
         try {
             Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA", provider);
@@ -78,7 +76,6 @@ class BouncyCastleCrypto implements Crypto {
         }
     }
 
-    @Override
     public PublicKey decodePublicKey(ByteArray encodedPublicKey) {
         try {
             X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
@@ -110,7 +107,6 @@ class BouncyCastleCrypto implements Crypto {
         }
     }
 
-    @Override
     public ByteArray hash(ByteArray bytes) {
         try {
             return new ByteArray(MessageDigest.getInstance("SHA-256", provider).digest(bytes.getBytes()));
@@ -119,7 +115,6 @@ class BouncyCastleCrypto implements Crypto {
         }
     }
 
-    @Override
     public ByteArray hash(String str) {
         return hash(new ByteArray(str.getBytes()));
     }

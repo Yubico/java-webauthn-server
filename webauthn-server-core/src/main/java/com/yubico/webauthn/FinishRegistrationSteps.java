@@ -60,7 +60,7 @@ class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
 
-    private static final Crypto crypto = new BouncyCastleCrypto();
+    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     private final PublicKeyCredentialCreationOptions request;
     private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;

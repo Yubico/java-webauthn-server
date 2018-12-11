@@ -43,9 +43,7 @@ import lombok.ToString;
 @ToString
 class U2fRawRegisterResponse {
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
-
-    @EqualsAndHashCode.Exclude
-    private transient final Crypto crypto;
+    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     /**
      * The (uncompressed) x,y-representation of a curve point on the P-256
@@ -65,22 +63,13 @@ class U2fRawRegisterResponse {
     private final ByteArray signature;
 
     U2fRawRegisterResponse(ByteArray userPublicKey,
-                           ByteArray keyHandle,
-                           X509Certificate attestationCertificate,
-                           ByteArray signature) {
-        this(userPublicKey, keyHandle, attestationCertificate, signature, new BouncyCastleCrypto());
-    }
-
-    private U2fRawRegisterResponse(ByteArray userPublicKey,
                                    ByteArray keyHandle,
                                    X509Certificate attestationCertificate,
-                                   ByteArray signature,
-                                   Crypto crypto) {
+                                   ByteArray signature) {
         this.userPublicKey = userPublicKey;
         this.keyHandle = keyHandle;
         this.attestationCertificate = attestationCertificate;
         this.signature = signature;
-        this.crypto = crypto;
     }
 
     boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
