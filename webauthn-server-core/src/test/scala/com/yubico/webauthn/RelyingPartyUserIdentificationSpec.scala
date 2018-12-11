@@ -166,9 +166,11 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
       val request = rp.startAssertion(StartAssertionOptions.builder()
           .username(Optional.of(Defaults.username))
           .build())
-      val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
-          .request(request)
-          .response(Defaults.publicKeyCredential)
+      val result = Try(rp.finishAssertion(FinishAssertionOptions
+          .builder(
+            request,
+            Defaults.publicKeyCredential
+          )
           .build()
       ))
 
@@ -182,9 +184,11 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
         userHandle = Some(Defaults.userHandle)
       )
 
-      val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
-          .request(request)
-          .response(response)
+      val result = Try(rp.finishAssertion(FinishAssertionOptions
+          .builder(
+            request,
+            response
+          )
           .build()
       ))
 
@@ -193,9 +197,11 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
       val request = rp.startAssertion(StartAssertionOptions.builder().build())
-      val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
-          .request(request)
-          .response(Defaults.publicKeyCredential)
+      val result = Try(rp.finishAssertion(FinishAssertionOptions
+          .builder(
+            request,
+            Defaults.publicKeyCredential
+          )
           .build()
       ))
 

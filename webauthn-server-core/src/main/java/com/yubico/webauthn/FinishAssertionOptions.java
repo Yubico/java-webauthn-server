@@ -47,4 +47,14 @@ public class FinishAssertionOptions {
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
 
+    public static FinishAssertionOptionsBuilder builder(
+        @NonNull AssertionRequest request,
+        @NonNull PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response
+    ) {
+        return new FinishAssertionOptionsBuilder()
+            .request(request)
+            .response(response)
+        ;
+    }
+
 }
