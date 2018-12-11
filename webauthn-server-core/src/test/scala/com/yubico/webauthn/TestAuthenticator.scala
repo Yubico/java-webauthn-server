@@ -217,10 +217,10 @@ object TestAuthenticator {
       alg = alg
     )
 
-    val response = new AuthenticatorAttestationResponse(
-      attestationObjectBytes,
-      clientDataJsonBytes
-    )
+    val response = AuthenticatorAttestationResponse.builder()
+      .attestationObject(attestationObjectBytes)
+      .clientDataJSON(clientDataJsonBytes)
+      .build()
 
     PublicKeyCredential.builder()
       .id(response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId)

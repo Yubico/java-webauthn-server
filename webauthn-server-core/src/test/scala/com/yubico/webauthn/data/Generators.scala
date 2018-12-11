@@ -171,7 +171,11 @@ object Generators {
   implicit val arbitraryAuthenticatorAttestationResponse: Arbitrary[AuthenticatorAttestationResponse] = Arbitrary(for {
     attestationObject <- attestationObjectBytes
     clientDataJSON <- clientDataJsonBytes
-  } yield new AuthenticatorAttestationResponse(attestationObject, clientDataJSON))
+  } yield AuthenticatorAttestationResponse.builder()
+    .attestationObject(attestationObject)
+    .clientDataJSON(clientDataJSON)
+    .build()
+  )
 
   implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] = Arbitrary(authenticatorDataBytes map (new AuthenticatorData(_)))
   def authenticatorDataBytes: Gen[ByteArray] = for {

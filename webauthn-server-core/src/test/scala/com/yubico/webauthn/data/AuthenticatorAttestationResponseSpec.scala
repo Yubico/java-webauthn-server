@@ -56,12 +56,19 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
     describe("has a clientDataJSON field which") {
 
       it("can be parsed as JSON.") {
-        val clientData = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson).getClientData
+        val clientData = AuthenticatorAttestationResponse.builder()
+          .attestationObject(exampleAttestation)
+          .clientDataJSON(exampleJson)
+          .build()
+          .getClientData
         clientData.getChallenge should equal (challenge)
       }
 
       describe("defines attributes on the contained CollectedClientData:") {
-        val response = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson)
+        val response = AuthenticatorAttestationResponse.builder()
+          .attestationObject(exampleAttestation)
+          .clientDataJSON(exampleJson)
+          .build()
 
         it("challenge") {
           response.getClientData.getChallenge should equal (challenge)
@@ -86,7 +93,10 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
     }
 
     it("can decode its attestationObject as CBOR.") {
-      val response = new AuthenticatorAttestationResponse(exampleAttestation, exampleJson)
+      val response = AuthenticatorAttestationResponse.builder()
+        .attestationObject(exampleAttestation)
+        .clientDataJSON(exampleJson)
+        .build()
 
       response.getAttestation.getFormat should be ("fido-u2f")
     }

@@ -218,7 +218,12 @@ case class RegistrationTestData(
 
   def response: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = PublicKeyCredential.builder()
     .id(new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialId)
-    .response(new AuthenticatorAttestationResponse(attestationObject, clientDataJsonBytes))
+    .response(
+      AuthenticatorAttestationResponse.builder()
+        .attestationObject(attestationObject)
+        .clientDataJSON(clientDataJsonBytes)
+        .build()
+    )
     .clientExtensionResults(clientExtensionResults)
     .build()
 }
