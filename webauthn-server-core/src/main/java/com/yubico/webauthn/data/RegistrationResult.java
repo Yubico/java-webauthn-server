@@ -76,4 +76,39 @@ public class RegistrationResult {
         this.attestationMetadata = attestationMetadata;
     }
 
+    public static RegistrationResultBuilder.MandatoryStages builder() {
+        return new RegistrationResultBuilder.MandatoryStages();
+    }
+
+    public static class RegistrationResultBuilder {
+        public static class MandatoryStages {
+            private RegistrationResultBuilder builder = new RegistrationResultBuilder();
+
+            public Step2 keyId(PublicKeyCredentialDescriptor keyId) {
+                builder.keyId(keyId);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 attestationTrusted(boolean attestationTrusted) {
+                    builder.attestationTrusted(attestationTrusted);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 attestationType(AttestationType attestationType) {
+                    builder.attestationType(attestationType);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
+                    return builder.publicKeyCose(publicKeyCose);
+                }
+            }
+        }
+    }
+
 }

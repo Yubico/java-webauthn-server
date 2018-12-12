@@ -657,8 +657,8 @@ class FinishRegistrationSteps {
                 .keyId(keyId())
                 .attestationTrusted(attestationTrusted)
                 .attestationType(attestationType)
-                .attestationMetadata(attestationMetadata)
                 .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestationData().get().getCredentialPublicKey())
+                .attestationMetadata(attestationMetadata)
                 .warnings(allWarnings())
                 .build()
             );

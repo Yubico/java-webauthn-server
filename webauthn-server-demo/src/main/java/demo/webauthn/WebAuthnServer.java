@@ -426,11 +426,11 @@ public class WebAuthnServer {
             }
 
             final RegistrationResult result = RegistrationResult.builder()
-                .attestationMetadata(attestation)
+                .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
                 .attestationType(AttestationType.BASIC)
-                .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .publicKeyCose(WebAuthnCodecs.rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
+                .attestationMetadata(attestation)
                 .build();
 
             return Either.right(

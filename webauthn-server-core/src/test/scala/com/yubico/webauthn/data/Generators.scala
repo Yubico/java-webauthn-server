@@ -332,11 +332,11 @@ object Generators {
     publicKeyCose <- arbitrary[ByteArray]
     warnings <- arbitrary[java.util.List[String]]
   } yield RegistrationResult.builder()
-    .attestationMetadata(attestationMetadata)
+    .keyId(keyId)
     .attestationTrusted(attestationTrusted)
     .attestationType(attestationType)
-    .keyId(keyId)
     .publicKeyCose(publicKeyCose)
+    .attestationMetadata(attestationMetadata)
     .warnings(warnings)
     .build())
 
