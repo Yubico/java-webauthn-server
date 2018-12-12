@@ -149,8 +149,8 @@ public class RelyingParty {
         return AssertionRequest
             .builder(
                 PublicKeyCredentialRequestOptions.builder()
-                    .rpId(Optional.of(identity.getId()))
                     .challenge(generateChallenge())
+                    .rpId(Optional.of(identity.getId()))
                     .allowCredentials(
                         startAssertionOptions.getUsername().map(un ->
                             new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))

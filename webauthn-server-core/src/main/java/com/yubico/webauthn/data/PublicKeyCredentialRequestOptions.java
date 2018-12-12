@@ -94,7 +94,7 @@ public class PublicKeyCredentialRequestOptions {
     @Builder.Default
     private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
-    PublicKeyCredentialRequestOptions(
+    private PublicKeyCredentialRequestOptions(
         @NonNull ByteArray challenge,
         @NonNull Optional<Long> timeout,
         @NonNull Optional<String> rpId,
@@ -129,4 +129,17 @@ public class PublicKeyCredentialRequestOptions {
         );
     }
 
+    public static PublicKeyCredentialRequestOptionsBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialRequestOptionsBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialRequestOptionsBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialRequestOptionsBuilder builder = new PublicKeyCredentialRequestOptionsBuilder();
+
+            public PublicKeyCredentialRequestOptionsBuilder challenge(ByteArray challenge) {
+                return builder.challenge(challenge);
+            }
+        }
+    }
 }

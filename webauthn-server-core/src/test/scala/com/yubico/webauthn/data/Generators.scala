@@ -314,8 +314,8 @@ object Generators {
     timeout <- arbitrary[Optional[java.lang.Long]]
     userVerification <- arbitrary[UserVerificationRequirement]
   } yield PublicKeyCredentialRequestOptions.builder()
-    .allowCredentials(allowCredentials)
     .challenge(challenge)
+    .allowCredentials(allowCredentials)
     .extensions(extensions)
     .rpId(rpId)
     .timeout(timeout)
