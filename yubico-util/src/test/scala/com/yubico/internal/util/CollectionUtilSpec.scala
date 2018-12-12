@@ -10,6 +10,31 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 @RunWith(classOf[JUnitRunner])
 class CollectionUtilSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
 
+  describe("immutableMap") {
+    it("returns a Map instance which throws exceptions on modification attempts.") {
+      forAll { m: java.util.Map[Int, Int] =>
+        val immutable = CollectionUtil.immutableMap(m)
+        an [UnsupportedOperationException] should be thrownBy { immutable.put(0, 0) }
+      }
+
+      forAll(minSize(1)) { m: java.util.Map[Int, Int] =>
+        val immutable = CollectionUtil.immutableMap(m)
+        an [UnsupportedOperationException] should be thrownBy { immutable.remove(0) }
+      }
+    }
+
+    it("prevents mutations to the argument from propagating to the return value.") {
+      forAll { m: java.util.Map[Int, Int] =>
+        val immutable = CollectionUtil.immutableMap(m)
+        immutable should equal (m)
+
+        m.put(0.to(10000).find(i => !m.containsKey(i)).get, 0)
+        immutable should not equal m
+        immutable.size should equal (m.size - 1)
+      }
+    }
+  }
+
   describe("immutableList") {
     it("returns a List instance which throws exceptions on modification attempts.") {
       forAll { l: java.util.List[Int] =>

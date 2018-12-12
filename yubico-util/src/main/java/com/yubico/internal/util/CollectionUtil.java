@@ -2,11 +2,20 @@ package com.yubico.internal.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class CollectionUtil {
+
+    /**
+     * @return A shallow copy of <code>m</code> which cannot be modified
+     */
+    public static <K, V> Map<K, V> immutableMap(Map<K, V> m) {
+        return Collections.unmodifiableMap(new HashMap<>(m));
+    }
 
     /**
      * @return A shallow copy of <code>l</code> which cannot be modified
