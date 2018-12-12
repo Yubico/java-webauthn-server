@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class CollectionUtil {
 
@@ -29,6 +31,13 @@ public class CollectionUtil {
      */
     public static <T> Set<T> immutableSet(Set<T> s) {
         return Collections.unmodifiableSet(new HashSet<>(s));
+    }
+
+    /**
+     * @return A shallow copy of <code>s</code> which cannot be modified
+     */
+    public static <T> Set<T> immutableSortedSet(SortedSet<T> s) {
+        return Collections.unmodifiableSortedSet(new TreeSet<>(s));
     }
 
 }

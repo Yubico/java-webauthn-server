@@ -84,4 +84,29 @@ class CollectionUtilSpec extends FunSpec with Matchers with GeneratorDrivenPrope
       }
     }
   }
+
+  describe("immutableSortedSet") {
+    it("returns a SortedSet instance which throws exceptions on modification attempts.") {
+      forAll { s: java.util.SortedSet[Int] =>
+        val immutable = CollectionUtil.immutableSortedSet(s)
+        an [UnsupportedOperationException] should be thrownBy { immutable.add(0) }
+      }
+
+      forAll(minSize(1)) { s: java.util.SortedSet[Int] =>
+        val immutable = CollectionUtil.immutableSortedSet(s)
+        an [UnsupportedOperationException] should be thrownBy { immutable.remove(0) }
+      }
+    }
+
+    it("prevents mutations to the argument from propagating to the return value.") {
+      forAll { s: java.util.SortedSet[Int] =>
+        val immutable = CollectionUtil.immutableSortedSet(s)
+        immutable should equal (s)
+
+        s.add(0.to(10000).find(i => !s.contains(i)).get)
+        immutable should not equal s
+        immutable.size should equal (s.size - 1)
+      }
+    }
+  }
 }
