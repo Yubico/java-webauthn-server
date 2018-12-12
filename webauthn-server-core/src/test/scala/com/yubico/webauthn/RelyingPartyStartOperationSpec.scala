@@ -84,7 +84,8 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
     it("sets excludeCredentials automatically.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
         val rp = relyingParty(credentials = credentials)
-        val result = rp.startRegistration(StartRegistrationOptions.builder(userId)
+        val result = rp.startRegistration(StartRegistrationOptions.builder()
+          .user(userId)
           .build()
         )
 
@@ -95,8 +96,8 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
     it("sets challenge randomly.") {
       val rp = relyingParty()
 
-      val request1 = rp.startRegistration(StartRegistrationOptions.builder(userId).build())
-      val request2 = rp.startRegistration(StartRegistrationOptions.builder(userId).build())
+      val request1 = rp.startRegistration(StartRegistrationOptions.builder().user(userId).build())
+      val request2 = rp.startRegistration(StartRegistrationOptions.builder().user(userId).build())
 
       request1.getChallenge should not equal request2.getChallenge
       request1.getChallenge.size should be >= 32

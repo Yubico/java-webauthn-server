@@ -205,13 +205,12 @@ public class WebAuthnServer {
                 credentialNickname,
                 generateRandom(32),
                 rp.startRegistration(
-                    StartRegistrationOptions
-                        .builder(
-                            UserIdentity.builder()
-                                .name(username)
-                                .displayName(displayName)
-                                .id(generateRandom(32))
-                                .build()
+                    StartRegistrationOptions.builder()
+                        .user(UserIdentity.builder()
+                            .name(username)
+                            .displayName(displayName)
+                            .id(generateRandom(32))
+                            .build()
                         )
                         .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
                             .requireResidentKey(requireResidentKey)
@@ -252,8 +251,8 @@ public class WebAuthnServer {
                     credentialNickname,
                     generateRandom(32),
                     rp.startRegistration(
-                        StartRegistrationOptions
-                            .builder(existingUser)
+                        StartRegistrationOptions.builder()
+                            .user(existingUser)
                             .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
                                 .requireResidentKey(requireResidentKey)
                                 .build()
