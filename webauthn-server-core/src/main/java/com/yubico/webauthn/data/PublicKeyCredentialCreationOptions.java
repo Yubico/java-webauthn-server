@@ -159,4 +159,39 @@ public class PublicKeyCredentialCreationOptions {
         );
     }
 
+    public static PublicKeyCredentialCreationOptionsBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialCreationOptionsBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialCreationOptionsBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialCreationOptionsBuilder builder = new PublicKeyCredentialCreationOptionsBuilder();
+
+            public Step2 rp(RelyingPartyIdentity rp) {
+                builder.rp(rp);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 user(UserIdentity user) {
+                    builder.user(user);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 challenge(ByteArray challenge) {
+                    builder.challenge(challenge);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public PublicKeyCredentialCreationOptionsBuilder pubKeyCredParams(List<PublicKeyCredentialParameters> pubKeyCredParams) {
+                    return builder.pubKeyCredParams(pubKeyCredParams);
+                }
+            }
+        }
+    }
+
 }

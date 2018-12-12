@@ -277,15 +277,15 @@ object Generators {
     timeout <- arbitrary[Optional[java.lang.Long]]
     user <- arbitrary[UserIdentity]
   } yield PublicKeyCredentialCreationOptions.builder()
+    .rp(rp)
+    .user(user)
+    .challenge(challenge)
+    .pubKeyCredParams(pubKeyCredParams)
     .attestation(attestation)
     .authenticatorSelection(authenticatorSelection)
-    .challenge(challenge)
     .excludeCredentials(excludeCredentials)
     .extensions(extensions)
-    .pubKeyCredParams(pubKeyCredParams)
-    .rp(rp)
     .timeout(timeout)
-    .user(user)
     .build())
 
   implicit val arbitraryPublicKeyCredentialDescriptor: Arbitrary[PublicKeyCredentialDescriptor] = Arbitrary(for {
