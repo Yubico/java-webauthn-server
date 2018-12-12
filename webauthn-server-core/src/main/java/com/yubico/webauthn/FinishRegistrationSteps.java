@@ -37,7 +37,6 @@ import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;

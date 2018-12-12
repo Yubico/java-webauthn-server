@@ -22,11 +22,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
