@@ -79,11 +79,6 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     val requestedExtensions: Option[ObjectNode] = None
     val clientExtensionResults: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build()
 
-    val request = PublicKeyCredentialRequestOptions.builder()
-      .challenge(challenge)
-      .rpId(Some(rpId.getId).asJava)
-      .build()
-
     val publicKeyCredential: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = PublicKeyCredential.builder()
       .id(credentialId)
       .response(
