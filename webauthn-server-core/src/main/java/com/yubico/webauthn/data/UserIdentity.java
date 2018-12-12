@@ -86,4 +86,33 @@ public class UserIdentity implements PublicKeyCredentialEntity {
         this(name, displayName, id, Optional.ofNullable(icon));
     }
 
+    public static UserIdentityBuilder.MandatoryStages builder() {
+        return new UserIdentityBuilder.MandatoryStages();
+    }
+
+    public static class UserIdentityBuilder {
+        public static class MandatoryStages {
+            private UserIdentityBuilder builder = new UserIdentityBuilder();
+
+            public Step2 name(String name) {
+                builder.name(name);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 displayName(String displayName) {
+                    builder.displayName(displayName);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public UserIdentityBuilder id(ByteArray id) {
+                    return builder.id(id);
+                }
+
+            }
+        }
+    }
+
 }

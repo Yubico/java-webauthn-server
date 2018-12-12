@@ -345,10 +345,10 @@ object Generators {
     id <- arbitrary[ByteArray]
     name <- arbitrary[String]
   } yield UserIdentity.builder()
-    .displayName(displayName)
-    .icon(icon)
-    .id(id)
     .name(name)
+    .displayName(displayName)
+    .id(id)
+    .icon(icon)
     .build())
 
   def knownExtensionId: Gen[String] = Gen.oneOf("appid", "txAuthSimple", "txAuthGeneric", "authnSel", "exts", "uvi", "loc", "uvm", "biometricPerfBounds")
