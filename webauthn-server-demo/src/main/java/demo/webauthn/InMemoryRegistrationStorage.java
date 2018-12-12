@@ -29,7 +29,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.yubico.webauthn.CredentialRepository;
-import com.yubico.webauthn.data.AssertionResult;
+import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.RegisteredCredential;

@@ -49,7 +49,7 @@ import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
-import com.yubico.webauthn.data.AssertionResult;
+import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;

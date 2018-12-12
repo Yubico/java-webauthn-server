@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.webauthn.RegistrationResult
+import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
