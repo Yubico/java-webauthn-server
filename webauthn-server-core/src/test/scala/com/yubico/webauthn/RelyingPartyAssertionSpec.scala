@@ -71,7 +71,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   private object Defaults {
 
-    val rpId = RelyingPartyIdentity.builder().name("Test party").id("localhost").build()
+    val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
 
     // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
     val authenticatorData: ByteArray = ByteArray.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000539")

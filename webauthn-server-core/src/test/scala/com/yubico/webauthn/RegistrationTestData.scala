@@ -154,7 +154,7 @@ case class RegistrationTestData(
   clientExtensionResults: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
   requestedExtensions: RegistrationExtensionInputs = RegistrationExtensionInputs.builder().build(),
-  rpId: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
+  rpId: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None
 ) {

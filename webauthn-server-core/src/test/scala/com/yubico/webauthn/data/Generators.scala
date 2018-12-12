@@ -327,9 +327,9 @@ object Generators {
     id <- arbitrary[String]
     name <- arbitrary[String]
   } yield RelyingPartyIdentity.builder()
-    .icon(icon)
     .id(id)
     .name(name)
+    .icon(icon)
     .build())
 
   implicit val arbitraryTokenBindingInfo: Arbitrary[TokenBindingInfo] = Arbitrary(Gen.oneOf(

@@ -101,7 +101,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     credentialId: Option[ByteArray] = None,
     credentialRepository: Option[CredentialRepository] = None,
     metadataService: Option[MetadataService] = None,
-    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
+    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
     RelyingParty

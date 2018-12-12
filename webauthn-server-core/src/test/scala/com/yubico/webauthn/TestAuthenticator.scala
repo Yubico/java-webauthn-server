@@ -167,7 +167,7 @@ object TestAuthenticator {
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = {
 
     val options = PublicKeyCredentialCreationOptions.builder()
-      .rp(RelyingPartyIdentity.builder().name("Test party").id(rpId).build())
+      .rp(RelyingPartyIdentity.builder().id(rpId).name("Test party").build())
       .user(userId)
       .challenge(challenge)
       .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)

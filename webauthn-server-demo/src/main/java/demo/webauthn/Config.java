@@ -43,7 +43,7 @@ public class Config {
     private static final String DEFAULT_ORIGIN = "https://localhost:8443";
     private static final int DEFAULT_PORT = 8080;
     private static final RelyingPartyIdentity DEFAULT_RP_ID
-        = RelyingPartyIdentity.builder().name("Yubico WebAuthn demo").id("localhost").build();
+        = RelyingPartyIdentity.builder().id("localhost").name("Yubico WebAuthn demo").build();
 
     private final List<String> origins;
     private final int port;
