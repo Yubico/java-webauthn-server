@@ -163,8 +163,8 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
           .username(Optional.of(Defaults.username))
           .build())
       val deterministicRequest =
-        request.toBuilder().publicKeyCredentialRequestOptions(
-          request.getPublicKeyCredentialRequestOptions.toBuilder().challenge(Defaults.challenge).build()
+        request.toBuilder.publicKeyCredentialRequestOptions(
+          request.getPublicKeyCredentialRequestOptions.toBuilder.challenge(Defaults.challenge).build()
         )
         .build()
 
@@ -182,8 +182,8 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     it("succeeds if username was not given but userHandle was returned.") {
       val request = rp.startAssertion(StartAssertionOptions.builder().build())
       val deterministicRequest =
-        request.toBuilder().publicKeyCredentialRequestOptions(
-          request.getPublicKeyCredentialRequestOptions.toBuilder().challenge(Defaults.challenge).build()
+        request.toBuilder.publicKeyCredentialRequestOptions(
+          request.getPublicKeyCredentialRequestOptions.toBuilder.challenge(Defaults.challenge).build()
         )
         .build()
 
