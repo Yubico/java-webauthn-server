@@ -350,11 +350,9 @@ public class WebAuthnServer {
         } else {
             try {
                 com.yubico.webauthn.RegistrationResult registration = rp.finishRegistration(
-                    FinishRegistrationOptions
-                        .builder(
-                            request.getPublicKeyCredentialCreationOptions(),
-                            response.getCredential()
-                        )
+                    FinishRegistrationOptions.builder()
+                        .request(request.getPublicKeyCredentialCreationOptions())
+                        .response(response.getCredential())
                         .build()
                 );
 
