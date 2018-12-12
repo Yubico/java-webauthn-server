@@ -25,6 +25,9 @@ object JavaGenerators {
   implicit def arbitrarySet[A](implicit a: Arbitrary[Set[A]]): Arbitrary[java.util.Set[A]] =
     Arbitrary(a.arbitrary map (s => new java.util.HashSet[A](s.asJava)))
 
+  implicit def arbitrarySortedSet[A](implicit a: Arbitrary[Set[A]]): Arbitrary[java.util.SortedSet[A]] =
+    Arbitrary(a.arbitrary map (s => new java.util.TreeSet[A](s.asJava)))
+
   implicit val arbitraryUrl: Arbitrary[URL] = Arbitrary(url())
   def url(
     scheme: Gen[String] = Gen.oneOf("http", "https"),
