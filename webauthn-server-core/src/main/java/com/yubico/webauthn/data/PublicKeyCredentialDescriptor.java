@@ -61,7 +61,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     @Builder.Default
     private final Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
 
-    public PublicKeyCredentialDescriptor(
+    private PublicKeyCredentialDescriptor(
         @NonNull PublicKeyCredentialType type,
         @NonNull ByteArray id,
         @NonNull Optional<Set<AuthenticatorTransport>> transports
@@ -105,4 +105,17 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         return 0;
     }
 
+    public static PublicKeyCredentialDescriptorBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialDescriptorBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialDescriptorBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialDescriptorBuilder builder = new PublicKeyCredentialDescriptorBuilder();
+
+            public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
+                return builder.id(id);
+            }
+        }
+    }
 }

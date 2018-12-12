@@ -666,8 +666,8 @@ class FinishRegistrationSteps {
 
         private PublicKeyCredentialDescriptor keyId() {
             return PublicKeyCredentialDescriptor.builder()
-                .type(response.getType())
                 .id(response.getId())
+                .type(response.getType())
                 .build();
         }
     }
