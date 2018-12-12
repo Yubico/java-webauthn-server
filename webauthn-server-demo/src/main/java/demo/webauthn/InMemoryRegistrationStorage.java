@@ -28,17 +28,17 @@ import COSE.CoseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.yubico.webauthn.CredentialRepository;
+import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.RegisteredCredential;
-import com.yubico.internal.util.WebAuthnCodecs;
 import demo.webauthn.data.CredentialRegistration;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -191,7 +191,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     @Override
     public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
-        return Collections.unmodifiableSet(
+        return CollectionUtil.immutableSet(
             storage.asMap().values().stream()
                 .flatMap(Collection::stream)
                 .filter(reg -> reg.getRegistration().getKeyId().getId().equals(credentialId))

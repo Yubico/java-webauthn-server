@@ -26,8 +26,8 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.EnumUtil;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -68,7 +68,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     ) {
         this.type = type;
         this.id = id;
-        this.transports = transports.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
+        this.transports = transports.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
     }
 
     @JsonCreator

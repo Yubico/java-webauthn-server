@@ -26,7 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Collections;
+import com.yubico.internal.util.CollectionUtil;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -105,7 +105,7 @@ public class PublicKeyCredentialRequestOptions {
         this.challenge = challenge;
         this.timeout = timeout;
         this.rpId = rpId;
-        this.allowCredentials = allowCredentials.map(Collections::unmodifiableList);
+        this.allowCredentials = allowCredentials.map(CollectionUtil::immutableList);
         this.userVerification = userVerification;
         this.extensions = extensions;
     }

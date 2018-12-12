@@ -24,10 +24,10 @@
 
 package com.yubico.webauthn.attestation.resolver;
 
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.AttestationResolver;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +42,7 @@ public final class CompositeAttestationResolver implements AttestationResolver {
     private final List<AttestationResolver> resolvers;
 
     public CompositeAttestationResolver(List<AttestationResolver> resolvers) {
-        this.resolvers = Collections.unmodifiableList(resolvers);
+        this.resolvers = CollectionUtil.immutableList(resolvers);
     }
 
     @Override

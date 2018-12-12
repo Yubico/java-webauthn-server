@@ -26,8 +26,8 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.ByteArray;
-import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;
@@ -72,7 +72,7 @@ public class AssertionResult {
         this.username = username;
         this.signatureCount = signatureCount;
         this.signatureCounterValid = signatureCounterValid;
-        this.warnings = Collections.unmodifiableList(warnings);
+        this.warnings = CollectionUtil.immutableList(warnings);
     }
 
     static AssertionResultBuilder.MandatoryStages builder() {

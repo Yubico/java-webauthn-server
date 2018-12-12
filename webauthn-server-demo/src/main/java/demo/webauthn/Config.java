@@ -24,13 +24,13 @@
 
 package demo.webauthn;
 
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class Config {
     private final Optional<AppId> appId;
 
     private Config(List<String> origins, int port, RelyingPartyIdentity rpIdentity, Optional<AppId> appId) {
-        this.origins = Collections.unmodifiableList(origins);
+        this.origins = CollectionUtil.immutableList(origins);
         this.port = port;
         this.rpIdentity = rpIdentity;
         this.appId = appId;

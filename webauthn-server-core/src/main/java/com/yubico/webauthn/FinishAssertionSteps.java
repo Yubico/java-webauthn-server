@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
@@ -99,7 +100,7 @@ final class FinishAssertionSteps {
             List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
             result.addAll(getPrevWarnings());
             result.addAll(getWarnings());
-            return Collections.unmodifiableList(result);
+            return CollectionUtil.immutableList(result);
         }
 
         default B next() {
@@ -326,7 +327,7 @@ final class FinishAssertionSteps {
 
         @Override
         public List<String> getWarnings() {
-            return Collections.unmodifiableList(warnings);
+            return CollectionUtil.immutableList(warnings);
         }
 
         @Override
@@ -512,7 +513,7 @@ final class FinishAssertionSteps {
                 ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
                 return Collections.emptyList();
             } catch (Exception e) {
-                return Collections.unmodifiableList(Collections.singletonList(e.getMessage()));
+                return CollectionUtil.immutableList(Collections.singletonList(e.getMessage()));
             }
         }
 

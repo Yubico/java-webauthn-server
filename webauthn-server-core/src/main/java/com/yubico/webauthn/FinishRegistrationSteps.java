@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 import COSE.CoseException;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
@@ -109,7 +110,7 @@ final class FinishRegistrationSteps {
             List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
             result.addAll(getPrevWarnings());
             result.addAll(getWarnings());
-            return Collections.unmodifiableList(result);
+            return CollectionUtil.immutableList(result);
         }
 
         default A next() {
@@ -200,7 +201,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public List<String> getWarnings() {
-            return Collections.unmodifiableList(warnings);
+            return CollectionUtil.immutableList(warnings);
         }
     }
 

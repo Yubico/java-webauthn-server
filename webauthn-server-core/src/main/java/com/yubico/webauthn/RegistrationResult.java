@@ -26,6 +26,7 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
@@ -34,7 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -75,7 +75,7 @@ public class RegistrationResult {
         this.attestationTrusted = attestationTrusted;
         this.attestationType = attestationType;
         this.publicKeyCose = publicKeyCose;
-        this.warnings = Collections.unmodifiableList(warnings);
+        this.warnings = CollectionUtil.immutableList(warnings);
         this.attestationMetadata = attestationMetadata;
     }
 

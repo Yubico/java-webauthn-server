@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.AttestationResolver;
@@ -41,7 +42,6 @@ import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +81,7 @@ public final class SimpleAttestationResolver implements AttestationResolver {
         }
 
         this.trustResolver = trustResolver;
-        this.matchers = Collections.unmodifiableMap(matchers);
+        this.matchers = CollectionUtil.immutableMap(matchers);
     }
 
     public SimpleAttestationResolver(Collection<MetadataObject> objects, TrustResolver trustResolver) throws CertificateException {

@@ -26,6 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -126,9 +127,9 @@ public class PublicKeyCredentialCreationOptions {
         this.rp = rp;
         this.user = user;
         this.challenge = challenge;
-        this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
+        this.pubKeyCredParams = CollectionUtil.immutableList(pubKeyCredParams);
         this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions;
@@ -150,7 +151,7 @@ public class PublicKeyCredentialCreationOptions {
             rp,
             user,
             challenge,
-            Collections.unmodifiableList(pubKeyCredParams),
+            CollectionUtil.immutableList(pubKeyCredParams),
             Optional.ofNullable(timeout),
             Optional.ofNullable(excludeCredentials),
             Optional.ofNullable(authenticatorSelection),
