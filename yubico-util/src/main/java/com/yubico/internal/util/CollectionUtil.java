@@ -13,6 +13,8 @@ import java.util.TreeSet;
 public class CollectionUtil {
 
     /**
+     * Make an unmodifiable shallow copy of the argument.
+     *
      * @return A shallow copy of <code>m</code> which cannot be modified
      */
     public static <K, V> Map<K, V> immutableMap(Map<K, V> m) {
@@ -20,6 +22,8 @@ public class CollectionUtil {
     }
 
     /**
+     * Make an unmodifiable shallow copy of the argument.
+     *
      * @return A shallow copy of <code>l</code> which cannot be modified
      */
     public static <T> List<T> immutableList(List<T> l) {
@@ -27,6 +31,8 @@ public class CollectionUtil {
     }
 
     /**
+     * Make an unmodifiable shallow copy of the argument.
+     *
      * @return A shallow copy of <code>s</code> which cannot be modified
      */
     public static <T> Set<T> immutableSet(Set<T> s) {
@@ -34,6 +40,8 @@ public class CollectionUtil {
     }
 
     /**
+     * Make an unmodifiable shallow copy of the argument.
+     *
      * @return A shallow copy of <code>s</code> which cannot be modified
      */
     public static <T> Set<T> immutableSortedSet(SortedSet<T> s) {
