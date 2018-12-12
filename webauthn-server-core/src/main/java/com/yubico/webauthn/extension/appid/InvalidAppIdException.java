@@ -24,7 +24,7 @@
 
 package com.yubico.webauthn.extension.appid;
 
-public class InvalidAppIdException extends Exception {
+public final class InvalidAppIdException extends Exception {
     public InvalidAppIdException(String message) {
         super(message);
     }

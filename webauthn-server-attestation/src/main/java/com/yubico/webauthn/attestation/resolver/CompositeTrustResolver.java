@@ -36,7 +36,7 @@ import java.util.Optional;
  * List)} on each of the subordinate {@link TrustResolver}s in turn, and
  * returns the first non-<code>null</code> result.
  */
-public class CompositeTrustResolver implements TrustResolver {
+public final class CompositeTrustResolver implements TrustResolver {
 
     private final List<TrustResolver> resolvers;
 

@@ -47,7 +47,7 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 
 @Builder
 @Slf4j
-class FinishAssertionSteps {
+final class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
     private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();

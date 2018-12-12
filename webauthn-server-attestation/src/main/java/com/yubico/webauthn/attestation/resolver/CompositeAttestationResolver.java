@@ -37,7 +37,7 @@ import java.util.Optional;
  * each of the subordinate {@link AttestationResolver}s in turn, and returns
  * the first non-<code>null</code> result.
  */
-public class CompositeAttestationResolver implements AttestationResolver {
+public final class CompositeAttestationResolver implements AttestationResolver {
 
     private final List<AttestationResolver> resolvers;
 

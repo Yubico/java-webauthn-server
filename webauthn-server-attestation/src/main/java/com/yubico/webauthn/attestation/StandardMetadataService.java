@@ -40,7 +40,7 @@ import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StandardMetadataService implements MetadataService {
+public final class StandardMetadataService implements MetadataService {
     private static final Logger logger = LoggerFactory.getLogger(StandardMetadataService.class);
 
     private final Attestation unknownAttestation = Attestation.builder(false).build();

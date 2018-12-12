@@ -33,14 +33,12 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.X509Certificate;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.Value;
 
 /**
  * The register response produced by the token/key
  */
-@EqualsAndHashCode
-@ToString
+@Value
 class U2fRawRegisterResponse {
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
     private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();

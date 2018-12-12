@@ -50,7 +50,7 @@ import java.util.Optional;
 import lombok.NonNull;
 
 
-public class SimpleAttestationResolver implements AttestationResolver {
+public final class SimpleAttestationResolver implements AttestationResolver {
 
     private static final String SELECTORS = "selectors";
     private static final String SELECTOR_TYPE = "type";

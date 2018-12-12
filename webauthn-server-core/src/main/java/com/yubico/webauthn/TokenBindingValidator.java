@@ -29,7 +29,7 @@ import com.yubico.webauthn.data.TokenBindingInfo;
 import java.util.Optional;
 
 
-class TokenBindingValidator {
+final class TokenBindingValidator {
 
     static boolean validate(Optional<TokenBindingInfo> clientTokenBinding, Optional<ByteArray> rpTokenBindingId) {
         return rpTokenBindingId.map(rpToken ->

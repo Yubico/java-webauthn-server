@@ -59,7 +59,7 @@ import org.bouncycastle.asn1.DEROctetString;
 
 
 @Slf4j
-class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
+final class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
