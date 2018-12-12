@@ -122,7 +122,8 @@ public final class SimpleAttestationResolver implements AttestationResolver {
                 }
             }
 
-            return Attestation.builder(true)
+            return Attestation.builder()
+                .trusted(true)
                 .metadataIdentifier(Optional.ofNullable(identifier))
                 .vendorProperties(Optional.of(vendorProperties))
                 .deviceProperties(Optional.ofNullable(deviceProperties))
@@ -182,7 +183,8 @@ public final class SimpleAttestationResolver implements AttestationResolver {
 
     @Override
     public Attestation untrustedFromCertificate(X509Certificate attestationCertificate) {
-        return Attestation.builder(false)
+        return Attestation.builder()
+            .trusted(false)
             .transports(Optional.of(Transport.fromInt(getTransports(attestationCertificate))))
             .build();
     }

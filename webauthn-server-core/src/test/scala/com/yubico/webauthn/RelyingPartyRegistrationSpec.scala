@@ -117,7 +117,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
   class TestMetadataService(private val attestation: Option[Attestation] = None) extends MetadataService {
     override def getAttestation(attestationCertificateChain: java.util.List[X509Certificate]): Attestation = attestation match {
-      case None => Attestation.builder(false).build()
+      case None => Attestation.builder().trusted(false).build()
       case Some(a) => a
     }
   }
@@ -1397,7 +1397,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if the metadata service trusts it.") {
               val metadataService: MetadataService = new TestMetadataService(Some(
-                Attestation.builder(true)
+                Attestation.builder()
+                    .trusted(true)
                     .metadataIdentifier(Some("Test attestation CA").asJava)
                     .build()
                 )
@@ -1510,7 +1511,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val testData = RegistrationTestData.FidoU2f.BasicAttestation
           val steps = finishRegistration(
             testData = testData,
-            metadataService = Some(new TestMetadataService(Some(Attestation.builder(true).build()))),
+            metadataService = Some(new TestMetadataService(Some(Attestation.builder().trusted(true).build()))),
             credentialRepository = Some(emptyCredentialRepository)
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
