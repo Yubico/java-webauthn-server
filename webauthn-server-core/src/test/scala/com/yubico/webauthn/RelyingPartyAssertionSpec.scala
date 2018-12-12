@@ -131,8 +131,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ByteArray = if (clientDataJson == null) null else new ByteArray(clientDataJson.getBytes("UTF-8"))
 
-    val request = AssertionRequest
-      .builder(
+    val request = AssertionRequest.builder()
+      .publicKeyCredentialRequestOptions(
         PublicKeyCredentialRequestOptions.builder()
           .challenge(challenge)
           .rpId(Some(rpId.getId).asJava)

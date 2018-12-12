@@ -130,8 +130,8 @@ public class RelyingParty {
     }
 
     public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
-        return AssertionRequest
-            .builder(
+        return AssertionRequest.builder()
+            .publicKeyCredentialRequestOptions(
                 PublicKeyCredentialRequestOptions.builder()
                     .challenge(generateChallenge())
                     .rpId(Optional.of(identity.getId()))

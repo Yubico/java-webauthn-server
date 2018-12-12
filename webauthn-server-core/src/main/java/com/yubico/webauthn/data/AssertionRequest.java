@@ -46,21 +46,26 @@ public class AssertionRequest {
     @Builder.Default
     private final Optional<String> username = Optional.empty();
 
-    public static AssertionRequestBuilder builder(
-        @NonNull
-        PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions
-    ) {
-        return new AssertionRequestBuilder()
-            .publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions)
-        ;
-    }
-
     @JsonCreator
     private AssertionRequest(
         @NonNull @JsonProperty("publicKeyCredentialRequestOptions") PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
         @JsonProperty("username") String username
     ) {
         this(publicKeyCredentialRequestOptions, Optional.ofNullable(username));
+    }
+
+    public static AssertionRequestBuilder.MandatoryStages builder() {
+        return new AssertionRequestBuilder.MandatoryStages();
+    }
+
+    public static class AssertionRequestBuilder {
+        public static class MandatoryStages {
+            private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
+
+            public AssertionRequestBuilder publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {
+                return builder.publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions);
+            }
+        }
     }
 
 }
