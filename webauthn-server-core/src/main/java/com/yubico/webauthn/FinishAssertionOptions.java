@@ -47,14 +47,25 @@ public class FinishAssertionOptions {
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
 
-    public static FinishAssertionOptionsBuilder builder(
-        @NonNull AssertionRequest request,
-        @NonNull PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response
-    ) {
-        return new FinishAssertionOptionsBuilder()
-            .request(request)
-            .response(response)
-        ;
+    public static FinishAssertionOptionsBuilder.MandatoryStages builder() {
+        return new FinishAssertionOptionsBuilder.MandatoryStages();
+    }
+
+    public static class FinishAssertionOptionsBuilder {
+        public static class MandatoryStages {
+            private final FinishAssertionOptionsBuilder builder = new FinishAssertionOptionsBuilder();
+
+            public Step2 request(AssertionRequest request) {
+                builder.request(request);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public FinishAssertionOptionsBuilder response(PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response) {
+                    return builder.response(response);
+                }
+            }
+        }
     }
 
 }

@@ -499,11 +499,9 @@ public class WebAuthnServer {
         } else {
             try {
                 AssertionResult result = rp.finishAssertion(
-                    FinishAssertionOptions
-                        .builder(
-                            request.getRequest(),
-                            response.getCredential()
-                        )
+                    FinishAssertionOptions.builder()
+                        .request(request.getRequest())
+                        .response(response.getCredential())
                         .build()
                 );
 
