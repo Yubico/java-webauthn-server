@@ -72,20 +72,6 @@ public class RelyingParty {
     @Builder.Default private final boolean validateSignatureCounter = true;
     @Builder.Default private final boolean validateTypeAttribute = true;
 
-    public static RelyingPartyBuilder builder(
-        @NonNull RelyingPartyIdentity identity,
-        @NonNull List<PublicKeyCredentialParameters> preferredPubkeyParams,
-        @NonNull List<String> origins,
-        @NonNull CredentialRepository credentialRepository
-    ) {
-        return new RelyingPartyBuilder()
-            .identity(identity)
-            .preferredPubkeyParams(preferredPubkeyParams)
-            .origins(origins)
-            .credentialRepository(credentialRepository)
-        ;
-    }
-
     private static ByteArray generateChallenge() {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
@@ -200,4 +186,38 @@ public class RelyingParty {
             .build();
     }
 
+    public static RelyingPartyBuilder.MandatoryStages builder() {
+        return new RelyingPartyBuilder.MandatoryStages();
+    }
+
+    public static class RelyingPartyBuilder {
+        public static class MandatoryStages {
+            private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
+
+            public Step2 identity(RelyingPartyIdentity identity) {
+                builder.identity(identity);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 preferredPubkeyParams(List<PublicKeyCredentialParameters> preferredPubkeyParams) {
+                    builder.preferredPubkeyParams(preferredPubkeyParams);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 origins(List<String> origins) {
+                    builder.origins(origins);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
+                    return builder.credentialRepository(credentialRepository);
+                }
+            }
+        }
+    }
 }

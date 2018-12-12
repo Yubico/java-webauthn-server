@@ -117,11 +117,11 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
   describe("The assertion ceremony") {
 
-    val rp = RelyingParty
-      .builder(
-        Defaults.rpId,
-        Nil.asJava,
-        List(Defaults.rpId.getId).asJava,
+    val rp = RelyingParty.builder()
+      .identity(Defaults.rpId)
+      .preferredPubkeyParams(Nil.asJava)
+      .origins(List(Defaults.rpId.getId).asJava)
+      .credentialRepository(
         new CredentialRepository {
           override def getCredentialIdsForUsername(username: String) =
             if (username == Defaults.username)

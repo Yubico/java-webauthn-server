@@ -157,11 +157,11 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       .clientExtensionResults(clientExtensionResults)
       .build()
 
-    RelyingParty
-      .builder(
-        rpId,
-        Nil.asJava,
-        List(origin).asJava,
+    RelyingParty.builder()
+      .identity(rpId)
+      .preferredPubkeyParams(Nil.asJava)
+      .origins(List(origin).asJava)
+      .credentialRepository(
         credentialRepository getOrElse new CredentialRepository {
           override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
             (
