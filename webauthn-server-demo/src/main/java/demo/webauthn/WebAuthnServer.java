@@ -56,7 +56,6 @@ import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
-import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
@@ -68,6 +67,7 @@ import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
+import demo.webauthn.data.RegistrationResult;
 import demo.webauthn.data.U2fRegistrationResponse;
 import java.io.IOException;
 import java.io.InputStream;
@@ -349,7 +349,7 @@ public class WebAuthnServer {
             return Either.left(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
             try {
-                RegistrationResult registration = rp.finishRegistration(
+                com.yubico.webauthn.RegistrationResult registration = rp.finishRegistration(
                     FinishRegistrationOptions
                         .builder(
                             request.getPublicKeyCredentialCreationOptions(),
@@ -610,13 +610,13 @@ public class WebAuthnServer {
         UserIdentity userIdentity,
         Optional<String> nickname,
         RegistrationResponse response,
-        RegistrationResult registration
+        com.yubico.webauthn.RegistrationResult registration
     ) {
         return addRegistration(
             userIdentity,
             nickname,
             response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter(),
-            registration
+            RegistrationResult.fromLibraryType(registration)
         );
     }
 

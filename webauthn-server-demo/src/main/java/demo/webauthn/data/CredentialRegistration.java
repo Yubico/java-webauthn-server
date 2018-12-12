@@ -26,7 +26,6 @@ package demo.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserIdentity;
 import java.time.Instant;
 import java.util.Optional;

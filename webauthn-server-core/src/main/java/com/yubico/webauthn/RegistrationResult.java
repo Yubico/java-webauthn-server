@@ -79,11 +79,11 @@ public class RegistrationResult {
         this.attestationMetadata = attestationMetadata;
     }
 
-    public static RegistrationResultBuilder.MandatoryStages builder() {
+    static RegistrationResultBuilder.MandatoryStages builder() {
         return new RegistrationResultBuilder.MandatoryStages();
     }
 
-    public static class RegistrationResultBuilder {
+    static class RegistrationResultBuilder {
         public static class MandatoryStages {
             private RegistrationResultBuilder builder = new RegistrationResultBuilder();
 

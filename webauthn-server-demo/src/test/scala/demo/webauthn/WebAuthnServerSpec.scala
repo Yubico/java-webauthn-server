@@ -39,7 +39,6 @@ import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Transport
-import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -51,6 +50,7 @@ import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
 import demo.webauthn.data.AssertionRequest
+import demo.webauthn.data.RegistrationResult
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when

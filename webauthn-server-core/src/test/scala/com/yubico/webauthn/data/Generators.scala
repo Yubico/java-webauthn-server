@@ -39,8 +39,6 @@ import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.scalacheck.Arbitrary
@@ -323,22 +321,6 @@ object Generators {
     .build())
 
   implicit val arbitraryRegistrationExtensionInputs: Arbitrary[RegistrationExtensionInputs] = Arbitrary(Gen.const(RegistrationExtensionInputs.builder().build()))
-
-  implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] = Arbitrary(for {
-    attestationMetadata <- arbitrary[Optional[Attestation]]
-    attestationTrusted <- arbitrary[Boolean]
-    attestationType <- arbitrary[AttestationType]
-    keyId <- arbitrary[PublicKeyCredentialDescriptor]
-    publicKeyCose <- arbitrary[ByteArray]
-    warnings <- arbitrary[java.util.List[String]]
-  } yield RegistrationResult.builder()
-    .keyId(keyId)
-    .attestationTrusted(attestationTrusted)
-    .attestationType(attestationType)
-    .publicKeyCose(publicKeyCose)
-    .attestationMetadata(attestationMetadata)
-    .warnings(warnings)
-    .build())
 
   implicit val arbitraryRelyingPartyIdentity: Arbitrary[RelyingPartyIdentity] = Arbitrary(for {
     icon <- arbitrary[Optional[URL]]
