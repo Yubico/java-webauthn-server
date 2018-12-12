@@ -45,13 +45,13 @@ public class AssertionRequest {
 
     @NonNull
     @JsonIgnore
-    private final transient com.yubico.webauthn.data.AssertionRequest request;
+    private final transient com.yubico.webauthn.AssertionRequest request;
 
     public AssertionRequest(
         @NonNull
         ByteArray requestId,
         @NonNull
-        com.yubico.webauthn.data.AssertionRequest request
+            com.yubico.webauthn.AssertionRequest request
     ) {
         this.requestId = requestId;
         this.publicKeyCredentialRequestOptions = request.getPublicKeyCredentialRequestOptions();

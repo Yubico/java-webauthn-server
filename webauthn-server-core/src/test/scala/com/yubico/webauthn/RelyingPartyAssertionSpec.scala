@@ -41,7 +41,6 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs

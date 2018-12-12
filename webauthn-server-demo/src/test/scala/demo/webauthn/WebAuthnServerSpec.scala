@@ -149,7 +149,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
         assertionRequests.put(requestId, new AssertionRequest(
             requestId,
-            com.yubico.webauthn.data.AssertionRequest.builder()
+            com.yubico.webauthn.AssertionRequest.builder()
               .publicKeyCredentialRequestOptions(
                 PublicKeyCredentialRequestOptions.builder()
                   .challenge(challenge)

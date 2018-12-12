@@ -40,6 +40,7 @@ import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.AssertionResult
+import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.scalacheck.Arbitrary

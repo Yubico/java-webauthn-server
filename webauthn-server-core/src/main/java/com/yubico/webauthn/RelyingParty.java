@@ -25,7 +25,6 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.attestation.MetadataService;
-import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;

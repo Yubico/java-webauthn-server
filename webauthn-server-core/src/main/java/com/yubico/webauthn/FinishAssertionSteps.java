@@ -26,7 +26,6 @@ package com.yubico.webauthn;
 
 
 import com.yubico.internal.util.CollectionUtil;
-import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
