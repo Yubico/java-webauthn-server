@@ -75,11 +75,11 @@ public class AssertionResult {
         this.warnings = Collections.unmodifiableList(warnings);
     }
 
-    public static AssertionResultBuilder.MandatoryStages builder() {
+    static AssertionResultBuilder.MandatoryStages builder() {
         return new AssertionResultBuilder.MandatoryStages();
     }
 
-    public static class AssertionResultBuilder {
+    static class AssertionResultBuilder {
         public static class MandatoryStages {
             private final AssertionResultBuilder builder = new AssertionResultBuilder();
 

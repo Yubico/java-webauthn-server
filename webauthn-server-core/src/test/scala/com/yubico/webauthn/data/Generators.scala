@@ -75,24 +75,6 @@ object Generators {
     .username(username)
     .build())
 
-  implicit val arbitraryAssertionResult: Arbitrary[AssertionResult] = Arbitrary(for {
-    credentialId <- arbitrary[ByteArray]
-    signatureCount <- arbitrary[Long]
-    signatureCounterValid <- arbitrary[Boolean]
-    success <- arbitrary[Boolean]
-    userHandle <- arbitrary[ByteArray]
-    username <- arbitrary[String]
-    warnings <- arbitrary[java.util.List[String]]
-  } yield AssertionResult.builder()
-    .success(success)
-    .credentialId(credentialId)
-    .userHandle(userHandle)
-    .username(username)
-    .signatureCount(signatureCount)
-    .signatureCounterValid(signatureCounterValid)
-    .warnings(warnings)
-    .build())
-
   implicit val arbitraryAttestationData: Arbitrary[AttestationData] = Arbitrary(for {
     aaguid <- byteArray(16)
     credentialId <- arbitrary[ByteArray]
