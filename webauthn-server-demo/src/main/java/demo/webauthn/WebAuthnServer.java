@@ -55,7 +55,6 @@ import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
@@ -129,7 +128,6 @@ public class WebAuthnServer {
 
         rp = RelyingParty.builder()
             .identity(rpIdentity)
-            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
             .origins(origins)
             .credentialRepository(this.userStorage)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))

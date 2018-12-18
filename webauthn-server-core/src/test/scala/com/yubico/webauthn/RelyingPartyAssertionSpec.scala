@@ -158,7 +158,6 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
     RelyingParty.builder()
       .identity(rpId)
-      .preferredPubkeyParams(Nil.asJava)
       .origins(List(origin).asJava)
       .credentialRepository(
         credentialRepository getOrElse new CredentialRepository {
@@ -180,6 +179,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
         }
       )
+      .preferredPubkeyParams(Nil.asJava)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(validateSignatureCounter)
       .build()

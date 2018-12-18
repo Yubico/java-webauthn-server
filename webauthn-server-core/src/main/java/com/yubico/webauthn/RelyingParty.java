@@ -41,6 +41,8 @@ import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -58,13 +60,16 @@ public class RelyingParty {
     private static final SecureRandom random = new SecureRandom();
 
     @NonNull private final RelyingPartyIdentity identity;
-    @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
     @NonNull private final List<String> origins;
     @NonNull private final CredentialRepository credentialRepository;
 
     @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
     @Builder.Default @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
     @Builder.Default @NonNull private final Optional<MetadataService> metadataService = Optional.empty();
+    @Builder.Default @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams = Collections.unmodifiableList(Arrays.asList(
+        PublicKeyCredentialParameters.ES256,
+        PublicKeyCredentialParameters.RS256
+    ));
     @Builder.Default private final boolean allowMissingTokenBinding = false;
     @Builder.Default private final boolean allowUnrequestedExtensions = false;
     @Builder.Default private final boolean allowUntrustedAttestation = false;
@@ -199,20 +204,13 @@ public class RelyingParty {
             }
 
             public class Step2 {
-                public Step3 preferredPubkeyParams(List<PublicKeyCredentialParameters> preferredPubkeyParams) {
-                    builder.preferredPubkeyParams(preferredPubkeyParams);
+                public Step3 origins(List<String> origins) {
+                    builder.origins(origins);
                     return new Step3();
                 }
             }
 
             public class Step3 {
-                public Step4 origins(List<String> origins) {
-                    builder.origins(origins);
-                    return new Step4();
-                }
-            }
-
-            public class Step4 {
                 public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
                     return builder.credentialRepository(credentialRepository);
                 }
