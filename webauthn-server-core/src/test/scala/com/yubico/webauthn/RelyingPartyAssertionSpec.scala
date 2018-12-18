@@ -158,7 +158,6 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
     RelyingParty.builder()
       .identity(rpId)
-      .origins(List(origin).asJava)
       .credentialRepository(
         credentialRepository getOrElse new CredentialRepository {
           override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
@@ -180,6 +179,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       )
       .preferredPubkeyParams(Nil.asJava)
+      .origins(List(origin).asJava)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(validateSignatureCounter)
       .build()

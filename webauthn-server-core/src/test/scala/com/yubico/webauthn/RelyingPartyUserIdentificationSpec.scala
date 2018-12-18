@@ -119,7 +119,6 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     val rp = RelyingParty.builder()
       .identity(Defaults.rpId)
-      .origins(List(Defaults.rpId.getId).asJava)
       .credentialRepository(
         new CredentialRepository {
           override def getCredentialIdsForUsername(username: String) =
@@ -154,6 +153,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
         }
       )
       .preferredPubkeyParams(Nil.asJava)
+      .origins(List(Defaults.rpId.getId).asJava)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(true)
       .build()

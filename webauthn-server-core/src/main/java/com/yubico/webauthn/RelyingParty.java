@@ -45,15 +45,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 
 @Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Value
 public class RelyingParty {
 
@@ -75,6 +72,33 @@ public class RelyingParty {
     @Builder.Default private final boolean allowUntrustedAttestation = false;
     @Builder.Default private final boolean validateSignatureCounter = true;
     @Builder.Default private final boolean validateTypeAttribute = true;
+
+    private RelyingParty(
+        @NonNull RelyingPartyIdentity identity,
+        List<String> origins,
+        @NonNull CredentialRepository credentialRepository,
+        @NonNull Optional<AppId> appId,
+        @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
+        @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
+        boolean allowMissingTokenBinding,
+        boolean allowUnrequestedExtensions,
+        boolean allowUntrustedAttestation,
+        boolean validateSignatureCounter,
+        boolean validateTypeAttribute
+    ) {
+        this.identity = identity;
+        this.origins = origins != null ? origins : Collections.singletonList("https://" + identity.getId());
+        this.credentialRepository = credentialRepository;
+        this.appId = appId;
+        this.attestationConveyancePreference = attestationConveyancePreference;
+        this.metadataService = metadataService;
+        this.preferredPubkeyParams = preferredPubkeyParams;
+        this.allowMissingTokenBinding = allowMissingTokenBinding;
+        this.allowUnrequestedExtensions = allowUnrequestedExtensions;
+        this.allowUntrustedAttestation = allowUntrustedAttestation;
+        this.validateSignatureCounter = validateSignatureCounter;
+        this.validateTypeAttribute = validateTypeAttribute;
+    }
 
     private static ByteArray generateChallenge() {
         byte[] bytes = new byte[32];
@@ -204,13 +228,6 @@ public class RelyingParty {
             }
 
             public class Step2 {
-                public Step3 origins(List<String> origins) {
-                    builder.origins(origins);
-                    return new Step3();
-                }
-            }
-
-            public class Step3 {
                 public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
                     return builder.credentialRepository(credentialRepository);
                 }

@@ -33,6 +33,7 @@ import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.util.Either;
+import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.FinishRegistrationOptions;
 import com.yubico.webauthn.RelyingParty;
@@ -49,7 +50,6 @@ import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
-import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
@@ -128,8 +128,8 @@ public class WebAuthnServer {
 
         rp = RelyingParty.builder()
             .identity(rpIdentity)
-            .origins(origins)
             .credentialRepository(this.userStorage)
+            .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .metadataService(Optional.of(metadataService))
             .allowMissingTokenBinding(true)
