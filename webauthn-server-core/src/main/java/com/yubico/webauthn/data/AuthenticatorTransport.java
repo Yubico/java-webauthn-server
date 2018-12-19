@@ -62,7 +62,15 @@ public enum AuthenticatorTransport implements JsonStringSerializable {
      * The respective Authenticator may be contacted over Bluetooth Smart
      * (Bluetooth Low Energy / BLE).
      */
-    BLE("ble");
+    BLE("ble"),
+
+    /**
+     * Indicates the respective authenticator is contacted using a client
+     * device-specific transport. These authenticators are not removable from
+     * the client device.
+     */
+    INTERNAL("internal")
+    ;
 
     @NonNull
     private final String id;
