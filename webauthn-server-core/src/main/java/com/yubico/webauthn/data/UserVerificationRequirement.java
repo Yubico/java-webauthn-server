@@ -66,8 +66,6 @@ public enum UserVerificationRequirement implements JsonStringSerializable {
     @NonNull
     private final String id;
 
-    public static final UserVerificationRequirement DEFAULT = PREFERRED;
-
     private static Optional<UserVerificationRequirement> fromString(@NonNull String id) {
         return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
     }

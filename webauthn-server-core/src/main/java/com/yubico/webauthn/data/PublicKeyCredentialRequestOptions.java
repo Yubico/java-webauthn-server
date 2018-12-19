@@ -94,7 +94,7 @@ public class PublicKeyCredentialRequestOptions {
      */
     @NonNull
     @Builder.Default
-    private final UserVerificationRequirement userVerification = UserVerificationRequirement.DEFAULT;
+    private final UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
 
     /**
      * Additional parameters requesting additional processing by the client and authenticator.
