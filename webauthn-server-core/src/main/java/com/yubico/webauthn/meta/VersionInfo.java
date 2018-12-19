@@ -31,6 +31,8 @@ import java.time.LocalDate;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.jar.Manifest;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 

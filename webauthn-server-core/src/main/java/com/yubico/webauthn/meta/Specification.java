@@ -28,6 +28,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.LocalDateJsonSerializer;
 import java.net.URL;
 import java.time.LocalDate;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
@@ -36,6 +38,7 @@ import lombok.Value;
  * Reference to a particular version of a specification document.
  */
 @Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class Specification {
 
@@ -59,5 +62,9 @@ public class Specification {
      */
     @JsonSerialize(using = LocalDateJsonSerializer.class)
     private final LocalDate releaseDate;
+
+    static SpecificationBuilder builder() {
+        return new SpecificationBuilder();
+    }
 
 }
