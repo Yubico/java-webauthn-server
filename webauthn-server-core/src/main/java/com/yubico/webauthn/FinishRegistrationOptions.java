@@ -35,7 +35,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class FinishRegistrationOptions {
 
     @NonNull

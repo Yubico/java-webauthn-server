@@ -41,7 +41,7 @@ import lombok.Value;
  * get() methods. It mirrors the fields of the [[PublicKeyCredential]] object returned by the latter methods.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCredentialDescriptor> {
 
     /**

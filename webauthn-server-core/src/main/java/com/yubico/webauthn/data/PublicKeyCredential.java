@@ -33,7 +33,7 @@ import lombok.Value;
 
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> implements Credential {
 
     /**

@@ -34,7 +34,7 @@ import lombok.Value;
  * Used to supply additional parameters when creating a new credential.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialParameters {
 
     /**

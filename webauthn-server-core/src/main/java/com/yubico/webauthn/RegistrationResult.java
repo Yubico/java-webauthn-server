@@ -40,7 +40,7 @@ import lombok.Value;
 
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class RegistrationResult {
 
     @NonNull

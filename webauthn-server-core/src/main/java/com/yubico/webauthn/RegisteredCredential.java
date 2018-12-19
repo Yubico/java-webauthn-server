@@ -35,7 +35,7 @@ import lombok.Value;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class RegisteredCredential {
 
     @NonNull

@@ -36,7 +36,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class Attestation implements Serializable {
 
     private final boolean trusted;
