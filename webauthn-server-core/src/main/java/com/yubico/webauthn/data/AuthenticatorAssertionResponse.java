@@ -54,7 +54,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     @NonNull
     private final transient CollectedClientData clientData;
 
-    @Builder
+    @Builder(toBuilder = true)
     private AuthenticatorAssertionResponse(
         @NonNull final ByteArray authenticatorData,
         @NonNull final ByteArray clientDataJSON,

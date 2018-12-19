@@ -57,7 +57,7 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
         return attestation.getAuthenticatorData().getBytes();
     }
 
-    @Builder
+    @Builder(toBuilder = true)
     @JsonCreator
     private AuthenticatorAttestationResponse(
         @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
