@@ -37,7 +37,6 @@ import lombok.NonNull;
 @JsonSerialize(using = JsonStringSerializer.class)
 public enum TokenBindingStatus implements JsonStringSerializable {
 
-    NOT_SUPPORTED("not-supported"),
     PRESENT("present"),
     SUPPORTED("supported");
 

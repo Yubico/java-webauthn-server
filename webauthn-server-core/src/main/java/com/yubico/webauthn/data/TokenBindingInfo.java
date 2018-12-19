@@ -79,8 +79,4 @@ public class TokenBindingInfo {
         return new TokenBindingInfo(TokenBindingStatus.SUPPORTED, Optional.empty());
     }
 
-    public static TokenBindingInfo notSupported() {
-        return new TokenBindingInfo(TokenBindingStatus.NOT_SUPPORTED, Optional.empty());
-    }
-
 }

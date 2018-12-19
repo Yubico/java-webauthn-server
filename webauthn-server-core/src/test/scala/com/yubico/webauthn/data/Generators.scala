@@ -39,7 +39,6 @@ import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
-import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -315,7 +314,6 @@ object Generators {
     .build())
 
   implicit val arbitraryTokenBindingInfo: Arbitrary[TokenBindingInfo] = Arbitrary(Gen.oneOf(
-    Gen.const(TokenBindingInfo.notSupported()),
     Gen.const(TokenBindingInfo.supported()),
     arbitrary[ByteArray] map TokenBindingInfo.present
   ))
