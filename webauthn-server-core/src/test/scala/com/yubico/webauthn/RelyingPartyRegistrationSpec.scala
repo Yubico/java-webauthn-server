@@ -227,7 +227,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation
-            .editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
+            .editClientData(_.without("tokenBinding"))
           )
           val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -306,7 +306,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("Verification fails if RP specifies token binding ID but client does not support it.") {
             val steps = finishRegistration(
               callerTokenBindingId = Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
-              testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
+              testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
             )
             val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
