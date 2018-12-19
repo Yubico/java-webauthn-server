@@ -26,6 +26,8 @@ package com.yubico.webauthn.meta;
 
 import java.net.URL;
 import java.util.Optional;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 
 
@@ -33,6 +35,7 @@ import lombok.Value;
  * Description of this version of this library
  */
 @Value
+@AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Implementation {
 
     /**

@@ -26,6 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -126,9 +127,9 @@ public class PublicKeyCredentialCreationOptions {
         this.rp = rp;
         this.user = user;
         this.challenge = challenge;
-        this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
+        this.pubKeyCredParams = CollectionUtil.immutableList(pubKeyCredParams);
         this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions;
@@ -150,13 +151,48 @@ public class PublicKeyCredentialCreationOptions {
             rp,
             user,
             challenge,
-            Collections.unmodifiableList(pubKeyCredParams),
+            CollectionUtil.immutableList(pubKeyCredParams),
             Optional.ofNullable(timeout),
             Optional.ofNullable(excludeCredentials),
             Optional.ofNullable(authenticatorSelection),
             attestation,
             Optional.ofNullable(extensions).orElseGet(() -> RegistrationExtensionInputs.builder().build())
         );
+    }
+
+    public static PublicKeyCredentialCreationOptionsBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialCreationOptionsBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialCreationOptionsBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialCreationOptionsBuilder builder = new PublicKeyCredentialCreationOptionsBuilder();
+
+            public Step2 rp(RelyingPartyIdentity rp) {
+                builder.rp(rp);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 user(UserIdentity user) {
+                    builder.user(user);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 challenge(ByteArray challenge) {
+                    builder.challenge(challenge);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public PublicKeyCredentialCreationOptionsBuilder pubKeyCredParams(List<PublicKeyCredentialParameters> pubKeyCredParams) {
+                    return builder.pubKeyCredParams(pubKeyCredParams);
+                }
+            }
+        }
     }
 
 }

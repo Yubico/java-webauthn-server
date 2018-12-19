@@ -25,8 +25,6 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.attestation.MetadataService;
-import com.yubico.webauthn.data.AssertionRequest;
-import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
@@ -37,56 +35,82 @@ import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
-import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
+import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(toBuilder = true)
 @Value
 public class RelyingParty {
 
-    private final RelyingPartyIdentity rp;
-    private final List<PublicKeyCredentialParameters> preferredPubkeyParams;
-    private final List<String> origins;
-    private final CredentialRepository credentialRepository;
+    private static final SecureRandom random = new SecureRandom();
 
-    @Builder.Default
-    private final Optional<AppId> appId = Optional.empty();
-    @Builder.Default
-    private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
-    @Builder.Default
-    private final Crypto crypto = new BouncyCastleCrypto();
-    @Builder.Default
-    private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
-    @Builder.Default
-    private final Optional<MetadataService> metadataService = Optional.empty();
-    @Builder.Default
-    private final boolean allowMissingTokenBinding = false;
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
-    @Builder.Default
-    private final boolean allowUntrustedAttestation = false;
-    @Builder.Default
-    private final boolean validateSignatureCounter = true;
-    @Builder.Default
-    private final boolean validateTypeAttribute = true;
+    @NonNull private final RelyingPartyIdentity identity;
+    @NonNull private final List<String> origins;
+    @NonNull private final CredentialRepository credentialRepository;
+
+    @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
+    @Builder.Default @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
+    @Builder.Default @NonNull private final Optional<MetadataService> metadataService = Optional.empty();
+    @Builder.Default @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams = Collections.unmodifiableList(Arrays.asList(
+        PublicKeyCredentialParameters.ES256,
+        PublicKeyCredentialParameters.RS256
+    ));
+    @Builder.Default private final boolean allowMissingTokenBinding = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowUntrustedAttestation = false;
+    @Builder.Default private final boolean validateSignatureCounter = true;
+    @Builder.Default private final boolean validateTypeAttribute = true;
+
+    private RelyingParty(
+        @NonNull RelyingPartyIdentity identity,
+        List<String> origins,
+        @NonNull CredentialRepository credentialRepository,
+        @NonNull Optional<AppId> appId,
+        @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
+        @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
+        boolean allowMissingTokenBinding,
+        boolean allowUnrequestedExtensions,
+        boolean allowUntrustedAttestation,
+        boolean validateSignatureCounter,
+        boolean validateTypeAttribute
+    ) {
+        this.identity = identity;
+        this.origins = origins != null ? origins : Collections.singletonList("https://" + identity.getId());
+        this.credentialRepository = credentialRepository;
+        this.appId = appId;
+        this.attestationConveyancePreference = attestationConveyancePreference;
+        this.metadataService = metadataService;
+        this.preferredPubkeyParams = preferredPubkeyParams;
+        this.allowMissingTokenBinding = allowMissingTokenBinding;
+        this.allowUnrequestedExtensions = allowUnrequestedExtensions;
+        this.allowUntrustedAttestation = allowUntrustedAttestation;
+        this.validateSignatureCounter = validateSignatureCounter;
+        this.validateTypeAttribute = validateTypeAttribute;
+    }
+
+    private static ByteArray generateChallenge() {
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return new ByteArray(bytes);
+    }
 
     public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
         return PublicKeyCredentialCreationOptions.builder()
-            .rp(rp)
+            .rp(identity)
             .user(startRegistrationOptions.getUser())
-            .challenge(challengeGenerator.generateChallenge())
+            .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
                 Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
@@ -124,8 +148,7 @@ public class RelyingParty {
             .callerTokenBindingId(callerTokenBindingId)
             .credentialRepository(credentialRepository)
             .origins(origins)
-            .rpId(rp.getId())
-            .crypto(crypto)
+            .rpId(identity.getId())
             .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
@@ -136,22 +159,23 @@ public class RelyingParty {
 
     public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
         return AssertionRequest.builder()
-            .username(startAssertionOptions.getUsername())
-            .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-                .rpId(Optional.of(rp.getId()))
-                .challenge(challengeGenerator.generateChallenge())
-                .allowCredentials(
-                    startAssertionOptions.getUsername().map(un ->
-                        new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
-                )
-                .extensions(
-                    startAssertionOptions.getExtensions()
-                        .toBuilder()
-                        .appid(appId)
-                        .build()
-                )
-                .build()
+            .publicKeyCredentialRequestOptions(
+                PublicKeyCredentialRequestOptions.builder()
+                    .challenge(generateChallenge())
+                    .rpId(Optional.of(identity.getId()))
+                    .allowCredentials(
+                        startAssertionOptions.getUsername().map(un ->
+                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
+                    )
+                    .extensions(
+                        startAssertionOptions.getExtensions()
+                            .toBuilder()
+                            .appid(appId)
+                            .build()
+                    )
+                    .build()
             )
+            .username(startAssertionOptions.getUsername())
             .build();
     }
 
@@ -181,8 +205,7 @@ public class RelyingParty {
             .response(response)
             .callerTokenBindingId(callerTokenBindingId)
             .origins(origins)
-            .rpId(rp.getId())
-            .crypto(crypto)
+            .rpId(identity.getId())
             .credentialRepository(credentialRepository)
             .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
@@ -191,4 +214,24 @@ public class RelyingParty {
             .build();
     }
 
+    public static RelyingPartyBuilder.MandatoryStages builder() {
+        return new RelyingPartyBuilder.MandatoryStages();
+    }
+
+    public static class RelyingPartyBuilder {
+        public static class MandatoryStages {
+            private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
+
+            public Step2 identity(RelyingPartyIdentity identity) {
+                builder.identity(identity);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
+                    return builder.credentialRepository(credentialRepository);
+                }
+            }
+        }
+    }
 }

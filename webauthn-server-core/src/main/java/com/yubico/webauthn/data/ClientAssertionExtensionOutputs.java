@@ -36,7 +36,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
     @Builder.Default

@@ -49,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(of = { "data" }, callSuper = false)
-public class MetadataObject {
+public final class MetadataObject {
     private static final ObjectMapper OBJECT_MAPPER = WebAuthnCodecs.json();
 
     private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {

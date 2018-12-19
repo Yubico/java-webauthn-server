@@ -39,7 +39,6 @@ import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Transport
-import com.yubico.webauthn.data.RegistrationResult
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -51,6 +50,7 @@ import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
 import demo.webauthn.data.AssertionRequest
+import demo.webauthn.data.RegistrationResult
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when
@@ -149,14 +149,15 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
         assertionRequests.put(requestId, new AssertionRequest(
             requestId,
-            com.yubico.webauthn.data.AssertionRequest.builder()
-                .username(Some(testData.userId.getName).asJava)
-                .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+            com.yubico.webauthn.AssertionRequest.builder()
+              .publicKeyCredentialRequestOptions(
+                PublicKeyCredentialRequestOptions.builder()
                   .challenge(challenge)
                   .rpId(Some(rpId.getId).asJava)
                   .build()
-                )
-                .build()
+              )
+              .username(Some(testData.userId.getName).asJava)
+              .build()
         ))
 
         val userStorage = makeUserStorage(testData)
@@ -195,14 +196,15 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         .keyId(PublicKeyCredentialDescriptor.builder().id(testData.response.getId).build())
         .attestationTrusted(false)
         .attestationType(AttestationType.BASIC)
-        .attestationMetadata(Some(Attestation.builder(false)
+        .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestationData.get.getCredentialPublicKey)
+        .attestationMetadata(Some(Attestation.builder()
+          .trusted(false)
           .metadataIdentifier(Some("metadataIdentifier").asJava)
           .vendorProperties(Some(Map("vendor" -> "properties").asJava).asJava)
           .deviceProperties(Some(Map("device" -> "properties").asJava).asJava)
           .transports(Some(Set(Transport.USB).asJava).asJava)
           .build()
         ).asJava)
-        .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestationData.get.getCredentialPublicKey)
         .warnings(List.empty.asJava)
         .build()
       )

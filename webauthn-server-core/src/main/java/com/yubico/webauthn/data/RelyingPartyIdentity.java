@@ -75,4 +75,25 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
         this(name, id, Optional.ofNullable(icon));
     }
 
+    public static RelyingPartyIdentityBuilder.MandatoryStages builder() {
+        return new RelyingPartyIdentityBuilder.MandatoryStages();
+    }
+
+    public static class RelyingPartyIdentityBuilder {
+        public static class MandatoryStages {
+            private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
+
+            public Step2 id(String id) {
+                builder.id(id);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public RelyingPartyIdentityBuilder name(String name) {
+                    return builder.name(name);
+                }
+            }
+        }
+    }
+
 }

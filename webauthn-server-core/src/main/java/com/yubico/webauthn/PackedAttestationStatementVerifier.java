@@ -31,6 +31,7 @@ import javax.naming.ldap.Rdn;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AttestationObject;
@@ -46,7 +47,6 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
@@ -59,7 +59,7 @@ import org.bouncycastle.asn1.DEROctetString;
 
 
 @Slf4j
-class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
+final class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
@@ -215,7 +215,7 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
 
         final String ouValue = "Authenticator Attestation";
         final String idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4";
-        final Set<String> countries = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
+        final Set<String> countries = CollectionUtil.immutableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
 
         ExceptionUtil.assure(
             getDnField("C", cert).filter(countries::contains).isPresent(),

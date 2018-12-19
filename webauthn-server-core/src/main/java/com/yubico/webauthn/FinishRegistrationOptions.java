@@ -35,7 +35,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class FinishRegistrationOptions {
 
     @NonNull
@@ -47,4 +47,24 @@ public class FinishRegistrationOptions {
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
 
+    public static FinishRegistrationOptionsBuilder.MandatoryStages builder() {
+        return new FinishRegistrationOptionsBuilder.MandatoryStages();
+    }
+
+    public static class FinishRegistrationOptionsBuilder {
+        public static class MandatoryStages {
+            private final FinishRegistrationOptionsBuilder builder = new FinishRegistrationOptionsBuilder();
+
+            public Step2 request(PublicKeyCredentialCreationOptions request) {
+                builder.request(request);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public FinishRegistrationOptionsBuilder response(PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response) {
+                    return builder.response(response);
+                }
+            }
+        }
+    }
 }

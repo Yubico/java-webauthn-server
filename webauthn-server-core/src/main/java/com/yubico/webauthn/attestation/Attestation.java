@@ -36,7 +36,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class Attestation implements Serializable {
 
     private final boolean trusted;
@@ -72,8 +72,18 @@ public class Attestation implements Serializable {
         this.transports = transports.map(TreeSet::new);
     }
 
-    public static AttestationBuilder builder(boolean trusted) {
-        return new AttestationBuilder().trusted(trusted);
+    public static AttestationBuilder.MandatoryStages builder() {
+        return new AttestationBuilder.MandatoryStages();
+    }
+
+    public static class AttestationBuilder {
+        public static class MandatoryStages {
+            private final AttestationBuilder builder = new AttestationBuilder();
+
+            public AttestationBuilder trusted(boolean trusted) {
+                return builder.trusted(trusted);
+            }
+        }
     }
 
 }

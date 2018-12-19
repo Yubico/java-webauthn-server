@@ -22,10 +22,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -36,7 +37,7 @@ import lombok.Value;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class AssertionRequest {
 
     @NonNull
@@ -52,6 +53,20 @@ public class AssertionRequest {
         @JsonProperty("username") String username
     ) {
         this(publicKeyCredentialRequestOptions, Optional.ofNullable(username));
+    }
+
+    public static AssertionRequestBuilder.MandatoryStages builder() {
+        return new AssertionRequestBuilder.MandatoryStages();
+    }
+
+    public static class AssertionRequestBuilder {
+        public static class MandatoryStages {
+            private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
+
+            public AssertionRequestBuilder publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {
+                return builder.publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions);
+            }
+        }
     }
 
 }

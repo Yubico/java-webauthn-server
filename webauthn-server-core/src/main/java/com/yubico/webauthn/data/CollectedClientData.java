@@ -56,7 +56,7 @@ public class CollectedClientData {
 
     @NonNull
     @Getter(AccessLevel.NONE)
-    private final ObjectNode clientData;
+    private final transient ObjectNode clientData;
 
     /**
      * The URL-safe Base64 encoded challenge as provided by the RP.

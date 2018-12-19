@@ -22,11 +22,12 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Collections;
+import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.data.ByteArray;
 import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;
@@ -34,8 +35,10 @@ import lombok.Value;
 
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class AssertionResult {
+
+    private final boolean success;
 
     @NonNull
     private final ByteArray credentialId;
@@ -43,35 +46,89 @@ public class AssertionResult {
     @NonNull
     private final ByteArray userHandle;
 
+    @NonNull
+    private final String username;
+
     private final long signatureCount;
 
     private final boolean signatureCounterValid;
-
-    private final boolean success;
-
-    @NonNull
-    private final String username;
 
     @NonNull
     private final List<String> warnings;
 
     @JsonCreator
     private AssertionResult(
+        @JsonProperty("success") boolean success,
         @NonNull @JsonProperty("credentialId") ByteArray credentialId,
         @NonNull @JsonProperty("userHandle") ByteArray userHandle,
+        @NonNull @JsonProperty("username") String username,
         @JsonProperty("signatureCount") long signatureCount,
         @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
-        @JsonProperty("success") boolean success,
-        @NonNull @JsonProperty("username") String username,
         @NonNull @JsonProperty("warnings") List<String> warnings
     ) {
+        this.success = success;
         this.credentialId = credentialId;
         this.userHandle = userHandle;
+        this.username = username;
         this.signatureCount = signatureCount;
         this.signatureCounterValid = signatureCounterValid;
-        this.success = success;
-        this.username = username;
-        this.warnings = Collections.unmodifiableList(warnings);
+        this.warnings = CollectionUtil.immutableList(warnings);
+    }
+
+    static AssertionResultBuilder.MandatoryStages builder() {
+        return new AssertionResultBuilder.MandatoryStages();
+    }
+
+    static class AssertionResultBuilder {
+        public static class MandatoryStages {
+            private final AssertionResultBuilder builder = new AssertionResultBuilder();
+
+            public Step2 success(boolean success) {
+                builder.success(success);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 credentialId(ByteArray credentialId) {
+                    builder.credentialId(credentialId);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 userHandle(ByteArray userHandle) {
+                    builder.userHandle(userHandle);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public Step5 username(String username) {
+                    builder.username(username);
+                    return new Step5();
+                }
+            }
+
+            public class Step5 {
+                public Step6 signatureCount(long signatureCount) {
+                    builder.signatureCount(signatureCount);
+                    return new Step6();
+                }
+            }
+
+            public class Step6 {
+                public Step7 signatureCounterValid(boolean signatureCounterValid) {
+                    builder.signatureCounterValid(signatureCounterValid);
+                    return new Step7();
+                }
+            }
+
+            public class Step7 {
+                public AssertionResultBuilder warnings(List<String> warnings) {
+                    return builder.warnings(warnings);
+                }
+            }
+        }
     }
 
 }

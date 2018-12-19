@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import java.util
 import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
@@ -49,6 +50,7 @@ import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.RegistrationExtensionInputs
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
@@ -85,22 +87,29 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
   }
 
+  private val unimplementedCredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): util.Set[PublicKeyCredentialDescriptor] = ???
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
+    override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
+    override def lookupAll(credentialId: ByteArray): util.Set[RegisteredCredential] = ???
+  }
+
   private def finishRegistration(
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
     credentialId: Option[ByteArray] = None,
     credentialRepository: Option[CredentialRepository] = None,
     metadataService: Option[MetadataService] = None,
-    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
+    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
     RelyingParty.builder()
-      .allowUntrustedAttestation(allowUntrustedAttestation)
-      .challengeGenerator(null)
-      .origins(List(rp.getId).asJava)
+      .identity(rp)
+      .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
       .preferredPubkeyParams(Nil.asJava)
-      .rp(rp)
-      .credentialRepository(credentialRepository.orNull)
+      .origins(List(rp.getId).asJava)
+      .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
       .build()
       ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
@@ -108,7 +117,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
   class TestMetadataService(private val attestation: Option[Attestation] = None) extends MetadataService {
     override def getAttestation(attestationCertificateChain: java.util.List[X509Certificate]): Attestation = attestation match {
-      case None => Attestation.builder(false).build()
+      case None => Attestation.builder().trusted(false).build()
       case Some(a) => a
     }
   }
@@ -1388,7 +1397,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if the metadata service trusts it.") {
               val metadataService: MetadataService = new TestMetadataService(Some(
-                Attestation.builder(true)
+                Attestation.builder()
+                    .trusted(true)
                     .metadataIdentifier(Some("Test attestation CA").asJava)
                     .build()
                 )
@@ -1501,7 +1511,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val testData = RegistrationTestData.FidoU2f.BasicAttestation
           val steps = finishRegistration(
             testData = testData,
-            metadataService = Some(new TestMetadataService(Some(Attestation.builder(true).build()))),
+            metadataService = Some(new TestMetadataService(Some(Attestation.builder().trusted(true).build()))),
             credentialRepository = Some(emptyCredentialRepository)
           )
           steps.run.getKeyId.getId should be (testData.response.getId)

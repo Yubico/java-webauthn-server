@@ -53,6 +53,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -166,7 +167,7 @@ object TestAuthenticator {
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = {
 
     val options = PublicKeyCredentialCreationOptions.builder()
-      .rp(RelyingPartyIdentity.builder().name("Test party").id(rpId).build())
+      .rp(RelyingPartyIdentity.builder().id(rpId).name("Test party").build())
       .user(userId)
       .challenge(challenge)
       .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
@@ -216,10 +217,10 @@ object TestAuthenticator {
       alg = alg
     )
 
-    val response = new AuthenticatorAttestationResponse(
-      attestationObjectBytes,
-      clientDataJsonBytes
-    )
+    val response = AuthenticatorAttestationResponse.builder()
+      .attestationObject(attestationObjectBytes)
+      .clientDataJSON(clientDataJsonBytes)
+      .build()
 
     PublicKeyCredential.builder()
       .id(response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId)
@@ -322,16 +323,18 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray = makeAuthDataBytes(rpId = Defaults.rpId)
 
-    val response = new AuthenticatorAssertionResponse(
-      authDataBytes,
-      clientDataJsonBytes,
-      makeAssertionSignature(
-        authDataBytes,
-        crypto.hash(clientDataJsonBytes),
-        credentialKey.getPrivate
-      ),
-      userHandle.orNull
-    )
+    val response = AuthenticatorAssertionResponse.builder()
+      .authenticatorData(authDataBytes)
+      .clientDataJSON(clientDataJsonBytes)
+      .signature(
+        makeAssertionSignature(
+          authDataBytes,
+          crypto.hash(clientDataJsonBytes),
+          credentialKey.getPrivate
+        )
+      )
+      .userHandle(userHandle.asJava)
+      .build()
 
     PublicKeyCredential.builder()
       .id(credentialId)

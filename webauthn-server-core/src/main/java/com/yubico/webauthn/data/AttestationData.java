@@ -31,7 +31,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class AttestationData {
 
     /**
@@ -64,5 +64,11 @@ public class AttestationData {
         this.credentialId = credentialId;
         this.credentialPublicKey = credentialPublicKey;
     }
+
+    static AttestationDataBuilder builder() {
+        return new AttestationDataBuilder();
+    }
+
+    static class AttestationDataBuilder {}
 
 }

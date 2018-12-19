@@ -61,9 +61,10 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
     appId: Optional[AppId] = None.asJava,
     credentials: Set[PublicKeyCredentialDescriptor] = Set.empty
   ): RelyingParty = RelyingParty.builder()
-    .rp(rpId)
-    .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
+    .identity(rpId)
     .credentialRepository(credRepo(credentials))
+    .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
+    .origins(Nil.asJava)
     .appId(appId)
     .build()
 
@@ -92,6 +93,17 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       }
     }
 
+    it("sets challenge randomly.") {
+      val rp = relyingParty()
+
+      val request1 = rp.startRegistration(StartRegistrationOptions.builder().user(userId).build())
+      val request2 = rp.startRegistration(StartRegistrationOptions.builder().user(userId).build())
+
+      request1.getChallenge should not equal request2.getChallenge
+      request1.getChallenge.size should be >= 32
+      request2.getChallenge.size should be >= 32
+    }
+
   }
 
   describe("RelyingParty.startAssertion") {
@@ -115,6 +127,17 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
 
         result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala.map(_.asScala.toSet) should equal (Some(credentials))
       }
+    }
+
+    it("sets challenge randomly.") {
+      val rp = relyingParty()
+
+      val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
+      val request2 = rp.startAssertion(StartAssertionOptions.builder().build())
+
+      request1.getPublicKeyCredentialRequestOptions.getChallenge should not equal request2.getPublicKeyCredentialRequestOptions.getChallenge
+      request1.getPublicKeyCredentialRequestOptions.getChallenge.size should be >= 32
+      request2.getPublicKeyCredentialRequestOptions.getChallenge.size should be >= 32
     }
 
     it("sets the appid extension if the RP instance is given an AppId.") {

@@ -26,13 +26,14 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> implements Credential {
 
     /**
@@ -78,6 +79,40 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
         this.response = response;
         this.clientExtensionResults = clientExtensionResults;
         this.type = type;
+    }
+
+    public static <A extends AuthenticatorResponse, B extends ClientExtensionOutputs> PublicKeyCredentialBuilder<A, B>.MandatoryStages builder() {
+        return new PublicKeyCredentialBuilder<A, B>().start();
+    }
+
+    public static class PublicKeyCredentialBuilder<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
+        private MandatoryStages start() {
+            return new MandatoryStages(this);
+        }
+
+        @AllArgsConstructor
+        public class MandatoryStages {
+            private final PublicKeyCredentialBuilder<A, B> builder;
+
+            public Step2 id(ByteArray id) {
+                builder.id(id);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 response(A response) {
+                    builder.response(response);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public PublicKeyCredentialBuilder<A, B> clientExtensionResults(B clientExtensionResults) {
+                    return builder.clientExtensionResults(clientExtensionResults);
+                }
+            }
+        }
+
     }
 
 }

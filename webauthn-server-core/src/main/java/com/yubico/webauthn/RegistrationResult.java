@@ -22,22 +22,25 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.NonNull;
 import lombok.Value;
 
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class RegistrationResult {
 
     @NonNull
@@ -72,8 +75,43 @@ public class RegistrationResult {
         this.attestationTrusted = attestationTrusted;
         this.attestationType = attestationType;
         this.publicKeyCose = publicKeyCose;
-        this.warnings = Collections.unmodifiableList(warnings);
+        this.warnings = CollectionUtil.immutableList(warnings);
         this.attestationMetadata = attestationMetadata;
+    }
+
+    static RegistrationResultBuilder.MandatoryStages builder() {
+        return new RegistrationResultBuilder.MandatoryStages();
+    }
+
+    static class RegistrationResultBuilder {
+        public static class MandatoryStages {
+            private RegistrationResultBuilder builder = new RegistrationResultBuilder();
+
+            public Step2 keyId(PublicKeyCredentialDescriptor keyId) {
+                builder.keyId(keyId);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 attestationTrusted(boolean attestationTrusted) {
+                    builder.attestationTrusted(attestationTrusted);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public Step4 attestationType(AttestationType attestationType) {
+                    builder.attestationType(attestationType);
+                    return new Step4();
+                }
+            }
+
+            public class Step4 {
+                public RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
+                    return builder.publicKeyCose(publicKeyCose);
+                }
+            }
+        }
     }
 
 }

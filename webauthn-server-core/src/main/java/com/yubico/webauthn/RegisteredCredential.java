@@ -35,7 +35,7 @@ import lombok.Value;
 
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class RegisteredCredential {
 
     @NonNull
@@ -47,6 +47,32 @@ public class RegisteredCredential {
     @NonNull
     public final PublicKey publicKey;
 
-    public final long signatureCount;
+    @Builder.Default
+    public final long signatureCount = 0;
+
+    public static RegisteredCredentialBuilder.MandatoryStages builder() {
+        return new RegisteredCredentialBuilder.MandatoryStages();
+    }
+
+    public static class RegisteredCredentialBuilder {
+        public static class MandatoryStages {
+            private RegisteredCredentialBuilder builder = new RegisteredCredentialBuilder();
+            public Step2 credentialId(ByteArray credentialId) {
+                builder.credentialId(credentialId);
+                return new Step2();
+            }
+            public class Step2 {
+                public Step3 userHandle(ByteArray userHandle) {
+                    builder.userHandle(userHandle);
+                    return new Step3();
+                }
+            }
+            public class Step3 {
+                public RegisteredCredentialBuilder publicKey(PublicKey publicKey) {
+                    return builder.publicKey(publicKey);
+                }
+            }
+        }
+    }
 
 }

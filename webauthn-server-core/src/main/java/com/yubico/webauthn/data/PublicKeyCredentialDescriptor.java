@@ -26,8 +26,8 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.EnumUtil;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -41,7 +41,7 @@ import lombok.Value;
  * get() methods. It mirrors the fields of the [[PublicKeyCredential]] object returned by the latter methods.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCredentialDescriptor> {
 
     /**
@@ -61,14 +61,14 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     @Builder.Default
     private final Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
 
-    public PublicKeyCredentialDescriptor(
+    private PublicKeyCredentialDescriptor(
         @NonNull PublicKeyCredentialType type,
         @NonNull ByteArray id,
         @NonNull Optional<Set<AuthenticatorTransport>> transports
     ) {
         this.type = type;
         this.id = id;
-        this.transports = transports.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
+        this.transports = transports.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
     }
 
     @JsonCreator
@@ -105,4 +105,17 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         return 0;
     }
 
+    public static PublicKeyCredentialDescriptorBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialDescriptorBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialDescriptorBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialDescriptorBuilder builder = new PublicKeyCredentialDescriptorBuilder();
+
+            public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
+                return builder.id(id);
+            }
+        }
+    }
 }

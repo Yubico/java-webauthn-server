@@ -26,7 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Collections;
+import com.yubico.internal.util.CollectionUtil;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -40,7 +40,7 @@ import lombok.Value;
  * Its `challenge` member must be present, while its other members are optional.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialRequestOptions {
 
     /**
@@ -94,7 +94,7 @@ public class PublicKeyCredentialRequestOptions {
     @Builder.Default
     private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
-    PublicKeyCredentialRequestOptions(
+    private PublicKeyCredentialRequestOptions(
         @NonNull ByteArray challenge,
         @NonNull Optional<Long> timeout,
         @NonNull Optional<String> rpId,
@@ -105,7 +105,7 @@ public class PublicKeyCredentialRequestOptions {
         this.challenge = challenge;
         this.timeout = timeout;
         this.rpId = rpId;
-        this.allowCredentials = allowCredentials.map(Collections::unmodifiableList);
+        this.allowCredentials = allowCredentials.map(CollectionUtil::immutableList);
         this.userVerification = userVerification;
         this.extensions = extensions;
     }
@@ -129,4 +129,17 @@ public class PublicKeyCredentialRequestOptions {
         );
     }
 
+    public static PublicKeyCredentialRequestOptionsBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialRequestOptionsBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialRequestOptionsBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialRequestOptionsBuilder builder = new PublicKeyCredentialRequestOptionsBuilder();
+
+            public PublicKeyCredentialRequestOptionsBuilder challenge(ByteArray challenge) {
+                return builder.challenge(challenge);
+            }
+        }
+    }
 }

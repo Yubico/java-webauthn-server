@@ -39,8 +39,8 @@ import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.TestAuthenticator
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
+import com.yubico.webauthn.AssertionResult
+import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.scalacheck.Arbitrary
@@ -72,24 +72,6 @@ object Generators {
   } yield AssertionRequest.builder()
     .publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions)
     .username(username)
-    .build())
-
-  implicit val arbitraryAssertionResult: Arbitrary[AssertionResult] = Arbitrary(for {
-    credentialId <- arbitrary[ByteArray]
-    signatureCount <- arbitrary[Long]
-    signatureCounterValid <- arbitrary[Boolean]
-    success <- arbitrary[Boolean]
-    userHandle <- arbitrary[ByteArray]
-    username <- arbitrary[String]
-    warnings <- arbitrary[java.util.List[String]]
-  } yield AssertionResult.builder()
-    .credentialId(credentialId)
-    .signatureCount(signatureCount)
-    .signatureCounterValid(signatureCounterValid)
-    .success(success)
-    .userHandle(userHandle)
-    .username(username)
-    .warnings(warnings)
     .build())
 
   implicit val arbitraryAttestationData: Arbitrary[AttestationData] = Arbitrary(for {
@@ -158,17 +140,22 @@ object Generators {
     clientDataJson <- clientDataJsonBytes
     signature <- arbitrary[ByteArray]
     userHandle <- arbitrary[Option[ByteArray]]
-  } yield new AuthenticatorAssertionResponse(
-    authenticatorData,
-    clientDataJson,
-    signature,
-    userHandle.orNull
-  ))
+  } yield AuthenticatorAssertionResponse.builder()
+    .authenticatorData(authenticatorData)
+    .clientDataJSON(clientDataJson)
+    .signature(signature)
+    .userHandle(userHandle.asJava)
+    .build()
+  )
 
   implicit val arbitraryAuthenticatorAttestationResponse: Arbitrary[AuthenticatorAttestationResponse] = Arbitrary(for {
     attestationObject <- attestationObjectBytes
     clientDataJSON <- clientDataJsonBytes
-  } yield new AuthenticatorAttestationResponse(attestationObject, clientDataJSON))
+  } yield AuthenticatorAttestationResponse.builder()
+    .attestationObject(attestationObject)
+    .clientDataJSON(clientDataJSON)
+    .build()
+  )
 
   implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] = Arbitrary(authenticatorDataBytes map (new AuthenticatorData(_)))
   def authenticatorDataBytes: Gen[ByteArray] = for {
@@ -270,15 +257,15 @@ object Generators {
     timeout <- arbitrary[Optional[java.lang.Long]]
     user <- arbitrary[UserIdentity]
   } yield PublicKeyCredentialCreationOptions.builder()
+    .rp(rp)
+    .user(user)
+    .challenge(challenge)
+    .pubKeyCredParams(pubKeyCredParams)
     .attestation(attestation)
     .authenticatorSelection(authenticatorSelection)
-    .challenge(challenge)
     .excludeCredentials(excludeCredentials)
     .extensions(extensions)
-    .pubKeyCredParams(pubKeyCredParams)
-    .rp(rp)
     .timeout(timeout)
-    .user(user)
     .build())
 
   implicit val arbitraryPublicKeyCredentialDescriptor: Arbitrary[PublicKeyCredentialDescriptor] = Arbitrary(for {
@@ -307,8 +294,8 @@ object Generators {
     timeout <- arbitrary[Optional[java.lang.Long]]
     userVerification <- arbitrary[UserVerificationRequirement]
   } yield PublicKeyCredentialRequestOptions.builder()
-    .allowCredentials(allowCredentials)
     .challenge(challenge)
+    .allowCredentials(allowCredentials)
     .extensions(extensions)
     .rpId(rpId)
     .timeout(timeout)
@@ -317,30 +304,14 @@ object Generators {
 
   implicit val arbitraryRegistrationExtensionInputs: Arbitrary[RegistrationExtensionInputs] = Arbitrary(Gen.const(RegistrationExtensionInputs.builder().build()))
 
-  implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] = Arbitrary(for {
-    attestationMetadata <- arbitrary[Optional[Attestation]]
-    attestationTrusted <- arbitrary[Boolean]
-    attestationType <- arbitrary[AttestationType]
-    keyId <- arbitrary[PublicKeyCredentialDescriptor]
-    publicKeyCose <- arbitrary[ByteArray]
-    warnings <- arbitrary[java.util.List[String]]
-  } yield RegistrationResult.builder()
-    .attestationMetadata(attestationMetadata)
-    .attestationTrusted(attestationTrusted)
-    .attestationType(attestationType)
-    .keyId(keyId)
-    .publicKeyCose(publicKeyCose)
-    .warnings(warnings)
-    .build())
-
   implicit val arbitraryRelyingPartyIdentity: Arbitrary[RelyingPartyIdentity] = Arbitrary(for {
     icon <- arbitrary[Optional[URL]]
     id <- arbitrary[String]
     name <- arbitrary[String]
   } yield RelyingPartyIdentity.builder()
-    .icon(icon)
     .id(id)
     .name(name)
+    .icon(icon)
     .build())
 
   implicit val arbitraryTokenBindingInfo: Arbitrary[TokenBindingInfo] = Arbitrary(Gen.oneOf(
@@ -356,10 +327,10 @@ object Generators {
     id <- arbitrary[ByteArray]
     name <- arbitrary[String]
   } yield UserIdentity.builder()
-    .displayName(displayName)
-    .icon(icon)
-    .id(id)
     .name(name)
+    .displayName(displayName)
+    .id(id)
+    .icon(icon)
     .build())
 
   def knownExtensionId: Gen[String] = Gen.oneOf("appid", "txAuthSimple", "txAuthGeneric", "authnSel", "exts", "uvi", "loc", "uvm", "biometricPerfBounds")

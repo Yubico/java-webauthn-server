@@ -53,11 +53,11 @@ import scala.util.Try
 class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  private val crypto: Crypto = new BouncyCastleCrypto()
+  private val crypto: BouncyCastleCrypto = new BouncyCastleCrypto()
 
   private object Defaults {
 
-    val rpId = RelyingPartyIdentity.builder().name("Test party").id("localhost").build()
+    val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
 
     // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
     val authenticatorData: ByteArray = ByteArray.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000539")
@@ -79,19 +79,15 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
     val requestedExtensions: Option[ObjectNode] = None
     val clientExtensionResults: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build()
 
-    val request = PublicKeyCredentialRequestOptions.builder()
-      .challenge(challenge)
-      .rpId(Some(rpId.getId).asJava)
-      .build()
-
     val publicKeyCredential: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = PublicKeyCredential.builder()
       .id(credentialId)
-      .response(new AuthenticatorAssertionResponse(
-        authenticatorData,
-        clientDataJsonBytes,
-        signature,
-        null
-      ))
+      .response(
+        AuthenticatorAssertionResponse.builder()
+          .authenticatorData(authenticatorData)
+          .clientDataJSON(clientDataJsonBytes)
+          .signature(signature)
+          .build()
+      )
       .clientExtensionResults(clientExtensionResults)
       .build()
 
@@ -99,12 +95,13 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     def defaultResponse(
       userHandle: Option[ByteArray] = None
-    ): AuthenticatorAssertionResponse = new AuthenticatorAssertionResponse(
-      authenticatorData,
-      clientDataJsonBytes,
-      signature,
-      userHandle.orNull
-    )
+    ): AuthenticatorAssertionResponse =
+      AuthenticatorAssertionResponse.builder()
+        .authenticatorData(authenticatorData)
+        .clientDataJSON(clientDataJsonBytes)
+        .signature(signature)
+        .userHandle(userHandle.asJava)
+        .build()
 
     def defaultPublicKeyCredential(
       credentialId: ByteArray = Defaults.credentialId,
@@ -121,42 +118,43 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
   describe("The assertion ceremony") {
 
     val rp = RelyingParty.builder()
-      .allowUntrustedAttestation(false)
-      .challengeGenerator(new ChallengeGenerator() { override def generateChallenge(): ByteArray = new ByteArray(Defaults.challenge.getBytes) })
-      .origins(List(Defaults.rpId.getId).asJava)
+      .identity(Defaults.rpId)
+      .credentialRepository(
+        new CredentialRepository {
+          override def getCredentialIdsForUsername(username: String) =
+            if (username == Defaults.username)
+              Set(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava
+            else
+              Set.empty.asJava
+
+          override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
+            if (credId == Defaults.credentialId)
+              Some(RegisteredCredential.builder()
+                .credentialId(Defaults.credentialId)
+                .userHandle(Defaults.userHandle)
+                .publicKey(Defaults.credentialKey.getPublic)
+                .signatureCount(0)
+                .build()
+              ).asJava
+            else
+              None.asJava
+
+          override def lookupAll(credId: ByteArray) = ???
+          override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+            if (username == Defaults.username)
+              Some(Defaults.userHandle).asJava
+            else
+              None.asJava
+          override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
+            if (userHandle == Defaults.userHandle)
+              Some(Defaults.username).asJava
+            else
+              None.asJava
+        }
+      )
       .preferredPubkeyParams(Nil.asJava)
-      .rp(Defaults.rpId)
-      .credentialRepository(new CredentialRepository {
-        override def getCredentialIdsForUsername(username: String) =
-          if (username == Defaults.username)
-            Set(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava
-          else
-            Set.empty.asJava
-
-        override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
-          if (credId == Defaults.credentialId)
-            Some(RegisteredCredential.builder()
-              .credentialId(Defaults.credentialId)
-              .userHandle(Defaults.userHandle)
-              .publicKey(Defaults.credentialKey.getPublic)
-              .signatureCount(0)
-              .build()
-            ).asJava
-          else
-            None.asJava
-
-        override def lookupAll(credId: ByteArray) = ???
-        override def getUserHandleForUsername(username: String): Optional[ByteArray] =
-          if (username == Defaults.username)
-            Some(Defaults.userHandle).asJava
-          else
-            None.asJava
-        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
-          if (userHandle == Defaults.userHandle)
-            Some(Defaults.username).asJava
-          else
-            None.asJava
-      })
+      .origins(List(Defaults.rpId.getId).asJava)
+      .allowUntrustedAttestation(false)
       .validateSignatureCounter(true)
       .build()
 
@@ -164,8 +162,14 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
       val request = rp.startAssertion(StartAssertionOptions.builder()
           .username(Optional.of(Defaults.username))
           .build())
+      val deterministicRequest =
+        request.toBuilder.publicKeyCredentialRequestOptions(
+          request.getPublicKeyCredentialRequestOptions.toBuilder.challenge(Defaults.challenge).build()
+        )
+        .build()
+
       val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
-          .request(request)
+          .request(deterministicRequest)
           .response(Defaults.publicKeyCredential)
           .build()
       ))
@@ -175,13 +179,18 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     it("succeeds if username was not given but userHandle was returned.") {
       val request = rp.startAssertion(StartAssertionOptions.builder().build())
+      val deterministicRequest =
+        request.toBuilder.publicKeyCredentialRequestOptions(
+          request.getPublicKeyCredentialRequestOptions.toBuilder.challenge(Defaults.challenge).build()
+        )
+        .build()
 
       val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = Defaults.defaultPublicKeyCredential(
         userHandle = Some(Defaults.userHandle)
       )
 
       val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
-          .request(request)
+          .request(deterministicRequest)
           .response(response)
           .build()
       ))
@@ -191,8 +200,14 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
       val request = rp.startAssertion(StartAssertionOptions.builder().build())
+      val deterministicRequest =
+        request.toBuilder.publicKeyCredentialRequestOptions(
+          request.getPublicKeyCredentialRequestOptions.toBuilder.challenge(Defaults.challenge).build()
+        )
+        .build()
+
       val result = Try(rp.finishAssertion(FinishAssertionOptions.builder()
-          .request(request)
+          .request(deterministicRequest)
           .response(Defaults.publicKeyCredential)
           .build()
       ))

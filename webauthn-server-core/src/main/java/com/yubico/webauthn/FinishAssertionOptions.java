@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
@@ -35,7 +34,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class FinishAssertionOptions {
 
     @NonNull
@@ -46,5 +45,26 @@ public class FinishAssertionOptions {
     @NonNull
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
+
+    public static FinishAssertionOptionsBuilder.MandatoryStages builder() {
+        return new FinishAssertionOptionsBuilder.MandatoryStages();
+    }
+
+    public static class FinishAssertionOptionsBuilder {
+        public static class MandatoryStages {
+            private final FinishAssertionOptionsBuilder builder = new FinishAssertionOptionsBuilder();
+
+            public Step2 request(AssertionRequest request) {
+                builder.request(request);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public FinishAssertionOptionsBuilder response(PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response) {
+                    return builder.response(response);
+                }
+            }
+        }
+    }
 
 }

@@ -34,7 +34,7 @@ import lombok.Value;
  * Used to supply additional parameters when creating a new credential.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialParameters {
 
     /**
@@ -72,4 +72,17 @@ public class PublicKeyCredentialParameters {
      */
     public static final PublicKeyCredentialParameters RS256 = builder().alg(COSEAlgorithmIdentifier.RS256).build();
 
+    public static PublicKeyCredentialParametersBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialParametersBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialParametersBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialParametersBuilder builder = new PublicKeyCredentialParametersBuilder();
+
+            public PublicKeyCredentialParametersBuilder alg(COSEAlgorithmIdentifier alg) {
+                return builder.alg(alg);
+            }
+        }
+    }
 }
