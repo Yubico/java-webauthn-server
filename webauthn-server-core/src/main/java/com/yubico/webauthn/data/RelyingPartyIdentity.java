@@ -31,6 +31,7 @@ import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -49,6 +50,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
      * For example: "Acme Corporation", "Widgets, Inc.", or "Awesome Site".
      */
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final String name;
 
     /**
@@ -64,6 +66,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
      */
     @NonNull
     @Builder.Default
+    @Getter(onMethod = @__({ @Override }))
     private final Optional<URL> icon = Optional.empty();
 
     @JsonCreator
