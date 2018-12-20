@@ -25,11 +25,9 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.Getter;
@@ -134,11 +132,6 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
                 }
             }
         }
-    }
-
-    @JsonIgnore
-    public String getClientDataJSONString() {
-        return new String(clientDataJSON.getBytes(), Charset.forName("UTF-8"));
     }
 
 }
