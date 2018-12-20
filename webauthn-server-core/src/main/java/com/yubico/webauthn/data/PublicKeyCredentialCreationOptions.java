@@ -50,7 +50,7 @@ public class PublicKeyCredentialCreationOptions {
     /**
      * Contains data about the Relying Party responsible for the request.
      * <p>
-     * Its value's {@link RelyingPartyIdentity#id id} member specifies the <a href="https://w3c.github.io/webauthn/#rp-id">RP
+     * Its value’s {@link RelyingPartyIdentity#id id} member specifies the <a href="https://w3c.github.io/webauthn/#rp-id">RP
      * ID</a> the credential should be scoped to. If omitted, its value will be set by the client. See {@link
      * RelyingPartyIdentity} for further details.
      * </p>
