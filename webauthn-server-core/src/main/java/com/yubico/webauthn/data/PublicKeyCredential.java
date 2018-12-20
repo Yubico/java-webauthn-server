@@ -41,7 +41,7 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> implements Credential {
+public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
 
     /**
      * The raw Credential ID of this credential, corresponding to the <code>rawId</code> attribute in the WebAuthn API.
