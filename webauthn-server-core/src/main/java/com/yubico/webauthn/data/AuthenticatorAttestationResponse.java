@@ -35,9 +35,29 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * Represents the authenticator's response to a client's request for the creation of a new public key credential. It
+ * contains information about the new credential that can be used to identify it for later use, and metadata that can be
+ * used by the WebAuthn Relying Party to assess the characteristics of the credential during registration.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#authenticatorattestationresponse">§5.2.1. Information About Public Key
+ * Credential (interface AuthenticatorAttestationResponse)
+ * </a>
+ */
 @Value
 public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
+    /**
+     * Contains an attestation object, which is opaque to, and cryptographically protected against tampering by, the
+     * client. The attestation object contains both authenticator data and an attestation statement. The former contains
+     * the AAGUID, a unique credential ID, and the credential public key. The contents of the attestation statement are
+     * determined by the attestation statement format used by the authenticator. It also contains any additional
+     * information that the Relying Party's server requires to validate the attestation statement, as well as to decode
+     * and validate the authenticator data along with the JSON-serialized client data. For more details, see <a
+     * href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4 Attestation</a>, <a
+     * href="https://w3c.github.io/webauthn/#generating-an-attestation-object">§6.4.4 Generating an Attestation
+     * Object</a>, and <a href="https://w3c.github.io/webauthn/#fig-attStructs">Figure 5</a>.
+     */
     @NonNull
     private final ByteArray attestationObject;
 
@@ -45,6 +65,9 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
     @Getter(onMethod = @__({ @Override }))
     private final ByteArray clientDataJSON;
 
+    /**
+     * The {@link #attestationObject} parsed as a domain object.
+     */
     @NonNull
     @JsonIgnore
     private final transient AttestationObject attestation;
