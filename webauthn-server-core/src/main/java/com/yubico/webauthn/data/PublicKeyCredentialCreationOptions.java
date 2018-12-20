@@ -113,7 +113,7 @@ public class PublicKeyCredentialCreationOptions {
      */
     @NonNull
     @Builder.Default
-    private final AttestationConveyancePreference attestation = AttestationConveyancePreference.DEFAULT;
+    private final AttestationConveyancePreference attestation = AttestationConveyancePreference.NONE;
 
     /**
      * Additional parameters requesting additional processing by the client and authenticator.

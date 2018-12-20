@@ -33,6 +33,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCredentialCreationOptionsBuilder;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
@@ -107,7 +108,7 @@ public class RelyingParty {
     }
 
     public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
-        return PublicKeyCredentialCreationOptions.builder()
+        PublicKeyCredentialCreationOptionsBuilder builder = PublicKeyCredentialCreationOptions.builder()
             .rp(identity)
             .user(startRegistrationOptions.getUser())
             .challenge(generateChallenge())
@@ -116,9 +117,10 @@ public class RelyingParty {
                 Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
             )
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
-            .attestation(attestationConveyancePreference.orElse(AttestationConveyancePreference.DEFAULT))
             .extensions(startRegistrationOptions.getExtensions())
-            .build();
+        ;
+        attestationConveyancePreference.ifPresent(builder::attestation);
+        return builder.build();
     }
 
     public RegistrationResult finishRegistration(FinishRegistrationOptions finishRegistrationOptions) throws RegistrationFailedException {

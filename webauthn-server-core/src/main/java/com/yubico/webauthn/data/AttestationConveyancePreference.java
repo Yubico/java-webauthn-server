@@ -81,8 +81,6 @@ public enum AttestationConveyancePreference implements JsonStringSerializable {
     @NonNull
     private final String id;
 
-    public static final AttestationConveyancePreference DEFAULT = NONE;
-
     private static Optional<AttestationConveyancePreference> fromString(@NonNull String id) {
         return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
     }
