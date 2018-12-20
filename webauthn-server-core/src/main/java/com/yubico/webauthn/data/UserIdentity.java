@@ -31,6 +31,7 @@ import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -49,6 +50,7 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * For example: "john.p.smith@example.com" or "+14255551234".
      */
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final String name;
 
     /**
@@ -74,6 +76,7 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      */
     @NonNull
     @Builder.Default
+    @Getter(onMethod = @__({ @Override }))
     private final Optional<URL> icon = Optional.empty();
 
     @JsonCreator
