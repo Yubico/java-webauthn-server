@@ -37,7 +37,11 @@ import lombok.Value;
 
 
 /**
- * Describes a Relying Party with which a public key credential is associated.
+ * Used to supply additional Relying Party attributes when creating a new credential.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialrpentity">§5.4.2. Relying Party Parameters
+ * for Credential Generation (dictionary PublicKeyCredentialRpEntity)
+ * </a>
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -45,25 +49,25 @@ import lombok.Value;
 public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
 
     /**
-     * The human-friendly name of the Relaying Party.
+     * The human-palatable name of the Relaying Party.
      *
-     * For example: "Acme Corporation", "Widgets, Inc.", or "Awesome Site".
+     * <p>
+     * For example: "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+     * </p>
      */
     @NonNull
     @Getter(onMethod = @__({ @Override }))
     private final String name;
 
     /**
-     * The RP identifier with which credentials are associated.
+     * A unique identifier for the Relying Party, which sets the <a href="https://w3c.github.io/webauthn/#rp-id">RP
+     * ID</a>.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#rp-id">RP ID</a>
      */
     @NonNull
     private final String id;
 
-    /**
-     * A URL which resolves to an image associated with the RP.
-     *
-     * For example, this could be the RP's logo.
-     */
     @NonNull
     @Builder.Default
     @Getter(onMethod = @__({ @Override }))
