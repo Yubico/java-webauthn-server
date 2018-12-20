@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -40,9 +41,11 @@ import lombok.Value;
 public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final ByteArray authenticatorData;
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final ByteArray clientDataJSON;
 
     @NonNull
@@ -52,6 +55,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     private final Optional<ByteArray> userHandle;
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final transient CollectedClientData clientData;
 
     @Builder(toBuilder = true)

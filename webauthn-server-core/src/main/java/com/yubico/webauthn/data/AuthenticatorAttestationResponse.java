@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -41,6 +42,7 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
     private final ByteArray attestationObject;
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final ByteArray clientDataJSON;
 
     @NonNull
@@ -49,6 +51,7 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
     @NonNull
     @JsonIgnore
+    @Getter(onMethod = @__({ @Override }))
     private final transient CollectedClientData clientData;
 
     @Override
