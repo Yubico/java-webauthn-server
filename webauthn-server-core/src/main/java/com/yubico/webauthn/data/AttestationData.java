@@ -49,7 +49,7 @@ public class AttestationData {
     /**
      * The ''credential public key'' encoded in COSE_Key format.
      *
-     * @todo verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
+     * TODO: verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
      */
     @NonNull
     private final ByteArray credentialPublicKey;
