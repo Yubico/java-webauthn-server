@@ -23,6 +23,7 @@ Breaking changes:
 * Deleted interface `Crypto` and constructor parameter `crypto` of `RelyingParty`
 * Deleted interface `ChallengeGenerator` and constructor parameter
   `challengeGenerator` of `RelyingParty`
+* Renamed class `AttestationData` to `AttestedCredentialData` to agree with spec
 
 New features:
 

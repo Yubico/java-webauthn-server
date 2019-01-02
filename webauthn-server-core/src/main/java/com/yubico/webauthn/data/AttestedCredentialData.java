@@ -38,7 +38,7 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-public class AttestationData {
+public class AttestedCredentialData {
 
     /**
      * The AAGUID of the authenticator.
@@ -61,7 +61,7 @@ public class AttestationData {
     private final ByteArray credentialPublicKey;
 
     @JsonCreator
-    private AttestationData(
+    private AttestedCredentialData(
         @NonNull @JsonProperty("aaguid") ByteArray aaguid,
         @NonNull @JsonProperty("credentialId") ByteArray credentialId,
         @NonNull @JsonProperty("credentialPublicKey") ByteArray credentialPublicKey
@@ -71,10 +71,10 @@ public class AttestationData {
         this.credentialPublicKey = credentialPublicKey;
     }
 
-    static AttestationDataBuilder builder() {
-        return new AttestationDataBuilder();
+    static AttestedCredentialDataBuilder builder() {
+        return new AttestedCredentialDataBuilder();
     }
 
-    static class AttestationDataBuilder {}
+    static class AttestedCredentialDataBuilder {}
 
 }

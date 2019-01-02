@@ -86,7 +86,7 @@ public class AuthenticatorData {
      * @see #flags
      */
     @NonNull
-    private final transient Optional<AttestationData> attestationData;
+    private final transient Optional<AttestedCredentialData> attestedCredentialData;
 
     @NonNull
     private final transient Optional<CBORObject> extensions;
@@ -123,17 +123,17 @@ public class AuthenticatorData {
         this.flags = new AuthenticationDataFlags(rawBytes[FLAGS_INDEX]);
 
         if (flags.AT) {
-            VariableLengthParseResult parseResult = parseAttestationData(
+            VariableLengthParseResult parseResult = parseAttestedCredentialData(
                 flags,
                 Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)
             );
-            attestationData = parseResult.getAttestationData();
+            attestedCredentialData = parseResult.getAttestedCredentialData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
-            attestationData = Optional.empty();
+            attestedCredentialData = Optional.empty();
             extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)));
         } else {
-            attestationData = Optional.empty();
+            attestedCredentialData = Optional.empty();
             extensions = Optional.empty();
         }
     }
@@ -153,7 +153,7 @@ public class AuthenticatorData {
         return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), COUNTER_INDEX, COUNTER_END));
     }
 
-    private static VariableLengthParseResult parseAttestationData(AuthenticationDataFlags flags, byte[] bytes) {
+    private static VariableLengthParseResult parseAttestedCredentialData(AuthenticationDataFlags flags, byte[] bytes) {
         final int AAGUID_INDEX = 0;
         final int AAGUID_END = AAGUID_INDEX + 16;
 
@@ -162,7 +162,7 @@ public class AuthenticatorData {
 
         ExceptionUtil.assure(
             bytes.length >= CREDENTIAL_ID_LENGTH_END,
-            "Attestation data must contain at least %d bytes, was %d: %s",
+            "Attested credential data must contain at least %d bytes, was %d: %s",
             CREDENTIAL_ID_LENGTH_END,
             bytes.length,
             new ByteArray(bytes).getHex()
@@ -185,7 +185,7 @@ public class AuthenticatorData {
 
         ExceptionUtil.assure(
             bytes.length >= CREDENTIAL_ID_END,
-            "Expected credential ID of length %d, but attestation data and extension data is only %d bytes: %s",
+            "Expected credential ID of length %d, but attested credential data and extension data is only %d bytes: %s",
             CREDENTIAL_ID_END,
             bytes.length,
             new ByteArray(bytes).getHex()
@@ -206,19 +206,19 @@ public class AuthenticatorData {
             }
         } else if (indefiniteLengthBytes.available() > 0) {
             throw new IllegalArgumentException(String.format(
-                "Flags indicate no extension data, but %d bytes remain after attestation data.",
+                "Flags indicate no extension data, but %d bytes remain after attested credential data.",
                 indefiniteLengthBytes.available()
             ));
         } else if (flags.ED) {
             throw new IllegalArgumentException(
-                "Flags indicate there should be extension data, but no bytes remain after attestation data."
+                "Flags indicate there should be extension data, but no bytes remain after attested credential data."
             );
         } else {
             extensions = Optional.empty();
         }
 
         return new VariableLengthParseResult(
-            Optional.of(AttestationData.builder()
+            Optional.of(AttestedCredentialData.builder()
                 .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
                 .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
                 .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
@@ -237,7 +237,7 @@ public class AuthenticatorData {
 
     @Value
     private static class VariableLengthParseResult {
-        Optional<AttestationData> attestationData;
+        Optional<AttestedCredentialData> attestedCredentialData;
         Optional<CBORObject> extensions;
     }
 

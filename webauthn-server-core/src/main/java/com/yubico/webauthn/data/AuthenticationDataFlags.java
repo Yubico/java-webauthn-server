@@ -40,7 +40,7 @@ public final class AuthenticationDataFlags {
     /** User verified */
     public final boolean UV;
 
-    /** Attestation data present */
+    /** Attested credential data present */
     public final boolean AT;
 
     /** Extension data present */

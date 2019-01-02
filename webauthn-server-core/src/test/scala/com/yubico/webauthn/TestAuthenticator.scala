@@ -201,7 +201,7 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
       rpId = Defaults.rpId,
-      attestationDataBytes = Some(makeAttestationDataBytes(
+      attestedCredentialDataBytes = Some(makeAttestedCredentialDataBytes(
         aaguid = aaguid,
         publicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
         rpId = Defaults.rpId
@@ -223,7 +223,7 @@ object TestAuthenticator {
       .build()
 
     PublicKeyCredential.builder()
-      .id(response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId)
+      .id(response.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId)
       .response(response)
       .clientExtensionResults(clientExtensions)
       .build()
@@ -377,8 +377,8 @@ object TestAuthenticator {
     val signedData = makeU2fSignedData(
       authData.getRpIdHash,
       clientDataJson,
-      authData.getAttestationData.get.getCredentialId,
-      WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(authData.getAttestationData.get.getCredentialPublicKey))
+      authData.getAttestedCredentialData.get.getCredentialId,
+      WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(authData.getAttestedCredentialData.get.getCredentialPublicKey))
     )
 
     val f = JsonNodeFactory.instance
@@ -445,18 +445,18 @@ object TestAuthenticator {
   def makeAuthDataBytes(
     rpId: String = Defaults.rpId,
     counterBytes: ByteArray = ByteArray.fromHex("00000539"),
-    attestationDataBytes: Option[ByteArray] = None,
+    attestedCredentialDataBytes: Option[ByteArray] = None,
     extensionsCborBytes: Option[ByteArray] = None
   ): ByteArray =
     new ByteArray((Vector[Byte]()
       ++ sha256(rpId).getBytes.toVector
-      ++ Some[Byte]((0x01 | (if (attestationDataBytes.isDefined) 0x40 else 0x00) | (if (extensionsCborBytes.isDefined) 0x80 else 0x00)).toByte)
+      ++ Some[Byte]((0x01 | (if (attestedCredentialDataBytes.isDefined) 0x40 else 0x00) | (if (extensionsCborBytes.isDefined) 0x80 else 0x00)).toByte)
       ++ counterBytes.getBytes.toVector
-      ++ (attestationDataBytes map { _.getBytes.toVector } getOrElse Nil)
+      ++ (attestedCredentialDataBytes map { _.getBytes.toVector } getOrElse Nil)
       ++ (extensionsCborBytes map { _.getBytes.toVector } getOrElse Nil)
       ).toArray)
 
-  def makeAttestationDataBytes(
+  def makeAttestedCredentialDataBytes(
     publicKeyCose: ByteArray,
     rpId: String = Defaults.rpId,
     counterBytes: ByteArray = ByteArray.fromHex("0539"),

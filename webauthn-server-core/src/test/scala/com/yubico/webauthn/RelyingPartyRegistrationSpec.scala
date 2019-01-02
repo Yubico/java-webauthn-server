@@ -740,8 +740,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("a test case with a different signed credential public key is not valid.") {
             val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAuthenticatorData { authenticatorData =>
               val decoded = new AuthenticatorData(authenticatorData)
-              val L = decoded.getAttestationData.get.getCredentialId.getBytes.length
-              val evilPublicKey: Array[Byte] = decoded.getAttestationData.get.getCredentialPublicKey.getBytes.updated(30, 0: Byte)
+              val L = decoded.getAttestedCredentialData.get.getCredentialId.getBytes.length
+              val evilPublicKey: Array[Byte] = decoded.getAttestedCredentialData.get.getCredentialPublicKey.getBytes.updated(30, 0: Byte)
 
               new ByteArray(authenticatorData.getBytes.take(32 + 1 + 4 + 16 + 2 + L) ++ evilPublicKey)
             }
@@ -1063,7 +1063,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testDataBase.clientDataJsonHash
                   )
 
-                  CBORObject.DecodeFromBytes(new AttestationObject(testDataBase.attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
+                  CBORObject.DecodeFromBytes(new AttestationObject(testDataBase.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
                   new AttestationObject(testDataBase.attestationObject).getAttestationStatement.get("alg").longValue should equal (-7)
                   result should equal (true)
                 }
@@ -1075,7 +1075,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testData.clientDataJsonHash
                   ))
 
-                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
+                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
                   new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-8)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [IllegalArgumentException]
@@ -1451,18 +1451,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               RegisteredCredential.builder()
                 .credentialId(id)
                 .userHandle(uh)
-                .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
+                .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
                 .signatureCount(1337)
                 .build()
             ).asJava
 
             override def lookupAll(id: ByteArray) = id match {
-              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId =>
+              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId =>
                 Set(
                   RegisteredCredential.builder()
                     .credentialId(id)
                     .userHandle(testData.request.getUser.getId)
-                    .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
+                    .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
                     .signatureCount(1337)
                     .build()
                 ).asJava

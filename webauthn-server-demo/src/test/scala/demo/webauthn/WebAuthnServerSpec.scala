@@ -196,7 +196,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         .keyId(PublicKeyCredentialDescriptor.builder().id(testData.response.getId).build())
         .attestationTrusted(false)
         .attestationType(AttestationType.BASIC)
-        .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestationData.get.getCredentialPublicKey)
+        .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
         .attestationMetadata(Some(Attestation.builder()
           .trusted(false)
           .metadataIdentifier(Some("metadataIdentifier").asJava)

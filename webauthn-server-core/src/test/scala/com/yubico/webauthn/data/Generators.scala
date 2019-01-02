@@ -73,23 +73,23 @@ object Generators {
     .username(username)
     .build())
 
-  implicit val arbitraryAttestationData: Arbitrary[AttestationData] = Arbitrary(for {
+  implicit val arbitraryAttestedCredentialData: Arbitrary[AttestedCredentialData] = Arbitrary(for {
     aaguid <- byteArray(16)
     credentialId <- arbitrary[ByteArray]
     credentialPublicKey <- Gen.delay(Gen.const(TestAuthenticator.generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]))
     credentialPublicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialPublicKey)
-  } yield AttestationData.builder()
+  } yield AttestedCredentialData.builder()
     .aaguid(aaguid)
     .credentialId(credentialId)
     .credentialPublicKey(credentialPublicKeyCose)
     .build())
-  def attestationDataBytes: Gen[ByteArray] = for {
-    attestationData <- arbitrary[AttestationData]
+  def attestedCredentialDataBytes: Gen[ByteArray] = for {
+    attestedCredentialData <- arbitrary[AttestedCredentialData]
   } yield new ByteArray(
-    attestationData.getAaguid.getBytes
-    ++ BinaryUtil.encodeUint16(attestationData.getCredentialId.getBytes.length)
-    ++ attestationData.getCredentialId.getBytes
-    ++ attestationData.getCredentialPublicKey.getBytes
+    attestedCredentialData.getAaguid.getBytes
+    ++ BinaryUtil.encodeUint16(attestedCredentialData.getCredentialId.getBytes.length)
+    ++ attestedCredentialData.getCredentialId.getBytes
+    ++ attestedCredentialData.getCredentialPublicKey.getBytes
   )
 
   implicit val arbitraryAttestationObject: Arbitrary[AttestationObject] = Arbitrary(for {
@@ -159,16 +159,16 @@ object Generators {
   implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] = Arbitrary(authenticatorDataBytes map (new AuthenticatorData(_)))
   def authenticatorDataBytes: Gen[ByteArray] = for {
     fixedBytes <- byteArray(37)
-    attestationDataBytes <- Gen.option(attestationDataBytes)
+    attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
     extensions <- arbitrary[Option[CBORObject]]
 
     extensionsBytes = extensions map { exts => new ByteArray(exts.EncodeToBytes(CBOREncodeOptions.NoDuplicateKeys.And(CBOREncodeOptions.NoIndefLengthStrings))) }
-    atFlag = attestationDataBytes.isDefined
+    atFlag = attestedCredentialDataBytes.isDefined
     edFlag = extensionsBytes.isDefined
     flagsByte: Byte = setFlag(setFlag(fixedBytes.getBytes()(32), 0x40, atFlag), BinaryUtil.singleFromHex("80"), edFlag)
   } yield new ByteArray(
     fixedBytes.getBytes.updated(32, flagsByte)
-      ++ attestationDataBytes.map(_.getBytes).getOrElse(Array.empty)
+      ++ attestedCredentialDataBytes.map(_.getBytes).getOrElse(Array.empty)
       ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
   )
 

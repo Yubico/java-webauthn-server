@@ -79,7 +79,7 @@ object Test extends App {
     val parsedAttObj = new AttestationObject(attestationObject)
     println(parsedAttObj)
     println(parsedAttObj.getAuthenticatorData.getBytes.getHex)
-    println(WebAuthnCodecs.importCoseP256PublicKey(parsedAttObj.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
+    println(WebAuthnCodecs.importCoseP256PublicKey(parsedAttObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
 
     val attestationObjectCbor = WebAuthnCodecs.cbor.readTree(attestationObject.getBytes)
     println(attestationObjectCbor)
@@ -152,8 +152,8 @@ object Test extends App {
 
   // val parsedAuthData = AuthenticatorData(authDataBytes)
   // println(parsedAuthData)
-  // println(parsedAuthData.attestationData)
-  // println(parsedAuthData.attestationData.get)
-  // println(parsedAuthData.attestationData.get.credentialPublicKey)
+  // println(parsedAuthData.attestedCredentialData)
+  // println(parsedAuthData.attestedCredentialData.get)
+  // println(parsedAuthData.attestedCredentialData.get.credentialPublicKey)
 
 }
