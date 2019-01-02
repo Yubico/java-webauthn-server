@@ -97,7 +97,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[AttestedCredentialData]() {})
     test(new TypeReference[AttestationObject]() {})
     test(new TypeReference[AttestationType]() {})
-    test(new TypeReference[AuthenticationDataFlags]() {})
+    test(new TypeReference[AuthenticatorDataFlags]() {})
     test(new TypeReference[AuthenticatorAssertionResponse]() {})
     test(new TypeReference[AuthenticatorAttachment]() {})
     test(new TypeReference[AuthenticatorAttestationResponse]() {})

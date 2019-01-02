@@ -130,9 +130,9 @@ object Generators {
     ).asJava)
   } yield new ByteArray(WebAuthnCodecs.cbor().writeValueAsBytes(attObj))
 
-  implicit val arbitraryAuthenticationDataFlags: Arbitrary[AuthenticationDataFlags] = Arbitrary(for {
+  implicit val arbitraryAuthenticatorDataFlags: Arbitrary[AuthenticatorDataFlags] = Arbitrary(for {
     value <- arbitrary[Byte]
-  } yield new AuthenticationDataFlags(value))
+  } yield new AuthenticatorDataFlags(value))
 
   implicit val arbitraryAuthenticatorAssertionResponse: Arbitrary[AuthenticatorAssertionResponse] = Arbitrary(for {
     authenticatorData <- authenticatorDataBytes

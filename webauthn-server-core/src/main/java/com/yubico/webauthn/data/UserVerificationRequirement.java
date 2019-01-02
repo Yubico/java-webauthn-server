@@ -53,13 +53,13 @@ public enum UserVerificationRequirement implements JsonStringSerializable {
 
     /**
      * This value indicates that the Relying Party prefers user verification for the operation if possible, but will not
-     * fail the operation if the response does not have the {@link AuthenticationDataFlags#UV} flag set.
+     * fail the operation if the response does not have the {@link AuthenticatorDataFlags#UV} flag set.
      */
     PREFERRED("preferred"),
 
     /**
      * Indicates that the Relying Party requires user verification for the operation and will fail the operation if the
-     * response does not have the {@link AuthenticationDataFlags#UV} flag set.
+     * response does not have the {@link AuthenticatorDataFlags#UV} flag set.
      */
     REQUIRED("required");
 

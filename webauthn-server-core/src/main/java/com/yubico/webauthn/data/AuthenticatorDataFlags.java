@@ -36,7 +36,7 @@ import lombok.ToString;
  */
 @ToString
 @EqualsAndHashCode
-public final class AuthenticationDataFlags {
+public final class AuthenticatorDataFlags {
     public final byte value;
 
     /**
@@ -66,10 +66,10 @@ public final class AuthenticationDataFlags {
     public final boolean ED;
 
     /**
-     * Decode an {@link AuthenticationDataFlags} object from a raw bit field byte.
+     * Decode an {@link AuthenticatorDataFlags} object from a raw bit field byte.
      */
     @JsonCreator
-    public AuthenticationDataFlags(@JsonProperty("value") byte value) {
+    public AuthenticatorDataFlags(@JsonProperty("value") byte value) {
         this.value = value;
 
         UP = (value & Bitmasks.UP) != 0;

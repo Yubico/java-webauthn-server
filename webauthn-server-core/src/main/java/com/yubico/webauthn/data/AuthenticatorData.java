@@ -74,13 +74,13 @@ public class AuthenticatorData {
      * The flags bit field.
      */
     @NonNull
-    private final transient AuthenticationDataFlags flags;
+    private final transient AuthenticatorDataFlags flags;
 
     /**
      * Attested credential data, if present.
      *
      * <p>
-     * This member is present if and only if the {@link AuthenticationDataFlags#AT} flag is set.
+     * This member is present if and only if the {@link AuthenticatorDataFlags#AT} flag is set.
      * </p>
      *
      * @see #flags
@@ -120,7 +120,7 @@ public class AuthenticatorData {
 
         final byte[] rawBytes = bytes.getBytes();
 
-        this.flags = new AuthenticationDataFlags(rawBytes[FLAGS_INDEX]);
+        this.flags = new AuthenticatorDataFlags(rawBytes[FLAGS_INDEX]);
 
         if (flags.AT) {
             VariableLengthParseResult parseResult = parseAttestedCredentialData(
@@ -153,7 +153,7 @@ public class AuthenticatorData {
         return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), COUNTER_INDEX, COUNTER_END));
     }
 
-    private static VariableLengthParseResult parseAttestedCredentialData(AuthenticationDataFlags flags, byte[] bytes) {
+    private static VariableLengthParseResult parseAttestedCredentialData(AuthenticatorDataFlags flags, byte[] bytes) {
         final int AAGUID_INDEX = 0;
         final int AAGUID_END = AAGUID_INDEX + 16;
 
@@ -245,7 +245,7 @@ public class AuthenticatorData {
      * Extension-defined authenticator data, if present.
      *
      * <p>
-     * This member is present if and only if the {@link AuthenticationDataFlags#ED} flag is set.
+     * This member is present if and only if the {@link AuthenticatorDataFlags#ED} flag is set.
      * </p>
      *
      * <p>

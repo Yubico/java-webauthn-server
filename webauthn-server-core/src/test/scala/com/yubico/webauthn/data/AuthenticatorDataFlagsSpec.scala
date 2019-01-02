@@ -32,12 +32,12 @@ import org.scalatest.junit.JUnitRunner
 
 
 @RunWith(classOf[JUnitRunner])
-class AuthenticationDataFlagsSpec extends FunSpec with Matchers {
+class AuthenticatorDataFlagsSpec extends FunSpec with Matchers {
 
-  describe("AuthenticationDataFlags") {
+  describe("AuthenticatorDataFlags") {
 
     describe("decodes") {
-      def decode(hex: String) = new AuthenticationDataFlags(BinaryUtil.fromHex(hex).head)
+      def decode(hex: String) = new AuthenticatorDataFlags(BinaryUtil.fromHex(hex).head)
 
       it("0x01 to UP.") {
         val flags = decode("01")
