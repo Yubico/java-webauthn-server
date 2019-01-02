@@ -26,6 +26,7 @@ Breaking changes:
 * Renamed class `AttestationData` to `AttestedCredentialData` to agree with spec
 * Renamed class `AuthenticationDataFlags` to `AuthenticatorDataFlags`
 * Deleted constant `UserVerificationRequirement.DEFAULT`
+* Deleted method `AttestationObject.getAuthData()`
 
 New features:
 

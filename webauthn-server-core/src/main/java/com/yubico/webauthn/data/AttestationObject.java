@@ -71,6 +71,7 @@ public class AttestationObject {
     private final transient AuthenticatorData authenticatorData;
 
     @NonNull
+    @Getter(value = AccessLevel.NONE)
     private final transient ByteArray authData;
 
     /**
