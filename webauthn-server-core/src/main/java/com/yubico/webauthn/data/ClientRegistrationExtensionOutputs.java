@@ -31,6 +31,22 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
+
+/**
+ * Contains <a href="https://w3c.github.io/webauthn/#client-extension-output">client extension outputs</a> from a
+ * <code>navigator.credentials.create()</code> operation.
+ *
+ * <p>
+ * Note that there is no guarantee that any extension input present in {@link AssertionExtensionInputs} will have a
+ * corresponding output present here.
+ * </p>
+ *
+ * <p>
+ * The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
+ * </p>
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#extensions">§9. WebAuthn Extensions</a>
+ */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
