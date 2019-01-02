@@ -42,32 +42,52 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * The authenticator data structure is a byte array of 37 bytes or more. This class presents the authenticator data
+ * decoded as a high-level object.
+ *
+ * <p>
+ * The authenticator data structure encodes contextual bindings made by the authenticator. These bindings are controlled
+ * by the authenticator itself, and derive their trust from the WebAuthn Relying Party's assessment of the security
+ * properties of the authenticator. In one extreme case, the authenticator may be embedded in the client, and its
+ * bindings may be no more trustworthy than the client data. At the other extreme, the authenticator may be a discrete
+ * entity with high-security hardware and software, connected to the client over a secure channel. In both cases, the
+ * Relying Party receives the authenticator data in the same format, and uses its knowledge of the authenticator to make
+ * trust decisions.
+ * </p>
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+ */
 @Value
 @JsonSerialize(using = AuthenticatorData.JsonSerializer.class)
 public class AuthenticatorData {
 
+    /**
+     * The original raw byte array that this object is decoded from. This is a byte array of 37 bytes or more.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+     */
     @NonNull
     private final ByteArray bytes;
 
     /**
-     * The flags byte.
+     * The flags bit field.
      */
     @NonNull
     private final transient AuthenticationDataFlags flags;
 
     /**
-     * Attestation data, if present.
+     * Attested credential data, if present.
+     *
      * <p>
-     * See ''§5.3.1 Attestation data'' of [[com.yubico.webauthn.VersionInfo]] for details.
+     * This member is present if and only if the {@link AuthenticationDataFlags#AT} flag is set.
+     * </p>
+     *
+     * @see #flags
      */
     @NonNull
     private final transient Optional<AttestationData> attestationData;
 
-    /**
-     * Extension-defined authenticator data, if present.
-     * <p>
-     * See ''§8 WebAuthn Extensions'' of [[com.yubico.webauthn.VersionInfo]] for details.
-     */
     @NonNull
     private final transient Optional<CBORObject> extensions;
 
@@ -82,6 +102,9 @@ public class AuthenticatorData {
 
     private static final int FIXED_LENGTH_PART_END_INDEX = COUNTER_END;
 
+    /**
+     * Decode an {@link AuthenticatorData} object from a raw authenticator data byte array.
+     */
     @JsonCreator
     public AuthenticatorData(@NonNull ByteArray bytes) {
         ExceptionUtil.assure(
@@ -116,7 +139,7 @@ public class AuthenticatorData {
     }
 
     /**
-     * The SHA-256 hash of the RP ID associated with the credential.
+     * The SHA-256 hash of the RP ID the credential is scoped to.
      */
     @JsonProperty("rpIdHash")
     public ByteArray getRpIdHash() {
@@ -218,6 +241,19 @@ public class AuthenticatorData {
         Optional<CBORObject> extensions;
     }
 
+    /**
+     * Extension-defined authenticator data, if present.
+     *
+     * <p>
+     * This member is present if and only if the {@link AuthenticationDataFlags#ED} flag is set.
+     * </p>
+     *
+     * <p>
+     * Changes to the returned value are not reflected in the {@link AuthenticatorData} object.
+     * </p>
+     *
+     * @see #flags
+     */
     public Optional<CBORObject> getExtensions() {
         return extensions.map(WebAuthnCodecs::deepCopy);
     }
