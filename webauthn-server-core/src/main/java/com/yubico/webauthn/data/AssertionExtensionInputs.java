@@ -25,7 +25,6 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.util.HashSet;
