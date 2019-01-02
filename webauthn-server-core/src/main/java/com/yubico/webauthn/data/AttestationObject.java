@@ -70,10 +70,6 @@ public class AttestationObject {
     @NonNull
     private final transient AuthenticatorData authenticatorData;
 
-    @NonNull
-    @Getter(value = AccessLevel.NONE)
-    private final transient ByteArray authData;
-
     /**
      * The attestation statement format identifier of this attestation object.
      *
@@ -110,6 +106,7 @@ public class AttestationObject {
         this.bytes = bytes;
 
         final JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
+        final ByteArray authDataBytes;
 
         ExceptionUtil.assure(
             decoded != null,
@@ -126,7 +123,7 @@ public class AttestationObject {
             throw new IllegalArgumentException("Required property \"authData\" missing from attestation object: " + bytes.getBase64Url());
         } else {
             if (authData.isBinary()) {
-                this.authData = new ByteArray(authData.binaryValue());
+                authDataBytes = new ByteArray(authData.binaryValue());
             } else {
                 throw new IllegalArgumentException(String.format(
                     "Property \"authData\" of attestation object must be a CBOR byte array, was: %s. Attestation object: %s",
@@ -166,7 +163,7 @@ public class AttestationObject {
             }
         }
 
-        authenticatorData = new AuthenticatorData(this.authData);
+        authenticatorData = new AuthenticatorData(authDataBytes);
     }
 
     static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AttestationObject> {
