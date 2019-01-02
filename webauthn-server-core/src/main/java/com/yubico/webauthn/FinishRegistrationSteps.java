@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,7 @@ final class FinishRegistrationSteps {
     private final PublicKeyCredentialCreationOptions request;
     private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
-    private final List<String> origins;
+    private final Set<String> origins;
     private final String rpId;
     private final Boolean allowUntrustedAttestation;
     private final Optional<MetadataService> metadataService;

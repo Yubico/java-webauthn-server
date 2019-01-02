@@ -80,6 +80,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -121,7 +122,7 @@ public class WebAuthnServer {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, Set<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;

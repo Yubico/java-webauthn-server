@@ -153,7 +153,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
         }
       )
       .preferredPubkeyParams(Nil.asJava)
-      .origins(List(Defaults.rpId.getId).asJava)
+      .origins(Set(Defaults.rpId.getId).asJava)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(true)
       .build()

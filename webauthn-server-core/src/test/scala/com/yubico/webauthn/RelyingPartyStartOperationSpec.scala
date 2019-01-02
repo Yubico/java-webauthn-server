@@ -64,7 +64,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
     .identity(rpId)
     .credentialRepository(credRepo(credentials))
     .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
-    .origins(Nil.asJava)
+    .origins(Set.empty.asJava)
     .appId(appId)
     .build()
 

@@ -71,7 +71,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   private val requireResidentKey = false
   private val requestId = ByteArray.fromBase64Url("request1")
   private val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
-  private val origins = List("localhost").asJava
+  private val origins = Set("localhost").asJava
   private val appId = Optional.empty[AppId]
 
   describe("WebAuthnServer") {

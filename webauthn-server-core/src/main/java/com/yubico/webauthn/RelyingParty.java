@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -58,7 +59,7 @@ public class RelyingParty {
     private static final SecureRandom random = new SecureRandom();
 
     @NonNull private final RelyingPartyIdentity identity;
-    @NonNull private final List<String> origins;
+    @NonNull private final Set<String> origins;
     @NonNull private final CredentialRepository credentialRepository;
 
     @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
@@ -76,7 +77,7 @@ public class RelyingParty {
 
     private RelyingParty(
         @NonNull RelyingPartyIdentity identity,
-        List<String> origins,
+        Set<String> origins,
         @NonNull CredentialRepository credentialRepository,
         @NonNull Optional<AppId> appId,
         @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
@@ -88,7 +89,7 @@ public class RelyingParty {
         boolean validateTypeAttribute
     ) {
         this.identity = identity;
-        this.origins = origins != null ? origins : Collections.singletonList("https://" + identity.getId());
+        this.origins = origins != null ? origins : Collections.singleton("https://" + identity.getId());
         this.credentialRepository = credentialRepository;
         this.appId = appId;
         this.attestationConveyancePreference = attestationConveyancePreference;

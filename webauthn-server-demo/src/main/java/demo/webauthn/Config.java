@@ -31,8 +31,10 @@ import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,13 +47,13 @@ public class Config {
     private static final RelyingPartyIdentity DEFAULT_RP_ID
         = RelyingPartyIdentity.builder().id("localhost").name("Yubico WebAuthn demo").build();
 
-    private final List<String> origins;
+    private final Set<String> origins;
     private final int port;
     private final RelyingPartyIdentity rpIdentity;
     private final Optional<AppId> appId;
 
-    private Config(List<String> origins, int port, RelyingPartyIdentity rpIdentity, Optional<AppId> appId) {
-        this.origins = CollectionUtil.immutableList(origins);
+    private Config(Set<String> origins, int port, RelyingPartyIdentity rpIdentity, Optional<AppId> appId) {
+        this.origins = CollectionUtil.immutableSet(origins);
         this.port = port;
         this.rpIdentity = rpIdentity;
         this.appId = appId;
@@ -71,7 +73,7 @@ public class Config {
         return instance;
     }
 
-    public static List<String> getOrigins() {
+    public static Set<String> getOrigins() {
         return getInstance().origins;
     }
 
@@ -87,17 +89,17 @@ public class Config {
         return getInstance().appId;
     }
 
-    private static List<String> computeOrigins() {
+    private static Set<String> computeOrigins() {
         final String origins = System.getenv("YUBICO_WEBAUTHN_ALLOWED_ORIGINS");
 
         logger.debug("YUBICO_WEBAUTHN_ALLOWED_ORIGINS: {}", origins);
 
-        final List<String> result;
+        final Set<String> result;
 
         if (origins == null) {
-            result = Arrays.asList(DEFAULT_ORIGIN);
+            result = Collections.singleton(DEFAULT_ORIGIN);
         } else {
-            result = Arrays.asList(origins.split(","));
+            result = new HashSet<>(Arrays.asList(origins.split(",")));
         }
 
         logger.info("Origins: {}", result);

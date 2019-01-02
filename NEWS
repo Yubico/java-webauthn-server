@@ -27,6 +27,7 @@ Breaking changes:
 * Renamed class `AuthenticationDataFlags` to `AuthenticatorDataFlags`
 * Deleted constant `UserVerificationRequirement.DEFAULT`
 * Deleted method `AttestationObject.getAuthData()`
+* Changed type of field `RelyingParty.origins` from `List` to `Set`
 
 New features:
 

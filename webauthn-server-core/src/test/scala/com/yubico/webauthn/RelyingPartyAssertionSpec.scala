@@ -179,7 +179,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       )
       .preferredPubkeyParams(Nil.asJava)
-      .origins(List(origin).asJava)
+      .origins(Set(origin).asJava)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(validateSignatureCounter)
       .build()

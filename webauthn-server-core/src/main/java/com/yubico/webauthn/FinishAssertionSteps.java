@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +56,7 @@ final class FinishAssertionSteps {
     private final AssertionRequest request;
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
-    private final List<String> origins;
+    private final Set<String> origins;
     private final String rpId;
     private final CredentialRepository credentialRepository;
 
