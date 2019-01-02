@@ -185,11 +185,17 @@ public class PublicKeyCredentialCreationOptions {
         public static class MandatoryStages {
             private PublicKeyCredentialCreationOptionsBuilder builder = new PublicKeyCredentialCreationOptionsBuilder();
 
+            /**
+             * @see PublicKeyCredentialCreationOptions#getRp()
+             */
             public Step2 rp(RelyingPartyIdentity rp) {
                 builder.rp(rp);
                 return new Step2();
             }
 
+            /**
+             * @see PublicKeyCredentialCreationOptions#getUser()
+             */
             public class Step2 {
                 public Step3 user(UserIdentity user) {
                     builder.user(user);
@@ -197,6 +203,9 @@ public class PublicKeyCredentialCreationOptions {
                 }
             }
 
+            /**
+             * @see PublicKeyCredentialCreationOptions#getChallenge()
+             */
             public class Step3 {
                 public Step4 challenge(ByteArray challenge) {
                     builder.challenge(challenge);
@@ -204,6 +213,9 @@ public class PublicKeyCredentialCreationOptions {
                 }
             }
 
+            /**
+             * @see PublicKeyCredentialCreationOptions#getPubKeyCredParams()
+             */
             public class Step4 {
                 public PublicKeyCredentialCreationOptionsBuilder pubKeyCredParams(List<PublicKeyCredentialParameters> pubKeyCredParams) {
                     return builder.pubKeyCredParams(pubKeyCredParams);
