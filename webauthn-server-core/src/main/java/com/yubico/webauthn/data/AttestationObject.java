@@ -25,7 +25,6 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -43,25 +42,22 @@ import lombok.Value;
 public class AttestationObject {
 
     @NonNull
-    private final transient ByteArray bytes;
+    private final ByteArray bytes;
 
     @NonNull
     private final transient AuthenticatorData authenticatorData;
 
     @NonNull
-    @JsonProperty("authData")
-    private final ByteArray authData;
+    private final transient ByteArray authData;
 
     /**
      * The ''attestation statement format'' of this attestation object.
      */
     @NonNull
-    @JsonProperty("fmt")
-    private final String format;
+    private final transient String format;
 
     @NonNull
-    @JsonProperty("attStmt")
-    private final ObjectNode attestationStatement;
+    private final transient ObjectNode attestationStatement;
 
     @JsonCreator
     public AttestationObject(@NonNull ByteArray bytes) throws IOException {
