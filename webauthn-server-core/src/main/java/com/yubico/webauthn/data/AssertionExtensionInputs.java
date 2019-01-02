@@ -26,6 +26,8 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.util.HashSet;
 import java.util.Optional;
@@ -61,6 +63,12 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      * <p>
      * This extension does not allow FIDO-compatible credentials to be created. Thus, credentials created with WebAuthn
      * are not backwards compatible with the FIDO JavaScript APIs.
+     * </p>
+     *
+     * <p>
+     * {@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input automatically if the
+     * {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is given when constructing
+     * the {@link RelyingParty} instance.
      * </p>
      *
      * @see <a href="https://w3c.github.io/webauthn/#sctn-appid-extension">§10.1. FIDO AppID Extension (appid)</a>
