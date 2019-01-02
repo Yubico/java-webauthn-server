@@ -30,6 +30,12 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Attested credential data is a variable-length byte array added to the authenticator data when generating an
+ * attestation object for a given credential. This class provides access to the three data segments of that byte array.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#sec-attested-credential-data">6.4.1. Attested Credential Data</a>
+ */
 @Value
 @Builder(toBuilder = true)
 public class AttestationData {
@@ -41,17 +47,17 @@ public class AttestationData {
     private final ByteArray aaguid;
 
     /**
-     * The ID of the attested credential.
+     * The credential ID of the attested credential.
      */
     @NonNull
     private final ByteArray credentialId;
 
     /**
-     * The ''credential public key'' encoded in COSE_Key format.
-     *
-     * TODO: verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
+     * The credential public key encoded in COSE_Key format, as defined in Section 7 of <a
+     * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>.
      */
     @NonNull
+    // TODO: verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
     private final ByteArray credentialPublicKey;
 
     @JsonCreator
