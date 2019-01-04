@@ -1,0 +1,4 @@
+[submodule "lombok"]
+	path = lombok
+	url = https://github.com/emlun/lombok.git
+	branch = builder-javadoc
