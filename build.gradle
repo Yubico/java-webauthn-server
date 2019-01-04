@@ -12,8 +12,12 @@ buildscript {
 plugins {
   id 'com.github.kt3k.coveralls' version '2.8.1'
   id 'io.codearte.nexus-staging' version '0.9.0'
+  id 'io.franzbecker.gradle-lombok' version '1.14'
   id 'net.researchgate.release' version '2.4.0'
 }
+
+import io.franzbecker.gradle.lombok.LombokPlugin
+import io.franzbecker.gradle.lombok.task.DelombokTask
 
 project.ext.isCiBuild = System.env.CI == 'true'
 
@@ -40,11 +44,17 @@ allprojects  {
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'java'
   apply plugin: 'idea'
+  apply plugin: LombokPlugin
 
   group = 'com.yubico'
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
+
+  lombok {
+    version '1.18.4'
+    sha256 = '39f3922deb679b1852af519eb227157ef2dd0a21eec3542c8ce1b45f2df39742'
+  }
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -81,6 +91,23 @@ subprojects {
   }
   artifacts.archives packageSources
 
+  task delombok(type: DelombokTask, dependsOn: classes) {
+    ext.outputDir = file("${buildDir}/delombok")
+    outputs.dir outputDir
+    sourceSets.main.java.srcDirs.each {
+      inputs.dir it
+      args(it, '-d', outputDir)
+    }
+    doFirst {
+      outputDir.deleteDir()
+    }
+  }
+
+  javadoc {
+    dependsOn delombok
+    source = delombok.outputDir
+  }
+
   task packageJavadoc(type: Jar) {
     classifier = 'javadoc'
     inputs.files javadoc.outputs
@@ -89,8 +116,6 @@ subprojects {
   artifacts.archives packageJavadoc
 
   dependencies {
-
-    compileOnly 'org.projectlombok:lombok:1.18.2'
 
     compile(
       'org.slf4j:slf4j-api:1.7.25',

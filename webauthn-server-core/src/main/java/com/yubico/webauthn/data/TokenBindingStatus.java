@@ -33,12 +33,23 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
+/**
+ * @see <a href="https://w3c.github.io/webauthn/#enumdef-tokenbindingstatus">enum TokenBindingStatus</a>
+ */
 @AllArgsConstructor
 @JsonSerialize(using = JsonStringSerializer.class)
 public enum TokenBindingStatus implements JsonStringSerializable {
 
-    NOT_SUPPORTED("not-supported"),
+    /**
+     * Indicates token binding was used when communicating with the Relying Party. In this case, the {@link
+     * TokenBindingStatus#id} member MUST be present.
+     */
     PRESENT("present"),
+
+    /**
+     * Indicates the client supports token binding, but it was not negotiated when communicating with the Relying
+     * Party.
+     */
     SUPPORTED("supported");
 
     @NonNull

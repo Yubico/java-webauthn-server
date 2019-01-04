@@ -163,7 +163,7 @@ case class RegistrationTestData(
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
   def clientData = new CollectedClientData(clientDataJsonBytes)
   def clientDataJsonHash: ByteArray = new BouncyCastleCrypto().hash(clientDataJsonBytes)
-  def aaguid: ByteArray = new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getAaguid
+  def aaguid: ByteArray = new AttestationObject(attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getAaguid
   def packedAttestationCert: X509Certificate =
     CertificateParser.parseDer(
       new AttestationObject(attestationObject)
@@ -217,7 +217,7 @@ case class RegistrationTestData(
       .build()
 
   def response: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = PublicKeyCredential.builder()
-    .id(new AttestationObject(attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialId)
+    .id(new AttestationObject(attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialId)
     .response(
       AuthenticatorAttestationResponse.builder()
         .attestationObject(attestationObject)

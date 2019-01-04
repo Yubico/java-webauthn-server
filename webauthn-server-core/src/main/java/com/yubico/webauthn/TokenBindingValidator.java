@@ -36,8 +36,6 @@ final class TokenBindingValidator {
             clientTokenBinding.map(tbi -> {
                 switch (tbi.getStatus()) {
                     case SUPPORTED:
-                    case NOT_SUPPORTED:
-                        throw new IllegalArgumentException("Token binding ID set by RP but not by client.");
 
                     case PRESENT:
                         return tbi.getId().map(id -> {
@@ -54,7 +52,6 @@ final class TokenBindingValidator {
             clientTokenBinding.map(tbi -> {
                 switch (tbi.getStatus()) {
                     case SUPPORTED:
-                    case NOT_SUPPORTED:
                         return true;
 
                     case PRESENT:

@@ -22,12 +22,57 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.yubico.webauthn.data;
+package com.yubico.webauthn.data
 
-public interface Credential {
+import com.yubico.internal.util.BinaryUtil
+import org.junit.runner.RunWith
+import org.scalatest.FunSpec
+import org.scalatest.Matchers
+import org.scalatest.junit.JUnitRunner
 
-    ByteArray getId();
 
-    PublicKeyCredentialType getType();
+@RunWith(classOf[JUnitRunner])
+class AuthenticatorDataFlagsSpec extends FunSpec with Matchers {
+
+  describe("AuthenticatorDataFlags") {
+
+    describe("decodes") {
+      def decode(hex: String) = new AuthenticatorDataFlags(BinaryUtil.fromHex(hex).head)
+
+      it("0x01 to UP.") {
+        val flags = decode("01")
+        flags.UP should be (true)
+        flags.UV should be (false)
+        flags.AT should be (false)
+        flags.ED should be (false)
+      }
+
+      it("0x04 to UV.") {
+        val flags = decode("04")
+        flags.UP should be (false)
+        flags.UV should be (true)
+        flags.AT should be (false)
+        flags.ED should be (false)
+      }
+
+      it("0x40 to AT.") {
+        val flags = decode("40")
+        flags.UP should be (false)
+        flags.UV should be (false)
+        flags.AT should be (true)
+        flags.ED should be (false)
+      }
+
+      it("0x80 to ED.") {
+        val flags = decode("80")
+        flags.UP should be (false)
+        flags.UV should be (false)
+        flags.AT should be (false)
+        flags.ED should be (true)
+      }
+
+    }
+
+  }
 
 }

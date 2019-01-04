@@ -29,25 +29,47 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+/**
+ * The flags bit field of an authenticator data structure, decoded as a high-level object.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#flags">Table 1</a>
+ */
 @ToString
 @EqualsAndHashCode
-public final class AuthenticationDataFlags {
+public final class AuthenticatorDataFlags {
     public final byte value;
 
-    /** User present */
+    /**
+     * User present
+     */
     public final boolean UP;
 
     /** User verified */
     public final boolean UV;
 
-    /** Attestation data present */
+    /**
+     * Attested credential data present.
+     *
+     * <p>
+     * Users of this library should not need to inspect this value directly.
+     * </p>
+     *
+     * @see AuthenticatorData#getAttestedCredentialData()
+     */
     public final boolean AT;
 
-    /** Extension data present */
+    /**
+     * Extension data present.
+     *
+     * @see AuthenticatorData#getExtensions()
+     */
     public final boolean ED;
 
+    /**
+     * Decode an {@link AuthenticatorDataFlags} object from a raw bit field byte.
+     */
     @JsonCreator
-    public AuthenticationDataFlags(@JsonProperty("value") byte value) {
+    public AuthenticatorDataFlags(@JsonProperty("value") byte value) {
         this.value = value;
 
         UP = (value & Bitmasks.UP) != 0;

@@ -25,33 +25,54 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Optional;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * Represents an authenticator's response to a client’s request for generation of a new authentication assertion given
+ * the WebAuthn Relying Party's {@linkplain PublicKeyCredentialRequestOptions#challenge challenge} and OPTIONAL
+ * {@linkplain PublicKeyCredentialRequestOptions#allowCredentials list of credentials} it is aware of. This response
+ * contains a cryptographic {@linkplain #signature} proving possession of the credential private key, and optionally
+ * evidence of user consent to a specific transaction.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#authenticatorassertionresponse">§5.2.2. Web Authentication Assertion
+ * (interface AuthenticatorAssertionResponse)
+ * </a>
+ */
 @Value
 public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final ByteArray authenticatorData;
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final ByteArray clientDataJSON;
 
+    /**
+     * The raw signature returned from the authenticator. See <a href="https://w3c.github.io/webauthn/#op-get-assertion">§6.3.3
+     * The authenticatorGetAssertion Operation</a>.
+     */
     @NonNull
     private final ByteArray signature;
 
+    /**
+     * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
+     * <a href="https://w3c.github.io/webauthn/#op-get-assertion">§6.3.3 The authenticatorGetAssertion Operation</a>.
+     */
     @NonNull
     private final Optional<ByteArray> userHandle;
 
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final transient CollectedClientData clientData;
 
     @Builder(toBuilder = true)
@@ -111,11 +132,6 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
                 }
             }
         }
-    }
-
-    @JsonIgnore
-    public String getClientDataJSONString() {
-        return new String(clientDataJSON.getBytes(), Charset.forName("UTF-8"));
     }
 
 }

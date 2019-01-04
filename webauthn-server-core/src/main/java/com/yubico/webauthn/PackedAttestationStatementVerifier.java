@@ -99,17 +99,17 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
         final PublicKey pubkey;
         try {
             pubkey = WebAuthnCodecs.importCoseP256PublicKey(
-                attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey()
+                attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey()
             );
         } catch (IOException | CoseException e) {
             throw ExceptionUtil.wrapAndLog(
                 log,
-                String.format("Failed to parse public key from attestation data %s", attestationObject.getAuthenticatorData().getAttestationData()),
+                String.format("Failed to parse public key from attestation data %s", attestationObject.getAuthenticatorData().getAttestedCredentialData()),
                 e
             );
         }
 
-        final Long keyAlgId = CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey().getBytes())
+        final Long keyAlgId = CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey().getBytes())
                 .get(CBORObject.FromObject(3))
                 .AsInt64();
         final COSEAlgorithmIdentifier keyAlg = COSEAlgorithmIdentifier.fromId(keyAlgId)
@@ -183,7 +183,7 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
 
                 try {
                     return (signatureVerifier.verify(signature.getBytes())
-                        && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData().getAttestationData().get().getAaguid())
+                        && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getAaguid())
                     );
                 } catch (SignatureException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Failed to verify signature: " + attestationObject, e);

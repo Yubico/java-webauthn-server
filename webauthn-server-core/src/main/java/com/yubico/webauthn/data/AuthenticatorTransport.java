@@ -35,34 +35,48 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
-  * Authenticators may communicate with Clients using a variety of transports.
-  * This enumeration defines a hint as to how Clients might communicate with a
-  * particular Authenticator in order to obtain an assertion for a specific
-  * credential. Note that these hints represent the Relying Party's best belief
-  * as to how an Authenticator may be reached. A Relying Party may obtain a list
-  * of transports hints from some attestation statement formats or via some
-  * out-of-band mechanism; it is outside the scope of this specification to
-  * define that mechanism.
-  */
+ * Authenticators may communicate with Clients using a variety of transports. This enumeration defines a hint as to how
+ * Clients might communicate with a particular Authenticator in order to obtain an assertion for a specific credential.
+ * Note that these hints represent the Relying Party's best belief as to how an Authenticator may be reached. A Relying
+ * Party may obtain a list of transports hints from some attestation statement formats or via some out-of-band
+ * mechanism; it is outside the scope of this specification to define that mechanism.
+ * <p>
+ * <p>
+ * <p>
+ * Authenticators may implement various transports for communicating with clients. This enumeration defines hints as to
+ * how clients might communicate with a particular authenticator in order to obtain an assertion for a specific
+ * credential. Note that these hints represent the WebAuthn Relying Party's best belief as to how an authenticator may
+ * be reached. A Relying Party may obtain a list of transports hints from some attestation statement formats or via some
+ * out-of-band mechanism; it is outside the scope of the Web Authentication specification to define that mechanism.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#enumdef-authenticatortransport">§5.10.4. Authenticator Transport
+ * Enumeration (enum AuthenticatorTransport)</a>
+ */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum AuthenticatorTransport implements JsonStringSerializable {
+
     /**
-     * The respective Authenticator may be contacted over USB.
+     * Indicates the respective authenticator can be contacted over removable USB.
      */
     USB("usb"),
 
     /**
-     * The respective Authenticator may be contacted over Near Field Communication
-     * (NFC).
+     * Indicates the respective authenticator can be contacted over Near Field Communication (NFC).
      */
     NFC("nfc"),
 
     /**
-     * The respective Authenticator may be contacted over Bluetooth Smart
-     * (Bluetooth Low Energy / BLE).
+     * Indicates the respective authenticator can be contacted over Bluetooth Smart (Bluetooth Low Energy / BLE).
      */
-    BLE("ble");
+    BLE("ble"),
+
+    /**
+     * Indicates the respective authenticator is contacted using a client device-specific transport. These
+     * authenticators are not removable from the client device.
+     */
+    INTERNAL("internal")
+    ;
 
     @NonNull
     private final String id;

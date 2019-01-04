@@ -32,12 +32,22 @@ import lombok.Value;
 
 import static com.yubico.internal.util.ExceptionUtil.assure;
 
+/**
+ * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding protocol</a> used when
+ * communicating with the Relying Party.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-tokenbinding">dictionary TokenBinding</a>
+ */
 @Value
 public class TokenBindingInfo {
 
     @NonNull
     private final TokenBindingStatus status;
 
+    /**
+     * This member MUST be present if {@link #status} is present, and MUST be a base64url encoding of the Token Binding
+     * ID that was used when communicating with the Relying Party.
+     */
     @NonNull
     private final Optional<ByteArray> id;
 
@@ -77,10 +87,6 @@ public class TokenBindingInfo {
 
     public static TokenBindingInfo supported() {
         return new TokenBindingInfo(TokenBindingStatus.SUPPORTED, Optional.empty());
-    }
-
-    public static TokenBindingInfo notSupported() {
-        return new TokenBindingInfo(TokenBindingStatus.NOT_SUPPORTED, Optional.empty());
     }
 
 }
