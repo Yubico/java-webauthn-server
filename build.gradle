@@ -13,7 +13,6 @@ plugins {
   id 'com.github.kt3k.coveralls' version '2.8.1'
   id 'io.codearte.nexus-staging' version '0.9.0'
   id 'io.franzbecker.gradle-lombok' version '1.14'
-  id 'net.researchgate.release' version '2.4.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
