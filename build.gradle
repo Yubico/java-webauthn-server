@@ -54,6 +54,13 @@ allprojects  {
     version '1.18.4'
     sha256 = '39f3922deb679b1852af519eb227157ef2dd0a21eec3542c8ce1b45f2df39742'
   }
+  configurations.all {
+    resolutionStrategy {
+      dependencySubstitution {
+        substitute module('org.projectlombok:lombok') with module('com.yubico:lombok:1.18.5-custom')
+      }
+    }
+  }
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -66,6 +73,7 @@ allprojects  {
   repositories {
     mavenLocal()
 
+    maven { url uri("${rootProject.projectDir}/lib") }
     maven { url "http://repo.maven.apache.org/maven2" }
   }
 
