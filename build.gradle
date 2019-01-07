@@ -105,6 +105,8 @@ subprojects {
   javadoc {
     dependsOn delombok
     source = delombok.outputDir
+    options.encoding = 'UTF-8'
+    options.addStringOption('charset', 'UTF-8')
   }
 
   task packageJavadoc(type: Jar) {
