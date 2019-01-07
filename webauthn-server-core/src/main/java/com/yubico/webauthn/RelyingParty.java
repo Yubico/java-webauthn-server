@@ -69,7 +69,7 @@ public class RelyingParty {
         PublicKeyCredentialParameters.ES256,
         PublicKeyCredentialParameters.RS256
     ));
-    @Builder.Default private final boolean allowMissingTokenBinding = false;
+
     @Builder.Default private final boolean allowUnrequestedExtensions = false;
     @Builder.Default private final boolean allowUntrustedAttestation = false;
     @Builder.Default private final boolean validateSignatureCounter = true;
@@ -82,7 +82,6 @@ public class RelyingParty {
         @NonNull Optional<AppId> appId,
         @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
         @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
-        boolean allowMissingTokenBinding,
         boolean allowUnrequestedExtensions,
         boolean allowUntrustedAttestation,
         boolean validateSignatureCounter,
@@ -95,7 +94,6 @@ public class RelyingParty {
         this.attestationConveyancePreference = attestationConveyancePreference;
         this.metadataService = metadataService;
         this.preferredPubkeyParams = preferredPubkeyParams;
-        this.allowMissingTokenBinding = allowMissingTokenBinding;
         this.allowUnrequestedExtensions = allowUnrequestedExtensions;
         this.allowUntrustedAttestation = allowUntrustedAttestation;
         this.validateSignatureCounter = validateSignatureCounter;
@@ -152,7 +150,6 @@ public class RelyingParty {
             .credentialRepository(credentialRepository)
             .origins(origins)
             .rpId(identity.getId())
-            .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
             .metadataService(metadataService)
@@ -210,7 +207,6 @@ public class RelyingParty {
             .origins(origins)
             .rpId(identity.getId())
             .credentialRepository(credentialRepository)
-            .allowMissingTokenBinding(allowMissingTokenBinding)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .validateSignatureCounter(validateSignatureCounter)
             .validateTypeAttribute(validateTypeAttribute)

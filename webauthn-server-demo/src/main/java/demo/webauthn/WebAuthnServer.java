@@ -133,7 +133,6 @@ public class WebAuthnServer {
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .metadataService(Optional.of(metadataService))
-            .allowMissingTokenBinding(true)
             .allowUnrequestedExtensions(true)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)

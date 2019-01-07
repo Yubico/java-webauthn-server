@@ -27,6 +27,7 @@ Breaking changes:
  ** Renamed class `AttestationData` to `AttestedCredentialData`
  ** Enum constant `TokenBindingStatus.NOT_SUPPORTED` deleted; this is now
     instead signaled by a missing value
+ ** Parameter `RelyingParty.allowMissingTokenBinding` therefore removed
 * Renamed class `AuthenticationDataFlags` to `AuthenticatorDataFlags`
 * Deleted constant `UserVerificationRequirement.DEFAULT`
 * Deleted method `AttestationObject.getAuthData()`

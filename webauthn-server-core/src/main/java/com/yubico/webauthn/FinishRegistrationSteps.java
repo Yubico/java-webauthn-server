@@ -75,8 +75,6 @@ final class FinishRegistrationSteps {
     @Builder.Default
     private final Boolean allowUnrequestedExtensions = false;
     @Builder.Default
-    private final Boolean allowMissingTokenBinding = false;
-    @Builder.Default
     private final Boolean validateTypeAttribute = true;
 
 

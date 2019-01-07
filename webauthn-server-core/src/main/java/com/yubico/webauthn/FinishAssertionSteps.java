@@ -61,8 +61,6 @@ final class FinishAssertionSteps {
     private final CredentialRepository credentialRepository;
 
     @Builder.Default
-    private final boolean allowMissingTokenBinding = false;
-    @Builder.Default
     private final boolean validateTypeAttribute = true;
     @Builder.Default
     private final boolean validateSignatureCounter = true;
