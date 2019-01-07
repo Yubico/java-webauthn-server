@@ -23,7 +23,10 @@ Breaking changes:
 * Deleted interface `Crypto` and constructor parameter `crypto` of `RelyingParty`
 * Deleted interface `ChallengeGenerator` and constructor parameter
   `challengeGenerator` of `RelyingParty`
-* Renamed class `AttestationData` to `AttestedCredentialData` to agree with spec
+* Updated implementation to agree with current editor's draft of the spec
+ ** Renamed class `AttestationData` to `AttestedCredentialData`
+ ** Enum constant `TokenBindingStatus.NOT_SUPPORTED` deleted; this is now
+    instead signaled by a missing value
 * Renamed class `AuthenticationDataFlags` to `AuthenticatorDataFlags`
 * Deleted constant `UserVerificationRequirement.DEFAULT`
 * Deleted method `AttestationObject.getAuthData()`
