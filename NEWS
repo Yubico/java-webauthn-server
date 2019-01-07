@@ -1,5 +1,9 @@
 == Version 0.6.0 (unreleased) ==
 
+=== `webauthn-server-attestation` ===
+
+* Added attestation metadata for Security Key NFC by Yubico
+
 === `webauthn-server-core` ===
 
 Breaking changes:
