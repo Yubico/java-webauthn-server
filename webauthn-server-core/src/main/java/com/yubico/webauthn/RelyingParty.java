@@ -25,12 +25,15 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.attestation.MetadataService;
+import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
+import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCredentialCreationOptionsBuilder;
@@ -52,28 +55,208 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * Encapsulates the four basic Web Authentication operations - start/finish registration, start/finish authentication -
+ * along with overall operational settings for them.
+ * <p>
+ * This class has no mutable state. An instance of this class may therefore be thought of as a container for specialized
+ * versions (function closures) of these four operations rather than a stateful object.
+ * </p>
+ */
 @Builder(toBuilder = true)
 @Value
 public class RelyingParty {
 
     private static final SecureRandom random = new SecureRandom();
 
-    @NonNull private final RelyingPartyIdentity identity;
-    @NonNull private final Set<String> origins;
-    @NonNull private final CredentialRepository credentialRepository;
+    /**
+     * The {@link RelyingPartyIdentity} that will be set as the {@link PublicKeyCredentialCreationOptions#getRp() rp}
+     * parameter when initiating registration operations, and which {@link AuthenticatorData#getRpIdHash()} will be
+     * compared against. This is a required parameter.
+     *
+     * <p>
+     * A successful registration or authentication operation requires {@link AuthenticatorData#getRpIdHash()} to exactly
+     * equal the SHA-256 hash of this member's {@link RelyingPartyIdentity#getId() id} member. Alternatively, it may
+     * instead equal the SHA-256 hash of {@link #getAppId() appId} if the latter is present.
+     * </p>
+     *
+     * @see #startRegistration(StartRegistrationOptions)
+     * @see PublicKeyCredentialCreationOptions
+     */
+    @NonNull
+    private final RelyingPartyIdentity identity;
 
-    @Builder.Default @NonNull private final Optional<AppId> appId = Optional.empty();
-    @Builder.Default @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
-    @Builder.Default @NonNull private final Optional<MetadataService> metadataService = Optional.empty();
-    @Builder.Default @NonNull private final List<PublicKeyCredentialParameters> preferredPubkeyParams = Collections.unmodifiableList(Arrays.asList(
+    /**
+     * The allowed origins that returned authenticator responses will be compared against.
+     *
+     * <p>
+     * The default is the set containing only the string <code>"https://" + {@link #getIdentity()}.getId()</code>.
+     * </p>
+     *
+     * <p>
+     * A successful registration or authentication operation requires {@link CollectedClientData#getOrigin()} to exactly
+     * equal one of these values.
+     * </p>
+     *
+     * @see #getIdentity()
+     */
+    @NonNull
+    private final Set<String> origins;
+
+
+    /**
+     * An abstract database which can look up credentials, usernames and user handles from usernames, user handles and
+     * credential IDs. This is a required parameter.
+     *
+     * <p>
+     * This is used to look up:
+     * </p>
+     *
+     * <ul>
+     * <li>the user handle for a user logging in via user name</li>
+     * <li>the user name for a user logging in via user handle</li>
+     * <li>the credential IDs to include in {@link PublicKeyCredentialCreationOptions#getExcludeCredentials()}</li>
+     * <li>the credential IDs to include in {@link PublicKeyCredentialRequestOptions#getAllowCredentials()}</li>
+     * <li>that the correct user owns the credential when verifying an assertion</li>
+     * <li>the public key to use to verify an assertion</li>
+     * <li>the stored signature counter when verifying an assertion</li>
+     * </ul>
+     */
+    @NonNull
+    private final CredentialRepository credentialRepository;
+
+    /**
+     * The extension input to set for the <code>appid</code> extension when initiating authentication operations.
+     *
+     * <p>
+     * If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will automatically set the
+     * <code>appid</code> extension input, and {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will
+     * adjust its verification logic to also accept this AppID as an alternative to the RP ID.
+     * </p>
+     *
+     * <p>
+     * By default, this is not set.
+     * </p>
+     *
+     * @see AssertionExtensionInputs#getAppid()
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-appid-extension">§10.1. FIDO AppID Extension (appid)</a>
+     */
+    @Builder.Default
+    @NonNull
+    private final Optional<AppId> appId = Optional.empty();
+
+    /**
+     * The argument for the {@link PublicKeyCredentialCreationOptions#getAttestation() attestation} parameter in
+     * registration operations.
+     *
+     * <p>
+     * Unless your application has a concrete policy for authenticator attestation, it is recommended to leave this
+     * parameter undefined.
+     * </p>
+     *
+     * <p>
+     * By default, this is not set.
+     * </p>
+     *
+     * @see PublicKeyCredentialCreationOptions#getAttestation()
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     */
+    @Builder.Default
+    @NonNull
+    private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
+
+    /**
+     * A {@link MetadataService} instance to use for looking up device attestation metadata. This matters only if {@link
+     * #getAttestationConveyancePreference()} is non-empty and not set to {@link AttestationConveyancePreference#NONE}.
+     *
+     * <p>
+     * By default, this is not set.
+     * </p>
+     *
+     * @see PublicKeyCredentialCreationOptions#getAttestation()
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     */
+    @Builder.Default
+    @NonNull
+    private final Optional<MetadataService> metadataService = Optional.empty();
+
+    /**
+     * The argument for the {@link PublicKeyCredentialCreationOptions#getPubKeyCredParams() pubKeyCredParams} parameter
+     * in registration operations.
+     *
+     * <p>
+     * This is a list of acceptable public key algorithms and their parameters, ordered from most to least preferred.
+     * </p>
+     *
+     * <p>
+     * The default is the following list:
+     * </p>
+     *
+     * <ol>
+     * <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES256}</li>
+     * <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}</li>
+     * </ol>
+     *
+     * @see PublicKeyCredentialCreationOptions#getAttestation()
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     */
+    @Builder.Default
+    @NonNull
+    private final List<PublicKeyCredentialParameters> preferredPubkeyParams = Collections.unmodifiableList(Arrays.asList(
         PublicKeyCredentialParameters.ES256,
         PublicKeyCredentialParameters.RS256
     ));
 
-    @Builder.Default private final boolean allowUnrequestedExtensions = false;
-    @Builder.Default private final boolean allowUntrustedAttestation = false;
-    @Builder.Default private final boolean validateSignatureCounter = true;
-    @Builder.Default private final boolean validateTypeAttribute = true;
+    /**
+     * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} and {@link
+     * #finishAssertion(FinishAssertionOptions) finishAssertion} will accept responses containing extension outputs for
+     * which there was no extension input.
+     *
+     * <p>
+     * The default is <code>false</code>.
+     * </p>
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#extensions">§9. WebAuthn Extensions</a>
+     */
+    @Builder.Default
+    private final boolean allowUnrequestedExtensions = false;
+
+    /**
+     * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} will only allow
+     * registrations where the attestation signature can be linked to a trusted attestation root. This excludes self
+     * attestation and none attestation.
+     *
+     * <p>
+     * The default is <code>false</code>.
+     * </p>
+     */
+    @Builder.Default
+    private final boolean allowUntrustedAttestation = false;
+
+    /**
+     * If <code>true</code>, {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will fail if the {@link
+     * AuthenticatorData#getSignatureCounter() signature counter value} in the response is not strictly greater than the
+     * {@link RegisteredCredential#getSignatureCount() stored signature counter value}.
+     *
+     * <p>
+     * The default is <code>true</code>.
+     * </p>
+     */
+    @Builder.Default
+    private final boolean validateSignatureCounter = true;
+
+    /**
+     * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} and {@link
+     * #finishAssertion(FinishAssertionOptions) finishAssertion} will fail if the {@link CollectedClientData#getType()}
+     * type attribute} in the client data is not exactly equal to <code>"webauthn.create"</code> or
+     * <code>"webauthn.get"</code>, respectively.
+     *
+     * <p>
+     * The default is <code>true</code>.
+     * </p>
+     */
+    @Builder.Default
+    private final boolean validateTypeAttribute = true;
 
     private RelyingParty(
         @NonNull RelyingPartyIdentity identity,
@@ -132,11 +315,10 @@ public class RelyingParty {
 
     /**
      * This method is NOT part of the public API.
-     *
-     * This method is called internally by {@link
-     * #finishRegistration(FinishRegistrationOptions)}. It is a separate method to facilitate
-     * testing; users should call {@link
-     * #finishRegistration(FinishRegistrationOptions)} instead of this method.
+     * <p>
+     * This method is called internally by {@link #finishRegistration(FinishRegistrationOptions)}. It is a separate
+     * method to facilitate testing; users should call {@link #finishRegistration(FinishRegistrationOptions)} instead of
+     * this method.
      */
     FinishRegistrationSteps _finishRegistration(
         PublicKeyCredentialCreationOptions request,
@@ -189,11 +371,9 @@ public class RelyingParty {
 
     /**
      * This method is NOT part of the public API.
-     *
-     * This method is called internally by {@link
-     * #finishAssertion(FinishAssertionOptions)}. It is a separate method to
-     * facilitate testing; users should call {@link
-     * #finishAssertion(FinishAssertionOptions)} instead of this method.
+     * <p>
+     * This method is called internally by {@link #finishAssertion(FinishAssertionOptions)}. It is a separate method to
+     * facilitate testing; users should call {@link #finishAssertion(FinishAssertionOptions)} instead of this method.
      */
     FinishAssertionSteps _finishAssertion(
         AssertionRequest request,
@@ -221,12 +401,23 @@ public class RelyingParty {
         public static class MandatoryStages {
             private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
 
+            /**
+             * {@link RelyingPartyBuilder#identity(RelyingPartyIdentity) identity} is a required parameter.
+             *
+             * @see RelyingPartyBuilder#identity(RelyingPartyIdentity)
+             */
             public Step2 identity(RelyingPartyIdentity identity) {
                 builder.identity(identity);
                 return new Step2();
             }
 
             public class Step2 {
+                /**
+                 * {@link RelyingPartyBuilder#credentialRepository(CredentialRepository) credentialRepository} is a
+                 * required parameter.
+                 *
+                 * @see RelyingPartyBuilder#credentialRepository(CredentialRepository)
+                 */
                 public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
                     return builder.credentialRepository(credentialRepository);
                 }
