@@ -28,31 +28,81 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
+import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.data.AuthenticatorData;
 import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * The result of a call to {@link RelyingParty#finishAssertion(FinishAssertionOptions)}.
+ */
 @Value
 @Builder(toBuilder = true)
 public class AssertionResult {
 
+    /**
+     * <code>true</code> if the assertion was verified successfully.
+     */
     private final boolean success;
 
+    /**
+     * The <a href="https://w3c.github.io/webauthn/#credential-id">credential ID</a> of the credential used for the
+     * assertion.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#credential-id">Credential ID</a>
+     * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
+     */
     @NonNull
     private final ByteArray credentialId;
 
+    /**
+     * The <a href="https://w3c.github.io/webauthn/#user-handle">user handle</a> of the authenticated user.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#user-handle">User Handle</a>
+     * @see UserIdentity#getId()
+     * @see #getUsername()
+     */
     @NonNull
     private final ByteArray userHandle;
 
+    /**
+     * The username of the authenticated user.
+     *
+     * @see #getUserHandle()
+     */
     @NonNull
     private final String username;
 
+    /**
+     * The new <a href="https://w3c.github.io/webauthn/#signcount">signature count</a> of the credential used for the
+     * assertion.
+     *
+     * <p>
+     * You should update this value in your database.
+     * </p>
+     *
+     * @see AuthenticatorData#getSignatureCounter()
+     */
     private final long signatureCount;
 
+    /**
+     * <code>true</code> if and only if the {@link AuthenticatorData#getSignatureCounter() signature counter value}
+     * in the assertion was strictly greater than {@link RegisteredCredential#getSignatureCount() the stored one}.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+     * @see AuthenticatorData#getSignatureCounter()
+     * @see RegisteredCredential#getSignatureCount()
+     * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#validateSignatureCounter(boolean)
+     */
     private final boolean signatureCounterValid;
 
+    /**
+     * Zero or more human-readable messages about non-critical issues.
+     */
     @NonNull
     private final List<String> warnings;
 
