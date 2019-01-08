@@ -555,7 +555,7 @@ final class FinishAssertionSteps {
         public void validate() {
             if (!
                 crypto.verifySignature(
-                    credential.publicKey,
+                    credential.getPublicKey(),
                     signedBytes(),
                     response.getResponse().getSignature()
                 )

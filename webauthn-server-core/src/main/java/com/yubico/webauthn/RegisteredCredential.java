@@ -81,7 +81,7 @@ public class RegisteredCredential {
      * @see RegistrationResult#getPublicKeyCose()
      */
     @NonNull
-    public final PublicKey publicKey;
+    private final PublicKey publicKey;
 
     /**
      * The stored <a href="https://w3c.github.io/webauthn/#signcount">signature count</a> of the credential.
@@ -96,7 +96,7 @@ public class RegisteredCredential {
      * @see AssertionResult#getSignatureCount()
      */
     @Builder.Default
-    public final long signatureCount = 0;
+    private final long signatureCount = 0;
 
     public static RegisteredCredentialBuilder.MandatoryStages builder() {
         return new RegisteredCredentialBuilder.MandatoryStages();

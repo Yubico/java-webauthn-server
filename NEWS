@@ -33,6 +33,7 @@ Breaking changes:
 * Deleted constant `UserVerificationRequirement.DEFAULT`
 * Deleted method `AttestationObject.getAuthData()`
 * Changed type of field `RelyingParty.origins` from `List` to `Set`
+* Fixed (reduced) visibility of `RegisteredCredential` fields
 
 New features:
 

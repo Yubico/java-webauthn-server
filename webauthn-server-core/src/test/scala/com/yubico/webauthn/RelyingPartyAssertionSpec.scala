@@ -316,7 +316,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.credential.publicKey should equal (Defaults.credentialKey.getPublic)
+          step.credential.getPublicKey should equal (Defaults.credentialKey.getPublic)
           step.tryNext shouldBe a [Success[_]]
         }
       }
