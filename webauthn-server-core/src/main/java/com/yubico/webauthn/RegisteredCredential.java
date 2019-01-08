@@ -24,7 +24,11 @@
 
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.UserIdentity;
 import java.security.PublicKey;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -33,20 +37,64 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * An abstraction of a credential registered to a particular user.
+ *
+ * <p>
+ * Instances of this class are not expected to be long-lived, and the library only needs to read them, never write them.
+ * You may at your discretion store them directly in your database, or assemble them from other components.
+ * </p>
+ */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class RegisteredCredential {
 
+    /**
+     * The <a href="https://w3c.github.io/webauthn/#credential-id">credential ID</a> of the credential.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#credential-id">Credential ID</a>
+     * @see RegistrationResult#getKeyId()
+     * @see PublicKeyCredentialDescriptor#getId()
+     */
     @NonNull
     private final ByteArray credentialId;
 
+    /**
+     * The <a href="https://w3c.github.io/webauthn/#user-handle">user handle</a> of the user the credential is
+     * registered to.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#user-handle">User Handle</a>
+     * @see UserIdentity#getId()
+     */
     @NonNull
     private final ByteArray userHandle;
 
+    /**
+     * The public key of the credential.
+     *
+     * <p>
+     * This is used to verify the {@link AuthenticatorAssertionResponse#getSignature() signature} in authentication
+     * assertions.
+     * </p>
+     *
+     * @see RegistrationResult#getPublicKeyCose()
+     */
     @NonNull
     public final PublicKey publicKey;
 
+    /**
+     * The stored <a href="https://w3c.github.io/webauthn/#signcount">signature count</a> of the credential.
+     *
+     * <p>
+     * This is used to validate the {@link AuthenticatorData#getSignatureCounter() signature counter} in authentication
+     * assertions.
+     * </p>
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+     * @see AuthenticatorData#getSignatureCounter()
+     * @see AssertionResult#getSignatureCount()
+     */
     @Builder.Default
     public final long signatureCount = 0;
 
