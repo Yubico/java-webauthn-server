@@ -36,7 +36,7 @@ public interface CredentialRepository {
 
     Optional<ByteArray> getUserHandleForUsername(String username);
 
-    Optional<String> getUsernameForUserHandle(ByteArray userHandleBase64);
+    Optional<String> getUsernameForUserHandle(ByteArray userHandle);
 
     Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
 
