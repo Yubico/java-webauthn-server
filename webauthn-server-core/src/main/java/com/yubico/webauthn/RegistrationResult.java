@@ -30,6 +30,7 @@ import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
 import java.util.List;
@@ -39,25 +40,76 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * The result of a call to {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}.
+ */
 @Value
 @Builder(toBuilder = true)
 public class RegistrationResult {
 
+    /**
+     * The <a href="https://w3c.github.io/webauthn/#credential-id">credential ID</a> of the created credential.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#credential-id">Credential ID</a>
+     * @see PublicKeyCredential#getId()
+     */
     @NonNull
     private final PublicKeyCredentialDescriptor keyId;
 
+    /**
+     * <code>true</code> if and only if the attestation signature was successfully linked to a trusted attestation
+     * root.
+     *
+     * <p>
+     * You can ignore this if authenticator attestation is not relevant to your application.
+     * </p>
+     */
     private final boolean attestationTrusted;
 
+    /**
+     * The attestation type <a href="https://w3c.github.io/webauthn/#sctn-attestation-types">§6.4.3. Attestation
+     * Types</a> that was used for the created credential.
+     *
+     * <p>
+     * You can ignore this if authenticator attestation is not relevant to your application.
+     * </p>
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation-types">§6.4.3. Attestation Types</a>
+     */
     @NonNull
     private final AttestationType attestationType;
 
+    /**
+     * The public key of the created credential.
+     *
+     * <p>
+     * This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the authentication
+     * signatures.
+     * </p>
+     *
+     * @see RegisteredCredential#getPublicKey()
+     */
     @NonNull
     private final ByteArray publicKeyCose;
 
+    /**
+     * Zero or more human-readable messages about non-critical issues.
+     */
     @NonNull
     @Builder.Default
     private final List<String> warnings = Collections.emptyList();
 
+    /**
+     * Additional information about the authenticator, identified based on the attestation certificate.
+     *
+     * <p>
+     * This will be absent unless you set a {@link com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
+     * metadataService} in {@link RelyingParty}.
+     * </p>
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
+     */
     @NonNull
     @Builder.Default
     private final Optional<Attestation> attestationMetadata = Optional.empty();
