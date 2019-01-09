@@ -97,7 +97,7 @@ public class AttestationObject {
     private final transient ObjectNode attestationStatement;
 
     /**
-     * Decode an {@link AttestationObject} object from a raw attestation object data byte array.
+     * Decode an {@link AttestationObject} object from a raw attestation object byte array.
      *
      * @throws IOException if <code>bytes</code> cannot be parsed as a CBOR map.
      */
