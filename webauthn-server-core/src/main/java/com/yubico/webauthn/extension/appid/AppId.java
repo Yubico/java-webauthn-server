@@ -34,12 +34,27 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import lombok.Value;
 
+
+/**
+ * A FIDO AppID verified to be syntactically valid.
+ *
+ * @see <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-appid-and-facets-v2.0-id-20180227.html">FIDO AppID and Facet Specification</a>
+ */
 @Value
 @JsonSerialize(using = AppId.JsonSerializer.class)
 public class AppId {
 
+    /**
+     * The underlying string representation of this AppID.
+     */
     private final String id;
 
+    /**
+     * Verify that the <code>appId</code> is a valid FIDO AppID, and wrap it as an {@link AppId}.
+     *
+     * @throws InvalidAppIdException if <code>appId</code> is not a valid FIDO AppID.
+     * @see <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-appid-and-facets-v2.0-id-20180227.html">FIDO AppID and Facet Specification</a>
+     */
     @JsonCreator
     public AppId(String appId) throws InvalidAppIdException {
         checkIsValid(appId);
