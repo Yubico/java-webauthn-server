@@ -33,15 +33,33 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Parameters for {@link RelyingParty#finishAssertion(FinishAssertionOptions)}.
+ */
 @Value
 @Builder(toBuilder = true)
 public class FinishAssertionOptions {
 
+    /**
+     * The request that the {@link #getResponse() response} is a response to.
+     */
     @NonNull
     private final AssertionRequest request;
+
+    /**
+     * The client's response to the {@link #getRequest() request}.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#getAssertion">navigator.credentials.get()</a>
+     */
     @NonNull
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
 
+    /**
+     * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the connection to the
+     * client, if any.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#discover-from-external-source">The Token Binding Protocol Version 1.0</a>
+     */
     @NonNull
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
