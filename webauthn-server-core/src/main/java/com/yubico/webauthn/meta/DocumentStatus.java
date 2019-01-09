@@ -29,6 +29,9 @@ import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
 import lombok.AllArgsConstructor;
 
+/**
+ * A representation of Web Authentication specification document statuses.
+ */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum DocumentStatus implements JsonStringSerializable {
@@ -37,6 +40,9 @@ public enum DocumentStatus implements JsonStringSerializable {
 
     private final String id;
 
+    /**
+     * Used by JSON serializer.
+     */
     @Override
     public String toJsonString() {
         return id;
