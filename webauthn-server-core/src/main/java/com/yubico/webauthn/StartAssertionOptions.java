@@ -30,14 +30,34 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Parameters for {@link RelyingParty#startAssertion(StartAssertionOptions)}.
+ */
 @Value
 @Builder(toBuilder = true)
 public class StartAssertionOptions {
 
+    /**
+     * The username of the user to authenticate, if the user has already been identified.
+     * <p>
+     * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
+     * deferred until after receiving the response from the client.
+     * </p>
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">Client-side-resident
+     * credential</a>
+     */
     @NonNull
     @Builder.Default
     private final Optional<String> username = Optional.empty();
 
+    /**
+     * Extension inputs for this authentication operation.
+     * <p>
+     * If {@link RelyingParty#getAppId()} is set, {@link RelyingParty#startAssertion(StartAssertionOptions)} will
+     * overwrite any {@link AssertionExtensionInputs#getAppid() appId} extension input set herein.
+     * </p>
+     */
     @NonNull
     @Builder.Default
     private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
