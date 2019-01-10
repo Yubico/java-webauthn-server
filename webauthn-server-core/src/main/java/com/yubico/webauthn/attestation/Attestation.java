@@ -91,6 +91,10 @@ public class Attestation implements Serializable {
         this.transports = transports.map(TreeSet::new);
     }
 
+    public static Attestation empty() {
+        return builder().trusted(false).build();
+    }
+
     public static AttestationBuilder.MandatoryStages builder() {
         return new AttestationBuilder.MandatoryStages();
     }

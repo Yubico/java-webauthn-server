@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 public final class StandardMetadataService implements MetadataService {
     private static final Logger logger = LoggerFactory.getLogger(StandardMetadataService.class);
 
-    private final Attestation unknownAttestation = Attestation.builder().trusted(false).build();
+    private final Attestation unknownAttestation = Attestation.empty();
     private final AttestationResolver attestationResolver;
     private final Cache<String, Attestation> cache;
 
