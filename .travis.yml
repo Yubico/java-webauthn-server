@@ -9,7 +9,7 @@ jdk:
   - oraclejdk8
 
 script:
-  - ./gradlew check javadoc
+  - ./gradlew check assembleJavadoc
 
 after_success:
   - ./gradlew coveralls
@@ -20,4 +20,4 @@ deploy:
   github-token: $PAGES_DEPLOY_KEY
   on:
     branch: master
-  local-dir: 'webauthn-server-core/build/docs/javadoc'
+  local-dir: 'build/javadoc'

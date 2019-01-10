@@ -91,7 +91,14 @@ allprojects  {
 
 evaluationDependsOnChildren()
 
-subprojects {
+task assembleJavadoc(type: Sync) {
+  from("docs/index.html") {
+    expand project.properties
+  }
+  destinationDir = file("${rootProject.buildDir}/javadoc")
+}
+
+subprojects { project ->
   task packageSources(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -123,6 +130,14 @@ subprojects {
     from javadoc.destinationDir
   }
   artifacts.archives packageJavadoc
+
+  rootProject.tasks.assembleJavadoc {
+    dependsOn javadoc
+    inputs.dir javadoc.destinationDir
+    from(javadoc.destinationDir) {
+      into project.name
+    }
+  }
 
   dependencies {
 
