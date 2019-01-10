@@ -34,6 +34,7 @@ Breaking changes:
 * Deleted method `AttestationObject.getAuthData()`
 * Changed type of field `RelyingParty.origins` from `List` to `Set`
 * Fixed (reduced) visibility of `RegisteredCredential` fields
+* Class `MetadataObject` moved to `webauthn-server-attestation` module
 
 New features:
 
