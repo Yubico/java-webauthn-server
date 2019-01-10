@@ -34,7 +34,11 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
+ * Indicators of whether a {@link TokenBindingInfo}'s {@link TokenBindingInfo#getId() id} member is present and, if not,
+ * whether the client supports token binding.
+ *
  * @see <a href="https://w3c.github.io/webauthn/#enumdef-tokenbindingstatus">enum TokenBindingStatus</a>
+ * @see TokenBindingInfo
  */
 @AllArgsConstructor
 @JsonSerialize(using = JsonStringSerializer.class)
