@@ -21,8 +21,3 @@ deploy:
   on:
     branch: master
   local-dir: 'webauthn-server-core/build/docs/javadoc'
-
-addons:
-  hosts:
-    - travis-issue-5227-workaround
-  hostname: travis-issue-5227-workaround
