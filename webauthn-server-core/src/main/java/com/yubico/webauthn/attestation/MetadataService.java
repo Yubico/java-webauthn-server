@@ -28,8 +28,21 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+/**
+ * Abstraction of a repository which can look up authenticator attestation metadata from an attestation certificate
+ * chain.
+ */
 public interface MetadataService {
 
+    /**
+     * Attempt to look up attestation for a chain of certificates
+     *
+     * @param attestationCertificateChain
+     *     a certificate chain, where each certificate in the list should be signed by the following certificate.
+     * @return Attestation metadata, if any is available. If the certificate chain is empty, or if there is no signature
+     * path from a trusted attestation root to the first certificate in <code>attestationCertificateChange</code>,
+     * return {@link Attestation#empty()}.
+     */
     Attestation getAttestation(List<X509Certificate> attestationCertificateChain) throws CertificateEncodingException;
 
 }
