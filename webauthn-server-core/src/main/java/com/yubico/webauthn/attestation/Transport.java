@@ -28,10 +28,28 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Representations of communication modes supported by an authenticator.
+ */
 public enum Transport {
+    /**
+     * The authenticator supports communication via classic Bluetooth.
+     */
     BT_CLASSIC(1),
+
+    /**
+     * The authenticator supports communication via Bluetooth Low Energy (BLE).
+     */
     BLE(2),
+
+    /**
+     * The authenticator supports communication via USB.
+     */
     USB(4),
+
+    /**
+     * The authenticator supports communication via Near Field Communication (NFC).
+     */
     NFC(8);
 
     private final int bitpos;
