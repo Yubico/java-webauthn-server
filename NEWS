@@ -6,6 +6,12 @@
 
 === `webauthn-server-core` ===
 
+Breaking changes:
+
+* Deleted parameter `RelyingParty.verifyTypeAttribute`. This was added as a
+  workaround while browser implementations were incomplete, and should never be
+  used in production.
+
 
 == Version 0.6.0 ==
 

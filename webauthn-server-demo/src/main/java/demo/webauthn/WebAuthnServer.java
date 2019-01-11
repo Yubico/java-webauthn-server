@@ -136,7 +136,6 @@ public class WebAuthnServer {
             .allowUnrequestedExtensions(true)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
-            .validateTypeAttribute(false)
             .appId(appId)
             .build();
     }

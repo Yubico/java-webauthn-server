@@ -74,8 +74,6 @@ final class FinishRegistrationSteps {
 
     @Builder.Default
     private final boolean allowUnrequestedExtensions = false;
-    @Builder.Default
-    private final boolean validateTypeAttribute = true;
 
 
     public Step1 begin() {
@@ -172,20 +170,10 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            final String type = clientData.getType();
-
-            if (!CLIENT_DATA_TYPE.equals(type)) {
-                final String message = String.format(
-                    "The \"type\" in the client data must be exactly \"%s\", was: %s",
-                    CLIENT_DATA_TYPE, clientData.getType()
-                );
-
-                if (validateTypeAttribute) {
-                    throw new IllegalArgumentException(message);
-                } else {
-                    warnings.add(message);
-                }
-            }
+            assure(CLIENT_DATA_TYPE.equals(clientData.getType()),
+                "The \"type\" in the client data must be exactly \"%s\", was: %s",
+                CLIENT_DATA_TYPE, clientData.getType()
+            );
         }
 
         @Override

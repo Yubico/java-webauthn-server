@@ -245,19 +245,6 @@ public class RelyingParty {
     @Builder.Default
     private final boolean validateSignatureCounter = true;
 
-    /**
-     * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} and {@link
-     * #finishAssertion(FinishAssertionOptions) finishAssertion} will fail if the {@link CollectedClientData#getType()}
-     * type attribute} in the client data is not exactly equal to <code>"webauthn.create"</code> or
-     * <code>"webauthn.get"</code>, respectively.
-     *
-     * <p>
-     * The default is <code>true</code>.
-     * </p>
-     */
-    @Builder.Default
-    private final boolean validateTypeAttribute = true;
-
     private RelyingParty(
         @NonNull RelyingPartyIdentity identity,
         Set<String> origins,
@@ -267,8 +254,7 @@ public class RelyingParty {
         @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
         boolean allowUnrequestedExtensions,
         boolean allowUntrustedAttestation,
-        boolean validateSignatureCounter,
-        boolean validateTypeAttribute
+        boolean validateSignatureCounter
     ) {
         this.identity = identity;
         this.origins = origins != null ? origins : Collections.singleton("https://" + identity.getId());
@@ -280,7 +266,6 @@ public class RelyingParty {
         this.allowUnrequestedExtensions = allowUnrequestedExtensions;
         this.allowUntrustedAttestation = allowUntrustedAttestation;
         this.validateSignatureCounter = validateSignatureCounter;
-        this.validateTypeAttribute = validateTypeAttribute;
     }
 
     private static ByteArray generateChallenge() {
@@ -335,7 +320,6 @@ public class RelyingParty {
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
             .metadataService(metadataService)
-            .validateTypeAttribute(validateTypeAttribute)
             .build();
     }
 
@@ -389,7 +373,6 @@ public class RelyingParty {
             .credentialRepository(credentialRepository)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .validateSignatureCounter(validateSignatureCounter)
-            .validateTypeAttribute(validateTypeAttribute)
             .build();
     }
 

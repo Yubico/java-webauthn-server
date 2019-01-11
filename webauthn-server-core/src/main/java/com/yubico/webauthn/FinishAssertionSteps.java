@@ -61,8 +61,6 @@ final class FinishAssertionSteps {
     private final CredentialRepository credentialRepository;
 
     @Builder.Default
-    private final boolean validateTypeAttribute = true;
-    @Builder.Default
     private final boolean validateSignatureCounter = true;
     @Builder.Default
     private final boolean allowUnrequestedExtensions = false;
@@ -330,18 +328,10 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (!
-                CLIENT_DATA_TYPE.equals(clientData.getType())
-            ) {
-                final String message = String.format(
-                    "The \"type\" in the client data must be exactly \"%s\", was: %s", CLIENT_DATA_TYPE, clientData.getType()
-                );
-                if (validateTypeAttribute) {
-                    throw new IllegalArgumentException(message);
-                } else {
-                    warnings.add(message);
-                }
-            }
+            assure(CLIENT_DATA_TYPE.equals(clientData.getType()),
+                "The \"type\" in the client data must be exactly \"%s\", was: %s",
+                CLIENT_DATA_TYPE, clientData.getType()
+            );
         }
 
         @Override

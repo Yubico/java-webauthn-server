@@ -16,6 +16,11 @@ authenticators and authenticating registered authenticators.
 
 === Planned breaking changes
 
+* Delete parameter `RelyingParty.verifyTypeAttribute`
+
+  This was added as a work-around while browser implementations were incomplete,
+  and should never be used in production.
+
 * Re-type `RegisteredCredential.publicKey` so that library user doesn't need to
   parse the public key
 * Make sure `allowUntrustedAttestation` default agrees with recommendation against
