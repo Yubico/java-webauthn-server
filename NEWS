@@ -35,6 +35,7 @@ Breaking changes:
 * Changed type of field `RelyingParty.origins` from `List` to `Set`
 * Fixed (reduced) visibility of `RegisteredCredential` fields
 * Class `MetadataObject` moved to `webauthn-server-attestation` module
+* Updated and greatly expanded Javadoc
 
 New features:
 
