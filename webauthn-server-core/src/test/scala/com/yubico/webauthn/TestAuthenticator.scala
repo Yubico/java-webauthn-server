@@ -76,14 +76,17 @@ import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
+import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 object TestAuthenticator {
@@ -434,7 +437,7 @@ object TestAuthenticator {
         Map("sig" -> f.binaryNode(signature.getBytes))
           ++ (
             selfAttestationKey match {
-              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)).getId))
+              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse coseAlgorithmOfJavaKey(key)).getId))
               case None => Map("x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)))
             }
           )
@@ -633,5 +636,13 @@ object TestAuthenticator {
         .encodeToString(cert.getEncoded)
     + "\n-----END CERTIFICATE-----\n"
   )
+
+  def coseAlgorithmOfJavaKey(key: PrivateKey): COSEAlgorithmIdentifier =
+    Try(COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)) getOrElse
+        key match {
+          case key: BCECPrivateKey => key.getParameters.getCurve match {
+            case _: SecP256R1Curve => COSEAlgorithmIdentifier.valueOf("ES256")
+          }
+        }
 
 }
