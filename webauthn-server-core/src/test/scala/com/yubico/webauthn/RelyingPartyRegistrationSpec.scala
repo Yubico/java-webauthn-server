@@ -108,7 +108,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       .identity(rp)
       .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
       .preferredPubkeyParams(Nil.asJava)
-      .origins(Set(rp.getId).asJava)
+      .origins(Set("https://" + rp.getId).asJava)
       .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
       .build()
@@ -207,7 +207,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       it("5. Verify that the value of C.origin matches the Relying Party's origin.") {
         val steps = finishRegistration(
-          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "root.evil")
+          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "https://root.evil")
         )
         val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
 

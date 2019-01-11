@@ -132,6 +132,7 @@ object TestAuthenticator {
     val challenge: ByteArray = new ByteArray(Array(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91))
     val credentialId: ByteArray = new ByteArray(((0 to 31).toVector map { _.toByte }).toArray)
     val rpId = "localhost"
+    val origin = "https://" + rpId
     object TokenBinding {
       val status = "supported"
       val id = None
@@ -161,7 +162,7 @@ object TestAuthenticator {
     clientData: Option[JsonNode] = None,
     clientExtensions: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
     credentialKeypair: Option[KeyPair] = None,
-    origin: String = Defaults.rpId,
+    origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -291,7 +292,7 @@ object TestAuthenticator {
     clientExtensions: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build(),
     credentialId: ByteArray = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
-    origin: String = Defaults.rpId,
+    origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
