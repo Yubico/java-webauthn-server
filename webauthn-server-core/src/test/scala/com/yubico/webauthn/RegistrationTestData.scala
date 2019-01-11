@@ -58,9 +58,9 @@ object RegistrationTestDataGenerator extends App {
     caCert: Option[X509Certificate]
   ): Unit = {
     for { caCert <- caCert } {
-      println(s"""attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("${BinaryUtil.toHex(caCert.getEncoded)}").get.toArray)),""")
+      println(s"""attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("${BinaryUtil.toHex(caCert.getEncoded)}"))),""")
     }
-    println(s"""attestationObject = BinaryUtil.fromHex("${credential.getResponse.getAttestationObject.getHex}").get,
+    println(s"""attestationObject = new ByteArray(BinaryUtil.fromHex("${credential.getResponse.getAttestationObject.getHex}")),
                |clientDataJson = \"\"\"${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}\"\"\"
                |
                |
