@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.AttestationResolver;
@@ -41,7 +42,6 @@ import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +50,7 @@ import java.util.Optional;
 import lombok.NonNull;
 
 
-public class SimpleAttestationResolver implements AttestationResolver {
+public final class SimpleAttestationResolver implements AttestationResolver {
 
     private static final String SELECTORS = "selectors";
     private static final String SELECTOR_TYPE = "type";
@@ -81,7 +81,7 @@ public class SimpleAttestationResolver implements AttestationResolver {
         }
 
         this.trustResolver = trustResolver;
-        this.matchers = Collections.unmodifiableMap(matchers);
+        this.matchers = CollectionUtil.immutableMap(matchers);
     }
 
     public SimpleAttestationResolver(Collection<MetadataObject> objects, TrustResolver trustResolver) throws CertificateException {
@@ -122,7 +122,8 @@ public class SimpleAttestationResolver implements AttestationResolver {
                 }
             }
 
-            return Attestation.builder(true)
+            return Attestation.builder()
+                .trusted(true)
                 .metadataIdentifier(Optional.ofNullable(identifier))
                 .vendorProperties(Optional.of(vendorProperties))
                 .deviceProperties(Optional.ofNullable(deviceProperties))
@@ -182,7 +183,8 @@ public class SimpleAttestationResolver implements AttestationResolver {
 
     @Override
     public Attestation untrustedFromCertificate(X509Certificate attestationCertificate) {
-        return Attestation.builder(false)
+        return Attestation.builder()
+            .trusted(false)
             .transports(Optional.of(Transport.fromInt(getTransports(attestationCertificate))))
             .build();
     }

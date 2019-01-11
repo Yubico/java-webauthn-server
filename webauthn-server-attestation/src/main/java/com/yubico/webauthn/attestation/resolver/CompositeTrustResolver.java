@@ -24,9 +24,9 @@
 
 package com.yubico.webauthn.attestation.resolver;
 
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.TrustResolver;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,12 +36,12 @@ import java.util.Optional;
  * List)} on each of the subordinate {@link TrustResolver}s in turn, and
  * returns the first non-<code>null</code> result.
  */
-public class CompositeTrustResolver implements TrustResolver {
+public final class CompositeTrustResolver implements TrustResolver {
 
     private final List<TrustResolver> resolvers;
 
     public CompositeTrustResolver(List<TrustResolver> resolvers) {
-        this.resolvers = Collections.unmodifiableList(resolvers);
+        this.resolvers = CollectionUtil.immutableList(resolvers);
     }
 
     @Override

@@ -31,6 +31,7 @@ import javax.naming.ldap.Rdn;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AttestationObject;
@@ -46,7 +47,6 @@ import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
@@ -59,7 +59,7 @@ import org.bouncycastle.asn1.DEROctetString;
 
 
 @Slf4j
-class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
+final class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
@@ -99,17 +99,17 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
         final PublicKey pubkey;
         try {
             pubkey = WebAuthnCodecs.importCoseP256PublicKey(
-                attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey()
+                attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey()
             );
         } catch (IOException | CoseException e) {
             throw ExceptionUtil.wrapAndLog(
                 log,
-                String.format("Failed to parse public key from attestation data %s", attestationObject.getAuthenticatorData().getAttestationData()),
+                String.format("Failed to parse public key from attestation data %s", attestationObject.getAuthenticatorData().getAttestedCredentialData()),
                 e
             );
         }
 
-        final Long keyAlgId = CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey().getBytes())
+        final Long keyAlgId = CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey().getBytes())
                 .get(CBORObject.FromObject(3))
                 .AsInt64();
         final COSEAlgorithmIdentifier keyAlg = COSEAlgorithmIdentifier.fromId(keyAlgId)
@@ -183,7 +183,7 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
 
                 try {
                     return (signatureVerifier.verify(signature.getBytes())
-                        && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData().getAttestationData().get().getAaguid())
+                        && verifyX5cRequirements(attestationCertificate, attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getAaguid())
                     );
                 } catch (SignatureException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Failed to verify signature: " + attestationObject, e);
@@ -215,7 +215,7 @@ class PackedAttestationStatementVerifier implements AttestationStatementVerifier
 
         final String ouValue = "Authenticator Attestation";
         final String idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4";
-        final Set<String> countries = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
+        final Set<String> countries = CollectionUtil.immutableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
 
         ExceptionUtil.assure(
             getDnField("C", cert).filter(countries::contains).isPresent(),

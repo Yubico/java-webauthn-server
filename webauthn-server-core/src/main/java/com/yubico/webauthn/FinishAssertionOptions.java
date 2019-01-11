@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import com.yubico.webauthn.data.AssertionRequest;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
@@ -34,17 +33,56 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Parameters for {@link RelyingParty#finishAssertion(FinishAssertionOptions)}.
+ */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class FinishAssertionOptions {
 
+    /**
+     * The request that the {@link #getResponse() response} is a response to.
+     */
     @NonNull
     private final AssertionRequest request;
+
+    /**
+     * The client's response to the {@link #getRequest() request}.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#getAssertion">navigator.credentials.get()</a>
+     */
     @NonNull
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
 
+    /**
+     * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the connection to the
+     * client, if any.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#discover-from-external-source">The Token Binding Protocol Version 1.0</a>
+     */
     @NonNull
     @Builder.Default
     private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
+
+    public static FinishAssertionOptionsBuilder.MandatoryStages builder() {
+        return new FinishAssertionOptionsBuilder.MandatoryStages();
+    }
+
+    public static class FinishAssertionOptionsBuilder {
+        public static class MandatoryStages {
+            private final FinishAssertionOptionsBuilder builder = new FinishAssertionOptionsBuilder();
+
+            public Step2 request(AssertionRequest request) {
+                builder.request(request);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public FinishAssertionOptionsBuilder response(PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response) {
+                    return builder.response(response);
+                }
+            }
+        }
+    }
 
 }

@@ -36,7 +36,7 @@ import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.DEROctetString;
 
 @Slf4j
-public class ExtensionMatcher implements DeviceMatcher {
+public final class ExtensionMatcher implements DeviceMatcher {
     private static final Charset CHARSET = Charset.forName("UTF-8");
 
     public static final String SELECTOR_TYPE = "x509Extension";

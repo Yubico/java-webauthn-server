@@ -12,8 +12,11 @@ buildscript {
 plugins {
   id 'com.github.kt3k.coveralls' version '2.8.1'
   id 'io.codearte.nexus-staging' version '0.9.0'
-  id 'net.researchgate.release' version '2.4.0'
+  id 'io.franzbecker.gradle-lombok' version '1.14'
 }
+
+import io.franzbecker.gradle.lombok.LombokPlugin
+import io.franzbecker.gradle.lombok.task.DelombokTask
 
 project.ext.isCiBuild = System.env.CI == 'true'
 
@@ -40,11 +43,24 @@ allprojects  {
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'java'
   apply plugin: 'idea'
+  apply plugin: LombokPlugin
 
   group = 'com.yubico'
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
+
+  lombok {
+    version '1.18.4'
+    sha256 = '39f3922deb679b1852af519eb227157ef2dd0a21eec3542c8ce1b45f2df39742'
+  }
+  configurations.all {
+    resolutionStrategy {
+      dependencySubstitution {
+        substitute module('org.projectlombok:lombok') with module('com.yubico:lombok:1.18.5-custom')
+      }
+    }
+  }
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
@@ -57,6 +73,7 @@ allprojects  {
   repositories {
     mavenLocal()
 
+    maven { url uri("${rootProject.projectDir}/lib") }
     maven { url "http://repo.maven.apache.org/maven2" }
   }
 
@@ -74,12 +91,38 @@ allprojects  {
 
 evaluationDependsOnChildren()
 
-subprojects {
+task assembleJavadoc(type: Sync) {
+  from("docs/index.html") {
+    expand project.properties
+  }
+  destinationDir = file("${rootProject.buildDir}/javadoc")
+}
+
+subprojects { project ->
   task packageSources(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
   }
   artifacts.archives packageSources
+
+  task delombok(type: DelombokTask, dependsOn: classes) {
+    ext.outputDir = file("${buildDir}/delombok")
+    outputs.dir outputDir
+    sourceSets.main.java.srcDirs.each {
+      inputs.dir it
+      args(it, '-d', outputDir)
+    }
+    doFirst {
+      outputDir.deleteDir()
+    }
+  }
+
+  javadoc {
+    dependsOn delombok
+    source = delombok.outputDir
+    options.encoding = 'UTF-8'
+    options.addStringOption('charset', 'UTF-8')
+  }
 
   task packageJavadoc(type: Jar) {
     classifier = 'javadoc'
@@ -88,9 +131,15 @@ subprojects {
   }
   artifacts.archives packageJavadoc
 
-  dependencies {
+  rootProject.tasks.assembleJavadoc {
+    dependsOn javadoc
+    inputs.dir javadoc.destinationDir
+    from(javadoc.destinationDir) {
+      into project.name
+    }
+  }
 
-    compileOnly 'org.projectlombok:lombok:1.18.2'
+  dependencies {
 
     compile(
       'org.slf4j:slf4j-api:1.7.25',

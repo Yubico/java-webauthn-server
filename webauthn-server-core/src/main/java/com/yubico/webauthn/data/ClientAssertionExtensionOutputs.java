@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -35,10 +33,35 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Contains <a href="https://w3c.github.io/webauthn/#client-extension-output">client extension outputs</a> from a
+ * <code>navigator.credentials.get()</code> operation.
+ *
+ * <p>
+ * Note that there is no guarantee that any extension input present in {@link AssertionExtensionInputs} will have a
+ * corresponding output present here.
+ * </p>
+ *
+ * <p>
+ * The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
+ * </p>
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#extensions">§9. WebAuthn Extensions</a>
+ */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
+    /**
+     * The output from the FIDO AppID Extension (<code>appid</code>).
+     *
+     * <p>
+     * This value should be ignored because its behaviour is underspecified, see: <a
+     * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
+     * </p>
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sctn-appid-extension">§10.1. FIDO AppID Extension (appid)</a>
+     */
     @Builder.Default
     private final Optional<Boolean> appid = Optional.empty();
 

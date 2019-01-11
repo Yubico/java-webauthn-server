@@ -35,24 +35,43 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Non-standardized representation of partly free-form information about an authenticator device.
+ */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class Attestation implements Serializable {
 
+    /**
+     * <code>true</code> if and only if the contained information has been verified to be cryptographically supported by
+     * a trusted attestation root.
+     */
     private final boolean trusted;
 
+    /**
+     * A unique identifier for a particular version of the data source of the data in this object.
+     */
     @NonNull
     @Builder.Default
     private final Optional<String> metadataIdentifier = Optional.empty();
 
+    /**
+     * Free-form information about the authenticator vendor.
+     */
     @NonNull
     @Builder.Default
     private final Optional<Map<String, String>> vendorProperties = Optional.empty();
 
+    /**
+     * Free-form information about the authenticator model.
+     */
     @NonNull
     @Builder.Default
     private final Optional<Map<String, String>> deviceProperties = Optional.empty();
 
+    /**
+     * The set of communication modes supported by the authenticator.
+     */
     @NonNull
     @Builder.Default
     private final Optional<Set<Transport>> transports = Optional.empty();
@@ -72,8 +91,22 @@ public class Attestation implements Serializable {
         this.transports = transports.map(TreeSet::new);
     }
 
-    public static AttestationBuilder builder(boolean trusted) {
-        return new AttestationBuilder().trusted(trusted);
+    public static Attestation empty() {
+        return builder().trusted(false).build();
+    }
+
+    public static AttestationBuilder.MandatoryStages builder() {
+        return new AttestationBuilder.MandatoryStages();
+    }
+
+    public static class AttestationBuilder {
+        public static class MandatoryStages {
+            private final AttestationBuilder builder = new AttestationBuilder();
+
+            public AttestationBuilder trusted(boolean trusted) {
+                return builder.trusted(trusted);
+            }
+        }
     }
 
 }

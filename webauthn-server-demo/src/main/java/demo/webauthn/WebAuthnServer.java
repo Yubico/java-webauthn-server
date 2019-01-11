@@ -33,17 +33,16 @@ import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.util.Either;
-import com.yubico.webauthn.ChallengeGenerator;
+import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.FinishRegistrationOptions;
-import com.yubico.webauthn.RandomChallengeGenerator;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.AttestationResolver;
+import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.attestation.StandardMetadataService;
 import com.yubico.webauthn.attestation.TrustResolver;
@@ -51,14 +50,11 @@ import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
-import com.yubico.webauthn.data.AssertionResult;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.PublicKeyCredentialParameters;
-import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
@@ -70,9 +66,11 @@ import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
+import demo.webauthn.data.RegistrationResult;
 import demo.webauthn.data.U2fRegistrationResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -82,6 +80,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -92,6 +91,7 @@ import org.slf4j.LoggerFactory;
 
 public class WebAuthnServer {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
+    private static final SecureRandom random = new SecureRandom();
 
     private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
 
@@ -100,7 +100,6 @@ public class WebAuthnServer {
     private final RegistrationStorage userStorage;
     private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
 
-    private final ChallengeGenerator challengeGenerator = new RandomChallengeGenerator();
 
     private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
         StandardMetadataService.createDefaultTrustResolver(),
@@ -123,25 +122,29 @@ public class WebAuthnServer {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, List<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, Set<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
 
         rp = RelyingParty.builder()
-            .rp(rpIdentity)
-            .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
+            .identity(rpIdentity)
+            .credentialRepository(this.userStorage)
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
-            .credentialRepository(this.userStorage)
             .metadataService(Optional.of(metadataService))
-            .allowMissingTokenBinding(true)
             .allowUnrequestedExtensions(true)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
             .validateTypeAttribute(false)
             .appId(appId)
             .build();
+    }
+
+    private static ByteArray generateRandom(int length) {
+        byte[] bytes = new byte[length];
+        random.nextBytes(bytes);
+        return new ByteArray(bytes);
     }
 
     private static MetadataObject readPreviewMetadata() {
@@ -198,13 +201,13 @@ public class WebAuthnServer {
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
-                challengeGenerator.generateChallenge(),
+                generateRandom(32),
                 rp.startRegistration(
                     StartRegistrationOptions.builder()
                         .user(UserIdentity.builder()
                             .name(username)
                             .displayName(displayName)
-                            .id(challengeGenerator.generateChallenge())
+                            .id(generateRandom(32))
                             .build()
                         )
                         .authenticatorSelection(Optional.of(AuthenticatorSelectionCriteria.builder()
@@ -244,7 +247,7 @@ public class WebAuthnServer {
                 RegistrationRequest request = new RegistrationRequest(
                     username,
                     credentialNickname,
-                    challengeGenerator.generateChallenge(),
+                    generateRandom(32),
                     rp.startRegistration(
                         StartRegistrationOptions.builder()
                             .user(existingUser)
@@ -341,7 +344,7 @@ public class WebAuthnServer {
             return Either.left(Arrays.asList("Registration failed!", "No such registration in progress."));
         } else {
             try {
-                RegistrationResult registration = rp.finishRegistration(
+                com.yubico.webauthn.RegistrationResult registration = rp.finishRegistration(
                     FinishRegistrationOptions.builder()
                         .request(request.getPublicKeyCredentialCreationOptions())
                         .response(response.getCredential())
@@ -416,11 +419,11 @@ public class WebAuthnServer {
             }
 
             final RegistrationResult result = RegistrationResult.builder()
-                .attestationMetadata(attestation)
+                .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
                 .attestationType(AttestationType.BASIC)
-                .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .publicKeyCose(WebAuthnCodecs.rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
+                .attestationMetadata(attestation)
                 .build();
 
             return Either.right(
@@ -447,7 +450,7 @@ public class WebAuthnServer {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequest request = new AssertionRequest(
-                challengeGenerator.generateChallenge(),
+                generateRandom(32),
                 rp.startAssertion(
                     StartAssertionOptions.builder()
                         .username(username)
@@ -598,13 +601,13 @@ public class WebAuthnServer {
         UserIdentity userIdentity,
         Optional<String> nickname,
         RegistrationResponse response,
-        RegistrationResult registration
+        com.yubico.webauthn.RegistrationResult registration
     ) {
         return addRegistration(
             userIdentity,
             nickname,
             response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter(),
-            registration
+            RegistrationResult.fromLibraryType(registration)
         );
     }
 

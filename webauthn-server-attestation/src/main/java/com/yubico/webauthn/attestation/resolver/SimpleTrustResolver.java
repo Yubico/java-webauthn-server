@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * Assesses whether an argument certificate can be trusted, and if so, by what
  * trusted root certificate.
  */
-public class SimpleTrustResolver implements TrustResolver {
+public final class SimpleTrustResolver implements TrustResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(SimpleTrustResolver.class);
 

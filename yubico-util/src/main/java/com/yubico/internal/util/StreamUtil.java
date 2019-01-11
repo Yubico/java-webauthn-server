@@ -41,7 +41,7 @@ public class StreamUtil {
     }
 
     public static <T> Set<T> toSet(Iterator<T> it) {
-        return Collections.unmodifiableSet(toStream(it).collect(Collectors.toSet()));
+        return CollectionUtil.immutableSet(toStream(it).collect(Collectors.toSet()));
     }
 
 }

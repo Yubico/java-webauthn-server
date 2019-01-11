@@ -41,7 +41,6 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.AssertionRequest
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
@@ -71,7 +70,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   private object Defaults {
 
-    val rpId = RelyingPartyIdentity.builder().name("Test party").id("localhost").build()
+    val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
 
     // These values were generated using TestAuthenticator.makeCredentialExample(TestAuthenticator.createCredential())
     val authenticatorData: ByteArray = ByteArray.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630100000539")
@@ -132,52 +131,56 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     val clientDataJsonBytes: ByteArray = if (clientDataJson == null) null else new ByteArray(clientDataJson.getBytes("UTF-8"))
 
     val request = AssertionRequest.builder()
-      .username(Some(usernameForRequest).asJava)
-      .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-        .rpId(Some(rpId.getId).asJava)
-        .challenge(challenge)
-        .allowCredentials(allowCredentials.asJava)
-        .userVerification(userVerificationRequirement)
-        .extensions(requestedExtensions)
-        .build()
+      .publicKeyCredentialRequestOptions(
+        PublicKeyCredentialRequestOptions.builder()
+          .challenge(challenge)
+          .rpId(Some(rpId.getId).asJava)
+          .allowCredentials(allowCredentials.asJava)
+          .userVerification(userVerificationRequirement)
+          .extensions(requestedExtensions)
+          .build()
       )
+      .username(Some(usernameForRequest).asJava)
       .build()
 
     val response = PublicKeyCredential.builder()
       .id(credentialId)
-      .response(new AuthenticatorAssertionResponse(
-        if (authenticatorData == null) null else authenticatorData,
-        if (clientDataJsonBytes == null) null else clientDataJsonBytes,
-        if (signature == null) null else signature,
-        userHandleForResponse
-      ))
+      .response(
+        AuthenticatorAssertionResponse.builder()
+          .authenticatorData(if (authenticatorData == null) null else authenticatorData)
+          .clientDataJSON(if (clientDataJsonBytes == null) null else clientDataJsonBytes)
+          .signature(if (signature == null) null else signature)
+          .userHandle(Optional.of(userHandleForResponse))
+          .build()
+      )
       .clientExtensionResults(clientExtensionResults)
       .build()
 
     RelyingParty.builder()
-      .allowUntrustedAttestation(false)
-      .challengeGenerator(null)
-      .origins(List(origin).asJava)
+      .identity(rpId)
+      .credentialRepository(
+        credentialRepository getOrElse new CredentialRepository {
+          override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
+            (
+              if (credId == credentialId)
+                Some(RegisteredCredential.builder()
+                  .credentialId(credId)
+                  .userHandle(userHandleForUser)
+                  .publicKey(credentialKey.getPublic)
+                  .signatureCount(0)
+                  .build()
+                )
+              else None
+            ).asJava
+          override def lookupAll(credId: ByteArray) = lookup(credId, null).asScala.toSet.asJava
+          override def getCredentialIdsForUsername(username: String) = ???
+          override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
+          override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
+        }
+      )
       .preferredPubkeyParams(Nil.asJava)
-      .rp(rpId)
-      .credentialRepository(credentialRepository getOrElse new CredentialRepository {
-        override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
-          (
-            if (credId == credentialId)
-              Some(RegisteredCredential.builder()
-                .credentialId(credId)
-                .userHandle(userHandleForUser)
-                .publicKey(credentialKey.getPublic)
-                .signatureCount(0)
-                .build()
-              )
-            else None
-          ).asJava
-        override def lookupAll(credId: ByteArray) = lookup(credId, null).asScala.toSet.asJava
-        override def getCredentialIdsForUsername(username: String) = ???
-        override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username, userHandle = userHandleForUser)
-        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle, username = usernameForUser)
-      })
+      .origins(Set(origin).asJava)
+      .allowUntrustedAttestation(false)
       .validateSignatureCounter(validateSignatureCounter)
       .build()
       ._finishAssertion(request, response, callerTokenBindingId.asJava)
@@ -313,7 +316,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.credential.publicKey should equal (Defaults.credentialKey.getPublic)
+          step.credential.getPublicKey should equal (Defaults.credentialKey.getPublic)
           step.tryNext shouldBe a [Success[_]]
         }
       }
@@ -433,7 +436,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
-          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"not-supported"},"type":"webauthn.get"}"""
+          val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
           val steps = finishAssertion(clientDataJson = clientDataJson)
           val step: FinishAssertionSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
@@ -514,7 +517,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           }
 
           it("Verification fails if RP specifies token binding ID but client does not support it.") {
-            val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"not-supported"},"type":"webauthn.get"}"""
+            val clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
             val steps = finishAssertion(
               callerTokenBindingId = Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
               clientDataJson = clientDataJson
@@ -760,18 +763,16 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-            forAll(anyAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
-              whenever (clientExtensionOutputs.getExtensionIds.asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
-                val steps = finishAssertion(
-                  requestedExtensions = extensionInputs,
-                  clientExtensionResults = clientExtensionOutputs
-                )
-                val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            forAll(unrequestedAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
+              val steps = finishAssertion(
+                requestedExtensions = extensionInputs,
+                clientExtensionResults = clientExtensionOutputs
+              )
+              val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-                step.validations shouldBe a [Failure[_]]
-                step.validations.failed.get shouldBe an [IllegalArgumentException]
-                step.tryNext shouldBe a [Failure[_]]
-              }
+              step.validations shouldBe a [Failure[_]]
+              step.validations.failed.get shouldBe an [IllegalArgumentException]
+              step.tryNext shouldBe a [Failure[_]]
             }
           }
 

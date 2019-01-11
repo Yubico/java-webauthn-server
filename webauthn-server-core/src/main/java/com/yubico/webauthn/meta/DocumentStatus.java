@@ -29,14 +29,32 @@ import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
 import lombok.AllArgsConstructor;
 
+/**
+ * A representation of Web Authentication specification document statuses.
+ */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum DocumentStatus implements JsonStringSerializable {
+    /**
+     * An editor's draft is a changing work in progress.
+     */
+    EDITORS_DRAFT("editors-draft"),
+
+    /**
+     * A working draft is a named snapshot of a particular state of an editor's draft.
+     */
     WORKING_DRAFT("working-draft"),
+
+    /**
+     * A candidate recommendation is a specification release candidate.
+     */
     CANDIDATE_RECOMMENDATION("candidate-recommendation");
 
     private final String id;
 
+    /**
+     * Used by JSON serializer.
+     */
     @Override
     public String toJsonString() {
         return id;

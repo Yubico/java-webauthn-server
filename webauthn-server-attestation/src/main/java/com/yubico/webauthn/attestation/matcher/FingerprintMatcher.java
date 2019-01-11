@@ -30,7 +30,7 @@ import com.yubico.webauthn.attestation.DeviceMatcher;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 
-public class FingerprintMatcher implements DeviceMatcher {
+public final class FingerprintMatcher implements DeviceMatcher {
     public static final String SELECTOR_TYPE = "fingerprint";
 
     private static final String FINGERPRINTS_KEY = "fingerprints";

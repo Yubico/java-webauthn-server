@@ -41,14 +41,18 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * High-level API for reading W3C specified values out of client data.
+ * The client data represents the contextual bindings of both the Relying Party and the client.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-collectedclientdata">§5.10.1. Client Data Used in WebAuthn
+ * Signatures (dictionary CollectedClientData)
+ * </a>
  */
 @Value
 @JsonSerialize(using = CollectedClientData.JsonSerializer.class)
 public class CollectedClientData {
 
     /**
-     * The client data returned from, or to be sent to, the client.
+     * The client data returned from the client.
      */
     @NonNull
     @Getter(AccessLevel.NONE)
@@ -56,16 +60,19 @@ public class CollectedClientData {
 
     @NonNull
     @Getter(AccessLevel.NONE)
-    private final ObjectNode clientData;
+    private final transient ObjectNode clientData;
 
     /**
-     * The URL-safe Base64 encoded challenge as provided by the RP.
+     * The base64url encoding of the challenge provided by the Relying Party. See the <a
+     * href="https://w3c.github.io/webauthn/#cryptographic-challenges">§13.1 Cryptographic Challenges</a> security
+     * consideration.
      */
     @NonNull
     private final transient ByteArray challenge;
 
     /**
-     * The fully qualified origin of the requester, as identified by the client.
+     * The fully qualified origin of the requester, as provided to the authenticator by the client, in the syntax
+     * defined by <a href="https://tools.ietf.org/html/rfc6454">RFC 6454</a>.
      */
     @NonNull
     private final transient String origin;
@@ -120,7 +127,8 @@ public class CollectedClientData {
     }
 
     /**
-     * The URL-safe Base64 encoded TLS token binding ID the client has negotiated with the RP.
+     * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding protocol</a> used
+     * when communicating with the Relying Party. Its absence indicates that the client doesn't support token binding.
      */
     public final Optional<TokenBindingInfo> getTokenBinding() {
         return Optional.ofNullable(clientData.get("tokenBinding"))

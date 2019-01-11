@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 import COSE.CoseException;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
@@ -37,7 +38,6 @@ import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.RegistrationResult;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -56,24 +57,23 @@ import static com.yubico.webauthn.data.AttestationType.NONE;
 
 @Builder
 @Slf4j
-class FinishRegistrationSteps {
+final class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
+
+    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     private final PublicKeyCredentialCreationOptions request;
     private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
-    private final List<String> origins;
+    private final Set<String> origins;
     private final String rpId;
-    private final Crypto crypto;
     private final Boolean allowUntrustedAttestation;
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
 
     @Builder.Default
     private final Boolean allowUnrequestedExtensions = false;
-    @Builder.Default
-    private final Boolean allowMissingTokenBinding = false;
     @Builder.Default
     private final Boolean validateTypeAttribute = true;
 
@@ -109,7 +109,7 @@ class FinishRegistrationSteps {
             List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
             result.addAll(getPrevWarnings());
             result.addAll(getWarnings());
-            return Collections.unmodifiableList(result);
+            return CollectionUtil.immutableList(result);
         }
 
         default A next() {
@@ -200,7 +200,7 @@ class FinishRegistrationSteps {
 
         @Override
         public List<String> getWarnings() {
-            return Collections.unmodifiableList(warnings);
+            return CollectionUtil.immutableList(warnings);
         }
     }
 
@@ -656,8 +656,8 @@ class FinishRegistrationSteps {
                 .keyId(keyId())
                 .attestationTrusted(attestationTrusted)
                 .attestationType(attestationType)
+                .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey())
                 .attestationMetadata(attestationMetadata)
-                .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestationData().get().getCredentialPublicKey())
                 .warnings(allWarnings())
                 .build()
             );
@@ -665,8 +665,8 @@ class FinishRegistrationSteps {
 
         private PublicKeyCredentialDescriptor keyId() {
             return PublicKeyCredentialDescriptor.builder()
-                .type(response.getType())
                 .id(response.getId())
+                .type(response.getType())
                 .build();
         }
     }

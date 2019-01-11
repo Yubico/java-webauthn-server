@@ -32,19 +32,45 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+/**
+ * Parameters for {@link RelyingParty#startRegistration(StartRegistrationOptions)}.
+ */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class StartRegistrationOptions {
 
+    /**
+     * Identifiers for the user creating a credential.
+     */
     @NonNull
     private final UserIdentity user;
 
+    /**
+     * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+     */
     @NonNull
     @Builder.Default
     private final Optional<AuthenticatorSelectionCriteria> authenticatorSelection = Optional.empty();
 
+    /**
+     * Extension inputs for this registration operation.
+     */
     @NonNull
     @Builder.Default
     private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
+
+    public static StartRegistrationOptionsBuilder.MandatoryStages builder() {
+        return new StartRegistrationOptionsBuilder.MandatoryStages();
+    }
+
+    public static class StartRegistrationOptionsBuilder {
+        public static class MandatoryStages {
+            private final StartRegistrationOptionsBuilder builder = new StartRegistrationOptionsBuilder();
+
+            public StartRegistrationOptionsBuilder user(UserIdentity user) {
+                return builder.user(user);
+            }
+        }
+    }
 
 }

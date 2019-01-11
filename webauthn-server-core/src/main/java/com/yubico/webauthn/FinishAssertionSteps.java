@@ -25,8 +25,7 @@
 package com.yubico.webauthn;
 
 
-import com.yubico.webauthn.data.AssertionRequest;
-import com.yubico.webauthn.data.AssertionResult;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
@@ -39,6 +38,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -48,20 +48,18 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 
 @Builder
 @Slf4j
-class FinishAssertionSteps {
+final class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
+    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     private final AssertionRequest request;
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
-    private final List<String> origins;
+    private final Set<String> origins;
     private final String rpId;
-    private final Crypto crypto;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean allowMissingTokenBinding = false;
     @Builder.Default
     private final boolean validateTypeAttribute = true;
     @Builder.Default
@@ -100,7 +98,7 @@ class FinishAssertionSteps {
             List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
             result.addAll(getPrevWarnings());
             result.addAll(getWarnings());
-            return Collections.unmodifiableList(result);
+            return CollectionUtil.immutableList(result);
         }
 
         default B next() {
@@ -327,7 +325,7 @@ class FinishAssertionSteps {
 
         @Override
         public List<String> getWarnings() {
-            return Collections.unmodifiableList(warnings);
+            return CollectionUtil.immutableList(warnings);
         }
 
         @Override
@@ -513,7 +511,7 @@ class FinishAssertionSteps {
                 ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
                 return Collections.emptyList();
             } catch (Exception e) {
-                return Collections.unmodifiableList(Collections.singletonList(e.getMessage()));
+                return CollectionUtil.immutableList(Collections.singletonList(e.getMessage()));
             }
         }
 
@@ -557,7 +555,7 @@ class FinishAssertionSteps {
         public void validate() {
             if (!
                 crypto.verifySignature(
-                    credential.publicKey,
+                    credential.getPublicKey(),
                     signedBytes(),
                     response.getResponse().getSignature()
                 )
@@ -638,12 +636,12 @@ class FinishAssertionSteps {
         @Override
         public Optional<AssertionResult> result() {
             return Optional.of(AssertionResult.builder()
+                .success(true)
                 .credentialId(response.getId())
+                .userHandle(userHandle)
+                .username(username)
                 .signatureCount(assertionSignatureCount)
                 .signatureCounterValid(signatureCounterValid)
-                .success(true)
-                .username(username)
-                .userHandle(userHandle)
                 .warnings(allWarnings())
                 .build()
             );

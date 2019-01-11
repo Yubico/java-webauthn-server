@@ -34,15 +34,19 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
-  * Defines the valid credential types.
-  *
-  * It is an extensions point; values may be added to it in the future, as more
-  * credential types are defined. The values of this enumeration are used for
-  * versioning the Authentication Assertion and attestation structures
-  * according to the type of the authenticator.
-  *
-  * Currently one credential type is defined, namely [[PublicKey]].
-  */
+ * Defines the valid credential types.
+ * <p>
+ * It is an extensions point; values may be added to it in the future, as more credential types are defined. The values
+ * of this enumeration are used for versioning the Authentication Assertion and attestation structures according to the
+ * type of the authenticator.
+ * </p>
+ * <p>
+ * Currently one credential type is defined, namely {@link #PUBLIC_KEY}.
+ * </p>
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#enumdef-publickeycredentialtype">§5.10.2. Credential Type Enumeration
+ * (enum PublicKeyCredentialType)</a>
+ */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum PublicKeyCredentialType implements JsonStringSerializable {

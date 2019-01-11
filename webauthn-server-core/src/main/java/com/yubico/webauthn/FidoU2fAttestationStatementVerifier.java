@@ -27,7 +27,7 @@ package com.yubico.webauthn;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.internal.util.WebAuthnCodecs;
-import com.yubico.webauthn.data.AttestationData;
+import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
@@ -45,7 +45,7 @@ import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
 
 @Slf4j
-class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
+final class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     private static boolean isP256(ECParameterSpec params) {
         ECNamedCurveParameterSpec p256 = ECNamedCurveTable.getParameterSpec("P-256");
@@ -88,7 +88,7 @@ class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifie
             && validSelfSignature(attestationCertificate)
             && WebAuthnCodecs.ecPublicKeyToRaw(
                 WebAuthnCodecs.importCoseP256PublicKey(
-                    attestationObject.getAuthenticatorData().getAttestationData().get().getCredentialPublicKey()
+                    attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey()
                 )
                )
                 .equals(
@@ -118,9 +118,9 @@ class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifie
             throw new IllegalArgumentException("Attestation certificate for fido-u2f must have an ECDSA P-256 public key.");
         }
 
-        final Optional<AttestationData> attData = attestationObject.getAuthenticatorData().getAttestationData();
+        final Optional<AttestedCredentialData> attData = attestationObject.getAuthenticatorData().getAttestedCredentialData();
 
-        return attData.map(attestationData -> {
+        return attData.map(attestedCredentialData -> {
             JsonNode signature = attestationObject.getAttestationStatement().get("sig");
 
             if (signature == null) {
@@ -133,16 +133,16 @@ class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifie
                 try {
                     userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(
                         WebAuthnCodecs.importCoseP256PublicKey(
-                            attestationData.getCredentialPublicKey()
+                            attestedCredentialData.getCredentialPublicKey()
                         )
                     );
                 } catch (IOException | CoseException e) {
-                    RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestationData));
+                    RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestedCredentialData));
                     log.error(err.getMessage(), err);
                     throw err;
                 }
 
-                ByteArray keyHandle = attestationData.getCredentialId();
+                ByteArray keyHandle = attestedCredentialData.getCredentialId();
 
                 U2fRawRegisterResponse u2fRegisterResponse;
                 try {
