@@ -76,14 +76,17 @@ import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
+import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 object TestAuthenticator {
@@ -129,6 +132,7 @@ object TestAuthenticator {
     val challenge: ByteArray = new ByteArray(Array(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91))
     val credentialId: ByteArray = new ByteArray(((0 to 31).toVector map { _.toByte }).toArray)
     val rpId = "localhost"
+    val origin = "https://" + rpId
     object TokenBinding {
       val status = "supported"
       val id = None
@@ -158,7 +162,7 @@ object TestAuthenticator {
     clientData: Option[JsonNode] = None,
     clientExtensions: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
     credentialKeypair: Option[KeyPair] = None,
-    origin: String = Defaults.rpId,
+    origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -288,7 +292,7 @@ object TestAuthenticator {
     clientExtensions: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build(),
     credentialId: ByteArray = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
-    origin: String = Defaults.rpId,
+    origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -434,7 +438,7 @@ object TestAuthenticator {
         Map("sig" -> f.binaryNode(signature.getBytes))
           ++ (
             selfAttestationKey match {
-              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)).getId))
+              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse coseAlgorithmOfJavaKey(key)).getId))
               case None => Map("x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)))
             }
           )
@@ -633,5 +637,13 @@ object TestAuthenticator {
         .encodeToString(cert.getEncoded)
     + "\n-----END CERTIFICATE-----\n"
   )
+
+  def coseAlgorithmOfJavaKey(key: PrivateKey): COSEAlgorithmIdentifier =
+    Try(COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)) getOrElse
+        key match {
+          case key: BCECPrivateKey => key.getParameters.getCurve match {
+            case _: SecP256R1Curve => COSEAlgorithmIdentifier.valueOf("ES256")
+          }
+        }
 
 }

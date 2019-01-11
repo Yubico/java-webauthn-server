@@ -227,11 +227,11 @@ public class RelyingParty {
      * attestation and none attestation.
      *
      * <p>
-     * The default is <code>false</code>.
+     * The default is <code>true</code>.
      * </p>
      */
     @Builder.Default
-    private final boolean allowUntrustedAttestation = false;
+    private final boolean allowUntrustedAttestation = true;
 
     /**
      * If <code>true</code>, {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will fail if the {@link
