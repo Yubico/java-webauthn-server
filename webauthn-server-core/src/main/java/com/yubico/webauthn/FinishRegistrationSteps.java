@@ -68,14 +68,14 @@ final class FinishRegistrationSteps {
     private final Optional<ByteArray> callerTokenBindingId;
     private final Set<String> origins;
     private final String rpId;
-    private final Boolean allowUntrustedAttestation;
+    private final boolean allowUntrustedAttestation;
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
 
     @Builder.Default
-    private final Boolean allowUnrequestedExtensions = false;
+    private final boolean allowUnrequestedExtensions = false;
     @Builder.Default
-    private final Boolean validateTypeAttribute = true;
+    private final boolean validateTypeAttribute = true;
 
 
     public Step1 begin() {
