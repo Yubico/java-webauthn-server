@@ -35,8 +35,19 @@ import lombok.AllArgsConstructor;
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum DocumentStatus implements JsonStringSerializable {
+    /**
+     * An editor's draft is a changing work in progress.
+     */
     EDITORS_DRAFT("editors-draft"),
+
+    /**
+     * A working draft is a named snapshot of a particular state of an editor's draft.
+     */
     WORKING_DRAFT("working-draft"),
+
+    /**
+     * A candidate recommendation is a specification release candidate.
+     */
     CANDIDATE_RECOMMENDATION("candidate-recommendation");
 
     private final String id;
