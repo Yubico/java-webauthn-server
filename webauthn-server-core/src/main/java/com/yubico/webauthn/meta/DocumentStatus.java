@@ -35,6 +35,7 @@ import lombok.AllArgsConstructor;
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum DocumentStatus implements JsonStringSerializable {
+    EDITORS_DRAFT("editors-draft"),
     WORKING_DRAFT("working-draft"),
     CANDIDATE_RECOMMENDATION("candidate-recommendation");
 
