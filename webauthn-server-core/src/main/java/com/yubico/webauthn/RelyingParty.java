@@ -41,6 +41,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.security.SecureRandom;
@@ -345,6 +346,15 @@ public class RelyingParty {
             .build();
     }
 
+    /**
+     * @throws InvalidSignatureCountException
+     *     if {@link RelyingPartyBuilder#validateSignatureCounter(boolean) validateSignatureCounter} is
+     *     <code>true</code>, the {@link AuthenticatorData#getSignatureCounter() signature count} in the response is
+     *     less than or equal to the {@link RegisteredCredential#getSignatureCount() stored signature count}, and at
+     *     least one of the signature count values is nonzero.
+     * @throws AssertionFailedException
+     *     if validation fails for any other reason.
+     */
     public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions) throws AssertionFailedException {
         try {
             return _finishAssertion(finishAssertionOptions.getRequest(), finishAssertionOptions.getResponse(), finishAssertionOptions.getCallerTokenBindingId()).run();

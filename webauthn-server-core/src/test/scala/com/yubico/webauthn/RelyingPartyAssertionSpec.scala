@@ -46,6 +46,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
@@ -971,10 +972,17 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   validateSignatureCounter = true
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val result = Try(step.run())
 
                 step.validations shouldBe a [Failure[_]]
-                step.validations.failed.get shouldBe an [IllegalArgumentException]
+                step.validations.failed.get shouldBe an [InvalidSignatureCountException]
                 step.tryNext shouldBe a [Failure[_]]
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [InvalidSignatureCountException]
+                result.failed.get.asInstanceOf[InvalidSignatureCountException].getExpectedMinimum should equal (1338)
+                result.failed.get.asInstanceOf[InvalidSignatureCountException].getReceived should equal (1337)
+                result.failed.get.asInstanceOf[InvalidSignatureCountException].getCredentialId should equal (Defaults.credentialId)
               }
             }
           }

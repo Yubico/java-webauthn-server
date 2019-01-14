@@ -35,6 +35,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
+import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.io.IOException;
 import java.security.PublicKey;
@@ -74,14 +75,14 @@ final class FinishAssertionSteps {
         return new Step0();
     }
 
-    public AssertionResult run() {
+    public AssertionResult run() throws InvalidSignatureCountException {
         return begin().run();
     }
 
     private interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
         B nextStep();
 
-        void validate();
+        void validate() throws InvalidSignatureCountException;
 
         List<String> getPrevWarnings();
 
@@ -104,12 +105,12 @@ final class FinishAssertionSteps {
             return CollectionUtil.immutableList(result);
         }
 
-        default B next() {
+        default B next() throws InvalidSignatureCountException {
             validate();
             return nextStep();
         }
 
-        default AssertionResult run() {
+        default AssertionResult run() throws InvalidSignatureCountException {
             if (isFinished()) {
                 return result().get();
             } else {
@@ -596,13 +597,15 @@ final class FinishAssertionSteps {
         private final List<String> prevWarnings;
 
         @Override
-        public void validate() {
+        public void validate() throws InvalidSignatureCountException {
             if (validateSignatureCounter) {
-                assure(
-                    signatureCounterValid(),
-                    "Signature counter must increase. Stored value: %s, received value: %s",
-                    storedSignatureCountBefore(), assertionSignatureCount()
-                );
+                if (!signatureCounterValid()) {
+                    throw new InvalidSignatureCountException(
+                        response.getId(),
+                        storedSignatureCountBefore() + 1,
+                        assertionSignatureCount()
+                    );
+                }
             }
         }
 

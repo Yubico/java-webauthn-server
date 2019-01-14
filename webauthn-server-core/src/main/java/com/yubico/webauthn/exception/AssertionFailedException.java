@@ -24,10 +24,14 @@
 
 package com.yubico.webauthn.exception;
 
-public final class AssertionFailedException extends Exception {
+public class AssertionFailedException extends Exception {
 
     public AssertionFailedException(IllegalArgumentException e) {
         super(e);
+    }
+
+    public AssertionFailedException(String message) {
+        super(message);
     }
 
 }
