@@ -1452,7 +1452,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               RegisteredCredential.builder()
                 .credentialId(id)
                 .userHandle(uh)
-                .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
+                .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
                 .signatureCount(1337)
                 .build()
             ).asJava
@@ -1463,7 +1463,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   RegisteredCredential.builder()
                     .credentialId(id)
                     .userHandle(testData.request.getUser.getId)
-                    .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
+                    .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
                     .signatureCount(1337)
                     .build()
                 ).asJava

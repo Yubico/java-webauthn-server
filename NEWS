@@ -11,6 +11,9 @@ Breaking changes:
 * Deleted parameter `RelyingParty.verifyTypeAttribute`. This was added as a
   workaround while browser implementations were incomplete, and should never be
   used in production.
+* Replaced field `RegisteredCredential.publicKey: PublicKey` with
+  `publicKeyCose: ByteArray`. This means the library user no longer needs to
+  parse the public key before passing it back into the library.
 
 
 == Version 0.6.0 ==

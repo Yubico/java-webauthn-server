@@ -28,6 +28,7 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -107,6 +108,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     else
       ???
 
+  private def getPublicKeyBytes(credentialKey: KeyPair): ByteArray = WebAuthnCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey])
+
   def finishAssertion(
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
     authenticatorData: ByteArray = Defaults.authenticatorData,
@@ -129,6 +132,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     validateSignatureCounter: Boolean = true
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ByteArray = if (clientDataJson == null) null else new ByteArray(clientDataJson.getBytes("UTF-8"))
+    val credentialPublicKeyBytes = getPublicKeyBytes(credentialKey)
 
     val request = AssertionRequest.builder()
       .publicKeyCredentialRequestOptions(
@@ -166,7 +170,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 Some(RegisteredCredential.builder()
                   .credentialId(credId)
                   .userHandle(userHandleForUser)
-                  .publicKey(credentialKey.getPublic)
+                  .publicKeyCose(credentialPublicKeyBytes)
                   .signatureCount(0)
                   .build()
                 )
@@ -244,7 +248,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             RegisteredCredential.builder()
               .credentialId(new ByteArray(Array(0, 1, 2, 3)))
               .userHandle(owner.userHandle)
-              .publicKey(Defaults.credentialKey.getPublic)
+              .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
               .signatureCount(0)
               .build()
           ).asJava
@@ -304,7 +308,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               RegisteredCredential.builder()
                 .credentialId(id)
                 .userHandle(uh)
-                .publicKey(Defaults.credentialKey.getPublic)
+                .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                 .signatureCount(0)
                 .build()
             ).asJava
@@ -316,7 +320,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.credential.getPublicKey should equal (Defaults.credentialKey.getPublic)
+          step.credential.getPublicKeyCose should equal (getPublicKeyBytes(Defaults.credentialKey))
           step.tryNext shouldBe a [Success[_]]
         }
       }
@@ -905,7 +909,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 RegisteredCredential.builder()
                   .credentialId(id)
                   .userHandle(uh)
-                  .publicKey(Defaults.credentialKey.getPublic)
+                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                   .signatureCount(1336)
                   .build()
               ).asJava
@@ -937,7 +941,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 RegisteredCredential.builder()
                   .credentialId(id)
                   .userHandle(uh)
-                  .publicKey(Defaults.credentialKey.getPublic)
+                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                   .signatureCount(1337)
                   .build()
               ).asJava

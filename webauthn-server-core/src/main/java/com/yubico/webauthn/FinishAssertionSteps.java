@@ -25,7 +25,10 @@
 package com.yubico.webauthn;
 
 
+import COSE.CoseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
@@ -33,6 +36,8 @@ import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import com.yubico.webauthn.extension.appid.AppId;
+import java.io.IOException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -543,9 +548,29 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
+            final ByteArray cose = credential.getPublicKeyCose();
+            final PublicKey key;
+
+            try {
+                key = WebAuthnCodecs.importCoseP256PublicKey(cose);
+            } catch (CoseException | IOException e) {
+                String coseString;
+                try {
+                    coseString = WebAuthnCodecs.json().writeValueAsString(cose.getBytes());
+                } catch (JsonProcessingException e2) {
+                    coseString = "(Failed to write as string)";
+                }
+
+                throw new IllegalArgumentException(String.format(
+                    "Failed to decode public key: Credential ID: {} COSE: {}",
+                    credential.getCredentialId().getBase64Url(),
+                    coseString
+                ));
+            }
+
             if (!
                 crypto.verifySignature(
-                    credential.getPublicKey(),
+                    key,
                     signedBytes(),
                     response.getResponse().getSignature()
                 )

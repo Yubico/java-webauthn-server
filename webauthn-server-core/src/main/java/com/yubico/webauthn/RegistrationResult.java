@@ -87,7 +87,7 @@ public class RegistrationResult {
      * signatures.
      * </p>
      *
-     * @see RegisteredCredential#getPublicKey()
+     * @see RegisteredCredential#getPublicKeyCose()
      */
     @NonNull
     private final ByteArray publicKeyCose;
