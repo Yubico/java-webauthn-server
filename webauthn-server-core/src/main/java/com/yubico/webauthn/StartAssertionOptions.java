@@ -46,6 +46,10 @@ public class StartAssertionOptions {
      * deferred until after receiving the response from the client.
      * </p>
      *
+     * <p>
+     * The default is empty (absent).
+     * </p>
+     *
      * @see <a href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">Client-side-resident
      * credential</a>
      */
@@ -58,6 +62,10 @@ public class StartAssertionOptions {
      * <p>
      * If {@link RelyingParty#getAppId()} is set, {@link RelyingParty#startAssertion(StartAssertionOptions)} will
      * overwrite any {@link AssertionExtensionInputs#getAppid() appId} extension input set herein.
+     * </p>
+     *
+     * <p>
+     * The default specifies no extension inputs.
      * </p>
      */
     @NonNull
