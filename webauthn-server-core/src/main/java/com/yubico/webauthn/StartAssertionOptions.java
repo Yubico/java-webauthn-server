@@ -25,6 +25,8 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.AssertionExtensionInputs;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
+import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -62,5 +64,14 @@ public class StartAssertionOptions {
     @Builder.Default
     private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
+     * <p>
+     * The default is {@link UserVerificationRequirement#PREFERRED}.
+     * </p>
+     */
+    @NonNull
+    @Builder.Default
+    private final Optional<UserVerificationRequirement> userVerification = Optional.empty();
 
 }
