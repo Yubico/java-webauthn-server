@@ -447,8 +447,6 @@ final class FinishRegistrationSteps {
                 } catch (CertificateException e) {
                     throw new IllegalArgumentException("Failed to resolve attestation trust path.", e);
                 }
-            } else if (attestationStatementVerifier instanceof AndroidSafetynetAttestationStatementVerifier) {
-                return ((AndroidSafetynetAttestationStatementVerifier)attestationStatementVerifier).getAttestationTrustPath();
             } else {
                 return Optional.empty();
             }
@@ -462,20 +460,12 @@ final class FinishRegistrationSteps {
         private final Optional<List<X509Certificate>> attestationTrustPath;
         private final List<String> prevWarnings;
 
-        public String format() {
-            return attestation.getFormat();
-        }
-
         @Override
         public void validate() {
-            final String attStmtFormat = format();
-            final boolean isAndroidSafetynetFmt = attStmtFormat.equals("android-safetynet");
-            if (!isAndroidSafetynetFmt) {
-                assure(
-                    attestationType == AttestationType.SELF_ATTESTATION || attestationType == NONE || trustResolver().isPresent(),
-                    "Failed to obtain attestation trust anchors."
-                );
-            }
+            assure(
+                attestationType == AttestationType.SELF_ATTESTATION || attestationType == NONE || trustResolver().isPresent(),
+                "Failed to obtain attestation trust anchors."
+            );
         }
 
         @Override
@@ -490,11 +480,10 @@ final class FinishRegistrationSteps {
 
                 case BASIC:
                     switch (attestation.getFormat()) {
+                        case "android-safetynet":
                         case "fido-u2f":
                         case "packed":
                             return metadataService.map(KnownX509TrustAnchorsTrustResolver::new);
-                        case "android-safetynet":
-                            return Optional.empty();
                         default:
                             throw new UnsupportedOperationException(String.format(
                                 "Attestation type %s is not supported for attestation statement format \"%s\".",
@@ -521,23 +510,21 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            if (attestation.getFormat() != "android-safetynet") {
-                switch (attestationType) {
-                    case SELF_ATTESTATION:
-                        assure(allowUntrustedAttestation, "Self attestation is not allowed.");
-                        break;
+            switch (attestationType) {
+                case SELF_ATTESTATION:
+                    assure(allowUntrustedAttestation, "Self attestation is not allowed.");
+                    break;
 
-                    case BASIC:
-                        assure(allowUntrustedAttestation || attestationTrusted(), "Failed to derive trust for attestation key.");
-                        break;
+                case BASIC:
+                    assure(allowUntrustedAttestation || attestationTrusted(), "Failed to derive trust for attestation key.");
+                    break;
 
-                    case NONE:
-                        assure(allowUntrustedAttestation, "No attestation is not allowed.");
-                        break;
+                case NONE:
+                    assure(allowUntrustedAttestation, "No attestation is not allowed.");
+                    break;
 
-                    default:
-                        throw new UnsupportedOperationException("Attestation type not implemented: " + attestationType);
-                }
+                default:
+                    throw new UnsupportedOperationException("Attestation type not implemented: " + attestationType);
             }
         }
 
@@ -553,9 +540,6 @@ final class FinishRegistrationSteps {
                     return false;
 
                 case BASIC:
-                    if (attestation.getFormat() == "android-safetynet") {
-                        return true;
-                    }
                     return attestationMetadata().filter(Attestation::isTrusted).isPresent();
                 default:
                     throw new UnsupportedOperationException("Attestation type not implemented: " + attestationType);
@@ -563,9 +547,6 @@ final class FinishRegistrationSteps {
         }
 
         public Optional<Attestation> attestationMetadata() {
-            if (attestation.getFormat() == "android-safetynet") {
-                return Optional.empty();
-            }
             return trustResolver.flatMap(tr -> {
                 try {
                     return Optional.of(tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList)));

@@ -20,7 +20,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 
 @Slf4j
-class AndroidSafetynetAttestationStatementVerifier implements AttestationStatementVerifier {
+class AndroidSafetynetAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
     private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
