@@ -14,6 +14,9 @@ Breaking changes:
 * Replaced field `RegisteredCredential.publicKey: PublicKey` with
   `publicKeyCose: ByteArray`. This means the library user no longer needs to
   parse the public key before passing it back into the library.
+* `RelyingParty.finishAssertion` now throws `InvalidSignatureCountException`
+  instead of its supertype `AssertionFailedException` when signature count
+  validation is enabled and the received signature count is invalid.
 
 
 == Version 0.6.0 ==
