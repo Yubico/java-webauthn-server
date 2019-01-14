@@ -199,6 +199,40 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       ._finishAssertion(request, response, callerTokenBindingId.asJava)
   }
 
+  describe("RelyingParty.startAssertion") {
+
+    describe("respects the userVerification parameter in StartAssertionOptions.") {
+
+      val default = UserVerificationRequirement.PREFERRED
+
+      it(s"If the parameter is not set, or set to empty, the default of ${default} is used.") {
+        val rp = RelyingParty.builder()
+          .identity(Defaults.rpId)
+          .credentialRepository(emptyCredentialRepository)
+          .build()
+        val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
+        val request2 = rp.startAssertion(StartAssertionOptions.builder().userVerification(None.asJava).build())
+
+        request1.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
+        request2.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
+      }
+
+      it(s"If the parameter is set, that value is used.") {
+        val rp = RelyingParty.builder()
+          .identity(Defaults.rpId)
+          .credentialRepository(emptyCredentialRepository)
+          .build()
+
+        forAll { uv: UserVerificationRequirement =>
+          val request = rp.startAssertion(StartAssertionOptions.builder().userVerification(Some(uv).asJava).build())
+
+          request.getPublicKeyCredentialRequestOptions.getUserVerification should equal (uv)
+        }
+      }
+    }
+
+  }
+
   describe("§7.2. Verifying an authentication assertion") {
 
     describe("When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {

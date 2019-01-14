@@ -25,6 +25,8 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.AssertionExtensionInputs;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
+import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -44,6 +46,10 @@ public class StartAssertionOptions {
      * deferred until after receiving the response from the client.
      * </p>
      *
+     * <p>
+     * The default is empty (absent).
+     * </p>
+     *
      * @see <a href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">Client-side-resident
      * credential</a>
      */
@@ -57,10 +63,23 @@ public class StartAssertionOptions {
      * If {@link RelyingParty#getAppId()} is set, {@link RelyingParty#startAssertion(StartAssertionOptions)} will
      * overwrite any {@link AssertionExtensionInputs#getAppid() appId} extension input set herein.
      * </p>
+     *
+     * <p>
+     * The default specifies no extension inputs.
+     * </p>
      */
     @NonNull
     @Builder.Default
     private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
+     * <p>
+     * The default is {@link UserVerificationRequirement#PREFERRED}.
+     * </p>
+     */
+    @NonNull
+    @Builder.Default
+    private final Optional<UserVerificationRequirement> userVerification = Optional.empty();
 
 }

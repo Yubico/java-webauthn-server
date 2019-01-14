@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.AssertionRequest.AssertionRequestBuilder;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -39,6 +40,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCredentialCreationOptionsBuilder;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
@@ -325,22 +327,26 @@ public class RelyingParty {
     }
 
     public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
+        PublicKeyCredentialRequestOptionsBuilder pkcro = PublicKeyCredentialRequestOptions.builder()
+            .challenge(generateChallenge())
+            .rpId(Optional.of(identity.getId()))
+            .allowCredentials(
+                startAssertionOptions.getUsername().map(un ->
+                    new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
+            )
+            .extensions(
+                startAssertionOptions.getExtensions()
+                    .toBuilder()
+                    .appid(appId)
+                    .build()
+            )
+        ;
+
+        startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);
+
         return AssertionRequest.builder()
             .publicKeyCredentialRequestOptions(
-                PublicKeyCredentialRequestOptions.builder()
-                    .challenge(generateChallenge())
-                    .rpId(Optional.of(identity.getId()))
-                    .allowCredentials(
-                        startAssertionOptions.getUsername().map(un ->
-                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
-                    )
-                    .extensions(
-                        startAssertionOptions.getExtensions()
-                            .toBuilder()
-                            .appid(appId)
-                            .build()
-                    )
-                    .build()
+                pkcro.build()
             )
             .username(startAssertionOptions.getUsername())
             .build();
