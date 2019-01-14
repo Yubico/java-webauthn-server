@@ -18,6 +18,11 @@ Breaking changes:
   instead of its supertype `AssertionFailedException` when signature count
   validation is enabled and the received signature count is invalid.
 
+New features:
+
+* New parameter `StartAssertionOptions.userVerification` which is forwarded into
+  `PublicKeyCredentialRequestOptions` by `RelyingParty.startAssertion`
+
 
 == Version 0.6.0 ==
 
