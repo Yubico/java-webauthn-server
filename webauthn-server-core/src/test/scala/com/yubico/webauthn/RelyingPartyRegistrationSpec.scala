@@ -81,10 +81,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
   private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String) = ???
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-    override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
     override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
   }
 
@@ -1557,13 +1557,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("accept registrations with no attestation.") {
           val rp = RelyingParty.builder()
             .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
-            .credentialRepository(new CredentialRepository {
-              override def getCredentialIdsForUsername(username: String): util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
-              override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-              override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-              override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
-              override def lookupAll(credentialId: ByteArray): util.Set[RegisteredCredential] = Set.empty.asJava
-            })
+            .credentialRepository(emptyCredentialRepository)
             .build()
 
           val request = rp.startRegistration(StartRegistrationOptions.builder()
