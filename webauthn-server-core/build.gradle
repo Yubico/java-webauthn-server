@@ -10,11 +10,11 @@ dependencies {
 
   compile(
     project(':yubico-util'),
-    [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
+    'org.bouncycastle:bcpkix-jdk15on:1.54',
     'com.augustcellars.cose:cose-java:0.9.4',
-    [group: 'com.google.guava', name: 'guava', version:'19.0'],
-    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
-    [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
+    'com.google.guava:guava:19.0',
+    'com.fasterxml.jackson.core:jackson-databind:2.9.6',
+    'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.6',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
   )
 
