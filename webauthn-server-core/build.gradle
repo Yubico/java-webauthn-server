@@ -10,12 +10,12 @@ dependencies {
 
   compile(
     project(':yubico-util'),
-    'org.bouncycastle:bcpkix-jdk15on:1.54',
     'com.augustcellars.cose:cose-java:0.9.4',
-    'com.google.guava:guava:19.0',
     'com.fasterxml.jackson.core:jackson-databind:2.9.6',
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.6',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
+    'com.google.guava:guava:19.0',
+    'org.bouncycastle:bcpkix-jdk15on:1.54',
   )
 
   testCompile(
@@ -23,8 +23,8 @@ dependencies {
     'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
     'org.scala-lang:scala-library:2.11.3',
-    'org.scalatest:scalatest_2.11:3.0.4',
     'org.scalacheck:scalacheck_2.11:1.13.5',
+    'org.scalatest:scalatest_2.11:3.0.4',
   )
 
 }
