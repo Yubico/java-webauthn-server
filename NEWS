@@ -1,3 +1,75 @@
+== Version 0.7.0 ==
+
+=== `webauthn-server-attestation` ===
+
+* Added attestation metadata for Security Key NFC by Yubico
+
+=== `webauthn-server-core` ===
+
+Breaking changes:
+
+* Deleted parameter `RelyingParty.verifyTypeAttribute`. This was added as a
+  workaround while browser implementations were incomplete, and should never be
+  used in production.
+* Replaced field `RegisteredCredential.publicKey: PublicKey` with
+  `publicKeyCose: ByteArray`. This means the library user no longer needs to
+  parse the public key before passing it back into the library.
+* `RelyingParty.finishAssertion` now throws `InvalidSignatureCountException`
+  instead of its supertype `AssertionFailedException` when signature count
+  validation is enabled and the received signature count is invalid.
+
+New features:
+
+* New parameter `StartAssertionOptions.userVerification` which is forwarded into
+  `PublicKeyCredentialRequestOptions` by `RelyingParty.startAssertion`
+
+
+== Version 0.6.0 ==
+
+Breaking changes:
+
+* Classes moved from package `com.yubico.webauthn.data` to `com.yubico.webauthn`:
+ **  `AssertionRequest`
+ **  `AssertionResult`
+ **  `RegistrationResult`
+* All public classes are now final.
+* All builders now enforce mandatory arguments at compile time. Some usages may
+  therefore need to adjust the order of calls on the builder instance.
+ ** Static method `Attestation.trusted(boolean)` replaced with `.builder()` with
+    `.trusted(boolean)` as builder method instead
+ ** `AuthenticatorAssertionResponse` constructor is now private.
+ ** `AuthenticatorAttestationResponse` constructor is now private.
+ ** `PublicKeyCredentialDescriptor` constructor is now private.
+ ** `PublicKeyCredentialRequestOptions` constructor is now private.
+* All classes that take collections as constructor (builder) arguments now make
+  shallow copies of those collections, so that mutations of the collections
+  don't propagate into the class instance.
+* Deleted interface `Crypto` and constructor parameter `crypto` of `RelyingParty`
+* Deleted interface `ChallengeGenerator` and constructor parameter
+  `challengeGenerator` of `RelyingParty`
+* Updated implementation to agree with current editor's draft of the spec
+ ** Renamed class `AttestationData` to `AttestedCredentialData`
+ ** Enum constant `TokenBindingStatus.NOT_SUPPORTED` deleted; this is now
+    instead signaled by a missing value
+ ** Parameter `RelyingParty.allowMissingTokenBinding` therefore removed
+ ** Enum constant `AttestationType.PRIVACY_CA` renamed to `ATTESTATION_CA`
+* Renamed class `AuthenticationDataFlags` to `AuthenticatorDataFlags`
+* Deleted constant `UserVerificationRequirement.DEFAULT`
+* Deleted method `AttestationObject.getAuthData()`
+* Changed type of field `RelyingParty.origins` from `List` to `Set`
+* Fixed (reduced) visibility of `RegisteredCredential` fields
+* Class `MetadataObject` moved to `webauthn-server-attestation` module
+* Updated and greatly expanded Javadoc
+
+New features:
+
+* Constructor parameter `pubKeyCredParams` of `RelyingParty` is now optional
+  with a default value.
+* Constructor parameter `origins` of `RelyingParty` is now optional and defaults
+  to a list whose only element is the RP ID prefixed with `https://`.
+* All classes with a builder now also have a `.toBuilder()` method.
+
+
 == Version 0.5.0 ==
 
 === `webauthn-server-core` ===

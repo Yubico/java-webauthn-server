@@ -26,53 +26,55 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.Collections;
-import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-
+/**
+ * Attested credential data is a variable-length byte array added to the authenticator data when generating an
+ * attestation object for a given credential. This class provides access to the three data segments of that byte array.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#sec-attested-credential-data">6.4.1. Attested Credential Data</a>
+ */
 @Value
-@Builder
-public class AssertionResult {
+@Builder(toBuilder = true)
+public class AttestedCredentialData {
 
+    /**
+     * The AAGUID of the authenticator.
+     */
+    @NonNull
+    private final ByteArray aaguid;
+
+    /**
+     * The credential ID of the attested credential.
+     */
     @NonNull
     private final ByteArray credentialId;
 
+    /**
+     * The credential public key encoded in COSE_Key format, as defined in Section 7 of <a
+     * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>.
+     */
     @NonNull
-    private final ByteArray userHandle;
-
-    private final long signatureCount;
-
-    private final boolean signatureCounterValid;
-
-    private final boolean success;
-
-    @NonNull
-    private final String username;
-
-    @NonNull
-    private final List<String> warnings;
+    // TODO: verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
+    private final ByteArray credentialPublicKey;
 
     @JsonCreator
-    private AssertionResult(
+    private AttestedCredentialData(
+        @NonNull @JsonProperty("aaguid") ByteArray aaguid,
         @NonNull @JsonProperty("credentialId") ByteArray credentialId,
-        @NonNull @JsonProperty("userHandle") ByteArray userHandle,
-        @JsonProperty("signatureCount") long signatureCount,
-        @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
-        @JsonProperty("success") boolean success,
-        @NonNull @JsonProperty("username") String username,
-        @NonNull @JsonProperty("warnings") List<String> warnings
+        @NonNull @JsonProperty("credentialPublicKey") ByteArray credentialPublicKey
     ) {
+        this.aaguid = aaguid;
         this.credentialId = credentialId;
-        this.userHandle = userHandle;
-        this.signatureCount = signatureCount;
-        this.signatureCounterValid = signatureCounterValid;
-        this.success = success;
-        this.username = username;
-        this.warnings = Collections.unmodifiableList(warnings);
+        this.credentialPublicKey = credentialPublicKey;
     }
 
-}
+    static AttestedCredentialDataBuilder builder() {
+        return new AttestedCredentialDataBuilder();
+    }
 
+    static class AttestedCredentialDataBuilder {}
+
+}

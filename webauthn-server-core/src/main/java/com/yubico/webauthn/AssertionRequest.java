@@ -22,10 +22,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.yubico.webauthn.data;
+package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,14 +35,29 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * A combination of a {@link PublicKeyCredentialRequestOptions} and, optionally, a {@link #getUsername() username}.
+ */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class AssertionRequest {
 
+    /**
+     * An object that can be serialized to JSON and passed as the <code>publicKey</code> argument to
+     * <code>navigator.credentials.get()</code>.
+     */
     @NonNull
     private final PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
 
+    /**
+     * The username of the user to authenticate, if the user has already been identified.
+     * <p>
+     * If this is absent, this indicates that this is a request for an assertion by a <a
+     * href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">client-side-resident
+     * credential</a>, and identification of the user has been deferred until the response is received.
+     * </p>
+     */
     @NonNull
     @Builder.Default
     private final Optional<String> username = Optional.empty();
@@ -52,6 +68,24 @@ public class AssertionRequest {
         @JsonProperty("username") String username
     ) {
         this(publicKeyCredentialRequestOptions, Optional.ofNullable(username));
+    }
+
+    public static AssertionRequestBuilder.MandatoryStages builder() {
+        return new AssertionRequestBuilder.MandatoryStages();
+    }
+
+    public static class AssertionRequestBuilder {
+        public static class MandatoryStages {
+            private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
+
+            /**
+             * {@link AssertionRequestBuilder#publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions)
+             * publicKeyCredentialRequestOptions} is a required parameter.
+             */
+            public AssertionRequestBuilder publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {
+                return builder.publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions);
+            }
+        }
     }
 
 }

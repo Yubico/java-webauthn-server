@@ -16,9 +16,7 @@ authenticators and authenticating registered authenticators.
 
 === Planned breaking changes
 
-* Update spec version from Candidate Recommendation 2018-03-20 to Proposed
-  Recommendation 2018-11-??. This will involve renaming a couple of classes
-  and methods.
+None.
 
 
 === Example Usage

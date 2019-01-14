@@ -10,14 +10,14 @@ dependencies {
 
   compile(
     project(':yubico-util'),
-    [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
     'com.augustcellars.cose:cose-java:0.9.4',
-    [group: 'com.google.guava', name: 'guava', version:'19.0'],
-    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
-    [group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version:'2.9.6'],
-    [group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version:'2.9.6'],
-    [group: 'com.google.http-client', name: 'google-http-client-jackson2', version:'1.22.0'],
-    [group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.2'],
+    'com.fasterxml.jackson.core:jackson-databind:2.9.6',
+    'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.6',
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.6',
+    'com.google.guava:guava:19.0',
+    'com.google.http-client:google-http-client-jackson2:1.22.0',
+    'org.apache.httpcomponents:httpclient:4.5.2',
+    'org.bouncycastle:bcpkix-jdk15on:1.54',
   )
 
   testCompile(
@@ -25,8 +25,8 @@ dependencies {
     'commons-io:commons-io:2.5',
     'org.mockito:mockito-core:2.10.0',
     'org.scala-lang:scala-library:2.11.3',
-    'org.scalatest:scalatest_2.11:3.0.4',
     'org.scalacheck:scalacheck_2.11:1.13.5',
+    'org.scalatest:scalatest_2.11:3.0.4',
   )
 
 }

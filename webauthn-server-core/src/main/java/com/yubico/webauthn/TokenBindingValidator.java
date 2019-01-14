@@ -29,15 +29,13 @@ import com.yubico.webauthn.data.TokenBindingInfo;
 import java.util.Optional;
 
 
-class TokenBindingValidator {
+final class TokenBindingValidator {
 
     static boolean validate(Optional<TokenBindingInfo> clientTokenBinding, Optional<ByteArray> rpTokenBindingId) {
         return rpTokenBindingId.map(rpToken ->
             clientTokenBinding.map(tbi -> {
                 switch (tbi.getStatus()) {
                     case SUPPORTED:
-                    case NOT_SUPPORTED:
-                        throw new IllegalArgumentException("Token binding ID set by RP but not by client.");
 
                     case PRESENT:
                         return tbi.getId().map(id -> {
@@ -54,7 +52,6 @@ class TokenBindingValidator {
             clientTokenBinding.map(tbi -> {
                 switch (tbi.getStatus()) {
                     case SUPPORTED:
-                    case NOT_SUPPORTED:
                         return true;
 
                     case PRESENT:

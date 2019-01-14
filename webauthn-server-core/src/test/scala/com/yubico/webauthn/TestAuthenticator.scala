@@ -53,6 +53,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -75,14 +76,17 @@ import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
+import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 object TestAuthenticator {
@@ -128,6 +132,7 @@ object TestAuthenticator {
     val challenge: ByteArray = new ByteArray(Array(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91))
     val credentialId: ByteArray = new ByteArray(((0 to 31).toVector map { _.toByte }).toArray)
     val rpId = "localhost"
+    val origin = "https://" + rpId
     object TokenBinding {
       val status = "supported"
       val id = None
@@ -157,7 +162,7 @@ object TestAuthenticator {
     clientData: Option[JsonNode] = None,
     clientExtensions: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
     credentialKeypair: Option[KeyPair] = None,
-    origin: String = Defaults.rpId,
+    origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -166,7 +171,7 @@ object TestAuthenticator {
   ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = {
 
     val options = PublicKeyCredentialCreationOptions.builder()
-      .rp(RelyingPartyIdentity.builder().name("Test party").id(rpId).build())
+      .rp(RelyingPartyIdentity.builder().id(rpId).name("Test party").build())
       .user(userId)
       .challenge(challenge)
       .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
@@ -200,7 +205,7 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
       rpId = Defaults.rpId,
-      attestationDataBytes = Some(makeAttestationDataBytes(
+      attestedCredentialDataBytes = Some(makeAttestedCredentialDataBytes(
         aaguid = aaguid,
         publicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
         rpId = Defaults.rpId
@@ -216,13 +221,13 @@ object TestAuthenticator {
       alg = alg
     )
 
-    val response = new AuthenticatorAttestationResponse(
-      attestationObjectBytes,
-      clientDataJsonBytes
-    )
+    val response = AuthenticatorAttestationResponse.builder()
+      .attestationObject(attestationObjectBytes)
+      .clientDataJSON(clientDataJsonBytes)
+      .build()
 
     PublicKeyCredential.builder()
-      .id(response.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId)
+      .id(response.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId)
       .response(response)
       .clientExtensionResults(clientExtensions)
       .build()
@@ -287,7 +292,7 @@ object TestAuthenticator {
     clientExtensions: ClientAssertionExtensionOutputs = ClientAssertionExtensionOutputs.builder().build(),
     credentialId: ByteArray = Defaults.credentialId,
     credentialKey: KeyPair = Defaults.credentialKey,
-    origin: String = Defaults.rpId,
+    origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -322,16 +327,18 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray = makeAuthDataBytes(rpId = Defaults.rpId)
 
-    val response = new AuthenticatorAssertionResponse(
-      authDataBytes,
-      clientDataJsonBytes,
-      makeAssertionSignature(
-        authDataBytes,
-        crypto.hash(clientDataJsonBytes),
-        credentialKey.getPrivate
-      ),
-      userHandle.orNull
-    )
+    val response = AuthenticatorAssertionResponse.builder()
+      .authenticatorData(authDataBytes)
+      .clientDataJSON(clientDataJsonBytes)
+      .signature(
+        makeAssertionSignature(
+          authDataBytes,
+          crypto.hash(clientDataJsonBytes),
+          credentialKey.getPrivate
+        )
+      )
+      .userHandle(userHandle.asJava)
+      .build()
 
     PublicKeyCredential.builder()
       .id(credentialId)
@@ -374,8 +381,8 @@ object TestAuthenticator {
     val signedData = makeU2fSignedData(
       authData.getRpIdHash,
       clientDataJson,
-      authData.getAttestationData.get.getCredentialId,
-      WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(authData.getAttestationData.get.getCredentialPublicKey))
+      authData.getAttestedCredentialData.get.getCredentialId,
+      WebAuthnCodecs.ecPublicKeyToRaw(WebAuthnCodecs.importCoseP256PublicKey(authData.getAttestedCredentialData.get.getCredentialPublicKey))
     )
 
     val f = JsonNodeFactory.instance
@@ -431,7 +438,7 @@ object TestAuthenticator {
         Map("sig" -> f.binaryNode(signature.getBytes))
           ++ (
             selfAttestationKey match {
-              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)).getId))
+              case Some(key) => Map("alg" -> f.numberNode((alg getOrElse coseAlgorithmOfJavaKey(key)).getId))
               case None => Map("x5c" -> f.arrayNode().add(f.binaryNode(cert.getEncoded)))
             }
           )
@@ -442,18 +449,18 @@ object TestAuthenticator {
   def makeAuthDataBytes(
     rpId: String = Defaults.rpId,
     counterBytes: ByteArray = ByteArray.fromHex("00000539"),
-    attestationDataBytes: Option[ByteArray] = None,
+    attestedCredentialDataBytes: Option[ByteArray] = None,
     extensionsCborBytes: Option[ByteArray] = None
   ): ByteArray =
     new ByteArray((Vector[Byte]()
       ++ sha256(rpId).getBytes.toVector
-      ++ Some[Byte]((0x01 | (if (attestationDataBytes.isDefined) 0x40 else 0x00) | (if (extensionsCborBytes.isDefined) 0x80 else 0x00)).toByte)
+      ++ Some[Byte]((0x01 | (if (attestedCredentialDataBytes.isDefined) 0x40 else 0x00) | (if (extensionsCborBytes.isDefined) 0x80 else 0x00)).toByte)
       ++ counterBytes.getBytes.toVector
-      ++ (attestationDataBytes map { _.getBytes.toVector } getOrElse Nil)
+      ++ (attestedCredentialDataBytes map { _.getBytes.toVector } getOrElse Nil)
       ++ (extensionsCborBytes map { _.getBytes.toVector } getOrElse Nil)
       ).toArray)
 
-  def makeAttestationDataBytes(
+  def makeAttestedCredentialDataBytes(
     publicKeyCose: ByteArray,
     rpId: String = Defaults.rpId,
     counterBytes: ByteArray = ByteArray.fromHex("0539"),
@@ -630,5 +637,13 @@ object TestAuthenticator {
         .encodeToString(cert.getEncoded)
     + "\n-----END CERTIFICATE-----\n"
   )
+
+  def coseAlgorithmOfJavaKey(key: PrivateKey): COSEAlgorithmIdentifier =
+    Try(COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)) getOrElse
+        key match {
+          case key: BCECPrivateKey => key.getParameters.getCurve match {
+            case _: SecP256R1Curve => COSEAlgorithmIdentifier.valueOf("ES256")
+          }
+        }
 
 }

@@ -26,6 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -36,12 +37,23 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * Parameters for a call to <code>navigator.credentials.create()</code>.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions">§5.4. Options for
+ * Credential Creation (dictionary PublicKeyCredentialCreationOptions)</a>
+ */
 @Value
 @Builder(toBuilder = true)
 public class PublicKeyCredentialCreationOptions {
 
     /**
      * Contains data about the Relying Party responsible for the request.
+     * <p>
+     * Its value's {@link RelyingPartyIdentity#id id} member specifies the <a href="https://w3c.github.io/webauthn/#rp-id">RP
+     * ID</a> the credential should be scoped to. If omitted, its value will be set by the client. See {@link
+     * RelyingPartyIdentity} for further details.
+     * </p>
      */
     @NonNull
     private final RelyingPartyIdentity rp;
@@ -53,7 +65,9 @@ public class PublicKeyCredentialCreationOptions {
     private final UserIdentity user;
 
     /**
-     * A challenge intended to be used for generating the newly created credential’s attestation object.
+     * A challenge intended to be used for generating the newly created credential’s attestation object. See the <a
+     * href="https://w3c.github.io/webauthn/#cryptographic-challenges">§13.1 Cryptographic Challenges</a> security
+     * consideration.
      */
     @NonNull
     private final ByteArray challenge;
@@ -61,15 +75,16 @@ public class PublicKeyCredentialCreationOptions {
     /**
      * Information about the desired properties of the credential to be created.
      * <p>
-     * The sequence is ordered from most preferred to least preferred. The client will make a best-effort to create the
-     * most preferred credential that it can.
+     * The sequence is ordered from most preferred to least preferred. The client makes a best-effort to create the most
+     * preferred credential that it can.
+     * </p>
      */
     @NonNull
     private final List<PublicKeyCredentialParameters> pubKeyCredParams;
 
     /**
-     * Specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated
-     * as a hint, and MAY be overridden by the platform.
+     * A time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint,
+     * and MAY be overridden by the client.
      */
     @NonNull
     @Builder.Default
@@ -94,19 +109,22 @@ public class PublicKeyCredentialCreationOptions {
 
     /**
      * Intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default
-     * is none.
+     * is {@link AttestationConveyancePreference#NONE}.
      */
     @NonNull
     @Builder.Default
-    private final AttestationConveyancePreference attestation = AttestationConveyancePreference.DEFAULT;
+    private final AttestationConveyancePreference attestation = AttestationConveyancePreference.NONE;
 
     /**
      * Additional parameters requesting additional processing by the client and authenticator.
      * <p>
-     * For example, the caller may request that only authenticators with certain capabilies be used to create the
+     * For example, the caller may request that only authenticators with certain capabilities be used to create the
      * credential, or that particular information be returned in the attestation object. Some extensions are defined in
-     * §8 WebAuthn Extensions; consult the IANA "WebAuthn Extension Identifier" registry  for an up-to-date list of
-     * registered WebAuthn Extensions.
+     * <a href="https://w3c.github.io/webauthn/#extensions">§9 WebAuthn Extensions</a>; consult the IANA "WebAuthn
+     * Extension Identifier" registry established by
+     * <a href="https://tools.ietf.org/html/draft-hodges-webauthn-registries">[WebAuthn-Registries]</a> for an
+     * up-to-date list of registered WebAuthn Extensions.
+     * </p>
      */
     @NonNull
     @Builder.Default
@@ -126,9 +144,9 @@ public class PublicKeyCredentialCreationOptions {
         this.rp = rp;
         this.user = user;
         this.challenge = challenge;
-        this.pubKeyCredParams = Collections.unmodifiableList(pubKeyCredParams);
+        this.pubKeyCredParams = CollectionUtil.immutableList(pubKeyCredParams);
         this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
+        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
         this.authenticatorSelection = authenticatorSelection;
         this.attestation = attestation;
         this.extensions = extensions;
@@ -150,13 +168,60 @@ public class PublicKeyCredentialCreationOptions {
             rp,
             user,
             challenge,
-            Collections.unmodifiableList(pubKeyCredParams),
+            CollectionUtil.immutableList(pubKeyCredParams),
             Optional.ofNullable(timeout),
             Optional.ofNullable(excludeCredentials),
             Optional.ofNullable(authenticatorSelection),
             attestation,
             Optional.ofNullable(extensions).orElseGet(() -> RegistrationExtensionInputs.builder().build())
         );
+    }
+
+    public static PublicKeyCredentialCreationOptionsBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialCreationOptionsBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialCreationOptionsBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialCreationOptionsBuilder builder = new PublicKeyCredentialCreationOptionsBuilder();
+
+            /**
+             * @see PublicKeyCredentialCreationOptions#getRp()
+             */
+            public Step2 rp(RelyingPartyIdentity rp) {
+                builder.rp(rp);
+                return new Step2();
+            }
+
+            /**
+             * @see PublicKeyCredentialCreationOptions#getUser()
+             */
+            public class Step2 {
+                public Step3 user(UserIdentity user) {
+                    builder.user(user);
+                    return new Step3();
+                }
+            }
+
+            /**
+             * @see PublicKeyCredentialCreationOptions#getChallenge()
+             */
+            public class Step3 {
+                public Step4 challenge(ByteArray challenge) {
+                    builder.challenge(challenge);
+                    return new Step4();
+                }
+            }
+
+            /**
+             * @see PublicKeyCredentialCreationOptions#getPubKeyCredParams()
+             */
+            public class Step4 {
+                public PublicKeyCredentialCreationOptionsBuilder pubKeyCredParams(List<PublicKeyCredentialParameters> pubKeyCredParams) {
+                    return builder.pubKeyCredParams(pubKeyCredParams);
+                }
+            }
+        }
     }
 
 }

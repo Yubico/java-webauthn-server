@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import java.util
 import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
@@ -49,6 +50,8 @@ import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.RegistrationExtensionInputs
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
@@ -78,11 +81,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
   private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String) = ???
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
+  }
+
+  private val unimplementedCredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): util.Set[PublicKeyCredentialDescriptor] = ???
     override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
     override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
     override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
-    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
+    override def lookupAll(credentialId: ByteArray): util.Set[RegisteredCredential] = ???
   }
 
   private def finishRegistration(
@@ -91,16 +102,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     credentialId: Option[ByteArray] = None,
     credentialRepository: Option[CredentialRepository] = None,
     metadataService: Option[MetadataService] = None,
-    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().name("Test party").id("localhost").build(),
+    rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
     RelyingParty.builder()
-      .allowUntrustedAttestation(allowUntrustedAttestation)
-      .challengeGenerator(null)
-      .origins(List(rp.getId).asJava)
+      .identity(rp)
+      .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
       .preferredPubkeyParams(Nil.asJava)
-      .rp(rp)
-      .credentialRepository(credentialRepository.orNull)
+      .origins(Set("https://" + rp.getId).asJava)
+      .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
       .build()
       ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
@@ -108,7 +118,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
   class TestMetadataService(private val attestation: Option[Attestation] = None) extends MetadataService {
     override def getAttestation(attestationCertificateChain: java.util.List[X509Certificate]): Attestation = attestation match {
-      case None => Attestation.builder(false).build()
+      case None => Attestation.builder().trusted(false).build()
       case Some(a) => a
     }
   }
@@ -198,7 +208,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       it("5. Verify that the value of C.origin matches the Relying Party's origin.") {
         val steps = finishRegistration(
-          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "root.evil")
+          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "https://root.evil")
         )
         val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
 
@@ -218,7 +228,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation
-            .editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
+            .editClientData(_.without("tokenBinding"))
           )
           val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -297,7 +307,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("Verification fails if RP specifies token binding ID but client does not support it.") {
             val steps = finishRegistration(
               callerTokenBindingId = Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
-              testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("tokenBinding", toJson(Map("status" -> "not-supported")))
+              testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
             )
             val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -731,8 +741,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("a test case with a different signed credential public key is not valid.") {
             val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAuthenticatorData { authenticatorData =>
               val decoded = new AuthenticatorData(authenticatorData)
-              val L = decoded.getAttestationData.get.getCredentialId.getBytes.length
-              val evilPublicKey: Array[Byte] = decoded.getAttestationData.get.getCredentialPublicKey.getBytes.updated(30, 0: Byte)
+              val L = decoded.getAttestedCredentialData.get.getCredentialId.getBytes.length
+              val evilPublicKey: Array[Byte] = decoded.getAttestedCredentialData.get.getCredentialPublicKey.getBytes.updated(30, 0: Byte)
 
               new ByteArray(authenticatorData.getBytes.take(32 + 1 + 4 + 16 + 2 + L) ++ evilPublicKey)
             }
@@ -1054,7 +1064,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testDataBase.clientDataJsonHash
                   )
 
-                  CBORObject.DecodeFromBytes(new AttestationObject(testDataBase.attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
+                  CBORObject.DecodeFromBytes(new AttestationObject(testDataBase.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
                   new AttestationObject(testDataBase.attestationObject).getAttestationStatement.get("alg").longValue should equal (-7)
                   result should equal (true)
                 }
@@ -1066,8 +1076,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     testData.clientDataJsonHash
                   ))
 
-                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestationData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-8)
+                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
+                  new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-257)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [IllegalArgumentException]
                 }
@@ -1388,7 +1398,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
             it("is accepted if the metadata service trusts it.") {
               val metadataService: MetadataService = new TestMetadataService(Some(
-                Attestation.builder(true)
+                Attestation.builder()
+                    .trusted(true)
                     .metadataIdentifier(Some("Test attestation CA").asJava)
                     .build()
                 )
@@ -1441,18 +1452,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               RegisteredCredential.builder()
                 .credentialId(id)
                 .userHandle(uh)
-                .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
+                .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
                 .signatureCount(1337)
                 .build()
             ).asJava
 
             override def lookupAll(id: ByteArray) = id match {
-              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialId =>
+              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId =>
                 Set(
                   RegisteredCredential.builder()
                     .credentialId(id)
                     .userHandle(testData.request.getUser.getId)
-                    .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
+                    .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
                     .signatureCount(1337)
                     .build()
                 ).asJava
@@ -1501,7 +1512,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val testData = RegistrationTestData.FidoU2f.BasicAttestation
           val steps = finishRegistration(
             testData = testData,
-            metadataService = Some(new TestMetadataService(Some(Attestation.builder(true).build()))),
+            metadataService = Some(new TestMetadataService(Some(Attestation.builder().trusted(true).build()))),
             credentialRepository = Some(emptyCredentialRepository)
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
@@ -1539,6 +1550,33 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         Try(steps.run) shouldBe a [Failure[_]]
         Try(steps.run).failed.get shouldBe an [IllegalArgumentException]
+      }
+
+      describe("The default RelyingParty settings") {
+
+        it("accept registrations with no attestation.") {
+          val rp = RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
+            .credentialRepository(emptyCredentialRepository)
+            .build()
+
+          val request = rp.startRegistration(StartRegistrationOptions.builder()
+              .user(UserIdentity.builder().name("test").displayName("Test Testsson").id(new ByteArray(Array())).build())
+              .build()
+          ).toBuilder()
+            .challenge(RegistrationTestData.NoneAttestation.Default.clientData.getChallenge)
+            .build()
+
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+              .request(request)
+              .response(RegistrationTestData.NoneAttestation.Default.response)
+              .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (RegistrationTestData.NoneAttestation.Default.response.getId)
+        }
+
       }
 
     }

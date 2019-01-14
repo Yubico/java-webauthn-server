@@ -30,6 +30,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import com.yubico.webauthn.RegistrationResult
+import com.yubico.webauthn.AssertionResult
+import com.yubico.webauthn.AssertionRequest
+import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -90,10 +94,10 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[AssertionRequest]() {})
     test(new TypeReference[AssertionResult]() {})
     test(new TypeReference[AttestationConveyancePreference]() {})
-    test(new TypeReference[AttestationData]() {})
+    test(new TypeReference[AttestedCredentialData]() {})
     test(new TypeReference[AttestationObject]() {})
     test(new TypeReference[AttestationType]() {})
-    test(new TypeReference[AuthenticationDataFlags]() {})
+    test(new TypeReference[AuthenticatorDataFlags]() {})
     test(new TypeReference[AuthenticatorAssertionResponse]() {})
     test(new TypeReference[AuthenticatorAttachment]() {})
     test(new TypeReference[AuthenticatorAttestationResponse]() {})

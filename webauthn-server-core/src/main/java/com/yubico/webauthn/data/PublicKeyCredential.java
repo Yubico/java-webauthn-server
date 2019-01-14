@@ -26,18 +26,25 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * The PublicKeyCredential interface inherits from Credential <a href="https://www.w3.org/TR/credential-management-1/">[CREDENTIAL-MANAGEMENT-1]</a>,
+ * and contains the attributes that are returned to the caller when a new credential is created, or a new assertion is
+ * requested.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#iface-pkcredential">§5.1. PublicKeyCredential Interface</a>
+ */
 @Value
-@Builder
-public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> implements Credential {
+@Builder(toBuilder = true)
+public class PublicKeyCredential<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
 
     /**
-     * This attribute is inherited from `Credential`, though PublicKeyCredential overrides `Credential`'s getter,
-     * instead returning the base64url encoding of the [[rawId]].
+     * The raw Credential ID of this credential, corresponding to the <code>rawId</code> attribute in the WebAuthn API.
      */
     @NonNull
     private final ByteArray id;
@@ -46,9 +53,13 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
      * The authenticator's response to the client’s request to either create a public key credential, or generate an
      * authentication assertion.
      * <p>
-     * If the PublicKeyCredential is created in response to create(), this attribute’s value will be an
-     * [[AuthenticatorAttestationResponse]], otherwise, the PublicKeyCredential was created in response to get(), and
-     * this attribute’s value will be an [[AuthenticatorAssertionResponse]].
+     * If the {@link PublicKeyCredential} was created in response to
+     * <code>navigator.credentials.create()</code>, this attribute’s value will
+     * be an {@link AuthenticatorAttestationResponse}, otherwise, the {@link PublicKeyCredential} was created in
+     * response to
+     * <code>navigator.credentials.get()</code>, and this attribute’s value will
+     * be an {@link AuthenticatorAssertionResponse}.
+     * </p>
      */
     @NonNull
     private final A response;
@@ -61,7 +72,7 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
     private final B clientExtensionResults;
 
     /**
-     * The PublicKeyCredential's type value is the string "public-key".
+     * The {@link PublicKeyCredential}'s type value is the string "public-key".
      */
     @NonNull
     @Builder.Default
@@ -78,6 +89,40 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
         this.response = response;
         this.clientExtensionResults = clientExtensionResults;
         this.type = type;
+    }
+
+    public static <A extends AuthenticatorResponse, B extends ClientExtensionOutputs> PublicKeyCredentialBuilder<A, B>.MandatoryStages builder() {
+        return new PublicKeyCredentialBuilder<A, B>().start();
+    }
+
+    public static class PublicKeyCredentialBuilder<A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
+        private MandatoryStages start() {
+            return new MandatoryStages(this);
+        }
+
+        @AllArgsConstructor
+        public class MandatoryStages {
+            private final PublicKeyCredentialBuilder<A, B> builder;
+
+            public Step2 id(ByteArray id) {
+                builder.id(id);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 response(A response) {
+                    builder.response(response);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public PublicKeyCredentialBuilder<A, B> clientExtensionResults(B clientExtensionResults) {
+                    return builder.clientExtensionResults(clientExtensionResults);
+                }
+            }
+        }
+
     }
 
 }

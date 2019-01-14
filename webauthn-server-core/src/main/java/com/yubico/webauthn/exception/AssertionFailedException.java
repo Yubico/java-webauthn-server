@@ -30,4 +30,8 @@ public class AssertionFailedException extends Exception {
         super(e);
     }
 
+    public AssertionFailedException(String message) {
+        super(message);
+    }
+
 }

@@ -25,20 +25,26 @@
 package com.yubico.webauthn;
 
 
-import com.yubico.webauthn.data.AssertionRequest;
-import com.yubico.webauthn.data.AssertionResult;
+import COSE.CoseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.UserVerificationRequirement;
+import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.extension.appid.AppId;
+import java.io.IOException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -48,22 +54,18 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 
 @Builder
 @Slf4j
-class FinishAssertionSteps {
+final class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
+    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     private final AssertionRequest request;
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
-    private final List<String> origins;
+    private final Set<String> origins;
     private final String rpId;
-    private final Crypto crypto;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean allowMissingTokenBinding = false;
-    @Builder.Default
-    private final boolean validateTypeAttribute = true;
     @Builder.Default
     private final boolean validateSignatureCounter = true;
     @Builder.Default
@@ -73,14 +75,14 @@ class FinishAssertionSteps {
         return new Step0();
     }
 
-    public AssertionResult run() {
+    public AssertionResult run() throws InvalidSignatureCountException {
         return begin().run();
     }
 
     private interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
         B nextStep();
 
-        void validate();
+        void validate() throws InvalidSignatureCountException;
 
         List<String> getPrevWarnings();
 
@@ -100,15 +102,15 @@ class FinishAssertionSteps {
             List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
             result.addAll(getPrevWarnings());
             result.addAll(getWarnings());
-            return Collections.unmodifiableList(result);
+            return CollectionUtil.immutableList(result);
         }
 
-        default B next() {
+        default B next() throws InvalidSignatureCountException {
             validate();
             return nextStep();
         }
 
-        default AssertionResult run() {
+        default AssertionResult run() throws InvalidSignatureCountException {
             if (isFinished()) {
                 return result().get();
             } else {
@@ -327,23 +329,15 @@ class FinishAssertionSteps {
 
         @Override
         public List<String> getWarnings() {
-            return Collections.unmodifiableList(warnings);
+            return CollectionUtil.immutableList(warnings);
         }
 
         @Override
         public void validate() {
-            if (!
-                CLIENT_DATA_TYPE.equals(clientData.getType())
-            ) {
-                final String message = String.format(
-                    "The \"type\" in the client data must be exactly \"%s\", was: %s", CLIENT_DATA_TYPE, clientData.getType()
-                );
-                if (validateTypeAttribute) {
-                    throw new IllegalArgumentException(message);
-                } else {
-                    warnings.add(message);
-                }
-            }
+            assure(CLIENT_DATA_TYPE.equals(clientData.getType()),
+                "The \"type\" in the client data must be exactly \"%s\", was: %s",
+                CLIENT_DATA_TYPE, clientData.getType()
+            );
         }
 
         @Override
@@ -513,7 +507,7 @@ class FinishAssertionSteps {
                 ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
                 return Collections.emptyList();
             } catch (Exception e) {
-                return Collections.unmodifiableList(Collections.singletonList(e.getMessage()));
+                return CollectionUtil.immutableList(Collections.singletonList(e.getMessage()));
             }
         }
 
@@ -555,9 +549,29 @@ class FinishAssertionSteps {
 
         @Override
         public void validate() {
+            final ByteArray cose = credential.getPublicKeyCose();
+            final PublicKey key;
+
+            try {
+                key = WebAuthnCodecs.importCoseP256PublicKey(cose);
+            } catch (CoseException | IOException e) {
+                String coseString;
+                try {
+                    coseString = WebAuthnCodecs.json().writeValueAsString(cose.getBytes());
+                } catch (JsonProcessingException e2) {
+                    coseString = "(Failed to write as string)";
+                }
+
+                throw new IllegalArgumentException(String.format(
+                    "Failed to decode public key: Credential ID: {} COSE: {}",
+                    credential.getCredentialId().getBase64Url(),
+                    coseString
+                ));
+            }
+
             if (!
                 crypto.verifySignature(
-                    credential.publicKey,
+                    key,
                     signedBytes(),
                     response.getResponse().getSignature()
                 )
@@ -583,13 +597,15 @@ class FinishAssertionSteps {
         private final List<String> prevWarnings;
 
         @Override
-        public void validate() {
+        public void validate() throws InvalidSignatureCountException {
             if (validateSignatureCounter) {
-                assure(
-                    signatureCounterValid(),
-                    "Signature counter must increase. Stored value: %s, received value: %s",
-                    storedSignatureCountBefore(), assertionSignatureCount()
-                );
+                if (!signatureCounterValid()) {
+                    throw new InvalidSignatureCountException(
+                        response.getId(),
+                        storedSignatureCountBefore() + 1,
+                        assertionSignatureCount()
+                    );
+                }
             }
         }
 
@@ -638,12 +654,12 @@ class FinishAssertionSteps {
         @Override
         public Optional<AssertionResult> result() {
             return Optional.of(AssertionResult.builder()
+                .success(true)
                 .credentialId(response.getId())
+                .userHandle(userHandle)
+                .username(username)
                 .signatureCount(assertionSignatureCount)
                 .signatureCounterValid(signatureCounterValid)
-                .success(true)
-                .username(username)
-                .userHandle(userHandle)
                 .warnings(allWarnings())
                 .build()
             );

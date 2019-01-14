@@ -39,7 +39,8 @@ object Generators {
     metadataIdentifier <- arbitrary[Optional[String]]
     transports <- arbitrary[Optional[java.util.Set[Transport]]]
     vendorProperties <- arbitrary[Optional[java.util.Map[String, String]]]
-  } yield Attestation.builder(trusted)
+  } yield Attestation.builder()
+    .trusted(trusted)
     .deviceProperties(deviceProperties)
     .metadataIdentifier(metadataIdentifier)
     .transports(transports)

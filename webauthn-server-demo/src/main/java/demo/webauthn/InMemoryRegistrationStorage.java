@@ -24,21 +24,16 @@
 
 package demo.webauthn;
 
-import COSE.CoseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.CredentialRepository;
-import com.yubico.webauthn.data.AssertionResult;
+import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.RegisteredCredential;
-import com.yubico.internal.util.WebAuthnCodecs;
 import demo.webauthn.data.CredentialRegistration;
-import java.io.IOException;
-import java.security.PublicKey;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -160,54 +155,31 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
             .findAny();
 
         logger.debug("lookup credential ID: {}, user handle: {}; result: {}", credentialId, userHandle, registrationMaybe);
-        return registrationMaybe.flatMap(registration -> {
-            final ByteArray cose = registration.getRegistration().getPublicKeyCose();
-            final PublicKey key;
-
-            try {
-                key = WebAuthnCodecs.importCoseP256PublicKey(cose);
-            } catch (CoseException | IOException e) {
-                String coseString;
-                try {
-                    coseString = WebAuthnCodecs.json().writeValueAsString(cose.getBytes());
-                } catch (JsonProcessingException e2) {
-                    coseString = "(Failed to write as string)";
-                }
-
-                logger.error("Failed to decode public key in storage: ID: {} COSE: {}", credentialId, coseString);
-                return Optional.empty();
-            }
-
-            return Optional.of(
+        return registrationMaybe.flatMap(registration ->
+            Optional.of(
                 RegisteredCredential.builder()
                     .credentialId(registration.getRegistration().getKeyId().getId())
                     .userHandle(registration.getUserIdentity().getId())
-                    .publicKey(key)
+                    .publicKeyCose(registration.getRegistration().getPublicKeyCose())
                     .signatureCount(registration.getSignatureCount())
                     .build()
-            );
-        });
+            )
+        );
     }
 
     @Override
     public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
-        return Collections.unmodifiableSet(
+        return CollectionUtil.immutableSet(
             storage.asMap().values().stream()
                 .flatMap(Collection::stream)
                 .filter(reg -> reg.getRegistration().getKeyId().getId().equals(credentialId))
-                .map(reg -> {
-                    try {
-                        return RegisteredCredential.builder()
-                            .credentialId(reg.getRegistration().getKeyId().getId())
-                            .userHandle(reg.getUserIdentity().getId())
-                            .publicKey(WebAuthnCodecs.importCoseP256PublicKey(reg.getRegistration().getPublicKeyCose()))
-                            .signatureCount(reg.getSignatureCount())
-                            .build();
-                    } catch (CoseException | IOException e) {
-                        log.error("Failed to read public key {} from storage", reg.getRegistration().getKeyId().getId(), e);
-                        throw new RuntimeException(e);
-                    }
-                })
+                .map(reg -> RegisteredCredential.builder()
+                    .credentialId(reg.getRegistration().getKeyId().getId())
+                    .userHandle(reg.getUserIdentity().getId())
+                    .publicKeyCose(reg.getRegistration().getPublicKeyCose())
+                    .signatureCount(reg.getSignatureCount())
+                    .build()
+                )
                 .collect(Collectors.toSet()));
     }
 

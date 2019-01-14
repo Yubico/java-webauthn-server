@@ -42,32 +42,52 @@ import lombok.NonNull;
 import lombok.Value;
 
 
+/**
+ * The authenticator data structure is a byte array of 37 bytes or more. This class presents the authenticator data
+ * decoded as a high-level object.
+ *
+ * <p>
+ * The authenticator data structure encodes contextual bindings made by the authenticator. These bindings are controlled
+ * by the authenticator itself, and derive their trust from the WebAuthn Relying Party's assessment of the security
+ * properties of the authenticator. In one extreme case, the authenticator may be embedded in the client, and its
+ * bindings may be no more trustworthy than the client data. At the other extreme, the authenticator may be a discrete
+ * entity with high-security hardware and software, connected to the client over a secure channel. In both cases, the
+ * Relying Party receives the authenticator data in the same format, and uses its knowledge of the authenticator to make
+ * trust decisions.
+ * </p>
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+ */
 @Value
 @JsonSerialize(using = AuthenticatorData.JsonSerializer.class)
 public class AuthenticatorData {
 
+    /**
+     * The original raw byte array that this object is decoded from. This is a byte array of 37 bytes or more.
+     *
+     * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+     */
     @NonNull
     private final ByteArray bytes;
 
     /**
-     * The flags byte.
+     * The flags bit field.
      */
     @NonNull
-    private final transient AuthenticationDataFlags flags;
+    private final transient AuthenticatorDataFlags flags;
 
     /**
-     * Attestation data, if present.
+     * Attested credential data, if present.
+     *
      * <p>
-     * See ''§5.3.1 Attestation data'' of [[com.yubico.webauthn.VersionInfo]] for details.
+     * This member is present if and only if the {@link AuthenticatorDataFlags#AT} flag is set.
+     * </p>
+     *
+     * @see #flags
      */
     @NonNull
-    private final transient Optional<AttestationData> attestationData;
+    private final transient Optional<AttestedCredentialData> attestedCredentialData;
 
-    /**
-     * Extension-defined authenticator data, if present.
-     * <p>
-     * See ''§8 WebAuthn Extensions'' of [[com.yubico.webauthn.VersionInfo]] for details.
-     */
     @NonNull
     private final transient Optional<CBORObject> extensions;
 
@@ -82,6 +102,9 @@ public class AuthenticatorData {
 
     private static final int FIXED_LENGTH_PART_END_INDEX = COUNTER_END;
 
+    /**
+     * Decode an {@link AuthenticatorData} object from a raw authenticator data byte array.
+     */
     @JsonCreator
     public AuthenticatorData(@NonNull ByteArray bytes) {
         ExceptionUtil.assure(
@@ -97,26 +120,26 @@ public class AuthenticatorData {
 
         final byte[] rawBytes = bytes.getBytes();
 
-        this.flags = new AuthenticationDataFlags(rawBytes[FLAGS_INDEX]);
+        this.flags = new AuthenticatorDataFlags(rawBytes[FLAGS_INDEX]);
 
         if (flags.AT) {
-            VariableLengthParseResult parseResult = parseAttestationData(
+            VariableLengthParseResult parseResult = parseAttestedCredentialData(
                 flags,
                 Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)
             );
-            attestationData = parseResult.getAttestationData();
+            attestedCredentialData = parseResult.getAttestedCredentialData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
-            attestationData = Optional.empty();
+            attestedCredentialData = Optional.empty();
             extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)));
         } else {
-            attestationData = Optional.empty();
+            attestedCredentialData = Optional.empty();
             extensions = Optional.empty();
         }
     }
 
     /**
-     * The SHA-256 hash of the RP ID associated with the credential.
+     * The SHA-256 hash of the RP ID the credential is scoped to.
      */
     @JsonProperty("rpIdHash")
     public ByteArray getRpIdHash() {
@@ -130,7 +153,7 @@ public class AuthenticatorData {
         return BinaryUtil.getUint32(Arrays.copyOfRange(bytes.getBytes(), COUNTER_INDEX, COUNTER_END));
     }
 
-    private static VariableLengthParseResult parseAttestationData(AuthenticationDataFlags flags, byte[] bytes) {
+    private static VariableLengthParseResult parseAttestedCredentialData(AuthenticatorDataFlags flags, byte[] bytes) {
         final int AAGUID_INDEX = 0;
         final int AAGUID_END = AAGUID_INDEX + 16;
 
@@ -139,7 +162,7 @@ public class AuthenticatorData {
 
         ExceptionUtil.assure(
             bytes.length >= CREDENTIAL_ID_LENGTH_END,
-            "Attestation data must contain at least %d bytes, was %d: %s",
+            "Attested credential data must contain at least %d bytes, was %d: %s",
             CREDENTIAL_ID_LENGTH_END,
             bytes.length,
             new ByteArray(bytes).getHex()
@@ -162,7 +185,7 @@ public class AuthenticatorData {
 
         ExceptionUtil.assure(
             bytes.length >= CREDENTIAL_ID_END,
-            "Expected credential ID of length %d, but attestation data and extension data is only %d bytes: %s",
+            "Expected credential ID of length %d, but attested credential data and extension data is only %d bytes: %s",
             CREDENTIAL_ID_END,
             bytes.length,
             new ByteArray(bytes).getHex()
@@ -183,19 +206,19 @@ public class AuthenticatorData {
             }
         } else if (indefiniteLengthBytes.available() > 0) {
             throw new IllegalArgumentException(String.format(
-                "Flags indicate no extension data, but %d bytes remain after attestation data.",
+                "Flags indicate no extension data, but %d bytes remain after attested credential data.",
                 indefiniteLengthBytes.available()
             ));
         } else if (flags.ED) {
             throw new IllegalArgumentException(
-                "Flags indicate there should be extension data, but no bytes remain after attestation data."
+                "Flags indicate there should be extension data, but no bytes remain after attested credential data."
             );
         } else {
             extensions = Optional.empty();
         }
 
         return new VariableLengthParseResult(
-            Optional.of(AttestationData.builder()
+            Optional.of(AttestedCredentialData.builder()
                 .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
                 .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
                 .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
@@ -214,10 +237,23 @@ public class AuthenticatorData {
 
     @Value
     private static class VariableLengthParseResult {
-        Optional<AttestationData> attestationData;
+        Optional<AttestedCredentialData> attestedCredentialData;
         Optional<CBORObject> extensions;
     }
 
+    /**
+     * Extension-defined authenticator data, if present.
+     *
+     * <p>
+     * This member is present if and only if the {@link AuthenticatorDataFlags#ED} flag is set.
+     * </p>
+     *
+     * <p>
+     * Changes to the returned value are not reflected in the {@link AuthenticatorData} object.
+     * </p>
+     *
+     * @see #flags
+     */
     public Optional<CBORObject> getExtensions() {
         return extensions.map(WebAuthnCodecs::deepCopy);
     }

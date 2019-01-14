@@ -26,8 +26,8 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.EnumUtil;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -37,11 +37,15 @@ import lombok.Value;
 
 
 /**
- * The attributes that are specified by a caller when referring to a credential as an input parameter to the create() or
- * get() methods. It mirrors the fields of the [[PublicKeyCredential]] object returned by the latter methods.
+ * The attributes that are specified by a caller when referring to a public key credential as an input parameter to the
+ * <code>navigator.credentials.create()</code> or <code>navigator.credentials.get()</code> methods. It mirrors the
+ * fields of the {@link PublicKeyCredential} object returned by the latter methods.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialdescriptor">§5.10.3. Credential Descriptor
+ * (dictionary PublicKeyCredentialDescriptor)</a>
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCredentialDescriptor> {
 
     /**
@@ -52,23 +56,27 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
 
     /**
-     * The identifier of the credential that the caller is referring to.
+     * The credential ID of the public key credential the caller is referring to.
      */
     @NonNull
     private final ByteArray id;
 
+    /**
+     * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
+     * credential the caller is referring to.
+     */
     @NonNull
     @Builder.Default
     private final Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
 
-    public PublicKeyCredentialDescriptor(
+    private PublicKeyCredentialDescriptor(
         @NonNull PublicKeyCredentialType type,
         @NonNull ByteArray id,
         @NonNull Optional<Set<AuthenticatorTransport>> transports
     ) {
         this.type = type;
         this.id = id;
-        this.transports = transports.map(TreeSet::new).map(Collections::unmodifiableSortedSet);
+        this.transports = transports.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
     }
 
     @JsonCreator
@@ -105,4 +113,17 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         return 0;
     }
 
+    public static PublicKeyCredentialDescriptorBuilder.MandatoryStages builder() {
+        return new PublicKeyCredentialDescriptorBuilder.MandatoryStages();
+    }
+
+    public static class PublicKeyCredentialDescriptorBuilder {
+        public static class MandatoryStages {
+            private PublicKeyCredentialDescriptorBuilder builder = new PublicKeyCredentialDescriptorBuilder();
+
+            public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
+                return builder.id(id);
+            }
+        }
+    }
 }

@@ -31,6 +31,8 @@ import java.time.LocalDate;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.jar.Manifest;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,10 +64,10 @@ public class VersionInfo {
      * Represents the specification this implementation is based on
      */
     private final Specification specification = Specification.builder()
-        .url(new URL("https://www.w3.org/TR/2018/CR-webauthn-20180320/"))
-        .latestVersionUrl(new URL("https://www.w3.org/TR/webauthn/"))
-        .status(DocumentStatus.CANDIDATE_RECOMMENDATION)
-        .releaseDate(LocalDate.parse("2018-03-20"))
+        .url(new URL("https://w3c.github.io/webauthn/"))
+        .latestVersionUrl(new URL("https://w3c.github.io/webauthn/"))
+        .status(DocumentStatus.EDITORS_DRAFT)
+        .releaseDate(LocalDate.parse("2019-01-11"))
         .build();
 
     /**

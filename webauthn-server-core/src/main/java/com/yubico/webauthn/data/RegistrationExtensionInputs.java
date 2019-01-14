@@ -31,9 +31,19 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
+/**
+ * Contains <a href="https://w3c.github.io/webauthn/#client-extension-input">client extension inputs</a> to a
+ * <code>navigator.credentials.create()</code> operation. All members are optional.
+ *
+ * <p>
+ * The authenticator extension inputs are derived from these client extension inputs.
+ * </p>
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#extensions">§9. WebAuthn Extensions</a>
+ */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class RegistrationExtensionInputs implements ExtensionInputs {
 
     @Override

@@ -37,35 +37,37 @@ import lombok.Value;
 /**
  * This class may be used to specify requirements regarding authenticator attributes.
  *
- * Note: The member identifiers are intentionally short, rather than descriptive, because they will be serialized into a
- * message to the authenticator, which may be sent over a low-bandwidth link.
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-authenticatorselectioncriteria">§5.4.4. Authenticator Selection
+ * Criteria (dictionary AuthenticatorSelectionCriteria)
+ * </a>
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class AuthenticatorSelectionCriteria {
 
     /**
-     * If present, eligible authenticators are filtered to only authenticators attached with the specified §4.4.4
-     * Authenticator Attachment enumeration.
+     * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
+     * href="https://w3c.github.io/webauthn/#attachment">§5.4.5 Authenticator Attachment Enumeration (enum
+     * AuthenticatorAttachment)</a>.
      */
     @NonNull
     @Builder.Default
     private final Optional<AuthenticatorAttachment> authenticatorAttachment = Optional.empty();
 
     /**
-     * requireResidentKey Describes the Relying Party's requirements regarding availability of the Client-side-resident
-     * Credential Private Key. If the parameter is set to true, the authenticator MUST create a Client-side-resident
-     * Credential Private Key when creating a public key credential.
+     * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true</code>, the
+     * authenticator MUST create a <a href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">client-side-resident
+     * public key credential source</a> when creating a public key credential.
      */
     @Builder.Default
     private final boolean requireResidentKey = false;
 
     /**
-     * requireUserVerification
-     * <p>
-     * This member describes the Relying Party's requirements regarding user verification for the create() operation.
-     * Eligible authenticators are filtered to only those capable of satisfying this requirement.
+     * Describes the Relying Party's requirements regarding <a href="https://w3c.github.io/webauthn/#user-verification">user
+     * verification</a> for the
+     * <code>navigator.credentials.create()</code> operation. Eligible authenticators are filtered to only those
+     * capable of satisfying this requirement.
      */
     @NonNull
     @Builder.Default

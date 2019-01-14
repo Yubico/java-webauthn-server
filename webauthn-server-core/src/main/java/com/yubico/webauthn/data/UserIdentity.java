@@ -31,49 +31,90 @@ import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
 
 /**
- * Describes a user account, with which a public key credential is to be associated.
+ * Describes a user account, with which public key credentials can be associated.
+ *
+ * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialuserentity">§5.4.3. User Account Parameters
+ * for Credential Generation (dictionary PublicKeyCredentialUserEntity)
+ * </a>
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
+@Builder(toBuilder = true)
 public class UserIdentity implements PublicKeyCredentialEntity {
 
     /**
-     * A name for the user account.
+     * A human-palatable identifier for a user account. It is intended only for display, i.e., aiding the user in
+     * determining the difference between user accounts with similar {@link #displayName}s.
      * <p>
-     * For example: "john.p.smith@example.com" or "+14255551234".
+     * For example: "alexm", "alex.p.mueller@example.com" or "+14255551234".
+     * </p>
      */
     @NonNull
+    @Getter(onMethod = @__({ @Override }))
     private final String name;
 
     /**
-     * A friendly name for the user account (e.g. "Ryan A. Smith").
+     * A human-palatable name for the user account, intended only for display. For example, "Alex P. Müller" or "田中 倫".
+     * The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than necessary.
+     *
+     * <ul>
+     * <li>Relying Parties SHOULD perform enforcement, as prescribed in Section 2.3 of [RFC8266] for the Nickname
+     * Profile of the PRECIS FreeformClass [RFC8264], when setting {@link #displayName}'s value, or displaying the value
+     * to the user.</li>
+     * <li>Clients SHOULD perform enforcement, as prescribed in Section 2.3 of [RFC8266] for the Nickname Profile of
+     * the PRECIS FreeformClass [RFC8264], on {@link #displayName}'s value prior to displaying the value to the user or
+     * including the value as a parameter of the <code>authenticatorMakeCredential</code> operation.</li>
+     * </ul>
+     *
+     * <p>
+     * When clients, client platforms, or authenticators display a {@link #displayName}'s value, they should always use
+     * UI elements to provide a clear boundary around the displayed value, and not allow overflow into other elements.
+     * </p>
+     *
+     * <p>
+     * Authenticators MUST accept and store a 64-byte minimum length for a {@link #displayName} member's value.
+     * Authenticators MAY truncate a {@link #displayName} member's value to a length equal to or greater than 64 bytes.
+     * </p>
+     *
+     * @see <a href="https://tools.ietf.org/html/rfc8264">RFC 8264</a>
+     * @see <a href="https://tools.ietf.org/html/rfc8266">RFC 8266</a>
      */
     @NonNull
     private final String displayName;
 
     /**
-     * An identifier for the account, specified by the Relying Party.
+     * The <a href="https://w3c.github.io/webauthn/#user-handle">user handle</a> for the account, specified by the
+     * Relying Party.
+     *
      * <p>
-     * This is not meant to be displayed to the user, but is used by the Relying Party to control the number of
-     * credentials - an authenticator will never contain more than one credential for a given Relying Party under the
-     * same id.
+     * A user handle is an opaque byte sequence with a maximum size of 64 bytes. User handles are not meant to be
+     * displayed to users. The user handle SHOULD NOT contain personally identifying information about the user, such as
+     * a username or e-mail address; see <a href="https://w3c.github.io/webauthn/#sctn-user-handle-privacy">§14.9 User
+     * Handle Contents</a> for details.
+     * </p>
+     *
+     * <p>
+     * To ensure secure operation, authentication and authorization decisions MUST be made on the basis of this {@link
+     * #id} member, not the {@link #displayName} nor {@link #name} members. See <a href="https://tools.ietf.org/html/rfc8266#section-6.1">Section
+     * 6.1 of RFC 8266</a>.
+     * </p>
+     *
+     * <p>
+     * An authenticator will never contain more than one credential for a given Relying Party under the same user handle.
+     * </p>
      */
     @NonNull
     private final ByteArray id;
 
-    /**
-     * A URL which resolves to an image associated with the user account.
-     * <p>
-     * For example, this could be the user's avatar.
-     */
     @NonNull
     @Builder.Default
+    @Getter(onMethod = @__({ @Override }))
     private final Optional<URL> icon = Optional.empty();
 
     @JsonCreator
@@ -84,6 +125,35 @@ public class UserIdentity implements PublicKeyCredentialEntity {
         @JsonProperty("icon") URL icon
     ) {
         this(name, displayName, id, Optional.ofNullable(icon));
+    }
+
+    public static UserIdentityBuilder.MandatoryStages builder() {
+        return new UserIdentityBuilder.MandatoryStages();
+    }
+
+    public static class UserIdentityBuilder {
+        public static class MandatoryStages {
+            private UserIdentityBuilder builder = new UserIdentityBuilder();
+
+            public Step2 name(String name) {
+                builder.name(name);
+                return new Step2();
+            }
+
+            public class Step2 {
+                public Step3 displayName(String displayName) {
+                    builder.displayName(displayName);
+                    return new Step3();
+                }
+            }
+
+            public class Step3 {
+                public UserIdentityBuilder id(ByteArray id) {
+                    return builder.id(id);
+                }
+
+            }
+        }
     }
 
 }

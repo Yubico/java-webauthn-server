@@ -29,6 +29,9 @@ import java.util.Set;
 
 public interface ClientExtensionOutputs {
 
+    /**
+     * Returns a {@link Set} of the extension IDs for which an extension output is present.
+     */
     @JsonIgnore
     Set<String> getExtensionIds();
 

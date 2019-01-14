@@ -29,7 +29,7 @@ import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
 
 
-class NoneAttestationStatementVerifier implements AttestationStatementVerifier {
+final class NoneAttestationStatementVerifier implements AttestationStatementVerifier {
 
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {

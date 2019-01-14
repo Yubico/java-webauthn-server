@@ -27,7 +27,6 @@ package com.yubico.webauthn.test
 import java.util.Base64
 
 import com.yubico.webauthn.data.AttestationObject
-import com.yubico.webauthn.data.AuthenticationDataFlags
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
@@ -36,6 +35,7 @@ import COSE.OneKey
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
 
 
@@ -79,7 +79,7 @@ object Test extends App {
     val parsedAttObj = new AttestationObject(attestationObject)
     println(parsedAttObj)
     println(parsedAttObj.getAuthenticatorData.getBytes.getHex)
-    println(WebAuthnCodecs.importCoseP256PublicKey(parsedAttObj.getAuthenticatorData.getAttestationData.get.getCredentialPublicKey))
+    println(WebAuthnCodecs.importCoseP256PublicKey(parsedAttObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
 
     val attestationObjectCbor = WebAuthnCodecs.cbor.readTree(attestationObject.getBytes)
     println(attestationObjectCbor)
@@ -99,7 +99,7 @@ object Test extends App {
   def doAuthData(authDataBytes: ByteArray) = {
     val rpidBytes: Array[Byte] = authDataBytes.getBytes.slice(0, 32)
     val flagsByte: Byte = authDataBytes.getBytes()(32)
-    val flags = new AuthenticationDataFlags(flagsByte)
+    val flags = new AuthenticatorDataFlags(flagsByte)
     val counterBytes: Array[Byte] = authDataBytes.getBytes.slice(32 + 1, 32 + 1 + 4)
     val attestedCredData: Array[Byte] = authDataBytes.getBytes.drop(32 + 1 + 4)
 
@@ -152,8 +152,8 @@ object Test extends App {
 
   // val parsedAuthData = AuthenticatorData(authDataBytes)
   // println(parsedAuthData)
-  // println(parsedAuthData.attestationData)
-  // println(parsedAuthData.attestationData.get)
-  // println(parsedAuthData.attestationData.get.credentialPublicKey)
+  // println(parsedAuthData.attestedCredentialData)
+  // println(parsedAuthData.attestedCredentialData.get)
+  // println(parsedAuthData.attestedCredentialData.get.credentialPublicKey)
 
 }

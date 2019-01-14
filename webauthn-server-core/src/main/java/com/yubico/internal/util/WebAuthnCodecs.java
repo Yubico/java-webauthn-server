@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class WebAuthnCodecs {
+public final class WebAuthnCodecs {
 
     public static ObjectMapper cbor() {
         return new ObjectMapper(new CBORFactory()).setBase64Variant(Base64Variants.MODIFIED_FOR_URL);
