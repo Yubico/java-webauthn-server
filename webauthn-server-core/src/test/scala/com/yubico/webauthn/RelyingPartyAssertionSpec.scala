@@ -70,6 +70,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
   private def sha256(data: String): ByteArray = sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
 
+  private val emptyCredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
+  }
+
   private object Defaults {
 
     val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
@@ -288,13 +296,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
           val steps = finishAssertion(
-            credentialRepository = Some(new CredentialRepository {
-              override def lookup(id: ByteArray, uh: ByteArray) = None.asJava
-              override def lookupAll(id: ByteArray) = Set.empty.asJava
-              override def getCredentialIdsForUsername(username: String) = ???
-              override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-              override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-            })
+            credentialRepository = Some(emptyCredentialRepository)
           )
           val step: steps.Step3 = new steps.Step3(Defaults.username, Defaults.userHandle, Nil.asJava)
 
