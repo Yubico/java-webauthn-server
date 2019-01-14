@@ -1,6 +1,30 @@
-== Version 0.6.0 (unreleased) ==
+== Version 0.7.0 ==
+
+=== `webauthn-server-attestation` ===
+
+* Added attestation metadata for Security Key NFC by Yubico
 
 === `webauthn-server-core` ===
+
+Breaking changes:
+
+* Deleted parameter `RelyingParty.verifyTypeAttribute`. This was added as a
+  workaround while browser implementations were incomplete, and should never be
+  used in production.
+* Replaced field `RegisteredCredential.publicKey: PublicKey` with
+  `publicKeyCose: ByteArray`. This means the library user no longer needs to
+  parse the public key before passing it back into the library.
+* `RelyingParty.finishAssertion` now throws `InvalidSignatureCountException`
+  instead of its supertype `AssertionFailedException` when signature count
+  validation is enabled and the received signature count is invalid.
+
+New features:
+
+* New parameter `StartAssertionOptions.userVerification` which is forwarded into
+  `PublicKeyCredentialRequestOptions` by `RelyingParty.startAssertion`
+
+
+== Version 0.6.0 ==
 
 Breaking changes:
 

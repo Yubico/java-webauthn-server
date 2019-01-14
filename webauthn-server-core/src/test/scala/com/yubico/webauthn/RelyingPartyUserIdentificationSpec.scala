@@ -25,10 +25,12 @@
 package com.yubico.webauthn
 
 import java.security.KeyPair
+import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -132,7 +134,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
               Some(RegisteredCredential.builder()
                 .credentialId(Defaults.credentialId)
                 .userHandle(Defaults.userHandle)
-                .publicKey(Defaults.credentialKey.getPublic)
+                .publicKeyCose(WebAuthnCodecs.ecPublicKeyToCose(Defaults.credentialKey.getPublic.asInstanceOf[ECPublicKey]))
                 .signatureCount(0)
                 .build()
               ).asJava

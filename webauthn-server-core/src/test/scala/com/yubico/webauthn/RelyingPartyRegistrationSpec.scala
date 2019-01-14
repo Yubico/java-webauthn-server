@@ -51,6 +51,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
@@ -80,10 +81,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
   private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String) = ???
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-    override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
     override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
   }
 
@@ -108,7 +109,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       .identity(rp)
       .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
       .preferredPubkeyParams(Nil.asJava)
-      .origins(Set(rp.getId).asJava)
+      .origins(Set("https://" + rp.getId).asJava)
       .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
       .build()
@@ -207,7 +208,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       it("5. Verify that the value of C.origin matches the Relying Party's origin.") {
         val steps = finishRegistration(
-          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "root.evil")
+          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "https://root.evil")
         )
         val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
 
@@ -1076,7 +1077,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   ))
 
                   CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-8)
+                  new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-257)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [IllegalArgumentException]
                 }
@@ -1451,7 +1452,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               RegisteredCredential.builder()
                 .credentialId(id)
                 .userHandle(uh)
-                .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
+                .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
                 .signatureCount(1337)
                 .build()
             ).asJava
@@ -1462,7 +1463,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   RegisteredCredential.builder()
                     .credentialId(id)
                     .userHandle(testData.request.getUser.getId)
-                    .publicKey(WebAuthnCodecs.importCoseP256PublicKey(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
+                    .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
                     .signatureCount(1337)
                     .build()
                 ).asJava
@@ -1549,6 +1550,33 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         Try(steps.run) shouldBe a [Failure[_]]
         Try(steps.run).failed.get shouldBe an [IllegalArgumentException]
+      }
+
+      describe("The default RelyingParty settings") {
+
+        it("accept registrations with no attestation.") {
+          val rp = RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
+            .credentialRepository(emptyCredentialRepository)
+            .build()
+
+          val request = rp.startRegistration(StartRegistrationOptions.builder()
+              .user(UserIdentity.builder().name("test").displayName("Test Testsson").id(new ByteArray(Array())).build())
+              .build()
+          ).toBuilder()
+            .challenge(RegistrationTestData.NoneAttestation.Default.clientData.getChallenge)
+            .build()
+
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+              .request(request)
+              .response(RegistrationTestData.NoneAttestation.Default.response)
+              .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (RegistrationTestData.NoneAttestation.Default.response.getId)
+        }
+
       }
 
     }

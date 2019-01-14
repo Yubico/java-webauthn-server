@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.AssertionRequest.AssertionRequestBuilder;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -39,8 +40,10 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCredentialCreationOptionsBuilder;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.security.SecureRandom;
@@ -227,11 +230,11 @@ public class RelyingParty {
      * attestation and none attestation.
      *
      * <p>
-     * The default is <code>false</code>.
+     * The default is <code>true</code>.
      * </p>
      */
     @Builder.Default
-    private final boolean allowUntrustedAttestation = false;
+    private final boolean allowUntrustedAttestation = true;
 
     /**
      * If <code>true</code>, {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will fail if the {@link
@@ -245,19 +248,6 @@ public class RelyingParty {
     @Builder.Default
     private final boolean validateSignatureCounter = true;
 
-    /**
-     * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} and {@link
-     * #finishAssertion(FinishAssertionOptions) finishAssertion} will fail if the {@link CollectedClientData#getType()}
-     * type attribute} in the client data is not exactly equal to <code>"webauthn.create"</code> or
-     * <code>"webauthn.get"</code>, respectively.
-     *
-     * <p>
-     * The default is <code>true</code>.
-     * </p>
-     */
-    @Builder.Default
-    private final boolean validateTypeAttribute = true;
-
     private RelyingParty(
         @NonNull RelyingPartyIdentity identity,
         Set<String> origins,
@@ -267,8 +257,7 @@ public class RelyingParty {
         @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
         boolean allowUnrequestedExtensions,
         boolean allowUntrustedAttestation,
-        boolean validateSignatureCounter,
-        boolean validateTypeAttribute
+        boolean validateSignatureCounter
     ) {
         this.identity = identity;
         this.origins = origins != null ? origins : Collections.singleton("https://" + identity.getId());
@@ -280,7 +269,6 @@ public class RelyingParty {
         this.allowUnrequestedExtensions = allowUnrequestedExtensions;
         this.allowUntrustedAttestation = allowUntrustedAttestation;
         this.validateSignatureCounter = validateSignatureCounter;
-        this.validateTypeAttribute = validateTypeAttribute;
     }
 
     private static ByteArray generateChallenge() {
@@ -335,32 +323,44 @@ public class RelyingParty {
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
             .metadataService(metadataService)
-            .validateTypeAttribute(validateTypeAttribute)
             .build();
     }
 
     public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
+        PublicKeyCredentialRequestOptionsBuilder pkcro = PublicKeyCredentialRequestOptions.builder()
+            .challenge(generateChallenge())
+            .rpId(Optional.of(identity.getId()))
+            .allowCredentials(
+                startAssertionOptions.getUsername().map(un ->
+                    new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
+            )
+            .extensions(
+                startAssertionOptions.getExtensions()
+                    .toBuilder()
+                    .appid(appId)
+                    .build()
+            )
+        ;
+
+        startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);
+
         return AssertionRequest.builder()
             .publicKeyCredentialRequestOptions(
-                PublicKeyCredentialRequestOptions.builder()
-                    .challenge(generateChallenge())
-                    .rpId(Optional.of(identity.getId()))
-                    .allowCredentials(
-                        startAssertionOptions.getUsername().map(un ->
-                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
-                    )
-                    .extensions(
-                        startAssertionOptions.getExtensions()
-                            .toBuilder()
-                            .appid(appId)
-                            .build()
-                    )
-                    .build()
+                pkcro.build()
             )
             .username(startAssertionOptions.getUsername())
             .build();
     }
 
+    /**
+     * @throws InvalidSignatureCountException
+     *     if {@link RelyingPartyBuilder#validateSignatureCounter(boolean) validateSignatureCounter} is
+     *     <code>true</code>, the {@link AuthenticatorData#getSignatureCounter() signature count} in the response is
+     *     less than or equal to the {@link RegisteredCredential#getSignatureCount() stored signature count}, and at
+     *     least one of the signature count values is nonzero.
+     * @throws AssertionFailedException
+     *     if validation fails for any other reason.
+     */
     public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions) throws AssertionFailedException {
         try {
             return _finishAssertion(finishAssertionOptions.getRequest(), finishAssertionOptions.getResponse(), finishAssertionOptions.getCallerTokenBindingId()).run();
@@ -389,7 +389,6 @@ public class RelyingParty {
             .credentialRepository(credentialRepository)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .validateSignatureCounter(validateSignatureCounter)
-            .validateTypeAttribute(validateTypeAttribute)
             .build();
     }
 

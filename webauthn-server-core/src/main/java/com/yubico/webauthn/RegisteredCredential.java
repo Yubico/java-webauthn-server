@@ -24,12 +24,12 @@
 
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
-import java.security.PublicKey;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -71,17 +71,19 @@ public class RegisteredCredential {
     private final ByteArray userHandle;
 
     /**
-     * The public key of the credential.
+     * The credential public key encoded in COSE_Key format, as defined in Section 7 of <a
+     * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>.
      *
      * <p>
      * This is used to verify the {@link AuthenticatorAssertionResponse#getSignature() signature} in authentication
      * assertions.
      * </p>
      *
+     * @see AttestedCredentialData#getCredentialPublicKey()
      * @see RegistrationResult#getPublicKeyCose()
      */
     @NonNull
-    private final PublicKey publicKey;
+    private final ByteArray publicKeyCose;
 
     /**
      * The stored <a href="https://w3c.github.io/webauthn/#signcount">signature count</a> of the credential.
@@ -116,8 +118,8 @@ public class RegisteredCredential {
                 }
             }
             public class Step3 {
-                public RegisteredCredentialBuilder publicKey(PublicKey publicKey) {
-                    return builder.publicKey(publicKey);
+                public RegisteredCredentialBuilder publicKeyCose(ByteArray publicKeyCose) {
+                    return builder.publicKeyCose(publicKeyCose);
                 }
             }
         }

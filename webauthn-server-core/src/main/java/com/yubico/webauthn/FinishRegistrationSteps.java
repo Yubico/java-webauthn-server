@@ -68,14 +68,12 @@ final class FinishRegistrationSteps {
     private final Optional<ByteArray> callerTokenBindingId;
     private final Set<String> origins;
     private final String rpId;
-    private final Boolean allowUntrustedAttestation;
+    private final boolean allowUntrustedAttestation;
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
 
     @Builder.Default
-    private final Boolean allowUnrequestedExtensions = false;
-    @Builder.Default
-    private final Boolean validateTypeAttribute = true;
+    private final boolean allowUnrequestedExtensions = false;
 
 
     public Step1 begin() {
@@ -172,20 +170,10 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            final String type = clientData.getType();
-
-            if (!CLIENT_DATA_TYPE.equals(type)) {
-                final String message = String.format(
-                    "The \"type\" in the client data must be exactly \"%s\", was: %s",
-                    CLIENT_DATA_TYPE, clientData.getType()
-                );
-
-                if (validateTypeAttribute) {
-                    throw new IllegalArgumentException(message);
-                } else {
-                    warnings.add(message);
-                }
-            }
+            assure(CLIENT_DATA_TYPE.equals(clientData.getType()),
+                "The \"type\" in the client data must be exactly \"%s\", was: %s",
+                CLIENT_DATA_TYPE, clientData.getType()
+            );
         }
 
         @Override

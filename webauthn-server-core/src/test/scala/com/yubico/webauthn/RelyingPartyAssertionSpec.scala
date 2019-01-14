@@ -28,6 +28,7 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -45,6 +46,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
@@ -67,6 +69,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
   private def sha256(data: String): ByteArray = sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
+
+  private val emptyCredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
+  }
 
   private object Defaults {
 
@@ -107,6 +117,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     else
       ???
 
+  private def getPublicKeyBytes(credentialKey: KeyPair): ByteArray = WebAuthnCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey])
+
   def finishAssertion(
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
     authenticatorData: ByteArray = Defaults.authenticatorData,
@@ -129,6 +141,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     validateSignatureCounter: Boolean = true
   ): FinishAssertionSteps = {
     val clientDataJsonBytes: ByteArray = if (clientDataJson == null) null else new ByteArray(clientDataJson.getBytes("UTF-8"))
+    val credentialPublicKeyBytes = getPublicKeyBytes(credentialKey)
 
     val request = AssertionRequest.builder()
       .publicKeyCredentialRequestOptions(
@@ -166,7 +179,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 Some(RegisteredCredential.builder()
                   .credentialId(credId)
                   .userHandle(userHandleForUser)
-                  .publicKey(credentialKey.getPublic)
+                  .publicKeyCose(credentialPublicKeyBytes)
                   .signatureCount(0)
                   .build()
                 )
@@ -184,6 +197,40 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       .validateSignatureCounter(validateSignatureCounter)
       .build()
       ._finishAssertion(request, response, callerTokenBindingId.asJava)
+  }
+
+  describe("RelyingParty.startAssertion") {
+
+    describe("respects the userVerification parameter in StartAssertionOptions.") {
+
+      val default = UserVerificationRequirement.PREFERRED
+
+      it(s"If the parameter is not set, or set to empty, the default of ${default} is used.") {
+        val rp = RelyingParty.builder()
+          .identity(Defaults.rpId)
+          .credentialRepository(emptyCredentialRepository)
+          .build()
+        val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
+        val request2 = rp.startAssertion(StartAssertionOptions.builder().userVerification(None.asJava).build())
+
+        request1.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
+        request2.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
+      }
+
+      it(s"If the parameter is set, that value is used.") {
+        val rp = RelyingParty.builder()
+          .identity(Defaults.rpId)
+          .credentialRepository(emptyCredentialRepository)
+          .build()
+
+        forAll { uv: UserVerificationRequirement =>
+          val request = rp.startAssertion(StartAssertionOptions.builder().userVerification(Some(uv).asJava).build())
+
+          request.getPublicKeyCredentialRequestOptions.getUserVerification should equal (uv)
+        }
+      }
+    }
+
   }
 
   describe("§7.2. Verifying an authentication assertion") {
@@ -244,7 +291,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             RegisteredCredential.builder()
               .credentialId(new ByteArray(Array(0, 1, 2, 3)))
               .userHandle(owner.userHandle)
-              .publicKey(Defaults.credentialKey.getPublic)
+              .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
               .signatureCount(0)
               .build()
           ).asJava
@@ -283,13 +330,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
         it("Fails if the credential ID is unknown.") {
           val steps = finishAssertion(
-            credentialRepository = Some(new CredentialRepository {
-              override def lookup(id: ByteArray, uh: ByteArray) = None.asJava
-              override def lookupAll(id: ByteArray) = Set.empty.asJava
-              override def getCredentialIdsForUsername(username: String) = ???
-              override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-              override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-            })
+            credentialRepository = Some(emptyCredentialRepository)
           )
           val step: steps.Step3 = new steps.Step3(Defaults.username, Defaults.userHandle, Nil.asJava)
 
@@ -304,7 +345,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               RegisteredCredential.builder()
                 .credentialId(id)
                 .userHandle(uh)
-                .publicKey(Defaults.credentialKey.getPublic)
+                .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                 .signatureCount(0)
                 .build()
             ).asJava
@@ -316,7 +357,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
           step.validations shouldBe a [Success[_]]
-          step.credential.getPublicKey should equal (Defaults.credentialKey.getPublic)
+          step.credential.getPublicKeyCose should equal (getPublicKeyBytes(Defaults.credentialKey))
           step.tryNext shouldBe a [Success[_]]
         }
       }
@@ -763,7 +804,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-            forAll(unrequestedAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
+            forAll(unrequestedAssertionExtensions, minSuccessful(5)) { case (extensionInputs, clientExtensionOutputs) =>
               val steps = finishAssertion(
                 requestedExtensions = extensionInputs,
                 clientExtensionResults = clientExtensionOutputs
@@ -905,7 +946,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 RegisteredCredential.builder()
                   .credentialId(id)
                   .userHandle(uh)
-                  .publicKey(Defaults.credentialKey.getPublic)
+                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                   .signatureCount(1336)
                   .build()
               ).asJava
@@ -937,7 +978,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 RegisteredCredential.builder()
                   .credentialId(id)
                   .userHandle(uh)
-                  .publicKey(Defaults.credentialKey.getPublic)
+                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                   .signatureCount(1337)
                   .build()
               ).asJava
@@ -967,10 +1008,17 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                   validateSignatureCounter = true
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val result = Try(step.run())
 
                 step.validations shouldBe a [Failure[_]]
-                step.validations.failed.get shouldBe an [IllegalArgumentException]
+                step.validations.failed.get shouldBe an [InvalidSignatureCountException]
                 step.tryNext shouldBe a [Failure[_]]
+
+                result shouldBe a [Failure[_]]
+                result.failed.get shouldBe an [InvalidSignatureCountException]
+                result.failed.get.asInstanceOf[InvalidSignatureCountException].getExpectedMinimum should equal (1338)
+                result.failed.get.asInstanceOf[InvalidSignatureCountException].getReceived should equal (1337)
+                result.failed.get.asInstanceOf[InvalidSignatureCountException].getCredentialId should equal (Defaults.credentialId)
               }
             }
           }

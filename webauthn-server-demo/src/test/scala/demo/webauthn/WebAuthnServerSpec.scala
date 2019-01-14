@@ -26,6 +26,7 @@ package demo.webauthn
 
 import java.util
 import java.security.KeyPair
+import java.security.interfaces.ECPublicKey
 import java.time.Instant
 import java.util.Optional
 import java.util.concurrent.TimeUnit
@@ -165,7 +166,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(RegisteredCredential.builder()
           .credentialId(testData.response.getId)
           .userHandle(testData.userId.getId)
-          .publicKey(credentialKey.getPublic)
+          .publicKeyCose(WebAuthnCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey]))
           .signatureCount(0)
           .build()
         ).asJava)
