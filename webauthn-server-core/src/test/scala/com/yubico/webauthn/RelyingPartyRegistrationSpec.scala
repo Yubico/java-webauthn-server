@@ -1246,8 +1246,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           step.tryNext shouldBe a [Success[_]]
         }
 
-        ignore("The android-safetynet statement format is supported.") {
-          val steps = finishRegistration(testData = RegistrationTestData.AndroidSafetynet.BasicAttestation)
+        it("The android-safetynet statement format is supported.") {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.AndroidSafetynet.BasicAttestation,
+            rp = RelyingPartyIdentity.builder().id("demo.yubico.com").name("").build()
+          )
           val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
