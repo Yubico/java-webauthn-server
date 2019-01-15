@@ -35,6 +35,7 @@ import com.yubico.webauthn.data.exception.HexException;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
+import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.util.Arrays;
 
 /**
@@ -70,6 +71,13 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
             throw new Base64UrlException("Invalid Base64Url encoding: " + base64, e);
         }
         this.base64 = base64;
+    }
+
+    /**
+     * Create a new instance by decoding <code>base64</code> as classic Base64 data.
+     */
+    public static ByteArray fromBase64(@NonNull final String base64) {
+        return new ByteArray(Base64.decodeBase64(base64));
     }
 
     /**

@@ -56,6 +56,16 @@ public class ByteArrayTest {
         assertEquals(out3, "");
     }
 
+    @Test
+    public void decodeMimeTest() {
+        String base64 = "ab+/+/==";
+        String base64WithoutPadding = "ab+/+/";
+        String expectedRecoded = "ab-_-w";
+
+        assertEquals(expectedRecoded, ByteArray.fromBase64(base64).getBase64Url());
+        assertEquals(expectedRecoded, ByteArray.fromBase64(base64WithoutPadding).getBase64Url());
+    }
+
     @Test(expected = Base64UrlException.class)
     public void decodeBadAlphabetTest() throws Base64UrlException {
         ByteArray.fromBase64Url("****");
