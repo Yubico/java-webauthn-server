@@ -429,7 +429,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step15 nextStep() {
-            return new Step15(attestation, attestationType(), allWarnings());
+            return new Step15(attestation, attestationType(), attestationTrustPath(), allWarnings());
         }
 
         public AttestationType attestationType() {
@@ -459,6 +459,7 @@ final class FinishRegistrationSteps {
     public class Step15 implements Step<Step16> {
         private final AttestationObject attestation;
         private final AttestationType attestationType;
+        private final Optional<List<X509Certificate>> attestationTrustPath;
         private final List<String> prevWarnings;
 
         public String format() {
@@ -479,7 +480,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step16 nextStep() {
-            return new Step16(attestation, attestationType, trustResolver(), allWarnings());
+            return new Step16(attestation, attestationType, attestationTrustPath, trustResolver(), allWarnings());
         }
 
         public Optional<AttestationTrustResolver> trustResolver() {
@@ -514,6 +515,7 @@ final class FinishRegistrationSteps {
     public class Step16 implements Step<Step17> {
         private final AttestationObject attestation;
         private final AttestationType attestationType;
+        private final Optional<List<X509Certificate>> attestationTrustPath;
         private final Optional<AttestationTrustResolver> trustResolver;
         private final List<String> prevWarnings;
 
@@ -566,7 +568,7 @@ final class FinishRegistrationSteps {
             }
             return trustResolver.flatMap(tr -> {
                 try {
-                    return Optional.of(tr.resolveTrustAnchor(attestation));
+                    return Optional.of(tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList)));
                 } catch (CertificateEncodingException e) {
                     log.debug("Failed to resolve trust anchor for attestation: {}", attestation, e);
                     return Optional.empty();
@@ -578,7 +580,7 @@ final class FinishRegistrationSteps {
         public List<String> getWarnings() {
             return trustResolver.map(tr -> {
                 try {
-                    tr.resolveTrustAnchor(attestation);
+                    tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList));
                     return Collections.<String>emptyList();
                 } catch (CertificateEncodingException e) {
                     return Collections.singletonList("Failed to resolve trust anchor: " + e);
