@@ -125,6 +125,13 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
     }
 
     /**
+     * @return the content bytes encoded as classic Base64 data.
+     */
+    public String getBase64() {
+        return Base64.encodeBase64String(bytes);
+    }
+
+    /**
      * @return the content bytes encoded as Base64Url data.
      */
     public String getBase64Url() {
