@@ -32,12 +32,16 @@ import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
 import COSE.ECPublicKey
 import COSE.OneKey
+import com.fasterxml.jackson.databind.JsonNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
+
+import scala.collection.JavaConverters._
 
 
 object Test extends App {
@@ -111,6 +115,13 @@ object Test extends App {
 
       println(ByteArray.fromBase64Url(jwsHeaderBase64))
       println(prettifyJson(new String(ByteArray.fromBase64Url(jwsHeaderBase64).getBytes, "UTF-8")))
+      for { x5cNode: JsonNode <- WebAuthnCodecs.json().readTree(ByteArray.fromBase64Url(jwsHeaderBase64).getBytes).get("x5c").elements().asScala } {
+        val x5cBytes = ByteArray.fromBase64(x5cNode.textValue())
+        val cert = CertificateParser.parseDer(x5cBytes.getBytes)
+        println(cert)
+      }
+
+
       println(ByteArray.fromBase64Url(jwsPayloadBase64))
       println(prettifyJson(new String(ByteArray.fromBase64Url(jwsPayloadBase64).getBytes, "UTF-8")))
       println(ByteArray.fromBase64Url(jwsSigBase64))
