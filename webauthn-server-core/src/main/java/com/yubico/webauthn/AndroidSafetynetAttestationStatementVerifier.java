@@ -1,22 +1,30 @@
 package com.yubico.webauthn;
 
+import javax.net.ssl.SSLException;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
-import java.nio.charset.Charset;
+import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
-import javax.net.ssl.SSLException;
-import java.security.GeneralSecurityException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import com.google.api.client.json.webtoken.JsonWebSignature;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 
 @Slf4j
@@ -26,129 +34,158 @@ class AndroidSafetynetAttestationStatementVerifier implements AttestationStateme
 
     private static final DefaultHostnameVerifier HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
-    private X509Certificate mX5cCert = null;
-
-    public Optional<List<X509Certificate>> getAttestationTrustPath() {
-        if (mX5cCert != null) {
-            List<X509Certificate> certs = new ArrayList<>(1);
-            certs.add(mX5cCert);
-            return Optional.of(certs);
-        }
-        return Optional.empty();
-    }
-
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {
         return AttestationType.BASIC;
     }
 
     @Override
-    public boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
-        final JsonNode ver = attestationObject.getAttestationStatement().get("ver");
-        final JsonNode response = attestationObject.getAttestationStatement().get("response");
-
-        if (ver == null || !ver.isTextual() ) {
-            throw new IllegalArgumentException("attStmt.ver must be set as text! " + ver.toString());
+    public JsonNode getX5cArray(AttestationObject attestationObject) {
+        JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
+        ArrayNode array = jsonFactory.arrayNode();
+        for (JsonNode cert : parseJws(attestationObject).getHeader().get("x5c")) {
+            array.add(jsonFactory.binaryNode(ByteArray.fromBase64(cert.textValue()).getBytes()));
         }
-
-        if (response == null || !response.isBinary() ) {
-            throw new IllegalArgumentException("attStmt.response must be set to a binary value.");
-        }
-
-        String attStmtString;
-        try {
-            attStmtString = new String(response.binaryValue(), Charset.forName("UTF-8"));
-        } catch (IOException ioe) {
-            throw ExceptionUtil.wrapAndLog(log, "reponseNode.isBinary() was true but reponseNode.binaryValue() failed", ioe);
-        }
-
-        if (attStmtString != null && !attStmtString.isEmpty()) {
-            final AndroidSafetynetAttestationStatement attStmtObj = parseAndVerify(attStmtString);
-            if (attStmtObj != null) {
-                final byte[] nonce = attStmtObj.getNonce();
-                final boolean isCtsProfileMatch = attStmtObj.isCtsProfileMatch();
-
-                if (isCtsProfileMatch) {
-                    // Verify that the nonce in the response is identical to the SHA-256 hash of 
-                    // the concatenation of authenticatorData and clientDataHash.
-                    ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
-                    ByteArray hashSignedData = crypto.hash(signedData);
-                    ByteArray nonceByteArray = new ByteArray(nonce);
-
-                    final int compareResult = hashSignedData.compareTo(nonceByteArray);
-                    return (compareResult == 0);
-                }
-            }
-        }
-
-        return false;
+        return array;
     }
 
-    /**
-     * This code is copied from android-play-saftynet attestion sample.
-     * @param signedAttestationStatment
-     * @return
-     */
-    private AndroidSafetynetAttestationStatement parseAndVerify(String signedAttestationStatment) {
-        // Parse JSON Web Signature format.
-        JsonWebSignature jws;
-        try {
-            jws = JsonWebSignature.parser(JacksonFactory.getDefaultInstance())
-                    .setPayloadClass(AndroidSafetynetAttestationStatement.class).parse(signedAttestationStatment);
-        } catch (IOException e) {
-            System.err.println("Failure: " + signedAttestationStatment + " is not valid JWS " +
-                    "format.");
-            return null;
+    @Override
+    public boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
+        final JsonNode ver = attestationObject.getAttestationStatement().get("ver");
+
+        if (ver == null || !ver.isTextual()) {
+            throw new IllegalArgumentException("Property \"ver\" of android-safetynet attestation statement must be a string, was: " + ver);
         }
 
-        // Verify the signature of the JWS and retrieve the signature certificate.
-        X509Certificate cert;
+        JsonWebSignatureCustom jws = parseJws(attestationObject);
+
+        if (!verifySignature(jws)) {
+            return false;
+        }
+
+        JsonNode payload = jws.getPayload();
+
+        ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
+        ByteArray hashSignedData = crypto.hash(signedData);
+        ByteArray nonceByteArray = ByteArray.fromBase64(payload.get("nonce").textValue());
+        ExceptionUtil.assure(
+            hashSignedData.equals(nonceByteArray),
+            "Nonce does not equal authenticator data + client data. Expected nonce: %s, was nonce: %s",
+            hashSignedData.getBase64Url(),
+            nonceByteArray.getBase64Url()
+        );
+
+        ExceptionUtil.assure(
+            payload.get("ctsProfileMatch").booleanValue(),
+            "Expected ctsProfileMatch to be true, was: %s",
+            payload.get("ctsProfileMatch")
+        );
+
+        return true;
+    }
+
+    private static JsonWebSignatureCustom parseJws(AttestationObject attestationObject) {
+        return new JsonWebSignatureCustom(new String(getResponseBytes(attestationObject).getBytes(), StandardCharsets.UTF_8));
+    }
+
+    private static ByteArray getResponseBytes(AttestationObject attestationObject) {
+        final JsonNode response = attestationObject.getAttestationStatement().get("response");
+        if (response == null || !response.isBinary()) {
+            throw new IllegalArgumentException("Property \"response\" of android-safetynet attestation statement must be a binary value, was: " + response);
+        }
+
         try {
-            cert = jws.verifySignature();
-            if (cert == null) {
-                System.err.println("Failure: Signature verification failed.");
-                return null;
-            }
-        } catch (GeneralSecurityException e) {
-            System.err.println(
-                    "Failure: Error during cryptographic verification of the JWS signature.");
-            return null;
+            return new ByteArray(response.binaryValue());
+        } catch (IOException ioe) {
+            throw ExceptionUtil.wrapAndLog(log, "response.isBinary() was true but response.binaryValue failed: " + response, ioe);
+        }
+    }
+
+    private boolean verifySignature(JsonWebSignatureCustom jws) {
+        // Verify the signature of the JWS and retrieve the signature certificate.
+        X509Certificate attestationCertificate = jws.getX5c().get(0);
+
+        String signatureAlgorithmName = WebAuthnCodecs.jwsAlgorithmNameToJavaAlgorithmName(jws.getAlgorithm());
+
+        Signature signatureVerifier;
+        try {
+            signatureVerifier = Signature.getInstance(signatureAlgorithmName, crypto.getProvider());
+        } catch (NoSuchAlgorithmException e) {
+            throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
+        }
+        try {
+            signatureVerifier.initVerify(attestationCertificate.getPublicKey());
+        } catch (InvalidKeyException e) {
+            throw ExceptionUtil.wrapAndLog(log, "Attestation key is invalid: " + attestationCertificate, e);
+        }
+        try {
+            signatureVerifier.update(jws.getSignedBytes().getBytes());
+        } catch (SignatureException e) {
+            throw ExceptionUtil.wrapAndLog(log, "Signature object in invalid state: " + signatureVerifier, e);
         }
 
         // Verify the hostname of the certificate.
-        if (!verifyHostname("attest.android.com", cert)) {
-            System.err.println("Failure: Certificate isn't issued for the hostname attest.android" +
-                    ".com.");
-            return null;
+        ExceptionUtil.assure(
+            verifyHostname(attestationCertificate),
+            "Certificate isn't issued for the hostname attest.android.com: %s",
+            attestationCertificate
+        );
+
+        try {
+            return signatureVerifier.verify(jws.getSignature().getBytes());
+        } catch (SignatureException e) {
+            throw ExceptionUtil.wrapAndLog(log, "Failed to verify signature of JWS: " + jws, e);
+        }
+    }
+
+    @Value
+    private static class JsonWebSignatureCustom {
+        public final JsonNode header;
+        public final JsonNode payload;
+        public final ByteArray signedBytes;
+        public final ByteArray signature;
+        public final List<X509Certificate> x5c;
+        public final String algorithm;
+
+        JsonWebSignatureCustom(String jwsCompact) {
+            String[] parts = jwsCompact.split("\\.");
+            ObjectMapper json = WebAuthnCodecs.json();
+
+            try {
+                final ByteArray header = ByteArray.fromBase64Url(parts[0]);
+                final ByteArray payload = ByteArray.fromBase64Url(parts[1]);
+
+                this.header = json.readTree(header.getBytes());
+                this.payload = json.readTree(payload.getBytes());
+                this.signedBytes = new ByteArray((parts[0] + "." + parts[1]).getBytes(StandardCharsets.UTF_8));
+                this.signature = ByteArray.fromBase64Url(parts[2]);
+                this.x5c = getX5c(this.header);
+                this.algorithm = this.header.get("alg").textValue();
+            } catch (IOException | Base64UrlException e) {
+                throw ExceptionUtil.wrapAndLog(log, "Failed to parse JWS: " + jwsCompact, e);
+            } catch (CertificateException e) {
+                throw ExceptionUtil.wrapAndLog(log, "Failed to parse attestation certificates in JWS header: " + jwsCompact, e);
+            }
         }
 
-        // Save the cefrtificate
-        mX5cCert = cert;
-
-        // Extract and use the payload data.
-        AndroidSafetynetAttestationStatement stmt = (AndroidSafetynetAttestationStatement) jws.getPayload();
-        return stmt;
+        private static List<X509Certificate> getX5c(JsonNode header) throws IOException, CertificateException {
+            List<X509Certificate> result = new ArrayList<>();
+            for (JsonNode jsonNode : header.get("x5c")) {
+                result.add(CertificateParser.parseDer(jsonNode.binaryValue()));
+            }
+            return result;
+        }
     }
 
     /**
-     * Verifies that the certificate matches the specified hostname.
-     * Uses the {@link DefaultHostnameVerifier} from the Apache HttpClient library
-     * to confirm that the hostname matches the certificate.
-     *
-     * @param hostname
-     * @param leafCert
-     * @return
+     * Verifies that the certificate matches the hostname "attest.android.com".
      */
-    private static boolean verifyHostname(String hostname, X509Certificate leafCert) {
+    private static boolean verifyHostname(X509Certificate leafCert) {
         try {
-            // Check that the hostname matches the certificate. This method throws an exception if
-            // the cert could not be verified.
-            HOSTNAME_VERIFIER.verify(hostname, leafCert);
+            HOSTNAME_VERIFIER.verify("attest.android.com", leafCert);
             return true;
         } catch (SSLException e) {
-            e.printStackTrace();
+            return false;
         }
-
-        return false;
     }
 }

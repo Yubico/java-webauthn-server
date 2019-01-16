@@ -135,4 +135,12 @@ public final class WebAuthnCodecs {
         }
     }
 
+    public static String jwsAlgorithmNameToJavaAlgorithmName(String alg) {
+        switch (alg) {
+            case "RS256":
+                return "SHA256withRSA";
+        }
+        throw new IllegalArgumentException("Unknown algorithm: " + alg);
+    }
+
 }
