@@ -80,7 +80,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private val crypto = new BouncyCastleCrypto
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
-  def flipByte(index: Int, bytes: ByteArray): ByteArray = new ByteArray(bytes.getBytes.updated(index, (0xff ^ bytes.getBytes()(index)).toByte))
+  def flipByte(index: Int, bytes: ByteArray): ByteArray = editByte(bytes, index, b => (0xff ^ b).toByte)
+  def editByte(bytes: ByteArray, index: Int, updater: Byte => Byte): ByteArray = new ByteArray(bytes.getBytes.updated(index, updater(bytes.getBytes()(index))))
 
   private val emptyCredentialRepository = new CredentialRepository {
     override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
@@ -1300,9 +1301,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             describe("2. Verify that response is a valid SafetyNet response of version ver.") {
-              it("Fails if there's a byte flip in the signature.") {
+              it("Fails if there's a difference in the signature.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(flipByte(2000, new ByteArray(attStmt.get("response").binaryValue())).getBytes)))
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
 
                 val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                   new AttestationObject(testData.attestationObject),
