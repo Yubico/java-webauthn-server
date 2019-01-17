@@ -80,6 +80,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private val crypto = new BouncyCastleCrypto
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
+  def flipByte(index: Int, bytes: ByteArray): ByteArray = editByte(bytes, index, b => (0xff ^ b).toByte)
+  def editByte(bytes: ByteArray, index: Int, updater: Byte => Byte): ByteArray = new ByteArray(bytes.getBytes.updated(index, updater(bytes.getBytes()(index))))
+
   private val emptyCredentialRepository = new CredentialRepository {
     override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
     override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
@@ -694,8 +697,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.tryNext shouldBe a [Success[_]]
           }
 
-          def flipByte(index: Int, bytes: ByteArray): ByteArray = new ByteArray(bytes.getBytes.updated(index, (0xff ^ bytes.getBytes()(index)).toByte))
-
           it("a test case with different signed client data is not valid.") {
             val testData = RegistrationTestData.FidoU2f.SelfAttestation
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
@@ -1246,8 +1247,127 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           step.tryNext shouldBe a [Success[_]]
         }
 
-        ignore("The android-safetynet statement format is supported.") {
-          val steps = finishRegistration(testData = RegistrationTestData.AndroidSafetynet.BasicAttestation)
+        describe("For the android-safetynet attestation statement format") {
+          val verifier = new AndroidSafetynetAttestationStatementVerifier
+          val testDataContainer = RegistrationTestData.AndroidSafetynet
+          val defaultTestData = testDataContainer.BasicAttestation
+
+          it("the attestation statement verifier implementation is AndroidSafetynetAttestationStatementVerifier.") {
+            val steps = finishRegistration(
+              testData = defaultTestData,
+              allowUntrustedAttestation = true,
+              rp = defaultTestData.rpId
+            )
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.getAttestationStatementVerifier shouldBe an [AndroidSafetynetAttestationStatementVerifier]
+          }
+
+          describe("the verification procedure is:") {
+            def checkFails(testData: RegistrationTestData): Unit = {
+              val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
+                new AttestationObject(testData.attestationObject),
+                testData.clientDataJsonHash
+              ))
+
+              result shouldBe a [Failure[_]]
+              result.failed.get shouldBe an [IllegalArgumentException]
+            }
+
+            describe("1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.") {
+              it("Fails if attStmt.ver is a number value.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("ver", jsonFactory.numberNode(123)))
+                checkFails(testData)
+              }
+
+              it("Fails if attStmt.ver is missing.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("ver"))
+                checkFails(testData)
+              }
+
+              it("Fails if attStmt.response is a text value.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.textNode(new ByteArray(attStmt.get("response").binaryValue()).getBase64Url)))
+                checkFails(testData)
+              }
+
+              it("Fails if attStmt.response is missing.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("response"))
+                checkFails(testData)
+              }
+            }
+
+            describe("2. Verify that response is a valid SafetyNet response of version ver.") {
+              it("Fails if there's a difference in the signature.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
+
+                val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
+                  new AttestationObject(testData.attestationObject),
+                  testData.clientDataJsonHash
+                ))
+
+                result shouldBe a [Success[_]]
+                result.get should be (false)
+              }
+            }
+
+            describe("3. Verify that the nonce in the response is identical to the Base64 encoding of the SHA-256 hash of the concatenation of authenticatorData and clientDataHash.") {
+              it("Fails if an additional property is added to the client data.") {
+                val testData = defaultTestData.editClientData("foo", "bar")
+                checkFails(testData)
+              }
+            }
+
+            describe("4. Let attestationCert be the attestation certificate.") {
+              it("Nothing to test.") {}
+            }
+
+            it("5. Verify that attestationCert is issued to the hostname \"attest.android.com\" (see SafetyNet online documentation).") {
+              checkFails(testDataContainer.WrongHostname)
+            }
+
+            it("6. Verify that the ctsProfileMatch attribute in the payload of response is true.") {
+              checkFails(testDataContainer.FalseCtsProfileMatch)
+            }
+
+            describe("7. If successful, return implementation-specific values representing attestation type Basic and attestation trust path attestationCert.") {
+              it("The real example succeeds.") {
+                val steps = finishRegistration(
+                  testData = testDataContainer.RealExample,
+                  rp = testDataContainer.RealExample.rpId
+                )
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
+                step.attestationType() should be (AttestationType.BASIC)
+                step.attestationTrustPath().get should not be empty
+                step.attestationTrustPath().get.size should be (2)
+              }
+
+              it("The default test case succeeds.") {
+                val steps = finishRegistration(testData = testDataContainer.BasicAttestation)
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
+                step.attestationType() should be (AttestationType.BASIC)
+                step.attestationTrustPath().get should not be empty
+                step.attestationTrustPath().get.size should be (1)
+              }
+            }
+          }
+        }
+
+        it("The android-safetynet statement format is supported.") {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.AndroidSafetynet.RealExample,
+            rp = RelyingPartyIdentity.builder().id("demo.yubico.com").name("").build()
+          )
           val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
@@ -1256,6 +1376,22 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
+
+        describe("For the android-safetynet statement format") {
+          it("a trust resolver is returned.") {
+            val metadataService: MetadataService = new TestMetadataService()
+            val steps = finishRegistration(
+              testData = RegistrationTestData.AndroidSafetynet.RealExample,
+              metadataService = Some(metadataService),
+              rp = RegistrationTestData.AndroidSafetynet.RealExample.rpId
+            )
+            val step: FinishRegistrationSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.trustResolver.get should not be null
+            step.tryNext shouldBe a [Success[_]]
+          }
+        }
 
         describe("For the fido-u2f statement format") {
 
@@ -1369,7 +1505,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val steps = finishRegistration(
                 allowUntrustedAttestation = false,
                 testData = testData,
-                metadataService = Some(metadataService)
+                metadataService = Some(metadataService),
+                rp = testData.rpId
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1385,7 +1522,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val steps = finishRegistration(
                 allowUntrustedAttestation = true,
                 testData = testData,
-                metadataService = Some(metadataService)
+                metadataService = Some(metadataService),
+                rp = testData.rpId
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1407,7 +1545,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(
                 testData = testData,
-                metadataService = Some(metadataService)
+                metadataService = Some(metadataService),
+                rp = testData.rpId
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1426,9 +1565,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("An android-safetynet basic attestation") {
-            ignore("fails for now.") {
-              fail("Test not implemented.")
-            }
+            generateTests(testData = RegistrationTestData.AndroidSafetynet.RealExample)
           }
 
           describe("A fido-u2f basic attestation") {

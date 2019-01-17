@@ -32,11 +32,16 @@ import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
 import COSE.ECPublicKey
 import COSE.OneKey
+import com.fasterxml.jackson.databind.JsonNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.internal.util.CertificateParser
+import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
+
+import scala.collection.JavaConverters._
 
 
 object Test extends App {
@@ -64,7 +69,7 @@ object Test extends App {
   // println(attStmt.get("x5c").get(0).isBinary)
   // println(attStmt.get("x5c").get(0))
 
-
+  runWith(RegistrationTestData.AndroidSafetynet.RealExample.attestationObject)
 
   val attestationObjectFirefox58 = ByteArray.fromBase64Url("o2hhdXRoRGF0YVjKlJKaCrOPLCdHaydNzfSylZWY-KV_PzorqW39Kb9p5mdBAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAixHvZmRdDp0DhMTCfB9dHQF9frTlVXNqXGJ3tGfVV0hR6mIk9ioAbK4AK9VkoxdIE04kjemwBHc5Yaz8BrZ9ujY2FsZ2VFUzI1NmF4WCD7ESIYejaHqAg9C9hTMy1hQafvKmy1KIuXW6Artariq2F5WCCpWfXbnYPAUpTL18oD9A_BUFR7z9IhodehhSYlN_Y2mWNmbXRoZmlkby11MmZnYXR0U3RtdKJjeDVjgVkCTjCCAkowggEyoAMCAQICBFcW98AwDQYJKoZIhvcNAQELBQAwLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwIBcNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBaMCwxKjAoBgNVBAMMIVl1YmljbyBVMkYgRUUgU2VyaWFsIDI1MDU2OTIyNjE3NjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABGTZHFTW2VeN07BgeExGNtVIo5g6rzUnzustxuMrZ54z_OnoYxStvPhXUhsvTEmflK9wVWW-IhlbKbZOTa0N0GKjOzA5MCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS41MBMGCysGAQQBguUcAgEBBAQDAgUgMA0GCSqGSIb3DQEBCwUAA4IBAQB4mxjKm6TbdiDi-IuM_elRJm0qInfV4_vptoyaoOkaakjqdUzvC95ZhANtrn-Lo_3mS1F2BMOhGy5tdU1KNxnvqHaTD6Dg8wY_WkygvKAxT38Fo-pdTt2R00pmtV1cj6huAOe_X92AI36z24I-NOMSZ7NJqsecJKcSpZ6ASqqNa6klJqJ3p3HeMWpzvzxxH8VNImYn-teV5PROG3ADTwn8_ji33il4k_tZrIscM8_Fxr5djkzCf0ofRvb4RPh4wHKL3B37pnHaEIf1jOOOWWuj8p_QWUFdxQqjL4kUfNPbCAE31OZbvOsLv-VBiBiOzBQxGHlRkqs6c4eppXJ_EEiGY3NpZ1hHMEUCIEMdeuTafyyaQFAjrZv0ANFt6mHzqjABJBwtUPFfbU0BAiEAvHJuqQCMUoNErDJFR928WnJnykwmoEi5XxdvsjtbDIw")
   // val attestationObjectFirefoxNightly = ByteArray.fromBase64Url("o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEcwRQIhAMN34Lky1H00Yio4AJcCVh-cIbw__8fOgVPacfZqQMtSAiAHLWI6GKHAi7pmRMEljNuWBq_BHrKObzzzui9Duqmo7GN4NWOBWQJOMIICSjCCATKgAwIBAgIEVxb3wDANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowLDEqMCgGA1UEAwwhWXViaWNvIFUyRiBFRSBTZXJpYWwgMjUwNTY5MjI2MTc2MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEZNkcVNbZV43TsGB4TEY21UijmDqvNSfO6y3G4ytnnjP86ehjFK28-FdSGy9MSZ-Ur3BVZb4iGVsptk5NrQ3QYqM7MDkwIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjUwEwYLKwYBBAGC5RwCAQEEBAMCBSAwDQYJKoZIhvcNAQELBQADggEBAHibGMqbpNt2IOL4i4z96VEmbSoid9Xj--m2jJqg6RpqSOp1TO8L3lmEA22uf4uj_eZLUXYEw6EbLm11TUo3Ge-odpMPoODzBj9aTKC8oDFPfwWj6l1O3ZHTSma1XVyPqG4A579f3YAjfrPbgj404xJns0mqx5wkpxKlnoBKqo1rqSUmonencd4xanO_PHEfxU0iZif615Xk9E4bcANPCfz-OLfeKXiT-1msixwzz8XGvl2OTMJ_Sh9G9vhE-HjAcovcHfumcdoQh_WM445Za6Pyn9BZQV3FCqMviRR809sIATfU5lu86wu_5UGIGI7MFDEYeVGSqzpzh6mlcn8QSIZoYXV0aERhdGFYxJSSmgqzjywnR2snTc30spWVmPilfz86K6lt_Sm_aeZnQQAAAAAAAAAAAAAAAAAAAAAAAAAAAEBsMp3vlrdYz8qUyb6o0J9M9l7FLS6XI70p9Txx0LIDuG87doFwc-9Tu6pW0njfyIISSif4kXZkF87vrgCcDp3UpQECAyYgASFYIKjQ7ovDDFsXm-I3q1vX8WUtU2CQ5IwX0cPfgR1KxBZLIlggQR9CYSfpMsRLoL9Y1ADVV_rKHMStoipUywjOct0g7cA")
@@ -94,7 +99,40 @@ object Test extends App {
     val manuallyExtractedPubKeyBytes = new ByteArray(attestationObject.getBytes.drop(32 + 1 + 4 + 16 + 2 + 64))
     println(manuallyExtractedPubKeyBytes)
     println(WebAuthnCodecs.cbor.readTree(manuallyExtractedPubKeyBytes.getBytes))
+
+    println("Attestation statement:")
+    println(parsedAttObj.getAttestationStatement)
+
+    if (parsedAttObj.getFormat == "android-safetynet") {
+      println("Attestation statement \"response\" field:")
+      println(parsedAttObj.getAttestationStatement.get("response").binaryValue.toVector)
+      val safetynetJwsCompact = new String(parsedAttObj.getAttestationStatement.get("response").binaryValue, "UTF-8")
+
+      println(safetynetJwsCompact)
+
+      println(safetynetJwsCompact.split('.').toVector)
+      val Array(jwsHeaderBase64, jwsPayloadBase64, jwsSigBase64) = safetynetJwsCompact.split('.')
+
+      println(ByteArray.fromBase64Url(jwsHeaderBase64))
+      println(prettifyJson(new String(ByteArray.fromBase64Url(jwsHeaderBase64).getBytes, "UTF-8")))
+      for { x5cNode: JsonNode <- WebAuthnCodecs.json().readTree(ByteArray.fromBase64Url(jwsHeaderBase64).getBytes).get("x5c").elements().asScala } {
+        val x5cBytes = ByteArray.fromBase64(x5cNode.textValue())
+        val cert = CertificateParser.parseDer(x5cBytes.getBytes)
+        println(cert)
+      }
+
+
+      println(ByteArray.fromBase64Url(jwsPayloadBase64))
+      println(prettifyJson(new String(ByteArray.fromBase64Url(jwsPayloadBase64).getBytes, "UTF-8")))
+      println(ByteArray.fromBase64Url(jwsSigBase64))
+    }
+
+    println()
+    println()
   }
+
+  def prettifyJson(json: String): String =
+    WebAuthnCodecs.json().writerWithDefaultPrettyPrinter().writeValueAsString(WebAuthnCodecs.json().readTree(json))
 
   def doAuthData(authDataBytes: ByteArray) = {
     val rpidBytes: Array[Byte] = authDataBytes.getBytes.slice(0, 32)

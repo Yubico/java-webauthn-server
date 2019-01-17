@@ -25,12 +25,13 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.data.AttestationObject;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 
 interface AttestationTrustResolver {
 
-    Attestation resolveTrustAnchor(AttestationObject attestationObject) throws CertificateEncodingException;
+    Attestation resolveTrustAnchor(List<X509Certificate> certificateChain) throws CertificateEncodingException;
 
 }
