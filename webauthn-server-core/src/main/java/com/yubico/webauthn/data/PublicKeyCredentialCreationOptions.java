@@ -40,8 +40,8 @@ import lombok.Value;
 /**
  * Parameters for a call to <code>navigator.credentials.create()</code>.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions">§5.4. Options for
- * Credential Creation (dictionary PublicKeyCredentialCreationOptions)</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialcreationoptions">§5.4.
+ * Options for Credential Creation (dictionary PublicKeyCredentialCreationOptions)</a>
  */
 @Value
 @Builder(toBuilder = true)
@@ -50,7 +50,7 @@ public class PublicKeyCredentialCreationOptions {
     /**
      * Contains data about the Relying Party responsible for the request.
      * <p>
-     * Its value's {@link RelyingPartyIdentity#id id} member specifies the <a href="https://w3c.github.io/webauthn/#rp-id">RP
+     * Its value's {@link RelyingPartyIdentity#id id} member specifies the <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP
      * ID</a> the credential should be scoped to. If omitted, its value will be set by the client. See {@link
      * RelyingPartyIdentity} for further details.
      * </p>
@@ -66,8 +66,8 @@ public class PublicKeyCredentialCreationOptions {
 
     /**
      * A challenge intended to be used for generating the newly created credential’s attestation object. See the <a
-     * href="https://w3c.github.io/webauthn/#cryptographic-challenges">§13.1 Cryptographic Challenges</a> security
-     * consideration.
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1 Cryptographic
+     * Challenges</a> security consideration.
      */
     @NonNull
     private final ByteArray challenge;
@@ -120,8 +120,8 @@ public class PublicKeyCredentialCreationOptions {
      * <p>
      * For example, the caller may request that only authenticators with certain capabilities be used to create the
      * credential, or that particular information be returned in the attestation object. Some extensions are defined in
-     * <a href="https://w3c.github.io/webauthn/#extensions">§9 WebAuthn Extensions</a>; consult the IANA "WebAuthn
-     * Extension Identifier" registry established by
+     * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9 WebAuthn Extensions</a>; consult the
+     * IANA "WebAuthn Extension Identifier" registry established by
      * <a href="https://tools.ietf.org/html/draft-hodges-webauthn-registries">[WebAuthn-Registries]</a> for an
      * up-to-date list of registered WebAuthn Extensions.
      * </p>

@@ -35,7 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
- * This enumeration’s values describe authenticators' <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">attachment
+ * This enumeration’s values describe authenticators' <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticator-attachment-modality">attachment
  * modalities</a>. Relying Parties use this for two purposes:
  *
  * <ul>
@@ -51,8 +51,8 @@ import lombok.NonNull;
  * </li>
  * </ul>
  *
- * @see <a href="https://w3c.github.io/webauthn/#enumdef-authenticatorattachment">§5.4.5. Authenticator Attachment
- * Enumeration (enum AuthenticatorAttachment)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatorattachment">§5.4.5. Authenticator
+ * Attachment Enumeration (enum AuthenticatorAttachment)
  * </a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
@@ -60,7 +60,8 @@ import lombok.NonNull;
 public enum AuthenticatorAttachment implements JsonStringSerializable {
 
     /**
-     * Indicates <a href="https://w3c.github.io/webauthn/#cross-platform-attachment">cross-platform attachment</a>.
+     * Indicates <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cross-platform-attachment">cross-platform
+     * attachment</a>.
      * <p>
      * Authenticators of this class are removable from, and can "roam" among, client platforms.
      * </p>
@@ -68,7 +69,8 @@ public enum AuthenticatorAttachment implements JsonStringSerializable {
     CROSS_PLATFORM("cross-platform"),
 
     /**
-     * Indicates <a href="https://w3c.github.io/webauthn/#platform-attachment">platform attachment</a>.
+     * Indicates <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#platform-attachment">platform
+     * attachment</a>.
      * <p>
      * Usually, authenticators of this class are not removable from the platform.
      * </p>

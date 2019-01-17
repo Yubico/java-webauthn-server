@@ -36,7 +36,7 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
  * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding protocol</a> used when
  * communicating with the Relying Party.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-tokenbinding">dictionary TokenBinding</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-tokenbinding">dictionary TokenBinding</a>
  */
 @Value
 public class TokenBindingInfo {

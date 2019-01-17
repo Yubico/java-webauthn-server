@@ -36,8 +36,8 @@ import lombok.Getter;
  * A number identifying a cryptographic algorithm. The algorithm identifiers SHOULD be values registered in the IANA
  * COSE Algorithms registry, for instance, -7 for "ES256" and -257 for "RS256".
  *
- * @see <a href="https://w3c.github.io/webauthn/#typedefdef-cosealgorithmidentifier">§5.10.5. Cryptographic Algorithm
- * Identifier (typedef COSEAlgorithmIdentifier)</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#typedefdef-cosealgorithmidentifier">§5.10.5.
+ * Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
  */
 @JsonSerialize(using = JsonLongSerializer.class)
 public enum COSEAlgorithmIdentifier implements JsonLongSerializable {

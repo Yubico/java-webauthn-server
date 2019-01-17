@@ -35,11 +35,11 @@ import lombok.NonNull;
 
 
 /**
- * A WebAuthn Relying Party may require <a href="https://w3c.github.io/webauthn/#user-verification">user
+ * A WebAuthn Relying Party may require <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
  * verification</a> for some of its operations but not for others, and may use this type to express its needs.
  *
- * @see <a href="https://w3c.github.io/webauthn/#enumdef-userverificationrequirement">§5.10.6. User Verification
- * Requirement Enumeration (enum UserVerificationRequirement)</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-userverificationrequirement">§5.10.6. User
+ * Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor

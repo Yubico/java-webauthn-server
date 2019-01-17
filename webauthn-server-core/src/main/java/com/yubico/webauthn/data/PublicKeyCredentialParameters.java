@@ -33,8 +33,8 @@ import lombok.Value;
 /**
  * Used to supply additional parameters when creating a new credential.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialparameters">§5.3. Parameters for Credential
- * Generation (dictionary PublicKeyCredentialParameters)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialparameters">§5.3.
+ * Parameters for Credential Generation (dictionary PublicKeyCredentialParameters)
  * </a>
  */
 @Value

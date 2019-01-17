@@ -34,7 +34,8 @@ import lombok.Value;
  * Attested credential data is a variable-length byte array added to the authenticator data when generating an
  * attestation object for a given credential. This class provides access to the three data segments of that byte array.
  *
- * @see <a href="https://w3c.github.io/webauthn/#sec-attested-credential-data">6.4.1. Attested Credential Data</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-attested-credential-data">6.4.1. Attested
+ * Credential Data</a>
  */
 @Value
 @Builder(toBuilder = true)

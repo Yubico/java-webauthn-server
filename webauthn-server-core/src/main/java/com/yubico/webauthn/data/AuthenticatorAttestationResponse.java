@@ -40,8 +40,8 @@ import lombok.Value;
  * contains information about the new credential that can be used to identify it for later use, and metadata that can be
  * used by the WebAuthn Relying Party to assess the characteristics of the credential during registration.
  *
- * @see <a href="https://w3c.github.io/webauthn/#authenticatorattestationresponse">§5.2.1. Information About Public Key
- * Credential (interface AuthenticatorAttestationResponse)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorattestationresponse">§5.2.1. Information
+ * About Public Key Credential (interface AuthenticatorAttestationResponse)
  * </a>
  */
 @Value
@@ -54,9 +54,10 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
      * determined by the attestation statement format used by the authenticator. It also contains any additional
      * information that the Relying Party's server requires to validate the attestation statement, as well as to decode
      * and validate the authenticator data along with the JSON-serialized client data. For more details, see <a
-     * href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4 Attestation</a>, <a
-     * href="https://w3c.github.io/webauthn/#generating-an-attestation-object">§6.4.4 Generating an Attestation
-     * Object</a>, and <a href="https://w3c.github.io/webauthn/#fig-attStructs">Figure 5</a>.
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4 Attestation</a>, <a
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#generating-an-attestation-object">§6.4.4 Generating an
+     * Attestation Object</a>, and <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#fig-attStructs">Figure
+     * 5</a>.
      */
     @NonNull
     private final ByteArray attestationObject;

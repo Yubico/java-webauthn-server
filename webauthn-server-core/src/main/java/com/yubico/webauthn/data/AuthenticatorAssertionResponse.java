@@ -42,8 +42,8 @@ import lombok.Value;
  * contains a cryptographic {@linkplain #signature} proving possession of the credential private key, and optionally
  * evidence of user consent to a specific transaction.
  *
- * @see <a href="https://w3c.github.io/webauthn/#authenticatorassertionresponse">§5.2.2. Web Authentication Assertion
- * (interface AuthenticatorAssertionResponse)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorassertionresponse">§5.2.2. Web
+ * Authentication Assertion (interface AuthenticatorAssertionResponse)
  * </a>
  */
 @Value
@@ -58,7 +58,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     private final ByteArray clientDataJSON;
 
     /**
-     * The raw signature returned from the authenticator. See <a href="https://w3c.github.io/webauthn/#op-get-assertion">§6.3.3
+     * The raw signature returned from the authenticator. See <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3
      * The authenticatorGetAssertion Operation</a>.
      */
     @NonNull
@@ -66,7 +66,8 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
     /**
      * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
-     * <a href="https://w3c.github.io/webauthn/#op-get-assertion">§6.3.3 The authenticatorGetAssertion Operation</a>.
+     * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
+     * Operation</a>.
      */
     @NonNull
     private final Optional<ByteArray> userHandle;

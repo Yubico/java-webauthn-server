@@ -44,7 +44,7 @@ import lombok.NonNull;
  * Currently one credential type is defined, namely {@link #PUBLIC_KEY}.
  * </p>
  *
- * @see <a href="https://w3c.github.io/webauthn/#enumdef-publickeycredentialtype">§5.10.2. Credential Type Enumeration
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-publickeycredentialtype">§5.10.2. Credential Type Enumeration
  * (enum PublicKeyCredentialType)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)

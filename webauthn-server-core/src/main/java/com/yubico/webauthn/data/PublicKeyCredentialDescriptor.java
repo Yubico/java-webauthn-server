@@ -41,8 +41,8 @@ import lombok.Value;
  * <code>navigator.credentials.create()</code> or <code>navigator.credentials.get()</code> methods. It mirrors the
  * fields of the {@link PublicKeyCredential} object returned by the latter methods.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialdescriptor">§5.10.3. Credential Descriptor
- * (dictionary PublicKeyCredentialDescriptor)</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialdescriptor">§5.10.3.
+ * Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
  */
 @Value
 @Builder(toBuilder = true)

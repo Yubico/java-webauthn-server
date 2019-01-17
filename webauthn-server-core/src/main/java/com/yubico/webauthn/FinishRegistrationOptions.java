@@ -50,7 +50,7 @@ public class FinishRegistrationOptions {
     /**
      * The client's response to the {@link #getRequest() request}.
      *
-     * <a href="https://w3c.github.io/webauthn/#createCredential">navigator.credentials.create()</a>
+     * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#createCredential">navigator.credentials.create()</a>
      */
     @NonNull
     private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
@@ -59,7 +59,7 @@ public class FinishRegistrationOptions {
      * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the connection to the
      * client, if any.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#discover-from-external-source">The Token Binding Protocol Version 1.0</a>
+     * @see <a href="https://tools.ietf.org/html/rfc8471">The Token Binding Protocol Version 1.0</a>
      */
     @NonNull
     @Builder.Default

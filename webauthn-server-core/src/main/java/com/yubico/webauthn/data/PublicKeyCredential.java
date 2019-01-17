@@ -37,7 +37,8 @@ import lombok.Value;
  * and contains the attributes that are returned to the caller when a new credential is created, or a new assertion is
  * requested.
  *
- * @see <a href="https://w3c.github.io/webauthn/#iface-pkcredential">§5.1. PublicKeyCredential Interface</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#iface-pkcredential">§5.1. PublicKeyCredential
+ * Interface</a>
  */
 @Value
 @Builder(toBuilder = true)

@@ -142,7 +142,8 @@ public class RelyingParty {
      * </p>
      *
      * @see AssertionExtensionInputs#getAppid()
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-appid-extension">§10.1. FIDO AppID Extension (appid)</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+     * (appid)</a>
      */
     @Builder.Default
     @NonNull
@@ -162,7 +163,7 @@ public class RelyingParty {
      * </p>
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      */
     @Builder.Default
     @NonNull
@@ -177,7 +178,7 @@ public class RelyingParty {
      * </p>
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      */
     @Builder.Default
     @NonNull
@@ -201,7 +202,7 @@ public class RelyingParty {
      * </ol>
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      */
     @Builder.Default
     @NonNull
@@ -219,7 +220,7 @@ public class RelyingParty {
      * The default is <code>false</code>.
      * </p>
      *
-     * @see <a href="https://w3c.github.io/webauthn/#extensions">§9. WebAuthn Extensions</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn Extensions</a>
      */
     @Builder.Default
     private final boolean allowUnrequestedExtensions = false;

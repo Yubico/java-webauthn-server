@@ -43,8 +43,8 @@ import lombok.Value;
 /**
  * The client data represents the contextual bindings of both the Relying Party and the client.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-collectedclientdata">§5.10.1. Client Data Used in WebAuthn
- * Signatures (dictionary CollectedClientData)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-collectedclientdata">§5.10.1. Client Data Used
+ * in WebAuthn Signatures (dictionary CollectedClientData)
  * </a>
  */
 @Value
@@ -64,8 +64,8 @@ public class CollectedClientData {
 
     /**
      * The base64url encoding of the challenge provided by the Relying Party. See the <a
-     * href="https://w3c.github.io/webauthn/#cryptographic-challenges">§13.1 Cryptographic Challenges</a> security
-     * consideration.
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1 Cryptographic
+     * Challenges</a> security consideration.
      */
     @NonNull
     private final transient ByteArray challenge;

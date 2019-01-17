@@ -39,8 +39,8 @@ import lombok.Value;
 /**
  * Describes a user account, with which public key credentials can be associated.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialuserentity">§5.4.3. User Account Parameters
- * for Credential Generation (dictionary PublicKeyCredentialUserEntity)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialuserentity">§5.4.3. User
+ * Account Parameters for Credential Generation (dictionary PublicKeyCredentialUserEntity)
  * </a>
  */
 @Value
@@ -89,14 +89,14 @@ public class UserIdentity implements PublicKeyCredentialEntity {
     private final String displayName;
 
     /**
-     * The <a href="https://w3c.github.io/webauthn/#user-handle">user handle</a> for the account, specified by the
-     * Relying Party.
+     * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> for the account,
+     * specified by the Relying Party.
      *
      * <p>
      * A user handle is an opaque byte sequence with a maximum size of 64 bytes. User handles are not meant to be
      * displayed to users. The user handle SHOULD NOT contain personally identifying information about the user, such as
-     * a username or e-mail address; see <a href="https://w3c.github.io/webauthn/#sctn-user-handle-privacy">§14.9 User
-     * Handle Contents</a> for details.
+     * a username or e-mail address; see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-user-handle-privacy">§14.9
+     * User Handle Contents</a> for details.
      * </p>
      *
      * <p>
@@ -106,7 +106,8 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * </p>
      *
      * <p>
-     * An authenticator will never contain more than one credential for a given Relying Party under the same user handle.
+     * An authenticator will never contain more than one credential for a given Relying Party under the same user
+     * handle.
      * </p>
      */
     @NonNull
