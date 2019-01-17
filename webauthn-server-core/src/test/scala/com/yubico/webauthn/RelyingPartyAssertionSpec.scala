@@ -276,7 +276,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
+      describe("2. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id:") {
         object owner {
           val username = "owner"
           val userHandle = new ByteArray(Array(4, 5, 6, 7))
@@ -325,6 +325,18 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.validations shouldBe a [Success[_]]
           step.tryNext shouldBe a [Success[_]]
         }
+
+        describe("If the user was identified before the authentication ceremony was initiated, verify that the identified user is the owner of credentialSource. If credential.response.userHandle is present, verify that this value identifies the same user as was previously identified.") {
+          it("Fails for now.") {
+            fail("Test not implemented.")
+          }
+        }
+
+        describe("If the user was not identified before the authentication ceremony was initiated, verify that credential.response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
+          it("Fails for now.") {
+            fail("Test not implemented.")
+          }
+        }
       }
 
       describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
@@ -362,7 +374,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("4. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
+      describe("4. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
         it("Succeeds if all three are present.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Step4 = steps.begin.next.next.next.next
@@ -598,7 +610,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("11. Verify that the rpIdHash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+      describe("11. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
         it("Fails if RP ID is different.") {
           val steps = finishAssertion(rpId = Defaults.rpId.toBuilder.id("root.evil").build())
           val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
@@ -655,7 +667,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("12. If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.") {
+      describe("13. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.") {
         val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04).toByte).toArray)
         val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) & 0xfb).toByte).toArray)
 
@@ -727,7 +739,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.") {
+      describe("12. Verify that the User Present bit of the flags in authData is set.") {
         val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04 | 0x01).toByte).toArray)
         val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, ((Defaults.authenticatorData.getBytes.toVector(32) | 0x04) & 0xfe).toByte).toArray)
 
@@ -777,15 +789,16 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           step.tryNext shouldBe a [Success[_]]
         }
 
-        it("Succeeds if UV is required and flag is not set.") {
+        it("Fails if UV is required and flag is not set.") {
           val steps = finishAssertion(
             userVerificationRequirement = UserVerificationRequirement.REQUIRED,
             authenticatorData = flagOff
           )
           val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is required and flag is set.") {
@@ -877,7 +890,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(Defaults.clientDataJsonBytes.getBytes)))
       }
 
-      describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
+      describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of authData and hash.") {
         it("The default test case succeeds.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -938,8 +951,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("17. If the signature counter value adata.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
-        describe("If the signature counter value adata.signCount is") {
+      describe("17. If the signature counter value authData.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
+        describe("If the signature counter value authData.signCount is") {
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = Some(
@@ -956,7 +969,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
             }
 
-            describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
+            describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of authData.signCount.") {
               it("An increasing signature counter always succeeds.") {
                 val steps = finishAssertion(
                   credentialRepository = Some(credentialRepository),
@@ -972,7 +985,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             }
           }
 
-          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute. ") {
+          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
             val credentialRepository = new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = Some(
                 RegisteredCredential.builder()
@@ -989,7 +1002,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             }
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
-              it("If signature counter validation is disabled, the a nonincreasing signature counter succeeds.") {
+              it("If signature counter validation is disabled, a nonincreasing signature counter succeeds.") {
                 val steps = finishAssertion(
                   credentialRepository = Some(credentialRepository),
                   validateSignatureCounter = false
@@ -1002,7 +1015,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 step.next.result.get.getSignatureCount should be(1337)
               }
 
-              it("If signature counter validation is enabled, the a nonincreasing signature counter fails.") {
+              it("If signature counter validation is enabled, a nonincreasing signature counter fails.") {
                 val steps = finishAssertion(
                   credentialRepository = Some(credentialRepository),
                   validateSignatureCounter = true

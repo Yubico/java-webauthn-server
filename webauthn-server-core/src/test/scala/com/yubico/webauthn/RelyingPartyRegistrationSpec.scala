@@ -366,7 +366,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         step.attestation.getAttestationStatement should not be null
       }
 
-      describe("9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
+      describe("9. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
         it("Fails if RP ID is different.") {
           val steps = finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editAuthenticatorData { authData: ByteArray =>
@@ -389,7 +389,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
-      describe("10. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
+      describe("11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
         val testData = RegistrationTestData.Packed.BasicAttestation
         val authData = testData.response.getResponse.getAuthenticatorData
 
@@ -470,7 +470,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
-      describe("11. If user verification is not required for this registration, verify that the User Present bit of the flags in authData is set.") {
+      describe("10. Verify that the User Present bit of the flags in authData is set.") {
         val testData = RegistrationTestData.Packed.BasicAttestation
         val authData = testData.response.getResponse.getAuthenticatorData
 
@@ -527,7 +527,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           step.tryNext shouldBe a [Success[_]]
         }
 
-        it("Succeeds if UV is required and flag is not set.") {
+        it("Fails if UV is required and flag is not set.") {
           val steps = finishRegistration(
             testData = testData.copy(
               authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
@@ -535,8 +535,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           )
           val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
         }
 
         it("Succeeds if UV is required and flag is set.") {
@@ -552,7 +553,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
-      describe("12. Verify that the values of the ") {
+      describe("12. Verify that the values of the") {
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the create() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           ignore("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
@@ -634,7 +635,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       }
 
-      describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
+      describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name [WebAuthn-Registries].") {
         def setup(format: String): FinishRegistrationSteps = {
           finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", format)
@@ -1669,7 +1670,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           steps.run.isAttestationTrusted should be (false)
         }
 
-        describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.3.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
+        describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.4.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
           it("Nothing to test.") {}
         }
       }
