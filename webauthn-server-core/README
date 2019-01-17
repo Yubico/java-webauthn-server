@@ -17,7 +17,6 @@ it.
 * Attestation statement formats:
  ** https://www.w3.org/TR/webauthn/#tpm-attestation[`tpm`]
  ** https://www.w3.org/TR/webauthn/#android-key-attestation[`android-key`]
- ** https://www.w3.org/TR/webauthn/#android-safetynet-attestation[`android-safetynet`]
 * Extensions:
  ** https://www.w3.org/TR/webauthn/#sctn-simple-txauth-extension[`txAuthSimple`]
  ** https://www.w3.org/TR/webauthn/#sctn-generic-txauth-extension[`txAuthGeneric`]
