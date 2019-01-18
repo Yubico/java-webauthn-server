@@ -135,7 +135,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     signature: ByteArray = Defaults.signature,
     userHandleForResponse: ByteArray = Defaults.userHandle,
     userHandleForUser: ByteArray = Defaults.userHandle,
-    usernameForRequest: String = Defaults.username,
+    usernameForRequest: Option[String] = Some(Defaults.username),
     usernameForUser: String = Defaults.username,
     userVerificationRequirement: UserVerificationRequirement = UserVerificationRequirement.PREFERRED,
     validateSignatureCounter: Boolean = true
@@ -153,7 +153,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .extensions(requestedExtensions)
           .build()
       )
-      .username(Some(usernameForRequest).asJava)
+      .username(usernameForRequest.asJava)
       .build()
 
     val response = PublicKeyCredential.builder()
@@ -301,40 +301,61 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = Some(if (userHandle == owner.userHandle) owner.username else nonOwner.username).asJava
         })
 
-        it("Fails if credential ID is not owned by the given user handle.") {
-          val steps = finishAssertion(
-            credentialRepository = credentialRepository,
-            userHandleForUser = owner.userHandle,
-            userHandleForResponse = nonOwner.userHandle
-          )
-          val step: FinishAssertionSteps#Step2 = steps.begin.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if credential ID is owned by the given user handle.") {
-          val steps = finishAssertion(
-            credentialRepository = credentialRepository,
-            userHandleForUser = owner.userHandle,
-            userHandleForResponse = owner.userHandle
-          )
-          val step: FinishAssertionSteps#Step2 = steps.begin.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
         describe("If the user was identified before the authentication ceremony was initiated, verify that the identified user is the owner of credentialSource. If credential.response.userHandle is present, verify that this value identifies the same user as was previously identified.") {
-          it("Fails for now.") {
-            fail("Test not implemented.")
+          it("Fails if credential ID is not owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = Some(owner.username),
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = nonOwner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if credential ID is owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = Some(owner.username),
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = owner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
 
         describe("If the user was not identified before the authentication ceremony was initiated, verify that credential.response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
-          it("Fails for now.") {
-            fail("Test not implemented.")
+          it("Fails if credential ID is not owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = None,
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = nonOwner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if credential ID is owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = None,
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = owner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
         }
       }
