@@ -450,12 +450,10 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (request.getPublicKeyCredentialRequestOptions().getUserVerification() == UserVerificationRequirement.REQUIRED) {
-                assure(
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
-                    "User Verification is required."
-                );
-            }
+            assure(
+                response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+                "User Presence is required."
+            );
         }
 
         @Override
@@ -473,10 +471,10 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            if (request.getPublicKeyCredentialRequestOptions().getUserVerification() != UserVerificationRequirement.REQUIRED) {
+            if (request.getPublicKeyCredentialRequestOptions().getUserVerification() == UserVerificationRequirement.REQUIRED) {
                 assure(
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UP,
-                    "User Presence is required."
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
+                    "User Verification is required."
                 );
             }
         }
