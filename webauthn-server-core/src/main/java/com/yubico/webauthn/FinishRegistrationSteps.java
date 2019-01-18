@@ -84,7 +84,7 @@ final class FinishRegistrationSteps {
         return begin().run();
     }
 
-    private interface Step<A extends Step<?>> {
+    interface Step<A extends Step<?>> {
         A nextStep();
 
         void validate();

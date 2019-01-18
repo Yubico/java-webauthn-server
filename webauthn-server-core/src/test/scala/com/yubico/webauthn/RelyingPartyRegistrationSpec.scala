@@ -389,167 +389,95 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
-      describe("11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
+      {
         val testData = RegistrationTestData.Packed.BasicAttestation
-        val authData = testData.response.getResponse.getAuthenticatorData
 
-        def flagOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04).toByte))
-        def flagOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfb).toByte))
+        def upOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x01).toByte))
+        def upOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfe).toByte))
 
-        it("Succeeds if UV is discouraged and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+        def uvOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04).toByte))
+        def uvOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfb).toByte))
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+        def checks[Step <: FinishRegistrationSteps.Step[_]](stepsToStep: FinishRegistrationSteps => Step) = {
+          def check[B]
+            (stepsToStep: FinishRegistrationSteps => Step)
+            (chk: Step => B)
+            (uvr: UserVerificationRequirement, authDataEdit: ByteArray => ByteArray)
+          : B = {
+            val steps = finishRegistration(
+              testData = testData.copy(
+                authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(uvr).build())
+              ).editAuthenticatorData(authDataEdit)
+            )
+            chk(stepsToStep(steps))
+          }
+          def checkFailsWith(stepsToStep: FinishRegistrationSteps => Step): (UserVerificationRequirement, ByteArray => ByteArray) => Unit = check(stepsToStep) { step =>
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+          def checkSucceedsWith(stepsToStep: FinishRegistrationSteps => Step): (UserVerificationRequirement, ByteArray => ByteArray) => Unit = check(stepsToStep) { step =>
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
+
+          (checkFailsWith(stepsToStep), checkSucceedsWith(stepsToStep))
         }
 
-        it("Succeeds if UV is discouraged and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+        describe("10. Verify that the User Present bit of the flags in authData is set.") {
+          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step10](_.begin.next.next.next.next.next.next.next.next.next)
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          it("Fails if UV is discouraged and flag is not set.") {
+            checkFails(UserVerificationRequirement.DISCOURAGED, upOff)
+          }
+
+          it("Succeeds if UV is discouraged and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, upOn)
+          }
+
+          it("Fails if UV is preferred and flag is not set.") {
+            checkFails(UserVerificationRequirement.PREFERRED, upOff)
+          }
+
+          it("Succeeds if UV is preferred and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, upOn)
+          }
+
+          it("Fails if UV is required and flag is not set.") {
+            checkFails(UserVerificationRequirement.REQUIRED, upOff _ andThen uvOn)
+          }
+
+          it("Succeeds if UV is required and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.REQUIRED, upOn _ andThen uvOn)
+          }
         }
 
-        it("Succeeds if UV is preferred and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+        describe("11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
+          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step11](_.begin.next.next.next.next.next.next.next.next.next.next)
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
+          it("Succeeds if UV is discouraged and flag is not set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOff)
+          }
 
-        it("Succeeds if UV is preferred and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+          it("Succeeds if UV is discouraged and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOn)
+          }
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
+          it("Succeeds if UV is preferred and flag is not set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, uvOff)
+          }
 
-        it("Fails if UV is required and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+          it("Succeeds if UV is preferred and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, uvOn)
+          }
 
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
+          it("Fails if UV is required and flag is not set.") {
+            checkFails(UserVerificationRequirement.REQUIRED, uvOff)
+          }
 
-        it("Succeeds if UV is required and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-      }
-
-      describe("10. Verify that the User Present bit of the flags in authData is set.") {
-        val testData = RegistrationTestData.Packed.BasicAttestation
-        val authData = testData.response.getResponse.getAuthenticatorData
-
-        def flagOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04 | 0x01).toByte))
-        def flagOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, ((authData.getBytes()(32) | 0x04) & 0xfe).toByte))
-
-        it("Fails if UV is discouraged and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is discouraged and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Fails if UV is preferred and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is preferred and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Fails if UV is required and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is required and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          it("Succeeds if UV is required and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.REQUIRED, uvOn)
+          }
         }
       }
 

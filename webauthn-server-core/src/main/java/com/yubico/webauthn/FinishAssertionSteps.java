@@ -79,7 +79,7 @@ final class FinishAssertionSteps {
         return begin().run();
     }
 
-    private interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
+    interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
         B nextStep();
 
         void validate() throws InvalidSignatureCountException;
