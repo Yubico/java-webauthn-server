@@ -250,6 +250,13 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
                     "X.509 extension %s (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.",
                     idFidoGenCeAaguid
                 );
+
+                ExceptionUtil.assure(
+                    !
+                        cert.getCriticalExtensionOIDs().contains(idFidoGenCeAaguid),
+                    "X.509 extension %s (id-fido-gen-ce-aaguid) must not be marked critical.",
+                    idFidoGenCeAaguid
+                );
             });
 
         ExceptionUtil.assure(
