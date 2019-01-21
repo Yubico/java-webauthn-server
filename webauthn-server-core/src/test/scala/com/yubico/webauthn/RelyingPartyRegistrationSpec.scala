@@ -813,7 +813,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("the verification procedure is:") {
-            describe("1. Verify that the given attestation statement is valid CBOR conforming to the syntax defined above.") {
+            describe("1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.") {
 
               it("Fails if attStmt.sig is a text value.") {
                 val testData = RegistrationTestData.Packed.BasicAttestation
@@ -842,16 +842,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
             }
 
-            it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
-              val testData = RegistrationTestData.Packed.BasicAttestation
-              val authenticatorData: AuthenticatorData = new AttestationObject(testData.attestationObject).getAuthenticatorData
-              val clientDataHash = MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(testData.clientDataJson.getBytes("UTF-8"))
-
-              authenticatorData should not be null
-              clientDataHash should not be null
-            }
-
-            describe("3. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
+            describe("2. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
               it("The attestation type is identified as Basic.") {
                 val steps = finishRegistration(testData = RegistrationTestData.Packed.BasicAttestation)
                 val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -861,7 +852,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.attestationType should be (AttestationType.BASIC)
               }
 
-              describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
+              describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in attestnCert with the algorithm specified in alg.") {
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
@@ -888,7 +879,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              describe("2. Verify that x5c meets the requirements in §7.2.1 Packed attestation statement certificate requirements.") {
+              describe("2. Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate Requirements.") {
                 it("Fails for an attestation signature with an invalid country code.") {
                   val authenticator = TestAuthenticator
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
@@ -914,7 +905,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              describe("3. If x5c contains an extension with OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the AAGUID in authenticatorData.") {
+              describe("3. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData.") {
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result = verifier.verifyAttestationSignature(
@@ -952,7 +943,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              it("If successful, return attestation type Basic and trust path x5c.") {
+              describe("4. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation.") {
+                it("Nothing to test.") {}
+              }
+
+              it("5. If successful, return implementation-specific values representing attestation type Basic, AttCA or uncertainty, and attestation trust path x5c.") {
                 val testData = RegistrationTestData.Packed.BasicAttestation
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -965,17 +960,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
             }
 
-            describe("4. If ecdaaKeyId is present, then the attestation type is ECDAA. In this case:") {
+            describe("3. If ecdaaKeyId is present, then the attestation type is ECDAA. In this case:") {
               ignore("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId (see [FIDOEcdaaAlgorithm]).") {
                 fail("Test not implemented.")
               }
 
-              ignore("2. If successful, return attestation type ECDAA and trust path ecdaaKeyId.") {
+              ignore("2. If successful, return implementation-specific values representing attestation type ECDAA and attestation trust path ecdaaKeyId.") {
                 fail("Test not implemented.")
               }
             }
 
-            describe("5. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
+            describe("4. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
               val testDataBase = RegistrationTestData.Packed.SelfAttestation
 
               it("The attestation type is identified as SelfAttestation.") {
@@ -987,7 +982,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.attestationType should be (AttestationType.SELF_ATTESTATION)
               }
 
-              describe("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
+              describe("1. Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData.") {
                 it("Succeeds for the default test case.") {
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject),
@@ -1047,7 +1042,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              it("3. If successful, return attestation type Self and empty trust path.") {
+              it("3. If successful, return implementation-specific values representing attestation type Self and an empty attestation trust path.") {
                 val testData = RegistrationTestData.Packed.SelfAttestation
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1060,11 +1055,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
           }
 
-          describe("7.2.1. Packed attestation statement certificate requirements") {
+          describe("8.2.1. Packed Attestation Statement Certificate Requirements") {
             val testDataBase = RegistrationTestData.Packed.BasicAttestation
 
             describe("The attestation certificate MUST have the following fields/extensions:") {
-              it("Version must be set to 3.") {
+              it("Version MUST be set to 3 (which is indicated by an ASN.1 INTEGER with value 2).") {
                 val badCert = Mockito.mock(classOf[X509Certificate])
                 val principal = new X500Principal("O=Yubico, C=SE, OU=Authenticator Attestation")
                 Mockito.when(badCert.getVersion) thenReturn 2
@@ -1079,7 +1074,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               describe("Subject field MUST be set to:") {
-                it("Subject-C: Country where the Authenticator vendor is incorporated") {
+                it("Subject-C: ISO 3166 code specifying the country where the Authenticator vendor is incorporated (PrintableString)") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )._1
@@ -1091,7 +1086,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (true)
                 }
 
-                it("Subject-O: Legal name of the Authenticator vendor") {
+                it("Subject-O: Legal name of the Authenticator vendor (UTF8String)") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("C=SE, OU=Authenticator Attestation")
                   )._1
@@ -1103,7 +1098,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
                 }
 
-                it("Subject-OU: Authenticator Attestation") {
+                it("""Subject-OU: Literal string "Authenticator Attestation" (UTF8String)""") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=SE, OU=Foo")
                   )._1
@@ -1115,12 +1110,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
                 }
 
-                describe("Subject-CN: No stipulation.") {
+                describe("Subject-CN: A UTF8String of the vendor’s choosing") {
                   it("Nothing to test") {}
                 }
               }
 
-              it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as value.") {
+              it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING. The extension MUST NOT be marked as critical.") {
                 val idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4"
 
                 val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
@@ -1131,6 +1126,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [IllegalArgumentException]
+
+                val badCertCritical: X509Certificate = TestAuthenticator.generateAttestationCertificate(
+                  name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
+                  extensions = List((idFidoGenCeAaguid, true, new DEROctetString(testDataBase.aaguid.getBytes)))
+                )._1
+                val resultCritical = Try(verifier.verifyX5cRequirements(badCertCritical, testDataBase.aaguid))
+
+                resultCritical shouldBe a [Failure[_]]
+                resultCritical.failed.get shouldBe an [IllegalArgumentException]
 
                 val goodCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
@@ -1144,7 +1148,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
               }
 
-              it("The Basic Constraints extension MUST have the CA component set to false") {
+              it("The Basic Constraints extension MUST have the CA component set to false.") {
                 val result = Try(verifier.verifyX5cRequirements(testDataBase.attestationCaCert.get, testDataBase.aaguid))
 
                 result shouldBe a [Failure[_]]
@@ -1153,7 +1157,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (true)
               }
 
-              describe("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both optional as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
+              describe("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both OPTIONAL as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
                 it("Nothing to test.") {}
               }
             }
