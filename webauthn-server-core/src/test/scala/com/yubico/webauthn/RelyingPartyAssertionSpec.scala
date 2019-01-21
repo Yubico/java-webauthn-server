@@ -689,7 +689,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       {
-        def checks[Step <: FinishAssertionSteps.Step[_, _]](stepsToStep: FinishAssertionSteps => Step) = {
+        def checks[Step <: FinishAssertionSteps.Step[_]](stepsToStep: FinishAssertionSteps => Step) = {
           def check[A]
             (stepsToStep: FinishAssertionSteps => Step)
             (chk: Step => A)

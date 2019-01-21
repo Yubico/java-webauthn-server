@@ -79,8 +79,8 @@ final class FinishAssertionSteps {
         return begin().run();
     }
 
-    interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
-        B nextStep();
+    interface Step<Next extends Step<?>> {
+        Next nextStep();
 
         void validate() throws InvalidSignatureCountException;
 
@@ -105,7 +105,7 @@ final class FinishAssertionSteps {
             return CollectionUtil.immutableList(result);
         }
 
-        default B next() throws InvalidSignatureCountException {
+        default Next next() throws InvalidSignatureCountException {
             validate();
             return nextStep();
         }
@@ -120,7 +120,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step0 implements Step<Step0, Step1> {
+    public class Step0 implements Step<Step1> {
         @Override
         public Step1 nextStep() {
             return new Step1(username().get(), userHandle().get(), allWarnings());
@@ -163,7 +163,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step1 implements Step<Step0, Step2> {
+    public class Step1 implements Step<Step2> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -186,7 +186,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step2 implements Step<Step1, Step3> {
+    public class Step2 implements Step<Step3> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -215,7 +215,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step3 implements Step<Step2, Step4> {
+    public class Step3 implements Step<Step4> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -244,7 +244,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step4 implements Step<Step3, Step5> {
+    public class Step4 implements Step<Step5> {
 
         private final String username;
         private final ByteArray userHandle;
@@ -277,7 +277,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step5 implements Step<Step4, Step6> {
+    public class Step5 implements Step<Step6> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -295,7 +295,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step6 implements Step<Step5, Step7> {
+    public class Step6 implements Step<Step7> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -317,7 +317,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step7 implements Step<Step6, Step8> {
+    public class Step7 implements Step<Step8> {
 
         private final String username;
         private final ByteArray userHandle;
@@ -347,7 +347,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step8 implements Step<Step7, Step9> {
+    public class Step8 implements Step<Step9> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -368,7 +368,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step9 implements Step<Step8, Step10> {
+    public class Step9 implements Step<Step10> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -391,7 +391,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step10 implements Step<Step9, Step11> {
+    public class Step10 implements Step<Step11> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -409,7 +409,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step11 implements Step<Step10, Step12> {
+    public class Step11 implements Step<Step12> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -442,7 +442,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step12 implements Step<Step11, Step13> {
+    public class Step12 implements Step<Step13> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -463,7 +463,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step13 implements Step<Step12, Step14> {
+    public class Step13 implements Step<Step14> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -486,7 +486,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step14 implements Step<Step13, Step15> {
+    public class Step14 implements Step<Step15> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -516,7 +516,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step15 implements Step<Step14, Step16> {
+    public class Step15 implements Step<Step16> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -538,7 +538,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step16 implements Step<Step15, Step17> {
+    public class Step16 implements Step<Step17> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -589,7 +589,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step17 implements Step<Step16, Finished> {
+    public class Step17 implements Step<Finished> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -629,7 +629,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Finished implements Step<Step17, Finished> {
+    public class Finished implements Step<Finished> {
         private final String username;
         private final ByteArray userHandle;
         private final long assertionSignatureCount;
