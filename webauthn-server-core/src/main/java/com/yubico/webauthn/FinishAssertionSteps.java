@@ -588,14 +588,15 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() throws InvalidSignatureCountException {
-            if (validateSignatureCounter) {
-                if (!signatureCounterValid()) {
-                    throw new InvalidSignatureCountException(
-                        response.getId(),
-                        storedSignatureCountBefore() + 1,
-                        assertionSignatureCount()
-                    );
-                }
+            if (validateSignatureCounter
+                && !
+                    signatureCounterValid()
+            ) {
+                throw new InvalidSignatureCountException(
+                    response.getId(),
+                    storedSignatureCountBefore() + 1,
+                    assertionSignatureCount()
+                );
             }
         }
 
