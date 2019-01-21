@@ -1,3 +1,8 @@
+== Version 1.0.0 ==
+
+* Fixed URL in artifact POM
+
+
 == Version 0.8.0 ==
 
 Possibly breaking changes:
