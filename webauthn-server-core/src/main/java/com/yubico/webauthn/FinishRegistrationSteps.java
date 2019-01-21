@@ -252,7 +252,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            assure(clientDataJsonHash() != null, "Failed to compute hash of client data");
+            assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
         }
 
         @Override

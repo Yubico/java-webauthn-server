@@ -253,9 +253,9 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            assure(clientData().getBytes() != null, "Missing client data.");
-            assure(authenticatorData().getBytes() != null, "Missing authenticator data.");
-            assure(signature().getBytes() != null, "Missing signature.");
+            assure(clientData() != null, "Missing client data.");
+            assure(authenticatorData() != null, "Missing authenticator data.");
+            assure(signature() != null, "Missing signature.");
         }
 
         @Override
@@ -524,7 +524,7 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            assure(clientDataJsonHash() != null, "Failed to compute hash of client data");
+            assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
         }
 
         @Override
