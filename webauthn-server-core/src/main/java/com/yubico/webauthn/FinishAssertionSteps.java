@@ -85,10 +85,6 @@ final class FinishAssertionSteps {
 
         List<String> getPrevWarnings();
 
-        default boolean isFinished() {
-            return false;
-        }
-
         default Optional<AssertionResult> result() {
             return Optional.empty();
         }
@@ -110,7 +106,7 @@ final class FinishAssertionSteps {
         }
 
         default AssertionResult run() throws InvalidSignatureCountException {
-            if (isFinished()) {
+            if (result().isPresent()) {
                 return result().get();
             } else {
                 return next().run();
@@ -631,11 +627,6 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() { /* No-op */ }
-
-        @Override
-        public boolean isFinished() {
-            return true;
-        }
 
         @Override
         public Finished nextStep() {
