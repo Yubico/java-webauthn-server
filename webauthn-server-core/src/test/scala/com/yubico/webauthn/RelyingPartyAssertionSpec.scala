@@ -915,14 +915,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       describe("17. If the signature counter value authData.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
         describe("If the signature counter value authData.signCount is") {
-          describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
-            val credentialRepository = new CredentialRepository {
+          def credentialRepository(signatureCount: Long) =
+            new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = Some(
                 RegisteredCredential.builder()
                   .credentialId(id)
                   .userHandle(uh)
                   .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(1336)
+                  .signatureCount(signatureCount)
                   .build()
               ).asJava
               override def lookupAll(id: ByteArray) = ???
@@ -931,10 +931,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
             }
 
+          describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
+            val cr = credentialRepository(1336)
+
             describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of authData.signCount.") {
               it("An increasing signature counter always succeeds.") {
                 val steps = finishAssertion(
-                  credentialRepository = Some(credentialRepository),
+                  credentialRepository = Some(cr),
                   validateSignatureCounter = true
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -948,25 +951,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           }
 
           describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
-            val credentialRepository = new CredentialRepository {
-              override def lookup(id: ByteArray, uh: ByteArray) = Some(
-                RegisteredCredential.builder()
-                  .credentialId(id)
-                  .userHandle(uh)
-                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(1337)
-                  .build()
-              ).asJava
-              override def lookupAll(id: ByteArray) = ???
-              override def getCredentialIdsForUsername(username: String) = ???
-              override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
-              override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
-            }
+            val cr = credentialRepository(1337)
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
               it("If signature counter validation is disabled, a nonincreasing signature counter succeeds.") {
                 val steps = finishAssertion(
-                  credentialRepository = Some(credentialRepository),
+                  credentialRepository = Some(cr),
                   validateSignatureCounter = false
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -979,7 +969,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
               it("If signature counter validation is enabled, a nonincreasing signature counter fails.") {
                 val steps = finishAssertion(
-                  credentialRepository = Some(credentialRepository),
+                  credentialRepository = Some(cr),
                   validateSignatureCounter = true
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
