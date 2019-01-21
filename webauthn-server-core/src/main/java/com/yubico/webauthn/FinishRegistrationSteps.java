@@ -91,10 +91,6 @@ final class FinishRegistrationSteps {
 
         List<String> getPrevWarnings();
 
-        default boolean isFinished() {
-            return false;
-        }
-
         default Optional<RegistrationResult> result() {
             return Optional.empty();
         }
@@ -116,7 +112,7 @@ final class FinishRegistrationSteps {
         }
 
         default RegistrationResult run() {
-            if (isFinished()) {
+            if (result().isPresent()) {
                 return result().get();
             } else {
                 return next().run();
@@ -630,11 +626,6 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() { /* No-op */ }
-
-        @Override
-        public boolean isFinished() {
-            return true;
-        }
 
         @Override
         public Finished nextStep() {
