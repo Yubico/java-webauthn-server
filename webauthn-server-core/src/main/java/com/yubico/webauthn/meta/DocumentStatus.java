@@ -48,7 +48,17 @@ public enum DocumentStatus implements JsonStringSerializable {
     /**
      * A candidate recommendation is a specification release candidate.
      */
-    CANDIDATE_RECOMMENDATION("candidate-recommendation");
+    CANDIDATE_RECOMMENDATION("candidate-recommendation"),
+
+    /**
+     * A proposed recommendation is a finished draft intended for release.
+     */
+    PROPOSED_RECOMMENDATION("proposed-recommendation"),
+
+    /**
+     * A recommendation is a finished and released specification.
+     */
+    RECOMMENDATION("recommendation");
 
     private final String id;
 

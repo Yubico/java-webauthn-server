@@ -48,8 +48,8 @@ import lombok.NonNull;
  * out-of-band mechanism; it is outside the scope of the Web Authentication specification to define that mechanism.
  * </p>
  *
- * @see <a href="https://w3c.github.io/webauthn/#enumdef-authenticatortransport">§5.10.4. Authenticator Transport
- * Enumeration (enum AuthenticatorTransport)</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatortransport">§5.10.4. Authenticator
+ * Transport Enumeration (enum AuthenticatorTransport)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor

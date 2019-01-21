@@ -135,7 +135,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     signature: ByteArray = Defaults.signature,
     userHandleForResponse: ByteArray = Defaults.userHandle,
     userHandleForUser: ByteArray = Defaults.userHandle,
-    usernameForRequest: String = Defaults.username,
+    usernameForRequest: Option[String] = Some(Defaults.username),
     usernameForUser: String = Defaults.username,
     userVerificationRequirement: UserVerificationRequirement = UserVerificationRequirement.PREFERRED,
     validateSignatureCounter: Boolean = true
@@ -153,7 +153,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .extensions(requestedExtensions)
           .build()
       )
-      .username(Some(usernameForRequest).asJava)
+      .username(usernameForRequest.asJava)
       .build()
 
     val response = PublicKeyCredential.builder()
@@ -276,7 +276,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.") {
+      describe("2. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id:") {
         object owner {
           val username = "owner"
           val userHandle = new ByteArray(Array(4, 5, 6, 7))
@@ -301,29 +301,62 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = Some(if (userHandle == owner.userHandle) owner.username else nonOwner.username).asJava
         })
 
-        it("Fails if credential ID is not owned by the given user handle.") {
-          val steps = finishAssertion(
-            credentialRepository = credentialRepository,
-            userHandleForUser = owner.userHandle,
-            userHandleForResponse = nonOwner.userHandle
-          )
-          val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+        describe("If the user was identified before the authentication ceremony was initiated, verify that the identified user is the owner of credentialSource. If credential.response.userHandle is present, verify that this value identifies the same user as was previously identified.") {
+          it("Fails if credential ID is not owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = Some(owner.username),
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = nonOwner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if credential ID is owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = Some(owner.username),
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = owner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
         }
 
-        it("Succeeds if credential ID is owned by the given user handle.") {
-          val steps = finishAssertion(
-            credentialRepository = credentialRepository,
-            userHandleForUser = owner.userHandle,
-            userHandleForResponse = owner.userHandle
-          )
-          val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+        describe("If the user was not identified before the authentication ceremony was initiated, verify that credential.response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
+          it("Fails if credential ID is not owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = None,
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = nonOwner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+
+          it("Succeeds if credential ID is owned by the given user handle.") {
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              usernameForRequest = None,
+              userHandleForUser = owner.userHandle,
+              userHandleForResponse = owner.userHandle
+            )
+            val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
         }
       }
 
@@ -362,7 +395,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("4. Let cData, aData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
+      describe("4. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
         it("Succeeds if all three are present.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Step4 = steps.begin.next.next.next.next
@@ -598,7 +631,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("11. Verify that the rpIdHash in aData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+      describe("11. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
         it("Fails if RP ID is different.") {
           val steps = finishAssertion(rpId = Defaults.rpId.toBuilder.id("root.evil").build())
           val step: FinishAssertionSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
@@ -655,148 +688,90 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("12. If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.") {
-        val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04).toByte).toArray)
-        val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) & 0xfb).toByte).toArray)
+      {
+        def checks[Step <: FinishAssertionSteps.Step[_]](stepsToStep: FinishAssertionSteps => Step) = {
+          def check[A]
+            (stepsToStep: FinishAssertionSteps => Step)
+            (chk: Step => A)
+            (uvr: UserVerificationRequirement, authData: ByteArray)
+          : A = {
+            val steps = finishAssertion(
+              userVerificationRequirement = uvr,
+              authenticatorData = authData
+            )
+            chk(stepsToStep(steps))
+          }
+          def checkFailsWith(stepsToStep: FinishAssertionSteps => Step): (UserVerificationRequirement, ByteArray) => Unit = check(stepsToStep) { step =>
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+          def checkSucceedsWith(stepsToStep: FinishAssertionSteps => Step): (UserVerificationRequirement, ByteArray) => Unit = check(stepsToStep) { step =>
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
 
-        it("Succeeds if UV is discouraged and flag is not set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.DISCOURAGED,
-            authenticatorData = flagOff
-          )
-          val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          (checkFailsWith(stepsToStep), checkSucceedsWith(stepsToStep))
         }
 
-        it("Succeeds if UV is discouraged and flag is set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.DISCOURAGED,
-            authenticatorData = flagOn
-          )
-          val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+        describe("12. Verify that the User Present bit of the flags in authData is set.") {
+          val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04 | 0x01).toByte).toArray)
+          val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, ((Defaults.authenticatorData.getBytes.toVector(32) | 0x04) & 0xfe).toByte).toArray)
+          val (checkFails, checkSucceeds) = checks[FinishAssertionSteps#Step12](_.begin.next.next.next.next.next.next.next.next.next.next.next.next)
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          it("Fails if UV is discouraged and flag is not set.") {
+            checkFails(UserVerificationRequirement.DISCOURAGED, flagOff)
+          }
+
+          it("Succeeds if UV is discouraged and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, flagOn)
+          }
+
+          it("Fails if UV is preferred and flag is not set.") {
+            checkFails(UserVerificationRequirement.PREFERRED, flagOff)
+          }
+
+          it("Succeeds if UV is preferred and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, flagOn)
+          }
+
+          it("Fails if UV is required and flag is not set.") {
+            checkFails(UserVerificationRequirement.REQUIRED, flagOff)
+          }
+
+          it("Succeeds if UV is required and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.REQUIRED, flagOn)
+          }
         }
 
-        it("Succeeds if UV is preferred and flag is not set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.PREFERRED,
-            authenticatorData = flagOff
-          )
-          val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+        describe("13. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.") {
+          val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04).toByte).toArray)
+          val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) & 0xfb).toByte).toArray)
+          val (checkFails, checkSucceeds) = checks[FinishAssertionSteps#Step13](_.begin.next.next.next.next.next.next.next.next.next.next.next.next.next)
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
+          it("Succeeds if UV is discouraged and flag is not set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, flagOff)
+          }
 
-        it("Succeeds if UV is preferred and flag is set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.PREFERRED,
-            authenticatorData = flagOn
-          )
-          val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+          it("Succeeds if UV is discouraged and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, flagOn)
+          }
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
+          it("Succeeds if UV is preferred and flag is not set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, flagOff)
+          }
 
-        it("Fails if UV is required and flag is not set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.REQUIRED,
-            authenticatorData = flagOff
-          )
-          val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+          it("Succeeds if UV is preferred and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, flagOn)
+          }
 
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
+          it("Fails if UV is required and flag is not set.") {
+            checkFails(UserVerificationRequirement.REQUIRED, flagOff)
+          }
 
-        it("Succeeds if UV is required and flag is set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.REQUIRED,
-            authenticatorData = flagOn
-          )
-          val step: FinishAssertionSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-      }
-
-      describe("13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.") {
-        val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04 | 0x01).toByte).toArray)
-        val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, ((Defaults.authenticatorData.getBytes.toVector(32) | 0x04) & 0xfe).toByte).toArray)
-
-        it("Fails if UV is discouraged and flag is not set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.DISCOURAGED,
-            authenticatorData = flagOff
-          )
-          val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is discouraged and flag is set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.DISCOURAGED,
-            authenticatorData = flagOn
-          )
-          val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Fails if UV is preferred and flag is not set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.PREFERRED,
-            authenticatorData = flagOff
-          )
-          val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is preferred and flag is set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.PREFERRED,
-            authenticatorData = flagOn
-          )
-          val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Succeeds if UV is required and flag is not set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.REQUIRED,
-            authenticatorData = flagOff
-          )
-          val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Succeeds if UV is required and flag is set.") {
-          val steps = finishAssertion(
-            userVerificationRequirement = UserVerificationRequirement.REQUIRED,
-            authenticatorData = flagOn
-          )
-          val step: FinishAssertionSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          it("Succeeds if UV is required and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.REQUIRED, flagOn)
+          }
         }
       }
 
@@ -804,7 +779,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-            forAll(unrequestedAssertionExtensions, minSuccessful(5)) { case (extensionInputs, clientExtensionOutputs) =>
+            forAll(unrequestedAssertionExtensions, minSuccessful(1)) { case (extensionInputs, clientExtensionOutputs) =>
               val steps = finishAssertion(
                 requestedExtensions = extensionInputs,
                 clientExtensionResults = clientExtensionOutputs
@@ -877,7 +852,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(Defaults.clientDataJsonBytes.getBytes)))
       }
 
-      describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.") {
+      describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of authData and hash.") {
         it("The default test case succeeds.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -938,16 +913,16 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       }
 
-      describe("17. If the signature counter value adata.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
-        describe("If the signature counter value adata.signCount is") {
-          describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
-            val credentialRepository = new CredentialRepository {
+      describe("17. If the signature counter value authData.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
+        describe("If the signature counter value authData.signCount is") {
+          def credentialRepository(signatureCount: Long) =
+            new CredentialRepository {
               override def lookup(id: ByteArray, uh: ByteArray) = Some(
                 RegisteredCredential.builder()
                   .credentialId(id)
                   .userHandle(uh)
                   .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(1336)
+                  .signatureCount(signatureCount)
                   .build()
               ).asJava
               override def lookupAll(id: ByteArray) = ???
@@ -956,10 +931,49 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
             }
 
-            describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of adata.signCount.") {
+          describe("zero, then the stored signature counter value must also be zero.") {
+            val authenticatorData = new ByteArray(Defaults.authenticatorData.getBytes.updated(33, 0: Byte).updated(34, 0: Byte).updated(35, 0: Byte).updated(36, 0: Byte))
+            val signature = TestAuthenticator.makeAssertionSignature(authenticatorData, crypto.hash(Defaults.clientDataJsonBytes), Defaults.credentialKey.getPrivate)
+
+            it("Succeeds if the stored signature counter value is zero.") {
+              val cr = credentialRepository(0)
+              val steps = finishAssertion(
+                authenticatorData = authenticatorData,
+                signature = signature,
+                credentialRepository = Some(cr),
+                validateSignatureCounter = true
+              )
+              val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
+              step.next.result.get.isSignatureCounterValid should be (true)
+              step.next.result.get.getSignatureCount should be (0)
+            }
+
+            it("Fails if the stored signature counter value is nonzero.") {
+              val cr = credentialRepository(1)
+              val steps = finishAssertion(
+                authenticatorData = authenticatorData,
+                signature = signature,
+                credentialRepository = Some(cr),
+                validateSignatureCounter = true
+              )
+              val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Failure[_]]
+              step.tryNext shouldBe a [Failure[_]]
+              step.tryNext.failed.get shouldBe an [InvalidSignatureCountException]
+            }
+          }
+
+          describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
+            val cr = credentialRepository(1336)
+
+            describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of authData.signCount.") {
               it("An increasing signature counter always succeeds.") {
                 val steps = finishAssertion(
-                  credentialRepository = Some(credentialRepository),
+                  credentialRepository = Some(cr),
                   validateSignatureCounter = true
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -972,26 +986,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             }
           }
 
-          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute. ") {
-            val credentialRepository = new CredentialRepository {
-              override def lookup(id: ByteArray, uh: ByteArray) = Some(
-                RegisteredCredential.builder()
-                  .credentialId(id)
-                  .userHandle(uh)
-                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(1337)
-                  .build()
-              ).asJava
-              override def lookupAll(id: ByteArray) = ???
-              override def getCredentialIdsForUsername(username: String) = ???
-              override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
-              override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
-            }
+          describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
+            val cr = credentialRepository(1337)
 
             describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
-              it("If signature counter validation is disabled, the a nonincreasing signature counter succeeds.") {
+              it("If signature counter validation is disabled, a nonincreasing signature counter succeeds.") {
                 val steps = finishAssertion(
-                  credentialRepository = Some(credentialRepository),
+                  credentialRepository = Some(cr),
                   validateSignatureCounter = false
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1002,9 +1003,9 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 step.next.result.get.getSignatureCount should be(1337)
               }
 
-              it("If signature counter validation is enabled, the a nonincreasing signature counter fails.") {
+              it("If signature counter validation is enabled, a nonincreasing signature counter fails.") {
                 val steps = finishAssertion(
-                  credentialRepository = Some(credentialRepository),
+                  credentialRepository = Some(cr),
                   validateSignatureCounter = true
                 )
                 val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next

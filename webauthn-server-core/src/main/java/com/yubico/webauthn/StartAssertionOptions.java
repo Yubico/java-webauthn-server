@@ -50,7 +50,7 @@ public class StartAssertionOptions {
      * The default is empty (absent).
      * </p>
      *
-     * @see <a href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">Client-side-resident
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
      * credential</a>
      */
     @NonNull

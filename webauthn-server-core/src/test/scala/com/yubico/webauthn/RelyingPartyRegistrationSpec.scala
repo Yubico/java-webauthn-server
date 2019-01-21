@@ -80,6 +80,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   private val crypto = new BouncyCastleCrypto
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
+  def flipByte(index: Int, bytes: ByteArray): ByteArray = editByte(bytes, index, b => (0xff ^ b).toByte)
+  def editByte(bytes: ByteArray, index: Int, updater: Byte => Byte): ByteArray = new ByteArray(bytes.getBytes.updated(index, updater(bytes.getBytes()(index))))
+
   private val emptyCredentialRepository = new CredentialRepository {
     override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
     override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
@@ -363,7 +366,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         step.attestation.getAttestationStatement should not be null
       }
 
-      describe("9. Verify that the RP ID hash in authData is indeed the SHA-256 hash of the RP ID expected by the RP.") {
+      describe("9. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
         it("Fails if RP ID is different.") {
           val steps = finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editAuthenticatorData { authData: ByteArray =>
@@ -386,170 +389,99 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
-      describe("10. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
+      {
         val testData = RegistrationTestData.Packed.BasicAttestation
-        val authData = testData.response.getResponse.getAuthenticatorData
 
-        def flagOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04).toByte))
-        def flagOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfb).toByte))
+        def upOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x01).toByte))
+        def upOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfe).toByte))
 
-        it("Succeeds if UV is discouraged and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+        def uvOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04).toByte))
+        def uvOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfb).toByte))
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+        def checks[Step <: FinishRegistrationSteps.Step[_]](stepsToStep: FinishRegistrationSteps => Step) = {
+          def check[B]
+            (stepsToStep: FinishRegistrationSteps => Step)
+            (chk: Step => B)
+            (uvr: UserVerificationRequirement, authDataEdit: ByteArray => ByteArray)
+          : B = {
+            val steps = finishRegistration(
+              testData = testData.copy(
+                authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(uvr).build())
+              ).editAuthenticatorData(authDataEdit)
+            )
+            chk(stepsToStep(steps))
+          }
+          def checkFailsWith(stepsToStep: FinishRegistrationSteps => Step): (UserVerificationRequirement, ByteArray => ByteArray) => Unit = check(stepsToStep) { step =>
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+          def checkSucceedsWith(stepsToStep: FinishRegistrationSteps => Step): (UserVerificationRequirement, ByteArray => ByteArray) => Unit = check(stepsToStep) { step =>
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+          }
+
+          (checkFailsWith(stepsToStep), checkSucceedsWith(stepsToStep))
         }
 
-        it("Succeeds if UV is discouraged and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+        describe("10. Verify that the User Present bit of the flags in authData is set.") {
+          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step10](_.begin.next.next.next.next.next.next.next.next.next)
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          it("Fails if UV is discouraged and flag is not set.") {
+            checkFails(UserVerificationRequirement.DISCOURAGED, upOff)
+          }
+
+          it("Succeeds if UV is discouraged and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, upOn)
+          }
+
+          it("Fails if UV is preferred and flag is not set.") {
+            checkFails(UserVerificationRequirement.PREFERRED, upOff)
+          }
+
+          it("Succeeds if UV is preferred and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, upOn)
+          }
+
+          it("Fails if UV is required and flag is not set.") {
+            checkFails(UserVerificationRequirement.REQUIRED, upOff _ andThen uvOn)
+          }
+
+          it("Succeeds if UV is required and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.REQUIRED, upOn _ andThen uvOn)
+          }
         }
 
-        it("Succeeds if UV is preferred and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+        describe("11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
+          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step11](_.begin.next.next.next.next.next.next.next.next.next.next)
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
+          it("Succeeds if UV is discouraged and flag is not set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOff)
+          }
 
-        it("Succeeds if UV is preferred and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+          it("Succeeds if UV is discouraged and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOn)
+          }
 
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
+          it("Succeeds if UV is preferred and flag is not set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, uvOff)
+          }
 
-        it("Fails if UV is required and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
+          it("Succeeds if UV is preferred and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.PREFERRED, uvOn)
+          }
 
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
+          it("Fails if UV is required and flag is not set.") {
+            checkFails(UserVerificationRequirement.REQUIRED, uvOff)
+          }
 
-        it("Succeeds if UV is required and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step10 = steps.begin.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
+          it("Succeeds if UV is required and flag is set.") {
+            checkSucceeds(UserVerificationRequirement.REQUIRED, uvOn)
+          }
         }
       }
 
-      describe("11. If user verification is not required for this registration, verify that the User Present bit of the flags in authData is set.") {
-        val testData = RegistrationTestData.Packed.BasicAttestation
-        val authData = testData.response.getResponse.getAuthenticatorData
-
-        def flagOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04 | 0x01).toByte))
-        def flagOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, ((authData.getBytes()(32) | 0x04) & 0xfe).toByte))
-
-        it("Fails if UV is discouraged and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is discouraged and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.DISCOURAGED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Fails if UV is preferred and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
-        }
-
-        it("Succeeds if UV is preferred and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.PREFERRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Succeeds if UV is required and flag is not set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOff)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-
-        it("Succeeds if UV is required and flag is set.") {
-          val steps = finishRegistration(
-            testData = testData.copy(
-              authenticatorSelection = Some(AuthenticatorSelectionCriteria.builder().userVerification(UserVerificationRequirement.REQUIRED).build())
-            ).editAuthenticatorData(flagOn)
-          )
-          val step: FinishRegistrationSteps#Step11 = steps.begin.next.next.next.next.next.next.next.next.next.next
-
-          step.validations shouldBe a [Success[_]]
-          step.tryNext shouldBe a [Success[_]]
-        }
-      }
-
-      describe("12. Verify that the values of the ") {
+      describe("12. Verify that the values of the") {
 
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the create() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           ignore("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
@@ -631,7 +563,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       }
 
-      describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].") {
+      describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name [WebAuthn-Registries].") {
         def setup(format: String): FinishRegistrationSteps = {
           finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", format)
@@ -693,8 +625,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.attestationType should equal (AttestationType.SELF_ATTESTATION)
             step.tryNext shouldBe a [Success[_]]
           }
-
-          def flipByte(index: Int, bytes: ByteArray): ByteArray = new ByteArray(bytes.getBytes.updated(index, (0xff ^ bytes.getBytes()(index)).toByte))
 
           it("a test case with different signed client data is not valid.") {
             val testData = RegistrationTestData.FidoU2f.SelfAttestation
@@ -883,7 +813,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("the verification procedure is:") {
-            describe("1. Verify that the given attestation statement is valid CBOR conforming to the syntax defined above.") {
+            describe("1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.") {
 
               it("Fails if attStmt.sig is a text value.") {
                 val testData = RegistrationTestData.Packed.BasicAttestation
@@ -912,16 +842,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
             }
 
-            it("2. Let authenticatorData denote the authenticator data claimed to have been used for the attestation, and let clientDataHash denote the hash of the serialized client data.") {
-              val testData = RegistrationTestData.Packed.BasicAttestation
-              val authenticatorData: AuthenticatorData = new AttestationObject(testData.attestationObject).getAuthenticatorData
-              val clientDataHash = MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(testData.clientDataJson.getBytes("UTF-8"))
-
-              authenticatorData should not be null
-              clientDataHash should not be null
-            }
-
-            describe("3. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
+            describe("2. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
               it("The attestation type is identified as Basic.") {
                 val steps = finishRegistration(testData = RegistrationTestData.Packed.BasicAttestation)
                 val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -931,7 +852,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.attestationType should be (AttestationType.BASIC)
               }
 
-              describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in x5c with the algorithm specified in alg.") {
+              describe("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the attestation public key in attestnCert with the algorithm specified in alg.") {
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
@@ -958,7 +879,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              describe("2. Verify that x5c meets the requirements in §7.2.1 Packed attestation statement certificate requirements.") {
+              describe("2. Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate Requirements.") {
                 it("Fails for an attestation signature with an invalid country code.") {
                   val authenticator = TestAuthenticator
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
@@ -984,7 +905,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              describe("3. If x5c contains an extension with OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the AAGUID in authenticatorData.") {
+              describe("3. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData.") {
                 it("Succeeds for the default test case.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val result = verifier.verifyAttestationSignature(
@@ -1022,7 +943,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              it("If successful, return attestation type Basic and trust path x5c.") {
+              describe("4. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation.") {
+                it("Nothing to test.") {}
+              }
+
+              it("5. If successful, return implementation-specific values representing attestation type Basic, AttCA or uncertainty, and attestation trust path x5c.") {
                 val testData = RegistrationTestData.Packed.BasicAttestation
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1035,17 +960,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
             }
 
-            describe("4. If ecdaaKeyId is present, then the attestation type is ECDAA. In this case:") {
+            describe("3. If ecdaaKeyId is present, then the attestation type is ECDAA. In this case:") {
               ignore("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId (see [FIDOEcdaaAlgorithm]).") {
                 fail("Test not implemented.")
               }
 
-              ignore("2. If successful, return attestation type ECDAA and trust path ecdaaKeyId.") {
+              ignore("2. If successful, return implementation-specific values representing attestation type ECDAA and attestation trust path ecdaaKeyId.") {
                 fail("Test not implemented.")
               }
             }
 
-            describe("5. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
+            describe("4. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
               val testDataBase = RegistrationTestData.Packed.SelfAttestation
 
               it("The attestation type is identified as SelfAttestation.") {
@@ -1057,7 +982,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.attestationType should be (AttestationType.SELF_ATTESTATION)
               }
 
-              describe("1. Validate that alg matches the algorithm of the credential private key in authenticatorData.") {
+              describe("1. Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData.") {
                 it("Succeeds for the default test case.") {
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject),
@@ -1117,7 +1042,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
               }
 
-              it("3. If successful, return attestation type Self and empty trust path.") {
+              it("3. If successful, return implementation-specific values representing attestation type Self and an empty attestation trust path.") {
                 val testData = RegistrationTestData.Packed.SelfAttestation
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1130,11 +1055,11 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
           }
 
-          describe("7.2.1. Packed attestation statement certificate requirements") {
+          describe("8.2.1. Packed Attestation Statement Certificate Requirements") {
             val testDataBase = RegistrationTestData.Packed.BasicAttestation
 
             describe("The attestation certificate MUST have the following fields/extensions:") {
-              it("Version must be set to 3.") {
+              it("Version MUST be set to 3 (which is indicated by an ASN.1 INTEGER with value 2).") {
                 val badCert = Mockito.mock(classOf[X509Certificate])
                 val principal = new X500Principal("O=Yubico, C=SE, OU=Authenticator Attestation")
                 Mockito.when(badCert.getVersion) thenReturn 2
@@ -1149,7 +1074,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               }
 
               describe("Subject field MUST be set to:") {
-                it("Subject-C: Country where the Authenticator vendor is incorporated") {
+                it("Subject-C: ISO 3166 code specifying the country where the Authenticator vendor is incorporated (PrintableString)") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )._1
@@ -1161,7 +1086,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (true)
                 }
 
-                it("Subject-O: Legal name of the Authenticator vendor") {
+                it("Subject-O: Legal name of the Authenticator vendor (UTF8String)") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("C=SE, OU=Authenticator Attestation")
                   )._1
@@ -1173,7 +1098,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
                 }
 
-                it("Subject-OU: Authenticator Attestation") {
+                it("""Subject-OU: Literal string "Authenticator Attestation" (UTF8String)""") {
                   val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=SE, OU=Foo")
                   )._1
@@ -1185,12 +1110,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
                 }
 
-                describe("Subject-CN: No stipulation.") {
+                describe("Subject-CN: A UTF8String of the vendor’s choosing") {
                   it("Nothing to test") {}
                 }
               }
 
-              it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1 3 6 1 4 1 45724 1 1 4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as value.") {
+              it("If the related attestation root certificate is used for multiple authenticator models, the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING. The extension MUST NOT be marked as critical.") {
                 val idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4"
 
                 val badCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
@@ -1201,6 +1126,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
                 result shouldBe a [Failure[_]]
                 result.failed.get shouldBe an [IllegalArgumentException]
+
+                val badCertCritical: X509Certificate = TestAuthenticator.generateAttestationCertificate(
+                  name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
+                  extensions = List((idFidoGenCeAaguid, true, new DEROctetString(testDataBase.aaguid.getBytes)))
+                )._1
+                val resultCritical = Try(verifier.verifyX5cRequirements(badCertCritical, testDataBase.aaguid))
+
+                resultCritical shouldBe a [Failure[_]]
+                resultCritical.failed.get shouldBe an [IllegalArgumentException]
 
                 val goodCert: X509Certificate = TestAuthenticator.generateAttestationCertificate(
                   name = new X500Name("O=Yubico, C=SE, OU=Authenticator Attestation"),
@@ -1214,7 +1148,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal(true)
               }
 
-              it("The Basic Constraints extension MUST have the CA component set to false") {
+              it("The Basic Constraints extension MUST have the CA component set to false.") {
                 val result = Try(verifier.verifyX5cRequirements(testDataBase.attestationCaCert.get, testDataBase.aaguid))
 
                 result shouldBe a [Failure[_]]
@@ -1223,7 +1157,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 verifier.verifyX5cRequirements(testDataBase.packedAttestationCert, testDataBase.aaguid) should equal (true)
               }
 
-              describe("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both optional as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
+              describe("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both OPTIONAL as the status of many attestation certificates is available through authenticator metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
                 it("Nothing to test.") {}
               }
             }
@@ -1246,8 +1180,127 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           step.tryNext shouldBe a [Success[_]]
         }
 
-        ignore("The android-safetynet statement format is supported.") {
-          val steps = finishRegistration(testData = RegistrationTestData.AndroidSafetynet.BasicAttestation)
+        describe("For the android-safetynet attestation statement format") {
+          val verifier = new AndroidSafetynetAttestationStatementVerifier
+          val testDataContainer = RegistrationTestData.AndroidSafetynet
+          val defaultTestData = testDataContainer.BasicAttestation
+
+          it("the attestation statement verifier implementation is AndroidSafetynetAttestationStatementVerifier.") {
+            val steps = finishRegistration(
+              testData = defaultTestData,
+              allowUntrustedAttestation = true,
+              rp = defaultTestData.rpId
+            )
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.getAttestationStatementVerifier shouldBe an [AndroidSafetynetAttestationStatementVerifier]
+          }
+
+          describe("the verification procedure is:") {
+            def checkFails(testData: RegistrationTestData): Unit = {
+              val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
+                new AttestationObject(testData.attestationObject),
+                testData.clientDataJsonHash
+              ))
+
+              result shouldBe a [Failure[_]]
+              result.failed.get shouldBe an [IllegalArgumentException]
+            }
+
+            describe("1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.") {
+              it("Fails if attStmt.ver is a number value.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("ver", jsonFactory.numberNode(123)))
+                checkFails(testData)
+              }
+
+              it("Fails if attStmt.ver is missing.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("ver"))
+                checkFails(testData)
+              }
+
+              it("Fails if attStmt.response is a text value.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.textNode(new ByteArray(attStmt.get("response").binaryValue()).getBase64Url)))
+                checkFails(testData)
+              }
+
+              it("Fails if attStmt.response is missing.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("response"))
+                checkFails(testData)
+              }
+            }
+
+            describe("2. Verify that response is a valid SafetyNet response of version ver.") {
+              it("Fails if there's a difference in the signature.") {
+                val testData = defaultTestData
+                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
+
+                val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
+                  new AttestationObject(testData.attestationObject),
+                  testData.clientDataJsonHash
+                ))
+
+                result shouldBe a [Success[_]]
+                result.get should be (false)
+              }
+            }
+
+            describe("3. Verify that the nonce in the response is identical to the Base64 encoding of the SHA-256 hash of the concatenation of authenticatorData and clientDataHash.") {
+              it("Fails if an additional property is added to the client data.") {
+                val testData = defaultTestData.editClientData("foo", "bar")
+                checkFails(testData)
+              }
+            }
+
+            describe("4. Let attestationCert be the attestation certificate.") {
+              it("Nothing to test.") {}
+            }
+
+            it("5. Verify that attestationCert is issued to the hostname \"attest.android.com\" (see SafetyNet online documentation).") {
+              checkFails(testDataContainer.WrongHostname)
+            }
+
+            it("6. Verify that the ctsProfileMatch attribute in the payload of response is true.") {
+              checkFails(testDataContainer.FalseCtsProfileMatch)
+            }
+
+            describe("7. If successful, return implementation-specific values representing attestation type Basic and attestation trust path attestationCert.") {
+              it("The real example succeeds.") {
+                val steps = finishRegistration(
+                  testData = testDataContainer.RealExample,
+                  rp = testDataContainer.RealExample.rpId
+                )
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
+                step.attestationType() should be (AttestationType.BASIC)
+                step.attestationTrustPath().get should not be empty
+                step.attestationTrustPath().get.size should be (2)
+              }
+
+              it("The default test case succeeds.") {
+                val steps = finishRegistration(testData = testDataContainer.BasicAttestation)
+                val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a [Success[_]]
+                step.tryNext shouldBe a [Success[_]]
+                step.attestationType() should be (AttestationType.BASIC)
+                step.attestationTrustPath().get should not be empty
+                step.attestationTrustPath().get.size should be (1)
+              }
+            }
+          }
+        }
+
+        it("The android-safetynet statement format is supported.") {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.AndroidSafetynet.RealExample,
+            rp = RelyingPartyIdentity.builder().id("demo.yubico.com").name("").build()
+          )
           val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Success[_]]
@@ -1256,6 +1309,22 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       }
 
       describe("15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
+
+        describe("For the android-safetynet statement format") {
+          it("a trust resolver is returned.") {
+            val metadataService: MetadataService = new TestMetadataService()
+            val steps = finishRegistration(
+              testData = RegistrationTestData.AndroidSafetynet.RealExample,
+              metadataService = Some(metadataService),
+              rp = RegistrationTestData.AndroidSafetynet.RealExample.rpId
+            )
+            val step: FinishRegistrationSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.trustResolver.get should not be null
+            step.tryNext shouldBe a [Success[_]]
+          }
+        }
 
         describe("For the fido-u2f statement format") {
 
@@ -1369,7 +1438,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val steps = finishRegistration(
                 allowUntrustedAttestation = false,
                 testData = testData,
-                metadataService = Some(metadataService)
+                metadataService = Some(metadataService),
+                rp = testData.rpId
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1385,7 +1455,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val steps = finishRegistration(
                 allowUntrustedAttestation = true,
                 testData = testData,
-                metadataService = Some(metadataService)
+                metadataService = Some(metadataService),
+                rp = testData.rpId
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1407,7 +1478,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(
                 testData = testData,
-                metadataService = Some(metadataService)
+                metadataService = Some(metadataService),
+                rp = testData.rpId
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1426,9 +1498,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           }
 
           describe("An android-safetynet basic attestation") {
-            ignore("fails for now.") {
-              fail("Test not implemented.")
-            }
+            generateTests(testData = RegistrationTestData.AndroidSafetynet.RealExample)
           }
 
           describe("A fido-u2f basic attestation") {
@@ -1532,7 +1602,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           steps.run.isAttestationTrusted should be (false)
         }
 
-        describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.3.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
+        describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.4.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
           it("Nothing to test.") {}
         }
       }

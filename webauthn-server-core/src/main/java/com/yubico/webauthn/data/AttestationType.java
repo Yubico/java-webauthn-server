@@ -29,16 +29,16 @@ package com.yubico.webauthn.data;
  * Web Authentication supports several attestation types, defining the semantics of attestation statements and their
  * underlying trust models.
  *
- * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation-types">§6.4.3. Attestation Types</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3. Attestation Types</a>
  */
 public enum AttestationType {
     /**
      * In the case of basic attestation, the authenticator’s attestation key pair is specific to an authenticator model.
      * Thus, authenticators of the same model often share the same attestation key pair. See <a
-     * href="https://w3c.github.io/webauthn/#sec-attestation-privacy">§14.4 Attestation Privacy</a> for further
-     * information.
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-attestation-privacy">§14.4 Attestation Privacy</a> for
+     * further information.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#basic-attestation">Basic Attestation</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#basic-attestation">Basic Attestation</a>
      */
     BASIC,
 
@@ -48,7 +48,7 @@ public enum AttestationType {
      * Authenticators without meaningful protection measures for an attestation private key typically use this
      * attestation type.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#self-attestation">Self Attestation</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#self-attestation">Self Attestation</a>
      */
     SELF_ATTESTATION,
 
@@ -71,7 +71,7 @@ public enum AttestationType {
      * attestation statement.
      * </p>
      *
-     * @see <a href="https://w3c.github.io/webauthn/#attestation-ca">Attestation CA</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attestation-ca">Attestation CA</a>
      */
     ATTESTATION_CA,
 
@@ -82,18 +82,19 @@ public enum AttestationType {
      * cryptography and bilinear pairings, called ECDAA. See the <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
      * ECDAA Algorithm</a> for details.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#ecdaa">Elliptic Curve based Direct Anonymous Attestation
-     * (ECDAA)</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#ecdaa">Elliptic Curve based Direct Anonymous
+     * Attestation (ECDAA)</a>
      * @see <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
      * ECDAA Algorithm</a>
      */
     ECDAA,
 
     /**
-     * In this case, no attestation information is available. See also <a href="https://w3c.github.io/webauthn/#none-attestation">§8.7
+     * In this case, no attestation information is available. See also <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7
      * None Attestation Statement Format</a>.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#none-attestation">§8.7 None Attestation Statement Format</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None Attestation Statement
+     * Format</a>
      */
     NONE
 }

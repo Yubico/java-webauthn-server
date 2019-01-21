@@ -28,6 +28,7 @@ import java.io.InputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.math.BigInteger
+import java.nio.charset.StandardCharsets
 import java.security.PrivateKey
 import java.security.Signature
 import java.security.KeyPairGenerator
@@ -164,6 +165,7 @@ object TestAuthenticator {
     credentialKeypair: Option[KeyPair] = None,
     origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
+    safetynetCtsProfileMatch: Boolean = true,
     tokenBindingStatus: String = Defaults.TokenBinding.status,
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
     userId: UserIdentity = UserIdentity.builder().name("Test").displayName("Test").id(new ByteArray(Array(42, 13, 37))).build(),
@@ -218,7 +220,8 @@ object TestAuthenticator {
       clientDataJson,
       attestationCertAndKey,
       selfAttestationKey = if (useSelfAttestation) Some(credentialKeypair.get.getPrivate) else None,
-      alg = alg
+      alg = alg,
+      safetynetCtsProfileMatch = safetynetCtsProfileMatch
     )
 
     val response = AuthenticatorAttestationResponse.builder()
@@ -236,12 +239,23 @@ object TestAuthenticator {
   def createBasicAttestedCredential(
     aaguid: ByteArray = Defaults.aaguid,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
-    attestationStatementFormat: String = "fido-u2f"
+    attestationStatementFormat: String = "fido-u2f",
+    generateRsaCert: Boolean = false,
+    certSubject: Option[X500Name] = None,
+    safetynetCtsProfileMatch: Boolean = true
   ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = {
     val (caCert, generatedAttestationCertAndKey) = attestationCertAndKey match {
       case None =>
         val (caCert, caKey) = generateAttestationCaCertificate()
-        (Some(caCert), Some(generateAttestationCertificate(caCertAndKey = Some((caCert, caKey)))))
+        (
+          Some(caCert),
+          Some(
+            certSubject match {
+              case Some(name) => generateAttestationCertificate(caCertAndKey = Some((caCert, caKey)), generateRsa = generateRsaCert, name = name)
+              case None => generateAttestationCertificate(caCertAndKey = Some((caCert, caKey)), generateRsa = generateRsaCert)
+            }
+          )
+        )
       case Some(_) => (None, None)
     }
 
@@ -249,7 +263,8 @@ object TestAuthenticator {
       createCredential(
         aaguid = aaguid,
         attestationCertAndKey = attestationCertAndKey orElse generatedAttestationCertAndKey,
-        attestationStatementFormat = attestationStatementFormat
+        attestationStatementFormat = attestationStatementFormat,
+        safetynetCtsProfileMatch = safetynetCtsProfileMatch
       ),
       caCert
     )
@@ -353,11 +368,13 @@ object TestAuthenticator {
     clientDataJson: String,
     certAndKey: Option[(X509Certificate, PrivateKey)],
     selfAttestationKey: Option[PrivateKey] = None,
-    alg: Option[COSEAlgorithmIdentifier] = None
+    alg: Option[COSEAlgorithmIdentifier] = None,
+    safetynetCtsProfileMatch: Boolean = true
   ): ByteArray = {
     val makeAttestationStatement: (ByteArray, String, Option[(X509Certificate, PrivateKey)]) => JsonNode = format match {
-      case "fido-u2f" => makeU2fAttestationStatement _
-      case "none" => makeNoneAttestationStatement _
+      case "android-safetynet" => makeAndroidSafetynetAttestationStatement(_, _, _, ctsProfileMatch = safetynetCtsProfileMatch)
+      case "fido-u2f" => makeU2fAttestationStatement
+      case "none" => makeNoneAttestationStatement
       case "packed" => makePackedAttestationStatement(_, _, _, selfAttestationKey = selfAttestationKey, alg = alg)
     }
 
@@ -444,6 +461,49 @@ object TestAuthenticator {
           )
       ).asJava
     )
+  }
+
+  def makeAndroidSafetynetAttestationStatement(
+    authDataBytes: ByteArray,
+    clientDataJson: String,
+    attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+    ctsProfileMatch: Boolean = true
+  ): JsonNode = {
+    val (cert, key) = attestationCertAndKey getOrElse generateAttestationCertificate()
+
+    val nonce = crypto.hash(authDataBytes concat crypto.hash(clientDataJson))
+
+    val f = JsonNodeFactory.instance
+
+    val jwsHeader = f.objectNode().setAll(Map(
+      "alg" -> f.textNode("RS256"),
+      "x5c" -> f.arrayNode().add(f.textNode(new ByteArray(cert.getEncoded).getBase64))
+    ).asJava)
+    val jwsHeaderBase64 = new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(jwsHeader)).getBase64Url
+
+    val jwsPayload = f.objectNode().setAll(Map(
+      "nonce" -> f.binaryNode(nonce.getBytes),
+      "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
+      "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
+      "apkDigestSha256" -> f.textNode(crypto.hash("foo").getBase64),
+      "ctsProfileMatch" -> f.booleanNode(ctsProfileMatch),
+      "aplCertificateDigestSha256" -> f.arrayNode().add(f.textNode(crypto.hash("foo").getBase64)),
+      "basicIntegrity" -> f.booleanNode(true)
+    ).asJava)
+    val jwsPayloadBase64 = new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(jwsPayload)).getBase64Url
+
+    val jwsSignedCompact = jwsHeaderBase64 + "." + jwsPayloadBase64
+    val jwsSignedBytes = new ByteArray(jwsSignedCompact.getBytes(StandardCharsets.UTF_8))
+    val jwsSignature = sign(jwsSignedBytes, key)
+
+    val jwsCompact = jwsSignedCompact + "." + jwsSignature.getBase64Url
+
+    val attStmt = f.objectNode().setAll(Map(
+      "ver" -> f.textNode("14799021"),
+      "response" -> f.binaryNode(jwsCompact.getBytes(StandardCharsets.UTF_8))
+    ).asJava)
+
+    attStmt
   }
 
   def makeAuthDataBytes(
@@ -567,18 +627,23 @@ object TestAuthenticator {
     keypair: KeyPair = generateEcKeypair(),
     name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"),
     extensions: Iterable[(String, Boolean, ASN1Primitive)] = List(("1.3.6.1.4.1.45724.1.1.4", false, new DEROctetString(Defaults.aaguid.getBytes))),
-    caCertAndKey: Option[(X509Certificate, PrivateKey)] = None
+    caCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+    generateRsa: Boolean = false
   ): (X509Certificate, PrivateKey) = {
+    val actualKeypair =
+      if (generateRsa) generateRsaKeypair()
+      else keypair
+
     (
       buildCertificate(
-        publicKey = keypair.getPublic,
+        publicKey = actualKeypair.getPublic,
         issuerName = caCertAndKey.map(_._1).map(JcaX500NameUtil.getSubject).getOrElse(name),
         subjectName = name,
-        signingKey = caCertAndKey.map(_._2).getOrElse(keypair.getPrivate),
+        signingKey = caCertAndKey.map(_._2).getOrElse(actualKeypair.getPrivate),
         isCa = false,
         extensions = extensions
       ),
-      keypair.getPrivate
+      actualKeypair.getPrivate
     )
   }
 

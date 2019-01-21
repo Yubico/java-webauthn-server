@@ -26,7 +26,6 @@ package com.yubico.webauthn;
 
 
 import COSE.CoseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
@@ -79,16 +78,12 @@ final class FinishAssertionSteps {
         return begin().run();
     }
 
-    private interface Step<A extends Step<?, ?>, B extends Step<?, ?>> {
-        B nextStep();
+    interface Step<Next extends Step<?>> {
+        Next nextStep();
 
         void validate() throws InvalidSignatureCountException;
 
         List<String> getPrevWarnings();
-
-        default boolean isFinished() {
-            return false;
-        }
 
         default Optional<AssertionResult> result() {
             return Optional.empty();
@@ -105,13 +100,13 @@ final class FinishAssertionSteps {
             return CollectionUtil.immutableList(result);
         }
 
-        default B next() throws InvalidSignatureCountException {
+        default Next next() throws InvalidSignatureCountException {
             validate();
             return nextStep();
         }
 
         default AssertionResult run() throws InvalidSignatureCountException {
-            if (isFinished()) {
+            if (result().isPresent()) {
                 return result().get();
             } else {
                 return next().run();
@@ -120,7 +115,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step0 implements Step<Step0, Step1> {
+    class Step0 implements Step<Step1> {
         @Override
         public Step1 nextStep() {
             return new Step1(username().get(), userHandle().get(), allWarnings());
@@ -163,7 +158,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step1 implements Step<Step0, Step2> {
+    class Step1 implements Step<Step2> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -186,7 +181,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step2 implements Step<Step1, Step3> {
+    class Step2 implements Step<Step3> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -215,7 +210,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step3 implements Step<Step2, Step4> {
+    class Step3 implements Step<Step4> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
@@ -244,7 +239,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step4 implements Step<Step3, Step5> {
+    class Step4 implements Step<Step5> {
 
         private final String username;
         private final ByteArray userHandle;
@@ -253,9 +248,9 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            assure(clientData().getBytes() != null, "Missing client data.");
-            assure(authenticatorData().getBytes() != null, "Missing authenticator data.");
-            assure(signature().getBytes() != null, "Missing signature.");
+            assure(clientData() != null, "Missing client data.");
+            assure(authenticatorData() != null, "Missing authenticator data.");
+            assure(signature() != null, "Missing signature.");
         }
 
         @Override
@@ -277,7 +272,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step5 implements Step<Step4, Step6> {
+    class Step5 implements Step<Step6> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -295,7 +290,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step6 implements Step<Step5, Step7> {
+    class Step6 implements Step<Step7> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -317,7 +312,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step7 implements Step<Step6, Step8> {
+    class Step7 implements Step<Step8> {
 
         private final String username;
         private final ByteArray userHandle;
@@ -347,7 +342,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step8 implements Step<Step7, Step9> {
+    class Step8 implements Step<Step9> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -368,7 +363,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step9 implements Step<Step8, Step10> {
+    class Step9 implements Step<Step10> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -391,7 +386,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step10 implements Step<Step9, Step11> {
+    class Step10 implements Step<Step11> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -409,7 +404,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step11 implements Step<Step10, Step12> {
+    class Step11 implements Step<Step12> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -442,7 +437,28 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step12 implements Step<Step11, Step13> {
+    class Step12 implements Step<Step13> {
+        private final String username;
+        private final ByteArray userHandle;
+        private final RegisteredCredential credential;
+        private final List<String> prevWarnings;
+
+        @Override
+        public void validate() {
+            assure(
+                response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+                "User Presence is required."
+            );
+        }
+
+        @Override
+        public Step13 nextStep() {
+            return new Step13(username, userHandle, credential, allWarnings());
+        }
+    }
+
+    @Value
+    class Step13 implements Step<Step14> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -459,36 +475,13 @@ final class FinishAssertionSteps {
         }
 
         @Override
-        public Step13 nextStep() {
-            return new Step13(username, userHandle, credential, allWarnings());
-        }
-    }
-
-    @Value
-    public class Step13 implements Step<Step12, Step14> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
-
-        @Override
-        public void validate() {
-            if (request.getPublicKeyCredentialRequestOptions().getUserVerification() != UserVerificationRequirement.REQUIRED) {
-                assure(
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UP,
-                    "User Presence is required."
-                );
-            }
-        }
-
-        @Override
         public Step14 nextStep() {
             return new Step14(username, userHandle, credential, allWarnings());
         }
     }
 
     @Value
-    public class Step14 implements Step<Step13, Step15> {
+    class Step14 implements Step<Step15> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -518,7 +511,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step15 implements Step<Step14, Step16> {
+    class Step15 implements Step<Step16> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -526,7 +519,7 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            assure(clientDataJsonHash() != null, "Failed to compute hash of client data");
+            assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
         }
 
         @Override
@@ -540,7 +533,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step16 implements Step<Step15, Step17> {
+    class Step16 implements Step<Step17> {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
@@ -555,17 +548,10 @@ final class FinishAssertionSteps {
             try {
                 key = WebAuthnCodecs.importCoseP256PublicKey(cose);
             } catch (CoseException | IOException e) {
-                String coseString;
-                try {
-                    coseString = WebAuthnCodecs.json().writeValueAsString(cose.getBytes());
-                } catch (JsonProcessingException e2) {
-                    coseString = "(Failed to write as string)";
-                }
-
                 throw new IllegalArgumentException(String.format(
-                    "Failed to decode public key: Credential ID: {} COSE: {}",
+                    "Failed to decode public key: Credential ID: %s COSE: %s",
                     credential.getCredentialId().getBase64Url(),
-                    coseString
+                    cose.getBase64Url()
                 ));
             }
 
@@ -591,26 +577,27 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Step17 implements Step<Step16, Finished> {
+    class Step17 implements Step<Finished> {
         private final String username;
         private final ByteArray userHandle;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() throws InvalidSignatureCountException {
-            if (validateSignatureCounter) {
-                if (!signatureCounterValid()) {
-                    throw new InvalidSignatureCountException(
-                        response.getId(),
-                        storedSignatureCountBefore() + 1,
-                        assertionSignatureCount()
-                    );
-                }
+            if (validateSignatureCounter
+                && !
+                    signatureCounterValid()
+            ) {
+                throw new InvalidSignatureCountException(
+                    response.getId(),
+                    storedSignatureCountBefore() + 1,
+                    assertionSignatureCount()
+                );
             }
         }
 
         private boolean signatureCounterValid() {
-            return assertionSignatureCount() == 0
+            return (assertionSignatureCount() == 0 && storedSignatureCountBefore() == 0)
                 || assertionSignatureCount() > storedSignatureCountBefore();
         }
 
@@ -631,7 +618,7 @@ final class FinishAssertionSteps {
     }
 
     @Value
-    public class Finished implements Step<Step17, Finished> {
+    class Finished implements Step<Finished> {
         private final String username;
         private final ByteArray userHandle;
         private final long assertionSignatureCount;
@@ -640,11 +627,6 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() { /* No-op */ }
-
-        @Override
-        public boolean isFinished() {
-            return true;
-        }
 
         @Override
         public Finished nextStep() {

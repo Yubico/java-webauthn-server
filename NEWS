@@ -1,3 +1,26 @@
+== Version 0.8.0 ==
+
+Possibly breaking changes:
+
+* User Presence (UP) is now always required by the spec, not only when UV is not
+  required; implementation updated to reflect this.
+
+
+New features:
+
+* Added support for `android-safetynet` attestation statement format
+ ** Thanks to Ren Lin for the contribution, see https://github.com/Yubico/java-webauthn-server/pull/5
+* Implementation updated to reflect Proposed Recommendation version of the spec,
+  released 2019-01-17
+
+Bug fixes:
+
+* Fixed validation of zero-valued assertion signature counter
+ ** Previously, a zero-valued assertion signature counter was always regarded as
+    valid. Now, it is only considered valid if the stored signature counter is
+    also zero.
+
+
 == Version 0.7.0 ==
 
 === `webauthn-server-attestation` ===

@@ -37,8 +37,8 @@ import lombok.Value;
 /**
  * This class may be used to specify requirements regarding authenticator attributes.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-authenticatorselectioncriteria">§5.4.4. Authenticator Selection
- * Criteria (dictionary AuthenticatorSelectionCriteria)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-authenticatorselectioncriteria">§5.4.4.
+ * Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria)
  * </a>
  */
 @Value
@@ -48,8 +48,8 @@ public class AuthenticatorSelectionCriteria {
 
     /**
      * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
-     * href="https://w3c.github.io/webauthn/#attachment">§5.4.5 Authenticator Attachment Enumeration (enum
-     * AuthenticatorAttachment)</a>.
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
+     * (enum AuthenticatorAttachment)</a>.
      */
     @NonNull
     @Builder.Default
@@ -57,14 +57,14 @@ public class AuthenticatorSelectionCriteria {
 
     /**
      * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true</code>, the
-     * authenticator MUST create a <a href="https://w3c.github.io/webauthn/#client-side-resident-public-key-credential-source">client-side-resident
+     * authenticator MUST create a <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
      * public key credential source</a> when creating a public key credential.
      */
     @Builder.Default
     private final boolean requireResidentKey = false;
 
     /**
-     * Describes the Relying Party's requirements regarding <a href="https://w3c.github.io/webauthn/#user-verification">user
+     * Describes the Relying Party's requirements regarding <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
      * verification</a> for the
      * <code>navigator.credentials.create()</code> operation. Eligible authenticators are filtered to only those
      * capable of satisfying this requirement.

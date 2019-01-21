@@ -7,16 +7,16 @@ project.ext.publishMe = true
 dependencies {
 
   compile(
-    [group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.54'],
-    [group: 'com.google.guava', name: 'guava', version:'19.0'],
-    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.9.6'],
+    'com.fasterxml.jackson.core:jackson-databind:2.9.6',
+    'com.google.guava:guava:19.0',
+    'org.bouncycastle:bcpkix-jdk15on:1.54',
   )
 
   testCompile(
     project(':yubico-util-scala'),
     'org.scala-lang:scala-library:2.11.3',
-    'org.scalatest:scalatest_2.11:3.0.4',
     'org.scalacheck:scalacheck_2.11:1.13.5',
+    'org.scalatest:scalatest_2.11:3.0.4',
   )
 }
 

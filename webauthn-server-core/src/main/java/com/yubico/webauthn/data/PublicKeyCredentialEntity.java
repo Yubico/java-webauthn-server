@@ -32,8 +32,8 @@ import java.util.Optional;
  * Describes a user account, or a WebAuthn Relying Party, which a public key credential is associated with or scoped to,
  * respectively.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity">§5.4.1. Public Key Entity
- * Description (dictionary PublicKeyCredentialEntity)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialentity">§5.4.1. Public Key
+ * Entity Description (dictionary PublicKeyCredentialEntity)
  * </a>
  */
 public interface PublicKeyCredentialEntity {

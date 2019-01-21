@@ -42,7 +42,7 @@ interface X5cAttestationStatementVerifier {
     }
 
     default Optional<List<X509Certificate>> getAttestationTrustPath(AttestationObject attestationObject) throws CertificateException {
-        JsonNode x5cNode = attestationObject.getAttestationStatement().get("x5c");
+        JsonNode x5cNode = getX5cArray(attestationObject);
 
         if (x5cNode != null && x5cNode.isArray()) {
             List<X509Certificate> certs = new ArrayList<>(x5cNode.size());
@@ -66,6 +66,10 @@ interface X5cAttestationStatementVerifier {
         } else {
             return Optional.empty();
         }
+    }
+
+    default JsonNode getX5cArray(AttestationObject attestationObject) {
+        return attestationObject.getAttestationStatement().get("x5c");
     }
 
 }

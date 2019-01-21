@@ -56,7 +56,7 @@ import lombok.Value;
  * trust decisions.
  * </p>
  *
- * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1. Authenticator Data</a>
  */
 @Value
 @JsonSerialize(using = AuthenticatorData.JsonSerializer.class)
@@ -65,7 +65,8 @@ public class AuthenticatorData {
     /**
      * The original raw byte array that this object is decoded from. This is a byte array of 37 bytes or more.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1. Authenticator
+     * Data</a>
      */
     @NonNull
     private final ByteArray bytes;

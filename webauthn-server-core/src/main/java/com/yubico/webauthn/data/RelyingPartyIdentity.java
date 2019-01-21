@@ -39,8 +39,8 @@ import lombok.Value;
 /**
  * Used to supply additional Relying Party attributes when creating a new credential.
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialrpentity">§5.4.2. Relying Party Parameters
- * for Credential Generation (dictionary PublicKeyCredentialRpEntity)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrpentity">§5.4.2. Relying
+ * Party Parameters for Credential Generation (dictionary PublicKeyCredentialRpEntity)
  * </a>
  */
 @Value
@@ -60,10 +60,10 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
     private final String name;
 
     /**
-     * A unique identifier for the Relying Party, which sets the <a href="https://w3c.github.io/webauthn/#rp-id">RP
+     * A unique identifier for the Relying Party, which sets the <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP
      * ID</a>.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#rp-id">RP ID</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
      */
     @NonNull
     private final String id;

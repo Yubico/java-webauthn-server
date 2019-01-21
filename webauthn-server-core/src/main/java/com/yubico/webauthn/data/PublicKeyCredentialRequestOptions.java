@@ -40,8 +40,8 @@ import lombok.Value;
  * Its `challenge` member must be present, while its other members are optional.
  * </p>
  *
- * @see <a href="https://w3c.github.io/webauthn/#dictdef-publickeycredentialrequestoptions">§5.5. Options for Assertion
- * Generation (dictionary PublicKeyCredentialRequestOptions)
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrequestoptions">§5.5.
+ * Options for Assertion Generation (dictionary PublicKeyCredentialRequestOptions)
  * </a>
  */
 @Value
@@ -50,8 +50,8 @@ public class PublicKeyCredentialRequestOptions {
 
     /**
      * A challenge that the selected authenticator signs, along with other data, when producing an authentication
-     * assertion. See the <a href="https://w3c.github.io/webauthn/#cryptographic-challenges">§13.1 Cryptographic
-     * Challenges</a> security consideration.
+     * assertion. See the <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1
+     * Cryptographic Challenges</a> security consideration.
      */
     @NonNull
     private final ByteArray challenge;
@@ -86,7 +86,7 @@ public class PublicKeyCredentialRequestOptions {
     private final Optional<List<PublicKeyCredentialDescriptor>> allowCredentials = Optional.empty();
 
     /**
-     * Describes the Relying Party's requirements regarding <a href="https://w3c.github.io/webauthn/#user-verification">user
+     * Describes the Relying Party's requirements regarding <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
      * verification</a> for the <code>navigator.credentials.get()</code> operation.
      * <p>
      * Eligible authenticators are filtered to only those capable of satisfying this requirement.

@@ -50,19 +50,20 @@ public class AssertionResult {
     private final boolean success;
 
     /**
-     * The <a href="https://w3c.github.io/webauthn/#credential-id">credential ID</a> of the credential used for the
-     * assertion.
+     * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a> of the credential
+     * used for the assertion.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#credential-id">Credential ID</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
      * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
      */
     @NonNull
     private final ByteArray credentialId;
 
     /**
-     * The <a href="https://w3c.github.io/webauthn/#user-handle">user handle</a> of the authenticated user.
+     * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> of the authenticated
+     * user.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#user-handle">User Handle</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">User Handle</a>
      * @see UserIdentity#getId()
      * @see #getUsername()
      */
@@ -78,8 +79,8 @@ public class AssertionResult {
     private final String username;
 
     /**
-     * The new <a href="https://w3c.github.io/webauthn/#signcount">signature count</a> of the credential used for the
-     * assertion.
+     * The new <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#signcount">signature count</a> of the
+     * credential used for the assertion.
      *
      * <p>
      * You should update this value in your database.
@@ -93,7 +94,8 @@ public class AssertionResult {
      * <code>true</code> if and only if the {@link AuthenticatorData#getSignatureCounter() signature counter value}
      * in the assertion was strictly greater than {@link RegisteredCredential#getSignatureCount() the stored one}.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#sec-authenticator-data">§6.1. Authenticator Data</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1. Authenticator
+     * Data</a>
      * @see AuthenticatorData#getSignatureCounter()
      * @see RegisteredCredential#getSignatureCount()
      * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#validateSignatureCounter(boolean)

@@ -34,7 +34,8 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * Contains <a href="https://w3c.github.io/webauthn/#client-extension-output">client extension outputs</a> from a
+ * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
+ * outputs</a> from a
  * <code>navigator.credentials.get()</code> operation.
  *
  * <p>
@@ -46,7 +47,7 @@ import lombok.Value;
  * The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  * </p>
  *
- * @see <a href="https://w3c.github.io/webauthn/#extensions">§9. WebAuthn Extensions</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn Extensions</a>
  */
 @Value
 @Builder(toBuilder = true)
@@ -60,7 +61,8 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
      * </p>
      *
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-appid-extension">§10.1. FIDO AppID Extension (appid)</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+     * (appid)</a>
      */
     @Builder.Default
     private final Optional<Boolean> appid = Optional.empty();

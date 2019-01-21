@@ -49,7 +49,7 @@ public class FinishAssertionOptions {
     /**
      * The client's response to the {@link #getRequest() request}.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#getAssertion">navigator.credentials.get()</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#getAssertion">navigator.credentials.get()</a>
      */
     @NonNull
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
@@ -58,7 +58,7 @@ public class FinishAssertionOptions {
      * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the connection to the
      * client, if any.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#discover-from-external-source">The Token Binding Protocol Version 1.0</a>
+     * @see <a href="https://tools.ietf.org/html/rfc8471">The Token Binding Protocol Version 1.0</a>
      */
     @NonNull
     @Builder.Default

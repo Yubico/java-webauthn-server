@@ -48,9 +48,10 @@ import lombok.Value;
 public class RegistrationResult {
 
     /**
-     * The <a href="https://w3c.github.io/webauthn/#credential-id">credential ID</a> of the created credential.
+     * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a> of the created
+     * credential.
      *
-     * @see <a href="https://w3c.github.io/webauthn/#credential-id">Credential ID</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
      * @see PublicKeyCredential#getId()
      */
     @NonNull
@@ -67,14 +68,15 @@ public class RegistrationResult {
     private final boolean attestationTrusted;
 
     /**
-     * The attestation type <a href="https://w3c.github.io/webauthn/#sctn-attestation-types">§6.4.3. Attestation
-     * Types</a> that was used for the created credential.
+     * The attestation type <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+     * Attestation Types</a> that was used for the created credential.
      *
      * <p>
      * You can ignore this if authenticator attestation is not relevant to your application.
      * </p>
      *
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation-types">§6.4.3. Attestation Types</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3. Attestation
+     * Types</a>
      */
     @NonNull
     private final AttestationType attestationType;
@@ -107,7 +109,7 @@ public class RegistrationResult {
      * metadataService} in {@link RelyingParty}.
      * </p>
      *
-     * @see <a href="https://w3c.github.io/webauthn/#sctn-attestation">§6.4. Attestation</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
      */
     @NonNull
