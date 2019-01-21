@@ -179,7 +179,7 @@ subprojects { project ->
           pom.project {
             name project.description
             description 'Java server-side library for Web Authentication'
-            url 'https://developers.yubico.com/'
+            url 'https://developers.yubico.com/java-webauthn-server/'
 
             developers {
               developer {
