@@ -601,7 +601,7 @@ final class FinishAssertionSteps {
         }
 
         private boolean signatureCounterValid() {
-            return assertionSignatureCount() == 0
+            return (assertionSignatureCount() == 0 && storedSignatureCountBefore() == 0)
                 || assertionSignatureCount() > storedSignatureCountBefore();
         }
 
