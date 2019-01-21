@@ -931,6 +931,42 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
             }
 
+          describe("zero, then the stored signature counter value must also be zero.") {
+            val authenticatorData = new ByteArray(Defaults.authenticatorData.getBytes.updated(33, 0: Byte).updated(34, 0: Byte).updated(35, 0: Byte).updated(36, 0: Byte))
+            val signature = TestAuthenticator.makeAssertionSignature(authenticatorData, crypto.hash(Defaults.clientDataJsonBytes), Defaults.credentialKey.getPrivate)
+
+            it("Succeeds if the stored signature counter value is zero.") {
+              val cr = credentialRepository(0)
+              val steps = finishAssertion(
+                authenticatorData = authenticatorData,
+                signature = signature,
+                credentialRepository = Some(cr),
+                validateSignatureCounter = true
+              )
+              val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
+              step.next.result.get.isSignatureCounterValid should be (true)
+              step.next.result.get.getSignatureCount should be (0)
+            }
+
+            it("Fails if the stored signature counter value is nonzero.") {
+              val cr = credentialRepository(1)
+              val steps = finishAssertion(
+                authenticatorData = authenticatorData,
+                signature = signature,
+                credentialRepository = Some(cr),
+                validateSignatureCounter = true
+              )
+              val step: FinishAssertionSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Failure[_]]
+              step.tryNext shouldBe a [Failure[_]]
+              step.tryNext.failed.get shouldBe an [InvalidSignatureCountException]
+            }
+          }
+
           describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
             val cr = credentialRepository(1336)
 
