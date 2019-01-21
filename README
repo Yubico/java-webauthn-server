@@ -10,6 +10,26 @@ for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
 
+=== Dependency configuration
+
+Maven:
+
+----------
+<dependency>
+  <groupId>com.yubico</groupId>
+  <artifactId>webauthn-server-core</artifactId>
+  <version>1.0.0-RC2</version>
+  <scope>compile</scope>
+</dependency>
+----------
+
+Gradle:
+
+----------
+compile 'com.yubico:webauthn-server-core:1.0.0-RC2'
+----------
+
+
 === Example Usage
 
 See link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo
