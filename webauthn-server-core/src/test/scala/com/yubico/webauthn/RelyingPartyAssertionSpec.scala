@@ -702,13 +702,13 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
             chk(stepsToStep(steps))
           }
           def checkFailsWith(stepsToStep: FinishAssertionSteps => Step): (UserVerificationRequirement, ByteArray) => Unit = check(stepsToStep) { step =>
-            step.validations shouldBe a[Failure[_]]
-            step.validations.failed.get shouldBe an[IllegalArgumentException]
-            step.tryNext shouldBe a[Failure[_]]
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get shouldBe an [IllegalArgumentException]
+            step.tryNext shouldBe a [Failure[_]]
           }
           def checkSucceedsWith(stepsToStep: FinishAssertionSteps => Step): (UserVerificationRequirement, ByteArray) => Unit = check(stepsToStep) { step =>
-            step.validations shouldBe a[Success[_]]
-            step.tryNext shouldBe a[Success[_]]
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
           }
 
           (checkFailsWith(stepsToStep), checkSucceedsWith(stepsToStep))
