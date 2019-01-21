@@ -84,8 +84,8 @@ final class FinishRegistrationSteps {
         return begin().run();
     }
 
-    interface Step<A extends Step<?>> {
-        A nextStep();
+    interface Step<Next extends Step<?>> {
+        Next nextStep();
 
         void validate();
 
@@ -106,7 +106,7 @@ final class FinishRegistrationSteps {
             return CollectionUtil.immutableList(result);
         }
 
-        default A next() {
+        default Next next() {
             validate();
             return nextStep();
         }
