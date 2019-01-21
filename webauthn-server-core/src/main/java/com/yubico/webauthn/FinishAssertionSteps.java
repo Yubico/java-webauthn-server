@@ -561,7 +561,7 @@ final class FinishAssertionSteps {
                 }
 
                 throw new IllegalArgumentException(String.format(
-                    "Failed to decode public key: Credential ID: {} COSE: {}",
+                    "Failed to decode public key: Credential ID: %s COSE: %s",
                     credential.getCredentialId().getBase64Url(),
                     coseString
                 ));
