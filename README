@@ -31,9 +31,9 @@ Use the included
 https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle wrapper] to
 build the `.jar` artifact:
 
-```
+----------
 $ ./gradlew :webauthn-server-core:jar
-```
+----------
 
 The output is built in the `webauthn-server-core/build/libs/` directory, and the
 version is derived from the most recent Git tag. Builds done on a tagged commit
@@ -50,12 +50,12 @@ than 8.
 
 To run the tests (requires JDK 8):
 
-```
+----------
 $ ./gradlew check
-```
+----------
 
 To run the http://pitest.org/[PIT mutation tests] (requires JDK 8):
 
-```
+----------
 $ ./gradlew pitest
-```
+----------
