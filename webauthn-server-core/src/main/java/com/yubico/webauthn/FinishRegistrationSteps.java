@@ -121,7 +121,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step1 implements Step<Step2> {
+    class Step1 implements Step<Step2> {
         @Override
         public void validate() {}
 
@@ -137,7 +137,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step2 implements Step<Step3> {
+    class Step2 implements Step<Step3> {
         @Override
         public void validate() {
             assure(clientData() != null, "Client data must not be null.");
@@ -159,7 +159,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step3 implements Step<Step4> {
+    class Step3 implements Step<Step4> {
         private final CollectedClientData clientData;
 
         private List<String> warnings = new ArrayList<>(0);
@@ -189,7 +189,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step4 implements Step<Step5> {
+    class Step4 implements Step<Step5> {
         private final CollectedClientData clientData;
         private final List<String> prevWarnings;
 
@@ -208,7 +208,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step5 implements Step<Step6> {
+    class Step5 implements Step<Step6> {
         private final CollectedClientData clientData;
         private final List<String> prevWarnings;
 
@@ -227,7 +227,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step6 implements Step<Step7> {
+    class Step6 implements Step<Step7> {
         private final CollectedClientData clientData;
         private final List<String> prevWarnings;
 
@@ -243,7 +243,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step7 implements Step<Step8> {
+    class Step7 implements Step<Step8> {
         private final List<String> prevWarnings;
 
         @Override
@@ -262,7 +262,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step8 implements Step<Step9> {
+    class Step8 implements Step<Step9> {
         private final ByteArray clientDataJsonHash;
         private final List<String> prevWarnings;
 
@@ -282,7 +282,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step9 implements Step<Step10> {
+    class Step9 implements Step<Step10> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
@@ -302,7 +302,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step10 implements Step<Step11> {
+    class Step10 implements Step<Step11> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
@@ -319,7 +319,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step11 implements Step<Step12> {
+    class Step11 implements Step<Step12> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
@@ -338,7 +338,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step12 implements Step<Step13> {
+    class Step12 implements Step<Step13> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
@@ -367,7 +367,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step13 implements Step<Step14> {
+    class Step13 implements Step<Step14> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final List<String> prevWarnings;
@@ -407,7 +407,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step14 implements Step<Step15> {
+    class Step14 implements Step<Step15> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final AttestationStatementVerifier attestationStatementVerifier;
@@ -448,7 +448,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step15 implements Step<Step16> {
+    class Step15 implements Step<Step16> {
         private final AttestationObject attestation;
         private final AttestationType attestationType;
         private final Optional<List<X509Certificate>> attestationTrustPath;
@@ -495,7 +495,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step16 implements Step<Step17> {
+    class Step16 implements Step<Step17> {
         private final AttestationObject attestation;
         private final AttestationType attestationType;
         private final Optional<List<X509Certificate>> attestationTrustPath;
@@ -565,7 +565,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step17 implements Step<Step18> {
+    class Step17 implements Step<Step18> {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
@@ -583,7 +583,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step18 implements Step<Step19> {
+    class Step18 implements Step<Step19> {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
@@ -600,7 +600,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Step19 implements Step<Finished> {
+    class Step19 implements Step<Finished> {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
@@ -617,7 +617,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    public class Finished implements Step<Finished> {
+    class Finished implements Step<Finished> {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
