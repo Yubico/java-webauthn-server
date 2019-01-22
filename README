@@ -1,5 +1,8 @@
 java-webauthn-server
 ====================
+:toc:
+:toc-placement: macro
+:toc-title:
 
 image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
@@ -9,6 +12,12 @@ Java. Provides implementations of the
 https://www.w3.org/TR/webauthn/#rp-operations[Relying Party operations] required
 for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
+
+
+[discrete]
+== Table of contents
+
+toc::[]
 
 
 == Dependency configuration
