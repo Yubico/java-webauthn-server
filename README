@@ -14,7 +14,6 @@ for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
 
-[discrete]
 == Table of contents
 
 toc::[]
