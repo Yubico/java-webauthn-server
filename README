@@ -52,10 +52,133 @@ and other higher level concepts can make use of this authentication mechanism,
 but the authentication mechanism alone does not make a security system.
 
 
-== Example Usage
+== Quick start
 
-See link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo
-server, which stores authenticator registrations temporarily in memory.
+Implement the
+link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+interface with your database access logic. See
+link:webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage[`InMemoryRegistrationStorage`]
+for an example.
+
+Instantiate the
+link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+class:
+
+[source,java]
+----------
+RelyingPartyIdentity rpIdentity = RelyingPartyIdentity.builder()
+    .id("example.com")
+    .name("Example Application")
+    .build();
+
+RelyingParty rp = RelyingParty.builder()
+    .identity(rpIdentity)
+    .credentialRepository(new MyCredentialRepository())
+    .build();
+----------
+
+
+=== Registration
+
+Initiate a registration ceremony:
+
+[source,java]
+----------
+byte[] userHandle = new byte[64];
+random.nextBytes(userHandle);
+
+PublicKeyCredentialCreationOptions request = rp.startRegistration(StartRegistrationOptions.builder()
+    .user(UserIdentity.builder()
+        .name("alice")
+        .displayName("Alice Hypothetical")
+        .id(new ByteArray(userHandle))
+        .build())
+    .build());
+----------
+
+Serialize `request` to JSON and send it to the client:
+
+[source,java]
+----------
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+ObjectMapper jsonMapper = new ObjectMapper()
+    .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+    .setSerializationInclusion(Include.NON_ABSENT)
+    .registerModule(new Jdk8Module());
+
+String json = jsonMapper.writeValueAsString(request);
+return json;
+----------
+
+Get the response from the client:
+
+[source,java]
+----------
+String responseJson = /* ... */;
+PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
+    jsonMapper.readValue(responseJson, new TypeReference<PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>>(){});
+----------
+
+Validate the response:
+
+[source,java]
+----------
+try {
+    RegistrationResult result = rp.finishRegistration(FinishRegistrationOptions.builder()
+        .request(request)
+        .response(pkc)
+        .build());
+} catch (RegistrationFailedException e) { /* ... */ }
+----------
+
+Update your database:
+
+[source,java]
+----------
+storeCredential("alice", result.getKeyId(), result.getPublicKeyCose());
+----------
+
+
+=== Authentication
+
+Initiate an authentication ceremony:
+
+
+[source,java]
+----------
+AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
+    .username(Optional.of("alice"))
+    .build());
+String json = jsonMapper.writeValueAsString(request);
+return json;
+----------
+
+Validate the response:
+
+[source,java]
+----------
+String responseJson = /* ... */;
+
+PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
+    jsonMapper.readValue(responseJson, new TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>>() {
+});
+
+try {
+    AssertionResult result = rp.finishAssertion(FinishAssertionOptions.builder()
+        .request(request)
+        .response(pkc)
+        .build());
+
+    if (result.isSuccess()) {
+        return result.getUsername();
+    }
+} catch (AssertionFailedException e) { /* ... */ }
+throw new RuntimeException("Authentication failed");
+----------
+
+For more detailed example usage, see
+link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
 
 
 == Building
