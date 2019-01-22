@@ -190,6 +190,110 @@ For more detailed example usage, see
 link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
 
 
+== Architecture
+
+The library tries to place as few requirements on the overall application
+architecture as possible. For this reason it is stateless and free from side
+effects, and does not directly interact with any database. This means it is
+database agnostic and thread safe. The following diagram illustrates an example
+architecture for an application using the library.
+
+image::docs/img/demo-architecture.svg["Example application architecture",align="center"]
+
+The application manages all state and database access, and communicates with the
+library via POJO representations of requests and responses. The following
+diagram illustrates the data flow during a WebAuthn registration or
+authentication ceremony.
+
+image::docs/img/demo-sequence-diagram.svg["WebAuthn ceremony sequence diagram",align="center"]
+
+In this diagram, the *Client* is the user's browser and the application's
+client-side scripts. The *Server* is the application and its business logic, the
+*Library* is this library, and the *Users* database stores registered WebAuthn
+credentials.
+
+. The client requests to start the ceremony, for example by submitting a form.
+  The `username` may or may not be known at this point. For example, the user
+  might be requesting to create a new account, or we might be using
+  username-less authentication.
+
+. If the user does not already have a
+  https://www.w3.org/TR/webauthn/#user-handle[user handle], the application
+  creates one in some application-specific way.
+
+. The application may choose to authenticate the user with a password or the
+  like before proceeding.
+
+. The application calls one of the library's "start" methods to generate a
+  parameter object to be passed to `navigator.credentials.create()` or `.get()`
+  on the client.
+
+. The library generates a random challenge and an assortment of other arguments
+  depending on configuration set by the application.
+
+. If the `username` is known, the library uses a read-only database adapter
+  provided by the application to look up the user's credentials.
+
+. The returned list of https://www.w3.org/TR/webauthn/#credential-id[credential
+  IDs] is used to populate the
+  https://www.w3.org/TR/webauthn/#dom-publickeycredentialcreationoptions-excludecredentials[`excludeCredentials`]
+  or
+  https://www.w3.org/TR/webauthn/#dom-publickeycredentialrequestoptions-allowcredentials[`allowCredentials`]
+  parameter.
+
+. The library returns a `request` object which can be serialized to JSON and
+  passed as the `publicKey` argument to `navigator.credentials.create()` or
+  `.get()`. For registration ceremonies this will be a
+  https://www.w3.org/TR/webauthn/#dictdef-publickeycredentialcreationoptions[`PublicKeyCredentialCreationOptions`],
+  and for authentication ceremonies it will be a
+  https://www.w3.org/TR/webauthn/#dictdef-publickeycredentialrequestoptions[`PublicKeyCredentialRequestOptions`].
+  The application stores the `request` in temporary storage.
+
+. The application's client-side script runs `navigator.credentials.create()` or
+  `.get()` with `response` as the `publicKey` argument.
+
+. The user confirms the operation and the client returns a
+  https://www.w3.org/TR/webauthn/#public-key-credential[`PublicKeyCredential`]
+  object `response` to the application.
+
+. The application retrieves the `request` from temporary storage and passes
+  `request` and `response` to one of the library's "finish" methods to run the
+  response validation logic.
+
+. The library verifies that the `response` contents - challenge, origin, etc. -
+  are valid.
+
+. If this is an authentication ceremony, the library uses the database adapter
+  to look up the public key for the credential named in `response.id`.
+
+. The database adapter returns the public key.
+
+. The library verifies the authentication signature.
+
+. The library returns a POJO representation of the result of the ceremony. For
+  registration ceremonies, this will include the credential ID and public key of
+  the new credential. The application may also opt in to also getting
+  information about the authenticator model and whether the authenticator
+  attestation is trusted. For authentication ceremonies, this will include the
+  username and user handle, the credential ID of the credential used, and the
+  new https://www.w3.org/TR/webauthn/#signature-counter[signature counter] value
+  for the credential.
+
+. The application inspects the result object and takes any appropriate actions
+  as defined by its business logic.
+
+. If the result is not satisfactory, the application reports failure to the
+  client.
+
+. If the result is satisfactory, the application proceeds with storing the new
+  credential if this is a registration ceremony.
+
+. If this is an authentication ceremony, the application updates the signature
+  counter stored in the database for the credential.
+
+. Finally, the application reports success and resumes its business logic.
+
+
 == Building
 
 Use the included
