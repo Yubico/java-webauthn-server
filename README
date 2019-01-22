@@ -1,4 +1,5 @@
-== java-webauthn-server
+java-webauthn-server
+====================
 
 image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
@@ -10,7 +11,7 @@ for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
 
-=== Dependency configuration
+== Dependency configuration
 
 Maven:
 
@@ -30,13 +31,13 @@ compile 'com.yubico:webauthn-server-core:1.0.0-RC2'
 ----------
 
 
-=== Example Usage
+== Example Usage
 
 See link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo
 server, which stores authenticator registrations temporarily in memory.
 
 
-=== Building
+== Building
 
 Use the included
 https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle wrapper] to
