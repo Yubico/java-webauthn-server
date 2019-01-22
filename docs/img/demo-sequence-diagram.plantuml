@@ -1,0 +1,31 @@
+@startuml
+'Render using PlantUML: http://plantuml.com/
+
+participant Client
+participant Server
+participant Library
+database Users
+autonumber
+
+Client -> Server: ""start(username?)""
+Server -> Server: Create userHandle?
+Server -> Server: Verify password?
+Server -> Library: ""start(username?, userHandle?)""
+Library -> Library: Generate challenge
+Library -> Users: ""listCredentials(username)""
+Users --> Library: Credential IDs
+Library --> Server: ""request: PublicKeyCredential*Options""
+Server -> Client: ""navigator.credentials.*(request)""
+Client --> Server: ""response: PublicKeyCredential""
+Server -> Library: ""finish(request, response)""
+Library -> Library: Validate ""(request, response)""
+Library -> Users: ""getPublicKey(response.id)""
+Users --> Library: Public key
+Library -> Library: Verify ""response"" signature
+Library --> Server: ""result: Result""
+Server -> Server: Inspect ""result""
+Server ->x Client: Report failure?
+Server -> Users: Store new credential?
+Server -> Users: Update signature count?
+Server ->o Client: Report success?
+@enduml
