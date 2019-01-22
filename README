@@ -31,6 +31,27 @@ compile 'com.yubico:webauthn-server-core:1.0.0-RC2'
 ----------
 
 
+== Features
+
+- Generates request objects suitable as parameters to
+  `navigator.credentials.create()` and `.get()`
+- Performs all necessary
+  https://www.w3.org/TR/webauthn/#rp-operations[validation logic] on the
+  response from the client
+- Optionally integrates with a "metadata service" to verify
+  https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
+  and annotate responses with additional authenticator metadata
+
+
+=== Non-features
+
+This library has no concept of accounts, sessions, permissions or identity
+federation, and it's not an authentication framework; it only deals with
+executing the WebAuthn authentication mechanism. Sessions, account management
+and other higher level concepts can make use of this authentication mechanism,
+but the authentication mechanism alone does not make a security system.
+
+
 == Example Usage
 
 See link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo
