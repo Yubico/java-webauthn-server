@@ -60,6 +60,13 @@ and other higher level concepts can make use of this authentication mechanism,
 but the authentication mechanism alone does not make a security system.
 
 
+== Documentation
+
+See the
+link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/package-summary.html[Javadoc]
+for in-depth API documentation.
+
+
 == Quick start
 
 Implement the
