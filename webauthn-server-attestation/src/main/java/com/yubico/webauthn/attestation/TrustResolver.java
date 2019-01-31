@@ -46,9 +46,9 @@ public interface TrustResolver {
      * @param attestationCertificate The attestation certificate
      * @param caCertificateChain Zero or more certificates, of which the first
      *          has signed <code>attestationCertificate</code> and each of the
-     *          rest has signed the previous in order
-     * @return A trusted root certificate from which there exists a signature
-     *          path to <code>attestationCertificate</code>, if one exists.
+     *          remaining certificates has signed the certificate preceding it.
+     * @return A trusted root certificate from which there is a signature path
+     *          to <code>attestationCertificate</code>, if one exists.
      */
     Optional<X509Certificate> resolveTrustAnchor(X509Certificate attestationCertificate, List<X509Certificate> caCertificateChain);
 

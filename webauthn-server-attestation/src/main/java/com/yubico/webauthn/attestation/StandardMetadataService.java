@@ -105,8 +105,8 @@ public final class StandardMetadataService implements MetadataService {
      *
      * <p>
      * If the certificate chain is not trusted, the method returns an untrusted
-     * attestation populated with transports information found embedded in the
-     * attestation certificate.
+     * attestation populated with {@link Attestation#getTransports() transports}
+     * information found embedded in the attestation certificate.
      * </p>
      *
      * <p>
