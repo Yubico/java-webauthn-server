@@ -15,13 +15,24 @@ jdk:
 script:
   - ./gradlew check assembleJavadoc
 
-after_success:
-  - ./gradlew coveralls
+stages:
+  - test
+  - mutation-test
+  - deploy
 
-deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: $PAGES_DEPLOY_KEY
-  on:
-    branch: master
-  local-dir: 'build/javadoc'
+jobs:
+  include:
+    - stage: mutation-test
+      jdk: oraclejdk8
+      script: ./gradlew pitest coveralls
+
+    - stage: deploy
+      jdk: oraclejdk8
+      script: ./gradlew assembleJavadoc
+      deploy:
+        provider: pages
+        skip-cleanup: true
+        github-token: $PAGES_DEPLOY_KEY
+        on:
+          branch: master
+        local-dir: 'build/javadoc'
