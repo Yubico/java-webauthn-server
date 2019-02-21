@@ -60,6 +60,20 @@ and other higher level concepts can make use of this authentication mechanism,
 but the authentication mechanism alone does not make a security system.
 
 
+== Known issues
+
+- In the link:webauthn-server-demo[example app], authentication does not work in
+  Chrome as of version 70. This is due to a
+  link:https://bugs.chromium.org/p/chromium/issues/detail?id=847878[bug in
+  Chrome] which will not be worked around here. To work around this in
+  application code, you can omit the
+  link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/data/AuthenticatorAssertionResponse.AuthenticatorAssertionResponseBuilder.html#userHandle-java.util.Optional[`userHandle`]
+  when constructing an
+  link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/data/AuthenticatorAssertionResponse.html[`AuthenticatorAssertionResponse`]
+  value if the `userHandle` is empty. See
+  https://github.com/Yubico/java-webauthn-server/issues/12 .
+
+
 == Documentation
 
 See the
