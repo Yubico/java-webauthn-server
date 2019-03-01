@@ -53,7 +53,6 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.yubico.internal.util.ExceptionUtil.assure;
-import static com.yubico.webauthn.data.AttestationType.NONE;
 
 @Builder
 @Slf4j
@@ -373,24 +372,18 @@ final class FinishRegistrationSteps {
         private final List<String> prevWarnings;
 
         @Override
-        public void validate() {
-            assure(formatSupported(), "Unsupported attestation statement format: %s", format());
-        }
+        public void validate() {}
 
         @Override
         public Step14 nextStep() {
-            return new Step14(clientDataJsonHash, attestation, attestationStatementVerifier().get(), allWarnings());
+            return new Step14(clientDataJsonHash, attestation, attestationStatementVerifier(), allWarnings());
         }
 
         public String format() {
             return attestation.getFormat();
         }
 
-        public boolean formatSupported() {
-            return attestationStatementVerifier().isPresent();
-        }
-
-        private Optional<AttestationStatementVerifier> attestationStatementVerifier() {
+        public Optional<AttestationStatementVerifier> attestationStatementVerifier() {
             switch (format()) {
                 case "fido-u2f":
                     return Optional.of(new FidoU2fAttestationStatementVerifier());
@@ -410,15 +403,19 @@ final class FinishRegistrationSteps {
     class Step14 implements Step<Step15> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
-        private final AttestationStatementVerifier attestationStatementVerifier;
+        private final Optional<AttestationStatementVerifier> attestationStatementVerifier;
         private final List<String> prevWarnings;
 
         @Override
         public void validate() {
-            assure(
-                attestationStatementVerifier.verifyAttestationSignature(attestation, clientDataJsonHash),
-                "Invalid attestation signature."
-            );
+            attestationStatementVerifier.ifPresent(verifier -> {
+                assure(
+                    verifier.verifyAttestationSignature(attestation, clientDataJsonHash),
+                    "Invalid attestation signature."
+                );
+            });
+
+            assure(attestationType() != null, "Failed to determine attestation type");
         }
 
         @Override
@@ -428,18 +425,40 @@ final class FinishRegistrationSteps {
 
         public AttestationType attestationType() {
             try {
-                return attestationStatementVerifier.getAttestationType(attestation);
+                if (attestationStatementVerifier.isPresent()) {
+                    return attestationStatementVerifier.get().getAttestationType(attestation);
+                } else {
+                    switch (attestation.getFormat()) {
+                        case "android-key":
+                            // TODO delete this once android-key attestation verification is implemented
+                            return AttestationType.BASIC;
+                        case "tpm":
+                            // TODO delete this once tpm attestation verification is implemented
+                            if (attestation.getAttestationStatement().has("x5c")) {
+                                return AttestationType.ATTESTATION_CA;
+                            } else {
+                                return AttestationType.ECDAA;
+                            }
+                        default:
+                            throw new IllegalArgumentException("Failed to resolve attestation type; unknown attestation statement format: " + attestation.getFormat());
+                    }
+                }
             } catch (IOException | CoseException | CertificateException e) {
                 throw new IllegalArgumentException("Failed to resolve attestation type.", e);
             }
         }
 
         public Optional<List<X509Certificate>> attestationTrustPath() {
-            if (attestationStatementVerifier instanceof X5cAttestationStatementVerifier) {
-                try {
-                    return ((X5cAttestationStatementVerifier) attestationStatementVerifier).getAttestationTrustPath(attestation);
-                } catch (CertificateException e) {
-                    throw new IllegalArgumentException("Failed to resolve attestation trust path.", e);
+            if (attestationStatementVerifier.isPresent()) {
+                AttestationStatementVerifier verifier = attestationStatementVerifier.get();
+                if (verifier instanceof X5cAttestationStatementVerifier) {
+                    try {
+                        return ((X5cAttestationStatementVerifier) verifier).getAttestationTrustPath(attestation);
+                    } catch (CertificateException e) {
+                        throw new IllegalArgumentException("Failed to resolve attestation trust path.", e);
+                    }
+                } else {
+                    return Optional.empty();
                 }
             } else {
                 return Optional.empty();
@@ -456,10 +475,6 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            assure(
-                attestationType == AttestationType.SELF_ATTESTATION || attestationType == NONE || trustResolver().isPresent(),
-                "Failed to obtain attestation trust anchors."
-            );
         }
 
         @Override
@@ -504,6 +519,11 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
+            assure(
+                trustResolver.isPresent() || allowUntrustedAttestation,
+                "Failed to obtain attestation trust anchors."
+            );
+
             switch (attestationType) {
                 case SELF_ATTESTATION:
                     assure(allowUntrustedAttestation, "Self attestation is not allowed.");

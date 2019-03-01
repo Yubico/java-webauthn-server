@@ -1,3 +1,13 @@
+== Version 1.0.1 ==
+
+Bugfixes:
+
+* Registration no longer fails for unimplemented attestation statement formats
+  if `allowUnknownAttestation` is set to `true`.
+ ** Registration still fails for attestation statement formats not defined in
+    the WebAuthn Level 1 spec.
+
+
 == Version 1.0.0 ==
 
 * Fixed URL in artifact POM

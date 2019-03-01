@@ -27,7 +27,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.0.0-RC2</version>
+  <version>1.0.0</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -35,7 +35,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.0.0-RC2'
+compile 'com.yubico:webauthn-server-core:1.0.0'
 ----------
 
 
@@ -58,6 +58,20 @@ federation, and it's not an authentication framework; it only deals with
 executing the WebAuthn authentication mechanism. Sessions, account management
 and other higher level concepts can make use of this authentication mechanism,
 but the authentication mechanism alone does not make a security system.
+
+
+== Known issues
+
+- In the link:webauthn-server-demo[example app], authentication does not work in
+  Chrome as of version 70. This is due to a
+  link:https://bugs.chromium.org/p/chromium/issues/detail?id=847878[bug in
+  Chrome] which will not be worked around here. To work around this in
+  application code, you can omit the
+  link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/data/AuthenticatorAssertionResponse.AuthenticatorAssertionResponseBuilder.html#userHandle-java.util.Optional[`userHandle`]
+  when constructing an
+  link:https://yubico.github.io/java-webauthn-server/webauthn-server-core/com/yubico/webauthn/data/AuthenticatorAssertionResponse.html[`AuthenticatorAssertionResponse`]
+  value if the `userHandle` is empty. See
+  https://github.com/Yubico/java-webauthn-server/issues/12 .
 
 
 == Documentation
@@ -204,14 +218,14 @@ effects, and does not directly interact with any database. This means it is
 database agnostic and thread safe. The following diagram illustrates an example
 architecture for an application using the library.
 
-image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/master/docs/img/demo-architecture.svg["Example application architecture",align="center"]
+image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/master/docs/img/demo-architecture.svg?sanitize=true["Example application architecture",align="center"]
 
 The application manages all state and database access, and communicates with the
 library via POJO representations of requests and responses. The following
 diagram illustrates the data flow during a WebAuthn registration or
 authentication ceremony.
 
-image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/master/docs/img/demo-sequence-diagram.svg["WebAuthn ceremony sequence diagram",align="center"]
+image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/master/docs/img/demo-sequence-diagram.svg?sanitize=true["WebAuthn ceremony sequence diagram",align="center"]
 
 In this diagram, the *Client* is the user's browser and the application's
 client-side scripts. The *Server* is the application and its business logic, the

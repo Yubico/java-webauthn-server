@@ -231,6 +231,12 @@ public class RelyingParty {
      * attestation and none attestation.
      *
      * <p>
+     * Regardless of the value of this option, invalid attestation statements of supported formats will always be
+     * rejected. For example, a "packed" attestation statement with an invalid signature will be rejected even if this
+     * option is set to <code>true</code>.
+     * </p>
+     *
+     * <p>
      * The default is <code>true</code>.
      * </p>
      */

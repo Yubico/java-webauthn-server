@@ -30,6 +30,7 @@ import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.KeyPair
 import java.security.PrivateKey
+import java.security.SignatureException
 import java.security.cert.X509Certificate
 import java.util.Optional
 
@@ -52,6 +53,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserIdentity
+import com.yubico.webauthn.data.AttestationConveyancePreference
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
@@ -570,42 +572,62 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           )
         }
 
-        def checkFailure(format: String): Unit = {
-          it(s"""Fails if fmt is "${format}".""") {
-            val steps = setup(format)
-            val step: FinishRegistrationSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
-
-            step.validations shouldBe a [Failure[_]]
-            step.validations.failed.get shouldBe an [IllegalArgumentException]
-            step.tryNext shouldBe a [Failure[_]]
-          }
-        }
-
-        def checkSuccess(format: String): Unit = {
-          it(s"""Succeeds if fmt is "${format}".""") {
+        def checkUnknown(format: String): Unit = {
+          it(s"""Returns no known attestation statement verifier if fmt is "${format}".""") {
             val steps = setup(format)
             val step: FinishRegistrationSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a [Success[_]]
             step.tryNext shouldBe a [Success[_]]
             step.format should equal (format)
-            step.formatSupported should be(true)
+            step.attestationStatementVerifier.asScala shouldBe empty
           }
         }
 
-        ignore("Succeeds if fmt is android-key.") { checkSuccess("android-key") }
-        ignore("Succeeds if fmt is android-safetynet.") { checkSuccess("android-safetynet") }
-        checkSuccess("fido-u2f")
-        checkSuccess("none")
-        checkSuccess("packed")
-        ignore("Succeeds if fmt is tpm.") { checkSuccess("tpm") }
+        def checkKnown(format: String): Unit = {
+          it(s"""Returns a known attestation statement verifier if fmt is "${format}".""") {
+            val steps = setup(format)
+            val step: FinishRegistrationSteps#Step13 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
-        checkFailure("FIDO-U2F")
-        checkFailure("Fido-U2F")
-        checkFailure("bleurgh")
+            step.validations shouldBe a [Success[_]]
+            step.tryNext shouldBe a [Success[_]]
+            step.format should equal (format)
+            step.attestationStatementVerifier.asScala should not be empty
+          }
+        }
+
+        checkKnown("android-safetynet")
+        checkKnown("fido-u2f")
+        checkKnown("none")
+        checkKnown("packed")
+
+        checkUnknown("android-key")
+        checkUnknown("tpm")
+
+        checkUnknown("FIDO-U2F")
+        checkUnknown("Fido-U2F")
+        checkUnknown("bleurgh")
       }
 
       describe("14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 7.") {
+
+        describe("If allowUntrustedAttestation is set,") {
+          it("a fido-u2f attestation is still rejected if invalid.") {
+            val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("attStmt", { attStmtNode: JsonNode =>
+              attStmtNode.asInstanceOf[ObjectNode]
+                .set("sig", jsonFactory.binaryNode(Array(0, 0, 0, 0)))
+            })
+            val steps = finishRegistration(
+              testData = testData,
+              allowUntrustedAttestation = true
+            )
+            val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Failure[_]]
+            step.validations.failed.get.getCause shouldBe a [SignatureException]
+            step.tryNext shouldBe a [Failure[_]]
+          }
+        }
 
         describe("For the fido-u2f statement format,") {
           it("the default test case is a valid basic attestation.") {
@@ -632,7 +654,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: FinishRegistrationSteps#Step14 = new steps.Step14(
               new BouncyCastleCrypto().hash(new ByteArray(testData.clientDataJsonBytes.getBytes.updated(20, (testData.clientDataJsonBytes.getBytes()(20) + 1).toByte))),
               new AttestationObject(testData.attestationObject),
-              new FidoU2fAttestationStatementVerifier,
+              Some(new FidoU2fAttestationStatementVerifier).asJava,
               Nil.asJava
             )
 
@@ -651,7 +673,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: FinishRegistrationSteps#Step14 = new steps.Step14(
               new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
               new AttestationObject(testData.attestationObject),
-              new FidoU2fAttestationStatementVerifier,
+              Some(new FidoU2fAttestationStatementVerifier).asJava,
               Nil.asJava
             )
 
@@ -683,7 +705,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val step: FinishRegistrationSteps#Step14 = new steps.Step14(
               new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
               new AttestationObject(testData.attestationObject),
-              new FidoU2fAttestationStatementVerifier,
+              Some(new FidoU2fAttestationStatementVerifier).asJava,
               Nil.asJava
             )
 
@@ -778,7 +800,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
                 new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
-                new NoneAttestationStatementVerifier,
+                Some(new NoneAttestationStatementVerifier).asJava,
                 Nil.asJava
               )
 
@@ -809,7 +831,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val steps = finishRegistration(testData = RegistrationTestData.Packed.BasicAttestation)
             val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.getAttestationStatementVerifier shouldBe a [PackedAttestationStatementVerifier]
+            step.getAttestationStatementVerifier.get shouldBe a [PackedAttestationStatementVerifier]
           }
 
           describe("the verification procedure is:") {
@@ -1188,12 +1210,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           it("the attestation statement verifier implementation is AndroidSafetynetAttestationStatementVerifier.") {
             val steps = finishRegistration(
               testData = defaultTestData,
-              allowUntrustedAttestation = true,
+              allowUntrustedAttestation = false,
               rp = defaultTestData.rpId
             )
             val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            step.getAttestationStatementVerifier shouldBe an [AndroidSafetynetAttestationStatementVerifier]
+            step.getAttestationStatementVerifier.get shouldBe an [AndroidSafetynetAttestationStatementVerifier]
           }
 
           describe("the verification procedure is:") {
@@ -1306,6 +1328,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           step.validations shouldBe a [Success[_]]
           step.tryNext shouldBe a [Success[_]]
         }
+
+        it("Unknown attestation statement formats fail.") {
+          val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", "urgel"))
+          val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
+        }
+
       }
 
       describe("15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
@@ -1362,7 +1394,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             step.tryNext shouldBe a [Success[_]]
           }
         }
-
       }
 
       describe("16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:") {
@@ -1602,9 +1633,41 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           steps.run.isAttestationTrusted should be (false)
         }
 
+        it("The test case with unknown attestation fails.") {
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", "urgel")
+          val steps = finishRegistration(
+            testData = testData,
+            allowUntrustedAttestation = true,
+            credentialRepository = Some(emptyCredentialRepository)
+          )
+          val result = Try(steps.run)
+          result.failed.get shouldBe an [IllegalArgumentException]
+        }
+
         describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.4.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
           it("Nothing to test.") {}
         }
+
+        def testUntrusted(testData: RegistrationTestData): Unit = {
+          val fmt = new AttestationObject(testData.attestationObject).getFormat
+          it(s"""A test case with good "${fmt}" attestation but no metadata service succeeds, but reports attestation as not trusted.""") {
+            val testData = RegistrationTestData.FidoU2f.BasicAttestation
+            val steps = finishRegistration(
+              testData = testData,
+              metadataService = None,
+              allowUntrustedAttestation = true,
+              credentialRepository = Some(emptyCredentialRepository)
+            )
+            steps.run.getKeyId.getId should be (testData.response.getId)
+            steps.run.isAttestationTrusted should be (false)
+          }
+        }
+
+        testUntrusted(RegistrationTestData.AndroidKey.BasicAttestation)
+        testUntrusted(RegistrationTestData.AndroidSafetynet.BasicAttestation)
+        testUntrusted(RegistrationTestData.FidoU2f.BasicAttestation)
+        testUntrusted(RegistrationTestData.NoneAttestation.Default)
+        testUntrusted(RegistrationTestData.Tpm.PrivacyCa)
       }
 
       it("(Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
