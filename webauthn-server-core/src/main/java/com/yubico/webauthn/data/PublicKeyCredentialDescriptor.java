@@ -66,8 +66,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
      * credential the caller is referring to.
      */
     @NonNull
-    @Builder.Default
-    private final Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
+    private final Optional<Set<AuthenticatorTransport>> transports;
 
     private PublicKeyCredentialDescriptor(
         @NonNull PublicKeyCredentialType type,
@@ -118,12 +117,31 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     }
 
     public static class PublicKeyCredentialDescriptorBuilder {
+        private Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
+
         public static class MandatoryStages {
             private PublicKeyCredentialDescriptorBuilder builder = new PublicKeyCredentialDescriptorBuilder();
 
             public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
                 return builder.id(id);
             }
+        }
+
+        /**
+         * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
+         * credential the caller is referring to.
+         */
+        public PublicKeyCredentialDescriptorBuilder transports(@NonNull Optional<Set<AuthenticatorTransport>> transports) {
+            this.transports = transports;
+            return this;
+        }
+
+        /**
+         * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
+         * credential the caller is referring to.
+         */
+        public PublicKeyCredentialDescriptorBuilder transports(@NonNull Set<AuthenticatorTransport> transports) {
+            return this.transports(Optional.of(transports));
         }
     }
 }
