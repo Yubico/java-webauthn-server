@@ -163,7 +163,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .authenticatorData(if (authenticatorData == null) null else authenticatorData)
           .clientDataJSON(if (clientDataJsonBytes == null) null else clientDataJsonBytes)
           .signature(if (signature == null) null else signature)
-          .userHandle(Optional.of(userHandleForResponse))
+          .userHandle(userHandleForResponse)
           .build()
       )
       .clientExtensionResults(clientExtensionResults)
