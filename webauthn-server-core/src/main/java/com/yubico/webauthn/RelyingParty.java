@@ -291,7 +291,7 @@ public class RelyingParty {
             .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
-                Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
+                credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName())
             )
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(startRegistrationOptions.getExtensions())
