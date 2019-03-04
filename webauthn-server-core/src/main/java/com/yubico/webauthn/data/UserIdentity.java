@@ -113,6 +113,15 @@ public class UserIdentity implements PublicKeyCredentialEntity {
     @NonNull
     private final ByteArray id;
 
+    /**
+     * A URL which resolves to an image associated with the entity. For example, this could be the user’s avatar.
+     *
+     * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
+     * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its
+     * length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of
+     * needing more storage.
+     * </p>
+     */
     @NonNull
     @Builder.Default
     @Getter(onMethod = @__({ @Override }))
