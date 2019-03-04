@@ -147,7 +147,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       .publicKeyCredentialRequestOptions(
         PublicKeyCredentialRequestOptions.builder()
           .challenge(challenge)
-          .rpId(Some(rpId.getId).asJava)
+          .rpId(rpId.getId)
           .allowCredentials(allowCredentials.asJava)
           .userVerification(userVerificationRequirement)
           .extensions(requestedExtensions)
