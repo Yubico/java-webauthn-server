@@ -83,4 +83,38 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
         return ids;
     }
 
+    public static class ClientAssertionExtensionOutputsBuilder {
+        private Optional<Boolean> appid;
+
+        /**
+         * The output from the FIDO AppID Extension (<code>appid</code>).
+         *
+         * <p>
+         * This value should be ignored because its behaviour is underspecified, see: <a
+         * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
+         * </p>
+         *
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+         * (appid)</a>
+         */
+        public ClientAssertionExtensionOutputsBuilder appid(Optional<Boolean> appid) {
+            this.appid = appid;
+            return this;
+        }
+
+        /**
+         * The output from the FIDO AppID Extension (<code>appid</code>).
+         *
+         * <p>
+         * This value should be ignored because its behaviour is underspecified, see: <a
+         * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
+         * </p>
+         *
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+         * (appid)</a>
+         */
+        public ClientAssertionExtensionOutputsBuilder appid(boolean appid) {
+            return this.appid(Optional.of(appid));
+        }
+    }
 }
