@@ -49,8 +49,7 @@ public class StartRegistrationOptions {
      * Constraints on what kind of authenticator the user is allowed to use to create the credential.
      */
     @NonNull
-    @Builder.Default
-    private final Optional<AuthenticatorSelectionCriteria> authenticatorSelection = Optional.empty();
+    private final Optional<AuthenticatorSelectionCriteria> authenticatorSelection;
 
     /**
      * Extension inputs for this registration operation.
@@ -64,12 +63,29 @@ public class StartRegistrationOptions {
     }
 
     public static class StartRegistrationOptionsBuilder {
+        private @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection = Optional.empty();
+
         public static class MandatoryStages {
             private final StartRegistrationOptionsBuilder builder = new StartRegistrationOptionsBuilder();
 
             public StartRegistrationOptionsBuilder user(UserIdentity user) {
                 return builder.user(user);
             }
+        }
+
+        /**
+         * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+         */
+        public StartRegistrationOptionsBuilder authenticatorSelection(@NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
+            this.authenticatorSelection = authenticatorSelection;
+            return this;
+        }
+
+        /**
+         * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+         */
+        public StartRegistrationOptionsBuilder authenticatorSelection(@NonNull AuthenticatorSelectionCriteria authenticatorSelection) {
+            return this.authenticatorSelection(Optional.of(authenticatorSelection));
         }
     }
 
