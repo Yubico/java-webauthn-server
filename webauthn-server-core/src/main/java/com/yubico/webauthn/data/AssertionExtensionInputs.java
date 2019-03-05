@@ -75,8 +75,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
      * (appid)</a>
      */
-    @Builder.Default
-    private final Optional<AppId> appid = Optional.empty();
+    private final Optional<AppId> appid;
 
     @JsonCreator
     private AssertionExtensionInputs(
@@ -94,4 +93,64 @@ public class AssertionExtensionInputs implements ExtensionInputs {
         return ids;
     }
 
+    public static class AssertionExtensionInputsBuilder {
+        private Optional<AppId> appid = Optional.empty();
+
+        /**
+         * The input to the FIDO AppID Extension (<code>appid</code>).
+         *
+         * <p>
+         * This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO
+         * JavaScript APIs to request an assertion. The FIDO APIs use an alternative identifier for Relying Parties called
+         * an <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-appid-and-facets-v2.0-id-20180227.html">AppID</a>,
+         * and any credentials created using those APIs will be scoped to that identifier. Without this extension, they
+         * would need to be re-registered in order to be scoped to an RP ID.
+         * </p>
+         * <p>
+         * This extension does not allow FIDO-compatible credentials to be created. Thus, credentials created with WebAuthn
+         * are not backwards compatible with the FIDO JavaScript APIs.
+         * </p>
+         *
+         * <p>
+         * {@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input automatically if the {@link
+         * RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is given when constructing the {@link RelyingParty}
+         * instance.
+         * </p>
+         *
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+         * (appid)</a>
+         */
+        public AssertionExtensionInputsBuilder appid(Optional<AppId> appid) {
+            this.appid = appid;
+            return this;
+        }
+
+        /**
+         * The input to the FIDO AppID Extension (<code>appid</code>).
+         *
+         * <p>
+         * This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO
+         * JavaScript APIs to request an assertion. The FIDO APIs use an alternative identifier for Relying Parties called
+         * an <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-appid-and-facets-v2.0-id-20180227.html">AppID</a>,
+         * and any credentials created using those APIs will be scoped to that identifier. Without this extension, they
+         * would need to be re-registered in order to be scoped to an RP ID.
+         * </p>
+         * <p>
+         * This extension does not allow FIDO-compatible credentials to be created. Thus, credentials created with WebAuthn
+         * are not backwards compatible with the FIDO JavaScript APIs.
+         * </p>
+         *
+         * <p>
+         * {@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input automatically if the {@link
+         * RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is given when constructing the {@link RelyingParty}
+         * instance.
+         * </p>
+         *
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+         * (appid)</a>
+         */
+        public AssertionExtensionInputsBuilder appid(AppId appid) {
+            return this.appid(Optional.of(appid));
+        }
+    }
 }
