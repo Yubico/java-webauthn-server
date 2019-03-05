@@ -64,8 +64,8 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
      * (appid)</a>
      */
-    @Builder.Default
-    private final Optional<Boolean> appid = Optional.empty();
+    @NonNull
+    private final Optional<Boolean> appid;
 
     @JsonCreator
     private ClientAssertionExtensionOutputs(
@@ -84,7 +84,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     }
 
     public static class ClientAssertionExtensionOutputsBuilder {
-        private Optional<Boolean> appid;
+        private Optional<Boolean> appid = Optional.empty();
 
         /**
          * The output from the FIDO AppID Extension (<code>appid</code>).
@@ -97,7 +97,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
          * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
          * (appid)</a>
          */
-        public ClientAssertionExtensionOutputsBuilder appid(Optional<Boolean> appid) {
+        public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
             this.appid = appid;
             return this;
         }
