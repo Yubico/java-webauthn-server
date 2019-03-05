@@ -54,8 +54,7 @@ public class StartAssertionOptions {
      * credential</a>
      */
     @NonNull
-    @Builder.Default
-    private final Optional<String> username = Optional.empty();
+    private final Optional<String> username;
 
     /**
      * Extension inputs for this authentication operation.
@@ -79,7 +78,68 @@ public class StartAssertionOptions {
      * </p>
      */
     @NonNull
-    @Builder.Default
-    private final Optional<UserVerificationRequirement> userVerification = Optional.empty();
+    private final Optional<UserVerificationRequirement> userVerification;
 
+    public static class StartAssertionOptionsBuilder {
+        private @NonNull Optional<String> username = Optional.empty();
+        private @NonNull Optional<UserVerificationRequirement> userVerification = Optional.empty();
+
+        /**
+         * The username of the user to authenticate, if the user has already been identified.
+         * <p>
+         * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
+         * deferred until after receiving the response from the client.
+         * </p>
+         *
+         * <p>
+         * The default is empty (absent).
+         * </p>
+         *
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+         * credential</a>
+         */
+        public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
+            this.username = username;
+            return this;
+        }
+
+        /**
+         * The username of the user to authenticate, if the user has already been identified.
+         * <p>
+         * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
+         * deferred until after receiving the response from the client.
+         * </p>
+         *
+         * <p>
+         * The default is empty (absent).
+         * </p>
+         *
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+         * credential</a>
+         */
+        public StartAssertionOptionsBuilder username(@NonNull String username) {
+            return this.username(Optional.of(username));
+        }
+
+        /**
+         * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
+         * <p>
+         * The default is {@link UserVerificationRequirement#PREFERRED}.
+         * </p>
+         */
+        public StartAssertionOptionsBuilder userVerification(@NonNull Optional<UserVerificationRequirement> userVerification) {
+            this.userVerification = userVerification;
+            return this;
+        }
+
+        /**
+         * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
+         * <p>
+         * The default is {@link UserVerificationRequirement#PREFERRED}.
+         * </p>
+         */
+        public StartAssertionOptionsBuilder userVerification(@NonNull UserVerificationRequirement userVerification) {
+            return this.userVerification(Optional.of(userVerification));
+        }
+    }
 }

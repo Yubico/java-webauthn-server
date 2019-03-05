@@ -75,6 +75,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
      * (appid)</a>
      */
+    @NonNull
     private final Optional<AppId> appid;
 
     @JsonCreator
@@ -120,7 +121,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
          * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
          * (appid)</a>
          */
-        public AssertionExtensionInputsBuilder appid(Optional<AppId> appid) {
+        public AssertionExtensionInputsBuilder appid(@NonNull Optional<AppId> appid) {
             this.appid = appid;
             return this;
         }
@@ -149,7 +150,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
          * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
          * (appid)</a>
          */
-        public AssertionExtensionInputsBuilder appid(AppId appid) {
+        public AssertionExtensionInputsBuilder appid(@NonNull AppId appid) {
             return this.appid(Optional.of(appid));
         }
     }

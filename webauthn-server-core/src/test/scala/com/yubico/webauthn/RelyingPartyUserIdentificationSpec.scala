@@ -162,7 +162,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
     it("succeeds for the default test case if a username was given.") {
       val request = rp.startAssertion(StartAssertionOptions.builder()
-          .username(Optional.of(Defaults.username))
+          .username(Defaults.username)
           .build())
       val deterministicRequest =
         request.toBuilder.publicKeyCredentialRequestOptions(

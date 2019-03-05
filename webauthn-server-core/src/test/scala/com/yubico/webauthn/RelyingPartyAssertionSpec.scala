@@ -211,7 +211,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .credentialRepository(emptyCredentialRepository)
           .build()
         val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
-        val request2 = rp.startAssertion(StartAssertionOptions.builder().userVerification(None.asJava).build())
+        val request2 = rp.startAssertion(StartAssertionOptions.builder().userVerification(Optional.empty[UserVerificationRequirement]).build())
 
         request1.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
         request2.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
@@ -224,7 +224,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .build()
 
         forAll { uv: UserVerificationRequirement =>
-          val request = rp.startAssertion(StartAssertionOptions.builder().userVerification(Some(uv).asJava).build())
+          val request = rp.startAssertion(StartAssertionOptions.builder().userVerification(uv).build())
 
           request.getPublicKeyCredentialRequestOptions.getUserVerification should equal (uv)
         }
