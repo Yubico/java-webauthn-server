@@ -1,3 +1,19 @@
+== Version 1.1.0 (unreleased) ==
+
+Changed behaviours:
+
+* `AssertionExtensionInputsBuilder.appid(Optional<AppId>)` now fails fast if the
+  argument is `null`
+* `ClientAssertionExtensionOutputsBuilder.appid(Optional<Boolean>)` now fails
+  fast if the argument is `null`
+
+
+New features:
+
+* Public API methods that take `Optional` parameters now come with
+  `Optional`-less aliases.
+
+
 == Version 1.0.1 ==
 
 Bugfixes:

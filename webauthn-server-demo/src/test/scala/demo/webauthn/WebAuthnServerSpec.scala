@@ -154,7 +154,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
               .publicKeyCredentialRequestOptions(
                 PublicKeyCredentialRequestOptions.builder()
                   .challenge(challenge)
-                  .rpId(Some(rpId.getId).asJava)
+                  .rpId(rpId.getId)
                   .build()
               )
               .username(Some(testData.userId.getName).asJava)

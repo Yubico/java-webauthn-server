@@ -121,7 +121,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
         val rp = relyingParty(credentials = credentials)
         val result = rp.startAssertion(StartAssertionOptions.builder()
-          .username(Some(userId.getName).asJava)
+          .username(userId.getName)
           .build()
         )
 
@@ -144,7 +144,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       forAll { appId: Optional[AppId] =>
         val rp = relyingParty(appId = appId)
         val result = rp.startAssertion(StartAssertionOptions.builder()
-          .username(Some(userId.getName).asJava)
+          .username(userId.getName)
           .build()
         )
 

@@ -59,8 +59,7 @@ public class AssertionRequest {
      * </p>
      */
     @NonNull
-    @Builder.Default
-    private final Optional<String> username = Optional.empty();
+    private final Optional<String> username;
 
     @JsonCreator
     private AssertionRequest(
@@ -75,6 +74,8 @@ public class AssertionRequest {
     }
 
     public static class AssertionRequestBuilder {
+        private Optional<String> username = Optional.empty();
+
         public static class MandatoryStages {
             private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
 
@@ -85,6 +86,31 @@ public class AssertionRequest {
             public AssertionRequestBuilder publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {
                 return builder.publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions);
             }
+        }
+
+        /**
+         * The username of the user to authenticate, if the user has already been identified.
+         * <p>
+         * If this is absent, this indicates that this is a request for an assertion by a <a
+         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+         * credential</a>, and identification of the user has been deferred until the response is received.
+         * </p>
+         */
+        public AssertionRequestBuilder username(@NonNull Optional<String> username) {
+            this.username = username;
+            return this;
+        }
+
+        /**
+         * The username of the user to authenticate, if the user has already been identified.
+         * <p>
+         * If this is absent, this indicates that this is a request for an assertion by a <a
+         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+         * credential</a>, and identification of the user has been deferred until the response is received.
+         * </p>
+         */
+        public AssertionRequestBuilder username(@NonNull String username) {
+            return this.username(Optional.of(username));
         }
     }
 

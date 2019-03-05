@@ -147,7 +147,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       .publicKeyCredentialRequestOptions(
         PublicKeyCredentialRequestOptions.builder()
           .challenge(challenge)
-          .rpId(Some(rpId.getId).asJava)
+          .rpId(rpId.getId)
           .allowCredentials(allowCredentials.asJava)
           .userVerification(userVerificationRequirement)
           .extensions(requestedExtensions)
@@ -163,7 +163,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .authenticatorData(if (authenticatorData == null) null else authenticatorData)
           .clientDataJSON(if (clientDataJsonBytes == null) null else clientDataJsonBytes)
           .signature(if (signature == null) null else signature)
-          .userHandle(Optional.of(userHandleForResponse))
+          .userHandle(userHandleForResponse)
           .build()
       )
       .clientExtensionResults(clientExtensionResults)
@@ -211,7 +211,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .credentialRepository(emptyCredentialRepository)
           .build()
         val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
-        val request2 = rp.startAssertion(StartAssertionOptions.builder().userVerification(None.asJava).build())
+        val request2 = rp.startAssertion(StartAssertionOptions.builder().userVerification(Optional.empty[UserVerificationRequirement]).build())
 
         request1.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
         request2.getPublicKeyCredentialRequestOptions.getUserVerification should equal (default)
@@ -224,7 +224,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           .build()
 
         forAll { uv: UserVerificationRequirement =>
-          val request = rp.startAssertion(StartAssertionOptions.builder().userVerification(Some(uv).asJava).build())
+          val request = rp.startAssertion(StartAssertionOptions.builder().userVerification(uv).build())
 
           request.getPublicKeyCredentialRequestOptions.getUserVerification should equal (uv)
         }
@@ -780,7 +780,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
             val extensionInputs = AssertionExtensionInputs.builder().build()
-            val clientExtensionOutputs = ClientAssertionExtensionOutputs.builder().appid(Optional.of(true)).build()
+            val clientExtensionOutputs = ClientAssertionExtensionOutputs.builder().appid(true).build()
 
             // forAll(unrequestedAssertionExtensions, minSuccessful(1)) { case (extensionInputs, clientExtensionOutputs) =>
               val steps = finishAssertion(
