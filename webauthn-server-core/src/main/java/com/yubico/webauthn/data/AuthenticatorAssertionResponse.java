@@ -133,6 +133,25 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
                 }
             }
         }
+
+        /**
+         * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
+         * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
+         * Operation</a>.
+         */
+        public AuthenticatorAssertionResponseBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
+            this.userHandle = userHandle;
+            return this;
+        }
+
+        /**
+         * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
+         * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
+         * Operation</a>.
+         */
+        public AuthenticatorAssertionResponseBuilder userHandle(@NonNull ByteArray userHandle) {
+            return this.userHandle(Optional.of(userHandle));
+        }
     }
 
 }

@@ -63,8 +63,7 @@ public class PublicKeyCredentialRequestOptions {
      * </p>
      */
     @NonNull
-    @Builder.Default
-    private final Optional<Long> timeout = Optional.empty();
+    private final Optional<Long> timeout;
 
     /**
      * Specifies the relying party identifier claimed by the caller.
@@ -73,8 +72,7 @@ public class PublicKeyCredentialRequestOptions {
      * </p>
      */
     @NonNull
-    @Builder.Default
-    private final Optional<String> rpId = Optional.empty();
+    private final Optional<String> rpId;
 
     /**
      * A list of {@link PublicKeyCredentialDescriptor} objects representing public key credentials acceptable to the
@@ -82,8 +80,7 @@ public class PublicKeyCredentialRequestOptions {
      * credential, and so on down the list).
      */
     @NonNull
-    @Builder.Default
-    private final Optional<List<PublicKeyCredentialDescriptor>> allowCredentials = Optional.empty();
+    private final Optional<List<PublicKeyCredentialDescriptor>> allowCredentials;
 
     /**
      * Describes the Relying Party's requirements regarding <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
@@ -147,12 +144,77 @@ public class PublicKeyCredentialRequestOptions {
     }
 
     public static class PublicKeyCredentialRequestOptionsBuilder {
+        private @NonNull Optional<Long> timeout = Optional.empty();
+        private @NonNull Optional<String> rpId = Optional.empty();
+        private @NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials = Optional.empty();
+
         public static class MandatoryStages {
             private PublicKeyCredentialRequestOptionsBuilder builder = new PublicKeyCredentialRequestOptionsBuilder();
 
             public PublicKeyCredentialRequestOptionsBuilder challenge(ByteArray challenge) {
                 return builder.challenge(challenge);
             }
+        }
+
+        /**
+         * Specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
+         * <p>
+         * This is treated as a hint, and MAY be overridden by the client.
+         * </p>
+         */
+        public PublicKeyCredentialRequestOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        /**
+         * Specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
+         * <p>
+         * This is treated as a hint, and MAY be overridden by the client.
+         * </p>
+         */
+        public PublicKeyCredentialRequestOptionsBuilder timeout(long timeout) {
+            return this.timeout(Optional.of(timeout));
+        }
+
+        /**
+         * Specifies the relying party identifier claimed by the caller.
+         * <p>
+         * If omitted, its value will be set by the client.
+         * </p>
+         */
+        public PublicKeyCredentialRequestOptionsBuilder rpId(@NonNull Optional<String> rpId) {
+            this.rpId = rpId;
+            return this;
+        }
+
+        /**
+         * Specifies the relying party identifier claimed by the caller.
+         * <p>
+         * If omitted, its value will be set by the client.
+         * </p>
+         */
+        public PublicKeyCredentialRequestOptionsBuilder rpId(@NonNull String rpId) {
+            return this.rpId(Optional.of(rpId));
+        }
+
+        /**
+         * A list of {@link PublicKeyCredentialDescriptor} objects representing public key credentials acceptable to the
+         * caller, in descending order of the caller’s preference (the first item in the list is the most preferred
+         * credential, and so on down the list).
+         */
+        public PublicKeyCredentialRequestOptionsBuilder allowCredentials(@NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials) {
+            this.allowCredentials = allowCredentials;
+            return this;
+        }
+
+        /**
+         * A list of {@link PublicKeyCredentialDescriptor} objects representing public key credentials acceptable to the
+         * caller, in descending order of the caller’s preference (the first item in the list is the most preferred
+         * credential, and so on down the list).
+         */
+        public PublicKeyCredentialRequestOptionsBuilder allowCredentials(@NonNull List<PublicKeyCredentialDescriptor> allowCredentials) {
+            return this.allowCredentials(Optional.of(allowCredentials));
         }
     }
 }

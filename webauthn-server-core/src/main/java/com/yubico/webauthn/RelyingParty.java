@@ -145,9 +145,8 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
      * (appid)</a>
      */
-    @Builder.Default
     @NonNull
-    private final Optional<AppId> appId = Optional.empty();
+    private final Optional<AppId> appId;
 
     /**
      * The argument for the {@link PublicKeyCredentialCreationOptions#getAttestation() attestation} parameter in
@@ -165,9 +164,8 @@ public class RelyingParty {
      * @see PublicKeyCredentialCreationOptions#getAttestation()
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      */
-    @Builder.Default
     @NonNull
-    private final Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
+    private final Optional<AttestationConveyancePreference> attestationConveyancePreference;
 
     /**
      * A {@link MetadataService} instance to use for looking up device attestation metadata. This matters only if {@link
@@ -180,9 +178,8 @@ public class RelyingParty {
      * @see PublicKeyCredentialCreationOptions#getAttestation()
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      */
-    @Builder.Default
     @NonNull
-    private final Optional<MetadataService> metadataService = Optional.empty();
+    private final Optional<MetadataService> metadataService;
 
     /**
      * The argument for the {@link PublicKeyCredentialCreationOptions#getPubKeyCredParams() pubKeyCredParams} parameter
@@ -291,7 +288,7 @@ public class RelyingParty {
             .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
-                Optional.of(credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName()))
+                credentialRepository.getCredentialIdsForUsername(startRegistrationOptions.getUser().getName())
             )
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(startRegistrationOptions.getExtensions())
@@ -336,7 +333,7 @@ public class RelyingParty {
     public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
         PublicKeyCredentialRequestOptionsBuilder pkcro = PublicKeyCredentialRequestOptions.builder()
             .challenge(generateChallenge())
-            .rpId(Optional.of(identity.getId()))
+            .rpId(identity.getId())
             .allowCredentials(
                 startAssertionOptions.getUsername().map(un ->
                     new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
@@ -404,6 +401,10 @@ public class RelyingParty {
     }
 
     public static class RelyingPartyBuilder {
+        private @NonNull Optional<AppId> appId = Optional.empty();
+        private @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference = Optional.empty();
+        private @NonNull Optional<MetadataService> metadataService = Optional.empty();
+
         public static class MandatoryStages {
             private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
 
@@ -428,6 +429,121 @@ public class RelyingParty {
                     return builder.credentialRepository(credentialRepository);
                 }
             }
+        }
+
+        /**
+         * The extension input to set for the <code>appid</code> extension when initiating authentication operations.
+         *
+         * <p>
+         * If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will automatically set the
+         * <code>appid</code> extension input, and {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will
+         * adjust its verification logic to also accept this AppID as an alternative to the RP ID.
+         * </p>
+         *
+         * <p>
+         * By default, this is not set.
+         * </p>
+         *
+         * @see AssertionExtensionInputs#getAppid()
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+         * (appid)</a>
+         */
+        public RelyingPartyBuilder appId(@NonNull Optional<AppId> appId) {
+            this.appId = appId;
+            return this;
+        }
+
+        /**
+         * The extension input to set for the <code>appid</code> extension when initiating authentication operations.
+         *
+         * <p>
+         * If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will automatically set the
+         * <code>appid</code> extension input, and {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will
+         * adjust its verification logic to also accept this AppID as an alternative to the RP ID.
+         * </p>
+         *
+         * <p>
+         * By default, this is not set.
+         * </p>
+         *
+         * @see AssertionExtensionInputs#getAppid()
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+         * (appid)</a>
+         */
+        public RelyingPartyBuilder appId(@NonNull AppId appId) {
+            return this.appId(Optional.of(appId));
+        }
+
+        /**
+         * The argument for the {@link PublicKeyCredentialCreationOptions#getAttestation() attestation} parameter in
+         * registration operations.
+         *
+         * <p>
+         * Unless your application has a concrete policy for authenticator attestation, it is recommended to leave this
+         * parameter undefined.
+         * </p>
+         *
+         * <p>
+         * By default, this is not set.
+         * </p>
+         *
+         * @see PublicKeyCredentialCreationOptions#getAttestation()
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
+         */
+        public RelyingPartyBuilder attestationConveyancePreference(@NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference) {
+            this.attestationConveyancePreference = attestationConveyancePreference;
+            return this;
+        }
+
+        /**
+         * The argument for the {@link PublicKeyCredentialCreationOptions#getAttestation() attestation} parameter in
+         * registration operations.
+         *
+         * <p>
+         * Unless your application has a concrete policy for authenticator attestation, it is recommended to leave this
+         * parameter undefined.
+         * </p>
+         *
+         * <p>
+         * By default, this is not set.
+         * </p>
+         *
+         * @see PublicKeyCredentialCreationOptions#getAttestation()
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
+         */
+        public RelyingPartyBuilder attestationConveyancePreference(@NonNull AttestationConveyancePreference attestationConveyancePreference) {
+            return this.attestationConveyancePreference(Optional.of(attestationConveyancePreference));
+        }
+
+        /**
+         * A {@link MetadataService} instance to use for looking up device attestation metadata. This matters only if {@link
+         * #getAttestationConveyancePreference()} is non-empty and not set to {@link AttestationConveyancePreference#NONE}.
+         *
+         * <p>
+         * By default, this is not set.
+         * </p>
+         *
+         * @see PublicKeyCredentialCreationOptions#getAttestation()
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
+         */
+        public RelyingPartyBuilder metadataService(@NonNull Optional<MetadataService> metadataService) {
+            this.metadataService = metadataService;
+            return this;
+        }
+
+        /**
+         * A {@link MetadataService} instance to use for looking up device attestation metadata. This matters only if {@link
+         * #getAttestationConveyancePreference()} is non-empty and not set to {@link AttestationConveyancePreference#NONE}.
+         *
+         * <p>
+         * By default, this is not set.
+         * </p>
+         *
+         * @see PublicKeyCredentialCreationOptions#getAttestation()
+         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
+         */
+        public RelyingPartyBuilder metadataService(@NonNull MetadataService metadataService) {
+            return this.metadataService(Optional.of(metadataService));
         }
     }
 }

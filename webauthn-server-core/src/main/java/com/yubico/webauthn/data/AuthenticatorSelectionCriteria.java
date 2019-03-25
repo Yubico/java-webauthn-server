@@ -52,8 +52,7 @@ public class AuthenticatorSelectionCriteria {
      * (enum AuthenticatorAttachment)</a>.
      */
     @NonNull
-    @Builder.Default
-    private final Optional<AuthenticatorAttachment> authenticatorAttachment = Optional.empty();
+    private final Optional<AuthenticatorAttachment> authenticatorAttachment;
 
     /**
      * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true</code>, the
@@ -82,4 +81,26 @@ public class AuthenticatorSelectionCriteria {
         this(Optional.ofNullable(authenticatorAttachment), requireResidentKey, userVerification);
     }
 
+    public static class AuthenticatorSelectionCriteriaBuilder {
+        private @NonNull Optional<AuthenticatorAttachment> authenticatorAttachment = Optional.empty();
+
+        /**
+         * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
+         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
+         * (enum AuthenticatorAttachment)</a>.
+         */
+        public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(@NonNull Optional<AuthenticatorAttachment> authenticatorAttachment) {
+            this.authenticatorAttachment = authenticatorAttachment;
+            return this;
+        }
+
+        /**
+         * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
+         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
+         * (enum AuthenticatorAttachment)</a>.
+         */
+        public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(@NonNull AuthenticatorAttachment authenticatorAttachment) {
+            return this.authenticatorAttachment(Optional.of(authenticatorAttachment));
+        }
+    }
 }

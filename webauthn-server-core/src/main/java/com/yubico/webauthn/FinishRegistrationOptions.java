@@ -62,14 +62,15 @@ public class FinishRegistrationOptions {
      * @see <a href="https://tools.ietf.org/html/rfc8471">The Token Binding Protocol Version 1.0</a>
      */
     @NonNull
-    @Builder.Default
-    private final Optional<ByteArray> callerTokenBindingId = Optional.empty();
+    private final Optional<ByteArray> callerTokenBindingId;
 
     public static FinishRegistrationOptionsBuilder.MandatoryStages builder() {
         return new FinishRegistrationOptionsBuilder.MandatoryStages();
     }
 
     public static class FinishRegistrationOptionsBuilder {
+        private Optional<ByteArray> callerTokenBindingId = Optional.empty();
+
         public static class MandatoryStages {
             private final FinishRegistrationOptionsBuilder builder = new FinishRegistrationOptionsBuilder();
 
@@ -83,6 +84,27 @@ public class FinishRegistrationOptions {
                     return builder.response(response);
                 }
             }
+        }
+
+        /**
+         * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the connection to the
+         * client, if any.
+         *
+         * @see <a href="https://tools.ietf.org/html/rfc8471">The Token Binding Protocol Version 1.0</a>
+         */
+        public FinishRegistrationOptionsBuilder callerTokenBindingId(@NonNull Optional<ByteArray> callerTokenBindingId) {
+            this.callerTokenBindingId = callerTokenBindingId;
+            return this;
+        }
+
+        /**
+         * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the connection to the
+         * client, if any.
+         *
+         * @see <a href="https://tools.ietf.org/html/rfc8471">The Token Binding Protocol Version 1.0</a>
+         */
+        public FinishRegistrationOptionsBuilder callerTokenBindingId(@NonNull ByteArray callerTokenBindingId) {
+            return this.callerTokenBindingId(Optional.of(callerTokenBindingId));
         }
     }
 }
