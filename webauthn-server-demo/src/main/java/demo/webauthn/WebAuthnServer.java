@@ -36,6 +36,8 @@ import com.yubico.util.Either;
 import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RegisteredCredential;
+import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
@@ -51,7 +53,6 @@ import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
-import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -61,13 +62,13 @@ import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
-import demo.webauthn.data.AssertionRequest;
+import demo.webauthn.data.AssertionRequestWrapper;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
-import demo.webauthn.data.RegistrationResult;
 import demo.webauthn.data.U2fRegistrationResponse;
+import demo.webauthn.data.U2fRegistrationResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
@@ -95,10 +96,10 @@ public class WebAuthnServer {
 
     private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
 
-    private final Cache<ByteArray, AssertionRequest> assertRequestStorage;
+    private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
-    private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
+    private final Cache<AssertionRequestWrapper, AuthenticatedAction> authenticatedActions = newCache();
 
 
     private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
@@ -122,7 +123,7 @@ public class WebAuthnServer {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, Set<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage, RelyingPartyIdentity rpIdentity, Set<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -223,7 +224,7 @@ public class WebAuthnServer {
         }
     }
 
-    public <T> Either<List<String>, AssertionRequest> startAddCredential(
+    public <T> Either<List<String>, AssertionRequestWrapper> startAddCredential(
         @NonNull String username,
         Optional<String> credentialNickname,
         boolean requireResidentKey,
@@ -417,10 +418,9 @@ public class WebAuthnServer {
                 logger.error("Failed to resolve attestation", e);
             }
 
-            final RegistrationResult result = RegistrationResult.builder()
+            final U2fRegistrationResult result = U2fRegistrationResult.builder()
                 .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
-                .attestationType(AttestationType.BASIC)
                 .publicKeyCose(WebAuthnCodecs.rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
                 .attestationMetadata(attestation)
                 .build();
@@ -442,13 +442,13 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, AssertionRequest> startAuthentication(Optional<String> username) {
+    public Either<List<String>, AssertionRequestWrapper> startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
 
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
-            AssertionRequest request = new AssertionRequest(
+            AssertionRequestWrapper request = new AssertionRequestWrapper(
                 generateRandom(32),
                 rp.startAssertion(
                     StartAssertionOptions.builder()
@@ -466,7 +466,7 @@ public class WebAuthnServer {
     @Value
     public static class SuccessfulAuthenticationResult {
         final boolean success = true;
-        AssertionRequest request;
+        AssertionRequestWrapper request;
         AssertionResponse response;
         Collection<CredentialRegistration> registrations;
         List<String> warnings;
@@ -483,7 +483,7 @@ public class WebAuthnServer {
             return Either.left(Arrays.asList("Assertion failed!", "Failed to decode response object.", e.getMessage()));
         }
 
-        AssertionRequest request = assertRequestStorage.getIfPresent(response.getRequestId());
+        AssertionRequestWrapper request = assertRequestStorage.getIfPresent(response.getRequestId());
         assertRequestStorage.invalidate(response.getRequestId());
 
         if (request == null) {
@@ -530,7 +530,7 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, AssertionRequest> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
+    public Either<List<String>, AssertionRequestWrapper> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
         return startAuthentication(username)
             .map(request -> {
                 synchronized (authenticatedActions) {
@@ -555,7 +555,7 @@ public class WebAuthnServer {
             });
     }
 
-    public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
+    public <T> Either<List<String>, AssertionRequestWrapper> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {
@@ -600,13 +600,19 @@ public class WebAuthnServer {
         UserIdentity userIdentity,
         Optional<String> nickname,
         RegistrationResponse response,
-        com.yubico.webauthn.RegistrationResult registration
+        RegistrationResult result
     ) {
         return addRegistration(
             userIdentity,
             nickname,
             response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter(),
-            RegistrationResult.fromLibraryType(registration)
+            RegisteredCredential.builder()
+                .credentialId(result.getKeyId().getId())
+                .userHandle(userIdentity.getId())
+                .publicKeyCose(result.getPublicKeyCose())
+                .signatureCount(response.getCredential().getResponse().getParsedAuthenticatorData().getSignatureCounter())
+                .build(),
+            result.getAttestationMetadata()
         );
     }
 
@@ -614,23 +620,43 @@ public class WebAuthnServer {
         UserIdentity userIdentity,
         Optional<String> nickname,
         long signatureCount,
-        RegistrationResult registration
+        U2fRegistrationResult result
+    ) {
+        return addRegistration(
+            userIdentity,
+            nickname,
+            signatureCount,
+            RegisteredCredential.builder()
+                .credentialId(result.getKeyId().getId())
+                .userHandle(userIdentity.getId())
+                .publicKeyCose(result.getPublicKeyCose())
+                .signatureCount(signatureCount)
+                .build(),
+            result.getAttestationMetadata()
+        );
+    }
+
+    private CredentialRegistration addRegistration(
+        UserIdentity userIdentity,
+        Optional<String> nickname,
+        long signatureCount,
+        RegisteredCredential credential,
+        Optional<Attestation> attestationMetadata
     ) {
         CredentialRegistration reg = CredentialRegistration.builder()
             .userIdentity(userIdentity)
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
-            .registration(registration)
+            .credential(credential)
             .signatureCount(signatureCount)
+            .attestationMetadata(attestationMetadata)
             .build();
 
         logger.debug(
-            "Adding registration: user: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
+            "Adding registration: user: {}, nickname: {}, credential: {}",
             userIdentity,
             nickname,
-            registration,
-            registration.getKeyId().getId(),
-            registration.getPublicKeyCose()
+            credential
         );
         userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
         return reg;
