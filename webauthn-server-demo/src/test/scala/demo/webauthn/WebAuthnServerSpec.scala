@@ -24,10 +24,10 @@
 
 package demo.webauthn
 
-import java.util
 import java.security.KeyPair
 import java.security.interfaces.ECPublicKey
 import java.time.Instant
+import java.util
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 
@@ -35,23 +35,18 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
-import com.yubico.webauthn.RegisteredCredential
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Transport
+import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.AttestationType
-import com.yubico.webauthn.data.CollectedClientData
-import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.extension.appid.AppId
+import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
-import demo.webauthn.data.AssertionRequestWrapper
-import demo.webauthn.data.RegistrationResult
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.when
@@ -193,20 +188,10 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       .userIdentity(testData.request.getUser)
       .credentialNickname(credentialNickname)
       .registrationTime(Instant.parse("2018-07-06T15:07:15Z"))
-      .registration(RegistrationResult.builder()
-        .keyId(PublicKeyCredentialDescriptor.builder().id(testData.response.getId).build())
-        .attestationTrusted(false)
-        .attestationType(AttestationType.BASIC)
+      .credential(RegisteredCredential.builder()
+        .credentialId(testData.response.getId)
+        .userHandle(testData.request.getUser.getId)
         .publicKeyCose(testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
-        .attestationMetadata(Some(Attestation.builder()
-          .trusted(false)
-          .metadataIdentifier(Some("metadataIdentifier").asJava)
-          .vendorProperties(Some(Map("vendor" -> "properties").asJava).asJava)
-          .deviceProperties(Some(Map("device" -> "properties").asJava).asJava)
-          .transports(Some(Set(Transport.USB).asJava).asJava)
-          .build()
-        ).asJava)
-        .warnings(List.empty.asJava)
         .build()
       )
       .build())

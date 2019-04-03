@@ -36,6 +36,8 @@ import com.yubico.util.Either;
 import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RegisteredCredential;
+import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
@@ -51,7 +53,6 @@ import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
-import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -66,8 +67,8 @@ import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
-import demo.webauthn.data.RegistrationResult;
 import demo.webauthn.data.U2fRegistrationResponse;
+import demo.webauthn.data.U2fRegistrationResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
@@ -417,10 +418,9 @@ public class WebAuthnServer {
                 logger.error("Failed to resolve attestation", e);
             }
 
-            final RegistrationResult result = RegistrationResult.builder()
+            final U2fRegistrationResult result = U2fRegistrationResult.builder()
                 .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
-                .attestationType(AttestationType.BASIC)
                 .publicKeyCose(WebAuthnCodecs.rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
                 .attestationMetadata(attestation)
                 .build();
@@ -600,13 +600,19 @@ public class WebAuthnServer {
         UserIdentity userIdentity,
         Optional<String> nickname,
         RegistrationResponse response,
-        com.yubico.webauthn.RegistrationResult registration
+        RegistrationResult result
     ) {
         return addRegistration(
             userIdentity,
             nickname,
             response.getCredential().getResponse().getAttestation().getAuthenticatorData().getSignatureCounter(),
-            RegistrationResult.fromLibraryType(registration)
+            RegisteredCredential.builder()
+                .credentialId(result.getKeyId().getId())
+                .userHandle(userIdentity.getId())
+                .publicKeyCose(result.getPublicKeyCose())
+                .signatureCount(response.getCredential().getResponse().getParsedAuthenticatorData().getSignatureCounter())
+                .build(),
+            result.getAttestationMetadata()
         );
     }
 
@@ -614,23 +620,43 @@ public class WebAuthnServer {
         UserIdentity userIdentity,
         Optional<String> nickname,
         long signatureCount,
-        RegistrationResult registration
+        U2fRegistrationResult result
+    ) {
+        return addRegistration(
+            userIdentity,
+            nickname,
+            signatureCount,
+            RegisteredCredential.builder()
+                .credentialId(result.getKeyId().getId())
+                .userHandle(userIdentity.getId())
+                .publicKeyCose(result.getPublicKeyCose())
+                .signatureCount(signatureCount)
+                .build(),
+            result.getAttestationMetadata()
+        );
+    }
+
+    private CredentialRegistration addRegistration(
+        UserIdentity userIdentity,
+        Optional<String> nickname,
+        long signatureCount,
+        RegisteredCredential credential,
+        Optional<Attestation> attestationMetadata
     ) {
         CredentialRegistration reg = CredentialRegistration.builder()
             .userIdentity(userIdentity)
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
-            .registration(registration)
+            .credential(credential)
             .signatureCount(signatureCount)
+            .attestationMetadata(attestationMetadata)
             .build();
 
         logger.debug(
-            "Adding registration: user: {}, nickname: {}, registration: {}, credentialId: {}, public key cose: {}",
+            "Adding registration: user: {}, nickname: {}, credential: {}",
             userIdentity,
             nickname,
-            registration,
-            registration.getKeyId().getId(),
-            registration.getPublicKeyCose()
+            credential
         );
         userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
         return reg;

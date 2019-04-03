@@ -266,9 +266,9 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
         nickname: data.registration.credentialNickname,
       };
 
-      if (data.registration.registration && data.registration.registration.attestationMetadata) {
+      if (data.registration && data.registration.attestationMetadata) {
         showDeviceInfo(extend(
-          data.registration.registration.attestationMetadata.deviceProperties,
+          data.registration.attestationMetadata.deviceProperties,
           nicknameInfo
         ));
       } else {
