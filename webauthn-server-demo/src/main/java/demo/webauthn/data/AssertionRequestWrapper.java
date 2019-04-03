@@ -32,7 +32,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 @Value
-public class AssertionRequest {
+public class AssertionRequestWrapper {
 
     @NonNull
     private final ByteArray requestId;
@@ -47,7 +47,7 @@ public class AssertionRequest {
     @JsonIgnore
     private final transient com.yubico.webauthn.AssertionRequest request;
 
-    public AssertionRequest(
+    public AssertionRequestWrapper(
         @NonNull
         ByteArray requestId,
         @NonNull

@@ -50,7 +50,7 @@ import com.yubico.webauthn.extension.appid.AppId
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
-import demo.webauthn.data.AssertionRequest
+import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.RegistrationResult
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
@@ -146,9 +146,9 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       }
 
       def newServerWithAuthenticationRequest(testData: RegistrationTestData) = {
-        val assertionRequests: Cache[ByteArray, AssertionRequest] = newCache()
+        val assertionRequests: Cache[ByteArray, AssertionRequestWrapper] = newCache()
 
-        assertionRequests.put(requestId, new AssertionRequest(
+        assertionRequests.put(requestId, new AssertionRequestWrapper(
             requestId,
             com.yubico.webauthn.AssertionRequest.builder()
               .publicKeyCredentialRequestOptions(

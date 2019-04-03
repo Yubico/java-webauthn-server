@@ -61,7 +61,7 @@ import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
-import demo.webauthn.data.AssertionRequest;
+import demo.webauthn.data.AssertionRequestWrapper;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
@@ -95,10 +95,10 @@ public class WebAuthnServer {
 
     private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
 
-    private final Cache<ByteArray, AssertionRequest> assertRequestStorage;
+    private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
-    private final Cache<AssertionRequest, AuthenticatedAction> authenticatedActions = newCache();
+    private final Cache<AssertionRequestWrapper, AuthenticatedAction> authenticatedActions = newCache();
 
 
     private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
@@ -122,7 +122,7 @@ public class WebAuthnServer {
         this(new InMemoryRegistrationStorage(), newCache(), newCache(), Config.getRpIdentity(), Config.getOrigins(), Config.getAppId());
     }
 
-    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequest> assertRequestStorage, RelyingPartyIdentity rpIdentity, Set<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
+    public WebAuthnServer(RegistrationStorage userStorage, Cache<ByteArray, RegistrationRequest> registerRequestStorage, Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage, RelyingPartyIdentity rpIdentity, Set<String> origins, Optional<AppId> appId) throws InvalidAppIdException, CertificateException {
         this.userStorage = userStorage;
         this.registerRequestStorage = registerRequestStorage;
         this.assertRequestStorage = assertRequestStorage;
@@ -223,7 +223,7 @@ public class WebAuthnServer {
         }
     }
 
-    public <T> Either<List<String>, AssertionRequest> startAddCredential(
+    public <T> Either<List<String>, AssertionRequestWrapper> startAddCredential(
         @NonNull String username,
         Optional<String> credentialNickname,
         boolean requireResidentKey,
@@ -442,13 +442,13 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, AssertionRequest> startAuthentication(Optional<String> username) {
+    public Either<List<String>, AssertionRequestWrapper> startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
 
         if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
-            AssertionRequest request = new AssertionRequest(
+            AssertionRequestWrapper request = new AssertionRequestWrapper(
                 generateRandom(32),
                 rp.startAssertion(
                     StartAssertionOptions.builder()
@@ -466,7 +466,7 @@ public class WebAuthnServer {
     @Value
     public static class SuccessfulAuthenticationResult {
         final boolean success = true;
-        AssertionRequest request;
+        AssertionRequestWrapper request;
         AssertionResponse response;
         Collection<CredentialRegistration> registrations;
         List<String> warnings;
@@ -483,7 +483,7 @@ public class WebAuthnServer {
             return Either.left(Arrays.asList("Assertion failed!", "Failed to decode response object.", e.getMessage()));
         }
 
-        AssertionRequest request = assertRequestStorage.getIfPresent(response.getRequestId());
+        AssertionRequestWrapper request = assertRequestStorage.getIfPresent(response.getRequestId());
         assertRequestStorage.invalidate(response.getRequestId());
 
         if (request == null) {
@@ -530,7 +530,7 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, AssertionRequest> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
+    public Either<List<String>, AssertionRequestWrapper> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
         return startAuthentication(username)
             .map(request -> {
                 synchronized (authenticatedActions) {
@@ -555,7 +555,7 @@ public class WebAuthnServer {
             });
     }
 
-    public <T> Either<List<String>, AssertionRequest> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
+    public <T> Either<List<String>, AssertionRequestWrapper> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
         logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
 
         if (username == null || username.isEmpty()) {

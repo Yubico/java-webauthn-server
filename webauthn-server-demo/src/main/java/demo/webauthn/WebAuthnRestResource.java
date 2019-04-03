@@ -50,7 +50,7 @@ import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
-import demo.webauthn.data.AssertionRequest;
+import demo.webauthn.data.AssertionRequestWrapper;
 import demo.webauthn.data.RegistrationRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -199,9 +199,9 @@ public class WebAuthnRestResource {
 
     private final class StartAuthenticationResponse {
         public final boolean success = true;
-        public final AssertionRequest request;
+        public final AssertionRequestWrapper request;
         public final StartAuthenticationActions actions = new StartAuthenticationActions();
-        private StartAuthenticationResponse(AssertionRequest request) throws MalformedURLException {
+        private StartAuthenticationResponse(AssertionRequestWrapper request) throws MalformedURLException {
             this.request = request;
         }
     }
@@ -216,7 +216,7 @@ public class WebAuthnRestResource {
         @FormParam("username") String username
     ) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
-        Either<List<String>, AssertionRequest> request = server.startAuthentication(Optional.ofNullable(username));
+        Either<List<String>, AssertionRequestWrapper> request = server.startAuthentication(Optional.ofNullable(username));
         if (request.isRight()) {
             return startResponse("startAuthentication", new StartAuthenticationResponse(request.right().get()));
         } else {
@@ -258,9 +258,9 @@ public class WebAuthnRestResource {
 
     private final class StartAuthenticatedActionResponse {
         public final boolean success = true;
-        public final AssertionRequest request;
+        public final AssertionRequestWrapper request;
         public final StartAuthenticatedActionActions actions = new StartAuthenticatedActionActions();
-        private StartAuthenticatedActionResponse(AssertionRequest request) throws MalformedURLException {
+        private StartAuthenticatedActionResponse(AssertionRequestWrapper request) throws MalformedURLException {
             this.request = request;
         }
     }
@@ -280,7 +280,7 @@ public class WebAuthnRestResource {
     ) throws MalformedURLException {
         logger.trace("addCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
 
-        Either<List<String>, AssertionRequest> result = server.startAddCredential(username, Optional.ofNullable(credentialNickname), requireResidentKey, (RegistrationRequest request) -> {
+        Either<List<String>, AssertionRequestWrapper> result = server.startAddCredential(username, Optional.ofNullable(credentialNickname), requireResidentKey, (RegistrationRequest request) -> {
             try {
                 return Either.right(new StartRegistrationResponse(request));
             } catch (MalformedURLException e) {
@@ -329,7 +329,7 @@ public class WebAuthnRestResource {
             );
         }
 
-        Either<List<String>, AssertionRequest> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
+        Either<List<String>, AssertionRequestWrapper> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
             try {
                 return ((ObjectNode) jsonFactory.objectNode()
                         .set("success", jsonFactory.booleanNode(true)))
