@@ -171,7 +171,7 @@ object RegistrationTestData {
     ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed", alg = Some(COSEAlgorithmIdentifier.RS256)) }
   }
   object Tpm {
-    val PrivacyCa: RegistrationTestData = Packed.SelfAttestation.editAttestationObject("fmt", "tpm")
+    val PrivacyCa: RegistrationTestData = Packed.BasicAttestation.editAttestationObject("fmt", "tpm")
   }
 }
 

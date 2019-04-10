@@ -1687,19 +1687,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("The default RelyingParty settings") {
 
+        val rp = RelyingParty.builder()
+          .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
+          .credentialRepository(emptyCredentialRepository)
+          .build()
+
+        val request = rp.startRegistration(StartRegistrationOptions.builder()
+          .user(UserIdentity.builder().name("test").displayName("Test Testsson").id(new ByteArray(Array())).build())
+          .build()
+        ).toBuilder()
+          .challenge(RegistrationTestData.NoneAttestation.Default.clientData.getChallenge)
+          .build()
+
         it("accept registrations with no attestation.") {
-          val rp = RelyingParty.builder()
-            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
-            .credentialRepository(emptyCredentialRepository)
-            .build()
-
-          val request = rp.startRegistration(StartRegistrationOptions.builder()
-              .user(UserIdentity.builder().name("test").displayName("Test Testsson").id(new ByteArray(Array())).build())
-              .build()
-          ).toBuilder()
-            .challenge(RegistrationTestData.NoneAttestation.Default.clientData.getChallenge)
-            .build()
-
           val result = rp.finishRegistration(FinishRegistrationOptions.builder()
               .request(request)
               .response(RegistrationTestData.NoneAttestation.Default.response)
@@ -1708,6 +1708,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
           result.isAttestationTrusted should be (false)
           result.getKeyId.getId should equal (RegistrationTestData.NoneAttestation.Default.response.getId)
+        }
+
+        it("accept TPM attestations but reports they're untrusted.") {
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(request)
+            .response(RegistrationTestData.Tpm.PrivacyCa.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
         }
 
       }
