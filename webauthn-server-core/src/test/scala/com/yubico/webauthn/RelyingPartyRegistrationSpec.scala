@@ -1710,7 +1710,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.NoneAttestation.Default.response.getId)
         }
 
-        it("accept TPM attestations but reports they're untrusted.") {
+        it("accept android-key attestations but report they're untrusted.") {
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(request)
+            .response(RegistrationTestData.AndroidKey.BasicAttestation.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (RegistrationTestData.AndroidKey.BasicAttestation.response.getId)
+        }
+
+        it("accept TPM attestations but report they're untrusted.") {
           val result = rp.finishRegistration(FinishRegistrationOptions.builder()
             .request(request)
             .response(RegistrationTestData.Tpm.PrivacyCa.response)

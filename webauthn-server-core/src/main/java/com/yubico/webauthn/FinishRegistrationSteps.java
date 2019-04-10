@@ -490,6 +490,7 @@ final class FinishRegistrationSteps {
                 case ATTESTATION_CA:
                 case BASIC:
                     switch (attestation.getFormat()) {
+                        case "android-key":
                         case "android-safetynet":
                         case "fido-u2f":
                         case "packed":
