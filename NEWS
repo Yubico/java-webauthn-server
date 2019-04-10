@@ -1,3 +1,13 @@
+== Version 1.1.1 (unreleased) ==
+
+Bug fixes:
+
+* `android-key` attestation statements now don't throw an exception if
+  `allowUntrustedAttestation` is set to `true`.
+* `tpm` attestation statements now don't throw an exception if
+  `allowUntrustedAttestation` is set to `true`.
+
+
 == Version 1.1.0 ==
 
 Changed behaviours:
