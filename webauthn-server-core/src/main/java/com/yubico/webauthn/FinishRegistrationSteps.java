@@ -493,6 +493,7 @@ final class FinishRegistrationSteps {
                         case "android-safetynet":
                         case "fido-u2f":
                         case "packed":
+                        case "tpm":
                             return metadataService.map(KnownX509TrustAnchorsTrustResolver::new);
                         default:
                             throw new UnsupportedOperationException(String.format(
