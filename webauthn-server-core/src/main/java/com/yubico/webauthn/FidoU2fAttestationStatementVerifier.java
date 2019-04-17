@@ -26,6 +26,7 @@ package com.yubico.webauthn;
 
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
@@ -33,11 +34,13 @@ import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.ByteArray;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -83,7 +86,12 @@ final class FidoU2fAttestationStatementVerifier implements AttestationStatementV
 
     private static ByteArray getRawUserPublicKey(AttestationObject attestationObject) throws IOException, CoseException {
         final ByteArray pubkeyCose = attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey();
-        final PublicKey pubkey = WebAuthnCodecs.importCosePublicKey(pubkeyCose);
+        final PublicKey pubkey;
+        try {
+            pubkey = WebAuthnCodecs.importCosePublicKey(pubkeyCose);
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            throw ExceptionUtil.wrapAndLog(log, "Failed to decode public key: " + pubkeyCose.getHex(), e);
+        }
 
         final ECPublicKey ecPubkey;
         try {

@@ -37,7 +37,9 @@ import com.yubico.webauthn.data.UserVerificationRequirement;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -547,7 +549,7 @@ final class FinishAssertionSteps {
 
             try {
                 key = WebAuthnCodecs.importCosePublicKey(cose);
-            } catch (CoseException | IOException e) {
+            } catch (CoseException | IOException | InvalidKeySpecException e) {
                 throw new IllegalArgumentException(
                     String.format(
                         "Failed to decode public key: Credential ID: %s COSE: %s",
@@ -556,6 +558,8 @@ final class FinishAssertionSteps {
                     ),
                     e
                 );
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
             }
 
             if (!

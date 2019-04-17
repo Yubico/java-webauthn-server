@@ -1,4 +1,8 @@
-== Version 1.1.1 (unreleased) ==
+== Version 1.2.0 (unreleased) ==
+
+New features:
+
+* RSA keys are now supported.
 
 Bug fixes:
 

@@ -46,6 +46,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
@@ -101,12 +102,14 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
             pubkey = WebAuthnCodecs.importCosePublicKey(
                 attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey()
             );
-        } catch (IOException | CoseException e) {
+        } catch (IOException | CoseException | InvalidKeySpecException e) {
             throw ExceptionUtil.wrapAndLog(
                 log,
                 String.format("Failed to parse public key from attestation data %s", attestationObject.getAuthenticatorData().getAttestedCredentialData()),
                 e
             );
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
 
         final Long keyAlgId = CBORObject.DecodeFromBytes(attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey().getBytes())
