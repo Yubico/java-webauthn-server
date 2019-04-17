@@ -1734,6 +1734,26 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       }
 
+      describe("RelyingParty supports registering") {
+        it("a real packed attestation with an RSA key.") {
+          val rp = RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
+            .credentialRepository(emptyCredentialRepository)
+            .origins(Set("https://demo3.yubico.test:8443").asJava)
+            .build()
+
+          val testData = RegistrationTestData.Packed.BasicAttestationRsa
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (testData.response.getId)
+        }
+      }
+
     }
 
   }
