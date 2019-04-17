@@ -27,12 +27,13 @@ package com.yubico.webauthn;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.internal.util.WebAuthnCodecs;
-import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.ByteArray;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
@@ -80,17 +81,27 @@ final class FidoU2fAttestationStatementVerifier implements AttestationStatementV
         }
     }
 
+    private static ByteArray getRawUserPublicKey(AttestationObject attestationObject) throws IOException, CoseException {
+        final ByteArray pubkeyCose = attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey();
+        final PublicKey pubkey = WebAuthnCodecs.importCosePublicKey(pubkeyCose);
+
+        final ECPublicKey ecPubkey;
+        try {
+            ecPubkey = (ECPublicKey) pubkey;
+        } catch (ClassCastException e) {
+            throw new RuntimeException( "U2F supports only EC keys, was: " + pubkey);
+        }
+
+        return WebAuthnCodecs.ecPublicKeyToRaw(ecPubkey);
+    }
+
     @Override
     public AttestationType getAttestationType(AttestationObject attestationObject) throws CoseException, IOException, CertificateException {
         X509Certificate attestationCertificate = getAttestationCertificate(attestationObject);
 
         if (attestationCertificate.getPublicKey() instanceof ECPublicKey
             && validSelfSignature(attestationCertificate)
-            && WebAuthnCodecs.ecPublicKeyToRaw(
-                WebAuthnCodecs.importCoseP256PublicKey(
-                    attestationObject.getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey()
-                )
-               )
+            && getRawUserPublicKey(attestationObject)
                 .equals(
                     WebAuthnCodecs.ecPublicKeyToRaw((ECPublicKey) attestationCertificate.getPublicKey())
                 )
@@ -128,14 +139,10 @@ final class FidoU2fAttestationStatementVerifier implements AttestationStatementV
             }
 
             if (signature.isBinary()) {
-                ByteArray userPublicKey;
+                final ByteArray userPublicKey;
 
                 try {
-                    userPublicKey = WebAuthnCodecs.ecPublicKeyToRaw(
-                        WebAuthnCodecs.importCoseP256PublicKey(
-                            attestedCredentialData.getCredentialPublicKey()
-                        )
-                    );
+                    userPublicKey = getRawUserPublicKey(attestationObject);
                 } catch (IOException | CoseException e) {
                     RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestedCredentialData));
                     log.error(err.getMessage(), err);

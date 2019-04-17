@@ -57,19 +57,32 @@ final class BouncyCastleCrypto {
         return verifySignature(attestationCertificate.getPublicKey(), signedBytes, signature);
     }
 
-    public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signature) {
+    public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signatureBytes) {
         try {
-            Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA", provider);
-            ecdsaSignature.initVerify(publicKey);
-            ecdsaSignature.update(signedBytes.getBytes());
-            return ecdsaSignature.verify(signature.getBytes());
-        } catch (GeneralSecurityException e) {
+            final String algName;
+            switch (publicKey.getAlgorithm()) {
+                case "EC":
+                    algName = "SHA256withECDSA";
+                    break;
+
+                case "RSA":
+                    algName = "SHA256withRSA";
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unsupported public key algorithm: " + publicKey);
+            }
+            Signature signature = Signature.getInstance(algName, provider);
+            signature.initVerify(publicKey);
+            signature.update(signedBytes.getBytes());
+            return signature.verify(signatureBytes.getBytes());
+        } catch (GeneralSecurityException | IllegalArgumentException e) {
             throw new RuntimeException(
                 String.format(
                     "Failed to verify signature. This could be a problem with your JVM environment, or a bug in webauthn-server-core. Public key: %s, signed data: %s , signature: %s",
                     publicKey,
                     signedBytes.getBase64Url(),
-                    signature.getBase64Url()
+                    signatureBytes.getBase64Url()
                 ),
                 e
             );

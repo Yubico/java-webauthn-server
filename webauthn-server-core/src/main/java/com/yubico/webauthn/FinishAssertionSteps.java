@@ -546,7 +546,7 @@ final class FinishAssertionSteps {
             final PublicKey key;
 
             try {
-                key = WebAuthnCodecs.importCoseP256PublicKey(cose);
+                key = WebAuthnCodecs.importCosePublicKey(cose);
             } catch (CoseException | IOException e) {
                 throw new IllegalArgumentException(
                     String.format(

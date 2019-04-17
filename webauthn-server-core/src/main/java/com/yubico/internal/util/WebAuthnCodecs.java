@@ -123,8 +123,18 @@ public final class WebAuthnCodecs {
         return rawEcdaKeyToCose(ecPublicKeyToRaw(key));
     }
 
-    public static ECPublicKey importCoseP256PublicKey(ByteArray key) throws CoseException, IOException {
-        return new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.getBytes())));
+    public static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException {
+        CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
+        final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
+        switch (kty) {
+            case 2: return importCoseP256PublicKey(cose);
+            default:
+                throw new IllegalArgumentException("Unsupported key type: " + kty);
+        }
+    }
+
+    private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException, IOException {
+        return new COSE.ECPublicKey(new OneKey(cose));
     }
 
     public static String getSignatureAlgorithmName(PublicKey key) {
