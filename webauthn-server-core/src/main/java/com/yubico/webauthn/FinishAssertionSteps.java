@@ -548,11 +548,14 @@ final class FinishAssertionSteps {
             try {
                 key = WebAuthnCodecs.importCoseP256PublicKey(cose);
             } catch (CoseException | IOException e) {
-                throw new IllegalArgumentException(String.format(
-                    "Failed to decode public key: Credential ID: %s COSE: %s",
-                    credential.getCredentialId().getBase64Url(),
-                    cose.getBase64Url()
-                ));
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Failed to decode public key: Credential ID: %s COSE: %s",
+                        credential.getCredentialId().getBase64Url(),
+                        cose.getBase64Url()
+                    ),
+                    e
+                );
             }
 
             if (!
