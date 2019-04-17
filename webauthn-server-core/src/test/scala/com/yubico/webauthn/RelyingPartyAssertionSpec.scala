@@ -31,6 +31,7 @@ import java.security.KeyPair
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
+import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.WebAuthnCodecs
@@ -1043,6 +1044,95 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
     }
 
+  }
+
+  describe("RelyingParty supports authenticating") {
+    it("a real RSA key.") {
+      val testData = RegistrationTestData.Packed.BasicAttestationRsa
+
+      val credData = testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get
+      val credId: ByteArray = credData.getCredentialId
+      val publicKeyBytes: ByteArray = credData.getCredentialPublicKey
+
+      val request: AssertionRequest = AssertionRequest.builder()
+        .publicKeyCredentialRequestOptions(WebAuthnCodecs.json.readValue("""{
+            "challenge": "drdVqKT0T-9PyQfkceSE94Q8ruW2I-w1gsamBisjuMw",
+            "rpId": "demo3.yubico.test",
+            "userVerification": "preferred",
+            "extensions": {
+              "appid": "https://demo3.yubico.test:8443"
+            }
+          }""",
+          classOf[PublicKeyCredentialRequestOptions]
+        ))
+        .username(testData.userId.getName)
+        .build()
+
+      val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = WebAuthnCodecs.json.readValue(
+        """{
+          "type": "public-key",
+          "id": "ClvGfsNH8ulYnrKNd4fEgQ",
+          "response": {
+            "authenticatorData": "AU4Ai_91hLmkf2mxjxj_SJrA3qTIOjr6tw1rluqSp_4FAAAABA",
+            "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5nZXQiLA0KCSJjaGFsbGVuZ2UiIDogImRyZFZxS1QwVC05UHlRZmtjZVNFOTRROHJ1VzJJLXcxZ3NhbUJpc2p1TXciLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9",
+            "signature": "1YYgnM1Nau6FQV2YK1qZDaoF6CHkFSxhaWac00dJNQemQueU_a1wE0hYy-g0O-ZwKn_MTtmfnwgjHxTRZx6v51eiuBpy-FlfkMmQHkz26MKKnQOK0Mc4kVjugvM0XlQ7E0hvsrdvVlmrwYc-U2IVfgRUw5rD-SbUctA_ZXc248LjyrgD_vhDWLR6I4nzmH_pe2tgKAQgohmzD4kVpVzS_T_M4Bn0Vcc5oUwNU4m57DiWDWCAR5BohKdajRgt8DUqBp9jvn9mgStIhEq1EIjhGdEE47WxVJaQb5IdHRaCNJ186x_ilsQvGT2Iy4s5C8IOkuffw07GesdpmJ8awtiA4A",
+            "userHandle": "NiBJtVMh4AmSpZYuJ--jnEWgFzZHHVbS6zx7HFgAjAc"
+          },
+          "clientExtensionResults": {
+            "appid": false
+          }
+        }""",
+        new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){}
+      )
+
+      val credRepo = new CredentialRepository {
+        override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
+          if (username == testData.userId.getName)
+            Set(PublicKeyCredentialDescriptor.builder().id(credId).build()).asJava
+          else Set.empty.asJava
+        override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+          if (username == testData.userId.getName)
+            Some(testData.userId.getId).asJava
+          else None.asJava
+        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
+          if (userHandle == testData.userId.getId)
+            Some(testData.userId.getName).asJava
+          else None.asJava
+        override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
+          if (credentialId == credId && userHandle == testData.userId.getId)
+            Some(RegisteredCredential.builder()
+              .credentialId(credId)
+              .userHandle(testData.userId.getId)
+              .publicKeyCose(publicKeyBytes)
+              .build()).asJava
+          else None.asJava
+        override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
+          if (credentialId == credId)
+            Set(RegisteredCredential.builder()
+              .credentialId(credId)
+              .userHandle(testData.userId.getId)
+              .publicKeyCose(publicKeyBytes)
+              .build()).asJava
+          else Set.empty.asJava
+      }
+
+      val rp = RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
+        .credentialRepository(credRepo)
+        .origins(Set("https://demo3.yubico.test:8443").asJava)
+        .build()
+
+
+      val result = rp.finishAssertion(FinishAssertionOptions.builder()
+        .request(request)
+        .response(response)
+        .build()
+      )
+
+      result.isSuccess should be (true)
+      result.getUserHandle should equal (testData.userId.getId)
+      result.getCredentialId should equal (credId)
+    }
   }
 
 }
