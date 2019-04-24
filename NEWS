@@ -3,6 +3,8 @@
 New features:
 
 * RSA keys are now supported.
+* New constructor functions `PublicKeyCredential.parseRegistrationResponseJson` and `.parseAssertionResponseJson`
+  * So users don't have to deal with the `TypeReference`s imposed by the generics, unless they want to.
 
 Bug fixes:
 

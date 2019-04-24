@@ -146,7 +146,7 @@ Get the response from the client:
 ----------
 String responseJson = /* ... */;
 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
-    jsonMapper.readValue(responseJson, new TypeReference<PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>>(){});
+    PublicKeyCredential.parseRegistrationResponseJson(responseJson);
 ----------
 
 Validate the response:
@@ -190,8 +190,7 @@ Validate the response:
 String responseJson = /* ... */;
 
 PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
-    jsonMapper.readValue(responseJson, new TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>>() {
-});
+    PublicKeyCredential.parseAssertionResponseJson(responseJson);
 
 try {
     AssertionResult result = rp.finishAssertion(FinishAssertionOptions.builder()
