@@ -1,0 +1,8 @@
+com.yubico.internal.util
+com.yubico.webauthn
+com.yubico.webauthn.attestation
+com.yubico.webauthn.data
+com.yubico.webauthn.data.exception
+com.yubico.webauthn.exception
+com.yubico.webauthn.extension.appid
+com.yubico.webauthn.meta

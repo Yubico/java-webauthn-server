@@ -1,0 +1,3 @@
+com.yubico.webauthn.attestation
+com.yubico.webauthn.attestation.matcher
+com.yubico.webauthn.attestation.resolver
