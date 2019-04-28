@@ -83,7 +83,7 @@ class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenProp
 
         val coseKey = WebAuthnCodecs.rawEcdaKeyToCose(rawKey)
 
-        val importedPubkey: ECPublicKey = WebAuthnCodecs.importCoseP256PublicKey(coseKey)
+        val importedPubkey: ECPublicKey = WebAuthnCodecs.importCosePublicKey(coseKey).asInstanceOf[ECPublicKey]
         val rawImportedPubkey = WebAuthnCodecs.ecPublicKeyToRaw(importedPubkey)
 
         rawImportedPubkey should equal (rawKey)
@@ -100,7 +100,7 @@ class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenProp
 
         val coseKey = WebAuthnCodecs.ecPublicKeyToCose(originalPubkey)
 
-        val importedPubkey: ECPublicKey = WebAuthnCodecs.importCoseP256PublicKey(coseKey)
+        val importedPubkey: ECPublicKey = WebAuthnCodecs.importCosePublicKey(coseKey).asInstanceOf[ECPublicKey]
         val rawImportedPubkey = WebAuthnCodecs.ecPublicKeyToRaw(importedPubkey)
 
         rawImportedPubkey should equal (rawKey)

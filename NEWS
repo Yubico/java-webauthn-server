@@ -1,3 +1,19 @@
+== Version 1.2.0 ==
+
+New features:
+
+* RSA keys are now supported.
+* New constructor functions `PublicKeyCredential.parseRegistrationResponseJson` and `.parseAssertionResponseJson`
+  * So users don't have to deal with the `TypeReference`s imposed by the generics, unless they want to.
+
+Bug fixes:
+
+* `android-key` attestation statements now don't throw an exception if
+  `allowUntrustedAttestation` is set to `true`.
+* `tpm` attestation statements now don't throw an exception if
+  `allowUntrustedAttestation` is set to `true`.
+
+
 == Version 1.1.0 ==
 
 Changed behaviours:

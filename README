@@ -27,7 +27,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -35,7 +35,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.1.0'
+compile 'com.yubico:webauthn-server-core:1.2.0'
 ----------
 
 
@@ -146,7 +146,7 @@ Get the response from the client:
 ----------
 String responseJson = /* ... */;
 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
-    jsonMapper.readValue(responseJson, new TypeReference<PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>>(){});
+    PublicKeyCredential.parseRegistrationResponseJson(responseJson);
 ----------
 
 Validate the response:
@@ -190,8 +190,7 @@ Validate the response:
 String responseJson = /* ... */;
 
 PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
-    jsonMapper.readValue(responseJson, new TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>>() {
-});
+    PublicKeyCredential.parseAssertionResponseJson(responseJson);
 
 try {
     AssertionResult result = rp.finishAssertion(FinishAssertionOptions.builder()
@@ -270,7 +269,7 @@ credentials.
   The application stores the `request` in temporary storage.
 
 . The application's client-side script runs `navigator.credentials.create()` or
-  `.get()` with `response` as the `publicKey` argument.
+  `.get()` with `request` as the `publicKey` argument.
 
 . The user confirms the operation and the client returns a
   https://www.w3.org/TR/webauthn/#public-key-credential[`PublicKeyCredential`]
@@ -292,7 +291,7 @@ credentials.
 
 . The library returns a POJO representation of the result of the ceremony. For
   registration ceremonies, this will include the credential ID and public key of
-  the new credential. The application may also opt in to also getting
+  the new credential. The application may opt in to also getting
   information about the authenticator model and whether the authenticator
   attestation is trusted. For authentication ceremonies, this will include the
   username and user handle, the credential ID of the credential used, and the

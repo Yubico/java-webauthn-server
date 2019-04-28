@@ -124,4 +124,36 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[UserVerificationRequirement]() {})
   }
 
+  describe("The class PublicKeyCredential") {
+    it("has an alternative parseRegistrationResponseJson function as an alias.") {
+      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+        forAll { value: A =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded: A = json.readValue(encoded, tpe)
+          val altDecoded = PublicKeyCredential.parseRegistrationResponseJson(encoded)
+          val altRecoded: String = json.writeValueAsString(altDecoded)
+
+          altDecoded should equal (decoded)
+          altRecoded should equal (encoded)
+        }
+      }
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+    }
+
+    it("has an alternative parseAuthenticationResponseJson function as an alias.") {
+      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+        forAll { value: A =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded: A = json.readValue(encoded, tpe)
+          val altDecoded = PublicKeyCredential.parseAssertionResponseJson(encoded)
+          val altRecoded: String = json.writeValueAsString(altDecoded)
+
+          altDecoded should equal (decoded)
+          altRecoded should equal (encoded)
+        }
+      }
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+    }
+  }
+
 }

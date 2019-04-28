@@ -487,11 +487,14 @@ final class FinishRegistrationSteps {
                 case SELF_ATTESTATION:
                     return Optional.empty();
 
+                case ATTESTATION_CA:
                 case BASIC:
                     switch (attestation.getFormat()) {
+                        case "android-key":
                         case "android-safetynet":
                         case "fido-u2f":
                         case "packed":
+                        case "tpm":
                             return metadataService.map(KnownX509TrustAnchorsTrustResolver::new);
                         default:
                             throw new UnsupportedOperationException(String.format(
@@ -529,6 +532,7 @@ final class FinishRegistrationSteps {
                     assure(allowUntrustedAttestation, "Self attestation is not allowed.");
                     break;
 
+                case ATTESTATION_CA:
                 case BASIC:
                     assure(allowUntrustedAttestation || attestationTrusted(), "Failed to derive trust for attestation key.");
                     break;
@@ -553,6 +557,7 @@ final class FinishRegistrationSteps {
                 case NONE:
                     return false;
 
+                case ATTESTATION_CA:
                 case BASIC:
                     return attestationMetadata().filter(Attestation::isTrusted).isPresent();
                 default:

@@ -158,13 +158,14 @@ public class Config {
 
     private static Optional<AppId> computeAppId() throws InvalidAppIdException {
         final String appId = System.getenv("YUBICO_WEBAUTHN_U2F_APPID");
-        logger.debug("U2F AppId: {}", appId);
+        logger.debug("YUBICO_WEBAUTHN_U2F_APPID: {}", appId);
 
-        if (appId == null) {
-            return Optional.empty();
-        } else {
-            return Optional.of(new AppId(appId));
-        }
+        AppId result = appId == null
+            ? new AppId("https://localhost:8443")
+            : new AppId(appId);
+
+        logger.debug("U2F AppId: {}", result.getId());
+        return Optional.of(result);
     }
 
 }

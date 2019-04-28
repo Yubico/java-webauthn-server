@@ -26,6 +26,9 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.yubico.internal.util.WebAuthnCodecs;
+import java.io.IOException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
@@ -124,6 +127,82 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
             }
         }
 
+    }
+
+    /**
+     * Parse a {@link PublicKeyCredential} object from JSON.
+     *
+     * <p>The <code>json</code> should be of the following format:</p>
+     *
+     * <pre>
+     * {
+     *   "id": "(resp.id)",
+     *   "response": {
+     *     "attestationObject": "(Base64Url encoded resp.attestationObject)",
+     *     "clientDataJSON": "(Base64Url encoded resp.clientDataJSON)"
+     *   },
+     *   "clientExtensionResults": { (resp.getClientExtensionResults()) },
+     *   "type": "public-key"
+     * }
+     * </pre>
+     *
+     * <dl>
+     *     <dt>resp:</dt><dd>The <a href="https://www.w3.org/TR/webauthn-1/#iface-pkcredential">PublicKeyCredential</a> object returned from a registration ceremony.</dd>
+     *     <dt>id:</dt><dd>The string value of <code>resp.id</code></dd>
+     *     <dt>response.attestationObject:</dt><dd>The value of <code>resp.attestationObject</code>, Base64Url encoded as a string</dd>
+     *     <dt>response.clientDataJSON:</dt><dd>The value of <code>resp.clientDataJSON</code>, Base64Url encoded as a string</dd>
+     *     <dt>clientExtensionResults:</dt><dd>The return value of <code>resp.getClientExtensionResults()</code></dd>
+     *     <dt>type:</dt><dd>The literal string value <code>"public-key"</code></dd>
+     * </dl>
+     *
+     * @param json a JSON string of the above format
+     * @throws IOException if the <code>json</code> is invalid or cannot be decoded as a {@link PublicKeyCredential}
+     */
+    public static PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> parseRegistrationResponseJson(String json) throws IOException {
+        return WebAuthnCodecs.json().readValue(
+            json,
+            new TypeReference<PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>>(){}
+        );
+    }
+
+    /**
+     * Parse a {@link PublicKeyCredential} object from JSON.
+     *
+     * <p>The <code>json</code> should be of the following format:</p>
+     *
+     * <pre>
+     * {
+     *   "id": "(resp.id)",
+     *   "response": {
+     *     "authenticatorData": "(Base64Url encoded resp.authenticatorData)",
+     *     "signature": "(Base64Url encoded resp.signature)",
+     *     "clientDataJSON": "(Base64Url encoded resp.clientDataJSON)",
+     *     "userHandle": "(null, undefined or Base64Url encoded resp.userHandle)"
+     *   },
+     *   "clientExtensionResults": { (resp.getClientExtensionResults()) },
+     *   "type": "public-key"
+     * }
+     * </pre>
+     *
+     * <dl>
+     *     <dt>resp:</dt><dd>The <a href="https://www.w3.org/TR/webauthn-1/#iface-pkcredential">PublicKeyCredential</a> object returned from an authentication ceremony.</dd>
+     *     <dt>id:</dt><dd>The string value of <code>resp.id</code></dd>
+     *     <dt>response.authenticatorData:</dt><dd>The value of <code>resp.authenticatorData</code>, Base64Url encoded as a string</dd>
+     *     <dt>response.signature:</dt><dd>The value of <code>resp.signature</code>, Base64Url encoded as a string</dd>
+     *     <dt>response.clientDataJSON:</dt><dd>The value of <code>resp.clientDataJSON</code>, Base64Url encoded as a string</dd>
+     *     <dt>response.userHandle:</dt><dd>The value of <code>resp.userHandle</code> Base64Url encoded as a string if present, otherwise <code>null</code> or <code>undefined</code></dd>
+     *     <dt>clientExtensionResults:</dt><dd>The return value of <code>resp.getClientExtensionResults()</code></dd>
+     *     <dt>type:</dt><dd>The literal string value <code>"public-key"</code></dd>
+     * </dl>
+     *
+     * @param json a JSON string of the above format
+     * @throws IOException if the <code>json</code> is invalid or cannot be decoded as a {@link PublicKeyCredential}
+     */
+    public static PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> parseAssertionResponseJson(String json) throws IOException {
+        return WebAuthnCodecs.json().readValue(
+            json,
+            new TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>>(){}
+        );
     }
 
 }

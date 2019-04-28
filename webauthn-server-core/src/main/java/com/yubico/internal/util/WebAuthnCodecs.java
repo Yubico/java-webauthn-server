@@ -38,11 +38,17 @@ import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 public final class WebAuthnCodecs {
@@ -123,8 +129,27 @@ public final class WebAuthnCodecs {
         return rawEcdaKeyToCose(ecPublicKeyToRaw(key));
     }
 
-    public static ECPublicKey importCoseP256PublicKey(ByteArray key) throws CoseException, IOException {
-        return new COSE.ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(key.getBytes())));
+    public static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
+        final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
+        switch (kty) {
+            case 2: return importCoseP256PublicKey(cose);
+            case 3: return importCoseRsaPublicKey(cose);
+            default:
+                throw new IllegalArgumentException("Unsupported key type: " + kty);
+        }
+    }
+
+    private static PublicKey importCoseRsaPublicKey(CBORObject cose) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        RSAPublicKeySpec spec = new RSAPublicKeySpec(
+            new BigInteger(1, cose.get(CBORObject.FromObject(-1)).GetByteString()),
+            new BigInteger(1, cose.get(CBORObject.FromObject(-2)).GetByteString())
+        );
+        return KeyFactory.getInstance("RSA", new BouncyCastleProvider()).generatePublic(spec);
+    }
+
+    private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException, IOException {
+        return new COSE.ECPublicKey(new OneKey(cose));
     }
 
     public static String getSignatureAlgorithmName(PublicKey key) {

@@ -1687,19 +1687,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
       describe("The default RelyingParty settings") {
 
+        val rp = RelyingParty.builder()
+          .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
+          .credentialRepository(emptyCredentialRepository)
+          .build()
+
+        val request = rp.startRegistration(StartRegistrationOptions.builder()
+          .user(UserIdentity.builder().name("test").displayName("Test Testsson").id(new ByteArray(Array())).build())
+          .build()
+        ).toBuilder()
+          .challenge(RegistrationTestData.NoneAttestation.Default.clientData.getChallenge)
+          .build()
+
         it("accept registrations with no attestation.") {
-          val rp = RelyingParty.builder()
-            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
-            .credentialRepository(emptyCredentialRepository)
-            .build()
-
-          val request = rp.startRegistration(StartRegistrationOptions.builder()
-              .user(UserIdentity.builder().name("test").displayName("Test Testsson").id(new ByteArray(Array())).build())
-              .build()
-          ).toBuilder()
-            .challenge(RegistrationTestData.NoneAttestation.Default.clientData.getChallenge)
-            .build()
-
           val result = rp.finishRegistration(FinishRegistrationOptions.builder()
               .request(request)
               .response(RegistrationTestData.NoneAttestation.Default.response)
@@ -1710,6 +1710,48 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.NoneAttestation.Default.response.getId)
         }
 
+        it("accept android-key attestations but report they're untrusted.") {
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(request)
+            .response(RegistrationTestData.AndroidKey.BasicAttestation.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (RegistrationTestData.AndroidKey.BasicAttestation.response.getId)
+        }
+
+        it("accept TPM attestations but report they're untrusted.") {
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(request)
+            .response(RegistrationTestData.Tpm.PrivacyCa.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
+        }
+
+      }
+
+      describe("RelyingParty supports registering") {
+        it("a real packed attestation with an RSA key.") {
+          val rp = RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
+            .credentialRepository(emptyCredentialRepository)
+            .origins(Set("https://demo3.yubico.test:8443").asJava)
+            .build()
+
+          val testData = RegistrationTestData.Packed.BasicAttestationRsa
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getKeyId.getId should equal (testData.response.getId)
+        }
       }
 
     }
