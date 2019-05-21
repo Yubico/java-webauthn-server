@@ -67,9 +67,9 @@ but the authentication mechanism alone does not make a security system.
   link:https://bugs.chromium.org/p/chromium/issues/detail?id=847878[bug in
   Chrome] which will not be worked around here. To work around this in
   application code, you can omit the
-  link:https://developers.yubico.com/java-webauthn-server-JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/AuthenticatorAssertionResponse.AuthenticatorAssertionResponseBuilder.html#userHandle-java.util.Optional[`userHandle`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/AuthenticatorAssertionResponse.AuthenticatorAssertionResponseBuilder.html#userHandle-java.util.Optional[`userHandle`]
   when constructing an
-  link:https://developers.yubico.com/java-webauthn-server-JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/AuthenticatorAssertionResponse.html[`AuthenticatorAssertionResponse`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/AuthenticatorAssertionResponse.html[`AuthenticatorAssertionResponse`]
   value if the `userHandle` is empty. See
   https://github.com/Yubico/java-webauthn-server/issues/12 .
 
@@ -77,20 +77,20 @@ but the authentication mechanism alone does not make a security system.
 == Documentation
 
 See the
-link:https://developers.yubico.com/java-webauthn-server-JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/package-summary.html[Javadoc]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/package-summary.html[Javadoc]
 for in-depth API documentation.
 
 
 == Quick start
 
 Implement the
-link:https://developers.yubico.com/java-webauthn-server-JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 interface with your database access logic. See
 link:https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
 for an example.
 
 Instantiate the
-link:https://developers.yubico.com/java-webauthn-server-JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
 class:
 
 [source,java]
