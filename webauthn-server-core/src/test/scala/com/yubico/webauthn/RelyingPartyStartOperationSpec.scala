@@ -107,6 +107,20 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       request2.getChallenge.size should be >= 32
     }
 
+    it("allows setting authenticatorSelection.") {
+      val authnrSel = AuthenticatorSelectionCriteria.builder()
+        .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
+        .requireResidentKey(true)
+        .build()
+
+      val pkcco = relyingParty().startRegistration(
+        StartRegistrationOptions.builder()
+          .user(userId)
+          .authenticatorSelection(authnrSel)
+          .build())
+      pkcco.getAuthenticatorSelection.asScala should equal (Some(authnrSel))
+    }
+
     it("allows setting the timeout to empty.") {
       val pkcco = relyingParty().startRegistration(
         StartRegistrationOptions.builder()
