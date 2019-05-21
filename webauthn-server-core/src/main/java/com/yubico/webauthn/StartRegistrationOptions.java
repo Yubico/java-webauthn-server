@@ -62,6 +62,11 @@ public class StartRegistrationOptions {
     /**
      * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
      * <p>
+     * This library does not take the timeout into account in any way, other than passing it through to the {@link
+     * PublicKeyCredentialCreationOptions} so it can be used as an argument to
+     * <code>navigator.credentials.create()</code> on the client side.
+     * </p>
+     * <p>
      * The default is empty.
      * </p>
      */
@@ -102,6 +107,11 @@ public class StartRegistrationOptions {
         /**
          * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
          * <p>
+         * This library does not take the timeout into account in any way, other than passing it through to the {@link
+         * PublicKeyCredentialCreationOptions} so it can be used as an argument to
+         * <code>navigator.credentials.create()</code> on the client side.
+         * </p>
+         * <p>
          * The default is empty.
          * </p>
          */
@@ -115,6 +125,11 @@ public class StartRegistrationOptions {
 
         /**
          * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
+         * <p>
+         * This library does not take the timeout into account in any way, other than passing it through to the {@link
+         * PublicKeyCredentialCreationOptions} so it can be used as an argument to
+         * <code>navigator.credentials.create()</code> on the client side.
+         * </p>
          * <p>
          * The default is empty.
          * </p>

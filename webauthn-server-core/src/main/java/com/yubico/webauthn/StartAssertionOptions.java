@@ -83,6 +83,11 @@ public class StartAssertionOptions {
     /**
      * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
      * <p>
+     * This library does not take the timeout into account in any way, other than passing it through to the {@link
+     * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+     * <code>navigator.credentials.get()</code> on the client side.
+     * </p>
+     * <p>
      * The default is empty.
      * </p>
      */
@@ -155,6 +160,11 @@ public class StartAssertionOptions {
         /**
          * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
          * <p>
+         * This library does not take the timeout into account in any way, other than passing it through to the {@link
+         * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+         * <code>navigator.credentials.get()</code> on the client side.
+         * </p>
+         * <p>
          * The default is empty.
          * </p>
          */
@@ -168,6 +178,11 @@ public class StartAssertionOptions {
 
         /**
          * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
+         * <p>
+         * This library does not take the timeout into account in any way, other than passing it through to the {@link
+         * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+         * <code>navigator.credentials.get()</code> on the client side.
+         * </p>
          * <p>
          * The default is empty.
          * </p>
