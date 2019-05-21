@@ -292,6 +292,7 @@ public class RelyingParty {
             )
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(startRegistrationOptions.getExtensions())
+            .timeout(startRegistrationOptions.getTimeout())
         ;
         attestationConveyancePreference.ifPresent(builder::attestation);
         return builder.build();
@@ -344,6 +345,7 @@ public class RelyingParty {
                     .appid(appId)
                     .build()
             )
+            .timeout(startAssertionOptions.getTimeout())
         ;
 
         startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);
