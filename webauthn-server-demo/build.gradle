@@ -14,9 +14,6 @@ apply plugin: 'war'
 apply plugin: 'application'
 apply from: 'gretty-2.2.0.plugin'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-
 configurations {
   forJdk10
 }
