@@ -16,7 +16,7 @@ dependencies {
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
     'commons-io:commons-io:2.5',
-    'org.mockito:mockito-core:2.10.0',
+    'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.13.5',
     'org.scalatest:scalatest_2.12:3.0.4',
