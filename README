@@ -44,6 +44,7 @@ compile 'com.yubico:webauthn-server-core:1.2.0'
 - Performs all necessary
   https://www.w3.org/TR/webauthn/#rp-operations[validation logic] on the
   response from the client
+- No mutable state or side effects - everything (except builders) is thread safe
 - Optionally integrates with a "metadata service" to verify
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
   and annotate responses with additional authenticator metadata
