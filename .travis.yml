@@ -5,8 +5,11 @@ branches:
     - tmp
 
 jdk:
-  - openjdk8
   - oraclejdk8
+  - oraclejdk11
+  - openjdk8
+  - openjdk10
+  - openjdk11
 
 script:
   - ./gradlew check assembleJavadoc
@@ -18,5 +21,5 @@ stages:
 jobs:
   include:
     - stage: mutation-test
-      jdk: oraclejdk8
+      jdk: oraclejdk11
       script: ./gradlew pitest coveralls
