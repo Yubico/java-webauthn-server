@@ -326,21 +326,13 @@ version is derived from the most recent Git tag. Builds done on a tagged commit
 will have a plain `x.y.z` version number, while a build on any other commit will
 result in a version number containing the abbreviated commit hash.
 
-Although the `.jar` artifact of this project can be used in JDK version 8 or
-later, the project as a whole currently builds only in JDK 8. This is because
-most tests are written in Scala, which
-https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-9\--up-compatibility-notes[currently
-only supports JDK 8]. Therefore compiling the tests can currently only be done
-in JDK 8, and so `./gradlew build` and similar tasks will fail in JDKs other
-than 8.
-
-To run the tests (requires JDK 8):
+To run the tests:
 
 ----------
 $ ./gradlew check
 ----------
 
-To run the http://pitest.org/[PIT mutation tests] (requires JDK 8):
+To run the http://pitest.org/[PIT mutation tests]:
 
 ----------
 $ ./gradlew pitest
