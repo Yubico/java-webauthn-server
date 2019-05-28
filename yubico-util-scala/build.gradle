@@ -6,7 +6,7 @@ dependencies {
 
   compile(
     'org.scala-lang:scala-library:2.12.8',
-    'org.scalacheck:scalacheck_2.12:1.13.5',
+    'org.scalacheck:scalacheck_2.12:1.14.0',
   )
 
   testCompile(

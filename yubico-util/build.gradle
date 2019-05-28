@@ -15,7 +15,7 @@ dependencies {
   testCompile(
     project(':yubico-util-scala'),
     'org.scala-lang:scala-library:2.12.8',
-    'org.scalacheck:scalacheck_2.12:1.13.5',
+    'org.scalacheck:scalacheck_2.12:1.14.0',
     'org.scalatest:scalatest_2.12:3.0.4',
   )
 }
