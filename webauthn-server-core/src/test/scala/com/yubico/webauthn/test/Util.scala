@@ -33,6 +33,7 @@ import com.yubico.internal.util.CertificateParser
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.openssl.PEMParser
 
+import scala.language.reflectiveCalls
 import scala.util.Try
 
 

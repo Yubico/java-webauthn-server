@@ -400,7 +400,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         def uvOn(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) | 0x04).toByte))
         def uvOff(authData: ByteArray): ByteArray = new ByteArray(authData.getBytes.updated(32, (authData.getBytes()(32) & 0xfb).toByte))
 
-        def checks[Step <: FinishRegistrationSteps.Step[_]](stepsToStep: FinishRegistrationSteps => Step) = {
+        def checks[Next <: FinishRegistrationSteps.Step[_], Step <: FinishRegistrationSteps.Step[Next]](stepsToStep: FinishRegistrationSteps => Step) = {
           def check[B]
             (stepsToStep: FinishRegistrationSteps => Step)
             (chk: Step => B)
@@ -427,7 +427,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         describe("10. Verify that the User Present bit of the flags in authData is set.") {
-          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step10](_.begin.next.next.next.next.next.next.next.next.next)
+          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step11, FinishRegistrationSteps#Step10](_.begin.next.next.next.next.next.next.next.next.next)
 
           it("Fails if UV is discouraged and flag is not set.") {
             checkFails(UserVerificationRequirement.DISCOURAGED, upOff)
@@ -455,7 +455,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         describe("11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
-          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step11](_.begin.next.next.next.next.next.next.next.next.next.next)
+          val (checkFails, checkSucceeds) = checks[FinishRegistrationSteps#Step12, FinishRegistrationSteps#Step11](_.begin.next.next.next.next.next.next.next.next.next.next)
 
           it("Succeeds if UV is discouraged and flag is not set.") {
             checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOff)
