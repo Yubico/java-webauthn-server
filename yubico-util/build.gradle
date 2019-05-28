@@ -7,7 +7,7 @@ project.ext.publishMe = true
 dependencies {
 
   compile(
-    'com.fasterxml.jackson.core:jackson-databind:2.9.6',
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
     'com.google.guava:guava:19.0',
     'org.bouncycastle:bcpkix-jdk15on:1.54',
   )
