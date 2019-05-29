@@ -21,5 +21,5 @@ stages:
 jobs:
   include:
     - stage: mutation-test
-      jdk: oraclejdk11
+      jdk: oraclejdk8
       script: ./gradlew pitest coveralls
