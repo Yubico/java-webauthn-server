@@ -24,24 +24,25 @@
 
 package com.yubico.webauthn
 
-import java.io.InputStream
 import java.io.BufferedReader
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
-import java.security.PrivateKey
-import java.security.Signature
-import java.security.KeyPairGenerator
-import java.security.SecureRandom
 import java.security.KeyFactory
-import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.MessageDigest
+import java.security.PrivateKey
 import java.security.PublicKey
+import java.security.SecureRandom
+import java.security.Signature
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
+import java.security.interfaces.RSAPublicKey
+import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
 import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.ECPoint
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Base64
@@ -51,30 +52,30 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.AuthenticatorAttestationResponse
-import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
-import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
+import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.ASN1Primitive
+import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
@@ -210,6 +211,7 @@ object TestAuthenticator {
     val keypair = credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
     val publicKeyCose = keypair.getPublic match {
       case pub: ECPublicKey => WebAuthnCodecs.ecPublicKeyToCose(pub)
+      case pub: RSAPublicKey => WebAuthnCodecs.rsaPublicKeyToCose(pub)
     }
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
@@ -557,6 +559,7 @@ object TestAuthenticator {
 
   def generateKeypair(algorithm: COSEAlgorithmIdentifier): KeyPair = algorithm match {
     case COSEAlgorithmIdentifier.ES256 => generateEcKeypair()
+    case COSEAlgorithmIdentifier.RS256 => generateRsaKeypair()
   }
 
   def generateEcKeypair(curve: String = "P-256"): KeyPair = {

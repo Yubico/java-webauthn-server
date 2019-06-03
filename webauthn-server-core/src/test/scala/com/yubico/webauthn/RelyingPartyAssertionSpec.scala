@@ -1048,7 +1048,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   describe("RelyingParty supports authenticating") {
     it("a real RSA key.") {
-      val testData = RegistrationTestData.Packed.BasicAttestationRsa
+      val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
 
       val credData = testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get
       val credId: ByteArray = credData.getCredentialId

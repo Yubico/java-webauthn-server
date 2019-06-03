@@ -1762,7 +1762,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             .origins(Set("https://demo3.yubico.test:8443").asJava)
             .build()
 
-          val testData = RegistrationTestData.Packed.BasicAttestationRsa
+          val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
           val result = rp.finishRegistration(FinishRegistrationOptions.builder()
             .request(testData.request)
             .response(testData.response)

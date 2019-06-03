@@ -35,6 +35,7 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
@@ -93,6 +94,17 @@ final class WebAuthnCodecs {
 
     public static ByteArray ecPublicKeyToCose(ECPublicKey key) {
         return rawEcdaKeyToCose(ecPublicKeyToRaw(key));
+    }
+
+    public static ByteArray rsaPublicKeyToCose(RSAPublicKey key) {
+        Map<Long, Object> coseKey = new HashMap<>();
+
+        coseKey.put(1L, 3L); // Key type: RSA
+        coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId());
+        coseKey.put(-1L, key.getModulus().toByteArray()); // public modulus n
+        coseKey.put(-2L, key.getPublicExponent().toByteArray()); // public exponent e
+
+        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
     }
 
     public static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
