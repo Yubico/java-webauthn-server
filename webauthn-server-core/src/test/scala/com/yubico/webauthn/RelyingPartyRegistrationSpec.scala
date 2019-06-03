@@ -718,7 +718,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -745,7 +745,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -907,7 +907,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val (credential, _) = authenticator.createBasicAttestedCredential(
+                  val ((credential, _), _) = authenticator.createBasicAttestedCredential(
                     attestationCertAndKey = Some(badCert, key),
                     attestationStatementFormat = "packed"
                   )

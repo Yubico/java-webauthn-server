@@ -59,7 +59,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
     describe("supports attestation certificates with the algorithm") {
       it ("ECDSA.") {
         val (cert, key) = TestAuthenticator.generateAttestationCertificate()
-        val (credential, _) = TestAuthenticator.createBasicAttestedCredential(
+        val ((credential, _), _) = TestAuthenticator.createBasicAttestedCredential(
           attestationCertAndKey = Some((cert, key)),
           attestationStatementFormat = "packed"
         )
@@ -75,7 +75,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
       it ("RSA.") {
         val (cert, key) = TestAuthenticator.generateRsaCertificate()
-        val (credential, _) = TestAuthenticator.createBasicAttestedCredential(
+        val ((credential, _), _) = TestAuthenticator.createBasicAttestedCredential(
           attestationCertAndKey = Some((cert, key)),
           attestationStatementFormat = "packed"
         )

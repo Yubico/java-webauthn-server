@@ -104,7 +104,7 @@ object TestAuthenticator {
 
     println(generateAttestationCertificate())
 
-    val (credential, _) = createBasicAttestedCredential(attestationStatementFormat = "packed")
+    val ((credential, _), _) = createBasicAttestedCredential(attestationStatementFormat = "packed")
 
     println(credential)
     println(s"Client data: ${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
@@ -173,7 +173,7 @@ object TestAuthenticator {
     tokenBindingId: Option[String] = Defaults.TokenBinding.id,
     userId: UserIdentity = UserIdentity.builder().name("Test").displayName("Test").id(new ByteArray(Array(42, 13, 37))).build(),
     useSelfAttestation: Boolean = false
-  ): data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs] = {
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) = {
 
     val options = PublicKeyCredentialCreationOptions.builder()
       .rp(RelyingPartyIdentity.builder().id(rpId).name("Test party").build())
@@ -238,11 +238,14 @@ object TestAuthenticator {
       .clientDataJSON(clientDataJsonBytes)
       .build()
 
-    PublicKeyCredential.builder()
-      .id(response.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId)
-      .response(response)
-      .clientExtensionResults(clientExtensions)
-      .build()
+    (
+      PublicKeyCredential.builder()
+        .id(response.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId)
+        .response(response)
+        .clientExtensionResults(clientExtensions)
+        .build(),
+      keypair
+    )
   }
 
   def createBasicAttestedCredential(
@@ -253,7 +256,7 @@ object TestAuthenticator {
     certSubject: Option[X500Name] = None,
     keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
     safetynetCtsProfileMatch: Boolean = true
-  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = {
+  ): ((data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[X509Certificate]) = {
     val (caCert, generatedAttestationCertAndKey) = attestationCertAndKey match {
       case None =>
         val (caCert, caKey) = generateAttestationCaCertificate()
@@ -284,7 +287,7 @@ object TestAuthenticator {
   def createSelfAttestedCredential(
     attestationStatementFormat: String = "fido-u2f",
     alg: Option[COSEAlgorithmIdentifier] = None
-  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[Nothing]) = {
+  ): ((data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[Nothing]) = {
     val keypair = generateEcKeypair()
     (
       attestationStatementFormat match {
@@ -308,7 +311,7 @@ object TestAuthenticator {
     )
   }
 
-  def createUnattestedCredential(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) =
+  def createUnattestedCredential(): ((PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[X509Certificate]) =
     (createCredential(attestationStatementFormat = "none"), None)
 
   def createAssertion(

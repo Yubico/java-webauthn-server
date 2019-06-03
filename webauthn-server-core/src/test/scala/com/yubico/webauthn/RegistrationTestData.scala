@@ -26,6 +26,7 @@ package com.yubico.webauthn
 
 import java.nio.charset.StandardCharsets
 import java.security.cert.X509Certificate
+import java.security.KeyPair
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -57,13 +58,15 @@ object RegistrationTestDataGenerator extends App {
 
   def printTestDataCode(
     credential: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs],
+    keypair: KeyPair,
     caCert: Option[X509Certificate]
   ): Unit = {
     for { caCert <- caCert } {
       println(s"""attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("${BinaryUtil.toHex(caCert.getEncoded)}"))),""")
     }
     println(s"""attestationObject = new ByteArray(BinaryUtil.fromHex("${credential.getResponse.getAttestationObject.getHex}")),
-               |clientDataJson = \"\"\"${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}\"\"\"
+               |clientDataJson = \"\"\"${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}\"\"\",
+               |privateKey = Some(\"\"\"${new ByteArray(keypair.getPrivate.getEncoded).getHex}\"\"\"),
                |
                |
                """.stripMargin)
@@ -85,9 +88,9 @@ object RegistrationTestDataGenerator extends App {
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationWithWrongAlgValue
     ).zipWithIndex } {
-      val (cred, cert) = testData.regenerate()
+      val ((cred, keypair), cert) = testData.regenerate()
       println(i)
-      printTestDataCode(cred, cert)
+      printTestDataCode(cred, keypair, cert)
     }
   }
 }
@@ -216,7 +219,7 @@ case class RegistrationTestData(
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None
 ) {
-  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = null
+  def regenerate(): ((PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[X509Certificate]) = null
 
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
   def clientData = new CollectedClientData(clientDataJsonBytes)
