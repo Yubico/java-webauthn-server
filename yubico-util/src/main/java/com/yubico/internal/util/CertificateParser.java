@@ -24,20 +24,20 @@
 
 package com.yubico.internal.util;
 
-import com.google.common.io.BaseEncoding;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class CertificateParser {
     private static final Provider BC_PROVIDER = new BouncyCastleProvider();
+    private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
     private final static List<String> FIXSIG = Arrays.asList(
             "CN=Yubico U2F EE Serial 776137165",
@@ -55,7 +55,7 @@ public class CertificateParser {
     }
 
     public static X509Certificate parseDer(String base64DerEncodedCert) throws CertificateException {
-        return parseDer(BaseEncoding.base64().decodingStream(new StringReader(base64DerEncodedCert)));
+        return parseDer(BASE64_DECODER.decode(base64DerEncodedCert));
     }
 
     public static X509Certificate parseDer(byte[] derEncodedCert) throws CertificateException {

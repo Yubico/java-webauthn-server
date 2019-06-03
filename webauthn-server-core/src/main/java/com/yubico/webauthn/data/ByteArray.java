@@ -26,16 +26,15 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.google.common.io.BaseEncoding;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
+import java.util.Base64;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.util.Arrays;
 
 /**
@@ -46,8 +45,11 @@ import org.bouncycastle.util.Arrays;
 @ToString(of = { "base64" }, includeFieldNames = false)
 public final class ByteArray implements Comparable<ByteArray>, JsonStringSerializable {
 
-    private final static BaseEncoding BASE64_ENCODER = BaseEncoding.base64Url().omitPadding();
-    private final static BaseEncoding BASE64_DECODER = BaseEncoding.base64Url();
+    private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+    private final static Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+
+    private final static Base64.Encoder BASE64URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
+    private final static Base64.Decoder BASE64URL_DECODER = Base64.getUrlDecoder();
 
     @NonNull
     private final byte[] bytes;
@@ -60,13 +62,13 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
      */
     public ByteArray(@NonNull byte[] bytes) {
         this.bytes = BinaryUtil.copy(bytes);
-        this.base64 = BASE64_ENCODER.encode(this.bytes);
+        this.base64 = BASE64URL_ENCODER.encodeToString(this.bytes);
     }
 
     @JsonCreator
     private ByteArray(String base64) throws Base64UrlException {
         try {
-            this.bytes = BASE64_DECODER.decode(base64);
+            this.bytes = BASE64URL_DECODER.decode(base64);
         } catch (IllegalArgumentException e) {
             throw new Base64UrlException("Invalid Base64Url encoding: " + base64, e);
         }
@@ -77,7 +79,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
      * Create a new instance by decoding <code>base64</code> as classic Base64 data.
      */
     public static ByteArray fromBase64(@NonNull final String base64) {
-        return new ByteArray(Base64.decodeBase64(base64));
+        return new ByteArray(BASE64_DECODER.decode(base64));
     }
 
     /**
@@ -128,7 +130,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
      * @return the content bytes encoded as classic Base64 data.
      */
     public String getBase64() {
-        return Base64.encodeBase64String(bytes);
+        return BASE64_ENCODER.encodeToString(bytes);
     }
 
     /**
