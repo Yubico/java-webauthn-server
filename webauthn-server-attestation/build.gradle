@@ -8,7 +8,6 @@ dependencies {
 
   compile(
     project(':webauthn-server-core'),
-    'com.google.guava:guava:19.0',
     'org.bouncycastle:bcpkix-jdk15on:1.54',
   )
 

@@ -26,7 +26,6 @@ dependencies {
 
     'com.fasterxml.jackson.core:jackson-core:2.9.9',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9',
-    'com.google.guava:guava:24.1-jre',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
     'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
