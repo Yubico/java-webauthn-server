@@ -482,7 +482,7 @@ object TestAuthenticator {
     val jwsHeaderBase64 = new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(jwsHeader)).getBase64Url
 
     val jwsPayload = f.objectNode().setAll(Map(
-      "nonce" -> f.binaryNode(nonce.getBytes),
+      "nonce" -> f.textNode(nonce.getBase64),
       "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
       "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
       "apkDigestSha256" -> f.textNode(crypto.hash("foo").getBase64),
