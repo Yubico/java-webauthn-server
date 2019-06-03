@@ -79,6 +79,7 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
+import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
@@ -211,6 +212,7 @@ object TestAuthenticator {
     val keypair = credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
     val publicKeyCose = keypair.getPublic match {
       case pub: ECPublicKey => WebAuthnCodecs.ecPublicKeyToCose(pub)
+      case pub: BCEdDSAPublicKey => WebAuthnCodecs.eddsaPublicKeyToCose(pub)
       case pub: RSAPublicKey => WebAuthnCodecs.rsaPublicKeyToCose(pub)
     }
 
@@ -561,6 +563,7 @@ object TestAuthenticator {
   }
 
   def generateKeypair(algorithm: COSEAlgorithmIdentifier): KeyPair = algorithm match {
+    case COSEAlgorithmIdentifier.EdDSA => generateEddsaKeypair()
     case COSEAlgorithmIdentifier.ES256 => generateEcKeypair()
     case COSEAlgorithmIdentifier.RS256 => generateRsaKeypair()
   }
@@ -571,6 +574,10 @@ object TestAuthenticator {
     g.initialize(ecSpec, new SecureRandom())
 
     g.generateKeyPair()
+  }
+
+  def generateEddsaKeypair(): KeyPair = {
+    KeyPairGenerator.getInstance("Ed25519", javaCryptoProvider).generateKeyPair()
   }
 
   def importEcKeypair(privateBytes: ByteArray, publicBytes: ByteArray): KeyPair = {
