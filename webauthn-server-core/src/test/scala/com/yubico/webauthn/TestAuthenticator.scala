@@ -132,6 +132,7 @@ object TestAuthenticator {
     val aaguid: ByteArray = new ByteArray(Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
     val challenge: ByteArray = new ByteArray(Array(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91))
     val credentialId: ByteArray = new ByteArray(((0 to 31).toVector map { _.toByte }).toArray)
+    val keyAlgorithm = COSEAlgorithmIdentifier.ES256
     val rpId = "localhost"
     val origin = "https://" + rpId
     object TokenBinding {
@@ -163,6 +164,7 @@ object TestAuthenticator {
     clientData: Option[JsonNode] = None,
     clientExtensions: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
     credentialKeypair: Option[KeyPair] = None,
+    keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
     origin: String = Defaults.origin,
     rpId: String = Defaults.rpId,
     safetynetCtsProfileMatch: Boolean = true,
@@ -176,7 +178,7 @@ object TestAuthenticator {
       .rp(RelyingPartyIdentity.builder().id(rpId).name("Test party").build())
       .user(userId)
       .challenge(challenge)
-      .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
+      .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(keyAlgorithm).build()).asJava)
       .build()
 
     val clientDataJson: String = JacksonCodecs.json.writeValueAsString(clientData getOrElse {
@@ -205,11 +207,16 @@ object TestAuthenticator {
     })
     val clientDataJsonBytes = toBytes(clientDataJson)
 
+    val keypair = credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
+    val publicKeyCose = keypair.getPublic match {
+      case pub: ECPublicKey => WebAuthnCodecs.ecPublicKeyToCose(pub)
+    }
+
     val authDataBytes: ByteArray = makeAuthDataBytes(
       rpId = Defaults.rpId,
       attestedCredentialDataBytes = Some(makeAttestedCredentialDataBytes(
         aaguid = aaguid,
-        publicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialKeypair.getOrElse(generateEcKeypair()).getPublic.asInstanceOf[ECPublicKey]),
+        publicKeyCose = publicKeyCose,
         rpId = Defaults.rpId
       ))
     )
@@ -242,6 +249,7 @@ object TestAuthenticator {
     attestationStatementFormat: String = "fido-u2f",
     generateRsaCert: Boolean = false,
     certSubject: Option[X500Name] = None,
+    keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
     safetynetCtsProfileMatch: Boolean = true
   ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = {
     val (caCert, generatedAttestationCertAndKey) = attestationCertAndKey match {
@@ -264,6 +272,7 @@ object TestAuthenticator {
         aaguid = aaguid,
         attestationCertAndKey = attestationCertAndKey orElse generatedAttestationCertAndKey,
         attestationStatementFormat = attestationStatementFormat,
+        keyAlgorithm = keyAlgorithm,
         safetynetCtsProfileMatch = safetynetCtsProfileMatch
       ),
       caCert
@@ -544,6 +553,10 @@ object TestAuthenticator {
     sig.initSign(key)
     sig.update(data.getBytes)
     new ByteArray(sig.sign())
+  }
+
+  def generateKeypair(algorithm: COSEAlgorithmIdentifier): KeyPair = algorithm match {
+    case COSEAlgorithmIdentifier.ES256 => generateEcKeypair()
   }
 
   def generateEcKeypair(curve: String = "P-256"): KeyPair = {
