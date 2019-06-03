@@ -71,7 +71,7 @@ object RegistrationTestDataGenerator extends App {
 
   def regenerateTestData(): Unit = {
     val td = RegistrationTestData
-    for { testData <- List(
+    for { (testData, i) <- List(
       td.AndroidSafetynet.BasicAttestation,
       td.AndroidSafetynet.WrongHostname,
       td.AndroidSafetynet.FalseCtsProfileMatch,
@@ -83,8 +83,9 @@ object RegistrationTestDataGenerator extends App {
       td.Packed.BasicAttestationWithWrongAaguidExtension,
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationWithWrongAlgValue
-    ) } {
+    ).zipWithIndex } {
       val (cred, cert) = testData.regenerate()
+      println(i)
       printTestDataCode(cred, cert)
     }
   }
