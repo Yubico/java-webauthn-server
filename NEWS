@@ -9,6 +9,10 @@ New features:
 * New optional parameter `timeout` added to `StartRegistrationOptions` and
   `StartAssertionOptions`
 
+Bug fixes:
+
+* Fixed polarity error in javadoc for `RelyingParty.allowUntrustedAttestation`
+
 
 == Version 1.2.0 ==
 
