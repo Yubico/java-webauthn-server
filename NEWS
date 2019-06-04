@@ -1,3 +1,19 @@
+== Version 1.3.0 ==
+
+Security fixes:
+
+* Bumped Jackson dependency to version 2.9.9 which has patched CVE-2019-12086
+
+New features:
+
+* New optional parameter `timeout` added to `StartRegistrationOptions` and
+  `StartAssertionOptions`
+
+Bug fixes:
+
+* Fixed polarity error in javadoc for `RelyingParty.allowUntrustedAttestation`
+
+
 == Version 1.2.0 ==
 
 New features:

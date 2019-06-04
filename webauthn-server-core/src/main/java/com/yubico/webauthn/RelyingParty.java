@@ -223,7 +223,7 @@ public class RelyingParty {
     private final boolean allowUnrequestedExtensions = false;
 
     /**
-     * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} will only allow
+     * If <code>false</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} will only allow
      * registrations where the attestation signature can be linked to a trusted attestation root. This excludes self
      * attestation and none attestation.
      *
@@ -292,6 +292,7 @@ public class RelyingParty {
             )
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(startRegistrationOptions.getExtensions())
+            .timeout(startRegistrationOptions.getTimeout())
         ;
         attestationConveyancePreference.ifPresent(builder::attestation);
         return builder.build();
@@ -344,6 +345,7 @@ public class RelyingParty {
                     .appid(appId)
                     .build()
             )
+            .timeout(startAssertionOptions.getTimeout())
         ;
 
         startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);

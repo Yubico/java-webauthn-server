@@ -28,6 +28,8 @@ import java.util.Optional
 
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JavaGenerators._
+import com.yubico.webauthn.data.AuthenticatorAttachment
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.UserIdentity
@@ -38,6 +40,7 @@ import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary._
+import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
@@ -104,6 +107,56 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       request2.getChallenge.size should be >= 32
     }
 
+    it("allows setting the timeout to empty.") {
+      val pkcco = relyingParty().startRegistration(
+        StartRegistrationOptions.builder()
+          .user(userId)
+          .timeout(Optional.empty[java.lang.Long])
+          .build())
+      pkcco.getTimeout.asScala shouldBe 'empty
+    }
+
+    it("allows setting the timeout to a positive value.") {
+      val rp = relyingParty()
+
+      forAll(Gen.posNum[Long]) { timeout: Long =>
+        val pkcco = rp.startRegistration(
+          StartRegistrationOptions.builder()
+            .user(userId)
+            .timeout(timeout)
+            .build())
+
+        pkcco.getTimeout.asScala should equal (Some(timeout))
+      }
+    }
+
+    it("does not allow setting the timeout to zero or negative.") {
+      an [IllegalArgumentException] should be thrownBy {
+        StartRegistrationOptions.builder()
+          .user(userId)
+          .timeout(0)
+      }
+
+      an [IllegalArgumentException] should be thrownBy {
+        StartRegistrationOptions.builder()
+          .user(userId)
+          .timeout(Optional.of[java.lang.Long](0L))
+      }
+
+      forAll(Gen.negNum[Long]) { timeout: Long =>
+        an [IllegalArgumentException] should be thrownBy {
+          StartRegistrationOptions.builder()
+            .user(userId)
+            .timeout(timeout)
+        }
+
+        an [IllegalArgumentException] should be thrownBy {
+          StartRegistrationOptions.builder()
+            .user(userId)
+            .timeout(Optional.of[java.lang.Long](timeout))
+        }
+      }
+    }
   }
 
   describe("RelyingParty.startAssertion") {
@@ -152,6 +205,50 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
       }
     }
 
+    it("allows setting the timeout to empty.") {
+      val req = relyingParty().startAssertion(
+        StartAssertionOptions.builder()
+          .timeout(Optional.empty[java.lang.Long])
+          .build())
+      req.getPublicKeyCredentialRequestOptions.getTimeout.asScala shouldBe 'empty
+    }
+
+    it("allows setting the timeout to a positive value.") {
+      val rp = relyingParty()
+
+      forAll(Gen.posNum[Long]) { timeout: Long =>
+        val req = rp.startAssertion(
+          StartAssertionOptions.builder()
+            .timeout(timeout)
+            .build())
+
+        req.getPublicKeyCredentialRequestOptions.getTimeout.asScala should equal (Some(timeout))
+      }
+    }
+
+    it("does not allow setting the timeout to zero or negative.") {
+      an [IllegalArgumentException] should be thrownBy {
+        StartAssertionOptions.builder()
+          .timeout(0)
+      }
+
+      an [IllegalArgumentException] should be thrownBy {
+        StartAssertionOptions.builder()
+          .timeout(Optional.of[java.lang.Long](0L))
+      }
+
+      forAll(Gen.negNum[Long]) { timeout: Long =>
+        an [IllegalArgumentException] should be thrownBy {
+          StartAssertionOptions.builder()
+            .timeout(timeout)
+        }
+
+        an [IllegalArgumentException] should be thrownBy {
+          StartAssertionOptions.builder()
+            .timeout(Optional.of[java.lang.Long](timeout))
+        }
+      }
+    }
   }
 
 }

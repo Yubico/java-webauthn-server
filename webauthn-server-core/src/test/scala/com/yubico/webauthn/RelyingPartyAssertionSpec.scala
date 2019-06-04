@@ -246,7 +246,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
           )
           val step: FinishAssertionSteps#Step1 = steps.begin.next
 
-          step.validations shouldBe a [Failure[_]]
+          toStepWithUtilities(step).validations shouldBe a [Failure[_]]
           step.validations.failed.get shouldBe an [IllegalArgumentException]
           step.tryNext shouldBe a [Failure[_]]
         }
@@ -690,12 +690,12 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       }
 
       {
-        def checks[Step <: FinishAssertionSteps.Step[_]](stepsToStep: FinishAssertionSteps => Step) = {
-          def check[A]
+        def checks[Next <: FinishAssertionSteps.Step[_], Step <: FinishAssertionSteps.Step[Next]](stepsToStep: FinishAssertionSteps => Step) = {
+          def check[Ret]
             (stepsToStep: FinishAssertionSteps => Step)
-            (chk: Step => A)
+            (chk: Step => Ret)
             (uvr: UserVerificationRequirement, authData: ByteArray)
-          : A = {
+          : Ret = {
             val steps = finishAssertion(
               userVerificationRequirement = uvr,
               authenticatorData = authData
@@ -718,7 +718,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         describe("12. Verify that the User Present bit of the flags in authData is set.") {
           val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04 | 0x01).toByte).toArray)
           val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, ((Defaults.authenticatorData.getBytes.toVector(32) | 0x04) & 0xfe).toByte).toArray)
-          val (checkFails, checkSucceeds) = checks[FinishAssertionSteps#Step12](_.begin.next.next.next.next.next.next.next.next.next.next.next.next)
+          val (checkFails, checkSucceeds) = checks[FinishAssertionSteps#Step13, FinishAssertionSteps#Step12](_.begin.next.next.next.next.next.next.next.next.next.next.next.next)
 
           it("Fails if UV is discouraged and flag is not set.") {
             checkFails(UserVerificationRequirement.DISCOURAGED, flagOff)
@@ -748,7 +748,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         describe("13. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.") {
           val flagOn: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) | 0x04).toByte).toArray)
           val flagOff: ByteArray = new ByteArray(Defaults.authenticatorData.getBytes.toVector.updated(32, (Defaults.authenticatorData.getBytes.toVector(32) & 0xfb).toByte).toArray)
-          val (checkFails, checkSucceeds) = checks[FinishAssertionSteps#Step13](_.begin.next.next.next.next.next.next.next.next.next.next.next.next.next)
+          val (checkFails, checkSucceeds) = checks[FinishAssertionSteps#Step14, FinishAssertionSteps#Step13](_.begin.next.next.next.next.next.next.next.next.next.next.next.next.next)
 
           it("Succeeds if UV is discouraged and flag is not set.") {
             checkSucceeds(UserVerificationRequirement.DISCOURAGED, flagOff)

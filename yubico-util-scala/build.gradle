@@ -5,12 +5,12 @@ apply plugin: 'scala'
 dependencies {
 
   compile(
-    'org.scala-lang:scala-library:2.11.3',
-    'org.scalacheck:scalacheck_2.11:1.13.5',
+    'org.scala-lang:scala-library:2.12.8',
+    'org.scalacheck:scalacheck_2.12:1.14.0',
   )
 
   testCompile(
-    'org.scalatest:scalatest_2.11:3.0.4',
+    'org.scalatest:scalatest_2.12:3.0.4',
   )
 }
 

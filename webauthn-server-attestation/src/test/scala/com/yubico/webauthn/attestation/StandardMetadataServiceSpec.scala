@@ -101,7 +101,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).lines.mkString(raw"\n")}"],
+          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).linesIterator.mkString(raw"\n")}"],
           "vendorInfo": {},
           "devices": [
             {
@@ -159,7 +159,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).lines.mkString(raw"\n")}"],
+          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).linesIterator.mkString(raw"\n")}"],
           "vendorInfo": {},
           "devices": []
         }"""
@@ -197,7 +197,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${TestAuthenticator.toPem(cacaca._1).lines.mkString(raw"\n")}"],
+          "trustedCertificates": ["${TestAuthenticator.toPem(cacaca._1).linesIterator.mkString(raw"\n")}"],
           "vendorInfo": {},
           "devices": [
             {
@@ -227,7 +227,7 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).lines.mkString(raw"\n")}"],
+          "trustedCertificates": ["${TestAuthenticator.toPem(caCert).linesIterator.mkString(raw"\n")}"],
           "vendorInfo": {},
           "devices": [
             {

@@ -14,9 +14,6 @@ apply plugin: 'war'
 apply plugin: 'application'
 apply from: 'gretty-2.2.0.plugin'
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-
 configurations {
   forJdk10
 }
@@ -27,8 +24,8 @@ dependencies {
     project(':webauthn-server-attestation'),
     project(':webauthn-server-core'),
 
-    'com.fasterxml.jackson.core:jackson-core:2.9.6',
-    'com.fasterxml.jackson.core:jackson-databind:2.9.6',
+    'com.fasterxml.jackson.core:jackson-core:2.9.9',
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
     'com.google.guava:guava:24.1-jre',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
@@ -52,10 +49,10 @@ dependencies {
     project(':yubico-util-scala'),
 
     'commons-io:commons-io:2.5',
-    'org.mockito:mockito-core:2.10.0',
-    'org.scala-lang:scala-library:2.11.3',
-    'org.scalacheck:scalacheck_2.11:1.13.5',
-    'org.scalatest:scalatest_2.11:3.0.4',
+    'org.mockito:mockito-core:2.27.0',
+    'org.scala-lang:scala-library:2.12.8',
+    'org.scalacheck:scalacheck_2.12:1.14.0',
+    'org.scalatest:scalatest_2.12:3.0.4',
   )
 
   modules {

@@ -80,9 +80,24 @@ public class StartAssertionOptions {
     @NonNull
     private final Optional<UserVerificationRequirement> userVerification;
 
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
+     * <p>
+     * This library does not take the timeout into account in any way, other than passing it through to the {@link
+     * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+     * <code>navigator.credentials.get()</code> on the client side.
+     * </p>
+     * <p>
+     * The default is empty.
+     * </p>
+     */
+    @NonNull
+    private final Optional<Long> timeout;
+
     public static class StartAssertionOptionsBuilder {
         private @NonNull Optional<String> username = Optional.empty();
         private @NonNull Optional<UserVerificationRequirement> userVerification = Optional.empty();
+        private @NonNull Optional<Long> timeout = Optional.empty();
 
         /**
          * The username of the user to authenticate, if the user has already been identified.
@@ -140,6 +155,40 @@ public class StartAssertionOptions {
          */
         public StartAssertionOptionsBuilder userVerification(@NonNull UserVerificationRequirement userVerification) {
             return this.userVerification(Optional.of(userVerification));
+        }
+
+        /**
+         * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
+         * <p>
+         * This library does not take the timeout into account in any way, other than passing it through to the {@link
+         * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+         * <code>navigator.credentials.get()</code> on the client side.
+         * </p>
+         * <p>
+         * The default is empty.
+         * </p>
+         */
+        public StartAssertionOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
+            if (timeout.isPresent() && timeout.get() <= 0) {
+                throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
+            }
+            this.timeout = timeout;
+            return this;
+        }
+
+        /**
+         * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
+         * <p>
+         * This library does not take the timeout into account in any way, other than passing it through to the {@link
+         * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+         * <code>navigator.credentials.get()</code> on the client side.
+         * </p>
+         * <p>
+         * The default is empty.
+         * </p>
+         */
+        public StartAssertionOptionsBuilder timeout(long timeout) {
+            return this.timeout(Optional.of(timeout));
         }
     }
 }

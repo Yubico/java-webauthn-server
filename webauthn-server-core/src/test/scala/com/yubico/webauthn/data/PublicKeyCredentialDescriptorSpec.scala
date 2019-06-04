@@ -38,7 +38,7 @@ class PublicKeyCredentialDescriptorSpec extends FunSpec with Matchers with Gener
 
       describe("which is consistent with") {
 
-        implicit val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 300)
+        implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 300)
 
         it("equals.") {
           forAll { (a: PublicKeyCredentialDescriptor, b: PublicKeyCredentialDescriptor) =>
