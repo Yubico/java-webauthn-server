@@ -165,7 +165,7 @@ public class PublicKeyCredentialCreationOptions {
             rp,
             user,
             challenge,
-            CollectionUtil.immutableList(pubKeyCredParams),
+            pubKeyCredParams,
             Optional.ofNullable(timeout),
             Optional.ofNullable(excludeCredentials),
             Optional.ofNullable(authenticatorSelection),
