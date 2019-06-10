@@ -14,7 +14,7 @@ dependencies {
     'com.fasterxml.jackson.core:jackson-databind:2.9.9',
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
     'org.apache.httpcomponents:httpclient:4.5.2',
-    'org.bouncycastle:bcpkix-jdk15on:1.54',
+    'org.bouncycastle:bcprov-jdk15on:1.62',
   )
 
   testCompile(
