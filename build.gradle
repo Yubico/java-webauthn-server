@@ -70,7 +70,10 @@ allprojects  {
   }
 
 
-  idea.module { downloadJavadoc = true }
+  idea.module {
+    downloadJavadoc = true
+    downloadSources = true
+  }
 
   test {
     failFast = true
