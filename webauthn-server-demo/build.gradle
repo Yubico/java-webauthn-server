@@ -11,7 +11,6 @@ description = 'WebAuthn demo'
 
 apply plugin: 'scala'
 apply plugin: 'war'
-apply plugin: 'application'
 apply from: 'gretty-2.2.0.plugin'
 
 configurations {
@@ -65,8 +64,6 @@ dependencies {
     }
   }
 }
-
-mainClassName = 'demo.webauthn.EmbeddedServer'
 
 gretty {
   contextPath = '/webauthn'
