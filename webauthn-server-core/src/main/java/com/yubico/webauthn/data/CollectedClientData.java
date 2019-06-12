@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
 import java.util.Optional;

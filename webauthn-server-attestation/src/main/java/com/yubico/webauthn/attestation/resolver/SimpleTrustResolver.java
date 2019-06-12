@@ -27,7 +27,7 @@ package com.yubico.webauthn.attestation.resolver;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.MetadataObject;
 import com.yubico.webauthn.attestation.TrustResolver;
 import java.io.IOException;

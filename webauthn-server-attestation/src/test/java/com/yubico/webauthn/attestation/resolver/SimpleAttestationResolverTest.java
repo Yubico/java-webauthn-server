@@ -25,7 +25,7 @@
 package com.yubico.webauthn.attestation.resolver;
 
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataObject;
 import java.io.IOException;

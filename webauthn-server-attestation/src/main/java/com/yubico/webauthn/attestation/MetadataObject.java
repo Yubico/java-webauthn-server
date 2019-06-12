@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;

@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.upokecenter.cbor.CBORObject
 import com.upokecenter.cbor.CBOREncodeOptions
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
@@ -42,6 +41,7 @@ import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
+import com.yubico.webauthn.WebAuthnCodecs
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary

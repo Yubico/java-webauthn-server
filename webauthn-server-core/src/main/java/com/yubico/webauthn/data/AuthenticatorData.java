@@ -33,7 +33,7 @@ import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.webauthn.WebAuthnCodecs;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;

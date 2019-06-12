@@ -27,7 +27,6 @@ package com.yubico.webauthn;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AttestedCredentialData;

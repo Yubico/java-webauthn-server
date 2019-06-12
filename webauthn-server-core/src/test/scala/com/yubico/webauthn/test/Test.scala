@@ -35,11 +35,11 @@ import COSE.OneKey
 import com.fasterxml.jackson.databind.JsonNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.WebAuthnCodecs
 
 import scala.collection.JavaConverters._
 

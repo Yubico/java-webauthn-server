@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationTestData
@@ -43,6 +42,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.WebAuthnCodecs
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
