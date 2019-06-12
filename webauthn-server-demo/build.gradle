@@ -1,4 +1,7 @@
 plugins {
+  id 'java'
+  id 'war'
+  id 'scala'
   id 'com.bmuschko.docker-remote-api' version '3.6.1'
 }
 
@@ -9,8 +12,6 @@ project.ext.dockerName = project.name
 
 description = 'WebAuthn demo'
 
-apply plugin: 'scala'
-apply plugin: 'war'
 apply from: 'gretty-2.2.0.plugin'
 
 configurations {

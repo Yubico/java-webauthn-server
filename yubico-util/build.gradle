@@ -1,6 +1,9 @@
-description = 'Yubico internal utilities'
+plugins {
+  id 'java-library'
+  id 'scala'
+}
 
-apply plugin: 'scala'
+description = 'Yubico internal utilities'
 
 project.ext.publishMe = true
 

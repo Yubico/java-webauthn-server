@@ -3,10 +3,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    configurations.maybeCreate('pitest')
     classpath 'com.cinnober.gradle:semver-git:2.4.0'
-    classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.3.0'
-    pitest 'org.pitest:pitest-command-line:1.4.2' // Transitive dependency from pitest plugin
   }
 }
 plugins {
@@ -36,51 +33,33 @@ wrapper {
   gradleVersion = '4.10'
 }
 
-allprojects  {
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
-  ext.dirtyMarker = "-DIRTY"
-
+allprojects {
   apply plugin: 'com.cinnober.gradle.semver-git'
-  apply plugin: 'java'
   apply plugin: 'idea'
-  apply plugin: LombokPlugin
 
   group = 'com.yubico'
 
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+  ext.dirtyMarker = "-DIRTY"
+
+  idea.module {
+    downloadJavadoc = true
+    downloadSources = true
+  }
+}
+
+subprojects {
+  apply plugin: LombokPlugin
 
   lombok {
     version '1.18.6'
     sha256 = '6373d9ade79efdc028cd48d40a9af9ac6a090dbcfaec55b438ec49556a4e92fb'
   }
 
-  tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-  }
-
-  tasks.withType(AbstractArchiveTask) {
-    from(rootProject.file('COPYING'))
-  }
-
   repositories {
     mavenLocal()
 
     maven { url "http://repo.maven.apache.org/maven2" }
-  }
-
-
-  idea.module {
-    downloadJavadoc = true
-    downloadSources = true
-  }
-
-  test {
-    failFast = true
-
-    testLogging {
-      showStandardStreams = isCiBuild
-    }
   }
 }
 
@@ -94,6 +73,27 @@ task assembleJavadoc(type: Sync) {
 }
 
 subprojects { project ->
+
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+
+
+  tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+  }
+
+  tasks.withType(AbstractArchiveTask) {
+    from(rootProject.file('COPYING'))
+  }
+
+  test {
+    failFast = true
+
+    testLogging {
+      showStandardStreams = isCiBuild
+    }
+  }
+
   task packageSources(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource

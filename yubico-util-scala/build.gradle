@@ -1,6 +1,8 @@
-description = 'Yubico internal Scala utilities'
+plugins {
+  id 'scala'
+}
 
-apply plugin: 'scala'
+description = 'Yubico internal Scala utilities'
 
 dependencies {
 

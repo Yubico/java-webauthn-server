@@ -1,8 +1,13 @@
+plugins {
+  id 'java-library'
+  id 'scala'
+}
+
 description = 'Yubico WebAuthn attestation subsystem'
 
-apply plugin: 'scala'
-
 project.ext.publishMe = true
+
+evaluationDependsOn(':webauthn-server-core')
 
 dependencies {
 

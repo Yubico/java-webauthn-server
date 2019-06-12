@@ -1,8 +1,10 @@
-apply plugin: 'info.solidsoft.pitest'
+plugins {
+  id 'java-library'
+  id 'scala'
+  id 'info.solidsoft.pitest'
+}
 
 description = 'WebAuthn core API'
-
-apply plugin: 'scala'
 
 project.ext.publishMe = true
 
