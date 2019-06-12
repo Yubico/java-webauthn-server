@@ -6,7 +6,7 @@ project.ext.publishMe = true
 
 dependencies {
 
-  compile(
+  implementation(
     'com.upokecenter:cbor:2.4.1',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9',
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
@@ -15,7 +15,7 @@ dependencies {
     'org.bouncycastle:bcprov-jdk15on:1.62',
   )
 
-  testCompile(
+  testImplementation(
     project(':yubico-util-scala'),
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',

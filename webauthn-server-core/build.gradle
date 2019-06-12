@@ -8,7 +8,7 @@ project.ext.publishMe = true
 
 dependencies {
 
-  compile(
+  implementation(
     project(':yubico-util'),
     'com.augustcellars.cose:cose-java:0.9.4',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9',
@@ -17,7 +17,7 @@ dependencies {
     'org.bouncycastle:bcprov-jdk15on:1.62',
   )
 
-  testCompile(
+  testImplementation(
     project(':yubico-util-scala'),
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
     'commons-io:commons-io:2.5',

@@ -20,7 +20,7 @@ configurations {
 
 dependencies {
 
-  compile(
+  implementation(
     project(':webauthn-server-attestation'),
     project(':webauthn-server-core'),
 
@@ -36,14 +36,14 @@ dependencies {
     'javax.xml.bind:jaxb-api:2.3.0',
   )
 
-  runtime(
+  runtimeOnly(
     configurations.forJdk10,
     'ch.qos.logback:logback-classic:1.2.3',
     'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
     'org.glassfish.jersey.inject:jersey-hk2:2.26',
   )
 
-  testCompile(
+  testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 

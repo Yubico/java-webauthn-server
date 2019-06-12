@@ -6,12 +6,12 @@ project.ext.publishMe = true
 
 dependencies {
 
-  compile(
+  implementation(
     project(':webauthn-server-core'),
     'org.bouncycastle:bcprov-jdk15on:1.62',
   )
 
-  testCompile(
+  testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
     'commons-io:commons-io:2.5',
