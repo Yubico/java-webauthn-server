@@ -34,7 +34,6 @@ dependencies {
   )
 
   forJdk10(
-    'javax.activation:activation:1.1.1',
     'javax.xml.bind:jaxb-api:2.3.0',
   )
 
@@ -50,7 +49,6 @@ dependencies {
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 
-    'commons-io:commons-io:2.5',
     'junit:junit:4.12',
     'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
