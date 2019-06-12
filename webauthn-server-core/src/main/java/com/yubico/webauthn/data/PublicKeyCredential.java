@@ -27,7 +27,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.internal.util.JacksonCodecs;
 import java.io.IOException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -159,7 +159,7 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
      * @throws IOException if the <code>json</code> is invalid or cannot be decoded as a {@link PublicKeyCredential}
      */
     public static PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> parseRegistrationResponseJson(String json) throws IOException {
-        return WebAuthnCodecs.json().readValue(
+        return JacksonCodecs.json().readValue(
             json,
             new TypeReference<PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>>(){}
         );
@@ -199,7 +199,7 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
      * @throws IOException if the <code>json</code> is invalid or cannot be decoded as a {@link PublicKeyCredential}
      */
     public static PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> parseAssertionResponseJson(String json) throws IOException {
-        return WebAuthnCodecs.json().readValue(
+        return JacksonCodecs.json().readValue(
             json,
             new TypeReference<PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>>(){}
         );

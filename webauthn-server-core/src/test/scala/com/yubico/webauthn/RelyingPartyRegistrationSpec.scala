@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -529,7 +530,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   ).editAuthenticatorData(
                     authData => new ByteArray(
                       authData.getBytes.updated(32, (authData.getBytes()(32) | 0x80).toByte) ++
-                        WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
+                        JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
                     )
                   )
                 )
@@ -550,7 +551,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 ).editAuthenticatorData(
                   authData => new ByteArray(
                     authData.getBytes.updated(32, (authData.getBytes()(32) | 0x80).toByte) ++
-                      WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
+                      JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
                   )
                 )
               )

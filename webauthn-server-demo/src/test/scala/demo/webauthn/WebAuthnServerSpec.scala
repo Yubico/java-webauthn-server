@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
@@ -60,7 +61,7 @@ import scala.collection.JavaConverters._
 @RunWith(classOf[JUnitRunner])
 class WebAuthnServerSpec extends FunSpec with Matchers {
 
-  private val jsonMapper = WebAuthnCodecs.json()
+  private val jsonMapper = JacksonCodecs.json()
   private val username = "foo-user"
   private val displayName = "Foo User"
   private val credentialNickname = Some("My Lovely Credential").asJava

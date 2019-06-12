@@ -33,7 +33,7 @@ import com.upokecenter.cbor.CBORException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.webauthn.WebAuthnCodecs;
+import com.yubico.internal.util.JacksonCodecs;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -256,7 +256,7 @@ public class AuthenticatorData {
      * @see #flags
      */
     public Optional<CBORObject> getExtensions() {
-        return extensions.map(WebAuthnCodecs::deepCopy);
+        return extensions.map(JacksonCodecs::deepCopy);
     }
 
     static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AuthenticatorData> {

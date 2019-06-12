@@ -24,6 +24,7 @@
 
 package demo.webauthn
 
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.WebAuthnCodecs
@@ -36,7 +37,7 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class JsonSerializationSpec extends FunSpec with Matchers {
 
-  private val jsonMapper = WebAuthnCodecs.json()
+  private val jsonMapper = JacksonCodecs.json()
 
   val testData = RegistrationTestData.FidoU2f.BasicAttestation
   val authenticationAttestationResponseJson = s"""{"attestationObject":"${testData.response.getResponse.getAttestationObject.getBase64Url}","clientDataJSON":"${testData.response.getResponse.getClientDataJSON.getBase64Url}"}"""

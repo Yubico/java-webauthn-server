@@ -27,6 +27,7 @@ package com.yubico.webauthn;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.AppId;
@@ -46,7 +47,7 @@ public class U2fVerifier {
         final ByteArray appIdHash = crypto.hash(appId.getId());
         final ByteArray clientDataHash = crypto.hash(response.getCredential().getU2fResponse().getClientDataJSON());
 
-        final JsonNode clientData = WebAuthnCodecs.json().readTree(response.getCredential().getU2fResponse().getClientDataJSON().getBytes());
+        final JsonNode clientData = JacksonCodecs.json().readTree(response.getCredential().getU2fResponse().getClientDataJSON().getBytes());
         final String challengeBase64 = clientData.get("challenge").textValue();
 
         ExceptionUtil.assure(

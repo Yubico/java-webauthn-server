@@ -31,6 +31,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.AssertionResult;
@@ -115,7 +116,7 @@ public class WebAuthnServer {
     );
 
     private final Clock clock = Clock.systemDefaultZone();
-    private final ObjectMapper jsonMapper = WebAuthnCodecs.json();
+    private final ObjectMapper jsonMapper = JacksonCodecs.json();
 
     private final RelyingParty rp;
 
@@ -150,7 +151,7 @@ public class WebAuthnServer {
     private static MetadataObject readPreviewMetadata() {
         InputStream is = WebAuthnServer.class.getResourceAsStream(PREVIEW_METADATA_PATH);
         try {
-            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
+            return JacksonCodecs.json().readValue(is, MetadataObject.class);
         } catch (IOException e) {
             throw ExceptionUtil.wrapAndLog(logger, "Failed to read metadata from " + PREVIEW_METADATA_PATH, e);
         } finally {

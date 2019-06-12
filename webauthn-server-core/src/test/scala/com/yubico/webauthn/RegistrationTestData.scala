@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.ByteArray
@@ -210,8 +211,8 @@ case class RegistrationTestData(
     )
 
   def editClientData[A <: JsonNode](updater: ObjectNode => A): RegistrationTestData = copy(
-    clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-      updater(WebAuthnCodecs.json.readTree(clientDataJson).asInstanceOf[ObjectNode])
+    clientDataJson = JacksonCodecs.json.writeValueAsString(
+      updater(JacksonCodecs.json.readTree(clientDataJson).asInstanceOf[ObjectNode])
     )
   )
 
@@ -228,15 +229,15 @@ case class RegistrationTestData(
     )
 
   def editAttestationObject[A <: JsonNode](name: String, value: A): RegistrationTestData = copy(
-    attestationObject = new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(
-      WebAuthnCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
+    attestationObject = new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
+      JacksonCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
         .set(name, value)
     ))
   )
   def editAttestationObject[A <: JsonNode](name: String, updater: JsonNode => A): RegistrationTestData = {
-    val attObj = WebAuthnCodecs.cbor.readTree(attestationObject.getBytes)
+    val attObj = JacksonCodecs.cbor.readTree(attestationObject.getBytes)
     copy(
-      attestationObject = new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(
+      attestationObject = new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
         attObj.asInstanceOf[ObjectNode]
           .set(name, updater(attObj.get(name))
           ))
@@ -248,7 +249,7 @@ case class RegistrationTestData(
     editAttestationObject(name, RegistrationTestData.jsonFactory.textNode(value))
 
   def editAuthenticatorData(updater: ByteArray => ByteArray): RegistrationTestData = {
-    val attObj: ObjectNode = WebAuthnCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
+    val attObj: ObjectNode = JacksonCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
     val authData: ByteArray = new ByteArray(attObj.get("authData").binaryValue)
     editAttestationObject("authData", RegistrationTestData.jsonFactory.binaryNode(updater(authData).getBytes))
   }

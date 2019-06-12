@@ -35,6 +35,7 @@ import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -457,8 +458,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         def assertFails(typeString: String): Unit = {
           val steps = finishAssertion(
-            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+            clientDataJson = JacksonCodecs.json.writeValueAsString(
+              JacksonCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                 .set("type", jsonFactory.textNode(typeString))
             )
           )
@@ -816,7 +817,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val steps = finishAssertion(
                   requestedExtensions = extensionInputs,
                   authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                    extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                    extensionsCborBytes = Some(new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
                   )
                 )
                 val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -833,7 +834,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               val steps = finishAssertion(
                 requestedExtensions = extensionInputs,
                 authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                  extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                  extensionsCborBytes = Some(new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
                 )
               )
               val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -867,8 +868,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("A mutated clientDataJSON fails verification.") {
           val steps = finishAssertion(
-            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+            clientDataJson = JacksonCodecs.json.writeValueAsString(
+              JacksonCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                 .set("foo", jsonFactory.textNode("bar"))
             )
           )
@@ -1054,7 +1055,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       val publicKeyBytes: ByteArray = credData.getCredentialPublicKey
 
       val request: AssertionRequest = AssertionRequest.builder()
-        .publicKeyCredentialRequestOptions(WebAuthnCodecs.json.readValue("""{
+        .publicKeyCredentialRequestOptions(JacksonCodecs.json.readValue("""{
             "challenge": "drdVqKT0T-9PyQfkceSE94Q8ruW2I-w1gsamBisjuMw",
             "rpId": "demo3.yubico.test",
             "userVerification": "preferred",
@@ -1067,7 +1068,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         .username(testData.userId.getName)
         .build()
 
-      val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = WebAuthnCodecs.json.readValue(
+      val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = JacksonCodecs.json.readValue(
         """{
           "type": "public-key",
           "id": "ClvGfsNH8ulYnrKNd4fEgQ",
