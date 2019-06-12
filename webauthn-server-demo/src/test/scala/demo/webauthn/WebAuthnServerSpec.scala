@@ -43,7 +43,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.extension.appid.AppId
-import com.yubico.webauthn.WebAuthnCodecs
+import com.yubico.webauthn.WebAuthnTestCodecs
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
@@ -162,7 +162,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(RegisteredCredential.builder()
           .credentialId(testData.response.getId)
           .userHandle(testData.userId.getId)
-          .publicKeyCose(WebAuthnCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey]))
+          .publicKeyCose(WebAuthnTestCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey]))
           .signatureCount(0)
           .build()
         ).asJava)

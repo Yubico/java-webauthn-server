@@ -41,6 +41,7 @@ import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.WebAuthnCodecs
+import com.yubico.webauthn.WebAuthnTestCodecs
 
 import scala.collection.JavaConverters._
 
@@ -85,7 +86,7 @@ object Test extends App {
     val parsedAttObj = new AttestationObject(attestationObject)
     println(parsedAttObj)
     println(parsedAttObj.getAuthenticatorData.getBytes.getHex)
-    println(WebAuthnCodecs.importCosePublicKey(parsedAttObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
+    println(WebAuthnTestCodecs.importCosePublicKey(parsedAttObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey))
 
     val attestationObjectCbor = JacksonCodecs.cbor.readTree(attestationObject.getBytes)
     println(attestationObjectCbor)
@@ -167,9 +168,9 @@ object Test extends App {
     println(s"credentialPublicKeyCbor: ${credentialPublicKeyCbor}")
     println(s"credentialPublicKeyCbor2: ${credentialPublicKeyCbor2}")
     println(s"credentialPublicKeyDecoded: ${credentialPublicKeyDecoded}")
-    println(s"raw credential public key: ${WebAuthnCodecs.ecPublicKeyToRaw(credentialPublicKeyDecoded)}")
-    println(s"raw credential public key: ${WebAuthnCodecs.ecPublicKeyToRaw(credentialPublicKeyDecoded).getHex}")
-    println(s"raw credential public key length: ${WebAuthnCodecs.ecPublicKeyToRaw(credentialPublicKeyDecoded).getBytes.length}")
+    println(s"raw credential public key: ${WebAuthnTestCodecs.ecPublicKeyToRaw(credentialPublicKeyDecoded)}")
+    println(s"raw credential public key: ${WebAuthnTestCodecs.ecPublicKeyToRaw(credentialPublicKeyDecoded).getHex}")
+    println(s"raw credential public key length: ${WebAuthnTestCodecs.ecPublicKeyToRaw(credentialPublicKeyDecoded).getBytes.length}")
 
     // asn1dump(credentialPublicKeyBytes)
   }

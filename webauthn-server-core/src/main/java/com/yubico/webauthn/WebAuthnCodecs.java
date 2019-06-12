@@ -43,7 +43,7 @@ import java.util.Map;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
-public final class WebAuthnCodecs {
+final class WebAuthnCodecs {
 
     public static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
         byte[] x = key.getW().getAffineX().toByteArray();

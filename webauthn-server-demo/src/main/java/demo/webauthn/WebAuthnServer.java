@@ -29,10 +29,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Closeables;
+import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.JacksonCodecs;
-import com.yubico.webauthn.WebAuthnCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
@@ -56,6 +56,7 @@ import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
@@ -80,7 +81,9 @@ import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -422,7 +425,7 @@ public class WebAuthnServer {
             final U2fRegistrationResult result = U2fRegistrationResult.builder()
                 .keyId(PublicKeyCredentialDescriptor.builder().id(response.getCredential().getU2fResponse().getKeyHandle()).build())
                 .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
-                .publicKeyCose(WebAuthnCodecs.rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
+                .publicKeyCose(rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
                 .attestationMetadata(attestation)
                 .build();
 
@@ -662,5 +665,30 @@ public class WebAuthnServer {
         userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
         return reg;
     }
+
+    static ByteArray rawEcdaKeyToCose(ByteArray key) {
+        final byte[] keyBytes = key.getBytes();
+
+        if (!(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes[0] == 0x04))) {
+            throw new IllegalArgumentException(String.format(
+                "Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was %d bytes starting with %02x",
+                keyBytes.length,
+                keyBytes[0]
+            ));
+        }
+
+        final int start = keyBytes.length == 64 ? 0 : 1;
+
+        Map<Long, Object> coseKey = new HashMap<>();
+
+        coseKey.put(1L, 2L); // Key type: EC
+        coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId());
+        coseKey.put(-1L, 1L); // Curve: P-256
+        coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + 32)); // x
+        coseKey.put(-3L, Arrays.copyOfRange(keyBytes, start + 32, start + 64)); // y
+
+        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
+    }
+
 
 }
