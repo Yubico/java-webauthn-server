@@ -25,7 +25,7 @@
 package com.yubico.webauthn.attestation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.internal.util.JacksonCodecs;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -50,7 +50,7 @@ public class MetadataObjectTest {
         + "}]"
     + "}";
 
-    private final ObjectMapper objectMapper = WebAuthnCodecs.json();
+    private final ObjectMapper objectMapper = JacksonCodecs.json();
 
     @Test
     public void testToAndFromJson() throws Exception {

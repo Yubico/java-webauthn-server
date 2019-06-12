@@ -1,3 +1,12 @@
+== Version 1.3.1 (unreleased) ==
+
+Changes:
+
+* Class `com.yubico.internal.util.WebAuthnCodecs` is no longer public. The
+  package `com.yubico.internal.util` was already declared non-public in JavaDoc,
+  but this is now also enforced via Java visibility rules.
+
+
 == Version 1.3.0 ==
 
 Security fixes:

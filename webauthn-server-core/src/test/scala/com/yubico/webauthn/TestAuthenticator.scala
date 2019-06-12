@@ -53,8 +53,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -179,7 +179,7 @@ object TestAuthenticator {
       .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
       .build()
 
-    val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
+    val clientDataJson: String = JacksonCodecs.json.writeValueAsString(clientData getOrElse {
       val json: ObjectNode = jsonFactory.objectNode()
 
       json.setAll(Map(
@@ -198,7 +198,7 @@ object TestAuthenticator {
         }
       )
 
-      json.set("clientExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(clientExtensions)))
+      json.set("clientExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(clientExtensions)))
       authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
 
       json
@@ -314,7 +314,7 @@ object TestAuthenticator {
     userHandle: Option[ByteArray] = None
   ): data.PublicKeyCredential[data.AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = {
 
-    val clientDataJson: String = WebAuthnCodecs.json.writeValueAsString(clientData getOrElse {
+    val clientDataJson: String = JacksonCodecs.json.writeValueAsString(clientData getOrElse {
       val json: ObjectNode = jsonFactory.objectNode()
 
       json.setAll(Map(
@@ -333,7 +333,7 @@ object TestAuthenticator {
         }
       )
 
-      json.set("clientExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(clientExtensions)))
+      json.set("clientExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(clientExtensions)))
       authenticatorExtensions foreach { extensions => json.set("authenticatorExtensions", extensions) }
 
       json
@@ -385,7 +385,7 @@ object TestAuthenticator {
       "attStmt" -> makeAttestationStatement(authDataBytes, clientDataJson, certAndKey)
     ).asJava)
 
-    new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(attObj))
+    new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(attObj))
   }
 
   def makeU2fAttestationStatement(
@@ -479,7 +479,7 @@ object TestAuthenticator {
       "alg" -> f.textNode("RS256"),
       "x5c" -> f.arrayNode().add(f.textNode(new ByteArray(cert.getEncoded).getBase64))
     ).asJava)
-    val jwsHeaderBase64 = new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(jwsHeader)).getBase64Url
+    val jwsHeaderBase64 = new ByteArray(JacksonCodecs.json().writeValueAsBytes(jwsHeader)).getBase64Url
 
     val jwsPayload = f.objectNode().setAll(Map(
       "nonce" -> f.textNode(nonce.getBase64),
@@ -490,7 +490,7 @@ object TestAuthenticator {
       "aplCertificateDigestSha256" -> f.arrayNode().add(f.textNode(crypto.hash("foo").getBase64)),
       "basicIntegrity" -> f.booleanNode(true)
     ).asJava)
-    val jwsPayloadBase64 = new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(jwsPayload)).getBase64Url
+    val jwsPayloadBase64 = new ByteArray(JacksonCodecs.json().writeValueAsBytes(jwsPayload)).getBase64Url
 
     val jwsSignedCompact = jwsHeaderBase64 + "." + jwsPayloadBase64
     val jwsSignedBytes = new ByteArray(jwsSignedCompact.getBytes(StandardCharsets.UTF_8))

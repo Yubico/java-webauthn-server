@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
 import java.util.Optional;
@@ -85,7 +85,7 @@ public class CollectedClientData {
 
     @JsonCreator
     public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
-        JsonNode clientData = WebAuthnCodecs.json().readTree(clientDataJSON.getBytes());
+        JsonNode clientData = JacksonCodecs.json().readTree(clientDataJSON.getBytes());
 
         ExceptionUtil.assure(
             clientData != null && clientData.isObject(),

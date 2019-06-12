@@ -33,8 +33,8 @@ import java.util.concurrent.TimeUnit
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
@@ -43,6 +43,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.WebAuthnTestCodecs
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
@@ -60,7 +61,7 @@ import scala.collection.JavaConverters._
 @RunWith(classOf[JUnitRunner])
 class WebAuthnServerSpec extends FunSpec with Matchers {
 
-  private val jsonMapper = WebAuthnCodecs.json()
+  private val jsonMapper = JacksonCodecs.json()
   private val username = "foo-user"
   private val displayName = "Foo User"
   private val credentialNickname = Some("My Lovely Credential").asJava
@@ -161,7 +162,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(RegisteredCredential.builder()
           .credentialId(testData.response.getId)
           .userHandle(testData.userId.getId)
-          .publicKeyCose(WebAuthnCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey]))
+          .publicKeyCose(WebAuthnTestCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey]))
           .signatureCount(0)
           .build()
         ).asJava)

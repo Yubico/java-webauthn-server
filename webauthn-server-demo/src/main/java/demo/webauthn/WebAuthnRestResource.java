@@ -44,10 +44,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
 import demo.webauthn.data.AssertionRequestWrapper;
@@ -70,7 +70,7 @@ public class WebAuthnRestResource {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRestResource.class);
 
     private final WebAuthnServer server;
-    private final ObjectMapper jsonMapper = WebAuthnCodecs.json();
+    private final ObjectMapper jsonMapper = JacksonCodecs.json();
     private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
     public WebAuthnRestResource() throws InvalidAppIdException, CertificateException {
