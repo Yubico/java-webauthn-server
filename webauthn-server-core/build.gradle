@@ -16,12 +16,14 @@ dependencies {
     'com.google.guava:guava:19.0',
     'org.apache.httpcomponents:httpclient:4.5.2',
     'org.bouncycastle:bcprov-jdk15on:1.62',
+    'org.slf4j:slf4j-api:1.7.25',
   )
 
   testImplementation(
     project(':yubico-util-scala'),
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
     'commons-io:commons-io:2.5',
+    'junit:junit:4.12',
     'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
