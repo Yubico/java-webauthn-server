@@ -88,7 +88,7 @@ subprojects { project ->
 
   if (project.hasProperty('publishMe') && project.publishMe) {
     task packageSources(type: Jar) {
-      classifier = 'sources'
+      archiveClassifier = 'sources'
       from sourceSets.main.allSource
     }
     artifacts.archives packageSources
@@ -99,7 +99,7 @@ subprojects { project ->
     }
 
     task packageJavadoc(type: Jar) {
-      classifier = 'javadoc'
+      archiveClassifier = 'javadoc'
       inputs.files javadoc.outputs
       from javadoc.destinationDir
     }
