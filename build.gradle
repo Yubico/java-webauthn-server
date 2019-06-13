@@ -100,8 +100,7 @@ subprojects { project ->
 
     task packageJavadoc(type: Jar) {
       archiveClassifier = 'javadoc'
-      inputs.files javadoc.outputs
-      from javadoc.destinationDir
+      from javadoc
     }
     artifacts.archives packageJavadoc
 
