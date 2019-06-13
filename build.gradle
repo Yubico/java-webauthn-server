@@ -87,22 +87,22 @@ subprojects { project ->
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
-    task packageSources(type: Jar) {
+    task sourcesJar(type: Jar) {
       archiveClassifier = 'sources'
       from sourceSets.main.allSource
     }
-    artifacts.archives packageSources
+    artifacts.archives sourcesJar
 
     javadoc {
       options.encoding = 'UTF-8'
       options.addStringOption('charset', 'UTF-8')
     }
 
-    task packageJavadoc(type: Jar) {
+    task javadocJar(type: Jar) {
       archiveClassifier = 'javadoc'
       from javadoc
     }
-    artifacts.archives packageJavadoc
+    artifacts.archives javadocJar
 
     rootProject.tasks.assembleJavadoc {
       dependsOn javadoc
