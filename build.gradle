@@ -84,6 +84,8 @@ subprojects { project ->
 
   tasks.withType(AbstractArchiveTask) {
     from(rootProject.file('COPYING'))
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
   }
 
   test {
