@@ -86,29 +86,31 @@ subprojects { project ->
     }
   }
 
-  task packageSources(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-  }
-  artifacts.archives packageSources
+  if (project.hasProperty('publishMe') && project.publishMe) {
+    task packageSources(type: Jar) {
+      classifier = 'sources'
+      from sourceSets.main.allSource
+    }
+    artifacts.archives packageSources
 
-  javadoc {
-    options.encoding = 'UTF-8'
-    options.addStringOption('charset', 'UTF-8')
-  }
+    javadoc {
+      options.encoding = 'UTF-8'
+      options.addStringOption('charset', 'UTF-8')
+    }
 
-  task packageJavadoc(type: Jar) {
-    classifier = 'javadoc'
-    inputs.files javadoc.outputs
-    from javadoc.destinationDir
-  }
-  artifacts.archives packageJavadoc
+    task packageJavadoc(type: Jar) {
+      classifier = 'javadoc'
+      inputs.files javadoc.outputs
+      from javadoc.destinationDir
+    }
+    artifacts.archives packageJavadoc
 
-  rootProject.tasks.assembleJavadoc {
-    dependsOn javadoc
-    inputs.dir javadoc.destinationDir
-    from(javadoc.destinationDir) {
-      into project.name
+    rootProject.tasks.assembleJavadoc {
+      dependsOn javadoc
+      inputs.dir javadoc.destinationDir
+      from(javadoc.destinationDir) {
+        into project.name
+      }
     }
   }
 
