@@ -16,14 +16,3 @@ dependencies {
   )
 }
 
-
-jar {
-  manifest {
-    attributes([
-      'Implementation-Id': 'yubico-util-scala',
-      'Implementation-Title': project.description,
-      'Implementation-Version': project.version,
-      'Implementation-Vendor': 'Yubico',
-    ])
-  }
-}
