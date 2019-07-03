@@ -42,7 +42,7 @@ import org.bouncycastle.util.Arrays;
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
-@ToString(of = { "base64" }, includeFieldNames = false)
+@ToString(includeFieldNames = false, onlyExplicitlyIncluded = true)
 public final class ByteArray implements Comparable<ByteArray>, JsonStringSerializable {
 
     private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
@@ -143,6 +143,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
     /**
      * @return the content bytes encoded as hexadecimal data.
      */
+    @ToString.Include
     public String getHex() {
         return BinaryUtil.toHex(bytes);
     }

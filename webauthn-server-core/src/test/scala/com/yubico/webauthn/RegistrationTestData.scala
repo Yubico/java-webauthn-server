@@ -26,6 +26,7 @@ package com.yubico.webauthn
 
 import java.nio.charset.StandardCharsets
 import java.security.cert.X509Certificate
+import java.security.KeyPair
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -34,19 +35,19 @@ import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.webauthn.data.AuthenticatorAttestationResponse
-import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
-import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.AttestationObject
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.RegistrationExtensionInputs
-import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
 import org.bouncycastle.asn1.x500.X500Name
 
 import scala.collection.JavaConverters._
@@ -57,13 +58,15 @@ object RegistrationTestDataGenerator extends App {
 
   def printTestDataCode(
     credential: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs],
+    keypair: KeyPair,
     caCert: Option[X509Certificate]
   ): Unit = {
     for { caCert <- caCert } {
       println(s"""attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("${BinaryUtil.toHex(caCert.getEncoded)}"))),""")
     }
     println(s"""attestationObject = new ByteArray(BinaryUtil.fromHex("${credential.getResponse.getAttestationObject.getHex}")),
-               |clientDataJson = \"\"\"${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}\"\"\"
+               |clientDataJson = \"\"\"${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}\"\"\",
+               |privateKey = Some(\"\"\"${new ByteArray(keypair.getPrivate.getEncoded).getHex}\"\"\"),
                |
                |
                """.stripMargin)
@@ -71,7 +74,7 @@ object RegistrationTestDataGenerator extends App {
 
   def regenerateTestData(): Unit = {
     val td = RegistrationTestData
-    for { testData <- List(
+    for { (testData, i) <- List(
       td.AndroidSafetynet.BasicAttestation,
       td.AndroidSafetynet.WrongHostname,
       td.AndroidSafetynet.FalseCtsProfileMatch,
@@ -79,19 +82,34 @@ object RegistrationTestDataGenerator extends App {
       td.FidoU2f.SelfAttestation,
       td.NoneAttestation.Default,
       td.Packed.BasicAttestation,
+      td.Packed.BasicAttestationEdDsa,
+      td.Packed.BasicAttestationRsa,
       td.Packed.BasicAttestationWithoutAaguidExtension,
       td.Packed.BasicAttestationWithWrongAaguidExtension,
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationWithWrongAlgValue
-    ) } {
-      val (cred, cert) = testData.regenerate()
-      printTestDataCode(cred, cert)
+    ).zipWithIndex } {
+      val ((cred, keypair), cert) = testData.regenerate()
+      println(i)
+      printTestDataCode(cred, keypair, cert)
     }
   }
 }
 
 object RegistrationTestData {
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+
+  def validExamples = List(
+    AndroidSafetynet.RealExample,
+    AndroidSafetynet.BasicAttestation,
+    FidoU2f.BasicAttestation,
+    FidoU2f.SelfAttestation,
+    NoneAttestation.Default,
+    Packed.BasicAttestation,
+    Packed.BasicAttestationEdDsa,
+    Packed.BasicAttestationRsa,
+    Packed.BasicAttestationRsaReal,
+  )
 
   object AndroidKey {
     val BasicAttestation: RegistrationTestData = Packed.SelfAttestation.editAttestationObject("fmt", "android-key")
@@ -134,7 +152,6 @@ object RegistrationTestData {
       attestationObject = new ByteArray(BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00205558386f4ed61a6c98a3fed94060fff66808947953754a0dff2aea9ae2164635a52258208d05cb87cec921d5e6fbc22c32a07fb35ed89c19a3f0a2866fcf4a248194e650032601022158202bb1c0846fca809059b41272f0c2953d733b31b50c14453b7a9855b7bfc98229200163666d74686669646f2d7532666761747453746d74bf63783563815901e7308201e330820189a00302010202020539300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200042bb1c0846fca809059b41272f0c2953d733b31b50c14453b7a9855b7bfc982298d05cb87cec921d5e6fbc22c32a07fb35ed89c19a3f0a2866fcf4a248194e650a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020348003045022100a91c5499a6518bc59648bde7e7467488736e1ae82b5eb85c14957a0f82d23dfc02205a4b9963f88dbabaa0fa298eae6f0876b9f5e65650c4bd29f1f3f7eeb1312c24637369675847304502205af7085152ec65cc5ee097c5890316e6cac286379c32925a969ab414b013aa59022100b9b9d56cf4314e10c13caa57fb1fb0a01e87ffdec623c62637fddf56a8c4c62cffff")),
       clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}"""
     ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "fido-u2f") }
-
   }
   object NoneAttestation {
     val Default = new RegistrationTestData(
@@ -150,11 +167,25 @@ object RegistrationTestData {
       clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}"""
     ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "packed") }
 
+    val BasicAttestationEdDsa: RegistrationTestData = new RegistrationTestData(
+      attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("308201d63082017da00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d0301070342000436a18972db7a76bf269a68461d5326d83a3cecd5bded6526ca0137b9c2a8d192bdf4554eb5572f30916474f206783bb0500abc1983446d7f56a7d912b4b983afa3133011300f0603551d130101ff040530030101ff300a06082a8648ce3d040302034700304402205fc7a9389494a8e1b102200550e52913ab95e5ac20d37a05ac9eff483f85169c022062e9cfc141b014ed6058e9b42b99afe53ab596ad1dd85426f010cb02207b9d88"))),
+      attestationObject = new ByteArray(BinaryUtil.fromHex("bf686175746844617461588f49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00203f1a8b132e03a186ff9e6c8ae6524f740ea77b1df686c9b4a2b0a9f3a5d00c90a403390100010121582c302a300506032b65700321004212a8a0396b0bbbe5d1226287becdd21907f493248f819888bff174b1910a4e200663666d74667061636b65646761747453746d74bf6373696758483046022100b98243a47abc89c5a32e08af5542750b7467a65b6eadb34032915065f3d1c74a022100891d2278f0c07dd31120c2ad59340ecabaf1a238dae3e6441c12ada443f4165363783563815901ea308201e63082018ca00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004df92b815b785ceddf1dd3e9e8e99b6e92873af812e717bd9db1777bfe20201e57d4e0a21f8cea8709b8646676cd5db1656e19a9ec8d8b3bda518c23bd845ff81a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d0403020348003045022100c385bb5783129c36d5148b784b086e6cb86a464d70ad578d03a7f97fa63e836702205433da460b40d770eea995bebfe524bfa7d0bc329bed0f53b68432a769f3cdfcffff")),
+      clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}""",
+    ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "packed", keyAlgorithm = COSEAlgorithmIdentifier.EdDSA) }
+
     val BasicAttestationRsa: RegistrationTestData = new RegistrationTestData(
+      attestationCaCert = Some(CertificateParser.parseDer(BinaryUtil.fromHex("308201d63082017da00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d03010703420004bff996ecb8a8436ae9de965d1515258af215962d3125f84c8922cd2b20ddccaaf2458a4c5a12492a108961158e5717da7172e5cec2cfca8d784d6dcc6242ffe6a3133011300f0603551d130101ff040530030101ff300a06082a8648ce3d0403020347003044022068e1a42513f0dbb22d24d2c51fc609a33aa7b800119c394e2bce115c1d08179b02207e2d910e4b63c095c0599d6e9027d5c8084a4cc10efe8cef01c82a50988391ca"))),
+      attestationObject = new ByteArray(BinaryUtil.fromHex("bf68617574684461746159016849960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020a447a72a802c3fd5d6b1c1cd40c3599ef53ac1894199b155d22019b666d7a4dfa403390100010321430100012059010100cfe2799c34e0c905e5a8d9ba805d1651ff50d32514bfde5bda35e04e5cf3a5b0446a72aaed2d6bbd47fbc5fffb6480b6f03906de66521852f6bf3f38916065a4f4e9c3e3ff0ae661a75ad6b311315d059f5ae12ac5bc5eb31e71db208fa61fca4a9a93ddac5cb07c8f76fa1e9713d8fb08c5e5bb1ffbb9dd811a5fd3875a347ff1cdfaa2f89dbe048cbd8bf99292a9b70236abf96e62c1742c3e7af0f2246dd8dbcaec39cd477b2b33497f96eb1d6dd11ef9b36146456803a47d71795b026d5ccebc0b1d217018b2ee6cc859c4551d57715c978f1bd4d55ac3ddb49927706382b22ad016e4d6f1baa7c890e6d5f05411511f594232b76e3320cc208eaf310de963666d74667061636b65646761747453746d74bf6373696758473045022100f08623e12693d5af5cdb10c74deff4ee9da9dd9d66adefd0a203d53a6b6d5fe002202d183a5ff69d83394653d6ae02124c16bb36a97809dcdae3bda17fd724cad86d63783563815901e9308201e53082018ca00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200043a74a7a2d1855509b7d7aaab40f1e159db771e8de5da0e86dbc4bf9a07eea3989665e31a9a2c4fe71249782940592a4221e8457c6ea27d5b0277904fd5063193a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d04030203470030440220182ad112298caf8b732ed1b225ef3318a2df05848b9183f13095711a2cb0b54a02205cd0ff52eb61aa93a7243daf18a991baa708193acd60b8d6b3ed0b1238b54a3bffff")),
+      clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}"""
+    ) { override def regenerate() = TestAuthenticator.createBasicAttestedCredential(attestationStatementFormat = "packed", keyAlgorithm = COSEAlgorithmIdentifier.RS256) }
+
+    val BasicAttestationRsaReal: RegistrationTestData = new RegistrationTestData(
       // Real attestation object from SKY3
       attestationCaCert = Some(CertificateParser.parseDer(    "MIIDHjCCAgagAwIBAgIEG1BT9zANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/jwYuhBVlqaiYWEMsrWFisgJ+PtM91eSrpI4TK7U53mwCIawSDHy8vUmk5N2KAj9abvT9NP5SMS1hQi3usxoYGonXQgfO6ZXyUA9a+KAkqdFnBnlyugSeCOep8EdZFfsaRFtMjkwz5Gcz2Py4vIYvCdMHPtwaz0bVuzneueIEz6TnQjE63Rdt2zbwnebwTG5ZybeWSwbzy+BJ34ZHcUhPAY89yJQXuE0IzMZFcEBbPNRbWECRKgjq//qT9nmDOFVlSRCt2wiqPSzluwn+v+suQEBsUjTGMEd25tKXXTkNW21wIWbxeSyUoTXwLvGS6xlwQSgNpk2qXYwf8iXg7VWZAgMBAAGjQjBAMB0GA1UdDgQWBBQgIvz0bNGJhjgpToksyKpP9xv9oDAPBgNVHRMECDAGAQH/AgEAMA4GA1UdDwEB/wQEAwIBBjANBgkqhkiG9w0BAQsFAAOCAQEAjvjuOMDSa+JXFCLyBKsycXtBVZsJ4Ue3LbaEsPY4MYN/hIQ5ZM5p7EjfcnMG4CtYkNsfNHc0AhBLdq45rnT87q/6O3vUEtNMafbhU6kthX7Y+9XFN9NpmYxr+ekVY5xOxi8h9JDIgoMP4VB1uS0aunL1IGqrNooL9mmFnL2kLVVee6/VR6C5+KSTCMCWppMuJIZII2v9o4dkoZ8Y7QRjQlLfYzd3qGtKbw7xaF1UsG/5xUb/Btwb2X2g4InpiB/yt/3CpQXpiWX/K4mBvUKiGn05ZsqeY1gx4g0xLBqcU9psmyPzK+Vsgw2jeRQ5JlKDyqE0hebfC1tvFu0CCrJFcw==")),
       attestationObject = ByteArray.fromBase64Url( "o2NmbXRmcGFja2VkaGF1dGhEYXRhWQFXAU4Ai_91hLmkf2mxjxj_SJrA3qTIOjr6tw1rluqSp_5FAAAAAG1Eupv27C5JuTAMj-kgy3MAEApbxn7DR_LpWJ6yjXeHxIGkAQMDOQEAIFkBAPm_XOU-DioXdG6YXFo5gpHPNxJDimlbnXCro2D_hvzBsxoY4oEzNyRDgK_PoDedZ4tJyk12_I8qJ8g5HqbpT6YUekYegcP4ugL1Omr31gGqTwsF45fIITcSWXcoJbqPnwotbaM98Hu15mSIT8NeXDce0MVNYJ6PULRm6xiiWXHk1cxwrHd9xPCjww6CjRKDc06hP--noBbToW3xx43eh7kGlisWPeU1naIMe7CZAjIMhNlu_uxQssaPAhEXNzDENpK99ieUg290Ym4YNAGbWdW4irkeTt7h_yC-ARrJUu4ygwwGaqCTl9QIMrwZGuiQD11LC0uKraIA2YHaGa2UGKshQwEAAWdhdHRTdG10o2NhbGcmY3NpZ1hHMEUCIQDLKMt6O4aKJkl71VhyIcuI6lqyFTHMDuCO5Y4Jdq2_xQIgPm2_1GF0ivkR816opfVQMWq0s-Hx0uJjcX5l5tm9ZgFjeDVjgVkCwTCCAr0wggGloAMCAQICBCrnYmMwDQYJKoZIhvcNAQELBQAwLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwIBcNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBaMG4xCzAJBgNVBAYTAlNFMRIwEAYDVQQKDAlZdWJpY28gQUIxIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0ZXN0YXRpb24xJzAlBgNVBAMMHll1YmljbyBVMkYgRUUgU2VyaWFsIDcxOTgwNzA3NTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABCoDhl5gQ9meEf8QqiVUV4S_Ca-Oax47MhcpIW9VEhqM2RDTmd3HaL3-SnvH49q8YubSRp_1Z1uP-okMynSGnj-jbDBqMCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS4xMBMGCysGAQQBguUcAgEBBAQDAgQwMCEGCysGAQQBguUcAQEEBBIEEG1Eupv27C5JuTAMj-kgy3MwDAYDVR0TAQH_BAIwADANBgkqhkiG9w0BAQsFAAOCAQEAclfQPNzD4RVphJDW-A75W1MHI3PZ5kcyYysR3Nx3iuxr1ZJtB-F7nFQweI3jL05HtFh2_4xVIgKb6Th4eVcjMecncBaCinEbOcdP1sEli9Hk2eVm1XB5A0faUjXAPw_-QLFCjgXG6ReZ5HVUcWkB7riLsFeJNYitiKrTDXFPLy-sNtVNutcQnFsCerDKuM81TvEAigkIbKCGlq8M_NvBg5j83wIxbCYiyV7mIr3RwApHieShzLdJo1S6XydgQjC-_64G5r8C-8AVvNFR3zXXCpio5C3KRIj88HEEIYjf6h1fdLfqeIsq-cUUqbq5T-c4nNoZUZCysTB9v5EY4akp-A"),
       clientDataJson = new String(ByteArray.fromBase64Url("ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5jcmVhdGUiLA0KCSJjaGFsbGVuZ2UiIDogImxaMllKbUZ2YWkteGhYMElteG9fQlk1SkpVdmREa3JXd1ZGZllmcHQtNmciLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9").getBytes, StandardCharsets.UTF_8),
+      rpId = RelyingPartyIdentity.builder().id("demo3.yubico.test").name("").build(),
+      origin = Some("https://demo3.yubico.test:8443"),
       userId = UserIdentity.builder().name("foo").displayName("Foo Bar").id(ByteArray.fromBase64Url("NiBJtVMh4AmSpZYuJ--jnEWgFzZHHVbS6zx7HFgAjAc")).build()
     )
 
@@ -189,13 +220,14 @@ case class RegistrationTestData(
   clientDataJson: String,
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
   clientExtensionResults: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
+  origin: Option[String] = None,
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
   requestedExtensions: RegistrationExtensionInputs = RegistrationExtensionInputs.builder().build(),
   rpId: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
   userId: UserIdentity = UserIdentity.builder().name("test@test.org").displayName("Test user").id(new ByteArray(Array(42, 13, 37))).build(),
   attestationCaCert: Option[X509Certificate] = None
 ) {
-  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], Option[X509Certificate]) = null
+  def regenerate(): ((PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[X509Certificate]) = null
 
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
   def clientData = new CollectedClientData(clientDataJsonBytes)

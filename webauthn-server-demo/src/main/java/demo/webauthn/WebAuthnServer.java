@@ -24,8 +24,12 @@
 
 package demo.webauthn;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Closeables;
@@ -54,6 +58,7 @@ import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
+import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
@@ -89,6 +94,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 import org.slf4j.Logger;
@@ -279,6 +285,8 @@ public class WebAuthnServer {
         CredentialRegistration registration;
         boolean attestationTrusted;
         Optional<AttestationCertInfo> attestationCert;
+        @JsonSerialize(using = AuthDataSerializer.class)
+        AuthenticatorData authData;
 
         public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted) {
             this.request = request;
@@ -297,7 +305,9 @@ public class WebAuthnServer {
                 }
             })
             .map(AttestationCertInfo::new);
+            this.authData = response.getCredential().getResponse().getParsedAuthenticatorData();
         }
+
     }
 
     @Value
@@ -468,12 +478,24 @@ public class WebAuthnServer {
     }
 
     @Value
-    public static class SuccessfulAuthenticationResult {
-        final boolean success = true;
-        AssertionRequestWrapper request;
-        AssertionResponse response;
-        Collection<CredentialRegistration> registrations;
-        List<String> warnings;
+    @AllArgsConstructor
+    public static final class SuccessfulAuthenticationResult {
+        private final boolean success = true;
+        private final AssertionRequestWrapper request;
+        private final AssertionResponse response;
+        private final Collection<CredentialRegistration> registrations;
+        @JsonSerialize(using = AuthDataSerializer.class) AuthenticatorData authData;
+        private final List<String> warnings;
+
+        public SuccessfulAuthenticationResult(AssertionRequestWrapper request, AssertionResponse response, Collection<CredentialRegistration> registrations, List<String> warnings) {
+            this(
+                request,
+                response,
+                registrations,
+                response.getCredential().getResponse().getParsedAuthenticatorData(),
+                warnings
+            );
+        }
     }
 
     public Either<List<String>, SuccessfulAuthenticationResult> finishAuthentication(String responseJson) {
@@ -690,5 +712,27 @@ public class WebAuthnServer {
         return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
     }
 
+
+    private static class AuthDataSerializer extends JsonSerializer<AuthenticatorData> {
+        @Override public void serialize(AuthenticatorData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            gen.writeStringField("rpIdHash", value.getRpIdHash().getHex());
+            gen.writeObjectField("flags", value.getFlags());
+            gen.writeNumberField("signatureCounter", value.getSignatureCounter());
+            value.getAttestedCredentialData().ifPresent(acd -> {
+                try {
+                    gen.writeObjectFieldStart("attestedCredentialData");
+                    gen.writeStringField("aaguid", acd.getAaguid().getHex());
+                    gen.writeStringField("credentialId", acd.getCredentialId().getHex());
+                    gen.writeStringField("publicKey", acd.getCredentialPublicKey().getHex());
+                    gen.writeEndObject();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            gen.writeObjectField("extensions", value.getExtensions());
+            gen.writeEndObject();
+        }
+    }
 
 }

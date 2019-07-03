@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import com.yubico.webauthn.AssertionRequest.AssertionRequestBuilder;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -195,6 +194,7 @@ public class RelyingParty {
      *
      * <ol>
      * <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES256}</li>
+     * <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#EdDSA EdDSA}</li>
      * <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}</li>
      * </ol>
      *
@@ -205,6 +205,7 @@ public class RelyingParty {
     @NonNull
     private final List<PublicKeyCredentialParameters> preferredPubkeyParams = Collections.unmodifiableList(Arrays.asList(
         PublicKeyCredentialParameters.ES256,
+        PublicKeyCredentialParameters.EdDSA,
         PublicKeyCredentialParameters.RS256
     ));
 

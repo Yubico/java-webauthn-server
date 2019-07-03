@@ -35,15 +35,20 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 final class WebAuthnCodecs {
+
+    private static final ByteArray ED25519_CURVE_OID = new ByteArray(new byte[]{0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
 
     public static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
         byte[] x = key.getW().getAffineX().toByteArray();
@@ -95,10 +100,33 @@ final class WebAuthnCodecs {
         return rawEcdaKeyToCose(ecPublicKeyToRaw(key));
     }
 
+    public static ByteArray eddsaPublicKeyToCose(BCEdDSAPublicKey key) {
+        Map<Long, Object> coseKey = new HashMap<>();
+
+        coseKey.put(1L, 1L); // Key type: octet key pair
+        coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId());
+        coseKey.put(-1L, 6L); // crv: Ed25519
+        coseKey.put(-2L, key.getEncoded());
+
+        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
+    }
+
+    public static ByteArray rsaPublicKeyToCose(RSAPublicKey key) {
+        Map<Long, Object> coseKey = new HashMap<>();
+
+        coseKey.put(1L, 3L); // Key type: RSA
+        coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId());
+        coseKey.put(-1L, key.getModulus().toByteArray()); // public modulus n
+        coseKey.put(-2L, key.getPublicExponent().toByteArray()); // public exponent e
+
+        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
+    }
+
     public static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
         final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
         switch (kty) {
+            case 1: return importCoseEdDsaPublicKey(cose);
             case 2: return importCoseP256PublicKey(cose);
             case 3: return importCoseRsaPublicKey(cose);
             default:
@@ -116,6 +144,30 @@ final class WebAuthnCodecs {
 
     private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException, IOException {
         return new COSE.ECPublicKey(new OneKey(cose));
+    }
+
+    private static PublicKey importCoseEdDsaPublicKey(CBORObject cose) {
+        final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
+        switch (curveId) {
+            case 6: return importCoseEd25519PublicKey(cose);
+            default:
+                throw new IllegalArgumentException("Unsupported EdDSA curve: " + curveId);
+        }
+    }
+
+    private static PublicKey importCoseEd25519PublicKey(CBORObject cose) {
+        final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
+        final ByteArray x509Key = new ByteArray(new byte[]{0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size()) })
+            .concat(ED25519_CURVE_OID)
+            .concat(new ByteArray(new byte[]{ 0x03, (byte) (rawKey.size() + 1), 0}))
+            .concat(rawKey);
+
+        try {
+            KeyFactory kFact = KeyFactory.getInstance("EdDSA", new BouncyCastleProvider());
+            return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getSignatureAlgorithmName(PublicKey key) {

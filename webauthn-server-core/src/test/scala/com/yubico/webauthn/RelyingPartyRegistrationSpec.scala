@@ -718,7 +718,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -745,7 +745,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -907,7 +907,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val (credential, _) = authenticator.createBasicAttestedCredential(
+                  val ((credential, _), _) = authenticator.createBasicAttestedCredential(
                     attestationCertAndKey = Some(badCert, key),
                     attestationStatementFormat = "packed"
                   )
@@ -1732,6 +1732,26 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
         }
 
+        it("accept all test examples in the validExamples list.") {
+          RegistrationTestData.validExamples.foreach { testData =>
+            val rp = {
+              val builder = RelyingParty.builder()
+                .identity(testData.rpId)
+                .credentialRepository(emptyCredentialRepository)
+              testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
+              builder.build()
+            }
+
+            val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+              .request(testData.request)
+              .response(testData.response)
+              .build()
+            )
+
+            result.getKeyId.getId should equal (testData.response.getId)
+          }
+        }
+
       }
 
       describe("RelyingParty supports registering") {
@@ -1742,7 +1762,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             .origins(Set("https://demo3.yubico.test:8443").asJava)
             .build()
 
-          val testData = RegistrationTestData.Packed.BasicAttestationRsa
+          val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
           val result = rp.finishRegistration(FinishRegistrationOptions.builder()
             .request(testData.request)
             .response(testData.response)
