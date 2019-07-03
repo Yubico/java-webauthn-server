@@ -29,7 +29,6 @@ import COSE.OneKey;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
-import com.yubico.webauthn.data.exception.HexException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
@@ -48,6 +47,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 final class WebAuthnCodecs {
+
+    private static final ByteArray ED25519_CURVE_OID = new ByteArray(new byte[]{0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
 
     public static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
         byte[] x = key.getW().getAffineX().toByteArray();
@@ -155,17 +156,16 @@ final class WebAuthnCodecs {
     }
 
     private static PublicKey importCoseEd25519PublicKey(CBORObject cose) {
-        try {
-            final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
-            final ByteArray curveOid = ByteArray.fromHex("300506032B6570");
-            final ByteArray x509Key = new ByteArray(new byte[]{0x30, (byte) (curveOid.size() + 3 + rawKey.size()) })
-                .concat(curveOid)
-                .concat(new ByteArray(new byte[]{ 0x03, (byte) (rawKey.size() + 1), 0}))
-                .concat(rawKey);
+        final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
+        final ByteArray x509Key = new ByteArray(new byte[]{0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size()) })
+            .concat(ED25519_CURVE_OID)
+            .concat(new ByteArray(new byte[]{ 0x03, (byte) (rawKey.size() + 1), 0}))
+            .concat(rawKey);
 
+        try {
             KeyFactory kFact = KeyFactory.getInstance("EdDSA", new BouncyCastleProvider());
             return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
-        } catch (HexException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
     }
