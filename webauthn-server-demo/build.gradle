@@ -7,7 +7,7 @@ plugins {
 }
 
 lombok {
-  version = '1.18.6'
+  version = '1.18.8'
 }
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
