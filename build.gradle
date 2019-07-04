@@ -104,6 +104,9 @@ subprojects { project ->
     ext.outputDir = file("${buildDir}/delombok")
     outputs.dir outputDir
     sourceSets.main.java.srcDirs.each {
+      if (!it.exists()) {
+        it.mkdirs()
+      }
       inputs.dir it
       args(it, '-d', outputDir)
     }
