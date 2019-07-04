@@ -21,3 +21,4 @@ target/
 .gradle/
 /build/
 /*/build/
+/*/lombok.config
