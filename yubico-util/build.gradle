@@ -7,7 +7,6 @@ project.ext.publishMe = true
 dependencies {
 
   implementation(
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
     'com.google.guava:guava:19.0',
