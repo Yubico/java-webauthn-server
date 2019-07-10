@@ -1,5 +1,13 @@
 plugins {
+  id 'java'
+  id 'war'
+  id 'scala'
   id 'com.bmuschko.docker-remote-api' version '3.6.1'
+  id "io.freefair.lombok"
+}
+
+lombok {
+  version = '1.18.8'
 }
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
@@ -9,9 +17,6 @@ project.ext.dockerName = project.name
 
 description = 'WebAuthn demo'
 
-apply plugin: 'scala'
-apply plugin: 'war'
-apply plugin: 'application'
 apply from: 'gretty-2.2.0.plugin'
 
 configurations {
@@ -20,34 +25,37 @@ configurations {
 
 dependencies {
 
-  compile(
+  implementation(
     project(':webauthn-server-attestation'),
     project(':webauthn-server-core'),
+    project(':yubico-util'),
 
-    'com.fasterxml.jackson.core:jackson-core:2.9.9',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9',
+    'com.google.guava:guava:19.0',
+    'com.upokecenter:cbor:2.4.1',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
     'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
+    'org.slf4j:slf4j-api:1.7.25',
   )
 
   forJdk10(
-    'javax.activation:activation:1.1.1',
     'javax.xml.bind:jaxb-api:2.3.0',
   )
 
-  runtime(
+  runtimeOnly(
     configurations.forJdk10,
+
     'ch.qos.logback:logback-classic:1.2.3',
     'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
     'org.glassfish.jersey.inject:jersey-hk2:2.26',
   )
 
-  testCompile(
+  testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 
-    'commons-io:commons-io:2.5',
+    'junit:junit:4.12',
     'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
@@ -60,8 +68,6 @@ dependencies {
     }
   }
 }
-
-mainClassName = 'demo.webauthn.EmbeddedServer'
 
 gretty {
   contextPath = '/webauthn'

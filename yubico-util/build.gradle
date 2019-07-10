@@ -1,22 +1,30 @@
-description = 'Yubico internal utilities'
+plugins {
+  id 'java-library'
+  id 'scala'
+  id "io.freefair.lombok"
+}
 
-apply plugin: 'scala'
+lombok {
+  version = '1.18.8'
+}
+
+description = 'Yubico internal utilities'
 
 project.ext.publishMe = true
 
 dependencies {
 
-  compile(
-    'com.upokecenter:cbor:2.4.1',
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
+  implementation(
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
-    'com.google.guava:guava:19.0',
+    'com.upokecenter:cbor:2.4.1',
     'org.bouncycastle:bcprov-jdk15on:1.62',
+    'org.slf4j:slf4j-api:1.7.25',
   )
 
-  testCompile(
+  testImplementation(
     project(':yubico-util-scala'),
+    'junit:junit:4.12',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
     'org.scalatest:scalatest_2.12:3.0.4',
