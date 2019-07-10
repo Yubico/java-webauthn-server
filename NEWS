@@ -13,6 +13,8 @@ New features:
 * Added support for Ed25519 signatures.
 * New constants `COSEAlgorithmIdentifier.EdDSA` and
   `PublicKeyCredentialParameters.EdDSA`
+* Artifacts are now built reproducibly; fresh builds from source should now be
+  verifiable by signature files from Maven Central.
 
 
 == Version 1.3.0 ==
