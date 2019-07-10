@@ -71,7 +71,7 @@ public class VersionInfo {
         .build();
 
     /**
-     * Represents the specification this implementation is based on
+     * Description of this version of this library
      */
     private final Implementation implementation = new Implementation(
         findImplementationVersionInManifest(),
