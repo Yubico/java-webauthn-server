@@ -64,10 +64,10 @@ public class VersionInfo {
      * Represents the specification this implementation is based on
      */
     private final Specification specification = Specification.builder()
-        .url(new URL("https://www.w3.org/TR/2019/PR-webauthn-20190117/"))
+        .url(new URL("https://www.w3.org/TR/2019/REC-webauthn-1-20190304/"))
         .latestVersionUrl(new URL("https://www.w3.org/TR/webauthn/"))
-        .status(DocumentStatus.PROPOSED_RECOMMENDATION)
-        .releaseDate(LocalDate.parse("2019-01-17"))
+        .status(DocumentStatus.RECOMMENDATION)
+        .releaseDate(LocalDate.parse("2019-03-04"))
         .build();
 
     /**
