@@ -91,7 +91,6 @@ subprojects { project ->
       archiveClassifier = 'sources'
       from sourceSets.main.allSource
     }
-    artifacts.archives sourcesJar
 
     javadoc {
       options.encoding = 'UTF-8'
@@ -102,7 +101,6 @@ subprojects { project ->
       archiveClassifier = 'javadoc'
       from javadoc
     }
-    artifacts.archives javadocJar
 
     rootProject.tasks.assembleJavadoc {
       dependsOn javadoc
@@ -115,57 +113,61 @@ subprojects { project ->
 
   if (publishEnabled && project.hasProperty('publishMe') && project.publishMe) {
 
-    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
-    signing {
-      useGpgCmd()
-      sign configurations.archives
-    }
-    signArchives.dependsOn check
+    publishing {
+      publications {
+        jars(MavenPublication) {
+          from components.java
+          artifact javadocJar
+          artifact sourcesJar
 
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-          repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          pom.project {
-            name project.description
-            description 'Java server-side library for Web Authentication'
-            url 'https://developers.yubico.com/java-webauthn-server/'
+          pom {
+            name = project.description
+            description = 'Java server-side library for Web Authentication'
+            url = 'https://developers.yubico.com/java-webauthn-server/'
 
             developers {
               developer {
-                id 'emil'
-                name 'Emil Lundberg'
-                email 'emil@yubico.com'
+                id = 'emil'
+                name = 'Emil Lundberg'
+                email = 'emil@yubico.com'
               }
             }
 
             licenses {
               license {
-                name 'BSD-license'
-                comments 'Revised 2-clause BSD license'
+                name = 'BSD-license'
+                comments = 'Revised 2-clause BSD license'
               }
             }
 
             scm {
-              url 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              connection 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-              tag 'HEAD'
+              url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
+              tag = 'HEAD'
             }
           }
         }
       }
+
+      repositories {
+        maven {
+          name = "sonatypeNexus"
+          url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+          credentials {
+            username ossrhUsername
+            password ossrhPassword
+          }
+        }
+      }
+    }
+
+    signing {
+      useGpgCmd()
+      sign publishing.publications.jars
     }
   }
 }
