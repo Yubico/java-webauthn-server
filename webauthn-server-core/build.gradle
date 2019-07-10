@@ -9,7 +9,7 @@ lombok {
   version = '1.18.8'
 }
 
-description = 'WebAuthn core API'
+description = 'Yubico WebAuthn server core API'
 
 project.ext.publishMe = true
 
