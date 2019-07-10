@@ -67,4 +67,6 @@ public class Specification {
         return new SpecificationBuilder();
     }
 
+    static class SpecificationBuilder {
+    }
 }

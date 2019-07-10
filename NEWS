@@ -5,6 +5,9 @@ Changes:
 * Class `com.yubico.internal.util.WebAuthnCodecs` is no longer public. The
   package `com.yubico.internal.util` was already declared non-public in JavaDoc,
   but this is now also enforced via Java visibility rules.
+* Class `com.yubico.webauthn.meta.Specification.SpecificationBuilder` is no
+  longer public. It was never intended to be, although this was not documented
+  explicitly.
 * Default value for `RelyingParty.preferredPubKeyParams` changed from `[ES256,
   RS256]` to `[ES256, EdDSA, RS256]`
 
