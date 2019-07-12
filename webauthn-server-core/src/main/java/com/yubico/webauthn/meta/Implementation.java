@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import lombok.Value;
 
 
@@ -41,11 +42,16 @@ public class Implementation {
     /**
      * The version number of this release of the library.
      */
-    private final Optional<String> version;
+    private final String version;
 
     /**
      * Address to where the source code for this library can be found.
      */
+    @NonNull
     private final URL sourceCodeUrl;
+
+    public Optional<String> getVersion() {
+        return Optional.ofNullable(version);
+    }
 
 }

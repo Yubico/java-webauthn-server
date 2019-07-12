@@ -112,9 +112,9 @@ public class RegistrationResult {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
      */
-    @NonNull
     @Builder.Default
-    private final Optional<Attestation> attestationMetadata = Optional.empty();
+    @Builder.ObtainVia(method = "getAttestationMetadata")
+    private final Attestation attestationMetadata = null;
 
     @JsonCreator
     private RegistrationResult(
@@ -123,7 +123,7 @@ public class RegistrationResult {
         @NonNull @JsonProperty("attestationType") AttestationType attestationType,
         @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
         @NonNull @JsonProperty("warnings") List<String> warnings,
-        @NonNull @JsonProperty("attestationMetadata") Optional<Attestation> attestationMetadata
+        @JsonProperty("attestationMetadata") Attestation attestationMetadata
     ) {
         this.keyId = keyId;
         this.attestationTrusted = attestationTrusted;
@@ -131,6 +131,10 @@ public class RegistrationResult {
         this.publicKeyCose = publicKeyCose;
         this.warnings = CollectionUtil.immutableList(warnings);
         this.attestationMetadata = attestationMetadata;
+    }
+
+    public Optional<Attestation> getAttestationMetadata() {
+        return Optional.ofNullable(attestationMetadata);
     }
 
     static RegistrationResultBuilder.MandatoryStages builder() {
@@ -165,6 +169,11 @@ public class RegistrationResult {
                     return builder.publicKeyCose(publicKeyCose);
                 }
             }
+        }
+
+        public RegistrationResultBuilder attestationMetadata(@NonNull Optional<Attestation> attestationMetadata) {
+            this.attestationMetadata = attestationMetadata.orElse(null);
+            return this;
         }
     }
 

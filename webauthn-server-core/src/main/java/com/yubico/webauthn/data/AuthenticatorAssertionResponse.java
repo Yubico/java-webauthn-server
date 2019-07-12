@@ -69,19 +69,19 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
      * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
      * Operation</a>.
      */
-    @NonNull
-    private final Optional<ByteArray> userHandle;
+    private final ByteArray userHandle;
 
     @NonNull
     @Getter(onMethod = @__({ @Override }))
     private final transient CollectedClientData clientData;
 
+    @JsonCreator
     @Builder(toBuilder = true)
     private AuthenticatorAssertionResponse(
-        @NonNull final ByteArray authenticatorData,
-        @NonNull final ByteArray clientDataJSON,
-        @NonNull final ByteArray signature,
-        @NonNull final Optional<ByteArray> userHandle
+        @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
+        @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJSON,
+        @NonNull @JsonProperty("signature") final ByteArray signature,
+        @JsonProperty("userHandle") final ByteArray userHandle
     ) throws IOException, Base64UrlException {
         this.authenticatorData = authenticatorData;
         this.clientDataJSON = clientDataJSON;
@@ -90,19 +90,13 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
         this.clientData = new CollectedClientData(this.clientDataJSON);
     }
 
-    @JsonCreator
-    private AuthenticatorAssertionResponse(
-        @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
-        @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJSON,
-        @NonNull @JsonProperty("signature") final ByteArray signature,
-        @JsonProperty("userHandle") final ByteArray userHandle
-    ) throws IOException, Base64UrlException {
-        this(
-            authenticatorData,
-            clientDataJSON,
-            signature,
-            Optional.ofNullable(userHandle)
-        );
+    /**
+     * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
+     * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
+     * Operation</a>.
+     */
+    public Optional<ByteArray> getUserHandle() {
+        return Optional.ofNullable(userHandle);
     }
 
     public static AuthenticatorAssertionResponseBuilder.MandatoryStages builder() {
@@ -110,7 +104,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     }
 
     public static class AuthenticatorAssertionResponseBuilder {
-        private Optional<ByteArray> userHandle = Optional.empty();
+        private ByteArray userHandle = null;
 
         public static class MandatoryStages {
             private final AuthenticatorAssertionResponseBuilder builder = new AuthenticatorAssertionResponseBuilder();
@@ -140,8 +134,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
          * Operation</a>.
          */
         public AuthenticatorAssertionResponseBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
-            this.userHandle = userHandle;
-            return this;
+            return this.userHandle(userHandle.orElse(null));
         }
 
         /**
@@ -149,8 +142,9 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
          * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
          * Operation</a>.
          */
-        public AuthenticatorAssertionResponseBuilder userHandle(@NonNull ByteArray userHandle) {
-            return this.userHandle(Optional.of(userHandle));
+        public AuthenticatorAssertionResponseBuilder userHandle(ByteArray userHandle) {
+            this.userHandle = userHandle;
+            return this;
         }
     }
 

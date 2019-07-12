@@ -86,11 +86,9 @@ public class AuthenticatorData {
      *
      * @see #flags
      */
-    @NonNull
-    private final transient Optional<AttestedCredentialData> attestedCredentialData;
+    private final transient AttestedCredentialData attestedCredentialData;
 
-    @NonNull
-    private final transient Optional<CBORObject> extensions;
+    private final transient CBORObject extensions;
 
     private static final int RP_ID_HASH_INDEX = 0;
     private static final int RP_ID_HASH_END = RP_ID_HASH_INDEX + 32;
@@ -131,11 +129,11 @@ public class AuthenticatorData {
             attestedCredentialData = parseResult.getAttestedCredentialData();
             extensions = parseResult.getExtensions();
         } else if (flags.ED) {
-            attestedCredentialData = Optional.empty();
-            extensions = Optional.of(parseExtensions(Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length)));
+            attestedCredentialData = null;
+            extensions = parseExtensions(Arrays.copyOfRange(rawBytes, FIXED_LENGTH_PART_END_INDEX, rawBytes.length));
         } else {
-            attestedCredentialData = Optional.empty();
-            extensions = Optional.empty();
+            attestedCredentialData = null;
+            extensions = null;
         }
     }
 
@@ -197,11 +195,11 @@ public class AuthenticatorData {
         );
 
         final CBORObject credentialPublicKey = CBORObject.Read(indefiniteLengthBytes);
-        final Optional<CBORObject> extensions;
+        final CBORObject extensions;
 
         if (flags.ED && indefiniteLengthBytes.available() > 0) {
             try {
-                extensions = Optional.of(CBORObject.Read(indefiniteLengthBytes));
+                extensions = CBORObject.Read(indefiniteLengthBytes);
             } catch (CBORException e) {
                 throw new IllegalArgumentException("Failed to parse extension data", e);
             }
@@ -215,15 +213,15 @@ public class AuthenticatorData {
                 "Flags indicate there should be extension data, but no bytes remain after attested credential data."
             );
         } else {
-            extensions = Optional.empty();
+            extensions = null;
         }
 
         return new VariableLengthParseResult(
-            Optional.of(AttestedCredentialData.builder()
+            AttestedCredentialData.builder()
                 .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
                 .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
                 .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
-                .build()),
+                .build(),
             extensions
         );
     }
@@ -238,8 +236,21 @@ public class AuthenticatorData {
 
     @Value
     private static class VariableLengthParseResult {
-        Optional<AttestedCredentialData> attestedCredentialData;
-        Optional<CBORObject> extensions;
+        AttestedCredentialData attestedCredentialData;
+        CBORObject extensions;
+    }
+
+    /**
+     * Attested credential data, if present.
+     *
+     * <p>
+     * This member is present if and only if the {@link AuthenticatorDataFlags#AT} flag is set.
+     * </p>
+     *
+     * @see #flags
+     */
+    public Optional<AttestedCredentialData> getAttestedCredentialData() {
+        return Optional.ofNullable(attestedCredentialData);
     }
 
     /**
@@ -256,7 +267,7 @@ public class AuthenticatorData {
      * @see #flags
      */
     public Optional<CBORObject> getExtensions() {
-        return extensions.map(JacksonCodecs::deepCopy);
+        return Optional.ofNullable(extensions).map(JacksonCodecs::deepCopy);
     }
 
     static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AuthenticatorData> {

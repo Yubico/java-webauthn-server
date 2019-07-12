@@ -28,8 +28,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URL;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -44,7 +42,6 @@ import lombok.Value;
  * </a>
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
 
@@ -78,9 +75,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
      * needing more storage.
      * </p>
      */
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final Optional<URL> icon;
+    private final URL icon;
 
     @JsonCreator
     private RelyingPartyIdentity(
@@ -88,7 +83,9 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
         @NonNull @JsonProperty("id") String id,
         @JsonProperty("icon") URL icon
     ) {
-        this(name, id, Optional.ofNullable(icon));
+        this.name = name;
+        this.id = id;
+        this.icon = icon;
     }
 
     public static RelyingPartyIdentityBuilder.MandatoryStages builder() {
@@ -96,7 +93,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
     }
 
     public static class RelyingPartyIdentityBuilder {
-        private @NonNull Optional<URL> icon = Optional.empty();
+        private URL icon = null;
 
         public static class MandatoryStages {
             private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
@@ -124,8 +121,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
          * </p>
          */
         public RelyingPartyIdentityBuilder icon(@NonNull Optional<URL> icon) {
-            this.icon = icon;
-            return this;
+            return this.icon(icon.orElse(null));
         }
 
         /**
@@ -138,9 +134,15 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
          * needing more storage.
          * </p>
          */
-        public RelyingPartyIdentityBuilder icon(@NonNull URL icon) {
-            return this.icon(Optional.of(icon));
+        public RelyingPartyIdentityBuilder icon(URL icon) {
+            this.icon = icon;
+            return this;
         }
+    }
+
+    @Override
+    public Optional<URL> getIcon() {
+        return Optional.ofNullable(icon);
     }
 
 }

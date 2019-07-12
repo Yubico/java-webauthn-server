@@ -27,8 +27,6 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -42,7 +40,6 @@ import lombok.Value;
  * </a>
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class AuthenticatorSelectionCriteria {
 
@@ -51,8 +48,7 @@ public class AuthenticatorSelectionCriteria {
      * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
      * (enum AuthenticatorAttachment)</a>.
      */
-    @NonNull
-    private final Optional<AuthenticatorAttachment> authenticatorAttachment;
+    private final AuthenticatorAttachment authenticatorAttachment;
 
     /**
      * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true</code>, the
@@ -72,17 +68,28 @@ public class AuthenticatorSelectionCriteria {
     @Builder.Default
     private UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
 
+    /**
+     * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
+     * (enum AuthenticatorAttachment)</a>.
+     */
+    public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+        return Optional.ofNullable(authenticatorAttachment);
+    }
+
     @JsonCreator
     private AuthenticatorSelectionCriteria(
         @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
         @JsonProperty("requireResidentKey") boolean requireResidentKey,
         @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification
     ) {
-        this(Optional.ofNullable(authenticatorAttachment), requireResidentKey, userVerification);
+        this.authenticatorAttachment = authenticatorAttachment;
+        this.requireResidentKey = requireResidentKey;
+        this.userVerification = userVerification;
     }
 
     public static class AuthenticatorSelectionCriteriaBuilder {
-        private @NonNull Optional<AuthenticatorAttachment> authenticatorAttachment = Optional.empty();
+        private AuthenticatorAttachment authenticatorAttachment = null;
 
         /**
          * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
@@ -90,8 +97,7 @@ public class AuthenticatorSelectionCriteria {
          * (enum AuthenticatorAttachment)</a>.
          */
         public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(@NonNull Optional<AuthenticatorAttachment> authenticatorAttachment) {
-            this.authenticatorAttachment = authenticatorAttachment;
-            return this;
+            return this.authenticatorAttachment(authenticatorAttachment.orElse(null));
         }
 
         /**
@@ -99,8 +105,9 @@ public class AuthenticatorSelectionCriteria {
          * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
          * (enum AuthenticatorAttachment)</a>.
          */
-        public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(@NonNull AuthenticatorAttachment authenticatorAttachment) {
-            return this.authenticatorAttachment(Optional.of(authenticatorAttachment));
+        public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(AuthenticatorAttachment authenticatorAttachment) {
+            this.authenticatorAttachment = authenticatorAttachment;
+            return this;
         }
     }
 }

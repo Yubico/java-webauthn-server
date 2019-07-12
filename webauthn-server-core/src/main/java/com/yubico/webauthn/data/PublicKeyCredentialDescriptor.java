@@ -65,18 +65,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
      * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
      * credential the caller is referring to.
      */
-    @NonNull
-    private final Optional<Set<AuthenticatorTransport>> transports;
-
-    private PublicKeyCredentialDescriptor(
-        @NonNull PublicKeyCredentialType type,
-        @NonNull ByteArray id,
-        @NonNull Optional<Set<AuthenticatorTransport>> transports
-    ) {
-        this.type = type;
-        this.id = id;
-        this.transports = transports.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
-    }
+    private final Set<AuthenticatorTransport> transports;
 
     @JsonCreator
     private PublicKeyCredentialDescriptor(
@@ -84,7 +73,9 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         @NonNull @JsonProperty("id") ByteArray id,
         @JsonProperty("transports") Set<AuthenticatorTransport> transports
     ) {
-        this(type, id, Optional.ofNullable(transports));
+        this.type = type;
+        this.id = id;
+        this.transports = transports == null ? null : CollectionUtil.immutableSortedSet(new TreeSet<>(transports));
     }
 
     @Override
@@ -98,12 +89,12 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
             return type.compareTo(other.type);
         }
 
-        if (!transports.isPresent() && other.transports.isPresent()) {
+        if (!getTransports().isPresent() && other.getTransports().isPresent()) {
             return -1;
-        } else if (transports.isPresent() && !other.transports.isPresent()) {
+        } else if (getTransports().isPresent() && !other.getTransports().isPresent()) {
             return 1;
-        } else if (transports.isPresent() && other.transports.isPresent()){
-            int transportsComparison = EnumUtil.compareSets(transports.get(), other.transports.get(), AuthenticatorTransport.class);
+        } else if (getTransports().isPresent() && other.getTransports().isPresent()) {
+            int transportsComparison = EnumUtil.compareSets(getTransports().get(), other.getTransports().get(), AuthenticatorTransport.class);
             if (transportsComparison != 0) {
                 return transportsComparison;
             }
@@ -117,7 +108,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     }
 
     public static class PublicKeyCredentialDescriptorBuilder {
-        private Optional<Set<AuthenticatorTransport>> transports = Optional.empty();
+        private Set<AuthenticatorTransport> transports = null;
 
         public static class MandatoryStages {
             private PublicKeyCredentialDescriptorBuilder builder = new PublicKeyCredentialDescriptorBuilder();
@@ -132,16 +123,21 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
          * credential the caller is referring to.
          */
         public PublicKeyCredentialDescriptorBuilder transports(@NonNull Optional<Set<AuthenticatorTransport>> transports) {
-            this.transports = transports;
-            return this;
+            return this.transports(transports.orElse(null));
         }
 
         /**
          * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
          * credential the caller is referring to.
          */
-        public PublicKeyCredentialDescriptorBuilder transports(@NonNull Set<AuthenticatorTransport> transports) {
-            return this.transports(Optional.of(transports));
+        public PublicKeyCredentialDescriptorBuilder transports(Set<AuthenticatorTransport> transports) {
+            this.transports = transports;
+            return this;
         }
     }
+
+    public Optional<Set<AuthenticatorTransport>> getTransports() {
+        return Optional.ofNullable(transports);
+    }
+
 }

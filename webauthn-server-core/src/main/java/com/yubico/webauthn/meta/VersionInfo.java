@@ -74,7 +74,7 @@ public class VersionInfo {
      * Description of this version of this library
      */
     private final Implementation implementation = new Implementation(
-        findImplementationVersionInManifest(),
+        findImplementationVersionInManifest().orElse(null),
         new URL("https://github.com/Yubico/java-webauthn-server")
     );
 

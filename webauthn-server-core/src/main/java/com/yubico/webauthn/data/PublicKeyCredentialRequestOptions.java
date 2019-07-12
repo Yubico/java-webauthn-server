@@ -27,6 +27,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -62,8 +63,8 @@ public class PublicKeyCredentialRequestOptions {
      * This is treated as a hint, and MAY be overridden by the client.
      * </p>
      */
-    @NonNull
-    private final Optional<Long> timeout;
+    @Builder.ObtainVia(method = "wrapTimeout")
+    private final Long timeout;
 
     /**
      * Specifies the relying party identifier claimed by the caller.
@@ -71,16 +72,14 @@ public class PublicKeyCredentialRequestOptions {
      * If omitted, its value will be set by the client.
      * </p>
      */
-    @NonNull
-    private final Optional<String> rpId;
+    private final String rpId;
 
     /**
      * A list of {@link PublicKeyCredentialDescriptor} objects representing public key credentials acceptable to the
      * caller, in descending order of the caller’s preference (the first item in the list is the most preferred
      * credential, and so on down the list).
      */
-    @NonNull
-    private final Optional<List<PublicKeyCredentialDescriptor>> allowCredentials;
+    private final List<PublicKeyCredentialDescriptor> allowCredentials;
 
     /**
      * Describes the Relying Party's requirements regarding <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
@@ -104,22 +103,6 @@ public class PublicKeyCredentialRequestOptions {
     @Builder.Default
     private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
 
-    private PublicKeyCredentialRequestOptions(
-        @NonNull ByteArray challenge,
-        @NonNull Optional<Long> timeout,
-        @NonNull Optional<String> rpId,
-        @NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials,
-        @NonNull UserVerificationRequirement userVerification,
-        @NonNull AssertionExtensionInputs extensions
-    ) {
-        this.challenge = challenge;
-        this.timeout = timeout;
-        this.rpId = rpId;
-        this.allowCredentials = allowCredentials.map(CollectionUtil::immutableList);
-        this.userVerification = userVerification;
-        this.extensions = extensions;
-    }
-
     @JsonCreator
     private PublicKeyCredentialRequestOptions(
         @NonNull @JsonProperty("challenge") ByteArray challenge,
@@ -127,16 +110,22 @@ public class PublicKeyCredentialRequestOptions {
         @JsonProperty("rpId") String rpId,
         @JsonProperty("allowCredentials") List<PublicKeyCredentialDescriptor> allowCredentials,
         @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification,
-        @JsonProperty("extensions") AssertionExtensionInputs extensions
+        @NonNull @JsonProperty("extensions") AssertionExtensionInputs extensions
     ) {
-        this(
-            challenge,
-            Optional.ofNullable(timeout),
-            Optional.ofNullable(rpId),
-            Optional.ofNullable(allowCredentials),
-            userVerification,
-            Optional.ofNullable(extensions).orElseGet(() -> AssertionExtensionInputs.builder().build())
-        );
+        this.challenge = challenge;
+        this.timeout = timeout;
+        this.rpId = rpId;
+        this.allowCredentials = allowCredentials == null ? null : CollectionUtil.immutableList(allowCredentials);
+        this.userVerification = userVerification;
+        this.extensions = extensions;
+    }
+
+    public Optional<Long> getTimeout() {
+        return Optional.ofNullable(timeout);
+    }
+
+    public Optional<List<PublicKeyCredentialDescriptor>> getAllowCredentials() {
+        return Optional.ofNullable(allowCredentials);
     }
 
     public static PublicKeyCredentialRequestOptionsBuilder.MandatoryStages builder() {
@@ -144,9 +133,9 @@ public class PublicKeyCredentialRequestOptions {
     }
 
     public static class PublicKeyCredentialRequestOptionsBuilder {
-        private @NonNull Optional<Long> timeout = Optional.empty();
-        private @NonNull Optional<String> rpId = Optional.empty();
-        private @NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials = Optional.empty();
+        private Long timeout = null;
+        private String rpId = null;
+        private List<PublicKeyCredentialDescriptor> allowCredentials = null;
 
         public static class MandatoryStages {
             private PublicKeyCredentialRequestOptionsBuilder builder = new PublicKeyCredentialRequestOptionsBuilder();
@@ -163,7 +152,7 @@ public class PublicKeyCredentialRequestOptions {
          * </p>
          */
         public PublicKeyCredentialRequestOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
-            this.timeout = timeout;
+            this.timeout = timeout.orElse(null);
             return this;
         }
 
@@ -184,8 +173,7 @@ public class PublicKeyCredentialRequestOptions {
          * </p>
          */
         public PublicKeyCredentialRequestOptionsBuilder rpId(@NonNull Optional<String> rpId) {
-            this.rpId = rpId;
-            return this;
+            return this.rpId(rpId.orElse(null));
         }
 
         /**
@@ -194,17 +182,8 @@ public class PublicKeyCredentialRequestOptions {
          * If omitted, its value will be set by the client.
          * </p>
          */
-        public PublicKeyCredentialRequestOptionsBuilder rpId(@NonNull String rpId) {
-            return this.rpId(Optional.of(rpId));
-        }
-
-        /**
-         * A list of {@link PublicKeyCredentialDescriptor} objects representing public key credentials acceptable to the
-         * caller, in descending order of the caller’s preference (the first item in the list is the most preferred
-         * credential, and so on down the list).
-         */
-        public PublicKeyCredentialRequestOptionsBuilder allowCredentials(@NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials) {
-            this.allowCredentials = allowCredentials;
+        public PublicKeyCredentialRequestOptionsBuilder rpId(String rpId) {
+            this.rpId = rpId;
             return this;
         }
 
@@ -213,8 +192,24 @@ public class PublicKeyCredentialRequestOptions {
          * caller, in descending order of the caller’s preference (the first item in the list is the most preferred
          * credential, and so on down the list).
          */
-        public PublicKeyCredentialRequestOptionsBuilder allowCredentials(@NonNull List<PublicKeyCredentialDescriptor> allowCredentials) {
-            return this.allowCredentials(Optional.of(allowCredentials));
+        public PublicKeyCredentialRequestOptionsBuilder allowCredentials(@NonNull Optional<List<PublicKeyCredentialDescriptor>> allowCredentials) {
+            return this.allowCredentials(allowCredentials.orElse(null));
+        }
+
+        /**
+         * A list of {@link PublicKeyCredentialDescriptor} objects representing public key credentials acceptable to the
+         * caller, in descending order of the caller’s preference (the first item in the list is the most preferred
+         * credential, and so on down the list).
+         */
+        public PublicKeyCredentialRequestOptionsBuilder allowCredentials(List<PublicKeyCredentialDescriptor> allowCredentials) {
+            this.allowCredentials = allowCredentials;
+            return this;
         }
     }
+
+    // Needed so that Lombok's .toBuilder() doesn't call .timeout(null: long)
+    private Optional<Long> wrapTimeout() {
+        return Optional.ofNullable(timeout);
+    }
+
 }

@@ -64,12 +64,12 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
      * (appid)</a>
      */
-    @NonNull
-    private final Optional<Boolean> appid;
+    @Builder.ObtainVia(method = "getAppid")
+    private final Boolean appid;
 
     @JsonCreator
     private ClientAssertionExtensionOutputs(
-        @NonNull @JsonProperty("appid") Optional<Boolean> appid
+        @JsonProperty("appid") Boolean appid
     ) {
         this.appid = appid;
     }
@@ -78,13 +78,28 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     public Set<String> getExtensionIds() {
         Set<String> ids = new HashSet<>();
 
-        appid.ifPresent((id) -> ids.add("appid"));
+        getAppid().ifPresent((id) -> ids.add("appid"));
 
         return ids;
     }
 
+    /**
+     * The output from the FIDO AppID Extension (<code>appid</code>).
+     *
+     * <p>
+     * This value should be ignored because its behaviour is underspecified, see: <a
+     * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
+     * </p>
+     *
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
+     * (appid)</a>
+     */
+    public Optional<Boolean> getAppid() {
+        return Optional.ofNullable(appid);
+    }
+
     public static class ClientAssertionExtensionOutputsBuilder {
-        private Optional<Boolean> appid = Optional.empty();
+        private Boolean appid = null;
 
         /**
          * The output from the FIDO AppID Extension (<code>appid</code>).
@@ -98,7 +113,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
          * (appid)</a>
          */
         public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
-            this.appid = appid;
+            this.appid = appid.orElse(null);
             return this;
         }
 
@@ -117,4 +132,5 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
             return this.appid(Optional.of(appid));
         }
     }
+
 }

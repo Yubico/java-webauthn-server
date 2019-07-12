@@ -51,44 +51,64 @@ public class Attestation implements Serializable {
     /**
      * A unique identifier for a particular version of the data source of the data in this object.
      */
-    @NonNull
-    @Builder.Default
-    private final Optional<String> metadataIdentifier = Optional.empty();
+    private final String metadataIdentifier;
 
     /**
      * Free-form information about the authenticator vendor.
      */
-    @NonNull
-    @Builder.Default
-    private final Optional<Map<String, String>> vendorProperties = Optional.empty();
+    private final Map<String, String> vendorProperties;
 
     /**
      * Free-form information about the authenticator model.
      */
-    @NonNull
-    @Builder.Default
-    private final Optional<Map<String, String>> deviceProperties = Optional.empty();
+    private final Map<String, String> deviceProperties;
 
     /**
      * The set of communication modes supported by the authenticator.
      */
-    @NonNull
-    @Builder.Default
-    private final Optional<Set<Transport>> transports = Optional.empty();
+    private final Set<Transport> transports;
 
     @JsonCreator
     private Attestation(
         @JsonProperty("trusted") boolean trusted,
-        @NonNull @JsonProperty("metadataIdentifier") Optional<String> metadataIdentifier,
-        @NonNull @JsonProperty("vendorProperties") Optional<Map<String, String>> vendorProperties,
-        @NonNull @JsonProperty("deviceProperties") Optional<Map<String, String>> deviceProperties,
-        @NonNull @JsonProperty("transports") Optional<Set<Transport>> transports
+        @JsonProperty("metadataIdentifier") String metadataIdentifier,
+        @JsonProperty("vendorProperties") Map<String, String> vendorProperties,
+        @JsonProperty("deviceProperties") Map<String, String> deviceProperties,
+        @JsonProperty("transports") Set<Transport> transports
     ) {
         this.trusted = trusted;
         this.metadataIdentifier = metadataIdentifier;
         this.vendorProperties = vendorProperties;
         this.deviceProperties = deviceProperties;
-        this.transports = transports.map(TreeSet::new);
+        this.transports = transports == null ? null : new TreeSet<>(transports);
+    }
+
+    /**
+     * A unique identifier for a particular version of the data source of the data in this object.
+     */
+    public Optional<String> getMetadataIdentifier() {
+        return Optional.ofNullable(metadataIdentifier);
+    }
+
+    /**
+     * Free-form information about the authenticator vendor.
+     */
+    public Optional<Map<String, String>> getVendorProperties() {
+        return Optional.ofNullable(vendorProperties);
+    }
+
+    /**
+     * Free-form information about the authenticator model.
+     */
+    public Optional<Map<String, String>> getDeviceProperties() {
+        return Optional.ofNullable(deviceProperties);
+    }
+
+    /**
+     * The set of communication modes supported by the authenticator.
+     */
+    public Optional<Set<Transport>> getTransports() {
+        return Optional.ofNullable(transports);
     }
 
     public static Attestation empty() {
@@ -100,12 +120,54 @@ public class Attestation implements Serializable {
     }
 
     public static class AttestationBuilder {
+        private boolean trusted;
+        private String metadataIdentifier;
+        private Map<String, String> vendorProperties;
+        private Map<String, String> deviceProperties;
+        private Set<Transport> transports;
+
         public static class MandatoryStages {
             private final AttestationBuilder builder = new AttestationBuilder();
 
             public AttestationBuilder trusted(boolean trusted) {
                 return builder.trusted(trusted);
             }
+        }
+
+        public AttestationBuilder metadataIdentifier(@NonNull Optional<String> metadataIdentifier) {
+            return this.metadataIdentifier(metadataIdentifier.orElse(null));
+        }
+
+        public AttestationBuilder metadataIdentifier(String metadataIdentifier) {
+            this.metadataIdentifier = metadataIdentifier;
+            return this;
+        }
+
+        public AttestationBuilder vendorProperties(@NonNull Optional<Map<String, String>> vendorProperties) {
+            return this.vendorProperties(vendorProperties.orElse(null));
+        }
+
+        public AttestationBuilder vendorProperties(Map<String, String> vendorProperties) {
+            this.vendorProperties = vendorProperties;
+            return this;
+        }
+
+        public AttestationBuilder deviceProperties(@NonNull Optional<Map<String, String>> deviceProperties) {
+            return this.deviceProperties(deviceProperties.orElse(null));
+        }
+
+        public AttestationBuilder deviceProperties(Map<String, String> deviceProperties) {
+            this.deviceProperties = deviceProperties;
+            return this;
+        }
+
+        public AttestationBuilder transports(@NonNull Optional<Set<Transport>> transports) {
+            return this.transports(transports.orElse(null));
+        }
+
+        public AttestationBuilder transports(Set<Transport> transports) {
+            this.transports = transports;
+            return this;
         }
     }
 

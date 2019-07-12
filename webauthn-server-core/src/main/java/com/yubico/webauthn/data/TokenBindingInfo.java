@@ -27,6 +27,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -48,12 +49,12 @@ public class TokenBindingInfo {
      * This member MUST be present if {@link #status} is present, and MUST be a base64url encoding of the Token Binding
      * ID that was used when communicating with the Relying Party.
      */
-    @NonNull
-    private final Optional<ByteArray> id;
+    private final ByteArray id;
 
+    @JsonCreator
     TokenBindingInfo(
-        @NonNull TokenBindingStatus status,
-        @NonNull Optional<ByteArray> id
+        @NonNull @JsonProperty("status") TokenBindingStatus status,
+        @NonNull @JsonProperty("id") Optional<ByteArray> id
     ) {
         if (status == TokenBindingStatus.PRESENT) {
             assure(
@@ -70,15 +71,7 @@ public class TokenBindingInfo {
         }
 
         this.status = status;
-        this.id = id;
-    }
-
-    @JsonCreator
-    private TokenBindingInfo(
-        @NonNull @JsonProperty("status") TokenBindingStatus status,
-        @JsonProperty("id") ByteArray id
-    ) {
-        this(status, Optional.ofNullable(id));
+        this.id = id.orElse(null);
     }
 
     public static TokenBindingInfo present(@NonNull ByteArray id) {
@@ -87,6 +80,10 @@ public class TokenBindingInfo {
 
     public static TokenBindingInfo supported() {
         return new TokenBindingInfo(TokenBindingStatus.SUPPORTED, Optional.empty());
+    }
+
+    public Optional<ByteArray> getId() {
+        return Optional.ofNullable(id);
     }
 
 }
