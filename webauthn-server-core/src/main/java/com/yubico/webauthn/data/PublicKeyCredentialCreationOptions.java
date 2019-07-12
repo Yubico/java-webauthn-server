@@ -158,7 +158,7 @@ public class PublicKeyCredentialCreationOptions {
         @JsonProperty("timeout") Long timeout,
         @JsonProperty("excludeCredentials") Set<PublicKeyCredentialDescriptor> excludeCredentials,
         @JsonProperty("authenticatorSelection") AuthenticatorSelectionCriteria authenticatorSelection,
-        @NonNull @JsonProperty("attestation") AttestationConveyancePreference attestation,
+        @JsonProperty("attestation") AttestationConveyancePreference attestation,
         @JsonProperty("extensions") RegistrationExtensionInputs extensions
     ) {
         this(
@@ -169,7 +169,7 @@ public class PublicKeyCredentialCreationOptions {
             Optional.ofNullable(timeout),
             Optional.ofNullable(excludeCredentials),
             Optional.ofNullable(authenticatorSelection),
-            attestation,
+            Optional.ofNullable(attestation).orElse(AttestationConveyancePreference.NONE),
             Optional.ofNullable(extensions).orElseGet(() -> RegistrationExtensionInputs.builder().build())
         );
     }
