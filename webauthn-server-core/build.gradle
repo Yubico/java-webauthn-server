@@ -2,11 +2,6 @@ plugins {
   id 'java-library'
   id 'scala'
   id 'info.solidsoft.pitest'
-  id "io.freefair.lombok"
-}
-
-lombok {
-  version = '1.18.8'
 }
 
 description = 'Yubico WebAuthn server core API'

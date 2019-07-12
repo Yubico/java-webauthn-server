@@ -3,11 +3,6 @@ plugins {
   id 'war'
   id 'scala'
   id 'com.bmuschko.docker-remote-api' version '3.6.1'
-  id "io.freefair.lombok"
-}
-
-lombok {
-  version = '1.18.8'
 }
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage

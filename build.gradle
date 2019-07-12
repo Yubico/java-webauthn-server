@@ -9,8 +9,11 @@ buildscript {
 plugins {
   id 'com.github.kt3k.coveralls' version '2.8.1'
   id 'io.codearte.nexus-staging' version '0.9.0'
-  id "io.freefair.lombok" version "3.6.6"
+  id 'io.franzbecker.gradle-lombok' version '1.14'
 }
+
+import io.franzbecker.gradle.lombok.LombokPlugin
+import io.franzbecker.gradle.lombok.task.DelombokTask
 
 project.ext.isCiBuild = System.env.CI == 'true'
 
@@ -46,6 +49,13 @@ allprojects {
 }
 
 subprojects {
+  apply plugin: LombokPlugin
+
+  lombok {
+    version '1.18.8'
+    sha256 = '0396952823579b316a0fe85cbd871bbb3508143c2bcbd985dd7800e806cb24fc'
+  }
+
   repositories {
     mavenLocal()
 
@@ -92,7 +102,24 @@ subprojects { project ->
       from sourceSets.main.allSource
     }
 
+    task delombok(type: DelombokTask, dependsOn: classes) {
+      ext.outputDir = file("${buildDir}/delombok")
+      outputs.dir outputDir
+      sourceSets.main.java.srcDirs.each {
+        if (!it.exists()) {
+          it.mkdirs()
+        }
+        inputs.dir it
+        args(it, '-d', outputDir)
+      }
+      doFirst {
+        outputDir.deleteDir()
+      }
+    }
+
     javadoc {
+      dependsOn delombok
+      source = delombok.outputDir
       options.encoding = 'UTF-8'
       options.addStringOption('charset', 'UTF-8')
     }
