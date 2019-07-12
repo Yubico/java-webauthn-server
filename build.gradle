@@ -203,6 +203,10 @@ task pitestMerge(type: com.yubico.gradle.pitest.tasks.PitestMergeTask)
 
 coveralls {
   sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
+
+  // Workaround to TLS issues in JDK 11, see https://github.com/kt3k/coveralls-gradle-plugin/issues/85
+  saveAsFile = true
+  sendToCoveralls = false
 }
 tasks.coveralls {
   inputs.files pitestMerge.outputs.files
