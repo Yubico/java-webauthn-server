@@ -7,7 +7,7 @@ buildscript {
   }
 }
 plugins {
-  id 'com.github.kt3k.coveralls' version '2.8.1'
+  id 'com.github.kt3k.coveralls' version '2.8.2'
   id 'io.codearte.nexus-staging' version '0.9.0'
   id 'io.franzbecker.gradle-lombok' version '1.14'
 }
