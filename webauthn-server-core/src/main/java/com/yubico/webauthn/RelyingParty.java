@@ -89,15 +89,11 @@ public class RelyingParty {
     private final RelyingPartyIdentity identity;
 
     /**
-     * The allowed origins that returned authenticator responses will be compared against.
+     * The allowed origins that returned authenticator responses will be compared against. Incoming origins can
+     * expand on the string with subdomains and a port number. This set should only contain FQDNs.
      *
      * <p>
-     * The default is the set containing only the string <code>"https://" + {@link #getIdentity()}.getId()</code>.
-     * </p>
-     *
-     * <p>
-     * A successful registration or authentication operation requires {@link CollectedClientData#getOrigin()} to exactly
-     * equal one of these values.
+     * The default is the set containing only the string <code>{@link #getIdentity()}.getId()</code>.
      * </p>
      *
      * @see #getIdentity()
@@ -265,7 +261,7 @@ public class RelyingParty {
         boolean validateSignatureCounter
     ) {
         this.identity = identity;
-        this.origins = origins != null ? origins : Collections.singleton("https://" + identity.getId());
+        this.origins = origins != null ? origins : Collections.singleton(identity.getId());
         this.credentialRepository = credentialRepository;
         this.appId = appId;
         this.attestationConveyancePreference = attestationConveyancePreference;

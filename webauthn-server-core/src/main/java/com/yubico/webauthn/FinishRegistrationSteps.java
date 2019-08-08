@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -214,7 +215,9 @@ final class FinishRegistrationSteps {
         @Override
         public void validate() {
             assure(
-                origins.stream().anyMatch(o -> o.equals(clientData.getOrigin())),
+                origins.stream().anyMatch(allowedOrigin ->
+                        Pattern.compile("(https://)?(\\w+\\.)?" + allowedOrigin + "(:\\d+)?")
+                                .matcher(clientData.getOrigin()).matches()),
                 "Incorrect origin: " + clientData.getOrigin()
             );
         }

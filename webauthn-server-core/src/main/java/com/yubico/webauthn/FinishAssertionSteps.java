@@ -45,6 +45,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -375,7 +376,9 @@ final class FinishAssertionSteps {
             final String responseOrigin;
             responseOrigin = response.getResponse().getClientData().getOrigin();
 
-            if (origins.stream().noneMatch(o -> o.equals(responseOrigin))) {
+            if (origins.stream().noneMatch(allowedOrigin ->
+                    Pattern.compile("(https://)?(\\w+\\.)?" + allowedOrigin + "(:\\d+)?")
+                            .matcher(responseOrigin).matches())) {
                 throw new IllegalArgumentException("Incorrect origin: " + responseOrigin);
             }
         }
