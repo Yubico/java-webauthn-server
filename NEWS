@@ -19,6 +19,11 @@ New features:
 * Artifacts are now built reproducibly; fresh builds from source should now be
   verifiable by signature files from Maven Central.
 
+Security fixes:
+
+* Bumped Jackson dependency to version 2.9.9.3 which has patched CVE-2019-12814,
+  CVE-2019-14439, CVE-2019-14379
+
 
 == Version 1.3.0 ==
 

@@ -30,7 +30,7 @@ dependencies {
     project(':webauthn-server-core'),
     project(':yubico-util'),
 
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',
     'com.upokecenter:cbor:2.4.1',
     'javax.ws.rs:javax.ws.rs-api:2.1',
