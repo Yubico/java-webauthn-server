@@ -5,7 +5,6 @@ branches:
     - /^tmp-?.*/
 
 jdk:
-  - oraclejdk8
   - oraclejdk11
   - openjdk8
   - openjdk10
