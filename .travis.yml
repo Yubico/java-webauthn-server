@@ -22,3 +22,6 @@ jobs:
     - stage: mutation-test
       jdk: oraclejdk11
       script: ./gradlew pitest coveralls
+
+      # Workaround to TLS issues in JDK 11, see https://github.com/kt3k/coveralls-gradle-plugin/issues/85
+      after_success: curl -F 'json_file=@build/coveralls/report.json' 'https://coveralls.io/api/v1/jobs'

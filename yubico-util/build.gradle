@@ -1,11 +1,6 @@
 plugins {
   id 'java-library'
   id 'scala'
-  id "io.freefair.lombok"
-}
-
-lombok {
-  version = '1.18.8'
 }
 
 description = 'Yubico internal utilities'
