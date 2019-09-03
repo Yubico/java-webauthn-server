@@ -24,13 +24,13 @@
 
 package com.yubico.webauthn.test
 
+import java.security.interfaces.ECPublicKey
 import java.util.Base64
 
 import com.yubico.webauthn.data.AttestationObject
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.util.ASN1Dump
-import COSE.ECPublicKey
 import COSE.OneKey
 import com.fasterxml.jackson.databind.JsonNode
 import com.upokecenter.cbor.CBORObject
@@ -40,7 +40,6 @@ import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.WebAuthnCodecs
 import com.yubico.webauthn.WebAuthnTestCodecs
 
 import scala.collection.JavaConverters._
@@ -156,7 +155,7 @@ object Test extends App {
     val credentialPublicKeyBytes = attestedCredData.drop(16 + 2 + L)
     val credentialPublicKeyCbor = JacksonCodecs.cbor.readTree(credentialPublicKeyBytes)
     val credentialPublicKeyCbor2 = CBORObject.DecodeFromBytes(credentialPublicKeyBytes)
-    val credentialPublicKeyDecoded = new ECPublicKey(new OneKey(CBORObject.DecodeFromBytes(credentialPublicKeyBytes)))
+    val credentialPublicKeyDecoded: ECPublicKey = new OneKey(CBORObject.DecodeFromBytes(credentialPublicKeyBytes)).AsPublicKey().asInstanceOf[ECPublicKey]
 
     println("Attested credential data:")
     println(s"AAGUID: ${aaguid}")

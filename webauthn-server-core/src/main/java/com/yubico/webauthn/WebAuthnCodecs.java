@@ -142,8 +142,8 @@ final class WebAuthnCodecs {
         return KeyFactory.getInstance("RSA", new BouncyCastleProvider()).generatePublic(spec);
     }
 
-    private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException, IOException {
-        return new COSE.ECPublicKey(new OneKey(cose));
+    private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
+        return (ECPublicKey) new OneKey(cose).AsPublicKey();
     }
 
     private static PublicKey importCoseEdDsaPublicKey(CBORObject cose) {

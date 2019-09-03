@@ -29,6 +29,10 @@ dependencies {
     'org.scalacheck:scalacheck_2.12:1.14.0',
     'org.scalatest:scalatest_2.12:3.0.4',
   )
+  testRuntimeOnly(
+    // Transitive dependency from :webauthn-server-core:test
+    'org.bouncycastle:bcpkix-jdk15on:1.62',
+  )
 }
 
 

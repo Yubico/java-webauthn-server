@@ -12,7 +12,7 @@ dependencies {
 
   implementation(
     project(':yubico-util'),
-    'com.augustcellars.cose:cose-java:0.9.4',
+    'com.augustcellars.cose:cose-java:0.9.10',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',
     'org.apache.httpcomponents:httpclient:4.5.2',
@@ -24,6 +24,7 @@ dependencies {
     project(':yubico-util-scala'),
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
     'junit:junit:4.12',
+    'org.bouncycastle:bcpkix-jdk15on:1.62',
     'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
