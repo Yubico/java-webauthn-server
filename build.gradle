@@ -89,8 +89,6 @@ subprojects { project ->
   }
 
   test {
-    failFast = true
-
     testLogging {
       showStandardStreams = isCiBuild
     }
