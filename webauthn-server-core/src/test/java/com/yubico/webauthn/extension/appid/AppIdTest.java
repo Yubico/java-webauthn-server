@@ -24,10 +24,13 @@
 
 package com.yubico.webauthn.extension.appid;
 
+import com.yubico.internal.util.JacksonCodecs;
+import java.io.IOException;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 public class AppIdTest {
 
@@ -67,6 +70,22 @@ public class AppIdTest {
     @Test
     public void badSyntax() {
         assertFalse(isValid("https://bad[syntax]"));
+    }
+
+    @Test
+    public void jsonDecode() throws InvalidAppIdException, IOException {
+        assertEquals(
+            new AppId("https://example.org"),
+            JacksonCodecs.json().readValue("\"https://example.org\"", AppId.class)
+        );
+    }
+
+    @Test
+    public void jsonEncode() throws InvalidAppIdException, IOException {
+        assertEquals(
+            "\"https://example.org\"",
+            JacksonCodecs.json().writeValueAsString(new AppId("https://example.org"))
+        );
     }
 
     private static boolean isValid(String appId) {
