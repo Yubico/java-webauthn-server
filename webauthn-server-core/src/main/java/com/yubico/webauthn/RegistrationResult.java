@@ -142,36 +142,36 @@ public class RegistrationResult {
     }
 
     static class RegistrationResultBuilder {
-        public static class MandatoryStages {
+        static class MandatoryStages {
             private RegistrationResultBuilder builder = new RegistrationResultBuilder();
 
-            public Step2 keyId(PublicKeyCredentialDescriptor keyId) {
+            Step2 keyId(PublicKeyCredentialDescriptor keyId) {
                 builder.keyId(keyId);
                 return new Step2();
             }
 
-            public class Step2 {
-                public Step3 attestationTrusted(boolean attestationTrusted) {
+            class Step2 {
+                Step3 attestationTrusted(boolean attestationTrusted) {
                     builder.attestationTrusted(attestationTrusted);
                     return new Step3();
                 }
             }
 
-            public class Step3 {
-                public Step4 attestationType(AttestationType attestationType) {
+            class Step3 {
+                Step4 attestationType(AttestationType attestationType) {
                     builder.attestationType(attestationType);
                     return new Step4();
                 }
             }
 
-            public class Step4 {
-                public RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
+            class Step4 {
+                RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
                     return builder.publicKeyCose(publicKeyCose);
                 }
             }
         }
 
-        public RegistrationResultBuilder attestationMetadata(@NonNull Optional<Attestation> attestationMetadata) {
+        RegistrationResultBuilder attestationMetadata(@NonNull Optional<Attestation> attestationMetadata) {
             this.attestationMetadata = attestationMetadata.orElse(null);
             return this;
         }
