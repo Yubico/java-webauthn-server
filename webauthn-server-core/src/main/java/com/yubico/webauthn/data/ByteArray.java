@@ -65,7 +65,6 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
         this.base64 = BASE64URL_ENCODER.encodeToString(this.bytes);
     }
 
-    @JsonCreator
     private ByteArray(String base64) throws Base64UrlException {
         try {
             this.bytes = BASE64URL_DECODER.decode(base64);
@@ -87,6 +86,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
      *
      * @throws Base64UrlException if <code>base64</code> is not valid Base64Url data.
      */
+    @JsonCreator
     public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
         return new ByteArray(base64);
     }
