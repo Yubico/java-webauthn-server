@@ -36,6 +36,7 @@ import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.RegistrationResult
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
+import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -123,6 +124,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[RelyingPartyIdentity]() {})
     test(new TypeReference[TokenBindingInfo]() {})
     test(new TypeReference[TokenBindingStatus]() {})
+    test(new TypeReference[Transport]() {})
     test(new TypeReference[UserIdentity]() {})
     test(new TypeReference[UserVerificationRequirement]() {})
   }
