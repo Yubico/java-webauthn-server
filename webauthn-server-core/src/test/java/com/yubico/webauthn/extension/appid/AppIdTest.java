@@ -95,6 +95,6 @@ public class AppIdTest {
         } catch (InvalidAppIdException e) {
             return false;
         }
-
     }
+
 }
