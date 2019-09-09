@@ -352,7 +352,8 @@ To run the tests:
 $ ./gradlew check
 ----------
 
-To run the http://pitest.org/[PIT mutation tests]:
+To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
+minutes):
 
 ----------
 $ ./gradlew pitest
