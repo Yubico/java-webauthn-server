@@ -1,0 +1,27 @@
+name: Java CI
+
+on: [push]
+
+jobs:
+  build:
+    name: JDK ${{matrix.java}}
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [8, 10, 11, 12]
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v1
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Run tests
+      run: ./gradlew check assembleJavadoc
+
+    - name: Run mutation tests
+      run: ./gradlew pitest
