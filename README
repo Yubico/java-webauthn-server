@@ -327,14 +327,14 @@ version is derived from the most recent Git tag. Builds done on a tagged commit
 will have a plain `x.y.z` version number, while a build on any other commit will
 result in a version number containing the abbreviated commit hash.
 
-Starting in version `1.4.0`, artifacts are built reproducibly. Fresh builds from
+Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds from
 tagged commits should therefore be verifiable by signatures from Maven Central:
 
 ```
-$ git checkout 1.4.0
+$ git checkout 1.4.0-RC2
 $ ./gradlew :webauthn-server-core:jar
-$ wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/webauthn-server-core-1.4.0.jar.asc
-$ gpg --verify webauthn-server-core-1.4.0.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0.jar
+$ wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0-RC2/webauthn-server-core-1.4.0-RC2.jar.asc
+$ gpg --verify webauthn-server-core-1.4.0-RC2.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0-RC2.jar
 ```
 
 Note that building with a different JDK may produce a different artifact. To
