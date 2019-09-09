@@ -337,6 +337,10 @@ $ wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/weba
 $ gpg --verify webauthn-server-core-1.4.0.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0.jar
 ```
 
+Note that building with a different JDK may produce a different artifact. To
+ensure binary reproducibility, please build with the same JDK as specified in
+the release notes.
+
 Official Yubico software signing keys are listed on the
 https://developers.yubico.com/Software_Projects/Software_Signing.html[Yubico
 Developers site].
