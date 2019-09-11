@@ -1,0 +1,39 @@
+name: Verify release signatures
+
+on:
+  release:
+    types: [published, created, edited, prereleased]
+
+jobs:
+  verify:
+    name: Verify signatures (JDK ${{matrix.java}})
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [11]
+
+    steps:
+    - name: Download signatures
+      run: |
+        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF}/webauthn-server-attestation-${GITHUB_REF}.jar.asc
+        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF}/webauthn-server-core-${GITHUB_REF}.jar.asc
+
+    - name: check out code
+      uses: actions/checkout@v1
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Build jars
+      run: ./gradlew jar
+
+    - name: Fetch keys
+      run: gpg --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E
+
+    - name: Verify signatures
+      run: |
+        gpg --verify webauthn-server-attestation-${GITHUB_REF}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF}.jar
+        gpg --verify webauthn-server-core-${GITHUB_REF}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF}.jar
