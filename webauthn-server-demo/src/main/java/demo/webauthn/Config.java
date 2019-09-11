@@ -43,15 +43,18 @@ public class Config {
     private static final Logger logger = LoggerFactory.getLogger(Config.class);
 
     private static final String DEFAULT_ORIGIN = "https://localhost:8443";
+    private static final int DEFAULT_PORT = 8443;
     private static final RelyingPartyIdentity DEFAULT_RP_ID
         = RelyingPartyIdentity.builder().id("localhost").name("Yubico WebAuthn demo").build();
 
     private final Set<String> origins;
+    private final int port;
     private final RelyingPartyIdentity rpIdentity;
     private final Optional<AppId> appId;
 
-    private Config(Set<String> origins, RelyingPartyIdentity rpIdentity, Optional<AppId> appId) {
+    private Config(Set<String> origins, int port, RelyingPartyIdentity rpIdentity, Optional<AppId> appId) {
         this.origins = CollectionUtil.immutableSet(origins);
+        this.port = port;
         this.rpIdentity = rpIdentity;
         this.appId = appId;
     }
@@ -60,7 +63,7 @@ public class Config {
     private static Config getInstance() {
         if (instance == null) {
             try {
-                instance = new Config(computeOrigins(), computeRpIdentity(), computeAppId());
+                instance = new Config(computeOrigins(), computePort(), computeRpIdentity(), computeAppId());
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             } catch (InvalidAppIdException e) {
@@ -72,6 +75,10 @@ public class Config {
 
     public static Set<String> getOrigins() {
         return getInstance().origins;
+    }
+
+    public static int getPort() {
+        return getInstance().port;
     }
 
     public static RelyingPartyIdentity getRpIdentity() {
@@ -98,6 +105,16 @@ public class Config {
         logger.info("Origins: {}", result);
 
         return result;
+    }
+
+    private static int computePort() {
+        final String port = System.getenv("YUBICO_WEBAUTHN_PORT");
+
+        if (port == null) {
+            return DEFAULT_PORT;
+        } else {
+            return Integer.parseInt(port);
+        }
     }
 
     private static RelyingPartyIdentity computeRpIdentity() throws MalformedURLException {

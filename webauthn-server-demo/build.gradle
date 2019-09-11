@@ -1,6 +1,7 @@
 plugins {
   id 'java'
   id 'war'
+  id 'application'
   id 'scala'
   id 'com.bmuschko.docker-remote-api' version '3.6.1'
 }
@@ -30,11 +31,13 @@ dependencies {
     'com.upokecenter:cbor:2.4.1',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
-    'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
+    'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
+    'org.glassfish.jersey.containers:jersey-container-servlet-core:2.26',
     'org.slf4j:slf4j-api:1.7.25',
   )
 
   forJdk10(
+    'javax.activation:activation:1.1.1',
     'javax.xml.bind:jaxb-api:2.3.0',
   )
 
@@ -64,14 +67,7 @@ dependencies {
   }
 }
 
-gretty {
-  contextPath = '/webauthn'
-  httpEnabled = false
-  httpsEnabled = true
-  servletContainer = 'jetty7' // Orders of magnitude faster than jetty9
-  sslKeyStorePassword = 'p@ssw0rd'
-  sslKeyStorePath = file('keystore.jks')
-}
+mainClassName = 'demo.webauthn.EmbeddedServer'
 
 task dockerPrepare(type: Sync) {
   from file('docker')

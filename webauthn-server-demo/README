@@ -71,6 +71,14 @@ with Yubico device metadata.
 
 == Usage
 
+This subproject includes two ways to run the demo server:
+
+- As a `.war` archive to be deployed in any Java web server
+- As a standalone Java executable
+
+
+=== `.war` archive
+
 The `.war` archive includes a simple web GUI hosted at `/`, relative to the
 context root of the deployed `.war` application, which communicates with the
 server via a REST API served at `/api/v1/`.
@@ -79,25 +87,55 @@ To build it, run
 
   $ ../gradlew war
 
-To build and run it via Gradle, run
 
-  $ ../gradlew appRun
+=== Standalone Java executable
 
-This will serve the application under `https://localhost:8443/webauthn/` by
-default.
+The standalone Java executable has the main class
+https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
+This server also serves the REST API at `/api/v1/`, and static resources for the
+GUI under `/`.
+
+To build it, run one of the following:
+
+  $ ../gradlew distTar
+  $ ../gradlew distZip
+
+This will build an archive which can be unpacked and run anywhere with a Java
+environment as:
+
+  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo
+  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo.bat
+
+NOTE: This distribution does not include the static files or an HTTPS key store.
+To run it outside of the project directory, you'll need to create a
+`${wd}/keystore.jks` with password `p@ssw0rd` and copy the contents of
+`src/main/webapp/` to `${wd}/src/main/webapp`, where `${wd}` is the working
+directory of the `webauthn-server-demo` process.
+
+To build and run the demo server via Gradle, run:
+
+  $ ./gradlew run
+
+This will serve the application under `https://localhost:8443/`.
 
 NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
 certificate. This will cause your browser to show a warning, which is safe to
 bypass. The dummy certificate is not included in the `.war` artifact; it is only
-used when running via Gradle.
+used by the embedded Jetty server.
 
 
 === Configuration
 
-The server accepts the following environment variables for
+Both modes of running the server accept the following environment variables for
 configuration. Note that if running via Gradle, you may need to disable the
 Gradle daemon (`--no-daemon`) in order for the server process to have the
 correct environment.
+
+  - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
+    `YUBICO_WEBAUTHN_PORT=8081`
+
+    This is ignored when running as a `.war` artifact, since the port is
+    controlled by the parent web server.
 
   - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
     server will accept requests for. Example:
