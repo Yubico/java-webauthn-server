@@ -101,16 +101,12 @@ To build it, run one of the following:
   $ ../gradlew distZip
 
 This will build an archive which can be unpacked and run anywhere with a Java
-environment as:
+environment:
 
-  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo
-  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo.bat
-
-NOTE: This distribution does not include the static files or an HTTPS key store.
-To run it outside of the project directory, you'll need to create a
-`${wd}/keystore.jks` with password `p@ssw0rd` and copy the contents of
-`src/main/webapp/` to `${wd}/src/main/webapp`, where `${wd}` is the working
-directory of the `webauthn-server-demo` process.
+  $ unzip webauthn-server-demo-$VERSION.zip
+  $ cd webauthn-server-demo-$VERSION
+  $ ./bin/webauthn-server-demo
+  > ./bin/webauthn-server-demo.bat
 
 To build and run the demo server via Gradle, run:
 
@@ -121,7 +117,7 @@ This will serve the application under `https://localhost:8443/`.
 NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
 certificate. This will cause your browser to show a warning, which is safe to
 bypass. The dummy certificate is not included in the `.war` artifact; it is only
-used by the embedded Jetty server.
+used by the embedded Jetty server and the application distribution archives.
 
 
 === Configuration
