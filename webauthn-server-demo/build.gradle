@@ -37,6 +37,7 @@ dependencies {
   )
 
   forJdk10(
+    'javax.activation:activation:1.1.1',
     'javax.xml.bind:jaxb-api:2.3.0',
   )
 
