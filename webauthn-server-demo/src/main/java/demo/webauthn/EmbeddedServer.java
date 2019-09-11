@@ -24,15 +24,21 @@
 
 package demo.webauthn;
 
-import javax.ws.rs.core.UriBuilder;
-
 import demo.App;
-import java.net.URI;
+import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 /**
  * Standalone Java application launcher that runs the demo server with the API
@@ -43,18 +49,37 @@ public class EmbeddedServer {
     public static void main(String[] args) throws Exception {
         final int port = Config.getPort();
 
-        URI baseUri = UriBuilder.fromUri("http://localhost").port(port).build();
-
         App app = new App();
 
         ResourceConfig config = new ResourceConfig();
         config.registerClasses(app.getClasses());
         config.registerInstances(app.getSingletons());
 
-        Server server = JettyHttpContainerFactory.createServer(baseUri, config, false);
-        ServerConnector connector = new ServerConnector(server);
+        SslContextFactory ssl = new SslContextFactory("keystore.jks");
+        ssl.setKeyStorePassword("p@ssw0rd");
+
+        Server server = new Server();
+        HttpConfiguration httpConfig = new HttpConfiguration();
+        httpConfig.setSecureScheme("https");
+        httpConfig.setSecurePort(port);
+        HttpConfiguration httpsConfig = new HttpConfiguration(httpConfig);
+        httpsConfig.addCustomizer(new SecureRequestCustomizer());
+
+        ServerConnector connector = new ServerConnector(
+            server,
+            new SslConnectionFactory(ssl, HttpVersion.HTTP_1_1.asString()),
+            new HttpConnectionFactory(httpsConfig)
+        );
+
         connector.setPort(port);
         connector.setHost("127.0.0.1");
+
+        ServletHolder servlet = new ServletHolder(new ServletContainer(config));
+        ServletContextHandler context = new ServletContextHandler(server, "/webauthn");
+        context.addServlet(DefaultServlet.class, "/");
+        context.setResourceBase("src/main/webapp");
+        context.addServlet(servlet, "/api/*");
+
         server.setConnectors(new Connector[] { connector });
         server.start();
     }
