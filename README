@@ -5,6 +5,7 @@ java-webauthn-server
 :toc-title:
 
 image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
+image:https://github.com/Yubico/java-webauthn-server/workflows/build/badge.svg["Build Status", link="https://github.com/Yubico/java-webauthn-server/actions"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
 
 Server-side https://www.w3.org/TR/webauthn/[Web Authentication] library for
