@@ -75,7 +75,7 @@ public class EmbeddedServer {
         connector.setHost("127.0.0.1");
 
         ServletHolder servlet = new ServletHolder(new ServletContainer(config));
-        ServletContextHandler context = new ServletContextHandler(server, "/webauthn");
+        ServletContextHandler context = new ServletContextHandler(server, "/");
         context.addServlet(DefaultServlet.class, "/");
         context.setResourceBase("src/main/webapp");
         context.addServlet(servlet, "/api/*");
