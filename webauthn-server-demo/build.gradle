@@ -1,6 +1,7 @@
 plugins {
   id 'java'
   id 'war'
+  id 'application'
   id 'scala'
   id 'com.bmuschko.docker-remote-api' version '3.6.1'
 }
@@ -63,6 +64,8 @@ dependencies {
     }
   }
 }
+
+mainClassName = 'demo.webauthn.EmbeddedServer'
 
 gretty {
   contextPath = '/webauthn'
