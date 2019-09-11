@@ -24,4 +24,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Run tests
-      run: ./gradlew check assembleJavadoc
+      run: ./gradlew check
+
+    - name: Build JavaDoc
+      run: ./gradlew assembleJavadoc
