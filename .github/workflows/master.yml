@@ -1,3 +1,4 @@
+# This name is shown in the status badge in the README
 name: build
 
 on:
