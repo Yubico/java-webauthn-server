@@ -1,3 +1,14 @@
+== Version 1.5.0 (unreleased) ==
+
+New features:
+
+* Origin matching can now be relaxed via two new `RelyingParty` options:
+  * `allowOriginPort` (default `false`): Allow any port number in the origin
+  * `allowOriginSubdomain` (default `false`): Allow any subdomain of any origin
+    listed in `RelyingParty.origins`
+  * See JavaDoc for details and examples.
+
+
 == Version 1.4.0 (unreleased) ==
 
 Changes:
