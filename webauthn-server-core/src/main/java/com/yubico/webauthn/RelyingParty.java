@@ -96,8 +96,20 @@ public class RelyingParty {
      * </p>
      *
      * <p>
-     * A successful registration or authentication operation requires {@link CollectedClientData#getOrigin()} to exactly
-     * equal one of these values.
+     * If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} and {@link
+     * RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false</code> (the
+     * default), then a successful registration or authentication operation requires {@link
+     * CollectedClientData#getOrigin()} to exactly equal one of these values.
+     * </p>
+     *
+     * <p>
+     * If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} is <code>true</code>, then the above rule
+     * is relaxed to allow any port number in {@link CollectedClientData#getOrigin()}, regardless of any port specified.
+     * </p>
+     *
+     * <p>
+     * If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is <code>true</code>, then the
+     * above rule is relaxed to allow any subdomain, of any depth, of any of these values.
      * </p>
      *
      * @see #getIdentity()
@@ -210,6 +222,111 @@ public class RelyingParty {
     ));
 
     /**
+     * If <code>true</code>, the origin matching rule is relaxed to allow any port number.
+     *
+     * <p>
+     * The default is <code>false</code>.
+     * </p>
+     *
+     * <p>
+     * Examples with <code>origins: ["https://example.org", "https://accounts.example.org", "https://acme.com:8443"]</code>
+     * </p>
+     *
+     * <ul>
+     *   <li>
+     *     <p><code>allowOriginPort: false</code></p>
+     *
+     *     <p>Accepted:</p>
+     *     <ul>
+     *       <li><code>https://example.org</code></li>
+     *       <li><code>https://accounts.example.org</code></li>
+     *       <li><code>https://acme.com:8443</code></li>
+     *     </ul>
+     *
+     *     <p>Rejected:</p>
+     *     <ul>
+     *       <li><code>https://example.org:8443</code></li>
+     *       <li><code>https://shop.example.org</code></li>
+     *       <li><code>https://acme.com</code></li>
+     *       <li><code>https://acme.com:9000</code></li>
+     *     </ul>
+     *   </li>
+     *   <li>
+     *     <p><code>allowOriginPort: true</code></p>
+     *
+     *     <p>Accepted:</p>
+     *     <ul>
+     *       <li><code>https://example.org</code></li>
+     *       <li><code>https://example.org:8443</code></li>
+     *       <li><code>https://accounts.example.org</code></li>
+     *       <li><code>https://acme.com</code></li>
+     *       <li><code>https://acme.com:8443</code></li>
+     *       <li><code>https://acme.com:9000</code></li>
+     *     </ul>
+     *
+     *     <p>Rejected:</p>
+     *     <ul>
+     *       <li><code>https://shop.example.org</code></li>
+     *     </ul>
+     *   </li>
+     * </ul>
+     */
+    @Builder.Default
+    private final boolean allowOriginPort = false;
+
+    /**
+     * If <code>true</code>, the origin matching rule is relaxed to allow any subdomain of the values of {@link
+     * RelyingPartyBuilder#origins(Set) origins}.
+     *
+     * <p>
+     * The default is <code>false</code>.
+     * </p>
+     *
+     * <p>
+     * Examples with <code>origins: ["https://example.org", "https://acme.com:8443"]</code>
+     * </p>
+     *
+     * <ul>
+     *   <li>
+     *     <p><code>allowOriginSubdomain: false</code></p>
+     *
+     *     <p>Accepted:</p>
+     *     <ul>
+     *       <li><code>https://example.org</code></li>
+     *       <li><code>https://acme.com:8443</code></li>
+     *     </ul>
+     *
+     *     <p>Rejected:</p>
+     *     <ul>
+     *       <li><code>https://example.org:8443</code></li>
+     *       <li><code>https://accounts.example.org</code></li>
+     *       <li><code>https://acme.com</code></li>
+     *       <li><code>https://eu.shop.acme.com:8443</code></li>
+     *     </ul>
+     *   </li>
+     *   <li>
+     *     <p><code>allowOriginSubdomain: true</code></p>
+     *
+     *     <p>Accepted:</p>
+     *     <ul>
+     *       <li><code>https://example.org</code></li>
+     *       <li><code>https://accounts.example.org</code></li>
+     *       <li><code>https://acme.com:8443</code></li>
+     *       <li><code>https://eu.shop.acme.com:8443</code></li>
+     *     </ul>
+     *
+     *     <p>Rejected:</p>
+     *     <ul>
+     *       <li><code>https://example.org:8443</code></li>
+     *       <li><code>https://acme.com</code></li>
+     *     </ul>
+     *   </li>
+     * </ul>
+     */
+    @Builder.Default
+    private final boolean allowOriginSubdomain = false;
+
+    /**
      * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration} and {@link
      * #finishAssertion(FinishAssertionOptions) finishAssertion} will accept responses containing extension outputs for
      * which there was no extension input.
@@ -260,6 +377,8 @@ public class RelyingParty {
         @NonNull Optional<AppId> appId,
         @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
         @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
+        boolean allowOriginPort,
+        boolean allowOriginSubdomain,
         boolean allowUnrequestedExtensions,
         boolean allowUntrustedAttestation,
         boolean validateSignatureCounter
@@ -271,6 +390,8 @@ public class RelyingParty {
         this.attestationConveyancePreference = attestationConveyancePreference;
         this.metadataService = metadataService;
         this.preferredPubkeyParams = preferredPubkeyParams;
+        this.allowOriginPort = allowOriginPort;
+        this.allowOriginSubdomain = allowOriginSubdomain;
         this.allowUnrequestedExtensions = allowUnrequestedExtensions;
         this.allowUntrustedAttestation = allowUntrustedAttestation;
         this.validateSignatureCounter = validateSignatureCounter;
@@ -326,6 +447,8 @@ public class RelyingParty {
             .credentialRepository(credentialRepository)
             .origins(origins)
             .rpId(identity.getId())
+            .allowOriginPort(allowOriginPort)
+            .allowOriginSubdomain(allowOriginSubdomain)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
             .metadataService(metadataService)
@@ -394,6 +517,8 @@ public class RelyingParty {
             .origins(origins)
             .rpId(identity.getId())
             .credentialRepository(credentialRepository)
+            .allowOriginPort(allowOriginPort)
+            .allowOriginSubdomain(allowOriginSubdomain)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .validateSignatureCounter(validateSignatureCounter)
             .build();

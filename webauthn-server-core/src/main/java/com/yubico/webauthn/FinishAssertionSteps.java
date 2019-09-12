@@ -66,10 +66,10 @@ final class FinishAssertionSteps {
     private final String rpId;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean validateSignatureCounter = true;
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowOriginPort = false;
+    @Builder.Default private final boolean allowOriginSubdomain = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean validateSignatureCounter = true;
 
     public Step0 begin() {
         return new Step0();

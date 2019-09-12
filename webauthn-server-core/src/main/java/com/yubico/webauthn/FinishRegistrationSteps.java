@@ -71,8 +71,9 @@ final class FinishRegistrationSteps {
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowOriginPort = false;
+    @Builder.Default private final boolean allowOriginSubdomain = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
 
 
     public Step1 begin() {
