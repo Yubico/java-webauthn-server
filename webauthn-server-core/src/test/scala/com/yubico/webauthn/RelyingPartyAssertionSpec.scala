@@ -123,6 +123,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   def finishAssertion(
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
+    allowOriginPort: Boolean = false,
+    allowOriginSubdomain: Boolean = false,
     authenticatorData: ByteArray = Defaults.authenticatorData,
     callerTokenBindingId: Option[ByteArray] = None,
     challenge: ByteArray = Defaults.challenge,
@@ -194,6 +196,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
       )
       .preferredPubkeyParams(Nil.asJava)
+      .allowOriginPort(allowOriginPort)
+      .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(validateSignatureCounter)
 
@@ -496,13 +500,203 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         step.tryNext shouldBe a [Failure[_]]
       }
 
-      it("9. Verify that the value of C.origin matches the Relying Party's origin.") {
-        val steps = finishAssertion(clientDataJson = Defaults.clientDataJson.replace("https://localhost", "https://root.evil"))
-        val step: FinishAssertionSteps#Step9 = steps.begin.next.next.next.next.next.next.next.next.next
+      describe("9. Verify that the value of C.origin matches the Relying Party's origin.") {
+        def checkAccepted(
+          origin: String,
+          origins: Option[Set[String]] = None,
+          allowOriginPort: Boolean = false,
+          allowOriginSubdomain: Boolean = false
+        ): Unit = {
+          val clientDataJson: String = Defaults.clientDataJson.replace("\"https://localhost\"", "\"" + origin + "\"")
+          val steps = finishAssertion(
+            clientDataJson = clientDataJson,
+            origins = origins,
+            allowOriginPort = allowOriginPort,
+            allowOriginSubdomain = allowOriginSubdomain
+          )
+          val step: FinishAssertionSteps#Step9 = steps.begin.next.next.next.next.next.next.next.next.next
 
-        step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [IllegalArgumentException]
-        step.tryNext shouldBe a [Failure[_]]
+          step.validations shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
+        }
+
+        def checkRejected(
+          origin: String,
+          origins: Option[Set[String]] = None,
+          allowOriginPort: Boolean = false,
+          allowOriginSubdomain: Boolean = false
+        ): Unit = {
+          val clientDataJson: String = Defaults.clientDataJson.replace("\"https://localhost\"", "\"" + origin + "\"")
+          val steps = finishAssertion(
+            clientDataJson = clientDataJson,
+            origins = origins,
+            allowOriginPort = allowOriginPort,
+            allowOriginSubdomain = allowOriginSubdomain
+          )
+          val step: FinishAssertionSteps#Step9 = steps.begin.next.next.next.next.next.next.next.next.next
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
+        }
+
+        it("Fails if origin is different.") {
+          checkRejected(origin = "https://root.evil")
+        }
+
+        describe("Explicit ports are") {
+          val origin = "https://localhost:8080"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("allowed if RP opts in to it.") {
+            checkAccepted(origin = origin, allowOriginPort = true)
+          }
+        }
+
+        describe("Subdomains are") {
+          val origin = "https://foo.localhost"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("allowed if RP opts in to it.") {
+            checkAccepted(origin = origin, allowOriginSubdomain = true)
+          }
+        }
+
+        describe("Subdomains and explicit ports at the same time are") {
+          val origin = "https://foo.localhost:8080"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("not allowed if only subdomains are allowed.") {
+            checkRejected(origin = origin, allowOriginSubdomain = true)
+          }
+
+          it("not allowed if only explicit ports are allowed.") {
+            checkRejected(origin = origin, allowOriginPort = true)
+          }
+
+          it("allowed if RP opts in to both.") {
+            checkAccepted(origin = origin, allowOriginPort = true, allowOriginSubdomain = true)
+          }
+        }
+
+        describe("The examples in JavaDoc are correct:") {
+          def check(
+            origins: Set[String],
+            acceptOrigins: Iterable[String],
+            rejectOrigins: Iterable[String],
+            allowOriginPort: Boolean = false,
+            allowOriginSubdomain: Boolean = false
+          ): Unit = {
+            for { origin <- acceptOrigins } {
+              it(s"${origin} is accepted.") {
+                checkAccepted(
+                  origin = origin,
+                  origins = Some(origins),
+                  allowOriginPort = allowOriginPort,
+                  allowOriginSubdomain = allowOriginSubdomain
+                )
+              }
+            }
+
+            for { origin <- rejectOrigins } {
+              it(s"${origin} is rejected.") {
+                checkRejected(
+                  origin = origin,
+                  origins = Some(origins),
+                  allowOriginPort = allowOriginPort,
+                  allowOriginSubdomain = allowOriginSubdomain
+                )
+              }
+            }
+          }
+
+          describe("For allowOriginPort:") {
+            val origins = Set("https://example.org", "https://accounts.example.org", "https://acme.com:8443")
+
+            describe("false,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://accounts.example.org",
+                  "https://acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://shop.example.org",
+                  "https://acme.com",
+                  "https://acme.com:9000"
+                ),
+                allowOriginPort = false
+              )
+            }
+
+            describe("true,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://example.org:8443",
+                  "https://accounts.example.org",
+                  "https://acme.com",
+                  "https://acme.com:8443",
+                  "https://acme.com:9000"
+                ),
+                rejectOrigins = List(
+                  "https://shop.example.org"
+                ),
+                allowOriginPort = true
+              )
+            }
+          }
+
+          describe("For allowOriginSubdomain:") {
+            val origins = Set("https://example.org", "https://acme.com:8443")
+
+            describe("false,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://accounts.example.org",
+                  "https://acme.com",
+                  "https://shop.acme.com:8443"
+                ),
+                allowOriginSubdomain = false
+              )
+            }
+
+            describe("true,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://accounts.example.org",
+                  "https://acme.com:8443",
+                  "https://shop.acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://acme.com"
+                ),
+                allowOriginSubdomain = true
+              )
+            }
+          }
+        }
       }
 
       describe("10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.") {
