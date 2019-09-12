@@ -10,6 +10,9 @@ Changes:
   explicitly.
 * Default value for `RelyingParty.preferredPubKeyParams` changed from `[ES256,
   RS256]` to `[ES256, EdDSA, RS256]`
+* Data classes no longer use `Optional` internally in field types. This should
+  not meaningfully affect the public API, but might improve compatibility with
+  frameworks that use reflection.
 
 New features:
 
