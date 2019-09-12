@@ -114,7 +114,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
       .identity(rp)
       .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
       .preferredPubkeyParams(Nil.asJava)
-      .origins(Set("https://" + rp.getId).asJava)
       .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
       .build()
