@@ -275,8 +275,8 @@ public class RelyingParty {
     private final boolean allowOriginPort = false;
 
     /**
-     * If <code>true</code>, the origin matching rule is relaxed to allow any subdomain of the values of {@link
-     * RelyingPartyBuilder#origins(Set) origins}.
+     * If <code>true</code>, the origin matching rule is relaxed to allow any subdomain, of any depth, of the values of
+     * {@link RelyingPartyBuilder#origins(Set) origins}.
      *
      * <p>
      * The default is <code>false</code>.
