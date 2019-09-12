@@ -214,9 +214,15 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
+            final String responseOrigin = clientData.getOrigin();
             assure(
-                origins.stream().anyMatch(o -> o.equals(clientData.getOrigin())),
-                "Incorrect origin: " + clientData.getOrigin()
+                OriginMatcher.isAllowed(
+                    responseOrigin,
+                    origins,
+                    allowOriginPort,
+                    allowOriginSubdomain
+                ),
+                "Incorrect origin: " + responseOrigin
             );
         }
 
