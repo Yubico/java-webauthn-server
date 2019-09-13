@@ -24,11 +24,13 @@
 
 package com.yubico.webauthn.data;
 
-import java.util.Collections;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 /**
@@ -43,13 +45,42 @@ import lombok.Value;
  * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn Extensions</a>
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class RegistrationExtensionInputs implements ExtensionInputs {
 
+    private RecoveryExtensionInput recovery;
+
+    @JsonCreator
+    private RegistrationExtensionInputs(
+        @JsonProperty("recovery") RecoveryExtensionInput recovery
+    ) {
+        this.recovery = recovery;
+    }
+
     @Override
     public Set<String> getExtensionIds() {
-        return Collections.emptySet();
+        Set<String> ids = new HashSet<>();
+
+        getRecovery().ifPresent(recovery -> ids.add("recovery"));
+
+        return ids;
+    }
+
+    public static class RegistrationExtensionInputsBuilder {
+        private RecoveryExtensionInput recovery = null;
+
+        public RegistrationExtensionInputsBuilder recovery(@NonNull Optional<RecoveryExtensionInput> recovery) {
+            return this.recovery(recovery.orElse(null));
+        }
+
+        public RegistrationExtensionInputsBuilder recovery(RecoveryExtensionInput recovery) {
+            this.recovery = recovery;
+            return this;
+        }
+    }
+
+    public Optional<RecoveryExtensionInput> getRecovery() {
+        return Optional.ofNullable(recovery);
     }
 
 }

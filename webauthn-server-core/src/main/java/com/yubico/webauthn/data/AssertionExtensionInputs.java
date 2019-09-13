@@ -77,11 +77,15 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      */
     private final AppId appid;
 
+    private final RecoveryExtensionInput recovery;
+
     @JsonCreator
     private AssertionExtensionInputs(
-        @JsonProperty("appid") AppId appid
+        @JsonProperty("appid") AppId appid,
+        @JsonProperty("recovery") RecoveryExtensionInput recovery
     ) {
         this.appid = appid;
+        this.recovery = recovery;
     }
 
     @Override
@@ -89,12 +93,14 @@ public class AssertionExtensionInputs implements ExtensionInputs {
         Set<String> ids = new HashSet<>();
 
         getAppid().ifPresent((id) -> ids.add("appid"));
+        getRecovery().ifPresent(recovery -> ids.add("recovery"));
 
         return ids;
     }
 
     public static class AssertionExtensionInputsBuilder {
         private AppId appid = null;
+        private RecoveryExtensionInput recovery = null;
 
         /**
          * The input to the FIDO AppID Extension (<code>appid</code>).
@@ -152,6 +158,15 @@ public class AssertionExtensionInputs implements ExtensionInputs {
             this.appid = appid;
             return this;
         }
+
+        public AssertionExtensionInputsBuilder recovery(@NonNull Optional<RecoveryExtensionInput> recovery) {
+            return this.recovery(recovery.orElse(null));
+        }
+
+        public AssertionExtensionInputsBuilder recovery(RecoveryExtensionInput recovery) {
+            this.recovery = recovery;
+            return this;
+        }
     }
 
     /**
@@ -180,6 +195,10 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      */
     public Optional<AppId> getAppid() {
         return Optional.ofNullable(appid);
+    }
+
+    public Optional<RecoveryExtensionInput> getRecovery() {
+        return Optional.ofNullable(recovery);
     }
 
 }
