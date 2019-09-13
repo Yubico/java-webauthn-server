@@ -26,6 +26,11 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.upokecenter.cbor.CBORObject;
+import com.yubico.internal.util.BinaryUtil;
+import com.yubico.internal.util.ExceptionUtil;
+import java.io.ByteArrayInputStream;
+import java.util.Arrays;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -70,6 +75,66 @@ public class AttestedCredentialData {
         this.aaguid = aaguid;
         this.credentialId = credentialId;
         this.credentialPublicKey = credentialPublicKey;
+    }
+
+    static ParseResult parse(byte[] bytes) {
+        final int AAGUID_INDEX = 0;
+        final int AAGUID_END = AAGUID_INDEX + 16;
+
+        final int CREDENTIAL_ID_LENGTH_INDEX = AAGUID_END;
+        final int CREDENTIAL_ID_LENGTH_END = CREDENTIAL_ID_LENGTH_INDEX + 2;
+
+        ExceptionUtil.assure(
+            bytes.length >= CREDENTIAL_ID_LENGTH_END,
+            "Attested credential data must contain at least %d bytes, was %d: %s",
+            CREDENTIAL_ID_LENGTH_END,
+            bytes.length,
+            new ByteArray(bytes).getHex()
+        );
+
+        byte[] credentialIdLengthBytes = Arrays.copyOfRange(bytes, CREDENTIAL_ID_LENGTH_INDEX, CREDENTIAL_ID_LENGTH_END);
+
+        final int L;
+        try {
+            L = BinaryUtil.getUint16(credentialIdLengthBytes);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid credential ID length bytes: " + Arrays.asList(credentialIdLengthBytes), e);
+        }
+
+        final int CREDENTIAL_ID_INDEX = CREDENTIAL_ID_LENGTH_END;
+        final int CREDENTIAL_ID_END = CREDENTIAL_ID_INDEX + L;
+
+        final int CREDENTIAL_PUBLIC_KEY_INDEX = CREDENTIAL_ID_END;
+        final int CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END = bytes.length;
+
+        ExceptionUtil.assure(
+            bytes.length >= CREDENTIAL_ID_END,
+            "Expected credential ID of length %d, but attested credential data and extension data is only %d bytes: %s",
+            CREDENTIAL_ID_END,
+            bytes.length,
+            new ByteArray(bytes).getHex()
+        );
+
+        ByteArrayInputStream indefiniteLengthBytes = new ByteArrayInputStream(
+            Arrays.copyOfRange(bytes, CREDENTIAL_PUBLIC_KEY_INDEX, CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END)
+        );
+
+        final CBORObject credentialPublicKey = CBORObject.Read(indefiniteLengthBytes);
+
+        return new ParseResult(
+            AttestedCredentialData.builder()
+                .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
+                .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
+                .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
+                .build(),
+            indefiniteLengthBytes
+        );
+    }
+
+    @Value
+    static class ParseResult {
+        public final AttestedCredentialData attestedCredentialData;
+        public final ByteArrayInputStream remainingBytes;
     }
 
     static AttestedCredentialDataBuilder builder() {
