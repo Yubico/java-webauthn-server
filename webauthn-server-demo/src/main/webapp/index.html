@@ -59,6 +59,8 @@ input[type="text"] {
 
   <script>
 
+let ceremonyState = {};
+
 function extend(obj, more) {
   return Object.assign({}, obj, more);
 }
@@ -276,28 +278,35 @@ function performCeremony(params) {
         callbacks.authenticatorRequest({ request, urls });
       }
       showRequest(request);
+      ceremonyState = {
+        callbacks,
+        request,
+        statusStrings,
+        urls,
+        useU2f,
+      };
       return executeRequest(request)
-        .then(webauthn.responseToObject)
-        .then(response => ({
-          request,
-          urls,
-          response,
-        }));
+        .then(webauthn.responseToObject);
     })
+    .then(finishCeremony)
 
-    .then((params) => {
-      const urls = params.urls;
-      const request = params.request;
-      const response = params.response;
+  ;
+}
 
-      setStatus(statusStrings.serverRequest || 'Sending response to server...');
-      if (callbacks.serverRequest) {
-        callbacks.serverRequest({ urls, request, response });
-      }
-      showAuthenticatorResponse(response);
-      return submitResponse(useU2f ? urls.finishU2f : urls.finish, request.requestId, response);
-    })
+function finishCeremony(response) {
+  const callbacks = ceremonyState.callbacks;
+  const request = ceremonyState.request;
+  const statusStrings = ceremonyState.statusStrings;
+  const urls = ceremonyState.urls;
+  const useU2f = ceremonyState.useU2f;
 
+  setStatus(statusStrings.serverRequest || 'Sending response to server...');
+  if (callbacks.serverRequest) {
+    callbacks.serverRequest({ urls, request, response });
+  }
+  showAuthenticatorResponse(response);
+
+  return submitResponse(useU2f ? urls.finishU2f : urls.finish, request.requestId, response)
     .then(data => {
       if (data && data.success) {
         setStatus(statusStrings.success);
@@ -306,8 +315,7 @@ function performCeremony(params) {
       }
       showServerResponse(data);
       return data;
-    })
-  ;
+    });
 }
 
 function registerResidentKey() {
