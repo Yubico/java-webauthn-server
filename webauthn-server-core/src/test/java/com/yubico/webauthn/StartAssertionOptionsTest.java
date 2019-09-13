@@ -15,8 +15,8 @@ public class StartAssertionOptionsTest {
             .extensions(AssertionExtensionInputs.builder().build())
             .userVerification(UserVerificationRequirement.REQUIRED)
             .userVerification(Optional.of(UserVerificationRequirement.REQUIRED))
-            .timeout(0)
-            .timeout(Optional.of(0l))
+            .timeout(1)
+            .timeout(Optional.of(1l))
             .build();
     }
 
