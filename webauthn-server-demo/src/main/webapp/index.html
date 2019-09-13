@@ -541,6 +541,14 @@ function deregister() {
     });
 }
 
+function postManualResponse(event) {
+  event.preventDefault();
+  const textField = document.getElementById('manual-response');
+  const responseJson = textField.value;
+  textField.value = '';
+  return finishCeremony(JSON.parse(responseJson));
+}
+
 function init() {
   hideDeviceInfo();
   return false;
@@ -654,6 +662,12 @@ window.onload = init;
     Server response: <pre id="server-response"></pre>
     Authenticator response: <pre id="authenticator-response"></pre>
     Request: <pre id="request"></pre>
+
+    Manual response:
+    <form onsubmit="javascript:postManualResponse(event)">
+      <div><textarea id="manual-response"></textarea></div>
+      <div><button type="submit">Submit</button></div>
+    </form>
 
   </div>
 </div>
