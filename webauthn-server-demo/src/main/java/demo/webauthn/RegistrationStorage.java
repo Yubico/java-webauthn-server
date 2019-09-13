@@ -27,6 +27,7 @@ package demo.webauthn;
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.RecoveryCredentialsState;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.Optional;
@@ -48,4 +49,5 @@ public interface RegistrationStorage extends CredentialRepository {
 
     void updateSignatureCount(AssertionResult result);
 
+    Optional<RecoveryCredentialsState> setRecoveryState(RecoveryCredentialsState state, ByteArray userHandle);
 }

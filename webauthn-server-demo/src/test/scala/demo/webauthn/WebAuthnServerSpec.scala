@@ -46,6 +46,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.WebAuthnTestCodecs
+import com.yubico.webauthn.data.RecoveryCredentialsState
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
@@ -70,6 +71,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   private val rpId = RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
   private val origins = Set("localhost").asJava
   private val appId = Optional.empty[AppId]
+  private val useRecovery = false
+  private val generateRecovery = false
 
   describe("WebAuthnServer") {
 
@@ -77,7 +80,14 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
       it("has a start method whose output can be serialized to JSON.") {
         val server = newServer
-        val request = server.startRegistration(username, Optional.of(displayName), credentialNickname, requireResidentKey, Optional.empty())
+        val request = server.startRegistration(
+          username,
+          Optional.of(displayName),
+          credentialNickname,
+          requireResidentKey,
+          Optional.empty(),
+          useRecovery
+        )
         val json = jsonMapper.writeValueAsString(request.right.get)
 
         json should not be null
@@ -125,7 +135,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
       it("has a start method whose output can be serialized to JSON.") {
         val server = newServerWithUser(RegistrationTestData.FidoU2f.BasicAttestation)
-        val request = server.startAuthentication(Optional.of(RegistrationTestData.FidoU2f.BasicAttestation.userId.getName))
+        val request = server.startAuthentication(Optional.of(RegistrationTestData.FidoU2f.BasicAttestation.userId.getName), generateRecovery)
         val json = jsonMapper.writeValueAsString(request.right.get)
 
         json should not be null
@@ -213,6 +223,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
             .build())
         else Optional.empty()
       override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
+      override def setRecoveryState(state: RecoveryCredentialsState, userHandle: ByteArray): Optional[RecoveryCredentialsState] = ???
     }
   }
 

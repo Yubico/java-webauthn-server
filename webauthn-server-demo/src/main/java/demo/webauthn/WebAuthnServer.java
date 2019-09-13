@@ -57,12 +57,17 @@ import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
+import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
+import com.yubico.webauthn.data.CredentialRevocation;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.RecoveryExtensionAction;
+import com.yubico.webauthn.data.RecoveryExtensionInput;
+import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
@@ -94,6 +99,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -206,7 +212,8 @@ public class WebAuthnServer {
         Optional<String> displayName,
         Optional<String> credentialNickname,
         boolean requireResidentKey,
-        Optional<ByteArray> sessionToken
+        Optional<ByteArray> sessionToken,
+        boolean useRecovery
     ) throws ExecutionException {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
@@ -238,6 +245,21 @@ public class WebAuthnServer {
                             .requireResidentKey(requireResidentKey)
                             .build()
                         )
+                        .extensions(RegistrationExtensionInputs.builder()
+                            .recovery(RecoveryExtensionInput.builder()
+                                .action(useRecovery ? RecoveryExtensionAction.RECOVER : RecoveryExtensionAction.STATE)
+                                .allowCredentials(useRecovery
+                                    ? Optional.of(
+                                        userStorage.lookupRecoveryStates(registrationUserId.getId()).stream()
+                                          .flatMap(recoveryCredentialsState -> recoveryCredentialsState.getRecoveryCredentials().stream())
+                                          .map(recoveryCredential -> PublicKeyCredentialDescriptor.builder()
+                                              .id(recoveryCredential.getCredentialId())
+                                              .build())
+                                          .collect(Collectors.toList())
+                                      )
+                                    : Optional.empty())
+                                .build())
+                            .build())
                         .build()
                 ),
                 Optional.of(sessions.createSession(registrationUserId.getId()))
@@ -354,6 +376,18 @@ public class WebAuthnServer {
 
                 if (userStorage.userExists(request.getUsername())) {
                     boolean permissionGranted = false;
+
+                    if (registration.getRecoveryRevocation().isPresent()) {
+                        CredentialRevocation revocation = registration.getRecoveryRevocation().get();
+                        Optional<CredentialRegistration> revokedRegistration =
+                            userStorage.getRegistrationByUsernameAndCredentialId(request.getUsername(), revocation.getRevokedCredentialId());
+
+                        if (revokedRegistration.isPresent()) {
+                            logger.info("Revoking: {}", revocation);
+                            userStorage.removeRegistrationByUsername(request.getUsername(), revokedRegistration.get());
+                            permissionGranted = true;
+                        }
+                    }
 
                     final boolean isValidSession = request.getSessionToken().map(token ->
                         sessions.isSessionForUser(request.getPublicKeyCredentialCreationOptions().getUser().getId(), token)
@@ -472,8 +506,8 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, AssertionRequestWrapper> startAuthentication(Optional<String> username) {
-        logger.trace("startAuthentication username: {}", username);
+    public Either<List<String>, AssertionRequestWrapper> startAuthentication(Optional<String> username, boolean generateRecovery) {
+        logger.trace("startAuthentication username: {}, generateRecovery: {}", username, generateRecovery);
 
         if (username.isPresent() && !userStorage.userExists(username.get())) {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
@@ -483,6 +517,11 @@ public class WebAuthnServer {
                 rp.startAssertion(
                     StartAssertionOptions.builder()
                         .username(username)
+                        .extensions(AssertionExtensionInputs.builder()
+                            .recovery(RecoveryExtensionInput.builder()
+                                .action(generateRecovery ? RecoveryExtensionAction.GENERATE : RecoveryExtensionAction.STATE)
+                                .build())
+                            .build())
                         .build()
                 )
             );
@@ -564,6 +603,11 @@ public class WebAuthnServer {
                             e
                         );
                     }
+
+                    result.getNewRecoveryCredentialsState().ifPresent(newState -> {
+                        logger.info("Setting new recovery state for user {}: {}", result.getUsername(), newState);
+                        userStorage.setRecoveryState(newState, result.getUserHandle());
+                    });
 
                     return Either.right(
                         new SuccessfulAuthenticationResult(

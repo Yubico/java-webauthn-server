@@ -155,6 +155,9 @@ function showServerResponse(data) {
   if (data && data.messages) {
     addMessages(data.messages);
   }
+  if (data && data.result && data.result.newRecoveryState) {
+    addMessage('Your authenticator has new recovery credentials. Please register them!');
+  }
   return showJson('server-response', data);
 }
 
@@ -183,7 +186,7 @@ function getIndexActions() {
   ;
 }
 
-function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey = false) {
+function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey = false, useRecovery = false) {
   return fetch(urls.register, {
     body: new URLSearchParams({
       username,
@@ -191,6 +194,7 @@ function getRegisterRequest(urls, username, displayName, credentialNickname, req
       credentialNickname,
       requireResidentKey,
       sessionToken: session.sessionToken || null,
+      useRecovery,
     }),
     method: 'POST',
   })
@@ -365,7 +369,7 @@ function finishCeremony(response) {
 function registerResidentKey() {
   return register(requireResidentKey = true);
 }
-function register(requireResidentKey = false, getRequest = getRegisterRequest) {
+function register(requireResidentKey = false, getRequest = getRegisterRequest, useRecovery = false) {
   const username = document.getElementById('username').value;
   const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
@@ -375,7 +379,7 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRequest(urls, username, displayName, credentialNickname, requireResidentKey),
+    getRequest: urls => getRequest(urls, username, displayName, credentialNickname, requireResidentKey, useRecovery),
     statusStrings: {
       init: 'Initiating registration ceremony with server...',
       authenticatorRequest: 'Asking authenticators to create credential...',
@@ -430,9 +434,11 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
   });
 }
 
-function getAuthenticateRequest(urls, username) {
+function getAuthenticateRequest(urls, username, generateRecovery) {
   return fetch(urls.authenticate, {
-    body: new URLSearchParams(username ? { username } : {}),
+    body: new URLSearchParams(
+      username ? { username, generateRecovery } : { generateRecovery }
+    ),
     method: 'POST',
   })
     .then(response => response.json())
@@ -447,13 +453,25 @@ function executeAuthenticateRequest(request) {
   return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
 }
 
-function authenticateWithUsername() {
-  return authenticate(document.getElementById('username').value);
+function authenticateWithUsername(generateRecovery = false) {
+  return authenticate(
+     document.getElementById('username').value,
+     getAuthenticateRequest,
+     generateRecovery,
+   );
 }
-function authenticate(username = null, getRequest = getAuthenticateRequest) {
+function generateRecovery() {
+  return authenticateWithUsername(true);
+}
+
+function authenticateRecovery() {
+  return register(undefined, undefined, true);
+}
+
+function authenticate(username = null, getRequest = getAuthenticateRequest, generateRecovery = false) {
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRequest(urls, username),
+    getRequest: urls => getRequest(urls, username, generateRecovery),
     statusStrings: {
       init: 'Initiating authentication ceremony with server...',
       authenticatorRequest: 'Asking authenticators to perform assertion...',
@@ -582,6 +600,21 @@ window.onload = init;
         <div>
           <button type="button" onClick="javascript:authenticate()">
             Authenticate without username
+          </button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div></div>
+        <div></div>
+        <div>
+          <button type="button" onClick="javascript:generateRecovery()">
+            Register recovery credentials
+          </button>
+        </div>
+        <div>
+          <button type="button" onClick="javascript:authenticateRecovery()">
+            Authenticate with recovery credential
           </button>
         </div>
       </div>

@@ -30,7 +30,6 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -52,7 +51,6 @@ import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
 import demo.webauthn.WebAuthnServer.DeregisterCredentialResult;
 import demo.webauthn.data.AssertionRequestWrapper;
-import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -153,9 +151,11 @@ public class WebAuthnRestResource {
         @NonNull @FormParam("displayName") String displayName,
         @FormParam("credentialNickname") String credentialNickname,
         @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey,
-        @FormParam("sessionToken") String sessionTokenBase64
+        @FormParam("sessionToken") String sessionTokenBase64,
+        @FormParam("useRecovery") @DefaultValue("false") boolean useRecovery
     ) throws MalformedURLException, ExecutionException {
-        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}", username, displayName, credentialNickname, requireResidentKey);
+        logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}, useRecovery: {}",
+            username, displayName, credentialNickname, requireResidentKey, useRecovery);
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
             Optional.of(displayName),
@@ -167,7 +167,8 @@ public class WebAuthnRestResource {
                 } catch (Base64UrlException e) {
                     throw new RuntimeException(e);
                 }
-            })
+            }),
+            useRecovery
         );
 
         if (result.isRight()) {
@@ -222,10 +223,14 @@ public class WebAuthnRestResource {
     @Path("authenticate")
     @POST
     public Response startAuthentication(
-        @FormParam("username") String username
+        @FormParam("username") String username,
+        @FormParam("generateRecovery") @DefaultValue("false") boolean generateRecovery
     ) throws MalformedURLException {
         logger.trace("startAuthentication username: {}", username);
-        Either<List<String>, AssertionRequestWrapper> request = server.startAuthentication(Optional.ofNullable(username));
+        Either<List<String>, AssertionRequestWrapper> request = server.startAuthentication(
+            Optional.ofNullable(username),
+            generateRecovery
+        );
         if (request.isRight()) {
             return startResponse("startAuthentication", new StartAuthenticationResponse(request.right().get()));
         } else {

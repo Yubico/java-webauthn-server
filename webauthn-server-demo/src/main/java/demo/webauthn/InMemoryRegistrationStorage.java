@@ -32,10 +32,13 @@ import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.RecoveryCredential;
+import com.yubico.webauthn.data.RecoveryCredentialsState;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -49,6 +52,11 @@ import org.slf4j.LoggerFactory;
 public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
 
     private final Cache<String, Set<CredentialRegistration>> storage = CacheBuilder.newBuilder()
+        .maximumSize(1000)
+        .expireAfterAccess(1, TimeUnit.DAYS)
+        .build();
+
+    private final Cache<ByteArray, RecoveryCredentialsState> recoveryCredentials = CacheBuilder.newBuilder()
         .maximumSize(1000)
         .expireAfterAccess(1, TimeUnit.DAYS)
         .build();
@@ -183,6 +191,23 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                     .build()
                 )
                 .collect(Collectors.toSet()));
+    }
+
+    @Override
+    public Set<RecoveryCredentialsState> lookupRecoveryStates(ByteArray userHandle) {
+        return getRegistrationsByUserHandle(userHandle)
+            .stream()
+            .map(registration -> registration.getCredential().getCredentialId())
+            .map(recoveryCredentials::getIfPresent)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Optional<RecoveryCredentialsState> setRecoveryState(RecoveryCredentialsState state, ByteArray userHandle) {
+        final Optional<RecoveryCredentialsState> previous = Optional.ofNullable(recoveryCredentials.getIfPresent(state.getMainCredentialId()));
+        recoveryCredentials.put(state.getMainCredentialId(), state);
+        return previous;
     }
 
 }
