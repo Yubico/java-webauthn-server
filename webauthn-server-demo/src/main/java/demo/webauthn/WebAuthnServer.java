@@ -252,6 +252,7 @@ public class WebAuthnServer {
     @Value
     public static class SuccessfulRegistrationResult {
         final boolean success = true;
+        RegistrationResult result;
         RegistrationRequest request;
         RegistrationResponse response;
         CredentialRegistration registration;
@@ -262,7 +263,15 @@ public class WebAuthnServer {
         String username;
         ByteArray sessionToken;
 
-        public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted, ByteArray sessionToken) {
+        public SuccessfulRegistrationResult(
+            RegistrationResult result,
+            RegistrationRequest request,
+            RegistrationResponse response,
+            CredentialRegistration registration,
+            boolean attestationTrusted,
+            ByteArray sessionToken
+        ) {
+            this.result = result;
             this.request = request;
             this.response = response;
             this.registration = registration;
@@ -370,6 +379,7 @@ public class WebAuthnServer {
 
                 return Either.right(
                     new SuccessfulRegistrationResult(
+                        registration,
                         request,
                         response,
                         addRegistration(
@@ -487,6 +497,7 @@ public class WebAuthnServer {
     @AllArgsConstructor
     public static final class SuccessfulAuthenticationResult {
         private final boolean success = true;
+        private final AssertionResult result;
         private final AssertionRequestWrapper request;
         private final AssertionResponse response;
         private final Collection<CredentialRegistration> registrations;
@@ -495,8 +506,17 @@ public class WebAuthnServer {
         private final ByteArray sessionToken;
         private final List<String> warnings;
 
-        public SuccessfulAuthenticationResult(AssertionRequestWrapper request, AssertionResponse response, Collection<CredentialRegistration> registrations, String username, ByteArray sessionToken, List<String> warnings) {
+        public SuccessfulAuthenticationResult(
+            AssertionResult result,
+            AssertionRequestWrapper request,
+            AssertionResponse response,
+            Collection<CredentialRegistration> registrations,
+            String username,
+            ByteArray sessionToken,
+            List<String> warnings
+        ) {
             this(
+                result,
                 request,
                 response,
                 registrations,
@@ -547,6 +567,7 @@ public class WebAuthnServer {
 
                     return Either.right(
                         new SuccessfulAuthenticationResult(
+                            result,
                             request,
                             response,
                             userStorage.getRegistrationsByUsername(result.getUsername()),
