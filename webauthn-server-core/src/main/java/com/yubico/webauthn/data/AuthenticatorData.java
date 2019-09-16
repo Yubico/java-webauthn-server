@@ -224,6 +224,15 @@ public class AuthenticatorData {
         return Optional.ofNullable(extensions).map(JacksonCodecs::deepCopy);
     }
 
+    /**
+     * TODO
+     *
+     * @throws IllegalArgumentException if the extensions is not a valid CBOR map.
+     */
+    public Optional<AuthenticatorExtensionOutputs> getParsedExtensions() {
+        return getExtensions().map(AuthenticatorExtensionOutputs::parse);
+    }
+
     static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<AuthenticatorData> {
         @Override
         public void serialize(AuthenticatorData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
