@@ -28,11 +28,15 @@ package com.yubico.webauthn;
 import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.AuthenticatorExtensionOutputs;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
+import com.yubico.webauthn.data.RecoveryCredential;
+import com.yubico.webauthn.data.RecoveryCredentialsState;
+import com.yubico.webauthn.data.RecoveryExtensionAction;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.extension.appid.AppId;
@@ -46,6 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -510,9 +515,56 @@ final class FinishAssertionSteps {
             }
         }
 
+        public boolean isNewRecoveryState() {
+            return response
+                .getResponse()
+                .getParsedAuthenticatorData()
+                .getParsedExtensions()
+                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                .map(recovery -> {
+                    if (recovery.getAction() == RecoveryExtensionAction.STATE) {
+                        return credentialRepository
+                            .lookupRecoveryState(response.getId(), userHandle)
+                            .getState() < recovery.getState();
+                    } else {
+                        return false;
+                    }
+                })
+                .orElse(false)
+            ;
+        }
+
+        public Optional<RecoveryCredentialsState> getNewRecoveryState() {
+            return response
+                .getResponse()
+                .getParsedAuthenticatorData()
+                .getParsedExtensions()
+                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                .flatMap(recovery ->
+                    recovery.getCreds()
+                        .map(creds ->
+                            RecoveryCredentialsState.builder()
+                                .mainCredentialId(response.getId())
+                                .state(recovery.getState())
+                                .recoveryCredentials(
+                                    recovery.getCreds().get().stream()
+                                        .map(cred -> RecoveryCredential.builder()
+                                            .aaguid(cred.getAaguid())
+                                            .credentialId(cred.getCredentialId())
+                                            .replacesCredentialId(response.getId())
+                                            .publicKeyCose(cred.getCredentialPublicKey())
+                                            .build()
+                                        )
+                                        .collect(Collectors.toSet())
+                                )
+                                .build()
+                        )
+                );
+        }
+
         @Override
         public Step15 nextStep() {
-            return new Step15(username, userHandle, credential, allWarnings());
+            return new Step15(username, userHandle, credential, isNewRecoveryState(), getNewRecoveryState(), allWarnings());
         }
     }
 
@@ -521,6 +573,8 @@ final class FinishAssertionSteps {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
+        private final boolean newRecoveryState;
+        private final Optional<RecoveryCredentialsState> recoveryCredentialsState;
         private final List<String> prevWarnings;
 
         @Override
@@ -530,7 +584,7 @@ final class FinishAssertionSteps {
 
         @Override
         public Step16 nextStep() {
-            return new Step16(username, userHandle, credential, clientDataJsonHash(), allWarnings());
+            return new Step16(username, userHandle, credential, newRecoveryState, recoveryCredentialsState, clientDataJsonHash(), allWarnings());
         }
 
         public ByteArray clientDataJsonHash() {
@@ -543,6 +597,8 @@ final class FinishAssertionSteps {
         private final String username;
         private final ByteArray userHandle;
         private final RegisteredCredential credential;
+        private final boolean newRecoveryState;
+        private final Optional<RecoveryCredentialsState> recoveryCredentialsState;
         private final ByteArray clientDataJsonHash;
         private final List<String> prevWarnings;
 
@@ -583,7 +639,7 @@ final class FinishAssertionSteps {
 
         @Override
         public Step17 nextStep() {
-            return new Step17(username, userHandle, allWarnings());
+            return new Step17(username, userHandle, newRecoveryState, recoveryCredentialsState, allWarnings());
         }
 
         public ByteArray signedBytes() {
@@ -595,6 +651,8 @@ final class FinishAssertionSteps {
     class Step17 implements Step<Finished> {
         private final String username;
         private final ByteArray userHandle;
+        private final boolean newRecoveryState;
+        private final Optional<RecoveryCredentialsState> recoveryCredentialsState;
         private final List<String> prevWarnings;
 
         @Override
@@ -618,7 +676,7 @@ final class FinishAssertionSteps {
 
         @Override
         public Finished nextStep() {
-            return new Finished(username, userHandle, assertionSignatureCount(), signatureCounterValid(), allWarnings());
+            return new Finished(username, userHandle, assertionSignatureCount(), signatureCounterValid(), newRecoveryState, recoveryCredentialsState, allWarnings());
         }
 
         private long storedSignatureCountBefore() {
@@ -638,6 +696,8 @@ final class FinishAssertionSteps {
         private final ByteArray userHandle;
         private final long assertionSignatureCount;
         private final boolean signatureCounterValid;
+        private final boolean newRecoveryState;
+        private final Optional<RecoveryCredentialsState> recoveryCredentialsState;
         private final List<String> prevWarnings;
 
         @Override
@@ -657,6 +717,8 @@ final class FinishAssertionSteps {
                 .username(username)
                 .signatureCount(assertionSignatureCount)
                 .signatureCounterValid(signatureCounterValid)
+                .newRecoveryState(newRecoveryState)
+                .newRecoveryCredentialsState(recoveryCredentialsState)
                 .warnings(allWarnings())
                 .build()
             );

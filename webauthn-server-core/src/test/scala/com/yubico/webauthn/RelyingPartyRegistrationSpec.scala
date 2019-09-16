@@ -855,6 +855,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               new BouncyCastleCrypto().hash(new ByteArray(testData.clientDataJsonBytes.getBytes.updated(20, (testData.clientDataJsonBytes.getBytes()(20) + 1).toByte))),
               new AttestationObject(testData.attestationObject),
               Some(new FidoU2fAttestationStatementVerifier).asJava,
+              false,
+              None.asJava,
               Nil.asJava
             )
 
@@ -874,6 +876,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
               new AttestationObject(testData.attestationObject),
               Some(new FidoU2fAttestationStatementVerifier).asJava,
+              false,
+              None.asJava,
               Nil.asJava
             )
 
@@ -906,6 +910,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
               new AttestationObject(testData.attestationObject),
               Some(new FidoU2fAttestationStatementVerifier).asJava,
+              false,
+              None.asJava,
               Nil.asJava
             )
 
@@ -1003,6 +1009,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new NoneAttestationStatementVerifier).asJava,
+                false,
+                None.asJava,
                 Nil.asJava
               )
 

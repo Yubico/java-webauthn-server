@@ -27,9 +27,11 @@ package com.yubico.webauthn;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.AssertionResult.AssertionResultBuilder.MandatoryStages.Step8;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.CredentialRevocation;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
@@ -94,6 +96,9 @@ public class RegistrationResult {
     @NonNull
     private final ByteArray publicKeyCose;
 
+    private final boolean newRecoveryState;
+    private final CredentialRevocation recoveryRevocation;
+
     /**
      * Zero or more human-readable messages about non-critical issues.
      */
@@ -121,6 +126,8 @@ public class RegistrationResult {
         @JsonProperty("attestationTrusted") boolean attestationTrusted,
         @NonNull @JsonProperty("attestationType") AttestationType attestationType,
         @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+        @JsonProperty("newRecoveryState") boolean newRecoveryState,
+        @JsonProperty("recoveryRevocation") CredentialRevocation recoveryRevocation,
         @NonNull @JsonProperty("warnings") List<String> warnings,
         @JsonProperty("attestationMetadata") Attestation attestationMetadata
     ) {
@@ -128,8 +135,14 @@ public class RegistrationResult {
         this.attestationTrusted = attestationTrusted;
         this.attestationType = attestationType;
         this.publicKeyCose = publicKeyCose;
+        this.newRecoveryState = newRecoveryState;
+        this.recoveryRevocation = recoveryRevocation;
         this.warnings = CollectionUtil.immutableList(warnings);
         this.attestationMetadata = attestationMetadata;
+    }
+
+    public Optional<CredentialRevocation> getRecoveryRevocation() {
+        return Optional.ofNullable(recoveryRevocation);
     }
 
     public Optional<Attestation> getAttestationMetadata() {

@@ -32,21 +32,28 @@ import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.AuthenticatorData;
+import com.yubico.webauthn.data.AuthenticatorExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
+import com.yubico.webauthn.data.CredentialRevocation;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.RecoveryExtensionAction;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -382,9 +389,106 @@ final class FinishRegistrationSteps {
             }
         }
 
+        public boolean isNewRecoveryState() {
+            return response
+                .getResponse()
+                .getParsedAuthenticatorData()
+                .getParsedExtensions()
+                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                .map(recovery -> {
+                    if (recovery.getAction() == RecoveryExtensionAction.STATE) {
+                        return credentialRepository
+                            .lookupRecoveryState(response.getId(), request.getUser().getId())
+                            .getState() < recovery.getState();
+                    } else {
+                        return recovery.getState() > 0;
+                    }
+                })
+                .orElse(false)
+            ;
+        }
+
+        public Optional<CredentialRevocation> getRecoveryRevocation() {
+            return response
+                .getResponse()
+                .getParsedAuthenticatorData()
+                .getParsedExtensions()
+                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                .flatMap(recovery -> {
+                    if (recovery.getAction() == RecoveryExtensionAction.RECOVER) {
+                        log.info("Attempting recovery: {}", recovery);
+                        return recovery.getCredId()
+                            .flatMap(credId ->
+                                recovery.getSig()
+                                    .flatMap(sig -> {
+                                        log.info("Attempting recovery with recovery credential {}", credId);
+                                        return credentialRepository.lookupRecoveryCredential(credId, request.getUser().getId())
+                                            .map(credential -> {
+                                                log.info("Found recovery credential {}", credential);
+
+                                                final ByteArray cose = credential.getPublicKeyCose();
+                                                final PublicKey key;
+                                                final AuthenticatorData authData = response.getResponse().getParsedAuthenticatorData();
+                                                final int FIXED_AUTHDATA_LENGTH = 32 + 1 + 4;
+                                                final int FIXED_CREDDATA_LENGTH = 16 + 2;
+                                                final ByteArray signedBytes =
+                                                    new ByteArray(Arrays.copyOfRange(
+                                                        authData.getBytes().getBytes(),
+                                                        0,
+                                                        FIXED_AUTHDATA_LENGTH + FIXED_CREDDATA_LENGTH
+                                                    ))
+                                                        .concat(authData.getAttestedCredentialData().get().getCredentialId())
+                                                        .concat(authData.getAttestedCredentialData().get().getCredentialPublicKey())
+                                                        .concat(clientDataJsonHash);
+
+                                                log.debug("Signed data: {}", signedBytes.getHex());
+                                                log.debug("Signature: {}", sig.getHex());
+                                                log.debug("Public key: {}", cose.getHex());
+
+                                                try {
+                                                    key = WebAuthnCodecs.importCosePublicKey(cose);
+                                                } catch (CoseException | IOException | InvalidKeySpecException e) {
+                                                    throw new IllegalArgumentException(
+                                                        String.format(
+                                                            "Failed to decode public key: Credential ID: %s COSE: %s",
+                                                            credential.getCredentialId().getBase64Url(),
+                                                            cose.getBase64Url()
+                                                        ),
+                                                        e
+                                                    );
+                                                } catch (NoSuchAlgorithmException e) {
+                                                    throw new RuntimeException(e);
+                                                }
+
+                                                final COSEAlgorithmIdentifier alg = WebAuthnCodecs.getCoseKeyAlg(credential.getPublicKeyCose())
+                                                    .orElseThrow(() -> new IllegalArgumentException(
+                                                        "Unknown COSE key algorithm in public key: " + credential.getPublicKeyCose().getBase64Url()
+                                                    ));
+
+                                                if (!
+                                                    crypto.verifySignature(key, signedBytes, sig, alg)
+                                                ) {
+                                                    throw new IllegalArgumentException("Invalid recovery signature.");
+                                                }
+
+                                                return CredentialRevocation.builder()
+                                                    .revokedCredentialId(credential.getReplacesCredentialId())
+                                                    .recoveryCredentialId(credential.getCredentialId())
+                                                    .newCredentialId(response.getId())
+                                                    .build();
+                                            });
+                                    })
+                            );
+                    } else {
+                        return Optional.empty();
+                    }
+                })
+            ;
+        }
+
         @Override
         public Step13 nextStep() {
-            return new Step13(clientDataJsonHash, attestation, allWarnings());
+            return new Step13(clientDataJsonHash, attestation, isNewRecoveryState(), getRecoveryRevocation(), allWarnings());
         }
     }
 
@@ -392,6 +496,8 @@ final class FinishRegistrationSteps {
     class Step13 implements Step<Step14> {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -399,7 +505,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step14 nextStep() {
-            return new Step14(clientDataJsonHash, attestation, attestationStatementVerifier(), allWarnings());
+            return new Step14(clientDataJsonHash, attestation, attestationStatementVerifier(), newRecoveryState, recoveryRevocation, allWarnings());
         }
 
         public String format() {
@@ -427,6 +533,8 @@ final class FinishRegistrationSteps {
         private final ByteArray clientDataJsonHash;
         private final AttestationObject attestation;
         private final Optional<AttestationStatementVerifier> attestationStatementVerifier;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -443,7 +551,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step15 nextStep() {
-            return new Step15(attestation, attestationType(), attestationTrustPath(), allWarnings());
+            return new Step15(attestation, attestationType(), attestationTrustPath(), newRecoveryState, recoveryRevocation, allWarnings());
         }
 
         public AttestationType attestationType() {
@@ -494,6 +602,8 @@ final class FinishRegistrationSteps {
         private final AttestationObject attestation;
         private final AttestationType attestationType;
         private final Optional<List<X509Certificate>> attestationTrustPath;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -502,7 +612,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step16 nextStep() {
-            return new Step16(attestation, attestationType, attestationTrustPath, trustResolver(), allWarnings());
+            return new Step16(attestation, attestationType, attestationTrustPath, trustResolver(), newRecoveryState, recoveryRevocation, allWarnings());
         }
 
         public Optional<AttestationTrustResolver> trustResolver() {
@@ -541,6 +651,8 @@ final class FinishRegistrationSteps {
         private final AttestationType attestationType;
         private final Optional<List<X509Certificate>> attestationTrustPath;
         private final Optional<AttestationTrustResolver> trustResolver;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -571,7 +683,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step17 nextStep() {
-            return new Step17(attestationType, attestationMetadata(), attestationTrusted(), allWarnings());
+            return new Step17(attestationType, attestationMetadata(), attestationTrusted(), newRecoveryState, recoveryRevocation, allWarnings());
         }
 
         public boolean attestationTrusted() {
@@ -617,6 +729,8 @@ final class FinishRegistrationSteps {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -626,7 +740,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step18 nextStep() {
-            return new Step18(attestationType, attestationMetadata, attestationTrusted, allWarnings());
+            return new Step18(attestationType, attestationMetadata, attestationTrusted, newRecoveryState, recoveryRevocation, allWarnings());
         }
     }
 
@@ -635,6 +749,8 @@ final class FinishRegistrationSteps {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -643,7 +759,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Step19 nextStep() {
-            return new Step19(attestationType, attestationMetadata, attestationTrusted, allWarnings());
+            return new Step19(attestationType, attestationMetadata, attestationTrusted, newRecoveryState, recoveryRevocation, allWarnings());
         }
     }
 
@@ -652,6 +768,8 @@ final class FinishRegistrationSteps {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -660,7 +778,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public CustomLastStep nextStep() {
-            return new CustomLastStep(attestationType, attestationMetadata, attestationTrusted, allWarnings());
+            return new CustomLastStep(attestationType, attestationMetadata, attestationTrusted, newRecoveryState, recoveryRevocation, allWarnings());
         }
     }
 
@@ -672,6 +790,8 @@ final class FinishRegistrationSteps {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
         @Override
@@ -694,7 +814,7 @@ final class FinishRegistrationSteps {
 
         @Override
         public Finished nextStep() {
-            return new Finished(attestationType, attestationMetadata, attestationTrusted, allWarnings());
+            return new Finished(attestationType, attestationMetadata, attestationTrusted, newRecoveryState, recoveryRevocation, allWarnings());
         }
     }
 
@@ -703,6 +823,8 @@ final class FinishRegistrationSteps {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
+        private final boolean newRecoveryState;
+        private final Optional<CredentialRevocation> recoveryRevocation;
         private final List<String> prevWarnings;
 
 
@@ -722,6 +844,8 @@ final class FinishRegistrationSteps {
                 .attestationType(attestationType)
                 .publicKeyCose(response.getResponse().getAttestation().getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey())
                 .attestationMetadata(attestationMetadata)
+                .newRecoveryState(newRecoveryState)
+                .recoveryRevocation(recoveryRevocation.orElse(null))
                 .warnings(allWarnings())
                 .build()
             );

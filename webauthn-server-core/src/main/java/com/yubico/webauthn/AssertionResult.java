@@ -27,11 +27,13 @@ package com.yubico.webauthn;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
+import com.yubico.webauthn.data.RecoveryCredentialsState;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.data.AuthenticatorData;
 import java.util.List;
+import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -102,6 +104,9 @@ public class AssertionResult {
      */
     private final boolean signatureCounterValid;
 
+    private final boolean newRecoveryState;
+    private final RecoveryCredentialsState newRecoveryCredentialsState;
+
     /**
      * Zero or more human-readable messages about non-critical issues.
      */
@@ -116,6 +121,8 @@ public class AssertionResult {
         @NonNull @JsonProperty("username") String username,
         @JsonProperty("signatureCount") long signatureCount,
         @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
+        @JsonProperty("newRecoveryState") boolean newRecoveryState,
+        @JsonProperty("newRecoveryCredentials") RecoveryCredentialsState newRecoveryCredentials,
         @NonNull @JsonProperty("warnings") List<String> warnings
     ) {
         this.success = success;
@@ -124,7 +131,13 @@ public class AssertionResult {
         this.username = username;
         this.signatureCount = signatureCount;
         this.signatureCounterValid = signatureCounterValid;
+        this.newRecoveryState = newRecoveryState;
+        this.newRecoveryCredentialsState = newRecoveryCredentials;
         this.warnings = CollectionUtil.immutableList(warnings);
+    }
+
+    public Optional<RecoveryCredentialsState> getNewRecoveryCredentialsState() {
+        return Optional.ofNullable(newRecoveryCredentialsState);
     }
 
     static AssertionResultBuilder.MandatoryStages builder() {
@@ -176,6 +189,20 @@ public class AssertionResult {
             }
 
             public class Step7 {
+                public Step8 newRecoveryState(boolean newRecoveryState) {
+                    builder.newRecoveryState(newRecoveryState);
+                    return new Step8();
+                }
+            }
+
+            public class Step8 {
+                public Step9 newRecoveryCredentialsState(Optional<RecoveryCredentialsState> newRecoveryCredentialsState) {
+                    builder.newRecoveryCredentialsState(newRecoveryCredentialsState.orElse(null));
+                    return new Step9();
+                }
+            }
+
+            public class Step9 {
                 public AssertionResultBuilder warnings(List<String> warnings) {
                     return builder.warnings(warnings);
                 }
