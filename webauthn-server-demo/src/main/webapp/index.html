@@ -448,7 +448,7 @@ function executeAuthenticateRequest(request) {
 }
 
 function authenticateWithUsername() {
-  return authenticate(username = document.getElementById('username').value);
+  return authenticate(document.getElementById('username').value);
 }
 function authenticate(username = null, getRequest = getAuthenticateRequest) {
   return performCeremony({
