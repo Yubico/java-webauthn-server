@@ -62,8 +62,10 @@ object Generators {
 
   implicit val arbitraryAssertionExtensionInputs: Arbitrary[AssertionExtensionInputs] = Arbitrary(for {
     appid <- arbitrary[Optional[AppId]]
+    recovery <- arbitrary[Optional[RecoveryExtensionInput]]
   } yield AssertionExtensionInputs.builder()
     .appid(appid)
+    .recovery(recovery)
     .build())
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] = Arbitrary(for {
@@ -240,6 +242,16 @@ object Generators {
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values()))
 
+  implicit val arbitraryCredentialRevocation: Arbitrary[CredentialRevocation] = Arbitrary(for {
+    revokedCredentialId <- arbitrary[ByteArray]
+    recoveryCredentialId <- arbitrary[ByteArray]
+    newCredentialId <- arbitrary[ByteArray]
+  } yield CredentialRevocation.builder()
+    .revokedCredentialId(revokedCredentialId)
+    .recoveryCredentialId(recoveryCredentialId)
+    .newCredentialId(newCredentialId)
+    .build())
+
   implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]] = Arbitrary(for {
     id <- arbitrary[ByteArray]
     response <- arbitrary[AuthenticatorAssertionResponse]
@@ -308,7 +320,72 @@ object Generators {
     .userVerification(userVerification)
     .build())
 
-  implicit val arbitraryRegistrationExtensionInputs: Arbitrary[RegistrationExtensionInputs] = Arbitrary(Gen.const(RegistrationExtensionInputs.builder().build()))
+  implicit val arbitraryRecoveryCredential: Arbitrary[RecoveryCredential] = Arbitrary(for {
+    aaguid <- byteArray(16)
+    credentialId <- arbitrary[ByteArray]
+    mainCredentialId <- arbitrary[ByteArray]
+    publicKey <- Gen.delay(Gen.const(TestAuthenticator.generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]))
+    publicKeyCose = WebAuthnTestCodecs.ecPublicKeyToCose(publicKey)
+  } yield RecoveryCredential.builder()
+    .aaguid(aaguid)
+    .credentialId(credentialId)
+    .replacesCredentialId(mainCredentialId)
+    .publicKeyCose(publicKeyCose)
+    .build())
+
+  implicit val arbitraryRecoveryCredentialsState: Arbitrary[RecoveryCredentialsState] = Arbitrary(for {
+    mainCredentialId <- arbitrary[ByteArray]
+    recoveryCredentials <- arbitrary[Set[RecoveryCredential]]
+    state <- arbitrary[Int]
+  } yield RecoveryCredentialsState.builder()
+    .mainCredentialId(mainCredentialId)
+    .recoveryCredentials(recoveryCredentials.asJava)
+    .state(state)
+    .build())
+
+  implicit val arbitraryRecoveryExtensionInput: Arbitrary[RecoveryExtensionInput] = Arbitrary(for {
+    action <- arbitrary[RecoveryExtensionAction]
+    allowCredentials: Option[List[PublicKeyCredentialDescriptor]] <-
+      if (action == RecoveryExtensionAction.RECOVER)
+        Gen.some(arbitrary[List[PublicKeyCredentialDescriptor]])
+      else
+        Gen.const(None)
+  } yield RecoveryExtensionInput.builder()
+    .action(action)
+    .allowCredentials(allowCredentials.map(_.asJava).asJava)
+    .build())
+
+  implicit val arbitraryRecoveryExtensionOutput: Arbitrary[RecoveryExtensionOutput] = Arbitrary(for {
+    action <- arbitrary[RecoveryExtensionAction]
+    state <- arbitrary[Int]
+    creds: Option[List[AttestedCredentialData]] <-
+      if (action == RecoveryExtensionAction.GENERATE)
+        Gen.some(arbitrary[List[AttestedCredentialData]])
+      else
+        Gen.const(None)
+    credId: Option[ByteArray] <-
+      if (action == RecoveryExtensionAction.RECOVER)
+        Gen.some(arbitrary[ByteArray])
+      else
+        Gen.const(None)
+    sig: Option[ByteArray] <-
+      if (action == RecoveryExtensionAction.RECOVER)
+        Gen.some(arbitrary[ByteArray])
+      else
+        Gen.const(None)
+  } yield RecoveryExtensionOutput.builder()
+    .action(action)
+    .state(state)
+    .creds(creds.map(_.asJava).orNull)
+    .credId(credId.orNull)
+    .sig(sig.orNull)
+    .build())
+
+  implicit val arbitraryRegistrationExtensionInputs: Arbitrary[RegistrationExtensionInputs] = Arbitrary(for {
+    recovery <- arbitrary[Optional[RecoveryExtensionInput]]
+  } yield RegistrationExtensionInputs.builder()
+    .recovery(recovery)
+    .build())
 
   implicit val arbitraryRelyingPartyIdentity: Arbitrary[RelyingPartyIdentity] = Arbitrary(for {
     icon <- arbitrary[Optional[URL]]
