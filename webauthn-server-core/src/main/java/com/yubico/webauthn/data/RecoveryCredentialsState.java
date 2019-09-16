@@ -2,6 +2,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 import lombok.Builder;
@@ -29,4 +30,13 @@ public class RecoveryCredentialsState {
         this.state = state;
         this.recoveryCredentials = new TreeSet<>(recoveryCredentials);
     }
+
+    public static RecoveryCredentialsState initial(ByteArray mainCredentialId) {
+        return builder()
+            .mainCredentialId(mainCredentialId)
+            .state(0)
+            .recoveryCredentials(Collections.emptySet())
+            .build();
+    }
+
 }
