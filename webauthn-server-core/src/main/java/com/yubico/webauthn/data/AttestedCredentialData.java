@@ -26,6 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.upokecenter.cbor.CBOREncodeOptions;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.ExceptionUtil;
@@ -125,7 +126,7 @@ public class AttestedCredentialData {
             AttestedCredentialData.builder()
                 .aaguid(new ByteArray(Arrays.copyOfRange(bytes, AAGUID_INDEX, AAGUID_END)))
                 .credentialId(new ByteArray(Arrays.copyOfRange(bytes, CREDENTIAL_ID_INDEX, CREDENTIAL_ID_END)))
-                .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes()))
+                .credentialPublicKey(new ByteArray(credentialPublicKey.EncodeToBytes(new CBOREncodeOptions(false, false, true))))
                 .build(),
             indefiniteLengthBytes
         );
