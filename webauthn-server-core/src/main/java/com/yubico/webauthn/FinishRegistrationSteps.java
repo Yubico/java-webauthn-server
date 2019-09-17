@@ -60,6 +60,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -82,6 +83,9 @@ final class FinishRegistrationSteps {
     private final boolean allowUntrustedAttestation;
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
+
+    @NonNull
+    private final Optional<RecoveryCredentialRepository> recoveryCredentialRepository;
 
     @Builder.Default private final boolean allowOriginPort = false;
     @Builder.Default private final boolean allowOriginSubdomain = false;
@@ -390,99 +394,104 @@ final class FinishRegistrationSteps {
         }
 
         public boolean isNewRecoveryState() {
-            return response
-                .getResponse()
-                .getParsedAuthenticatorData()
-                .getParsedExtensions()
-                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
-                .map(recovery -> {
-                    if (recovery.getAction() == RecoveryExtensionAction.STATE) {
-                        return credentialRepository
-                            .lookupRecoveryState(response.getId(), request.getUser().getId())
-                            .getState() < recovery.getState();
-                    } else {
-                        return recovery.getState() > 0;
-                    }
-                })
-                .orElse(false)
-            ;
+            return recoveryCredentialRepository
+                .flatMap(recoveryCredRepo ->
+                    response
+                    .getResponse()
+                    .getParsedAuthenticatorData()
+                    .getParsedExtensions()
+                    .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                    .map(recovery -> {
+                        if (recovery.getAction() == RecoveryExtensionAction.STATE) {
+                            return recoveryCredRepo
+                                .lookupRecoveryState(response.getId(), request.getUser().getId())
+                                .getState() < recovery.getState();
+                        } else {
+                            return recovery.getState() > 0;
+                        }
+                    })
+                )
+                .orElse(false);
         }
 
         public Optional<CredentialRevocation> getRecoveryRevocation() {
-            return response
-                .getResponse()
-                .getParsedAuthenticatorData()
-                .getParsedExtensions()
-                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
-                .flatMap(recovery -> {
-                    if (recovery.getAction() == RecoveryExtensionAction.RECOVER) {
-                        log.info("Attempting recovery: {}", recovery);
-                        return recovery.getCredId()
-                            .flatMap(credId ->
-                                recovery.getSig()
-                                    .flatMap(sig -> {
-                                        log.info("Attempting recovery with recovery credential {}", credId);
-                                        return credentialRepository.lookupRecoveryCredential(credId, request.getUser().getId())
-                                            .map(credential -> {
-                                                log.info("Found recovery credential {}", credential);
+            return recoveryCredentialRepository
+                .flatMap(recoveryCredRepo ->
+                    response
+                        .getResponse()
+                        .getParsedAuthenticatorData()
+                        .getParsedExtensions()
+                        .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                        .flatMap(recovery -> {
+                            if (recovery.getAction() == RecoveryExtensionAction.RECOVER) {
+                                log.info("Attempting recovery: {}", recovery);
+                                return recovery.getCredId()
+                                    .flatMap(credId ->
+                                        recovery.getSig()
+                                            .flatMap(sig -> {
+                                                log.info("Attempting recovery with recovery credential {}", credId);
+                                                return recoveryCredRepo.lookupRecoveryCredential(credId, request.getUser().getId())
+                                                    .map(credential -> {
+                                                        log.info("Found recovery credential {}", credential);
 
-                                                final ByteArray cose = credential.getPublicKeyCose();
-                                                final PublicKey key;
-                                                final AuthenticatorData authData = response.getResponse().getParsedAuthenticatorData();
-                                                final int FIXED_AUTHDATA_LENGTH = 32 + 1 + 4;
-                                                final int FIXED_CREDDATA_LENGTH = 16 + 2;
-                                                final ByteArray signedBytes =
-                                                    new ByteArray(Arrays.copyOfRange(
-                                                        authData.getBytes().getBytes(),
-                                                        0,
-                                                        FIXED_AUTHDATA_LENGTH + FIXED_CREDDATA_LENGTH
-                                                    ))
-                                                        .concat(authData.getAttestedCredentialData().get().getCredentialId())
-                                                        .concat(authData.getAttestedCredentialData().get().getCredentialPublicKey())
-                                                        .concat(clientDataJsonHash);
+                                                        final ByteArray cose = credential.getPublicKeyCose();
+                                                        final PublicKey key;
+                                                        final AuthenticatorData authData = response.getResponse().getParsedAuthenticatorData();
+                                                        final int FIXED_AUTHDATA_LENGTH = 32 + 1 + 4;
+                                                        final int FIXED_CREDDATA_LENGTH = 16 + 2;
+                                                        final ByteArray signedBytes =
+                                                            new ByteArray(Arrays.copyOfRange(
+                                                                authData.getBytes().getBytes(),
+                                                                0,
+                                                                FIXED_AUTHDATA_LENGTH + FIXED_CREDDATA_LENGTH
+                                                            ))
+                                                                .concat(authData.getAttestedCredentialData().get().getCredentialId())
+                                                                .concat(authData.getAttestedCredentialData().get().getCredentialPublicKey())
+                                                                .concat(clientDataJsonHash);
 
-                                                log.debug("Signed data: {}", signedBytes.getHex());
-                                                log.debug("Signature: {}", sig.getHex());
-                                                log.debug("Public key: {}", cose.getHex());
+                                                        log.debug("Signed data: {}", signedBytes.getHex());
+                                                        log.debug("Signature: {}", sig.getHex());
+                                                        log.debug("Public key: {}", cose.getHex());
 
-                                                try {
-                                                    key = WebAuthnCodecs.importCosePublicKey(cose);
-                                                } catch (CoseException | IOException | InvalidKeySpecException e) {
-                                                    throw new IllegalArgumentException(
-                                                        String.format(
-                                                            "Failed to decode public key: Credential ID: %s COSE: %s",
-                                                            credential.getCredentialId().getBase64Url(),
-                                                            cose.getBase64Url()
-                                                        ),
-                                                        e
-                                                    );
-                                                } catch (NoSuchAlgorithmException e) {
-                                                    throw new RuntimeException(e);
-                                                }
+                                                        try {
+                                                            key = WebAuthnCodecs.importCosePublicKey(cose);
+                                                        } catch (CoseException | IOException | InvalidKeySpecException e) {
+                                                            throw new IllegalArgumentException(
+                                                                String.format(
+                                                                    "Failed to decode public key: Credential ID: %s COSE: %s",
+                                                                    credential.getCredentialId().getBase64Url(),
+                                                                    cose.getBase64Url()
+                                                                ),
+                                                                e
+                                                            );
+                                                        } catch (NoSuchAlgorithmException e) {
+                                                            throw new RuntimeException(e);
+                                                        }
 
-                                                final COSEAlgorithmIdentifier alg = WebAuthnCodecs.getCoseKeyAlg(credential.getPublicKeyCose())
-                                                    .orElseThrow(() -> new IllegalArgumentException(
-                                                        "Unknown COSE key algorithm in public key: " + credential.getPublicKeyCose().getBase64Url()
-                                                    ));
+                                                        final COSEAlgorithmIdentifier alg = WebAuthnCodecs.getCoseKeyAlg(credential.getPublicKeyCose())
+                                                            .orElseThrow(() -> new IllegalArgumentException(
+                                                                "Unknown COSE key algorithm in public key: " + credential.getPublicKeyCose().getBase64Url()
+                                                            ));
 
-                                                if (!
-                                                    crypto.verifySignature(key, signedBytes, sig, alg)
-                                                ) {
-                                                    throw new IllegalArgumentException("Invalid recovery signature.");
-                                                }
+                                                        if (!
+                                                            crypto.verifySignature(key, signedBytes, sig, alg)
+                                                        ) {
+                                                            throw new IllegalArgumentException("Invalid recovery signature.");
+                                                        }
 
-                                                return CredentialRevocation.builder()
-                                                    .revokedCredentialId(credential.getReplacesCredentialId())
-                                                    .recoveryCredentialId(credential.getCredentialId())
-                                                    .newCredentialId(response.getId())
-                                                    .build();
-                                            });
-                                    })
-                            );
-                    } else {
-                        return Optional.empty();
-                    }
-                })
+                                                        return CredentialRevocation.builder()
+                                                            .revokedCredentialId(credential.getReplacesCredentialId())
+                                                            .recoveryCredentialId(credential.getCredentialId())
+                                                            .newCredentialId(response.getId())
+                                                            .build();
+                                                    });
+                                            })
+                                    );
+                            } else {
+                                return Optional.empty();
+                            }
+                        })
+                )
             ;
         }
 

@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,6 +72,9 @@ final class FinishAssertionSteps {
     private final Set<String> origins;
     private final String rpId;
     private final CredentialRepository credentialRepository;
+
+    @NonNull
+    private final Optional<RecoveryCredentialRepository> recoveryCredentialRepository;
 
     @Builder.Default private final boolean allowOriginPort = false;
     @Builder.Default private final boolean allowOriginSubdomain = false;
@@ -516,20 +520,23 @@ final class FinishAssertionSteps {
         }
 
         public boolean isNewRecoveryState() {
-            return response
-                .getResponse()
-                .getParsedAuthenticatorData()
-                .getParsedExtensions()
-                .flatMap(AuthenticatorExtensionOutputs::getRecovery)
-                .map(recovery -> {
-                    if (recovery.getAction() == RecoveryExtensionAction.STATE) {
-                        return credentialRepository
-                            .lookupRecoveryState(response.getId(), userHandle)
-                            .getState() < recovery.getState();
-                    } else {
-                        return false;
-                    }
-                })
+            return recoveryCredentialRepository
+                .flatMap(recoveryCredRepo ->
+                    response
+                        .getResponse()
+                        .getParsedAuthenticatorData()
+                        .getParsedExtensions()
+                        .flatMap(AuthenticatorExtensionOutputs::getRecovery)
+                        .map(recovery -> {
+                            if (recovery.getAction() == RecoveryExtensionAction.STATE) {
+                                return recoveryCredRepo
+                                    .lookupRecoveryState(response.getId(), userHandle)
+                                    .getState() < recovery.getState();
+                            } else {
+                                return false;
+                            }
+                        })
+                )
                 .orElse(false)
             ;
         }

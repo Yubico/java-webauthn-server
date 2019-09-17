@@ -28,11 +28,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.AssertionResult;
-import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.RecoveryCredential;
 import com.yubico.webauthn.data.RecoveryCredentialsState;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
@@ -49,7 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Slf4j
-public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
+public class InMemoryRegistrationStorage implements RegistrationStorage {
 
     private final Cache<String, Set<CredentialRegistration>> storage = CacheBuilder.newBuilder()
         .maximumSize(1000)

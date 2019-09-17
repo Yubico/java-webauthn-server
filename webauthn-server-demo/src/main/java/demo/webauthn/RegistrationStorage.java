@@ -24,15 +24,16 @@
 
 package demo.webauthn;
 
-import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.CredentialRepository;
+import com.yubico.webauthn.RecoveryCredentialRepository;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.RecoveryCredentialsState;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.Optional;
 
-public interface RegistrationStorage extends CredentialRepository {
+public interface RegistrationStorage extends CredentialRepository, RecoveryCredentialRepository {
 
     boolean addRegistrationByUsername(String username, CredentialRegistration reg);
 

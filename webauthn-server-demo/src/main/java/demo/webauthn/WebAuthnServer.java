@@ -150,6 +150,7 @@ public class WebAuthnServer {
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .metadataService(Optional.of(metadataService))
+            .recoveryCredentialRepository(Optional.of(userStorage))
             .allowOriginPort(false)
             .allowOriginSubdomain(false)
             .allowUnrequestedExtensions(true)

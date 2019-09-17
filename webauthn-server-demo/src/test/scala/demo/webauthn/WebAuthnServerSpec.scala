@@ -224,6 +224,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         else Optional.empty()
       override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
       override def setRecoveryState(state: RecoveryCredentialsState, userHandle: ByteArray): Optional[RecoveryCredentialsState] = ???
+      override def lookupRecoveryStates(userHandle: ByteArray): util.Set[RecoveryCredentialsState] = ???
     }
   }
 

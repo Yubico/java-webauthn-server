@@ -231,6 +231,9 @@ public class RelyingParty {
         PublicKeyCredentialParameters.RS256
     ));
 
+    @Builder.Default
+    private final Optional<RecoveryCredentialRepository> recoveryCredentialRepository = Optional.empty();
+
     /**
      * If <code>true</code>, the origin matching rule is relaxed to allow any port number.
      *
@@ -387,6 +390,7 @@ public class RelyingParty {
         @NonNull Optional<AppId> appId,
         @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
         @NonNull Optional<MetadataService> metadataService, List<PublicKeyCredentialParameters> preferredPubkeyParams,
+        @NonNull Optional<RecoveryCredentialRepository> recoveryCredentialRepository,
         boolean allowOriginPort,
         boolean allowOriginSubdomain,
         boolean allowUnrequestedExtensions,
@@ -409,6 +413,7 @@ public class RelyingParty {
         this.attestationConveyancePreference = attestationConveyancePreference;
         this.metadataService = metadataService;
         this.preferredPubkeyParams = preferredPubkeyParams;
+        this.recoveryCredentialRepository = recoveryCredentialRepository;
         this.allowOriginPort = allowOriginPort;
         this.allowOriginSubdomain = allowOriginSubdomain;
         this.allowUnrequestedExtensions = allowUnrequestedExtensions;
@@ -471,6 +476,7 @@ public class RelyingParty {
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .allowUntrustedAttestation(allowUntrustedAttestation)
             .metadataService(metadataService)
+            .recoveryCredentialRepository(recoveryCredentialRepository)
             .build();
     }
 
@@ -540,6 +546,7 @@ public class RelyingParty {
             .allowOriginSubdomain(allowOriginSubdomain)
             .allowUnrequestedExtensions(allowUnrequestedExtensions)
             .validateSignatureCounter(validateSignatureCounter)
+            .recoveryCredentialRepository(recoveryCredentialRepository)
             .build();
     }
 
