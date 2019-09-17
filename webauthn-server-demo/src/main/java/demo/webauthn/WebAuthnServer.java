@@ -209,7 +209,16 @@ public class WebAuthnServer {
     ) {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
-        if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
+        final ByteArray userHandle;
+        final boolean userExists = userStorage.userExists(username);
+
+        if (userExists) {
+            userHandle = userStorage.getUserHandleForUsername(username).get();
+        } else {
+            userHandle = generateRandom(32);
+        }
+
+        if (!userExists) {
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
@@ -219,7 +228,7 @@ public class WebAuthnServer {
                         .user(UserIdentity.builder()
                             .name(username)
                             .displayName(displayName)
-                            .id(generateRandom(32))
+                            .id(userHandle)
                             .build()
                         )
                         .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
@@ -461,7 +470,7 @@ public class WebAuthnServer {
     public Either<List<String>, AssertionRequestWrapper> startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
 
-        if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
+        if (username.isPresent() && !userStorage.userExists(username.get())) {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequestWrapper request = new AssertionRequestWrapper(
