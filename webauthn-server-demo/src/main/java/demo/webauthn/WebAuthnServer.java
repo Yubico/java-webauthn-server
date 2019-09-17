@@ -99,7 +99,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -250,14 +249,7 @@ public class WebAuthnServer {
                             .recovery(RecoveryExtensionInput.builder()
                                 .action(useRecovery ? RecoveryExtensionAction.RECOVER : RecoveryExtensionAction.STATE)
                                 .allowCredentials(useRecovery
-                                    ? Optional.of(
-                                        userStorage.lookupRecoveryStates(registrationUserId.getId()).values().stream()
-                                          .flatMap(recoveryCredentialsState -> recoveryCredentialsState.getRecoveryCredentials().stream())
-                                          .map(recoveryCredential -> PublicKeyCredentialDescriptor.builder()
-                                              .id(recoveryCredential.getCredentialId())
-                                              .build())
-                                          .collect(Collectors.toList())
-                                      )
+                                    ? Optional.of(userStorage.lookupRecoveryCredentialIds(registrationUserId.getId()))
                                     : Optional.empty())
                                 .build())
                             .build())
