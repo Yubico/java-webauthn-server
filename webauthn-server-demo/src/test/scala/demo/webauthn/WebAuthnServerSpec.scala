@@ -27,7 +27,6 @@ package demo.webauthn
 import java.security.KeyPair
 import java.security.interfaces.ECPublicKey
 import java.time.Instant
-import java.util
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 
@@ -187,7 +186,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
     testData: RegistrationTestData,
     credentialPubkey: Option[ByteArray] = None
   ) = {
-    val registrations = util.Arrays.asList(CredentialRegistration.builder()
+    val registrations = java.util.Arrays.asList(CredentialRegistration.builder()
       .signatureCount(testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter)
       .userIdentity(testData.request.getUser)
       .credentialNickname(credentialNickname)
@@ -224,7 +223,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         else Optional.empty()
       override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
       override def setRecoveryState(state: RecoveryCredentialsState, userHandle: ByteArray): Optional[RecoveryCredentialsState] = ???
-      override def lookupRecoveryStates(userHandle: ByteArray): util.Set[RecoveryCredentialsState] = ???
+      override def lookupRecoveryStates(userHandle: ByteArray): java.util.Map[ByteArray, RecoveryCredentialsState] = ???
     }
   }
 

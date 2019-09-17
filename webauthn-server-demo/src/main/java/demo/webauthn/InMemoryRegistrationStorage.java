@@ -35,6 +35,7 @@ import com.yubico.webauthn.data.RecoveryCredentialsState;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -192,13 +193,13 @@ public class InMemoryRegistrationStorage implements RegistrationStorage {
     }
 
     @Override
-    public Set<RecoveryCredentialsState> lookupRecoveryStates(ByteArray userHandle) {
+    public Map<ByteArray, RecoveryCredentialsState> lookupRecoveryStates(ByteArray userHandle) {
         return getRegistrationsByUserHandle(userHandle)
             .stream()
             .map(registration -> registration.getCredential().getCredentialId())
             .map(recoveryCredentials::getIfPresent)
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+            .collect(Collectors.toMap(RecoveryCredentialsState::getMainCredentialId, state -> state));
     }
 
     @Override

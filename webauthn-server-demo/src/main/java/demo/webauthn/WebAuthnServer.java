@@ -251,7 +251,7 @@ public class WebAuthnServer {
                                 .action(useRecovery ? RecoveryExtensionAction.RECOVER : RecoveryExtensionAction.STATE)
                                 .allowCredentials(useRecovery
                                     ? Optional.of(
-                                        userStorage.lookupRecoveryStates(registrationUserId.getId()).stream()
+                                        userStorage.lookupRecoveryStates(registrationUserId.getId()).values().stream()
                                           .flatMap(recoveryCredentialsState -> recoveryCredentialsState.getRecoveryCredentials().stream())
                                           .map(recoveryCredential -> PublicKeyCredentialDescriptor.builder()
                                               .id(recoveryCredential.getCredentialId())
