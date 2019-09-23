@@ -49,10 +49,12 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.exception.RegistrationFailedException
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
@@ -108,13 +110,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     credentialRepository: CredentialRepository = unimplementedCredentialRepository,
     metadataService: Option[MetadataService] = None,
     origins: Option[Set[String]] = None,
+    preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
     rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
     val builder = RelyingParty.builder()
       .identity(rp)
       .credentialRepository(credentialRepository)
-      .preferredPubkeyParams(Nil.asJava)
+      .preferredPubkeyParams(preferredPubkeyParams.asJava)
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(allowUntrustedAttestation)
@@ -1966,6 +1969,41 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
+    }
+
+  }
+
+  describe("Additions in L2-WD02 editor's draft:") {
+
+    describe("Verify that the \"alg\" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.") {
+      it("An ES256 key succeeds if ES256 was a requested algorithm.") {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+        val result = finishRegistration(
+          testData = testData,
+          credentialRepository = emptyCredentialRepository,
+          allowUntrustedAttestation = true
+        ).run
+
+        result should not be null
+        result.getPublicKeyCose should not be null
+      }
+
+      it("An ES256 key fails if only RSA and EdDSA are allowed.") {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+        val result = Try(finishRegistration(
+          testData = testData.copy(
+            overrideRequest = Some(testData.request.toBuilder
+              .pubKeyCredParams(List(PublicKeyCredentialParameters.EdDSA, PublicKeyCredentialParameters.RS256).asJava)
+              .build()
+            )
+          ),
+          credentialRepository = emptyCredentialRepository,
+          allowUntrustedAttestation = true
+        ).run)
+
+        result shouldBe a [Failure[_]]
+        result.failed.get shouldBe an [IllegalArgumentException]
+      }
     }
 
   }
