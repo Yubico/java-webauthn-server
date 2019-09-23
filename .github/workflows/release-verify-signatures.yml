@@ -16,8 +16,8 @@ jobs:
     steps:
     - name: Download signatures
       run: |
-        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF}/webauthn-server-attestation-${GITHUB_REF}.jar.asc
-        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF}/webauthn-server-core-${GITHUB_REF}.jar.asc
+        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF#refs/tags/}/webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar.asc
+        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF#refs/tags/}/webauthn-server-core-${GITHUB_REF#refs/tags/}.jar.asc
 
     - name: check out code
       uses: actions/checkout@v1
@@ -35,5 +35,5 @@ jobs:
 
     - name: Verify signatures
       run: |
-        gpg --verify webauthn-server-attestation-${GITHUB_REF}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF}.jar
-        gpg --verify webauthn-server-core-${GITHUB_REF}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF}.jar
+        gpg --verify webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar
+        gpg --verify webauthn-server-core-${GITHUB_REF#refs/tags/}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF#refs/tags/}.jar
