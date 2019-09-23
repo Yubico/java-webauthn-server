@@ -53,8 +53,7 @@ public class StartAssertionOptions {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
      * credential</a>
      */
-    @NonNull
-    private final Optional<String> username;
+    private final String username;
 
     /**
      * Extension inputs for this authentication operation.
@@ -77,8 +76,7 @@ public class StartAssertionOptions {
      * The default is {@link UserVerificationRequirement#PREFERRED}.
      * </p>
      */
-    @NonNull
-    private final Optional<UserVerificationRequirement> userVerification;
+    private final UserVerificationRequirement userVerification;
 
     /**
      * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
@@ -91,13 +89,55 @@ public class StartAssertionOptions {
      * The default is empty.
      * </p>
      */
-    @NonNull
-    private final Optional<Long> timeout;
+    private final Long timeout;
+
+    /**
+     * The username of the user to authenticate, if the user has already been identified.
+     * <p>
+     * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
+     * deferred until after receiving the response from the client.
+     * </p>
+     *
+     * <p>
+     * The default is empty (absent).
+     * </p>
+     *
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     * credential</a>
+     */
+    public Optional<String> getUsername() {
+        return Optional.ofNullable(username);
+    }
+
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
+     * <p>
+     * The default is {@link UserVerificationRequirement#PREFERRED}.
+     * </p>
+     */
+    public Optional<UserVerificationRequirement> getUserVerification() {
+        return Optional.ofNullable(userVerification);
+    }
+
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
+     * <p>
+     * This library does not take the timeout into account in any way, other than passing it through to the {@link
+     * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+     * <code>navigator.credentials.get()</code> on the client side.
+     * </p>
+     * <p>
+     * The default is empty.
+     * </p>
+     */
+    public Optional<Long> getTimeout() {
+        return Optional.ofNullable(timeout);
+    }
 
     public static class StartAssertionOptionsBuilder {
-        private @NonNull Optional<String> username = Optional.empty();
-        private @NonNull Optional<UserVerificationRequirement> userVerification = Optional.empty();
-        private @NonNull Optional<Long> timeout = Optional.empty();
+        private String username = null;
+        private UserVerificationRequirement userVerification = null;
+        private Long timeout = null;
 
         /**
          * The username of the user to authenticate, if the user has already been identified.
@@ -114,7 +154,7 @@ public class StartAssertionOptions {
          * credential</a>
          */
         public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
-            this.username = username;
+            this.username = username.orElse(null);
             return this;
         }
 
@@ -143,7 +183,7 @@ public class StartAssertionOptions {
          * </p>
          */
         public StartAssertionOptionsBuilder userVerification(@NonNull Optional<UserVerificationRequirement> userVerification) {
-            this.userVerification = userVerification;
+            this.userVerification = userVerification.orElse(null);
             return this;
         }
 
@@ -172,7 +212,7 @@ public class StartAssertionOptions {
             if (timeout.isPresent() && timeout.get() <= 0) {
                 throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
             }
-            this.timeout = timeout;
+            this.timeout = timeout.orElse(null);
             return this;
         }
 

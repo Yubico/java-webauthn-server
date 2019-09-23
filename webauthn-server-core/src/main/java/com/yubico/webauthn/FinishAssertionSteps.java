@@ -27,7 +27,6 @@ package com.yubico.webauthn;
 
 import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;

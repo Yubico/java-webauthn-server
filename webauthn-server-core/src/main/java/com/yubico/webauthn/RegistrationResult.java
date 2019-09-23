@@ -112,9 +112,9 @@ public class RegistrationResult {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
      */
-    @NonNull
     @Builder.Default
-    private final Optional<Attestation> attestationMetadata = Optional.empty();
+    @Builder.ObtainVia(method = "getAttestationMetadata")
+    private final Attestation attestationMetadata = null;
 
     @JsonCreator
     private RegistrationResult(
@@ -123,7 +123,7 @@ public class RegistrationResult {
         @NonNull @JsonProperty("attestationType") AttestationType attestationType,
         @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
         @NonNull @JsonProperty("warnings") List<String> warnings,
-        @NonNull @JsonProperty("attestationMetadata") Optional<Attestation> attestationMetadata
+        @JsonProperty("attestationMetadata") Attestation attestationMetadata
     ) {
         this.keyId = keyId;
         this.attestationTrusted = attestationTrusted;
@@ -133,38 +133,47 @@ public class RegistrationResult {
         this.attestationMetadata = attestationMetadata;
     }
 
+    public Optional<Attestation> getAttestationMetadata() {
+        return Optional.ofNullable(attestationMetadata);
+    }
+
     static RegistrationResultBuilder.MandatoryStages builder() {
         return new RegistrationResultBuilder.MandatoryStages();
     }
 
     static class RegistrationResultBuilder {
-        public static class MandatoryStages {
+        static class MandatoryStages {
             private RegistrationResultBuilder builder = new RegistrationResultBuilder();
 
-            public Step2 keyId(PublicKeyCredentialDescriptor keyId) {
+            Step2 keyId(PublicKeyCredentialDescriptor keyId) {
                 builder.keyId(keyId);
                 return new Step2();
             }
 
-            public class Step2 {
-                public Step3 attestationTrusted(boolean attestationTrusted) {
+            class Step2 {
+                Step3 attestationTrusted(boolean attestationTrusted) {
                     builder.attestationTrusted(attestationTrusted);
                     return new Step3();
                 }
             }
 
-            public class Step3 {
-                public Step4 attestationType(AttestationType attestationType) {
+            class Step3 {
+                Step4 attestationType(AttestationType attestationType) {
                     builder.attestationType(attestationType);
                     return new Step4();
                 }
             }
 
-            public class Step4 {
-                public RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
+            class Step4 {
+                RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
                     return builder.publicKeyCose(publicKeyCose);
                 }
             }
+        }
+
+        RegistrationResultBuilder attestationMetadata(@NonNull Optional<Attestation> attestationMetadata) {
+            this.attestationMetadata = attestationMetadata.orElse(null);
+            return this;
         }
     }
 

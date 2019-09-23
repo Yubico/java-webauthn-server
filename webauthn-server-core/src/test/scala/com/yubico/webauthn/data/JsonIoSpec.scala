@@ -26,14 +26,17 @@ package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.yubico.webauthn.RegistrationResult
-import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.AssertionRequest
+import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
+import com.yubico.webauthn.RegistrationResult
+import com.yubico.webauthn.attestation.Attestation
+import com.yubico.webauthn.attestation.Generators._
+import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -93,21 +96,22 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[AssertionExtensionInputs]() {})
     test(new TypeReference[AssertionRequest]() {})
     test(new TypeReference[AssertionResult]() {})
+    test(new TypeReference[Attestation]() {})
     test(new TypeReference[AttestationConveyancePreference]() {})
-    test(new TypeReference[AttestedCredentialData]() {})
     test(new TypeReference[AttestationObject]() {})
     test(new TypeReference[AttestationType]() {})
-    test(new TypeReference[AuthenticatorDataFlags]() {})
+    test(new TypeReference[AttestedCredentialData]() {})
     test(new TypeReference[AuthenticatorAssertionResponse]() {})
     test(new TypeReference[AuthenticatorAttachment]() {})
     test(new TypeReference[AuthenticatorAttestationResponse]() {})
     test(new TypeReference[AuthenticatorData]() {})
+    test(new TypeReference[AuthenticatorDataFlags]() {})
     test(new TypeReference[AuthenticatorSelectionCriteria]() {})
     test(new TypeReference[AuthenticatorTransport]() {})
-    test(new TypeReference[COSEAlgorithmIdentifier]() {})
     test(new TypeReference[ClientAssertionExtensionOutputs]() {})
     test(new TypeReference[ClientRegistrationExtensionOutputs]() {})
     test(new TypeReference[CollectedClientData]() {})
+    test(new TypeReference[COSEAlgorithmIdentifier]() {})
     test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]]() {})
     test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]]() {})
     test(new TypeReference[PublicKeyCredentialCreationOptions]() {})
@@ -120,6 +124,7 @@ class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyCheck
     test(new TypeReference[RelyingPartyIdentity]() {})
     test(new TypeReference[TokenBindingInfo]() {})
     test(new TypeReference[TokenBindingStatus]() {})
+    test(new TypeReference[Transport]() {})
     test(new TypeReference[UserIdentity]() {})
     test(new TypeReference[UserVerificationRequirement]() {})
   }

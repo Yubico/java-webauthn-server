@@ -27,7 +27,6 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,7 +49,7 @@ public class PublicKeyCredentialCreationOptions {
     /**
      * Contains data about the Relying Party responsible for the request.
      * <p>
-     * Its value's {@link RelyingPartyIdentity#id id} member specifies the <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP
+     * Its value's {@link RelyingPartyIdentity#getId() id} member specifies the <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP
      * ID</a> the credential should be scoped to. If omitted, its value will be set by the client. See {@link
      * RelyingPartyIdentity} for further details.
      * </p>
@@ -86,31 +85,28 @@ public class PublicKeyCredentialCreationOptions {
      * A time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint,
      * and MAY be overridden by the client.
      */
-    @NonNull
-    private final Optional<Long> timeout;
+    @Builder.ObtainVia(method = "wrapTimeout")
+    private final Long timeout;
 
     /**
      * Intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account
      * on a single authenticator. The client is requested to return an error if the new credential would be created on
      * an authenticator that also contains one of the credentials enumerated in this parameter.
      */
-    @NonNull
-    private final Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials;
+    private final Set<PublicKeyCredentialDescriptor> excludeCredentials;
 
     /**
      * Intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the
      * create() operation.
      */
-    @NonNull
-    private final Optional<AuthenticatorSelectionCriteria> authenticatorSelection;
+    private final AuthenticatorSelectionCriteria authenticatorSelection;
 
     /**
      * Intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default
      * is {@link AttestationConveyancePreference#NONE}.
      */
     @NonNull
-    @Builder.Default
-    private final AttestationConveyancePreference attestation = AttestationConveyancePreference.NONE;
+    private final AttestationConveyancePreference attestation;
 
     /**
      * Additional parameters requesting additional processing by the client and authenticator.
@@ -124,30 +120,7 @@ public class PublicKeyCredentialCreationOptions {
      * </p>
      */
     @NonNull
-    @Builder.Default
-    private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
-
-    private PublicKeyCredentialCreationOptions(
-        @NonNull RelyingPartyIdentity rp,
-        @NonNull UserIdentity user,
-        @NonNull ByteArray challenge,
-        @NonNull List<PublicKeyCredentialParameters> pubKeyCredParams,
-        @NonNull Optional<Long> timeout,
-        @NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials,
-        @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection,
-        @NonNull AttestationConveyancePreference attestation,
-        @NonNull RegistrationExtensionInputs extensions
-    ) {
-        this.rp = rp;
-        this.user = user;
-        this.challenge = challenge;
-        this.pubKeyCredParams = CollectionUtil.immutableList(pubKeyCredParams);
-        this.timeout = timeout;
-        this.excludeCredentials = excludeCredentials.map(TreeSet::new).map(CollectionUtil::immutableSortedSet);
-        this.authenticatorSelection = authenticatorSelection;
-        this.attestation = attestation;
-        this.extensions = extensions;
-    }
+    private final RegistrationExtensionInputs extensions;
 
     @JsonCreator
     private PublicKeyCredentialCreationOptions(
@@ -158,20 +131,30 @@ public class PublicKeyCredentialCreationOptions {
         @JsonProperty("timeout") Long timeout,
         @JsonProperty("excludeCredentials") Set<PublicKeyCredentialDescriptor> excludeCredentials,
         @JsonProperty("authenticatorSelection") AuthenticatorSelectionCriteria authenticatorSelection,
-        @NonNull @JsonProperty("attestation") AttestationConveyancePreference attestation,
+        @JsonProperty("attestation") AttestationConveyancePreference attestation,
         @JsonProperty("extensions") RegistrationExtensionInputs extensions
     ) {
-        this(
-            rp,
-            user,
-            challenge,
-            CollectionUtil.immutableList(pubKeyCredParams),
-            Optional.ofNullable(timeout),
-            Optional.ofNullable(excludeCredentials),
-            Optional.ofNullable(authenticatorSelection),
-            attestation,
-            Optional.ofNullable(extensions).orElseGet(() -> RegistrationExtensionInputs.builder().build())
-        );
+        this.rp = rp;
+        this.user = user;
+        this.challenge = challenge;
+        this.pubKeyCredParams = CollectionUtil.immutableList(pubKeyCredParams);
+        this.timeout = timeout;
+        this.excludeCredentials = excludeCredentials == null ? null : CollectionUtil.immutableSortedSet(new TreeSet<>(excludeCredentials));
+        this.authenticatorSelection = authenticatorSelection;
+        this.attestation = attestation == null ? AttestationConveyancePreference.NONE : attestation;
+        this.extensions = extensions == null ? RegistrationExtensionInputs.builder().build() : extensions;
+    }
+
+    public Optional<Long> getTimeout() {
+        return Optional.ofNullable(timeout);
+    }
+
+    public Optional<Set<PublicKeyCredentialDescriptor>> getExcludeCredentials() {
+        return Optional.ofNullable(excludeCredentials);
+    }
+
+    public Optional<AuthenticatorSelectionCriteria> getAuthenticatorSelection() {
+        return Optional.ofNullable(authenticatorSelection);
     }
 
     public static PublicKeyCredentialCreationOptionsBuilder.MandatoryStages builder() {
@@ -179,9 +162,9 @@ public class PublicKeyCredentialCreationOptions {
     }
 
     public static class PublicKeyCredentialCreationOptionsBuilder {
-        private @NonNull Optional<Long> timeout = Optional.empty();
-        private @NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials = Optional.empty();
-        private @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection = Optional.empty();
+        private Long timeout = null;
+        private Set<PublicKeyCredentialDescriptor> excludeCredentials = null;
+        private AuthenticatorSelectionCriteria authenticatorSelection = null;
 
         public static class MandatoryStages {
             private PublicKeyCredentialCreationOptionsBuilder builder = new PublicKeyCredentialCreationOptionsBuilder();
@@ -229,7 +212,7 @@ public class PublicKeyCredentialCreationOptions {
          * and MAY be overridden by the client.
          */
         public PublicKeyCredentialCreationOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
-            this.timeout = timeout;
+            this.timeout = timeout.orElse(null);
             return this;
         }
 
@@ -246,9 +229,8 @@ public class PublicKeyCredentialCreationOptions {
          * on a single authenticator. The client is requested to return an error if the new credential would be created on
          * an authenticator that also contains one of the credentials enumerated in this parameter.
          */
-        public PublicKeyCredentialCreationOptionsBuilder excludeCredentials(@NonNull Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials) {
-            this.excludeCredentials = excludeCredentials;
-            return this;
+        public PublicKeyCredentialCreationOptionsBuilder excludeCredentials(Optional<Set<PublicKeyCredentialDescriptor>> excludeCredentials) {
+            return this.excludeCredentials(excludeCredentials.orElse(null));
         }
 
         /**
@@ -256,16 +238,8 @@ public class PublicKeyCredentialCreationOptions {
          * on a single authenticator. The client is requested to return an error if the new credential would be created on
          * an authenticator that also contains one of the credentials enumerated in this parameter.
          */
-        public PublicKeyCredentialCreationOptionsBuilder excludeCredentials(@NonNull Set<PublicKeyCredentialDescriptor> excludeCredentials) {
-            return this.excludeCredentials(Optional.of(excludeCredentials));
-        }
-
-        /**
-         * Intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the
-         * create() operation.
-         */
-        public PublicKeyCredentialCreationOptionsBuilder authenticatorSelection(@NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
-            this.authenticatorSelection = authenticatorSelection;
+        public PublicKeyCredentialCreationOptionsBuilder excludeCredentials(Set<PublicKeyCredentialDescriptor> excludeCredentials) {
+            this.excludeCredentials = excludeCredentials;
             return this;
         }
 
@@ -273,9 +247,23 @@ public class PublicKeyCredentialCreationOptions {
          * Intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the
          * create() operation.
          */
-        public PublicKeyCredentialCreationOptionsBuilder authenticatorSelection(@NonNull AuthenticatorSelectionCriteria authenticatorSelection) {
-            return this.authenticatorSelection(Optional.of(authenticatorSelection));
+        public PublicKeyCredentialCreationOptionsBuilder authenticatorSelection(@NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
+            return this.authenticatorSelection(authenticatorSelection.orElse(null));
         }
+
+        /**
+         * Intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the
+         * create() operation.
+         */
+        public PublicKeyCredentialCreationOptionsBuilder authenticatorSelection(AuthenticatorSelectionCriteria authenticatorSelection) {
+            this.authenticatorSelection = authenticatorSelection;
+            return this;
+        }
+    }
+
+    // Needed so that Lombok's .toBuilder() doesn't call .timeout(null: long)
+    private Optional<Long> wrapTimeout() {
+        return Optional.ofNullable(timeout);
     }
 
 }

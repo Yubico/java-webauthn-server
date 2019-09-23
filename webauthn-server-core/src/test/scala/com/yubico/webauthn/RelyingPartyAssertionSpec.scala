@@ -26,27 +26,28 @@ package com.yubico.webauthn
 
 import java.io.IOException
 import java.nio.charset.Charset
-import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.MessageDigest
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
+import com.yubico.webauthn.data.AssertionExtensionInputs
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
-import com.yubico.webauthn.data.AuthenticatorAssertionResponse
-import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.AssertionExtensionInputs
-import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
-import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Util.toStepWithUtilities
@@ -458,8 +459,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         def assertFails(typeString: String): Unit = {
           val steps = finishAssertion(
-            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+            clientDataJson = JacksonCodecs.json.writeValueAsString(
+              JacksonCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                 .set("type", jsonFactory.textNode(typeString))
             )
           )
@@ -817,7 +818,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
                 val steps = finishAssertion(
                   requestedExtensions = extensionInputs,
                   authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                    extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                    extensionsCborBytes = Some(new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
                   )
                 )
                 val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -834,7 +835,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
               val steps = finishAssertion(
                 requestedExtensions = extensionInputs,
                 authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                  extensionsCborBytes = Some(new ByteArray(WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                  extensionsCborBytes = Some(new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
                 )
               )
               val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -868,8 +869,8 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
         it("A mutated clientDataJSON fails verification.") {
           val steps = finishAssertion(
-            clientDataJson = WebAuthnCodecs.json.writeValueAsString(
-              WebAuthnCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
+            clientDataJson = JacksonCodecs.json.writeValueAsString(
+              JacksonCodecs.json.readTree(Defaults.clientDataJson).asInstanceOf[ObjectNode]
                 .set("foo", jsonFactory.textNode("bar"))
             )
           )
@@ -1048,14 +1049,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
   describe("RelyingParty supports authenticating") {
     it("a real RSA key.") {
-      val testData = RegistrationTestData.Packed.BasicAttestationRsa
+      val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
 
       val credData = testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get
       val credId: ByteArray = credData.getCredentialId
       val publicKeyBytes: ByteArray = credData.getCredentialPublicKey
 
       val request: AssertionRequest = AssertionRequest.builder()
-        .publicKeyCredentialRequestOptions(WebAuthnCodecs.json.readValue("""{
+        .publicKeyCredentialRequestOptions(JacksonCodecs.json.readValue("""{
             "challenge": "drdVqKT0T-9PyQfkceSE94Q8ruW2I-w1gsamBisjuMw",
             "rpId": "demo3.yubico.test",
             "userVerification": "preferred",
@@ -1068,7 +1069,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         .username(testData.userId.getName)
         .build()
 
-      val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = WebAuthnCodecs.json.readValue(
+      val response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = JacksonCodecs.json.readValue(
         """{
           "type": "public-key",
           "id": "ClvGfsNH8ulYnrKNd4fEgQ",
@@ -1131,6 +1132,140 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
 
       result.isSuccess should be (true)
       result.getUserHandle should equal (testData.userId.getId)
+      result.getCredentialId should equal (credId)
+    }
+
+    it("an Ed25519 key.") {
+      val registrationRequest = JacksonCodecs.json().readValue(
+        """
+          |{
+          |  "rp": {
+          |    "name": "Yubico WebAuthn demo",
+          |    "id": "demo3.yubico.test"
+          |  },
+          |  "user": {
+          |    "name": "foo",
+          |    "displayName": "Foo Bar",
+          |    "id": "a2jHKZU9PDuGzwGaRQ5fVc8b_B3cfIOMZEiesm0Z-g0"
+          |  },
+          |  "challenge": "FFDZDypegliApKZXF8XCHCn2SlMy4BVupeOFXDSr1uE",
+          |  "pubKeyCredParams": [
+          |    {
+          |      "alg": -8,
+          |      "type": "public-key"
+          |    }
+          |  ],
+          |  "excludeCredentials": [],
+          |  "authenticatorSelection": {
+          |    "requireResidentKey": false,
+          |    "userVerification": "preferred"
+          |  },
+          |  "attestation": "direct",
+          |  "extensions": {}
+          |}
+        """.stripMargin,
+        classOf[PublicKeyCredentialCreationOptions])
+      val registrationResponse = PublicKeyCredential.parseRegistrationResponseJson(
+        """
+          |{
+          |  "type": "public-key",
+          |  "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM",
+          |  "response": {
+          |    "attestationObject": "o2NmbXRmcGFja2VkaGF1dGhEYXRhWOEBTgCL_3WEuaR_abGPGP9ImsDepMg6Ovq3DWuW6pKn_kUAAAAC-KAR84wKTRWABhcRH57cfQCAPMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCOkAQEDJyAGIVggSRLgxGS7m40dHlC9RGF4pzIj4V03KEVLj1iZ8-4zpgFnYXR0U3RtdKNjYWxnJmNzaWdYRzBFAiA6fyJf8gJc5N0fUJtpKckvc6jg0SJitLYVbzA3bl5uBgIhAI11DQDK7c0nhJGh5ElJzhTOcvvTovCAd31CZ_6ZsdrJY3g1Y4FZAmgwggJkMIIBTKADAgECAgQHL7bPMA0GCSqGSIb3DQEBCwUAMA8xDTALBgNVBAMMBHRlc3QwHhcNMTkwNDI0MTExMDAyWhcNMjAwNDIzMTExMDAyWjBuMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMScwJQYDVQQDDB5ZdWJpY28gVTJGIEVFIFNlcmlhbCAxMjA1Njc1MDMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATFcdVF_m2S3VTnMBABD0ZO8b4dvbqdr7a9zxLi9VBkR5YPakd2coJoFiuEcEuRhNJwSXlJlDX8q3Y-dY_Qp1XYozQwMjAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuMjAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBm6U8jEfxKn5WqNe1r7LNlq80RVYQraj1V90Z-a1BFKEEDtRzmoNEGlaUVbmYrdv5u4lWd1abiSq7hWc4H7uTklC8wUt9F1qnSjDWkK45cYjwMpTtRavAQtX00R-8g1orIdSMAVsJ1RG-gqlvJhQWvlWQk8fHRBQ74MzVgUhutu74CgL8_-QjH1_2yEkAndj6slsTyNOCv2n60jJNzT9dk6oYE9HyvOuhYTc0IBAR5XsWQj1XXOof9CnARaC7C0P2Tn1yW0wjeP5St4i2aKuoL5tsaaSVk11hZ6XF2kjKjjqjow9uTyVIrn1NH-kwHf0cZSkPExkHLIl1JDtpMCE5R",
+          |    "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5jcmVhdGUiLA0KCSJjaGFsbGVuZ2UiIDogIkZGRFpEeXBlZ2xpQXBLWlhGOFhDSENuMlNsTXk0QlZ1cGVPRlhEU3IxdUUiLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9"
+          |  },
+          |  "clientExtensionResults": {}
+          |}
+          |
+        """.stripMargin)
+
+      val assertionRequest = JacksonCodecs.json().readValue(
+        """{
+          |  "challenge": "YK17iD3fpOQKPSU6bxIU-TFBj1HNVSrX5bX5Pzj-SHQ",
+          |  "rpId": "demo3.yubico.test",
+          |  "allowCredentials": [
+          |    {
+          |      "type": "public-key",
+          |      "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM"
+          |    }
+          |  ],
+          |  "userVerification": "preferred",
+          |  "extensions": {
+          |    "appid": "https://demo3.yubico.test:8443"
+          |  }
+          |}
+          |""".stripMargin,
+        classOf[PublicKeyCredentialRequestOptions])
+      val assertionResponse = PublicKeyCredential.parseAssertionResponseJson(
+        """
+          |{
+          |  "type": "public-key",
+          |  "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM",
+          |  "response": {
+          |    "authenticatorData": "AU4Ai_91hLmkf2mxjxj_SJrA3qTIOjr6tw1rluqSp_4FAAAACA",
+          |    "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5nZXQiLA0KCSJjaGFsbGVuZ2UiIDogIllLMTdpRDNmcE9RS1BTVTZieElVLVRGQmoxSE5WU3JYNWJYNVB6ai1TSFEiLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9",
+          |    "signature": "YWVfTS-0-j6mRFG_fYBN9ApkhgjH89hyOVGaOuqxazXv1jA3YBQjoTurN43PebHPXDC6gNxjATUGxMvCq2t5Dg",
+          |    "userHandle": null
+          |  },
+          |  "clientExtensionResults": {
+          |    "appid": false
+          |  }
+          |}
+        """.stripMargin
+      )
+
+      val credData = registrationResponse.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get
+      val credId: ByteArray = credData.getCredentialId
+      val publicKeyBytes: ByteArray = credData.getCredentialPublicKey
+
+      val credRepo = new CredentialRepository {
+        override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
+          if (username == registrationRequest.getUser.getName)
+            Set(PublicKeyCredentialDescriptor.builder().id(credId).build()).asJava
+          else Set.empty.asJava
+        override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+          if (username == registrationRequest.getUser.getName)
+            Some(registrationRequest.getUser.getId).asJava
+          else None.asJava
+        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
+          if (userHandle == registrationRequest.getUser.getId)
+            Some(registrationRequest.getUser.getName).asJava
+          else None.asJava
+        override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
+          if (credentialId == credId && userHandle == registrationRequest.getUser.getId)
+            Some(RegisteredCredential.builder()
+              .credentialId(credId)
+              .userHandle(registrationRequest.getUser.getId)
+              .publicKeyCose(publicKeyBytes)
+              .build()).asJava
+          else None.asJava
+        override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
+          if (credentialId == credId)
+            Set(RegisteredCredential.builder()
+              .credentialId(credId)
+              .userHandle(registrationRequest.getUser.getId)
+              .publicKeyCose(publicKeyBytes)
+              .build()).asJava
+          else Set.empty.asJava
+      }
+
+      val rp = RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
+        .credentialRepository(credRepo)
+        .origins(Set("https://demo3.yubico.test:8443").asJava)
+        .build()
+
+      val result = rp.finishAssertion(FinishAssertionOptions.builder()
+        .request(AssertionRequest.builder()
+            .publicKeyCredentialRequestOptions(assertionRequest)
+            .username(registrationRequest.getUser.getName)
+            .build())
+        .response(assertionResponse)
+        .build()
+      )
+
+      result.isSuccess should be (true)
+      result.getUserHandle should equal (registrationRequest.getUser.getId)
       result.getCredentialId should equal (credId)
     }
   }

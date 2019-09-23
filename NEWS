@@ -1,3 +1,33 @@
+== Version 1.4.0 ==
+
+Changes:
+
+* Class `com.yubico.internal.util.WebAuthnCodecs` is no longer public. The
+  package `com.yubico.internal.util` was already declared non-public in JavaDoc,
+  but this is now also enforced via Java visibility rules.
+* Class `com.yubico.webauthn.meta.Specification.SpecificationBuilder` is no
+  longer public. It was never intended to be, although this was not documented
+  explicitly.
+* Default value for `RelyingParty.preferredPubKeyParams` changed from `[ES256,
+  RS256]` to `[ES256, EdDSA, RS256]`
+* Data classes no longer use `Optional` internally in field types. This should
+  not meaningfully affect the public API, but might improve compatibility with
+  frameworks that use reflection.
+
+New features:
+
+* Added support for Ed25519 signatures.
+* New constants `COSEAlgorithmIdentifier.EdDSA` and
+  `PublicKeyCredentialParameters.EdDSA`
+* Artifacts are now built reproducibly; fresh builds from source should now be
+  verifiable by signature files from Maven Central.
+
+Security fixes:
+
+* Bumped Jackson dependency to version 2.9.9.3 which has patched CVE-2019-12814,
+  CVE-2019-14439, CVE-2019-14379
+
+
 == Version 1.3.0 ==
 
 Security fixes:

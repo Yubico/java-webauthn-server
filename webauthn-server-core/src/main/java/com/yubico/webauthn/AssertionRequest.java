@@ -28,8 +28,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -39,7 +37,6 @@ import lombok.Value;
  * A combination of a {@link PublicKeyCredentialRequestOptions} and, optionally, a {@link #getUsername() username}.
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class AssertionRequest {
 
@@ -58,15 +55,27 @@ public class AssertionRequest {
      * credential</a>, and identification of the user has been deferred until the response is received.
      * </p>
      */
-    @NonNull
-    private final Optional<String> username;
+    private final String username;
 
     @JsonCreator
     private AssertionRequest(
         @NonNull @JsonProperty("publicKeyCredentialRequestOptions") PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
         @JsonProperty("username") String username
     ) {
-        this(publicKeyCredentialRequestOptions, Optional.ofNullable(username));
+        this.publicKeyCredentialRequestOptions = publicKeyCredentialRequestOptions;
+        this.username = username;
+    }
+
+    /**
+     * The username of the user to authenticate, if the user has already been identified.
+     * <p>
+     * If this is absent, this indicates that this is a request for an assertion by a <a
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+     * credential</a>, and identification of the user has been deferred until the response is received.
+     * </p>
+     */
+    public Optional<String> getUsername() {
+        return Optional.ofNullable(username);
     }
 
     public static AssertionRequestBuilder.MandatoryStages builder() {
@@ -74,7 +83,7 @@ public class AssertionRequest {
     }
 
     public static class AssertionRequestBuilder {
-        private Optional<String> username = Optional.empty();
+        private String username = null;
 
         public static class MandatoryStages {
             private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
@@ -97,8 +106,7 @@ public class AssertionRequest {
          * </p>
          */
         public AssertionRequestBuilder username(@NonNull Optional<String> username) {
-            this.username = username;
-            return this;
+            return this.username(username.orElse(null));
         }
 
         /**
@@ -109,8 +117,9 @@ public class AssertionRequest {
          * credential</a>, and identification of the user has been deferred until the response is received.
          * </p>
          */
-        public AssertionRequestBuilder username(@NonNull String username) {
-            return this.username(Optional.of(username));
+        public AssertionRequestBuilder username(String username) {
+            this.username = username;
+            return this;
         }
     }
 

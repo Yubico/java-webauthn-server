@@ -28,23 +28,24 @@ import java.net.URL
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
-import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.upokecenter.cbor.CBORObject
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBOREncodeOptions
+import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
-import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.AssertionRequest
+import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
+import com.yubico.webauthn.WebAuthnTestCodecs
 import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 
 import scala.collection.JavaConverters._
 
@@ -77,7 +78,7 @@ object Generators {
     aaguid <- byteArray(16)
     credentialId <- arbitrary[ByteArray]
     credentialPublicKey <- Gen.delay(Gen.const(TestAuthenticator.generateEcKeypair().getPublic.asInstanceOf[ECPublicKey]))
-    credentialPublicKeyCose = WebAuthnCodecs.ecPublicKeyToCose(credentialPublicKey)
+    credentialPublicKeyCose = WebAuthnTestCodecs.ecPublicKeyToCose(credentialPublicKey)
   } yield AttestedCredentialData.builder()
     .aaguid(aaguid)
     .credentialId(credentialId)
@@ -112,7 +113,7 @@ object Generators {
       "fmt" -> jsonFactory.textNode("packed"),
       "attStmt" -> attStmt
     ).asJava)
-  } yield new ByteArray(WebAuthnCodecs.cbor().writeValueAsBytes(attObj))
+  } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj))
 
   def fidoU2fAttestationObject: Gen[ByteArray] = for {
     authData <- authenticatorDataBytes
@@ -128,7 +129,7 @@ object Generators {
       "fmt" -> jsonFactory.textNode("fido-u2f"),
       "attStmt" -> attStmt
     ).asJava)
-  } yield new ByteArray(WebAuthnCodecs.cbor().writeValueAsBytes(attObj))
+  } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj))
 
   implicit val arbitraryAuthenticatorDataFlags: Arbitrary[AuthenticatorDataFlags] = Arbitrary(for {
     value <- arbitrary[Byte]
@@ -216,20 +217,20 @@ object Generators {
         .set("type", jsonFactory.textNode(tpe)).asInstanceOf[ObjectNode]
 
       tokenBinding.asScala foreach { tb =>
-        json.set("tokenBinding", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(tb)))
+        json.set("tokenBinding", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(tb)))
       }
 
       authenticatorExtensions.asScala foreach { ae =>
-        json.set("authenticatorExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(ae)))
+        json.set("authenticatorExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(ae)))
       }
 
       clientExtensions.asScala foreach { ce =>
-        json.set("clientExtensions", WebAuthnCodecs.json().readTree(WebAuthnCodecs.json().writeValueAsString(ce)))
+        json.set("clientExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(ce)))
       }
 
       json
     }
-  } yield new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json))
+  } yield new ByteArray(JacksonCodecs.json().writeValueAsBytes(json))
 
   implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values()))
 

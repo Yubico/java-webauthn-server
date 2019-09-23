@@ -65,6 +65,10 @@ final class BouncyCastleCrypto {
                     algName = "SHA256withECDSA";
                     break;
 
+                case "Ed25519":
+                    algName = "EDDSA";
+                    break;
+
                 case "RSA":
                     algName = "SHA256withRSA";
                     break;

@@ -87,25 +87,13 @@ To build it, run
 
   $ ../gradlew war
 
-To build and run it via Gradle, run
-
-  $ ../gradlew appRun
-
-This will serve the application under `https://localhost:8443/webauthn/` by
-default.
-
-NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
-certificate. This will cause your browser to show a warning, which is safe to
-bypass. The dummy certificate is not included in the `.war` artifact; it is only
-used when running via Gradle.
-
 
 === Standalone Java executable
 
 The standalone Java executable has the main class
 https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
-This server serves only the REST API at `/v1/`, and does not include the web
-GUI.
+This server also serves the REST API at `/api/v1/`, and static resources for the
+GUI under `/`.
 
 To build it, run one of the following:
 
@@ -113,18 +101,23 @@ To build it, run one of the following:
   $ ../gradlew distZip
 
 This will build an archive which can be unpacked and run anywhere with a Java
-environment as:
+environment:
 
-  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo
-  $ webauthn-server-demo-$VERSION/bin/webauthn-server-demo.bat
+  $ unzip webauthn-server-demo-$VERSION.zip
+  $ cd webauthn-server-demo-$VERSION
+  $ ./bin/webauthn-server-demo
+  > ./bin/webauthn-server-demo.bat
 
-To build and run it via Gradle, run:
+To build and run the demo server via Gradle, run:
 
   $ ./gradlew run
 
-This will serve the application under `http://localhost:8080/` by default.
+This will serve the application under `https://localhost:8443/`.
 
-HTTPS support for this mode is not yet implemented.
+NOTE: Since WebAuthn requires a HTTPS connection, this demo server uses a dummy
+certificate. This will cause your browser to show a warning, which is safe to
+bypass. The dummy certificate is not included in the `.war` artifact; it is only
+used by the embedded Jetty server and the application distribution archives.
 
 
 === Configuration

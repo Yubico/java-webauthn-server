@@ -38,8 +38,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
-import com.yubico.internal.util.WebAuthnCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -530,7 +530,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   ).editAuthenticatorData(
                     authData => new ByteArray(
                       authData.getBytes.updated(32, (authData.getBytes()(32) | 0x80).toByte) ++
-                        WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
+                        JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
                     )
                   )
                 )
@@ -551,7 +551,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 ).editAuthenticatorData(
                   authData => new ByteArray(
                     authData.getBytes.updated(32, (authData.getBytes()(32) | 0x80).toByte) ++
-                      WebAuthnCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
+                      JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
                   )
                 )
               )
@@ -718,7 +718,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -745,7 +745,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -907,7 +907,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val (credential, _) = authenticator.createBasicAttestedCredential(
+                  val ((credential, _), _) = authenticator.createBasicAttestedCredential(
                     attestationCertAndKey = Some(badCert, key),
                     attestationStatementFormat = "packed"
                   )
@@ -1732,6 +1732,26 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
         }
 
+        it("accept all test examples in the validExamples list.") {
+          RegistrationTestData.validExamples.foreach { testData =>
+            val rp = {
+              val builder = RelyingParty.builder()
+                .identity(testData.rpId)
+                .credentialRepository(emptyCredentialRepository)
+              testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
+              builder.build()
+            }
+
+            val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+              .request(testData.request)
+              .response(testData.response)
+              .build()
+            )
+
+            result.getKeyId.getId should equal (testData.response.getId)
+          }
+        }
+
       }
 
       describe("RelyingParty supports registering") {
@@ -1742,7 +1762,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             .origins(Set("https://demo3.yubico.test:8443").asJava)
             .build()
 
-          val testData = RegistrationTestData.Packed.BasicAttestationRsa
+          val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
           val result = rp.finishRegistration(FinishRegistrationOptions.builder()
             .request(testData.request)
             .response(testData.response)

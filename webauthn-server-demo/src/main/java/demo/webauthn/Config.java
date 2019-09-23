@@ -43,7 +43,7 @@ public class Config {
     private static final Logger logger = LoggerFactory.getLogger(Config.class);
 
     private static final String DEFAULT_ORIGIN = "https://localhost:8443";
-    private static final int DEFAULT_PORT = 8080;
+    private static final int DEFAULT_PORT = 8443;
     private static final RelyingPartyIdentity DEFAULT_RP_ID
         = RelyingPartyIdentity.builder().id("localhost").name("Yubico WebAuthn demo").build();
 

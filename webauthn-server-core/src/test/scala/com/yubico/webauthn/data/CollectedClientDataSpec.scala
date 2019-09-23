@@ -26,7 +26,8 @@ package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.internal.util.WebAuthnCodecs
+import com.yubico.internal.util.JacksonCodecs
+import com.yubico.webauthn.WebAuthnCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -36,11 +37,11 @@ import org.scalatest.junit.JUnitRunner
 @RunWith(classOf[JUnitRunner])
 class CollectedClientDataSpec extends FunSpec with Matchers {
 
-  def parse(json: JsonNode): CollectedClientData = new CollectedClientData(new ByteArray(WebAuthnCodecs.json().writeValueAsBytes(json)))
+  def parse(json: JsonNode): CollectedClientData = new CollectedClientData(new ByteArray(JacksonCodecs.json().writeValueAsBytes(json)))
 
   describe("CollectedClientData") {
 
-    val defaultJson: ObjectNode = WebAuthnCodecs.json.readTree("""{
+    val defaultJson: ObjectNode = JacksonCodecs.json.readTree("""{
         "challenge": "aaaa",
         "origin": "example.org",
         "type": "webauthn.create",

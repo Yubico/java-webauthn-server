@@ -1,27 +1,18 @@
-description = 'Yubico internal Scala utilities'
+plugins {
+  id 'scala'
+}
 
-apply plugin: 'scala'
+description = 'Yubico internal Scala utilities'
 
 dependencies {
 
-  compile(
+  implementation(
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
   )
 
-  testCompile(
+  testImplementation(
     'org.scalatest:scalatest_2.12:3.0.4',
   )
 }
 
-
-jar {
-  manifest {
-    attributes([
-      'Implementation-Id': 'yubico-util-scala',
-      'Implementation-Title': project.description,
-      'Implementation-Version': project.version,
-      'Implementation-Vendor': 'Yubico',
-    ])
-  }
-}

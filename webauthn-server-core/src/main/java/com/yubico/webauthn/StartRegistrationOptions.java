@@ -49,8 +49,7 @@ public class StartRegistrationOptions {
     /**
      * Constraints on what kind of authenticator the user is allowed to use to create the credential.
      */
-    @NonNull
-    private final Optional<AuthenticatorSelectionCriteria> authenticatorSelection;
+    private final AuthenticatorSelectionCriteria authenticatorSelection;
 
     /**
      * Extension inputs for this registration operation.
@@ -70,16 +69,37 @@ public class StartRegistrationOptions {
      * The default is empty.
      * </p>
      */
-    @NonNull
-    private final Optional<Long> timeout;
+    private final Long timeout;
+
+    /**
+     * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+     */
+    public Optional<AuthenticatorSelectionCriteria> getAuthenticatorSelection() {
+        return Optional.ofNullable(authenticatorSelection);
+    }
+
+    /**
+     * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
+     * <p>
+     * This library does not take the timeout into account in any way, other than passing it through to the {@link
+     * PublicKeyCredentialCreationOptions} so it can be used as an argument to
+     * <code>navigator.credentials.create()</code> on the client side.
+     * </p>
+     * <p>
+     * The default is empty.
+     * </p>
+     */
+    public Optional<Long> getTimeout() {
+        return Optional.ofNullable(timeout);
+    }
 
     public static StartRegistrationOptionsBuilder.MandatoryStages builder() {
         return new StartRegistrationOptionsBuilder.MandatoryStages();
     }
 
     public static class StartRegistrationOptionsBuilder {
-        private @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection = Optional.empty();
-        private @NonNull Optional<Long> timeout = Optional.empty();
+        private AuthenticatorSelectionCriteria authenticatorSelection = null;
+        private Long timeout = null;
 
         public static class MandatoryStages {
             private final StartRegistrationOptionsBuilder builder = new StartRegistrationOptionsBuilder();
@@ -93,15 +113,15 @@ public class StartRegistrationOptions {
          * Constraints on what kind of authenticator the user is allowed to use to create the credential.
          */
         public StartRegistrationOptionsBuilder authenticatorSelection(@NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
-            this.authenticatorSelection = authenticatorSelection;
-            return this;
+            return this.authenticatorSelection(authenticatorSelection.orElse(null));
         }
 
         /**
          * Constraints on what kind of authenticator the user is allowed to use to create the credential.
          */
-        public StartRegistrationOptionsBuilder authenticatorSelection(@NonNull AuthenticatorSelectionCriteria authenticatorSelection) {
-            return this.authenticatorSelection(Optional.of(authenticatorSelection));
+        public StartRegistrationOptionsBuilder authenticatorSelection(AuthenticatorSelectionCriteria authenticatorSelection) {
+            this.authenticatorSelection = authenticatorSelection;
+            return this;
         }
 
         /**
@@ -119,7 +139,7 @@ public class StartRegistrationOptions {
             if (timeout.isPresent() && timeout.get() <= 0) {
                 throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
             }
-            this.timeout = timeout;
+            this.timeout = timeout.orElse(null);
             return this;
         }
 

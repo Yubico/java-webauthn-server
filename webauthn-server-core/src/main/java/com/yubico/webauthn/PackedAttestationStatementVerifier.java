@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;

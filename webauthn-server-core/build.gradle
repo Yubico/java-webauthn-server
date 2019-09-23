@@ -1,27 +1,30 @@
-apply plugin: 'info.solidsoft.pitest'
+plugins {
+  id 'java-library'
+  id 'scala'
+  id 'info.solidsoft.pitest'
+}
 
-description = 'WebAuthn core API'
-
-apply plugin: 'scala'
+description = 'Yubico WebAuthn server core API'
 
 project.ext.publishMe = true
 
 dependencies {
 
-  compile(
+  implementation(
     project(':yubico-util'),
-    'com.augustcellars.cose:cose-java:0.9.4',
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
-    'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
-    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
+    'com.augustcellars.cose:cose-java:0.9.10',
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',
     'org.apache.httpcomponents:httpclient:4.5.2',
-    'org.bouncycastle:bcpkix-jdk15on:1.54',
+    'org.bouncycastle:bcprov-jdk15on:1.62',
+    'org.slf4j:slf4j-api:1.7.25',
   )
 
-  testCompile(
+  testImplementation(
     project(':yubico-util-scala'),
-    'commons-io:commons-io:2.5',
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
+    'junit:junit:4.12',
+    'org.bouncycastle:bcpkix-jdk15on:1.62',
     'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
@@ -46,7 +49,7 @@ jar {
 }
 
 pitest {
-  pitestVersion = '1.4.2'
+  pitestVersion = '1.4.9'
 
   timestampedReports = false
   outputFormats = ['XML', 'HTML']

@@ -5,6 +5,7 @@ java-webauthn-server
 :toc-title:
 
 image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
+image:https://github.com/Yubico/java-webauthn-server/workflows/build/badge.svg["Build Status", link="https://github.com/Yubico/java-webauthn-server/actions"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
 
 Server-side https://www.w3.org/TR/webauthn/[Web Authentication] library for
@@ -327,13 +328,33 @@ version is derived from the most recent Git tag. Builds done on a tagged commit
 will have a plain `x.y.z` version number, while a build on any other commit will
 result in a version number containing the abbreviated commit hash.
 
+Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds from
+tagged commits should therefore be verifiable by signatures from Maven Central:
+
+```
+$ git checkout 1.4.0-RC2
+$ ./gradlew :webauthn-server-core:jar
+$ wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0-RC2/webauthn-server-core-1.4.0-RC2.jar.asc
+$ gpg --verify webauthn-server-core-1.4.0-RC2.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0-RC2.jar
+```
+
+Note that building with a different JDK may produce a different artifact. To
+ensure binary reproducibility, please build with the same JDK as specified in
+the release notes.
+
+Official Yubico software signing keys are listed on the
+https://developers.yubico.com/Software_Projects/Software_Signing.html[Yubico
+Developers site].
+
+
 To run the tests:
 
 ----------
 $ ./gradlew check
 ----------
 
-To run the http://pitest.org/[PIT mutation tests]:
+To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
+minutes):
 
 ----------
 $ ./gradlew pitest

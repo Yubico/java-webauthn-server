@@ -1,4 +1,8 @@
 plugins {
+  id 'java'
+  id 'war'
+  id 'application'
+  id 'scala'
   id 'com.bmuschko.docker-remote-api' version '3.6.1'
 }
 
@@ -9,9 +13,6 @@ project.ext.dockerName = project.name
 
 description = 'WebAuthn demo'
 
-apply plugin: 'scala'
-apply plugin: 'war'
-apply plugin: 'application'
 apply from: 'gretty-2.2.0.plugin'
 
 configurations {
@@ -20,16 +21,19 @@ configurations {
 
 dependencies {
 
-  compile(
+  implementation(
     project(':webauthn-server-attestation'),
     project(':webauthn-server-core'),
+    project(':yubico-util'),
 
-    'com.fasterxml.jackson.core:jackson-core:2.9.9',
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9',
-    'com.google.guava:guava:24.1-jre',
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
+    'com.google.guava:guava:19.0',
+    'com.upokecenter:cbor:2.4.1',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
-    'org.glassfish.jersey.containers:jersey-container-jetty-http:2.26',
+    'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
+    'org.glassfish.jersey.containers:jersey-container-servlet-core:2.26',
+    'org.slf4j:slf4j-api:1.7.25',
   )
 
   forJdk10(
@@ -37,18 +41,19 @@ dependencies {
     'javax.xml.bind:jaxb-api:2.3.0',
   )
 
-  runtime(
+  runtimeOnly(
     configurations.forJdk10,
+
     'ch.qos.logback:logback-classic:1.2.3',
     'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
     'org.glassfish.jersey.inject:jersey-hk2:2.26',
   )
 
-  testCompile(
+  testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 
-    'commons-io:commons-io:2.5',
+    'junit:junit:4.12',
     'org.mockito:mockito-core:2.27.0',
     'org.scala-lang:scala-library:2.12.8',
     'org.scalacheck:scalacheck_2.12:1.14.0',
@@ -64,13 +69,14 @@ dependencies {
 
 mainClassName = 'demo.webauthn.EmbeddedServer'
 
-gretty {
-  contextPath = '/webauthn'
-  httpEnabled = false
-  httpsEnabled = true
-  servletContainer = 'jetty7' // Orders of magnitude faster than jetty9
-  sslKeyStorePassword = 'p@ssw0rd'
-  sslKeyStorePath = file('keystore.jks')
+[installDist, distZip, distTar].each { task ->
+  def intoDir = (task == installDist) ? "/" : "${project.name}-${project.version}"
+  task.into(intoDir) {
+    from 'keystore.jks'
+    from('src/main/webapp') {
+      into 'src/main/webapp'
+    }
+  }
 }
 
 task dockerPrepare(type: Sync) {

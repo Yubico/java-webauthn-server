@@ -3,14 +3,11 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    configurations.maybeCreate('pitest')
     classpath 'com.cinnober.gradle:semver-git:2.4.0'
-    classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.3.0'
-    pitest 'org.pitest:pitest-command-line:1.4.2' // Transitive dependency from pitest plugin
   }
 }
 plugins {
-  id 'com.github.kt3k.coveralls' version '2.8.1'
+  id 'com.github.kt3k.coveralls' version '2.8.2'
   id 'io.codearte.nexus-staging' version '0.9.0'
   id 'io.franzbecker.gradle-lombok' version '1.14'
 }
@@ -33,51 +30,36 @@ if (publishEnabled) {
 }
 
 wrapper {
-  gradleVersion = '4.10'
+  gradleVersion = '5.4'
 }
 
-allprojects  {
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
-  ext.dirtyMarker = "-DIRTY"
-
+allprojects {
   apply plugin: 'com.cinnober.gradle.semver-git'
-  apply plugin: 'java'
   apply plugin: 'idea'
-  apply plugin: LombokPlugin
 
   group = 'com.yubico'
 
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+  ext.dirtyMarker = "-DIRTY"
+
+  idea.module {
+    downloadJavadoc = true
+    downloadSources = true
+  }
+}
+
+subprojects {
+  apply plugin: LombokPlugin
 
   lombok {
-    version '1.18.6'
-    sha256 = '6373d9ade79efdc028cd48d40a9af9ac6a090dbcfaec55b438ec49556a4e92fb'
-  }
-
-  tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-  }
-
-  tasks.withType(AbstractArchiveTask) {
-    from(rootProject.file('COPYING'))
+    version '1.18.8'
+    sha256 = '0396952823579b316a0fe85cbd871bbb3508143c2bcbd985dd7800e806cb24fc'
   }
 
   repositories {
     mavenLocal()
 
     maven { url "http://repo.maven.apache.org/maven2" }
-  }
-
-
-  idea.module { downloadJavadoc = true }
-
-  test {
-    failFast = true
-
-    testLogging {
-      showStandardStreams = isCiBuild
-    }
   }
 }
 
@@ -91,112 +73,126 @@ task assembleJavadoc(type: Sync) {
 }
 
 subprojects { project ->
-  task packageSources(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-  }
-  artifacts.archives packageSources
 
-  task delombok(type: DelombokTask, dependsOn: classes) {
-    ext.outputDir = file("${buildDir}/delombok")
-    outputs.dir outputDir
-    sourceSets.main.java.srcDirs.each {
-      inputs.dir it
-      args(it, '-d', outputDir)
-    }
-    doFirst {
-      outputDir.deleteDir()
-    }
-  }
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
-  javadoc {
-    dependsOn delombok
-    source = delombok.outputDir
+
+  tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    options.addStringOption('charset', 'UTF-8')
   }
 
-  task packageJavadoc(type: Jar) {
-    classifier = 'javadoc'
-    inputs.files javadoc.outputs
-    from javadoc.destinationDir
+  tasks.withType(AbstractArchiveTask) {
+    from(rootProject.file('COPYING'))
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
   }
-  artifacts.archives packageJavadoc
 
-  rootProject.tasks.assembleJavadoc {
-    dependsOn javadoc
-    inputs.dir javadoc.destinationDir
-    from(javadoc.destinationDir) {
-      into project.name
+  test {
+    testLogging {
+      showStandardStreams = isCiBuild
     }
   }
 
-  dependencies {
+  if (project.hasProperty('publishMe') && project.publishMe) {
+    task sourcesJar(type: Jar) {
+      archiveClassifier = 'sources'
+      from sourceSets.main.allSource
+    }
 
-    compile(
-      'org.slf4j:slf4j-api:1.7.25',
-    )
+    task delombok(type: DelombokTask, dependsOn: classes) {
+      ext.outputDir = file("${buildDir}/delombok")
+      outputs.dir outputDir
+      sourceSets.main.java.srcDirs.each {
+        if (!it.exists()) {
+          it.mkdirs()
+        }
+        inputs.dir it
+        args(it, '-d', outputDir)
+      }
+      doFirst {
+        outputDir.deleteDir()
+      }
+    }
 
-    testCompile(
-      'junit:junit:4.12',
-      'org.mockito:mockito-core:2.27.0',
-    )
+    javadoc {
+      dependsOn delombok
+      source = delombok.outputDir
+      options.encoding = 'UTF-8'
+      options.addStringOption('charset', 'UTF-8')
+    }
 
+    task javadocJar(type: Jar) {
+      archiveClassifier = 'javadoc'
+      from javadoc
+    }
+
+    rootProject.tasks.assembleJavadoc {
+      dependsOn javadoc
+      inputs.dir javadoc.destinationDir
+      from(javadoc.destinationDir) {
+        into project.name
+      }
+    }
   }
 
   if (publishEnabled && project.hasProperty('publishMe') && project.publishMe) {
 
-    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
-    signing {
-      useGpgCmd()
-      sign configurations.archives
-    }
-    signArchives.dependsOn check
+    publishing {
+      publications {
+        jars(MavenPublication) {
+          from components.java
+          artifact javadocJar
+          artifact sourcesJar
 
-    uploadArchives {
-      repositories {
-        mavenDeployer {
-          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-          repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-            authentication(userName: ossrhUsername, password: ossrhPassword)
-          }
-
-          pom.project {
-            name project.description
-            description 'Java server-side library for Web Authentication'
-            url 'https://developers.yubico.com/java-webauthn-server/'
+          pom {
+            name = project.name
+            description = project.description
+            url = 'https://developers.yubico.com/java-webauthn-server/'
 
             developers {
               developer {
-                id 'emil'
-                name 'Emil Lundberg'
-                email 'emil@yubico.com'
+                id = 'emil'
+                name = 'Emil Lundberg'
+                email = 'emil@yubico.com'
               }
             }
 
             licenses {
               license {
-                name 'BSD-license'
-                comments 'Revised 2-clause BSD license'
+                name = 'BSD-license'
+                comments = 'Revised 2-clause BSD license'
               }
             }
 
             scm {
-              url 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              connection 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              developerConnection 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-              tag 'HEAD'
+              url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+              developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
+              tag = 'HEAD'
             }
           }
         }
       }
+
+      repositories {
+        maven {
+          name = "sonatypeNexus"
+          url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+          credentials {
+            username ossrhUsername
+            password ossrhPassword
+          }
+        }
+      }
+    }
+
+    signing {
+      useGpgCmd()
+      sign publishing.publications.jars
     }
   }
 }
@@ -205,6 +201,10 @@ task pitestMerge(type: com.yubico.gradle.pitest.tasks.PitestMergeTask)
 
 coveralls {
   sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
+
+  // Workaround to TLS issues in JDK 11, see https://github.com/kt3k/coveralls-gradle-plugin/issues/85
+  saveAsFile = true
+  sendToCoveralls = false
 }
 tasks.coveralls {
   inputs.files pitestMerge.outputs.files

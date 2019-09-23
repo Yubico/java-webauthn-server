@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.internal.util.JacksonCodecs;
 import java.io.IOException;
 import lombok.NonNull;
 import lombok.Value;
@@ -106,7 +106,7 @@ public class AttestationObject {
     public AttestationObject(@NonNull ByteArray bytes) throws IOException {
         this.bytes = bytes;
 
-        final JsonNode decoded = WebAuthnCodecs.cbor().readTree(bytes.getBytes());
+        final JsonNode decoded = JacksonCodecs.cbor().readTree(bytes.getBytes());
         final ByteArray authDataBytes;
 
         ExceptionUtil.assure(

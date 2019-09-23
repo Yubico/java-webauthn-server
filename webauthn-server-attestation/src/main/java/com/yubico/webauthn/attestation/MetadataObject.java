@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Closeables;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
-import com.yubico.internal.util.WebAuthnCodecs;
+import com.yubico.internal.util.JacksonCodecs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
@@ -50,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(of = { "data" }, callSuper = false)
 public final class MetadataObject {
-    private static final ObjectMapper OBJECT_MAPPER = WebAuthnCodecs.json();
+    private static final ObjectMapper OBJECT_MAPPER = JacksonCodecs.json();
 
     private static final TypeReference<Map<String, String>> MAP_STRING_STRING_TYPE = new TypeReference<Map<String, String>>() {
     };
@@ -85,7 +85,7 @@ public final class MetadataObject {
     public static MetadataObject readDefault() {
         InputStream is = MetadataObject.class.getResourceAsStream("/metadata.json");
         try {
-            return WebAuthnCodecs.json().readValue(is, MetadataObject.class);
+            return JacksonCodecs.json().readValue(is, MetadataObject.class);
         } catch (IOException e) {
             throw ExceptionUtil.wrapAndLog(log, "Failed to read default metadata", e);
         } finally {

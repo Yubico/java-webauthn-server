@@ -27,11 +27,13 @@ package com.yubico.webauthn.extension.appid;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.net.InetAddresses;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import lombok.NonNull;
 import lombok.Value;
 
 
@@ -56,7 +58,7 @@ public class AppId {
      * @see <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-appid-and-facets-v2.0-id-20180227.html">FIDO AppID and Facet Specification</a>
      */
     @JsonCreator
-    public AppId(String appId) throws InvalidAppIdException {
+    public AppId(@NonNull String appId) throws InvalidAppIdException {
         checkIsValid(appId);
         this.id = appId;
     }

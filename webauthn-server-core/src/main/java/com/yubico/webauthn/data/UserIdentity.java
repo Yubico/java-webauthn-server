@@ -28,8 +28,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URL;
 import java.util.Optional;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -44,7 +42,6 @@ import lombok.Value;
  * </a>
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class UserIdentity implements PublicKeyCredentialEntity {
 
@@ -122,9 +119,7 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * needing more storage.
      * </p>
      */
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final Optional<URL> icon;
+    private final URL icon;
 
     @JsonCreator
     private UserIdentity(
@@ -133,7 +128,10 @@ public class UserIdentity implements PublicKeyCredentialEntity {
         @NonNull @JsonProperty("id") ByteArray id,
         @JsonProperty("icon") URL icon
     ) {
-        this(name, displayName, id, Optional.ofNullable(icon));
+        this.name = name;
+        this.displayName = displayName;
+        this.id = id;
+        this.icon = icon;
     }
 
     public static UserIdentityBuilder.MandatoryStages builder() {
@@ -141,7 +139,7 @@ public class UserIdentity implements PublicKeyCredentialEntity {
     }
 
     public static class UserIdentityBuilder {
-        private @NonNull Optional<URL> icon = Optional.empty();
+        private URL icon = null;
 
         public static class MandatoryStages {
             private UserIdentityBuilder builder = new UserIdentityBuilder();
@@ -176,8 +174,7 @@ public class UserIdentity implements PublicKeyCredentialEntity {
          * </p>
          */
         public UserIdentityBuilder icon(@NonNull Optional<URL> icon) {
-            this.icon = icon;
-            return this;
+            return this.icon(icon.orElse(null));
         }
 
         /**
@@ -189,9 +186,15 @@ public class UserIdentity implements PublicKeyCredentialEntity {
          * needing more storage.
          * </p>
          */
-        public UserIdentityBuilder icon(@NonNull URL icon) {
-            return this.icon(Optional.of(icon));
+        public UserIdentityBuilder icon(URL icon) {
+            this.icon = icon;
+            return this;
         }
+    }
+
+    @Override
+    public Optional<URL> getIcon() {
+        return Optional.ofNullable(icon);
     }
 
 }
