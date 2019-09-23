@@ -105,7 +105,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
     credentialId: Option[ByteArray] = None,
-    credentialRepository: Option[CredentialRepository] = None,
+    credentialRepository: CredentialRepository = unimplementedCredentialRepository,
     metadataService: Option[MetadataService] = None,
     origins: Option[Set[String]] = None,
     rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
@@ -113,7 +113,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   ): FinishRegistrationSteps = {
     val builder = RelyingParty.builder()
       .identity(rp)
-      .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
+      .credentialRepository(credentialRepository)
       .preferredPubkeyParams(Nil.asJava)
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
@@ -1770,7 +1770,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
             testData = testData,
-            credentialRepository = Some(credentialRepository)
+            credentialRepository = credentialRepository
           )
           val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1791,7 +1791,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
             testData = testData,
-            credentialRepository = Some(credentialRepository)
+            credentialRepository = credentialRepository
           )
           val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1806,7 +1806,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             metadataService = Some(new TestMetadataService(Some(Attestation.builder().trusted(true).build()))),
-            credentialRepository = Some(emptyCredentialRepository)
+            credentialRepository = emptyCredentialRepository
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
           steps.run.isAttestationTrusted should be (true)
@@ -1819,7 +1819,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
-            credentialRepository = Some(emptyCredentialRepository)
+            credentialRepository = emptyCredentialRepository
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
           steps.run.isAttestationTrusted should be (false)
@@ -1830,7 +1830,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
-            credentialRepository = Some(emptyCredentialRepository)
+            credentialRepository = emptyCredentialRepository
           )
           val result = Try(steps.run)
           result.failed.get shouldBe an [IllegalArgumentException]
@@ -1848,7 +1848,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = testData,
               metadataService = None,
               allowUntrustedAttestation = true,
-              credentialRepository = Some(emptyCredentialRepository)
+              credentialRepository = emptyCredentialRepository
             )
             steps.run.getKeyId.getId should be (testData.response.getId)
             steps.run.isAttestationTrusted should be (false)
