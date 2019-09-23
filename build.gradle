@@ -88,6 +88,10 @@ subprojects { project ->
     reproducibleFileOrder = true
   }
 
+  tasks.withType(Sign) {
+    it.dependsOn check
+  }
+
   test {
     testLogging {
       showStandardStreams = isCiBuild
