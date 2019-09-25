@@ -315,7 +315,10 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            assure(response.getResponse().getParsedAuthenticatorData().getFlags().UP, "User Presence is required.");
+            assure(
+                response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+                "User Presence is required."
+            );
         }
 
         @Override
@@ -332,8 +335,16 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            if (request.getAuthenticatorSelection().map(AuthenticatorSelectionCriteria::getUserVerification).orElse(UserVerificationRequirement.PREFERRED) == UserVerificationRequirement.REQUIRED) {
-                assure(response.getResponse().getParsedAuthenticatorData().getFlags().UV, "User Verification is required.");
+            if (
+                request.getAuthenticatorSelection()
+                    .map(AuthenticatorSelectionCriteria::getUserVerification)
+                    .orElse(UserVerificationRequirement.PREFERRED)
+                    == UserVerificationRequirement.REQUIRED
+            ) {
+                assure(
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
+                    "User Verification is required."
+                );
             }
         }
 
