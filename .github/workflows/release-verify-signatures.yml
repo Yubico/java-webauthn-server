@@ -31,12 +31,12 @@ jobs:
       run: ./gradlew jar
 
     - name: Fetch keys
-      run: gpg --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E
+      run: gpg --no-default-keyring --keyring yubico --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E
 
     - name: Verify GitHub release signatures
       run: |
-        gpg --verify webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar
-        gpg --verify webauthn-server-core-${GITHUB_REF#refs/tags/}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF#refs/tags/}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${GITHUB_REF#refs/tags/}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF#refs/tags/}.jar
 
     - name: Download signatures from Maven Central
       run: |
@@ -45,5 +45,5 @@ jobs:
 
     - name: Verify Maven Central signatures
       run: |
-        gpg --verify webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar
-        gpg --verify webauthn-server-core-${GITHUB_REF#refs/tags/}.jar.mavencentral.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF#refs/tags/}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${GITHUB_REF#refs/tags/}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${GITHUB_REF#refs/tags/}.jar.mavencentral.asc webauthn-server-core/build/libs/webauthn-server-core-${GITHUB_REF#refs/tags/}.jar
