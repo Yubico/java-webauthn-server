@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 13]
+        java: [8, 11]
 
     steps:
     - name: Check out code

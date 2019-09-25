@@ -6,10 +6,8 @@ branches:
 
 jdk:
   - oraclejdk11
-  - oraclejdk13
   - openjdk8
   - openjdk11
-  - openjdk13
 
 script:
   - ./gradlew check assembleJavadoc
