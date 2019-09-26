@@ -13,8 +13,6 @@ project.ext.dockerName = project.name
 
 description = 'WebAuthn demo'
 
-apply from: 'gretty-2.2.0.plugin'
-
 configurations {
   forJdk10
 }
