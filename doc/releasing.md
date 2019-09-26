@@ -43,6 +43,7 @@ Release candidate versions
       `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z-RCN.jar.asc`
       and
       `webauthn-server-core/build/libs/webauthn-server-core-X.Y.Z-RCN.jar.asc`.
+    - Note which JDK version was used to build the artifacts.
 
 
 Release versions
@@ -115,3 +116,4 @@ Release versions
     - Attach the signature files from
       `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z.jar.asc`
       and `webauthn-server-core/build/libs/webauthn-server-core-X.Y.Z.jar.asc`.
+    - Note which JDK version was used to build the artifacts.
