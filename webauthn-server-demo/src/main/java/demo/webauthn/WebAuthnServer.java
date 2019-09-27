@@ -91,6 +91,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -110,6 +111,7 @@ public class WebAuthnServer {
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
     private final Cache<AssertionRequestWrapper, AuthenticatedAction> authenticatedActions = newCache();
+    private final SessionManager sessions = new SessionManager();
 
 
     private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
@@ -205,8 +207,9 @@ public class WebAuthnServer {
         @NonNull String username,
         @NonNull String displayName,
         Optional<String> credentialNickname,
-        boolean requireResidentKey
-    ) {
+        boolean requireResidentKey,
+        Optional<ByteArray> sessionToken
+    ) throws ExecutionException {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
         final ByteArray userHandle;
@@ -236,7 +239,8 @@ public class WebAuthnServer {
                             .build()
                         )
                         .build()
-                )
+                ),
+                Optional.of(sessions.createSession(userHandle))
             );
             registerRequestStorage.put(request.getRequestId(), request);
             return Either.right(request);
@@ -265,6 +269,13 @@ public class WebAuthnServer {
             final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
 
             AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
+                final ByteArray sessionToken;
+                try {
+                    sessionToken = sessions.createSession(existingUser.getId());
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+
                 RegistrationRequest request = new RegistrationRequest(
                     username,
                     credentialNickname,
@@ -277,7 +288,8 @@ public class WebAuthnServer {
                                 .build()
                             )
                             .build()
-                    )
+                    ),
+                    Optional.of(sessionToken)
                 );
                 registerRequestStorage.put(request.getRequestId(), request);
 
@@ -298,8 +310,10 @@ public class WebAuthnServer {
         Optional<AttestationCertInfo> attestationCert;
         @JsonSerialize(using = AuthDataSerializer.class)
         AuthenticatorData authData;
+        String username;
+        ByteArray sessionToken;
 
-        public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted) {
+        public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted, ByteArray sessionToken) {
             this.request = request;
             this.response = response;
             this.registration = registration;
@@ -317,6 +331,8 @@ public class WebAuthnServer {
             })
             .map(AttestationCertInfo::new);
             this.authData = response.getCredential().getResponse().getParsedAuthenticatorData();
+            this.username = request.getUsername();
+            this.sessionToken = sessionToken;
         }
 
     }
@@ -329,6 +345,8 @@ public class WebAuthnServer {
         final CredentialRegistration registration;
         boolean attestationTrusted;
         Optional<AttestationCertInfo> attestationCert;
+        final String username;
+        final ByteArray sessionToken;
     }
 
     @Value
@@ -376,6 +394,31 @@ public class WebAuthnServer {
                         .build()
                 );
 
+                if (userStorage.userExists(request.getUsername())) {
+                    boolean permissionGranted = false;
+
+                    final boolean isValidSession = request.getSessionToken().map(token ->
+                        sessions.isSessionForUser(request.getPublicKeyCredentialCreationOptions().getUser().getId(), token)
+                    ).orElse(false);
+
+                    logger.debug("Session token: {}", request.getSessionToken());
+                    logger.debug("Valid session: {}", isValidSession);
+
+                    if (isValidSession) {
+                        permissionGranted = true;
+                        logger.info("Session token accepted for user {}", request.getPublicKeyCredentialCreationOptions().getUser().getId());
+                    }
+
+                    logger.debug("permissionGranted: {}", permissionGranted);
+
+                    if (!permissionGranted) {
+                        throw new RegistrationFailedException(new IllegalArgumentException(String.format(
+                            "User %s already exists",
+                            request.getUsername()
+                        )));
+                    }
+                }
+
                 return Either.right(
                     new SuccessfulRegistrationResult(
                         request,
@@ -386,7 +429,8 @@ public class WebAuthnServer {
                             response,
                             registration
                         ),
-                        registration.isAttestationTrusted()
+                        registration.isAttestationTrusted(),
+                        sessions.createSession(request.getPublicKeyCredentialCreationOptions().getUser().getId())
                     )
                 );
             } catch (RegistrationFailedException e) {
@@ -399,7 +443,7 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, SuccessfulU2fRegistrationResult> finishU2fRegistration(String responseJson) {
+    public Either<List<String>, SuccessfulU2fRegistrationResult> finishU2fRegistration(String responseJson) throws ExecutionException {
         logger.trace("finishU2fRegistration responseJson: {}", responseJson);
         U2fRegistrationResponse response = null;
         try {
@@ -461,7 +505,9 @@ public class WebAuthnServer {
                         result
                     ),
                     result.isAttestationTrusted(),
-                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCertAndSignature()))
+                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCertAndSignature())),
+                    request.getUsername(),
+                    sessions.createSession(request.getPublicKeyCredentialCreationOptions().getUser().getId())
                 )
             );
         }
@@ -496,14 +542,18 @@ public class WebAuthnServer {
         private final AssertionResponse response;
         private final Collection<CredentialRegistration> registrations;
         @JsonSerialize(using = AuthDataSerializer.class) AuthenticatorData authData;
+        private final String username;
+        private final ByteArray sessionToken;
         private final List<String> warnings;
 
-        public SuccessfulAuthenticationResult(AssertionRequestWrapper request, AssertionResponse response, Collection<CredentialRegistration> registrations, List<String> warnings) {
+        public SuccessfulAuthenticationResult(AssertionRequestWrapper request, AssertionResponse response, Collection<CredentialRegistration> registrations, String username, ByteArray sessionToken, List<String> warnings) {
             this(
                 request,
                 response,
                 registrations,
                 response.getCredential().getResponse().getParsedAuthenticatorData(),
+                username,
+                sessionToken,
                 warnings
             );
         }
@@ -551,6 +601,8 @@ public class WebAuthnServer {
                             request,
                             response,
                             userStorage.getRegistrationsByUsername(result.getUsername()),
+                            result.getUsername(),
+                            sessions.createSession(result.getUserHandle()),
                             result.getWarnings()
                         )
                     );

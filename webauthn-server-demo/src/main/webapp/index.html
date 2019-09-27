@@ -60,6 +60,8 @@ input[type="text"] {
   <script>
 
 let ceremonyState = {};
+let session = {
+};
 
 function extend(obj, more) {
   return Object.assign({}, obj, more);
@@ -70,6 +72,32 @@ function rejectIfNotSuccess(response) {
     return response;
   } else {
     return new Promise((resolve, reject) => reject(response));
+  }
+}
+
+function updateSession(response) {
+  if (response.sessionToken) {
+     session.sessionToken = response.sessionToken;
+  }
+  if (response.username) {
+    session.username = response.username;
+  }
+  updateSessionBox();
+  return response;
+}
+
+function logout() {
+  session = {};
+  updateSession({});
+}
+
+function updateSessionBox() {
+  if (session.username) {
+    document.getElementById('session').textContent = `Logged in as ${session.username}`;
+    document.getElementById('logoutButton').disabled = false;
+  } else {
+    document.getElementById('session').textContent = 'Not logged in.';
+    document.getElementById('logoutButton').disabled = true;
   }
 }
 
@@ -150,10 +178,12 @@ function getRegisterRequest(urls, username, displayName, credentialNickname, req
       displayName,
       credentialNickname,
       requireResidentKey,
+      sessionToken: session.sessionToken || null,
     }),
     method: 'POST',
   })
     .then(response => response.json())
+    .then(updateSession)
     .then(rejectIfNotSuccess)
   ;
 }
@@ -234,18 +264,21 @@ function u2fRegister(appId, registerRequests, registeredKeys) {
   });
 }
 
-function submitResponse(url, requestId, response) {
-  console.log('submitResponse', url, requestId, response);
+function submitResponse(url, request, response) {
+  console.log('submitResponse', url, request, response);
 
   const body = {
-    requestId,
+    requestId: request.requestId,
     credential: response,
+    sessionToken: request.sessionToken || session.sessionToken || null,
   };
 
   return fetch(url, {
     method: 'POST',
     body: JSON.stringify(body),
-  }).then(response => response.json());
+  })
+    .then(response => response.json())
+    .then(updateSession)
   ;
 }
 
@@ -289,7 +322,6 @@ function performCeremony(params) {
         .then(webauthn.responseToObject);
     })
     .then(finishCeremony)
-
   ;
 }
 
@@ -306,7 +338,7 @@ function finishCeremony(response) {
   }
   showAuthenticatorResponse(response);
 
-  return submitResponse(useU2f ? urls.finishU2f : urls.finish, request.requestId, response)
+  return submitResponse(useU2f ? urls.finishU2f : urls.finish, request, response)
     .then(data => {
       if (data && data.success) {
         setStatus(statusStrings.success);
@@ -392,6 +424,7 @@ function getAuthenticateRequest(urls, username) {
     method: 'POST',
   })
     .then(response => response.json())
+    .then(updateSession)
     .then(rejectIfNotSuccess)
   ;
 }
@@ -401,10 +434,12 @@ function getDeregisterRequest(urls, username, credentialId) {
     body: new URLSearchParams({
       username,
       credentialId,
+      sessionToken: session.sessionToken,
     }),
     method: 'POST',
   })
     .then(response => response.json())
+    .then(updateSession)
     .then(rejectIfNotSuccess)
   ;
 }
@@ -605,6 +640,8 @@ window.onload = init;
     </form>
 
 
+    <p id="session">Not logged in.</p>
+    <button id="logoutButton" disabled="disabled" onClick="javascript:logout()">Log out</button>
     <p id="status"></p>
     <div id="messages"></div>
 

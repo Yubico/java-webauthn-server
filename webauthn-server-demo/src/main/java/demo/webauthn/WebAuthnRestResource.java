@@ -59,6 +59,7 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import org.slf4j.Logger;
@@ -151,14 +152,22 @@ public class WebAuthnRestResource {
         @NonNull @FormParam("username") String username,
         @NonNull @FormParam("displayName") String displayName,
         @FormParam("credentialNickname") String credentialNickname,
-        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
-    ) throws MalformedURLException {
+        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey,
+        @FormParam("sessionToken") String sessionTokenBase64
+    ) throws MalformedURLException, ExecutionException {
         logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}", username, displayName, credentialNickname, requireResidentKey);
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
             displayName,
             Optional.ofNullable(credentialNickname),
-            requireResidentKey
+            requireResidentKey,
+            Optional.ofNullable(sessionTokenBase64).map(base64 -> {
+                try {
+                    return ByteArray.fromBase64Url(base64);
+                } catch (Base64UrlException e) {
+                    throw new RuntimeException(e);
+                }
+            })
         );
 
         if (result.isRight()) {
@@ -186,7 +195,7 @@ public class WebAuthnRestResource {
 
     @Path("register/finish-u2f")
     @POST
-    public Response finishU2fRegistration(@NonNull String responseJson) {
+    public Response finishU2fRegistration(@NonNull String responseJson) throws ExecutionException {
         logger.trace("finishRegistration responseJson: {}", responseJson);
         Either<List<String>, WebAuthnServer.SuccessfulU2fRegistrationResult> result = server.finishU2fRegistration(responseJson);
         return finishResponse(
@@ -307,7 +316,7 @@ public class WebAuthnRestResource {
 
     @Path("action/add-credential/finish/finish-u2f")
     @POST
-    public Response finishU2fAddCredential(@NonNull String responseJson) {
+    public Response finishU2fAddCredential(@NonNull String responseJson) throws ExecutionException {
         return finishU2fRegistration(responseJson);
     }
 
