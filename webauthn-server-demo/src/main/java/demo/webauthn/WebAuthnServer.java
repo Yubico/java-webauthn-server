@@ -595,29 +595,35 @@ public class WebAuthnServer {
             });
     }
 
-    public <T> Either<List<String>, AssertionRequestWrapper> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
-        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
-
-        if (username == null || username.isEmpty()) {
-            return Either.left(Collections.singletonList("Username must not be empty."));
-        }
+    public Either<List<String>, CredentialRegistration> deregisterCredential(
+        @NonNull ByteArray sessionToken,
+        ByteArray credentialId
+    ) {
+        logger.trace("deregisterCredential session: {}, credentialId: {}", sessionToken, credentialId);
 
         if (credentialId == null || credentialId.getBytes().length == 0) {
             return Either.left(Collections.singletonList("Credential ID must not be empty."));
         }
 
-        AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
-            Optional<CredentialRegistration> credReg = userStorage.getRegistrationByUsernameAndCredentialId(username, credentialId);
+        Optional<ByteArray> session = sessions.getSession(sessionToken);
+        if (session.isPresent()) {
+            ByteArray userHandle = session.get();
+            Optional<String> username = userStorage.getUsernameForUserHandle(userHandle);
 
-            if (credReg.isPresent()) {
-                userStorage.removeRegistrationByUsername(username, credReg.get());
-                return Either.right(resultMapper.apply(credReg.get()));
+            if (username.isPresent()) {
+                Optional<CredentialRegistration> credReg = userStorage.getRegistrationByUsernameAndCredentialId(username.get(), credentialId);
+                if (credReg.isPresent()) {
+                    userStorage.removeRegistrationByUsername(username.get(), credReg.get());
+                    return Either.right(credReg.get());
+                } else {
+                    return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
+                }
             } else {
-                return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
+                return Either.left(Collections.singletonList("Invalid user handle"));
             }
-        };
-
-        return startAuthenticatedAction(Optional.of(username), action);
+        } else {
+            return Either.left(Collections.singletonList("Invalid session"));
+        }
     }
 
     public <T> Either<List<String>, T> deleteAccount(String username, Supplier<T> onSuccess) {

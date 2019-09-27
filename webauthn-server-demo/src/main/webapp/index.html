@@ -440,21 +440,6 @@ function getAuthenticateRequest(urls, username) {
   ;
 }
 
-function getDeregisterRequest(urls, username, credentialId) {
-  return fetch(urls.deregister, {
-    body: new URLSearchParams({
-      username,
-      credentialId,
-      sessionToken: session.sessionToken,
-    }),
-    method: 'POST',
-  })
-    .then(response => response.json())
-    .then(updateSession)
-    .then(rejectIfNotSuccess)
-  ;
-}
-
 function executeAuthenticateRequest(request) {
   console.log('executeAuthenticateRequest', request);
 
@@ -494,19 +479,22 @@ function authenticate(username = null, getRequest = getAuthenticateRequest) {
 }
 
 function deregister() {
-  const username = document.getElementById('username').value;
   const credentialId = document.getElementById('deregisterCredentialId').value;
+  addMessage('Deregistering credential...');
 
-  return performCeremony({
-    getIndexActions,
-    getRequest: urls => getDeregisterRequest(urls, username, credentialId),
-    statusStrings: {
-      init: 'Initiating authentication ceremony with server...',
-      authenticatorRequest: 'Asking authenticators to perform assertion...',
-      success: 'Authentication successful!',
-    },
-    executeRequest: executeAuthenticateRequest,
-  })
+  return getIndexActions()
+    .then(urls =>
+      fetch(urls.deregister, {
+       body: new URLSearchParams({
+         credentialId,
+         sessionToken: session.sessionToken || null,
+       }),
+       method: 'POST',
+     })
+    )
+    .then(response => response.json())
+    .then(updateSession)
+    .then(rejectIfNotSuccess)
     .then(data => {
       if (data.success) {
         if (data.droppedRegistration) {

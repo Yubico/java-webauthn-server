@@ -51,6 +51,7 @@ import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
 import demo.webauthn.data.AssertionRequestWrapper;
+import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -281,10 +282,10 @@ public class WebAuthnRestResource {
     @Path("action/deregister")
     @POST
     public Response deregisterCredential(
-        @NonNull @FormParam("username") String username,
+        @NonNull @FormParam("sessionToken") String sessionTokenBase64,
         @NonNull @FormParam("credentialId") String credentialIdBase64
-    ) throws MalformedURLException {
-        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialIdBase64);
+    ) throws MalformedURLException, Base64UrlException {
+        logger.trace("deregisterCredential sesion: {}, credentialId: {}", sessionTokenBase64, credentialIdBase64);
 
         final ByteArray credentialId;
         try {
@@ -296,20 +297,27 @@ public class WebAuthnRestResource {
             );
         }
 
-        Either<List<String>, AssertionRequestWrapper> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
+        Either<List<String>, CredentialRegistration> result = server.deregisterCredential(
+            ByteArray.fromBase64Url(sessionTokenBase64),
+            credentialId
+        );
+
+        if (result.isRight()) {
             try {
-                return ((ObjectNode) jsonFactory.objectNode()
-                        .set("success", jsonFactory.booleanNode(true)))
-                        .set("droppedRegistration", jsonMapper.readTree(writeJson(credentialRegistration)))
-                ;
+                JsonNode jsonResult = ((ObjectNode) jsonFactory.objectNode()
+                    .set("success", jsonFactory.booleanNode(true)))
+                    .set("droppedRegistration", jsonMapper.readTree(writeJson(result.right().get())));
+
+                return finishResponse(
+                    Either.right(jsonResult),
+                    "Failed to deregister credential; further error message(s) were unfortunately lost to an internal server error.",
+                    "deregisterCredential",
+                    ""
+                );
             } catch (IOException e) {
                 logger.error("Failed to write response as JSON", e);
                 throw new RuntimeException(e);
             }
-        }));
-
-        if (result.isRight()) {
-            return startResponse("deregisterCredential", new StartAuthenticatedActionResponse(result.right().get()));
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
