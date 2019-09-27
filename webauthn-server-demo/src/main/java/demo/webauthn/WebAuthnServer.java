@@ -568,7 +568,14 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, CredentialRegistration> deregisterCredential(
+    @Value
+    public static final class DeregisterCredentialResult {
+        boolean success = true;
+        CredentialRegistration droppedRegistration;
+        boolean accountDeleted;
+    }
+
+    public Either<List<String>, DeregisterCredentialResult> deregisterCredential(
         @NonNull ByteArray sessionToken,
         ByteArray credentialId
     ) {
@@ -587,7 +594,11 @@ public class WebAuthnServer {
                 Optional<CredentialRegistration> credReg = userStorage.getRegistrationByUsernameAndCredentialId(username.get(), credentialId);
                 if (credReg.isPresent()) {
                     userStorage.removeRegistrationByUsername(username.get(), credReg.get());
-                    return Either.right(credReg.get());
+
+                    return Either.right(new DeregisterCredentialResult(
+                        credReg.get(),
+                        !userStorage.userExists(username.get())
+                    ));
                 } else {
                     return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
                 }

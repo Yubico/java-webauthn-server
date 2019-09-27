@@ -502,6 +502,10 @@ function deregister() {
         } else {
           addMessage(`Successfully deregistered credential: ${credentialId}`);
         }
+        if (data.accountDeleted) {
+          addMessage('No credentials remain - account deleted.');
+          logout();
+        }
       } else {
         addMessage('Credential deregistration failed.');
       }

@@ -50,6 +50,7 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
+import demo.webauthn.WebAuthnServer.DeregisterCredentialResult;
 import demo.webauthn.data.AssertionRequestWrapper;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
@@ -265,27 +266,18 @@ public class WebAuthnRestResource {
             );
         }
 
-        Either<List<String>, CredentialRegistration> result = server.deregisterCredential(
+        Either<List<String>, DeregisterCredentialResult> result = server.deregisterCredential(
             ByteArray.fromBase64Url(sessionTokenBase64),
             credentialId
         );
 
         if (result.isRight()) {
-            try {
-                JsonNode jsonResult = ((ObjectNode) jsonFactory.objectNode()
-                    .set("success", jsonFactory.booleanNode(true)))
-                    .set("droppedRegistration", jsonMapper.readTree(writeJson(result.right().get())));
-
-                return finishResponse(
-                    Either.right(jsonResult),
-                    "Failed to deregister credential; further error message(s) were unfortunately lost to an internal server error.",
-                    "deregisterCredential",
-                    ""
-                );
-            } catch (IOException e) {
-                logger.error("Failed to write response as JSON", e);
-                throw new RuntimeException(e);
-            }
+            return finishResponse(
+                result,
+                "Failed to deregister credential; further error message(s) were unfortunately lost to an internal server error.",
+                "deregisterCredential",
+                ""
+            );
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),
