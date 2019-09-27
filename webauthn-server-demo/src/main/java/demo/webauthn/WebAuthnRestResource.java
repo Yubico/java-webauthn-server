@@ -247,38 +247,6 @@ public class WebAuthnRestResource {
         );
     }
 
-    @Path("action/{action}/finish")
-    @POST
-    public Response finishAuthenticatedAction(
-        @NonNull @PathParam("action") String action,
-        @NonNull String responseJson
-    ) {
-        logger.trace("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
-        Either<List<String>, ?> mappedResult = server.finishAuthenticatedAction(responseJson);
-
-        return finishResponse(
-            mappedResult,
-            "Action succeeded; further error message(s) were unfortunately lost to an internal server error.",
-            "finishAuthenticatedAction",
-            responseJson
-        );
-    }
-
-    private final class StartAuthenticatedActionResponse {
-        public final boolean success = true;
-        public final AssertionRequestWrapper request;
-        public final StartAuthenticatedActionActions actions = new StartAuthenticatedActionActions();
-        private StartAuthenticatedActionResponse(AssertionRequestWrapper request) throws MalformedURLException {
-            this.request = request;
-        }
-    }
-    private final class StartAuthenticatedActionActions {
-        public final URL finish = uriInfo.getAbsolutePathBuilder().path("finish").build().toURL();
-        public final URL finishU2f = uriInfo.getAbsolutePathBuilder().path("finish-u2f").build().toURL();
-        private StartAuthenticatedActionActions() throws MalformedURLException {
-        }
-    }
-
     @Path("action/deregister")
     @POST
     public Response deregisterCredential(

@@ -93,7 +93,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -110,7 +109,6 @@ public class WebAuthnServer {
     private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
-    private final Cache<AssertionRequestWrapper, AuthenticatedAction> authenticatedActions = newCache();
     private final SessionManager sessions = new SessionManager();
 
 
@@ -568,31 +566,6 @@ public class WebAuthnServer {
                 return Either.left(Arrays.asList("Assertion failed unexpectedly; this is likely a bug.", e.getMessage()));
             }
         }
-    }
-
-    public Either<List<String>, AssertionRequestWrapper> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
-        return startAuthentication(username)
-            .map(request -> {
-                synchronized (authenticatedActions) {
-                    authenticatedActions.put(request, action);
-                }
-                return request;
-            });
-    }
-
-    public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
-        return finishAuthentication(responseJson)
-            .flatMap(result -> {
-                AuthenticatedAction<?> action = authenticatedActions.getIfPresent(result.request);
-                authenticatedActions.invalidate(result.request);
-                if (action == null) {
-                    return Either.left(Collections.singletonList(
-                        "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
-                    ));
-                } else {
-                    return action.apply(result);
-                }
-            });
     }
 
     public Either<List<String>, CredentialRegistration> deregisterCredential(
