@@ -205,98 +205,49 @@ public class WebAuthnServer {
 
     public Either<String, RegistrationRequest> startRegistration(
         @NonNull String username,
-        @NonNull String displayName,
+        Optional<String> displayName,
         Optional<String> credentialNickname,
         boolean requireResidentKey,
         Optional<ByteArray> sessionToken
     ) throws ExecutionException {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
-        final ByteArray userHandle;
-        final boolean userExists = userStorage.userExists(username);
+        final Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
+        final Optional<UserIdentity> existingUser =
+            registrations.stream().findAny().map(CredentialRegistration::getUserIdentity);
+        final boolean permissionGranted = existingUser
+            .map(userIdentity ->
+                sessions.isSessionForUser(userIdentity.getId(), sessionToken))
+            .orElse(true);
 
-        if (userExists) {
-            userHandle = userStorage.getUserHandleForUsername(username).get();
-        } else {
-            userHandle = generateRandom(32);
-        }
+        if (permissionGranted) {
+            final UserIdentity registrationUserId = existingUser.orElseGet(() ->
+                UserIdentity.builder()
+                    .name(username)
+                    .displayName(displayName.get())
+                    .id(generateRandom(32))
+                    .build()
+            );
 
-        if (!userExists) {
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
                 generateRandom(32),
                 rp.startRegistration(
                     StartRegistrationOptions.builder()
-                        .user(UserIdentity.builder()
-                            .name(username)
-                            .displayName(displayName)
-                            .id(userHandle)
-                            .build()
-                        )
+                        .user(registrationUserId)
                         .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
                             .requireResidentKey(requireResidentKey)
                             .build()
                         )
                         .build()
                 ),
-                Optional.of(sessions.createSession(userHandle))
+                Optional.of(sessions.createSession(registrationUserId.getId()))
             );
             registerRequestStorage.put(request.getRequestId(), request);
             return Either.right(request);
         } else {
             return Either.left("The username \"" + username + "\" is already registered.");
-        }
-    }
-
-    public <T> Either<List<String>, AssertionRequestWrapper> startAddCredential(
-        @NonNull String username,
-        Optional<String> credentialNickname,
-        boolean requireResidentKey,
-        Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated
-    ) {
-        logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
-
-        if (username == null || username.isEmpty()) {
-            return Either.left(Collections.singletonList("username must not be empty."));
-        }
-
-        Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
-
-        if (registrations.isEmpty()) {
-            return Either.left(Collections.singletonList("The username \"" + username + "\" is not registered."));
-        } else {
-            final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
-
-            AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
-                final ByteArray sessionToken;
-                try {
-                    sessionToken = sessions.createSession(existingUser.getId());
-                } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
-
-                RegistrationRequest request = new RegistrationRequest(
-                    username,
-                    credentialNickname,
-                    generateRandom(32),
-                    rp.startRegistration(
-                        StartRegistrationOptions.builder()
-                            .user(existingUser)
-                            .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
-                                .requireResidentKey(requireResidentKey)
-                                .build()
-                            )
-                            .build()
-                    ),
-                    Optional.of(sessionToken)
-                );
-                registerRequestStorage.put(request.getRequestId(), request);
-
-                return whenAuthenticated.apply(request);
-            };
-
-            return startAuthenticatedAction(Optional.of(username), action);
         }
     }
 

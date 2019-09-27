@@ -77,7 +77,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
       it("has a start method whose output can be serialized to JSON.") {
         val server = newServer
-        val request = server.startRegistration(username, displayName, credentialNickname, requireResidentKey, Optional.empty())
+        val request = server.startRegistration(username, Optional.of(displayName), credentialNickname, requireResidentKey, Optional.empty())
         val json = jsonMapper.writeValueAsString(request.right.get)
 
         json should not be null

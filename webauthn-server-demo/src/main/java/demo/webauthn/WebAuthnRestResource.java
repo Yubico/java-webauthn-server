@@ -92,7 +92,6 @@ public class WebAuthnRestResource {
         }
     }
     private final class Index {
-        public final URL addCredential;
         public final URL authenticate;
         public final URL deleteAccount;
         public final URL deregister;
@@ -100,7 +99,6 @@ public class WebAuthnRestResource {
 
 
         public Index() throws MalformedURLException {
-            addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
             deleteAccount = uriInfo.getAbsolutePathBuilder().path("delete-account").build().toURL();
             deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
@@ -158,7 +156,7 @@ public class WebAuthnRestResource {
         logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}", username, displayName, credentialNickname, requireResidentKey);
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
-            displayName,
+            Optional.of(displayName),
             Optional.ofNullable(credentialNickname),
             requireResidentKey,
             Optional.ofNullable(sessionTokenBase64).map(base64 -> {
@@ -278,46 +276,6 @@ public class WebAuthnRestResource {
         public final URL finishU2f = uriInfo.getAbsolutePathBuilder().path("finish-u2f").build().toURL();
         private StartAuthenticatedActionActions() throws MalformedURLException {
         }
-    }
-
-    @Path("action/add-credential")
-    @POST
-    public Response addCredential(
-        @NonNull @FormParam("username") String username,
-        @FormParam("credentialNickname") String credentialNickname,
-        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
-    ) throws MalformedURLException {
-        logger.trace("addCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
-
-        Either<List<String>, AssertionRequestWrapper> result = server.startAddCredential(username, Optional.ofNullable(credentialNickname), requireResidentKey, (RegistrationRequest request) -> {
-            try {
-                return Either.right(new StartRegistrationResponse(request));
-            } catch (MalformedURLException e) {
-                logger.error("Failed to construct registration response", e);
-                return Either.left(Arrays.asList("Failed to construct response. This is probably a bug in the server."));
-            }
-        });
-
-        if (result.isRight()) {
-            return startResponse("addCredential", new StartAuthenticatedActionResponse(result.right().get()));
-        } else {
-            return messagesJson(
-                Response.status(Status.BAD_REQUEST),
-                result.left().get()
-            );
-        }
-    }
-
-    @Path("action/add-credential/finish/finish")
-    @POST
-    public Response finishAddCredential(@NonNull String responseJson) {
-        return finishRegistration(responseJson);
-    }
-
-    @Path("action/add-credential/finish/finish-u2f")
-    @POST
-    public Response finishU2fAddCredential(@NonNull String responseJson) throws ExecutionException {
-        return finishU2fRegistration(responseJson);
     }
 
     @Path("action/deregister")

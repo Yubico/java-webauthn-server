@@ -83,6 +83,7 @@ function updateSession(response) {
     session.username = response.username;
   }
   updateSessionBox();
+  updateRegisterButtons();
   return response;
 }
 
@@ -98,6 +99,16 @@ function updateSessionBox() {
   } else {
     document.getElementById('session').textContent = 'Not logged in.';
     document.getElementById('logoutButton').disabled = true;
+  }
+}
+
+function updateRegisterButtons() {
+  if (session.sessionToken) {
+     document.getElementById('registerButton').textContent = 'Add credential';
+     document.getElementById('registerRkButton').textContent = 'Add resident credential';
+  } else {
+     document.getElementById('registerButton').textContent = 'Register new account';
+     document.getElementById('registerRkButton').textContent = 'Register new account with resident credential';
   }
 }
 
@@ -519,33 +530,6 @@ function deregister() {
     });
 }
 
-function getAddCredentialRequest(url, username, credentialNickname) {
-  return fetch(url, {
-    body: new URLSearchParams({
-      username,
-      credentialNickname,
-    }),
-    method: 'POST',
-  }).then(response => response.json());
-}
-
-function addCredential(useU2f = false) {
-  const username = document.getElementById('username').value;
-  const credentialNickname = document.getElementById('credentialNickname').value;
-
-  return authenticate(
-    username,
-    urls => getAddCredentialRequest(urls.addCredential, username, credentialNickname)
-  )
-    .then(data =>
-      register(
-        username,
-        () => data
-      )
-    )
-  ;
-}
-
 function init() {
   hideDeviceInfo();
   return false;
@@ -583,12 +567,12 @@ window.onload = init;
         <label for="credentialNickname">Credential nickname:</label>
         <div><input type="text" id="credentialNickname"/></div>
         <div>
-          <button type="button" onClick="javascript:register()">
+          <button type="button" id="registerButton" onClick="javascript:register()">
             Register new account
           </button>
         </div>
         <div>
-          <button type="button" onClick="javascript:registerResidentKey()">
+          <button type="button" id="registerRkButton" onClick="javascript:registerResidentKey()">
             Register new account with resident credential
           </button>
         </div>
@@ -605,16 +589,6 @@ window.onload = init;
         <div>
           <button type="button" onClick="javascript:authenticate()">
             Authenticate without username
-          </button>
-        </div>
-      </div>
-
-      <div class="row">
-        <div></div>
-        <div></div>
-        <div>
-          <button type="button" onClick="javascript:addCredential()">
-            Register additional credential
           </button>
         </div>
       </div>
