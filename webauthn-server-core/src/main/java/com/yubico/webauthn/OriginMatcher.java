@@ -24,6 +24,7 @@ class OriginMatcher {
                 try {
                     allowedOrigin = new URL(allowedOriginString);
                 } catch (MalformedURLException e) {
+                    log.error("Allowed origin is an invalid URL: {}", allowedOriginString);
                     return false;
                 }
 
