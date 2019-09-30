@@ -34,13 +34,13 @@ wrapper {
 }
 
 allprojects {
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+  ext.dirtyMarker = "-DIRTY"
+
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'idea'
 
   group = 'com.yubico'
-
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
-  ext.dirtyMarker = "-DIRTY"
 
   idea.module {
     downloadJavadoc = true
