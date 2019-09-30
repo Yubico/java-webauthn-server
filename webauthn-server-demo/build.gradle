@@ -26,7 +26,7 @@ dependencies {
 
     'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',
-    'com.upokecenter:cbor:2.4.1',
+    'com.upokecenter:cbor:3.6.0',
     'javax.ws.rs:javax.ws.rs-api:2.1',
     'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
     'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
