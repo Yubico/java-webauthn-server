@@ -11,8 +11,11 @@ evaluationDependsOn(':webauthn-server-core')
 
 dependencies {
 
-  implementation(
+  api(
     project(':webauthn-server-core'),
+  )
+
+  implementation(
     project(':yubico-util'),
     'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',

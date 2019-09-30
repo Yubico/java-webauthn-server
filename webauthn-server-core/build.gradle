@@ -10,8 +10,11 @@ project.ext.publishMe = true
 
 dependencies {
 
-  implementation(
+  api(
     project(':yubico-util'),
+  )
+
+  implementation(
     'com.augustcellars.cose:cose-java:0.9.10',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',

@@ -9,6 +9,10 @@ project.ext.publishMe = true
 
 dependencies {
 
+  api(
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
+  )
+
   implementation(
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
