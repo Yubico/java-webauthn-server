@@ -4,7 +4,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @UtilityClass
 class OriginMatcher {
 
@@ -29,6 +31,7 @@ class OriginMatcher {
                 try {
                     originUrl = new URL(origin);
                 } catch (MalformedURLException e) {
+                    log.debug("Invalid origin in client data: {}", origin);
                     return false;
                 }
 
