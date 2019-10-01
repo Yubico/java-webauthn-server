@@ -16,38 +16,56 @@ class OriginMatcher {
         boolean allowPort,
         boolean allowSubdomain
     ) {
+        log.trace("isAllowed({}, {}, {}, {})", origin, allowedOrigins, allowPort, allowSubdomain);
+
+        final URL originUrl;
+        {
+            URL originUrl1;
+            try {
+                originUrl1 = new URL(origin);
+            } catch (MalformedURLException e) {
+                log.debug("Origin in client data is an invalid URL; will only match exactly: {}", origin);
+                originUrl1 = null;
+            }
+            originUrl = originUrl1;
+        }
+
         return allowedOrigins.stream().anyMatch(allowedOriginString -> {
             if (allowedOriginString.equals(origin)) {
+                log.debug("Exact match: {} == {}", origin, allowedOriginString);
                 return true;
-            } else {
+            } else if (originUrl != null && (allowPort || allowSubdomain)) {
                 final URL allowedOrigin;
                 try {
                     allowedOrigin = new URL(allowedOriginString);
                 } catch (MalformedURLException e) {
-                    log.error("Allowed origin is an invalid URL: {}", allowedOriginString);
+                    log.error("Allowed origin is an invalid URL; skipped for port/subdomain matching: {}", allowedOriginString);
                     return false;
                 }
 
-                final URL originUrl;
-                try {
-                    originUrl = new URL(origin);
-                } catch (MalformedURLException e) {
-                    log.debug("Invalid origin in client data: {}", origin);
-                    return false;
-                }
+                final boolean portAccepted;
+                final boolean domainAccepted;
 
-                if (!allowPort && originUrl.getPort() != allowedOrigin.getPort()) {
-                    return false;
+                if (allowPort) {
+                    portAccepted = true;
+                } else {
+                    portAccepted = originUrl.getPort() == allowedOrigin.getPort();
                 }
 
                 final String allowedDomain = allowedOrigin.getHost();
                 final String originDomain = originUrl.getHost();
 
                 if (allowSubdomain) {
-                    return originDomain.endsWith("." + allowedDomain);
+                    domainAccepted = originDomain.equals(allowedDomain) || originDomain.endsWith("." + allowedDomain);
                 } else {
-                    return originDomain.equals(allowedDomain);
+                    domainAccepted = originDomain.equals(allowedDomain);
                 }
+
+                log.debug("portAccepted: {}, domainAccepted: {}", portAccepted, domainAccepted);
+                return portAccepted && domainAccepted;
+            } else {
+                log.debug("No match: {} != {}", origin, allowedOriginString);
+                return false;
             }
         });
     }
