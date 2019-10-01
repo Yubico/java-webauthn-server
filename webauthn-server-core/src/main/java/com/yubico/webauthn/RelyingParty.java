@@ -45,6 +45,8 @@ import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +57,7 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -65,6 +68,7 @@ import lombok.Value;
  * versions (function closures) of these four operations rather than a stateful object.
  * </p>
  */
+@Slf4j
 @Builder(toBuilder = true)
 @Value
 public class RelyingParty {
@@ -110,6 +114,11 @@ public class RelyingParty {
      * <p>
      * If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is <code>true</code>, then the
      * above rule is relaxed to allow any subdomain, of any depth, of any of these values.
+     * </p>
+     *
+     * <p>
+     * For either of the above relaxations to take effect, both the allowed origin and the client data origin must be
+     * valid URLs. Origins that are not valid URLs are matched only by exact string equality.
      * </p>
      *
      * @see #getIdentity()
@@ -385,6 +394,15 @@ public class RelyingParty {
     ) {
         this.identity = identity;
         this.origins = origins != null ? origins : Collections.singleton("https://" + identity.getId());
+
+        for (String origin : this.origins) {
+            try {
+                new URL(origin);
+            } catch (MalformedURLException e) {
+                log.warn("Allowed origin is an invalid URL, it will match only by exact string equality: {}", origin);
+            }
+        }
+
         this.credentialRepository = credentialRepository;
         this.appId = appId;
         this.attestationConveyancePreference = attestationConveyancePreference;
