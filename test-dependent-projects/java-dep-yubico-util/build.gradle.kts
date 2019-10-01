@@ -4,7 +4,5 @@ plugins {
 
 dependencies {
     implementation(project(":yubico-util"))
-
-    testImplementation("junit:junit:4.12")
 }
 

@@ -1,7 +1,0 @@
-== Test projects for dependency declarations
-
-The purpose of the subprojects in this directory is to test that the dependency
-declarations in the main projects are good, so that downstream dependent
-projects get all the transitive dependencies they need. The "tests" in here are
-not primarily runtime functionality tests, but rather to make sure that the
-tests themselves compile.

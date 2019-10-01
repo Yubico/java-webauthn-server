@@ -1,11 +1,11 @@
-package com.yubico.example;
+package com.yubico.test.compilability;
 
 import com.yubico.webauthn.attestation.AttestationResolver;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 
-public class Example {
+public class ThisShouldCompile {
 
     public AttestationResolver getResolver() {
         return new AttestationResolver() {

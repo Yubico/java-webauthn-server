@@ -1,15 +1,16 @@
-package com.yubico.example;
+package com.yubico.test.compilability;
 
 import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.PublicKeyCredentialType;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import java.util.Optional;
 import java.util.Set;
 
-public class Example {
+public class ThisShouldCompile {
 
     public RelyingParty getRp() {
         return RelyingParty.builder()
@@ -26,5 +27,18 @@ public class Example {
                 })
             .build();
     }
+
+    public ByteArray getByteArray() {
+        ByteArray a = new ByteArray(new byte[] {1, 2, 3, 4});
+        byte[] b = a.getBytes();
+        return a;
+    }
+
+    public PublicKeyCredentialType getPublicKeyCredentialType() {
+        PublicKeyCredentialType a = PublicKeyCredentialType.PUBLIC_KEY;
+        String b = a.toJsonString();
+        return a;
+    }
+
 
 }
