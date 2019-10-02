@@ -22,7 +22,7 @@ class OriginMatcher {
         try {
             tmpOriginUrl = new URL(origin);
         } catch (MalformedURLException e) {
-            log.debug("Origin in client data is an invalid URL; will only match exactly: {}", origin);
+            log.debug("Origin in client data is not a valid URL; will only match exactly: {}", origin);
             tmpOriginUrl = null;
         }
         final URL originUrl = tmpOriginUrl;
@@ -36,7 +36,7 @@ class OriginMatcher {
                 try {
                     allowedOrigin = new URL(allowedOriginString);
                 } catch (MalformedURLException e) {
-                    log.error("Allowed origin is an invalid URL; skipping port/subdomain matching: {}", allowedOriginString);
+                    log.error("Allowed origin is not a valid URL; skipping port/subdomain matching: {}", allowedOriginString);
                     return false;
                 }
 

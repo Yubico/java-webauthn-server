@@ -400,7 +400,7 @@ public class RelyingParty {
             try {
                 new URL(origin);
             } catch (MalformedURLException e) {
-                log.warn("Allowed origin is an invalid URL, it will match only by exact string equality: {}", origin);
+                log.warn("Allowed origin is not a valid URL, it will match only by exact string equality: {}", origin);
             }
         }
 
