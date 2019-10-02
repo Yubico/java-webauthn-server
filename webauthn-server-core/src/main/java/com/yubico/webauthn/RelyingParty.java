@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -393,7 +394,7 @@ public class RelyingParty {
         boolean validateSignatureCounter
     ) {
         this.identity = identity;
-        this.origins = origins != null ? origins : Collections.singleton("https://" + identity.getId());
+        this.origins = origins != null ? CollectionUtil.immutableSet(origins) : Collections.singleton("https://" + identity.getId());
 
         for (String origin : this.origins) {
             try {
