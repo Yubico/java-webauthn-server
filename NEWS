@@ -1,3 +1,11 @@
+== Version 1.4.1 (unreleased) ==
+
+Packaging fixes:
+
+* Fixed dependency declarations so API dependencies are correctly propagated as
+  compile-time dependencies of dependent projects.
+
+
 == Version 1.4.0 ==
 
 Changes:
