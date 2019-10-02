@@ -23,7 +23,7 @@ Release candidate versions
  4. Publish to Sonatype Nexus:
 
     ```
-    $ ./gradlew publishJarsPublicationToSonatypeNexusRepository closeAndReleaseRepository
+    $ ./gradlew publish closeAndReleaseRepository
     ```
 
  5. Push to GitHub:
