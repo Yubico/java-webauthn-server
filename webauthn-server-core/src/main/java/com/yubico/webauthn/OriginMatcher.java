@@ -40,23 +40,8 @@ class OriginMatcher {
                     return false;
                 }
 
-                final boolean portAccepted;
-                final boolean domainAccepted;
-
-                if (allowPort) {
-                    portAccepted = true;
-                } else {
-                    portAccepted = originUrl.getPort() == allowedOrigin.getPort();
-                }
-
-                final String allowedDomain = allowedOrigin.getHost();
-                final String originDomain = originUrl.getHost();
-
-                if (allowSubdomain) {
-                    domainAccepted = originDomain.equals(allowedDomain) || originDomain.endsWith("." + allowedDomain);
-                } else {
-                    domainAccepted = originDomain.equals(allowedDomain);
-                }
+                final boolean portAccepted = isPortAccepted(allowPort, allowedOrigin, originUrl);
+                final boolean domainAccepted = isDomainAccepted(allowSubdomain, allowedOrigin, originUrl);
 
                 log.debug("portAccepted: {}, domainAccepted: {}", portAccepted, domainAccepted);
                 return portAccepted && domainAccepted;
@@ -65,6 +50,25 @@ class OriginMatcher {
                 return false;
             }
         });
+    }
+
+    private static boolean isPortAccepted(boolean allowPort, URL allowedOrigin, URL originUrl) {
+        if (allowPort) {
+            return true;
+        } else {
+            return originUrl.getPort() == allowedOrigin.getPort();
+        }
+    }
+
+    private static boolean isDomainAccepted(boolean allowSubdomain, URL allowedOrigin, URL originUrl) {
+        final String allowedDomain = allowedOrigin.getHost();
+        final String originDomain = originUrl.getHost();
+
+        if (allowSubdomain) {
+            return originDomain.equals(allowedDomain) || originDomain.endsWith("." + allowedDomain);
+        } else {
+            return originDomain.equals(allowedDomain);
+        }
     }
 
 }
