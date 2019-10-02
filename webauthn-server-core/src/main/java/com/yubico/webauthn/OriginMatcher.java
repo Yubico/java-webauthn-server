@@ -36,7 +36,7 @@ class OriginMatcher {
                 try {
                     allowedOrigin = new URL(allowedOriginString);
                 } catch (MalformedURLException e) {
-                    log.error("Allowed origin is an invalid URL; skipped for port/subdomain matching: {}", allowedOriginString);
+                    log.error("Allowed origin is an invalid URL; skipping port/subdomain matching: {}", allowedOriginString);
                     return false;
                 }
 
