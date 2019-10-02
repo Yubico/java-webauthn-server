@@ -20,14 +20,14 @@ class OriginMatcher {
 
         final URL originUrl;
         {
-            URL originUrl1;
+            URL tmpOriginUrl;
             try {
-                originUrl1 = new URL(origin);
+                tmpOriginUrl = new URL(origin);
             } catch (MalformedURLException e) {
                 log.debug("Origin in client data is an invalid URL; will only match exactly: {}", origin);
-                originUrl1 = null;
+                tmpOriginUrl = null;
             }
-            originUrl = originUrl1;
+            originUrl = tmpOriginUrl;
         }
 
         return allowedOrigins.stream().anyMatch(allowedOriginString -> {
