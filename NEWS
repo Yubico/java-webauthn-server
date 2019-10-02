@@ -4,6 +4,7 @@ Packaging fixes:
 
 * Fixed dependency declarations so API dependencies are correctly propagated as
   compile-time dependencies of dependent projects.
+* Fixed Specification-Version release date in webauthn-server-core jar manifest.
 
 
 == Version 1.4.0 ==
