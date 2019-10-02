@@ -9,10 +9,14 @@ project.ext.publishMe = true
 
 dependencies {
 
+  api(
+    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
+  )
+
   implementation(
     'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
-    'com.upokecenter:cbor:2.4.1',
+    'com.upokecenter:cbor:3.6.0',
     'org.bouncycastle:bcprov-jdk15on:1.62',
     'org.slf4j:slf4j-api:1.7.25',
   )

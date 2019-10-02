@@ -63,7 +63,9 @@ subprojects {
   }
 }
 
-evaluationDependsOnChildren()
+allprojects {
+  evaluationDependsOnChildren()
+}
 
 task assembleJavadoc(type: Sync) {
   from("docs/index.html") {
