@@ -52,17 +52,17 @@ class OriginMatcher {
         });
     }
 
-    private static boolean isPortAccepted(boolean allowPort, URL allowedOrigin, URL originUrl) {
-        if (allowPort) {
+    private static boolean isPortAccepted(boolean allowAnyPort, URL allowedOrigin, URL origin) {
+        if (allowAnyPort) {
             return true;
         } else {
-            return originUrl.getPort() == allowedOrigin.getPort();
+            return origin.getPort() == allowedOrigin.getPort();
         }
     }
 
-    private static boolean isDomainAccepted(boolean allowSubdomain, URL allowedOrigin, URL originUrl) {
+    private static boolean isDomainAccepted(boolean allowSubdomain, URL allowedOrigin, URL origin) {
         final String allowedDomain = allowedOrigin.getHost();
-        final String originDomain = originUrl.getHost();
+        final String originDomain = origin.getHost();
 
         if (allowSubdomain) {
             return originDomain.equals(allowedDomain) || originDomain.endsWith("." + allowedDomain);
