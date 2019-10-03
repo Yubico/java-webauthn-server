@@ -104,7 +104,7 @@ final class WebAuthnCodecs {
         Map<Long, Object> coseKey = new HashMap<>();
 
         coseKey.put(1L, 1L); // Key type: octet key pair
-        coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId());
+        coseKey.put(3L, COSEAlgorithmIdentifier.EdDSA.getId());
         coseKey.put(-1L, 6L); // crv: Ed25519
         coseKey.put(-2L, key.getEncoded());
 
