@@ -290,7 +290,7 @@ case class RegistrationTestData(
       .rp(rpId)
       .user(userId)
       .challenge(clientData.getChallenge)
-      .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(COSEAlgorithmIdentifier.ES256).build()).asJava)
+      .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256, PublicKeyCredentialParameters.EdDSA, PublicKeyCredentialParameters.RS256).asJava)
       .extensions(requestedExtensions)
       .authenticatorSelection(authenticatorSelection.asJava)
       .build()
