@@ -98,7 +98,6 @@ object RegistrationTestDataGenerator extends App {
       td.Packed.BasicAttestationWithWrongAaguidExtension,
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationRs1,
-      td.Packed.SelfAttestationWithWrongAlgValue
     ).zipWithIndex } {
       testData.regenerateFull() match {
         case Success(newTestData) =>
@@ -250,15 +249,6 @@ object RegistrationTestData {
         response = PublicKeyCredential.parseAssertionResponseJson("""{"id":"qDMGSMl-CWhgBL5MQprT5GiG9gMxF2Mssaq_JhxdEc0","response":{"authenticatorData":"SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAFOQ","clientDataJSON":"eyJjaGFsbGVuZ2UiOiJOM0xqSTJKNXlseVdlM0VENU9UNFhITFJxSHdtX0o0OF9EX2hvSk9GZjMwIiwib3JpZ2luIjoiaHR0cHM6Ly9sb2NhbGhvc3QiLCJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwidG9rZW5CaW5kaW5nIjp7InN0YXR1cyI6InN1cHBvcnRlZCJ9LCJjbGllbnRFeHRlbnNpb25zIjp7fX0","signature":"YQuXZwJLOXeEfrOxzG42yJxShEGHFbfD2oYURkOiZOI2LSzfcv5t5KDq4dfJ9S-U5aaylfIlD72u8rQeMIVyf5e8jD5z0bnPP5STZzDsJneoPGOQ6BQfuYGSGSO_JxjU9O6KduNTXKrm2KqaCptOTJHyf9geA2wR7_XSmEdg_OSq7e164ZIK12jiG-RFdEEVpWhuoJPva0TeHfe2tAnQPNreV7v8DaIOWJiBblQTirP0oUn5LrCNhl_Tsgz2-F8R53k48JpesiMhEM6r-e7DI83CrNRZWJnmO-04hMEbdNqO3TmZ3Fmtw9ufpn3zygeK0jrIw3SamFe2NgVvbcIHTg"},"clientExtensionResults":{},"type":"public-key"}""")
       )),
     ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(AttestationMaker.packed(_), keyAlgorithm = COSEAlgorithmIdentifier.RS1) }
-
-    val SelfAttestationWithWrongAlgValue = new RegistrationTestData(
-      alg = null,
-      attestationObject = new ByteArray(BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f00203022c626739f52e583ac292c31b80b80759d546f9956a5baf65216faae61313da52258202f752354da475fb5f6c0d35fef2ed8eea3e6dbf225c08b7fed567e813ae41402032601022158207fc7d8d3d5e8dce8bbfda0395f89f0d3c9ea0d9de1d6e62d0f0df9db7661cb9b200163666d74667061636b65646761747453746d74bf6373696758463044022078cf79efde68909ee2518b8feeb727b17a689db2e4b9d13dc3a34e9c46b9390002201e94861f46b7f19f5df5bedef08f91fb862e5eb07c23e6c3b28151917f3e5c2963616c67390100ffff")),
-      clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}"""
-    ) {
-      override def validate() {}
-      override def regenerate() = TestAuthenticator.createSelfAttestedCredential(AttestationMaker.packed(_))
-    }
   }
   object Tpm {
     val PrivacyCa: RegistrationTestData = Packed.BasicAttestation.editAttestationObject("fmt", "tpm")

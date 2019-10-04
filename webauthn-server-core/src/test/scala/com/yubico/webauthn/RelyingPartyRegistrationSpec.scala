@@ -31,6 +31,7 @@ import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.SignatureException
 import java.security.cert.X509Certificate
+import java.security.interfaces.RSAPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -1225,14 +1226,33 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
 
                 it("Fails if the alg is a different value.") {
-                  val testData = RegistrationTestData.Packed.SelfAttestationWithWrongAlgValue
+                  def modifyAuthdataPubkeyAlg(authDataBytes: Array[Byte]): Array[Byte] = {
+                    val authData = new AuthenticatorData(new ByteArray(authDataBytes))
+                    val key = WebAuthnCodecs.importCosePublicKey(authData.getAttestedCredentialData.get.getCredentialPublicKey).asInstanceOf[RSAPublicKey]
+                    val reencodedKey = WebAuthnTestCodecs.rsaPublicKeyToCose(key, COSEAlgorithmIdentifier.RS256)
+                    new ByteArray(java.util.Arrays.copyOfRange(authDataBytes, 0, 32 + 1 + 4 + 16 + 2))
+                      .concat(authData.getAttestedCredentialData.get.getCredentialId)
+                      .concat(reencodedKey)
+                      .getBytes
+                  }
+                  def modifyAttobjPubkeyAlg(attObjBytes: ByteArray): ByteArray = {
+                    val attObj = JacksonCodecs.cbor.readTree(attObjBytes.getBytes)
+                    new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
+                      attObj.asInstanceOf[ObjectNode]
+                        .set("authData", jsonFactory.binaryNode(modifyAuthdataPubkeyAlg(attObj.get("authData").binaryValue())))
+                    ))
+                  }
+
+                  val testData = RegistrationTestData.Packed.SelfAttestationRs1
+                  val attObj = new AttestationObject(modifyAttobjPubkeyAlg(testData.response.getResponse.getAttestationObject))
+
                   val result = Try(verifier.verifyAttestationSignature(
-                    new AttestationObject(testData.attestationObject),
+                    attObj,
                     testData.clientDataJsonHash
                   ))
 
-                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-257)
+                  CBORObject.DecodeFromBytes(attObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-257)
+                  attObj.getAttestationStatement.get("alg").longValue should equal (-65535)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [IllegalArgumentException]
                 }
