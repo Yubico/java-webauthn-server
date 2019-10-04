@@ -64,9 +64,6 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
-import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -191,13 +188,6 @@ object TestAuthenticator {
     userId: UserIdentity = UserIdentity.builder().name("Test").displayName("Test").id(new ByteArray(Array(42, 13, 37))).build(),
     useSelfAttestation: Boolean = false
   ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) = {
-
-    val options = PublicKeyCredentialCreationOptions.builder()
-      .rp(RelyingPartyIdentity.builder().id(rpId).name("Test party").build())
-      .user(userId)
-      .challenge(challenge)
-      .pubKeyCredParams(List(PublicKeyCredentialParameters.builder().alg(keyAlgorithm).build()).asJava)
-      .build()
 
     val clientDataJson: String = JacksonCodecs.json.writeValueAsString(clientData getOrElse {
       val json: ObjectNode = jsonFactory.objectNode()
