@@ -47,6 +47,7 @@ import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RegistrationExtensionInputs
@@ -914,6 +915,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
+                  alg = COSEAlgorithmIdentifier.ES256,
                   attestationObject = credential.getResponse.getAttestationObject,
                   clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")
                 ),
@@ -941,6 +943,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
+                  alg = COSEAlgorithmIdentifier.ES256,
                   attestationObject = credential.getResponse.getAttestationObject,
                   clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")
                 ),
