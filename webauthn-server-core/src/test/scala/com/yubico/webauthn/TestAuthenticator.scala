@@ -171,7 +171,6 @@ object TestAuthenticator {
 
   private def createCredential(
     aaguid: ByteArray = Defaults.aaguid,
-    alg: Option[COSEAlgorithmIdentifier] = None,
     attestationCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
     attestationStatementFormat: String = "fido-u2f",
     authenticatorExtensions: Option[JsonNode] = None,
@@ -237,7 +236,7 @@ object TestAuthenticator {
       clientDataJson,
       attestationCertAndKey,
       selfAttestationKey = if (useSelfAttestation) Some(credentialKeypair.get.getPrivate) else None,
-      alg = alg,
+      alg = Some(keyAlgorithm),
       safetynetCtsProfileMatch = safetynetCtsProfileMatch
     )
 
@@ -294,7 +293,7 @@ object TestAuthenticator {
 
   def createSelfAttestedCredential(
     attestationStatementFormat: String = "fido-u2f",
-    alg: Option[COSEAlgorithmIdentifier] = None
+    alg: COSEAlgorithmIdentifier = Defaults.keyAlgorithm
   ): ((data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[Nothing]) = {
     val keypair = generateEcKeypair()
     (
@@ -304,7 +303,7 @@ object TestAuthenticator {
             attestationCertAndKey = Some(generateAttestationCertificate (keypair) ),
             attestationStatementFormat = attestationStatementFormat,
             credentialKeypair = Some(keypair),
-            alg = alg
+            keyAlgorithm = alg
           )
         case "packed" =>
           createCredential(
@@ -312,7 +311,7 @@ object TestAuthenticator {
             attestationStatementFormat = attestationStatementFormat,
             credentialKeypair = Some(keypair),
             useSelfAttestation = true,
-            alg = alg
+            keyAlgorithm = alg
           )
       },
       None

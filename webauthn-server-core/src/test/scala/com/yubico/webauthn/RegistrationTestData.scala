@@ -225,7 +225,7 @@ object RegistrationTestData {
       clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}"""
     ) {
       override def validate() {}
-      override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed", alg = Some(COSEAlgorithmIdentifier.RS256))
+      override def regenerate() = TestAuthenticator.createSelfAttestedCredential(attestationStatementFormat = "packed", alg = COSEAlgorithmIdentifier.RS256)
     }
   }
   object Tpm {
