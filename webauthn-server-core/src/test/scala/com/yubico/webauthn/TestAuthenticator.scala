@@ -631,7 +631,7 @@ object TestAuthenticator {
     val namedSpec = ECNamedCurveTable.getParameterSpec("P-256")
     val curveSpec: ECNamedCurveSpec = new ECNamedCurveSpec("P-256", namedSpec.getCurve, namedSpec.getG, namedSpec.getN)
     val pubKeySpec: ECPublicKeySpec = new ECPublicKeySpec(pubKeyPoint, curveSpec)
-    val pubKey: PublicKey = KeyFactory.getInstance("ECDSA", javaCryptoProvider).generatePublic(pubKeySpec)
+    val pubKey: PublicKey = KeyFactory.getInstance("EC", javaCryptoProvider).generatePublic(pubKeySpec)
     verifySignature(pubKey, signedDataBytes, signatureBytes)
   }
 
