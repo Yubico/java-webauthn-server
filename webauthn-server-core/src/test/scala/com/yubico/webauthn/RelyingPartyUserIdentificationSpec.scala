@@ -133,7 +133,7 @@ class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
               Some(RegisteredCredential.builder()
                 .credentialId(Defaults.credentialId)
                 .userHandle(Defaults.userHandle)
-                .publicKeyCose(WebAuthnCodecs.ecPublicKeyToCose(Defaults.credentialKey.getPublic.asInstanceOf[ECPublicKey]))
+                .publicKeyCose(WebAuthnTestCodecs.ecPublicKeyToCose(Defaults.credentialKey.getPublic.asInstanceOf[ECPublicKey]))
                 .signatureCount(0)
                 .build()
               ).asJava

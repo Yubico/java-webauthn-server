@@ -227,9 +227,9 @@ object TestAuthenticator {
 
     val keypair = credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
     val publicKeyCose = keypair.getPublic match {
-      case pub: ECPublicKey => WebAuthnCodecs.ecPublicKeyToCose(pub)
-      case pub: BCEdDSAPublicKey => WebAuthnCodecs.eddsaPublicKeyToCose(pub)
-      case pub: RSAPublicKey => WebAuthnCodecs.rsaPublicKeyToCose(pub)
+      case pub: ECPublicKey => WebAuthnTestCodecs.ecPublicKeyToCose(pub)
+      case pub: BCEdDSAPublicKey => WebAuthnTestCodecs.eddsaPublicKeyToCose(pub)
+      case pub: RSAPublicKey => WebAuthnTestCodecs.rsaPublicKeyToCose(pub)
     }
 
     val authDataBytes: ByteArray = makeAuthDataBytes(

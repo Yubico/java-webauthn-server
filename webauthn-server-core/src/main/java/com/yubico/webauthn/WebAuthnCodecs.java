@@ -28,21 +28,16 @@ import COSE.CoseException;
 import COSE.OneKey;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
@@ -70,56 +65,6 @@ final class WebAuthnCodecs {
                 Arrays.copyOfRange(y, Math.max(0, y.length - 32), y.length)
             )
         ));
-    }
-
-    public static ByteArray rawEcdaKeyToCose(ByteArray key) {
-        final byte[] keyBytes = key.getBytes();
-
-        if (!(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes[0] == 0x04))) {
-            throw new IllegalArgumentException(String.format(
-                "Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was %d bytes starting with %02x",
-                keyBytes.length,
-                keyBytes[0]
-            ));
-        }
-
-        final int start = keyBytes.length == 64 ? 0 : 1;
-
-        Map<Long, Object> coseKey = new HashMap<>();
-
-        coseKey.put(1L, 2L); // Key type: EC
-        coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId());
-        coseKey.put(-1L, 1L); // Curve: P-256
-        coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + 32)); // x
-        coseKey.put(-3L, Arrays.copyOfRange(keyBytes, start + 32, start + 64)); // y
-
-        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
-    }
-
-    public static ByteArray ecPublicKeyToCose(ECPublicKey key) {
-        return rawEcdaKeyToCose(ecPublicKeyToRaw(key));
-    }
-
-    public static ByteArray eddsaPublicKeyToCose(BCEdDSAPublicKey key) {
-        Map<Long, Object> coseKey = new HashMap<>();
-
-        coseKey.put(1L, 1L); // Key type: octet key pair
-        coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId());
-        coseKey.put(-1L, 6L); // crv: Ed25519
-        coseKey.put(-2L, key.getEncoded());
-
-        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
-    }
-
-    public static ByteArray rsaPublicKeyToCose(RSAPublicKey key) {
-        Map<Long, Object> coseKey = new HashMap<>();
-
-        coseKey.put(1L, 3L); // Key type: RSA
-        coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId());
-        coseKey.put(-1L, key.getModulus().toByteArray()); // public modulus n
-        coseKey.put(-2L, key.getPublicExponent().toByteArray()); // public exponent e
-
-        return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
     }
 
     public static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
