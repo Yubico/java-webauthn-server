@@ -51,7 +51,8 @@ Release versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Make a no-fast-forward merge from the last release to the commit to be released:
+ 2. Make a no-fast-forward merge from the last (non release candidate) release
+    to the commit to be released:
 
     ```
     $ git checkout 1.3.0
