@@ -45,7 +45,7 @@ final class WebAuthnCodecs {
 
     private static final ByteArray ED25519_CURVE_OID = new ByteArray(new byte[]{0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
 
-    public static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
+    static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
         byte[] x = key.getW().getAffineX().toByteArray();
         byte[] y = key.getW().getAffineY().toByteArray();
         byte[] xPadding = new byte[Math.max(0, 32 - x.length)];
@@ -67,7 +67,7 @@ final class WebAuthnCodecs {
         ));
     }
 
-    public static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
         final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
         switch (kty) {
@@ -115,7 +115,7 @@ final class WebAuthnCodecs {
         }
     }
 
-    public static String getSignatureAlgorithmName(PublicKey key) {
+    static String getSignatureAlgorithmName(PublicKey key) {
         if (key.getAlgorithm().equals("EC")) {
             return "ECDSA";
         } else {
@@ -123,7 +123,7 @@ final class WebAuthnCodecs {
         }
     }
 
-    public static String jwsAlgorithmNameToJavaAlgorithmName(String alg) {
+    static String jwsAlgorithmNameToJavaAlgorithmName(String alg) {
         switch (alg) {
             case "RS256":
                 return "SHA256withRSA";
