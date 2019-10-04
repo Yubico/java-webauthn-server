@@ -24,19 +24,23 @@
 
 package com.yubico.internal.util;
 
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 
 public class EnumUtil {
 
-    public static <T extends Enum<?>> int compareSets(Set<T> a, Set<T> b, Class<T> clazz) {
-        for (T value : clazz.getEnumConstants()) {
-            if (a.contains(value) && !b.contains(value)) {
-                return 1;
-            } else if (!a.contains(value) && b.contains(value)) {
-                return -1;
-            }
+    public static <T extends Comparable<T>> int compareComparableSets(Set<T> a, Set<T> b) {
+        if (a.size() == b.size()) {
+            final Optional<T> minA = a.stream().min(Comparator.naturalOrder());
+            final Optional<T> minB = b.stream().min(Comparator.naturalOrder());
+
+            return minA
+                .map(t -> t.compareTo(minB.get()))
+                .orElse(0);
+        } else {
+            return a.size() - b.size();
         }
-        return 0;
     }
 
 }

@@ -94,7 +94,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         } else if (getTransports().isPresent() && !other.getTransports().isPresent()) {
             return 1;
         } else if (getTransports().isPresent() && other.getTransports().isPresent()) {
-            int transportsComparison = EnumUtil.compareSets(getTransports().get(), other.getTransports().get(), AuthenticatorTransport.class);
+            int transportsComparison = EnumUtil.compareComparableSets(getTransports().get(), other.getTransports().get());
             if (transportsComparison != 0) {
                 return transportsComparison;
             }

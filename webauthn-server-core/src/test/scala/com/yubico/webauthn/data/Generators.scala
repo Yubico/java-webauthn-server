@@ -183,6 +183,12 @@ object Generators {
     .userVerification(userVerification)
     .build())
 
+  implicit val arbitraryAuthenticatorTransport: Arbitrary[AuthenticatorTransport] = Arbitrary(
+    Gen.oneOf(
+      Gen.oneOf(AuthenticatorTransport.values()),
+      arbitrary[String] map (new AuthenticatorTransport(_))
+    ))
+
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
   def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 

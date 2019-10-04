@@ -25,14 +25,11 @@
 package com.yubico.webauthn.data;
 
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
-import java.util.Optional;
-import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
+import lombok.Value;
 
 /**
  * Authenticators may communicate with Clients using a variety of transports. This enumeration defines a hint as to how
@@ -52,48 +49,68 @@ import lombok.NonNull;
  * Transport Enumeration (enum AuthenticatorTransport)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
-@AllArgsConstructor
-public enum AuthenticatorTransport implements JsonStringSerializable {
+@Value
+public class AuthenticatorTransport implements Comparable<AuthenticatorTransport>, JsonStringSerializable {
+
+    @NonNull
+    private final String id;
 
     /**
      * Indicates the respective authenticator can be contacted over removable USB.
      */
-    USB("usb"),
+    public static final AuthenticatorTransport USB = new AuthenticatorTransport("usb");
 
     /**
      * Indicates the respective authenticator can be contacted over Near Field Communication (NFC).
      */
-    NFC("nfc"),
+    public static final AuthenticatorTransport NFC = new AuthenticatorTransport("nfc");
 
     /**
      * Indicates the respective authenticator can be contacted over Bluetooth Smart (Bluetooth Low Energy / BLE).
      */
-    BLE("ble"),
+    public static final AuthenticatorTransport BLE = new AuthenticatorTransport("ble");
 
     /**
      * Indicates the respective authenticator is contacted using a client device-specific transport. These
      * authenticators are not removable from the client device.
      */
-    INTERNAL("internal")
-    ;
+    public static final AuthenticatorTransport INTERNAL = new AuthenticatorTransport("internal");
 
-    @NonNull
-    private final String id;
-
-    private static Optional<AuthenticatorTransport> fromString(@NonNull String id) {
-        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+    /**
+     * @return An array containing all predefined values of {@link AuthenticatorTransport} known by this implementation.
+     */
+    public static AuthenticatorTransport[] values() {
+        return new AuthenticatorTransport[]{ USB, NFC, BLE, INTERNAL };
     }
 
-    @JsonCreator
-    private static AuthenticatorTransport fromJsonString(@NonNull String id) {
-        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
-            "Unknown %s value: %s", AuthenticatorTransport.class.getSimpleName(), id
-        )));
+    /**
+     * @return If <code>name</code> equals <code>"USB"</code>, <code>"NFC"</code>, <code>"BLE"</code> or
+     * <code>"INTERNAL"</code>, returns the constant by that name.
+     * @throws IllegalArgumentException
+     *     if <code>name</code> is anything else.
+     * @deprecated Use the constructor {@link #AuthenticatorTransport(String)} instead.
+     */
+    @Deprecated
+    public static AuthenticatorTransport valueOf(String name) {
+        switch (name) {
+            case "USB":
+            case "NFC":
+            case "BLE":
+            case "INTERNAL":
+                return new AuthenticatorTransport(name.toLowerCase());
+        default:
+            throw new IllegalArgumentException("No enum constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
+        }
     }
 
     @Override
     public String toJsonString() {
         return id;
+    }
+
+    @Override
+    public int compareTo(AuthenticatorTransport other) {
+        return id.compareTo(other.id);
     }
 
 }
