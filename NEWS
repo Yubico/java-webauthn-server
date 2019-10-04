@@ -4,6 +4,9 @@ Changes:
 
 * `RelyingParty` now makes an immutable copy of the `origins` argument, instead
   of storing a reference to a possibly mutable value.
+* Registration ceremony now verifies that the returned credential public key
+  matches one of the algorithms specified in
+  `RelyingParty.preferredPubkeyParams` and can be successfully parsed.
 
 New features:
 
