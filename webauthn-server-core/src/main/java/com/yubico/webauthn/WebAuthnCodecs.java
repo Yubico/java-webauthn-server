@@ -28,6 +28,7 @@ import COSE.CoseException;
 import COSE.OneKey;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
@@ -38,6 +39,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Optional;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
@@ -113,6 +115,12 @@ final class WebAuthnCodecs {
         } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    static Optional<COSEAlgorithmIdentifier> getCoseKeyAlg(ByteArray key) {
+        CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
+        final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
+        return COSEAlgorithmIdentifier.fromId(alg);
     }
 
     static String getSignatureAlgorithmName(PublicKey key) {
