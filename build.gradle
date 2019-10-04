@@ -7,9 +7,9 @@ buildscript {
   }
 }
 plugins {
-  id 'com.github.kt3k.coveralls' version '2.8.2'
+  id 'com.github.kt3k.coveralls' version '2.8.4'
   id 'io.codearte.nexus-staging' version '0.9.0'
-  id 'io.franzbecker.gradle-lombok' version '1.14'
+  id 'io.franzbecker.gradle-lombok' version '3.1.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
@@ -34,13 +34,13 @@ wrapper {
 }
 
 allprojects {
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+  ext.dirtyMarker = "-DIRTY"
+
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'idea'
 
   group = 'com.yubico'
-
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
-  ext.dirtyMarker = "-DIRTY"
 
   idea.module {
     downloadJavadoc = true
@@ -63,7 +63,9 @@ subprojects {
   }
 }
 
-evaluationDependsOnChildren()
+allprojects {
+  evaluationDependsOnChildren()
+}
 
 task assembleJavadoc(type: Sync) {
   from("docs/index.html") {
@@ -86,6 +88,10 @@ subprojects { project ->
     from(rootProject.file('COPYING'))
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+  }
+
+  tasks.withType(Sign) {
+    it.dependsOn check
   }
 
   test {
