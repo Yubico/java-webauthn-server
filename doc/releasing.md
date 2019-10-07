@@ -6,13 +6,15 @@ Release candidate versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Run the tests one more time:
+ 2. Make sure you're running Gradle in JDK 11.
+
+ 3. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 3. Tag the head commit with an `X.Y.Z-RCN` tag:
+ 4. Tag the head commit with an `X.Y.Z-RCN` tag:
 
     ```
     $ git tag -a -s 1.4.0-RC1 -m "Pre-release 1.4.0-RC1"
@@ -20,19 +22,19 @@ Release candidate versions
 
     No tag body needed.
 
- 4. Publish to Sonatype Nexus:
+ 5. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publish closeAndReleaseRepository
     ```
 
- 5. Push to GitHub:
+ 6. Push to GitHub:
 
     ```
     $ git push origin master 1.4.0-RC1
     ```
 
- 6. Make GitHub release.
+ 7. Make GitHub release.
 
     - Use the new tag as the release tag
     - Check the pre-release checkbox
@@ -51,7 +53,9 @@ Release versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Make a no-fast-forward merge from the last (non release candidate) release
+ 2. Make sure you're running Gradle in JDK 11.
+
+ 3. Make a no-fast-forward merge from the last (non release candidate) release
     to the commit to be released:
 
     ```
@@ -73,22 +77,22 @@ Release versions
     $ git branch -d release-1.4.0
     ```
 
- 3. Remove the "(unreleased)" tag from `NEWS`.
+ 4. Remove the "(unreleased)" tag from `NEWS`.
 
- 4. Amend this change into the merge commit:
+ 5. Amend this change into the merge commit:
 
     ```
     $ git add NEWS
     $ git commit --amend --reset-author
     ```
 
- 5. Run the tests one more time:
+ 6. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 6. Tag the merge commit with an `X.Y.Z` tag:
+ 7. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -96,19 +100,19 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
- 7. Publish to Sonatype Nexus:
+ 8. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publish closeAndReleaseRepository
     ```
 
- 8. Push to GitHub:
+ 9. Push to GitHub:
 
     ```
     $ git push origin master 1.4.0
     ```
 
- 9. Make GitHub release.
+10. Make GitHub release.
 
     - Use the new tag as the release tag
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
