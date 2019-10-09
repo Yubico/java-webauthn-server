@@ -15,7 +15,7 @@ dependencies {
   )
 
   implementation(
-    'com.augustcellars.cose:cose-java:0.9.10',
+    'com.augustcellars.cose:cose-java:1.0.0',
     'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
     'com.google.guava:guava:19.0',
     'org.apache.httpcomponents:httpclient:4.5.2',
