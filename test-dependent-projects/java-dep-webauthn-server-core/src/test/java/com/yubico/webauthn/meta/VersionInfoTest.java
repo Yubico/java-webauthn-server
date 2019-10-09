@@ -27,12 +27,12 @@ public class VersionInfoTest {
     public void implementationPropertiesAreSet() {
         final Implementation impl = versionInfo.getImplementation();
         assertTrue(impl.getSourceCodeUrl().toExternalForm().startsWith("https://"));
-        assertTrue(impl.getVersion().get().matches("^\\d+\\.\\d+\\.\\d+(-.*)?"));
+        assertTrue(impl.getVersion().matches("^\\d+\\.\\d+\\.\\d+(-.*)?"));
     }
 
     @Test
     public void majorVersionIsAtLeast1() {
-        final String version = versionInfo.getImplementation().getVersion().get();
+        final String version = versionInfo.getImplementation().getVersion();
         String[] splits = version.split("\\.");
         final int majorVersion = Integer.parseInt(splits[0]);
         assertTrue(majorVersion >= 1);

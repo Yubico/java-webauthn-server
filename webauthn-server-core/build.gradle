@@ -44,10 +44,17 @@ jar {
       'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
       'Specification-Version': 'Level 1 Recommendation 2019-03-04',
       'Specification-Vendor': 'World Wide Web Consortium',
+
+      'Specification-Url': 'https://www.w3.org/TR/2019/REC-webauthn-1-20190304/',
+      'Specification-Url-Latest': 'https://www.w3.org/TR/webauthn/',
+      'Specification-W3c-Status': 'recommendation',
+      'Specification-Release-Date': '2019-03-04',
+
       'Implementation-Id': 'java-webauthn-server',
       'Implementation-Title': 'Yubico Web Authentication server library',
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
+      'Implementation-Source-Url': 'https://github.com/Yubico/java-webauthn-server',
     ])
   }
 }
