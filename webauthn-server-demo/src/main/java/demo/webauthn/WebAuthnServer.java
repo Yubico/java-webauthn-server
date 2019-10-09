@@ -144,6 +144,8 @@ public class WebAuthnServer {
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .metadataService(Optional.of(metadataService))
+            .allowOriginPort(false)
+            .allowOriginSubdomain(false)
             .allowUnrequestedExtensions(true)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)

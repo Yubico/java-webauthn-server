@@ -71,8 +71,9 @@ final class FinishRegistrationSteps {
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowOriginPort = false;
+    @Builder.Default private final boolean allowOriginSubdomain = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
 
 
     public Step1 begin() {
@@ -213,9 +214,15 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
+            final String responseOrigin = clientData.getOrigin();
             assure(
-                origins.stream().anyMatch(o -> o.equals(clientData.getOrigin())),
-                "Incorrect origin: " + clientData.getOrigin()
+                OriginMatcher.isAllowed(
+                    responseOrigin,
+                    origins,
+                    allowOriginPort,
+                    allowOriginSubdomain
+                ),
+                "Incorrect origin: " + responseOrigin
             );
         }
 

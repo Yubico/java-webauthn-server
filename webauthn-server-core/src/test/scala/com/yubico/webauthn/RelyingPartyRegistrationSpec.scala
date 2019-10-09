@@ -24,11 +24,10 @@
 
 package com.yubico.webauthn
 
-import java.util
 import java.io.IOException
 import java.nio.charset.Charset
-import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.SignatureException
 import java.security.cert.X509Certificate
@@ -40,21 +39,20 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.data.AttestationObject
-import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
-import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.RegistrationExtensionInputs
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.AttestationConveyancePreference
+import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.RegistrationExtensionInputs
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
+import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
@@ -94,29 +92,37 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   }
 
   private val unimplementedCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): util.Set[PublicKeyCredentialDescriptor] = ???
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = ???
     override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
     override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
     override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
-    override def lookupAll(credentialId: ByteArray): util.Set[RegisteredCredential] = ???
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
   }
 
   private def finishRegistration(
+    allowOriginPort: Boolean = false,
+    allowOriginSubdomain: Boolean = false,
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
     credentialId: Option[ByteArray] = None,
     credentialRepository: Option[CredentialRepository] = None,
     metadataService: Option[MetadataService] = None,
+    origins: Option[Set[String]] = None,
     rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
-    RelyingParty.builder()
+    val builder = RelyingParty.builder()
       .identity(rp)
       .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
       .preferredPubkeyParams(Nil.asJava)
-      .origins(Set("https://" + rp.getId).asJava)
+      .allowOriginPort(allowOriginPort)
+      .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
+
+    origins.map(_.asJava).foreach(builder.origins _)
+
+    builder
       .build()
       ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
   }
@@ -211,15 +217,201 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         step.tryNext shouldBe a [Failure[_]]
       }
 
-      it("5. Verify that the value of C.origin matches the Relying Party's origin.") {
-        val steps = finishRegistration(
-          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "https://root.evil")
-        )
-        val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
+      describe("5. Verify that the value of C.origin matches the Relying Party's origin.") {
 
-        step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [IllegalArgumentException]
-        step.tryNext shouldBe a [Failure[_]]
+        def checkAccepted(
+          origin: String,
+          origins: Option[Set[String]] = None,
+          allowOriginPort: Boolean = false,
+          allowOriginSubdomain: Boolean = false
+        ): Unit = {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", origin),
+            origins = origins,
+            allowOriginPort = allowOriginPort,
+            allowOriginSubdomain = allowOriginSubdomain
+          )
+          val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
+
+          step.validations shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
+        }
+
+        def checkRejected(
+          origin: String,
+          origins: Option[Set[String]] = None,
+          allowOriginPort: Boolean = false,
+          allowOriginSubdomain: Boolean = false
+        ): Unit = {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", origin),
+            origins = origins,
+            allowOriginPort = allowOriginPort,
+            allowOriginSubdomain = allowOriginSubdomain
+          )
+          val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
+        }
+
+        it("Fails if origin is different.") {
+          checkRejected(origin = "https://root.evil")
+        }
+
+        describe("Explicit ports are") {
+          val origin = "https://localhost:8080"
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("allowed if RP opts in to it.") {
+            checkAccepted(origin = origin, allowOriginPort = true)
+          }
+        }
+
+        describe("Subdomains are") {
+          val origin = "https://foo.localhost"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("allowed if RP opts in to it.") {
+            checkAccepted(origin = origin, allowOriginSubdomain = true)
+          }
+        }
+
+        describe("Subdomains and explicit ports at the same time are") {
+          val origin   = "https://foo.localhost:8080"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("not allowed if only subdomains are allowed.") {
+            checkRejected(origin = origin, allowOriginPort = false, allowOriginSubdomain = true)
+          }
+
+          it("not allowed if only explicit ports are allowed.") {
+            checkRejected(origin = origin, allowOriginPort = true, allowOriginSubdomain = false)
+          }
+
+          it("allowed if RP opts in to both.") {
+            checkAccepted(origin = origin, allowOriginPort = true, allowOriginSubdomain = true)
+          }
+        }
+
+        describe("The examples in JavaDoc are correct:") {
+          def check(
+            origins: Set[String],
+            acceptOrigins: Iterable[String],
+            rejectOrigins: Iterable[String],
+            allowOriginPort: Boolean = false,
+            allowOriginSubdomain: Boolean = false
+          ): Unit = {
+            for { origin <- acceptOrigins } {
+              it(s"${origin} is accepted.") {
+                checkAccepted(
+                  origin = origin,
+                  origins = Some(origins),
+                  allowOriginPort = allowOriginPort,
+                  allowOriginSubdomain = allowOriginSubdomain
+                )
+              }
+            }
+
+            for { origin <- rejectOrigins } {
+              it(s"${origin} is rejected.") {
+                checkRejected(
+                  origin = origin,
+                  origins = Some(origins),
+                  allowOriginPort = allowOriginPort,
+                  allowOriginSubdomain = allowOriginSubdomain
+                )
+              }
+            }
+          }
+
+          describe("For allowOriginPort:") {
+            val origins = Set("https://example.org", "https://accounts.example.org", "https://acme.com:8443")
+
+            describe("false,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://accounts.example.org",
+                  "https://acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://shop.example.org",
+                  "https://acme.com",
+                  "https://acme.com:9000"
+                ),
+                allowOriginPort = false
+              )
+            }
+
+            describe("true,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://example.org:8443",
+                  "https://accounts.example.org",
+                  "https://acme.com",
+                  "https://acme.com:8443",
+                  "https://acme.com:9000"
+                ),
+                rejectOrigins = List(
+                  "https://shop.example.org"
+                ),
+                allowOriginPort = true
+              )
+            }
+          }
+
+          describe("For allowOriginSubdomain:") {
+            val origins = Set("https://example.org", "https://acme.com:8443")
+
+            describe("false,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://accounts.example.org",
+                  "https://acme.com",
+                  "https://shop.acme.com:8443"
+                ),
+                allowOriginSubdomain = false
+              )
+            }
+
+            describe("true,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://accounts.example.org",
+                  "https://acme.com:8443",
+                  "https://shop.acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://acme.com"
+                ),
+                allowOriginSubdomain = true
+              )
+            }
+          }
+        }
       }
 
       describe("6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.") {

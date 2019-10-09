@@ -156,6 +156,22 @@ object TestAuthenticator {
       |Client data: ${publicKeyCredential.getResponse.getClientDataJSON.getHex}
     """.stripMargin
 
+  def makeAssertionExample(): String = {
+    val (credential, keypair) = createCredential()
+    val assertion = createAssertion(credentialKey = keypair)
+
+    s"""
+    |val authenticatorData: ByteArray = ByteArray.fromHex("${assertion.getResponse.getAuthenticatorData.getHex}")
+    |val clientDataJson: String = "\""${new String(assertion.getResponse.getClientDataJSON.getBytes, StandardCharsets.UTF_8)}""\"
+    |val credentialId: ByteArray = ByteArray.fromBase64Url("${assertion.getId.getBase64Url}")
+    |val credentialKey: KeyPair = TestAuthenticator.importEcKeypair(
+    |  privateBytes = ByteArray.fromHex("${new ByteArray(keypair.getPrivate.getEncoded).getHex}"),
+    |  publicBytes = ByteArray.fromHex("${new ByteArray(keypair.getPublic.getEncoded).getHex}")
+    |)
+    |val signature: ByteArray = ByteArray.fromHex("${assertion.getResponse.getSignature.getHex}")
+    """.stripMargin
+  }
+
   private def createCredential(
     aaguid: ByteArray = Defaults.aaguid,
     alg: Option[COSEAlgorithmIdentifier] = None,
