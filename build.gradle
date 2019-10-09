@@ -74,6 +74,15 @@ task assembleJavadoc(type: Sync) {
   destinationDir = file("${rootProject.buildDir}/javadoc")
 }
 
+String getGitCommit() {
+  def proc = "git rev-parse HEAD".execute(null, projectDir)
+  proc.waitFor()
+  if (proc.exitValue() != 0) {
+    throw new RuntimeException("Failed to get git commit ID");
+  }
+  return proc.text.trim()
+}
+
 subprojects { project ->
 
   sourceCompatibility = 1.8

@@ -28,6 +28,7 @@ public class VersionInfoTest {
         final Implementation impl = versionInfo.getImplementation();
         assertTrue(impl.getSourceCodeUrl().toExternalForm().startsWith("https://"));
         assertTrue(impl.getVersion().matches("^\\d+\\.\\d+\\.\\d+(-.*)?"));
+        assertTrue(impl.getGitCommit().matches("^[a-f0-9]{40}$"));
     }
 
     @Test

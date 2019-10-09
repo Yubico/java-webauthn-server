@@ -51,4 +51,10 @@ public class Implementation {
     @NonNull
     private final URL sourceCodeUrl;
 
+    /**
+     * The commit ID of the source code the library was built from, if known.
+     */
+    @NonNull
+    private final String gitCommit;
+
 }

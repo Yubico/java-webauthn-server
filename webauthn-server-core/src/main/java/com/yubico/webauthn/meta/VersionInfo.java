@@ -74,7 +74,8 @@ public class VersionInfo {
      */
     private final Implementation implementation = new Implementation(
         findValueInManifest("Implementation-Version"),
-        new URL(findValueInManifest("Implementation-Source-Url"))
+        new URL(findValueInManifest("Implementation-Source-Url")),
+        findValueInManifest("Git-Commit")
     );
 
     private VersionInfo() throws IOException {

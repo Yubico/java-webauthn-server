@@ -50,4 +50,9 @@ public class ManifestInfoTest {
         assertEquals("Yubico", lookup("Implementation-Vendor"));
     }
 
+    @Test
+    public void customImplementationPropertiesAreSet() throws IOException {
+        assertTrue(lookup("Git-Commit").matches("^[a-f0-9]{40}$"));
+    }
+
 }

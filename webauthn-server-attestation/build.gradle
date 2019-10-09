@@ -46,6 +46,7 @@ jar {
       'Implementation-Title': project.description,
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
+      'Git-Commit': getGitCommit(),
     ])
   }
 }
