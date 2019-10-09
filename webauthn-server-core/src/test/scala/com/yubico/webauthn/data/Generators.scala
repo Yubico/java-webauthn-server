@@ -163,7 +163,7 @@ object Generators {
     attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
     extensions <- arbitrary[Option[CBORObject]]
 
-    extensionsBytes = extensions map { exts => new ByteArray(exts.EncodeToBytes(CBOREncodeOptions.NoDuplicateKeys.And(CBOREncodeOptions.NoIndefLengthStrings))) }
+    extensionsBytes = extensions map { exts => new ByteArray(exts.EncodeToBytes(CBOREncodeOptions.Default)) }
     atFlag = attestedCredentialDataBytes.isDefined
     edFlag = extensionsBytes.isDefined
     flagsByte: Byte = setFlag(setFlag(fixedBytes.getBytes()(32), 0x40, atFlag), BinaryUtil.singleFromHex("80"), edFlag)
