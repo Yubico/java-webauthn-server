@@ -9,6 +9,7 @@ out/
 *.iml
 *.iws
 */out/
+.attach_pid*
 
 # Mac
 .DS_Store
