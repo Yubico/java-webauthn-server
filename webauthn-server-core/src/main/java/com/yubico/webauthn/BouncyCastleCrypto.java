@@ -30,6 +30,7 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
@@ -53,30 +54,13 @@ final class BouncyCastleCrypto {
         return provider;
     }
 
-    public boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature) {
-        return verifySignature(attestationCertificate.getPublicKey(), signedBytes, signature);
+    public boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature, COSEAlgorithmIdentifier alg) {
+        return verifySignature(attestationCertificate.getPublicKey(), signedBytes, signature, alg);
     }
 
-    public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signatureBytes) {
+    public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signatureBytes, COSEAlgorithmIdentifier alg) {
         try {
-            final String algName;
-            switch (publicKey.getAlgorithm()) {
-                case "EC":
-                    algName = "SHA256withECDSA";
-                    break;
-
-                case "Ed25519":
-                    algName = "EDDSA";
-                    break;
-
-                case "RSA":
-                    algName = "SHA256withRSA";
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unsupported public key algorithm: " + publicKey);
-            }
-            Signature signature = Signature.getInstance(algName, provider);
+            Signature signature = Signature.getInstance(WebAuthnCodecs.getJavaAlgorithmName(alg), provider);
             signature.initVerify(publicKey);
             signature.update(signedBytes.getBytes());
             return signature.verify(signatureBytes.getBytes());

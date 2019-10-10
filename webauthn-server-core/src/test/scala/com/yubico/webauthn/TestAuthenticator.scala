@@ -205,7 +205,7 @@ object TestAuthenticator {
   }
   object AttestationSigner {
     def ca(alg: COSEAlgorithmIdentifier, certSubject: X500Name = new X500Name("CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE")): AttestationCert = {
-      val (caCert, caKey) = generateAttestationCaCertificate(name = certSubject)
+      val (caCert, caKey) = generateAttestationCaCertificate(signingAlg = alg, name = certSubject)
       val (cert, key) = generateAttestationCertificate(alg, caCertAndKey = Some((caCert, caKey)), name = certSubject)
       AttestationCert(cert, key, alg, List(caCert))
     }
@@ -555,7 +555,7 @@ object TestAuthenticator {
     sign(authenticatorData.concat(clientDataHash), key, alg)
 
   def sign(data: ByteArray, key: PrivateKey, alg: COSEAlgorithmIdentifier): ByteArray = {
-    val sig = Signature.getInstance("SHA256with" + key.getAlgorithm, javaCryptoProvider)
+    val sig = Signature.getInstance(WebAuthnCodecs.getJavaAlgorithmName(alg), javaCryptoProvider)
     sig.initSign(key)
     sig.update(data.getBytes)
     new ByteArray(sig.sign())
@@ -603,7 +603,7 @@ object TestAuthenticator {
     sig.update(signedDataBytes.getBytes)
 
     sig.verify(signatureBytes.getBytes) &&
-      crypto.verifySignature(pubKey, signedDataBytes, signatureBytes)
+      crypto.verifySignature(pubKey, signedDataBytes, signatureBytes, COSEAlgorithmIdentifier.ES256)
   }
 
   def verifyU2fExampleWithCert(
@@ -630,21 +630,24 @@ object TestAuthenticator {
   }
 
   def generateAttestationCaCertificate(
-    keypair: KeyPair = generateEcKeypair(),
+    keypair: Option[KeyPair] = None,
+    signingAlg: COSEAlgorithmIdentifier = COSEAlgorithmIdentifier.ES256,
     name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE"),
     superCa: Option[(X509Certificate, PrivateKey)] = None,
     extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil
   ): (X509Certificate, PrivateKey) = {
+    val actualKeypair = keypair.getOrElse(generateKeypair(signingAlg))
     (
       buildCertificate(
-        publicKey = keypair.getPublic,
+        publicKey = actualKeypair.getPublic,
         issuerName = superCa map (_._1) map JcaX500NameUtil.getSubject getOrElse name,
         subjectName = name,
-        signingKey = superCa map (_._2) getOrElse keypair.getPrivate,
+        signingKey = superCa map (_._2) getOrElse actualKeypair.getPrivate,
+        signingAlg = signingAlg,
         isCa = true,
         extensions = extensions
       ),
-      keypair.getPrivate
+      actualKeypair.getPrivate
     )
   }
 
@@ -665,6 +668,7 @@ object TestAuthenticator {
         issuerName = caCertAndKey.map(_._1).map(JcaX500NameUtil.getSubject).getOrElse(name),
         subjectName = name,
         signingKey = caCertAndKey.map(_._2).getOrElse(actualKeypair.getPrivate),
+        signingAlg = alg,
         isCa = false,
         extensions = extensions
       ),
@@ -677,6 +681,7 @@ object TestAuthenticator {
     issuerName: X500Name,
     subjectName: X500Name,
     signingKey: PrivateKey,
+    signingAlg: COSEAlgorithmIdentifier,
     isCa: Boolean = false,
     extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil
   ): X509Certificate = {
@@ -698,7 +703,7 @@ object TestAuthenticator {
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
       }
 
-      builder.build(new JcaContentSignerBuilder("SHA256with" + signingKey.getAlgorithm).setProvider(javaCryptoProvider).build(signingKey)).getEncoded
+      builder.build(new JcaContentSignerBuilder(WebAuthnCodecs.getJavaAlgorithmName(signingAlg)).setProvider(javaCryptoProvider).build(signingKey)).getEncoded
     })
   }
 

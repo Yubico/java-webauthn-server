@@ -32,6 +32,7 @@ package com.yubico.webauthn;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.security.cert.X509Certificate;
 import lombok.Value;
 
@@ -72,7 +73,7 @@ class U2fRawRegisterResponse {
 
     boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
         ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
-        return crypto.verifySignature(attestationCertificate, signedBytes, signature);
+        return crypto.verifySignature(attestationCertificate, signedBytes, signature, COSEAlgorithmIdentifier.ES256);
     }
 
     private static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {

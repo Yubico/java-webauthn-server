@@ -123,11 +123,12 @@ final class WebAuthnCodecs {
         return COSEAlgorithmIdentifier.fromId(alg);
     }
 
-    static String getSignatureAlgorithmName(PublicKey key) {
-        if (key.getAlgorithm().equals("EC")) {
-            return "ECDSA";
-        } else {
-            return key.getAlgorithm();
+    static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
+        switch (alg) {
+            case EdDSA: return "EDDSA";
+            case ES256: return "SHA256withECDSA";
+            case RS256: return "SHA256withRSA";
+            default: throw new IllegalArgumentException("Unknown algorithm: " + alg);
         }
     }
 

@@ -29,6 +29,7 @@ import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
@@ -565,11 +566,15 @@ final class FinishAssertionSteps {
                 throw new RuntimeException(e);
             }
 
+            final COSEAlgorithmIdentifier alg = WebAuthnCodecs.getCoseKeyAlg(cose).orElseThrow(() ->
+                new IllegalArgumentException(String.format("Failed to decode \"alg\" from COSE key: %s", cose)));
+
             if (!
                 crypto.verifySignature(
                     key,
                     signedBytes(),
-                    response.getResponse().getSignature()
+                    response.getResponse().getSignature(),
+                    alg
                 )
             ) {
                 throw new IllegalArgumentException("Invalid assertion signature.");
