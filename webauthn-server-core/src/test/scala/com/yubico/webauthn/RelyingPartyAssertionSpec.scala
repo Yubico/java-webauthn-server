@@ -47,6 +47,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
@@ -120,6 +121,29 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       ???
 
   private def getPublicKeyBytes(credentialKey: KeyPair): ByteArray = WebAuthnTestCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey])
+
+  private def credRepoWithUser(user: UserIdentity, credential: RegisteredCredential): CredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
+      if (username == user.getName)
+        Set(PublicKeyCredentialDescriptor.builder().id(credential.getCredentialId).build()).asJava
+      else Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+      if (username == user.getName)
+        Some(user.getId).asJava
+      else None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
+      if (userHandle == user.getId)
+        Some(user.getName).asJava
+      else None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
+      if (credentialId == credential.getCredentialId && userHandle == user.getId)
+        Some(credential).asJava
+      else None.asJava
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
+      if (credentialId == credential.getCredentialId)
+        Set(credential).asJava
+      else Set.empty.asJava
+  }
 
   def finishAssertion(
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
@@ -1468,6 +1492,40 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       result.isSuccess should be (true)
       result.getUserHandle should equal (registrationRequest.getUser.getId)
       result.getCredentialId should equal (credId)
+    }
+
+    describe("an RS1 key") {
+      def test(registrationTestData: RegistrationTestData): Unit = {
+        val testData = registrationTestData.assertion.get
+
+        val rp = RelyingParty.builder()
+          .identity(RelyingPartyIdentity.builder().id("localhost").name("Test RP").build())
+          .credentialRepository(credRepoWithUser(registrationTestData.userId, RegisteredCredential.builder()
+            .credentialId(registrationTestData.response.getId)
+            .userHandle(registrationTestData.userId.getId)
+            .publicKeyCose(registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
+            .signatureCount(0)
+            .build()))
+          .build()
+
+        val result = rp.finishAssertion(FinishAssertionOptions.builder()
+          .request(testData.request)
+          .response(testData.response)
+          .build()
+        )
+
+        result.isSuccess should be (true)
+        result.getUserHandle should equal (registrationTestData.userId.getId)
+        result.getCredentialId should equal (registrationTestData.response.getId)
+        result.getCredentialId should equal (testData.response.getId)
+      }
+
+      it("with basic attestation.") {
+        test(RegistrationTestData.Packed.BasicAttestationRs1)
+      }
+      it("with self attestation.") {
+        test(RegistrationTestData.Packed.SelfAttestationRs1)
+      }
     }
   }
 

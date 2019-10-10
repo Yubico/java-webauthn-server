@@ -586,6 +586,7 @@ object TestAuthenticator {
     case COSEAlgorithmIdentifier.EdDSA => generateEddsaKeypair()
     case COSEAlgorithmIdentifier.ES256 => generateEcKeypair()
     case COSEAlgorithmIdentifier.RS256 => generateRsaKeypair()
+    case COSEAlgorithmIdentifier.RS1 => generateRsaKeypair()
   }
 
   def generateEcKeypair(curve: String = "P-256"): KeyPair = {

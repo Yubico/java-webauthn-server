@@ -1081,6 +1081,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   result should equal (Success(true))
                 }
 
+                it("Succeeds for an RS1 test case.") {
+                  val testData = RegistrationTestData.Packed.BasicAttestationRs1
+
+                  val result = verifier.verifyAttestationSignature(
+                    new AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
+                  result should equal (true)
+                }
+
                 it("Fail if the default test case is mutated.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
 
@@ -1233,6 +1243,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject),
                     testDataBase.clientDataJsonHash
+                  )
+                  result should equal (true)
+                }
+
+                it("Succeeds for an RS1 test case.") {
+                  val testData = RegistrationTestData.Packed.SelfAttestationRs1
+                  val alg = WebAuthnCodecs.getCoseKeyAlg(testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey).get
+                  alg should be (COSEAlgorithmIdentifier.RS1)
+
+                  val result = verifier.verifyAttestationSignature(
+                    new AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
                   )
                   result should equal (true)
                 }
