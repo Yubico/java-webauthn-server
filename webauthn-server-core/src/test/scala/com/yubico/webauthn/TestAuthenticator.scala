@@ -462,12 +462,14 @@ object TestAuthenticator {
     val f = JsonNodeFactory.instance
     f.objectNode().setAll(
       (
-        Map("sig" -> f.binaryNode(signature.getBytes))
-          ++ (signer match {
-            case SelfAttestation(_, alg) => Map("alg" -> f.numberNode(alg.getId))
-            case AttestationCert(cert, _, _, chain) =>
-              Map("x5c" -> f.arrayNode().addAll((cert +: chain).map(crt => f.binaryNode(crt.getEncoded)).asJava))
-          })
+        Map(
+          "alg" -> f.numberNode(signer.alg.getId),
+          "sig" -> f.binaryNode(signature.getBytes)
+        ) ++ (signer match {
+          case _: SelfAttestation => Map.empty
+          case AttestationCert(cert, _, _, chain) =>
+            Map("x5c" -> f.arrayNode().addAll((cert +: chain).map(crt => f.binaryNode(crt.getEncoded)).asJava))
+        })
       ).asJava
     )
   }

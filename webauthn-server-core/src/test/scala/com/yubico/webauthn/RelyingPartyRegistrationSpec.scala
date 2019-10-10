@@ -1176,7 +1176,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.BASIC)
                 step.attestationTrustPath.asScala should not be empty
-                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert))
+                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert, testData.attestationCaCert.get))
               }
             }
 
