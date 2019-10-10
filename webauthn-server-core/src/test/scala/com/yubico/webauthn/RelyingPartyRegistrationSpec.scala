@@ -1930,26 +1930,27 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
         }
 
-        it("accept all test examples in the validExamples list.") {
-          RegistrationTestData.validExamples.foreach { testData =>
-            val rp = {
-              val builder = RelyingParty.builder()
-                .identity(testData.rpId)
-                .credentialRepository(emptyCredentialRepository)
-              testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
-              builder.build()
+        describe("accept all test examples in the validExamples list.") {
+          RegistrationTestData.validExamples.zipWithIndex.foreach { case (testData, i) =>
+            it(s"Succeeds for example index ${i}.") {
+              val rp = {
+                val builder = RelyingParty.builder()
+                  .identity(testData.rpId)
+                  .credentialRepository(emptyCredentialRepository)
+                testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
+                builder.build()
+              }
+
+              val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+                .request(testData.request)
+                .response(testData.response)
+                .build()
+              )
+
+              result.getKeyId.getId should equal (testData.response.getId)
             }
-
-            val result = rp.finishRegistration(FinishRegistrationOptions.builder()
-              .request(testData.request)
-              .response(testData.response)
-              .build()
-            )
-
-            result.getKeyId.getId should equal (testData.response.getId)
           }
         }
-
       }
 
       describe("RelyingParty supports registering") {
