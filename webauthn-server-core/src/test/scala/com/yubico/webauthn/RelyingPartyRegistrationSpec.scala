@@ -55,6 +55,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.test.Util.toStepWithUtilities
+import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -910,8 +911,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           describe("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
             val testAuthenticator = TestAuthenticator
 
-            def checkRejected(keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+            def checkRejected(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationSigner = new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -938,8 +939,8 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               standaloneVerification.failed.get shouldBe an [IllegalArgumentException]
             }
 
-            def checkAccepted(keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+            def checkAccepted(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationSigner = new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair)))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -965,19 +966,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             it("An RSA attestation certificate is rejected.") {
-              checkRejected(testAuthenticator.generateRsaKeypair())
+              checkRejected(COSEAlgorithmIdentifier.RS256, testAuthenticator.generateRsaKeypair())
             }
 
             it("A secp256r1 attestation certificate is accepted.") {
-              checkAccepted(testAuthenticator.generateEcKeypair(curve = "secp256r1"))
+              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256r1"))
             }
 
             it("A secp256k1 attestation certificate is rejected.") {
-              checkRejected(testAuthenticator.generateEcKeypair(curve = "secp256k1"))
+              checkRejected(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256k1"))
             }
 
             it("A P-256 attestation certificate is accepted.") {
-              checkAccepted(testAuthenticator.generateEcKeypair(curve = "P-256"))
+              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "P-256"))
             }
           }
         }
@@ -1099,11 +1100,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               describe("2. Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate Requirements.") {
                 it("Fails for an attestation signature with an invalid country code.") {
                   val authenticator = TestAuthenticator
+                  val alg = COSEAlgorithmIdentifier.ES256
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
+                    alg = alg,
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
                   val ((credential, _), _) = authenticator.createBasicAttestedCredential(
-                    attestationCertAndKey = Some(badCert, key),
+                    attestationSigner = new AttestationCert(alg, (badCert, key)),
                     attestationStatementFormat = "packed"
                   )
                   val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON)))

@@ -55,11 +55,11 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
-  def rsaPublicKeyToCose(key: RSAPublicKey): ByteArray = {
+  def rsaPublicKeyToCose(key: RSAPublicKey, alg: COSEAlgorithmIdentifier): ByteArray = {
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
     coseKey.put(1L, 3L) // Key type: RSA
 
-    coseKey.put(3L, COSEAlgorithmIdentifier.RS256.getId)
+    coseKey.put(3L, alg.getId)
     coseKey.put(-1L, key.getModulus.toByteArray) // public modulus n
 
     coseKey.put(-2L, key.getPublicExponent.toByteArray) // public exponent e
