@@ -598,7 +598,7 @@ object TestAuthenticator {
     g.generateKeyPair()
   }
 
-  def verifySignature(
+  def verifyEcSignature(
     pubKey: PublicKey,
     signedDataBytes: ByteArray,
     signatureBytes: ByteArray
@@ -618,7 +618,7 @@ object TestAuthenticator {
   ): Unit = {
     val attestationCert: X509Certificate  = CertificateParser.parseDer(attestationCertBytes.getBytes)
     val pubKey: PublicKey = attestationCert.getPublicKey
-    verifySignature(pubKey, signedDataBytes, signatureBytes)
+    verifyEcSignature(pubKey, signedDataBytes, signatureBytes)
   }
 
   def verifyU2fExampleWithExplicitParams(
@@ -631,7 +631,7 @@ object TestAuthenticator {
     val curveSpec: ECNamedCurveSpec = new ECNamedCurveSpec("P-256", namedSpec.getCurve, namedSpec.getG, namedSpec.getN)
     val pubKeySpec: ECPublicKeySpec = new ECPublicKeySpec(pubKeyPoint, curveSpec)
     val pubKey: PublicKey = KeyFactory.getInstance("EC", javaCryptoProvider).generatePublic(pubKeySpec)
-    verifySignature(pubKey, signedDataBytes, signatureBytes)
+    verifyEcSignature(pubKey, signedDataBytes, signatureBytes)
   }
 
   def generateAttestationCaCertificate(
