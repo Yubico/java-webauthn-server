@@ -198,7 +198,7 @@ object TestAuthenticator {
   sealed trait AttestationSigner { def key: PrivateKey; def alg: COSEAlgorithmIdentifier; def cert: X509Certificate }
   case class SelfAttestation(keypair: KeyPair, alg: COSEAlgorithmIdentifier) extends AttestationSigner {
     def key: PrivateKey = keypair.getPrivate
-    def cert: X509Certificate = generateAttestationCertificate(alg = alg, keypair = keypair)._1
+    def cert: X509Certificate = generateAttestationCertificate(alg = alg, keypair = Some(keypair))._1
   }
   case class AttestationCert(cert: X509Certificate, key: PrivateKey, alg: COSEAlgorithmIdentifier, chain: List[X509Certificate]) extends AttestationSigner {
     def this(alg: COSEAlgorithmIdentifier, keypair: (X509Certificate, PrivateKey)) = this(keypair._1, keypair._2, alg, Nil)
@@ -646,14 +646,12 @@ object TestAuthenticator {
 
   def generateAttestationCertificate(
     alg: COSEAlgorithmIdentifier = COSEAlgorithmIdentifier.ES256,
-    keypair: KeyPair = generateEcKeypair(),
+    keypair: Option[KeyPair] = None,
     name: X500Name = new X500Name("CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"),
     extensions: Iterable[(String, Boolean, ASN1Primitive)] = List(("1.3.6.1.4.1.45724.1.1.4", false, new DEROctetString(Defaults.aaguid.getBytes))),
     caCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
   ): (X509Certificate, PrivateKey) = {
-    val actualKeypair =
-      if (alg == COSEAlgorithmIdentifier.RS256) generateRsaKeypair()
-      else keypair
+    val actualKeypair = keypair.getOrElse(generateKeypair(alg))
 
     (
       buildCertificate(
@@ -701,7 +699,7 @@ object TestAuthenticator {
   }
 
   def generateRsaCertificate(): (X509Certificate, PrivateKey) =
-    generateAttestationCertificate(COSEAlgorithmIdentifier.RS256, keypair = generateRsaKeypair())
+    generateAttestationCertificate(COSEAlgorithmIdentifier.RS256)
 
   def importCertAndKeyFromPem(certPem: InputStream, keyPem: InputStream): (X509Certificate, PrivateKey) = {
     val cert: X509Certificate = Util.importCertFromPem(certPem)

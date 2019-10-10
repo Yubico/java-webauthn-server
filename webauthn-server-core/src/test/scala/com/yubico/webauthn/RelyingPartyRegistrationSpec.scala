@@ -913,7 +913,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, Some(keypair)))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -941,7 +941,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
-              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, Some(keypair)))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
