@@ -913,7 +913,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -941,7 +941,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -1106,7 +1106,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     alg = alg,
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val ((credential, _), _) = authenticator.createBasicAttestedCredential(
+                  val (credential, _) = authenticator.createBasicAttestedCredential(
                     attestationMaker = AttestationMaker.packed(new AttestationCert(alg, (badCert, key))),
                   )
                   val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON)))

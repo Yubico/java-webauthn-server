@@ -101,7 +101,7 @@ object TestAuthenticator {
 
     println(generateAttestationCertificate())
 
-    val ((credential, _), _) = createBasicAttestedCredential(attestationMaker = AttestationMaker.packed(AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ES256)))
+    val (credential, _) = createBasicAttestedCredential(attestationMaker = AttestationMaker.packed(AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ES256)))
 
     println(credential)
     println(s"Client data: ${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
@@ -318,35 +318,28 @@ object TestAuthenticator {
     aaguid: ByteArray = Defaults.aaguid,
     attestationMaker: AttestationMaker,
     keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
-  ): ((data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[X509Certificate]) = {
-    (
-      createCredential(
-        aaguid = aaguid,
-        attestationMaker = attestationMaker,
-        keyAlgorithm = keyAlgorithm,
-      ),
-      Some(attestationMaker.attestationCert.get)
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) =
+    createCredential(
+      aaguid = aaguid,
+      attestationMaker = attestationMaker,
+      keyAlgorithm = keyAlgorithm,
     )
-  }
 
   def createSelfAttestedCredential(
     attestationMaker: SelfAttestation => AttestationMaker,
     keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
-  ): ((data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[Nothing]) = {
+  ): (data.PublicKeyCredential[data.AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) = {
     val keypair = generateKeypair(keyAlgorithm)
     val signer = SelfAttestation(keypair, keyAlgorithm)
-    (
-      createCredential(
-        attestationMaker = attestationMaker(signer),
-        credentialKeypair = Some(keypair),
-        keyAlgorithm = keyAlgorithm
-      ),
-      None
+    createCredential(
+      attestationMaker = attestationMaker(signer),
+      credentialKeypair = Some(keypair),
+      keyAlgorithm = keyAlgorithm
     )
   }
 
-  def createUnattestedCredential(): ((PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair), Option[X509Certificate]) =
-    (createCredential(attestationMaker = AttestationMaker.none()), None)
+  def createUnattestedCredential(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) =
+    createCredential(attestationMaker = AttestationMaker.none())
 
   def createAssertion(
     alg: COSEAlgorithmIdentifier = COSEAlgorithmIdentifier.ES256,
