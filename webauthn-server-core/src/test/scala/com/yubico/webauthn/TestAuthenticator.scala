@@ -419,7 +419,22 @@ object TestAuthenticator {
     signer: AttestationSigner,
   ): JsonNode = {
     val authData = new AuthenticatorData(authDataBytes)
-    val signedData = makeU2fSignedData(
+
+    def makeSignedData(
+      rpIdHash: ByteArray,
+      clientDataJson: String,
+      credentialId: ByteArray,
+      credentialPublicKeyRawBytes: ByteArray
+    ): ByteArray = {
+      new ByteArray((Vector[Byte](0)
+        ++ rpIdHash.getBytes
+        ++ crypto.hash(clientDataJson).getBytes
+        ++ credentialId.getBytes
+        ++ credentialPublicKeyRawBytes.getBytes
+        ).toArray)
+    }
+
+    val signedData = makeSignedData(
       authData.getRpIdHash,
       clientDataJson,
       authData.getAttestedCredentialData.get.getCredentialId,
@@ -440,20 +455,6 @@ object TestAuthenticator {
   }
 
   def makeNoneAttestationStatement(): JsonNode = JsonNodeFactory.instance.objectNode()
-
-  def makeU2fSignedData(
-    rpIdHash: ByteArray,
-    clientDataJson: String,
-    credentialId: ByteArray,
-    credentialPublicKeyRawBytes: ByteArray
-  ): ByteArray = {
-    new ByteArray((Vector[Byte](0)
-      ++ rpIdHash.getBytes
-      ++ crypto.hash(clientDataJson).getBytes
-      ++ credentialId.getBytes
-      ++ credentialPublicKeyRawBytes.getBytes
-    ).toArray)
-  }
 
   def makePackedAttestationStatement(
     authDataBytes: ByteArray,
