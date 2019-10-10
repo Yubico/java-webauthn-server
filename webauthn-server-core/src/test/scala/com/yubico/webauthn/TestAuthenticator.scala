@@ -387,23 +387,8 @@ object TestAuthenticator {
     safetynetCtsProfileMatch: Boolean = true
   ): ByteArray = {
     val f = JsonNodeFactory.instance
-    val attObj = f.objectNode().setAll(Map(
-      "authData" -> f.binaryNode(authDataBytes.getBytes),
-      "fmt" -> f.textNode(format),
-      "attStmt" -> makeAttestationStatement(format, signer, safetynetCtsProfileMatch)(authDataBytes, clientDataJson)
-    ).asJava)
-    new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(attObj))
-  }
 
-  def makeAttestationStatement(
-    format: String,
-    signer: AttestationSigner,
-    safetynetCtsProfileMatch: Boolean = true
-  )(
-    authDataBytes: ByteArray,
-    clientDataJson: String,
-  ): JsonNode = {
-    (format, signer) match {
+    val attestationStatement = (format, signer) match {
       case ("android-safetynet", cert: AttestationCert) =>
         makeAndroidSafetynetAttestationStatement(authDataBytes, clientDataJson, cert, ctsProfileMatch = safetynetCtsProfileMatch)
       case ("fido-u2f", cert: AttestationCert) => makeU2fAttestationStatement(authDataBytes, clientDataJson, cert)
@@ -411,6 +396,13 @@ object TestAuthenticator {
       case ("packed", signer) => makePackedAttestationStatement(authDataBytes, clientDataJson, signer)
       case _ => ???
     }
+
+    val attObj = f.objectNode().setAll(Map(
+      "authData" -> f.binaryNode(authDataBytes.getBytes),
+      "fmt" -> f.textNode(format),
+      "attStmt" -> attestationStatement,
+    ).asJava)
+    new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(attObj))
   }
 
   def makeU2fAttestationStatement(
