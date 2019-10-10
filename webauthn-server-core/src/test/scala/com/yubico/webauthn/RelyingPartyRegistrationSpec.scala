@@ -56,6 +56,7 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
+import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -912,7 +913,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             val testAuthenticator = TestAuthenticator
 
             def checkRejected(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationSigner = new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -940,7 +941,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             def checkAccepted(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationSigner = new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair)))
+              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, keypair))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
@@ -1106,8 +1107,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
                   val ((credential, _), _) = authenticator.createBasicAttestedCredential(
-                    attestationSigner = new AttestationCert(alg, (badCert, key)),
-                    attestationStatementFormat = "packed"
+                    attestationMaker = AttestationMaker.packed(new AttestationCert(alg, (badCert, key))),
                   )
                   val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON)))
 

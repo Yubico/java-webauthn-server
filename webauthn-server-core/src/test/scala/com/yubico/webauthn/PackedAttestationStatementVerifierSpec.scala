@@ -28,6 +28,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.Util
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -62,8 +63,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
       it ("ECDSA.") {
         val (cert, key) = TestAuthenticator.generateAttestationCertificate()
         val ((credential, _), _) = TestAuthenticator.createBasicAttestedCredential(
-          attestationStatementFormat = "packed",
-          attestationSigner = new AttestationCert(COSEAlgorithmIdentifier.ES256, (cert, key)),
+          attestationMaker = AttestationMaker.packed(new AttestationCert(COSEAlgorithmIdentifier.ES256, (cert, key))),
         )
 
         val result = verifier.verifyAttestationSignature(
@@ -78,8 +78,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
       it ("RSA.") {
         val (cert, key) = TestAuthenticator.generateRsaCertificate()
         val ((credential, _), _) = TestAuthenticator.createBasicAttestedCredential(
-          attestationStatementFormat = "packed",
-          attestationSigner = new AttestationCert(COSEAlgorithmIdentifier.RS256, (cert, key)),
+          attestationMaker = AttestationMaker.packed(new AttestationCert(COSEAlgorithmIdentifier.RS256, (cert, key))),
         )
 
         val result = verifier.verifyAttestationSignature(
