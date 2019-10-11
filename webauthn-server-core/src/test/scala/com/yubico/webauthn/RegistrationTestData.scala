@@ -56,6 +56,8 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import org.bouncycastle.asn1.x500.X500Name
 
 import scala.collection.JavaConverters._
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 
@@ -96,9 +98,13 @@ object RegistrationTestDataGenerator extends App {
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationWithWrongAlgValue
     ).zipWithIndex } {
-      testData.regenerateFull() foreach { newTestData =>
-        println(i)
-        printTestDataCode(newTestData)
+      testData.regenerateFull() match {
+        case Success(newTestData) =>
+          println(i)
+          printTestDataCode(newTestData)
+        case Failure(e) =>
+          println("Failed to regenerate")
+          e.printStackTrace()
       }
     }
   }
