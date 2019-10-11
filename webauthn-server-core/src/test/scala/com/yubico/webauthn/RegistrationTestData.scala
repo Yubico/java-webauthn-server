@@ -51,25 +51,32 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.TestAuthenticator.AttestationSigner
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import org.bouncycastle.asn1.x500.X500Name
 
-import scala.annotation.meta.field
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 
 object RegistrationTestDataGenerator extends App {
   regenerateTestData()
 
   def printTestDataCode(
-    credential: PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs],
-    keypair: KeyPair,
+    testData: RegistrationTestData,
   ): Unit = {
-    println(s"""attestationObject = ByteArray.fromHex("${credential.getResponse.getAttestationObject.getHex}"),
-               |clientDataJson = \"\"\"${new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")}\"\"\",
-               |privateKey = Some(ByteArray.fromHex("${new ByteArray(keypair.getPrivate.getEncoded).getHex}")),
-               |
-               |
+    println(s"""attestationObject = ByteArray.fromHex("${testData.attestationObject.getHex}"),
+               |clientDataJson = \"\"\"${testData.clientDataJson}\"\"\",
+               |privateKey = Some(ByteArray.fromHex("${testData.privateKey.get.getHex}")),
                """.stripMargin)
+
+    testData.assertion foreach { assertion =>
+      println(s"""|assertion = Some(AssertionTestData(
+                  |  request = JacksonCodecs.json().readValue(\"\"\"${JacksonCodecs.json().writeValueAsString(assertion.request)}\"\"\", classOf[AssertionRequest]),
+                  |  response = PublicKeyCredential.parseAssertionResponseJson(\"\"\"${JacksonCodecs.json().writeValueAsString(assertion.response)}\"\"\")
+                  |)),
+                  """.stripMargin)
+    }
   }
 
   def regenerateTestData(): Unit = {
@@ -89,9 +96,10 @@ object RegistrationTestDataGenerator extends App {
       td.Packed.SelfAttestation,
       td.Packed.SelfAttestationWithWrongAlgValue
     ).zipWithIndex } {
-      val (cred, keypair) = testData.regenerate()
-      println(i)
-      printTestDataCode(cred, keypair)
+      testData.regenerateFull() foreach { newTestData =>
+        println(i)
+        printTestDataCode(newTestData)
+      }
     }
   }
 }
@@ -227,10 +235,12 @@ object RegistrationTestData {
 
 case class RegistrationTestData(
   alg: COSEAlgorithmIdentifier,
+  assertion: Option[AssertionTestData] = None,
   attestationObject: ByteArray,
   clientDataJson: String,
   authenticatorSelection: Option[AuthenticatorSelectionCriteria] = None,
   clientExtensionResults: ClientRegistrationExtensionOutputs = ClientRegistrationExtensionOutputs.builder().build(),
+  privateKey: Option[ByteArray] = None,
   origin: Option[String] = None,
   overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
   requestedExtensions: RegistrationExtensionInputs = RegistrationExtensionInputs.builder().build(),
@@ -239,7 +249,18 @@ case class RegistrationTestData(
 ) {
   validate()
 
-  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) = null
+  def regenerate(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) = ???
+  def regenerateFull(): Try[RegistrationTestData] = Try({
+    val (credential, keypair) = regenerate()
+    val newValue = copy(
+      attestationObject = credential.getResponse.getAttestationObject,
+      clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, StandardCharsets.UTF_8),
+      privateKey = Some(new ByteArray(keypair.getPrivate.getEncoded)),
+    )
+    newValue.copy(
+      assertion = newValue.assertion.map(_.regenerate(newValue))
+    )
+  })
 
   protected def validate() {
     val alg = WebAuthnCodecs.getCoseKeyAlg(response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey).get
@@ -326,4 +347,25 @@ case class RegistrationTestData(
     )
     .clientExtensionResults(clientExtensionResults)
     .build()
+
+  def keypair: Option[KeyPair] = privateKey map { privateKey =>
+    val pubKeyCoseBytes = new AttestationObject(attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+    val pubkey = WebAuthnCodecs.importCosePublicKey(pubKeyCoseBytes)
+    val prikey = WebAuthnTestCodecs.importPrivateKey(privateKey, WebAuthnCodecs.getCoseKeyAlg(pubKeyCoseBytes).get)
+    new KeyPair(pubkey, prikey)
+  }
+}
+
+case class AssertionTestData(
+  request: AssertionRequest,
+  response: PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs],
+) {
+  def regenerate(testData: RegistrationTestData): AssertionTestData = {
+    copy(
+      response = TestAuthenticator.createAssertionFromTestData(
+        testData,
+        request.getPublicKeyCredentialRequestOptions,
+      )
+    )
+  }
 }

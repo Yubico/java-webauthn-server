@@ -55,6 +55,7 @@ import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
@@ -63,6 +64,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -340,6 +342,30 @@ object TestAuthenticator {
 
   def createUnattestedCredential(): (PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs], KeyPair) =
     createCredential(attestationMaker = AttestationMaker.none())
+
+  def createAssertionFromTestData(
+    testData: RegistrationTestData,
+    request: PublicKeyCredentialRequestOptions,
+    origin: String = Defaults.origin,
+    tokenBindingStatus: String = Defaults.TokenBinding.status,
+    tokenBindingId: Option[String] = Defaults.TokenBinding.id,
+    withUserHandle: Boolean = false,
+  ): data.PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs] = {
+    createAssertion(
+      alg = testData.alg,
+      authenticatorExtensions = None,
+      challenge = request.getChallenge,
+      clientData = None,
+      clientExtensions = ClientAssertionExtensionOutputs.builder().build(),
+      credentialId = testData.response.getId,
+      credentialKey = testData.keypair.get,
+      origin = origin,
+      rpId = testData.rpId.getId,
+      tokenBindingStatus = tokenBindingStatus,
+      tokenBindingId = tokenBindingId,
+      userHandle = if (withUserHandle) Some(testData.userId.getId) else None,
+    )
+  }
 
   def createAssertion(
     alg: COSEAlgorithmIdentifier = COSEAlgorithmIdentifier.ES256,

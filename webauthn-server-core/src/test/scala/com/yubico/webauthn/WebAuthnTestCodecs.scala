@@ -2,6 +2,9 @@ package com.yubico.webauthn
 
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
+import java.security.KeyFactory
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.PrivateKey
 
 import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ByteArray
@@ -43,6 +46,28 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
+  def importPrivateKey(encodedKey: ByteArray, alg: COSEAlgorithmIdentifier): PrivateKey = alg match {
+    case COSEAlgorithmIdentifier.ES256 =>
+      val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", new BouncyCastleCrypto().getProvider)
+      val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+      keyFactory.generatePrivate(spec)
+
+    case COSEAlgorithmIdentifier.EdDSA =>
+      val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA", new BouncyCastleCrypto().getProvider)
+      val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+      keyFactory.generatePrivate(spec)
+
+    case COSEAlgorithmIdentifier.RS256 =>
+      val keyFactory: KeyFactory = KeyFactory.getInstance("RSA", new BouncyCastleCrypto().getProvider)
+      val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+      keyFactory.generatePrivate(spec)
+  }
+
+  def importEcdsaPrivateKey(encodedKey: ByteArray): PrivateKey = {
+    val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", new BouncyCastleCrypto().getProvider)
+    val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+    keyFactory.generatePrivate(spec)
+  }
 
   def eddsaPublicKeyToCose(key: BCEdDSAPublicKey): ByteArray = {
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
