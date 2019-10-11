@@ -76,7 +76,7 @@ object WebAuthnTestCodecs {
     coseKey.put(3L, COSEAlgorithmIdentifier.EdDSA.getId)
     coseKey.put(-1L, 6L) // crv: Ed25519
 
-    coseKey.put(-2L, key.getEncoded)
+    coseKey.put(-2L, key.getEncoded.takeRight(32)) // Strip ASN.1 prefix
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
