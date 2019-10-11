@@ -128,6 +128,7 @@ final class WebAuthnCodecs {
             case EdDSA: return "EDDSA";
             case ES256: return "SHA256withECDSA";
             case RS256: return "SHA256withRSA";
+            case RS1: return "SHA1withRSA";
             default: throw new IllegalArgumentException("Unknown algorithm: " + alg);
         }
     }
