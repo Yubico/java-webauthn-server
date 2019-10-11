@@ -45,7 +45,6 @@ import java.security.spec.ECPublicKeySpec
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
-import java.util.Base64
 import java.util.Date
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -726,13 +725,6 @@ object TestAuthenticator {
 
     (cert, key)
   }
-
-  def toPem(cert: X509Certificate): String = (
-    "-----BEGIN CERTIFICATE-----\n"
-    + Base64.getMimeEncoder(64, System.getProperty("line.separator").getBytes("UTF-8"))
-        .encodeToString(cert.getEncoded)
-    + "\n-----END CERTIFICATE-----\n"
-  )
 
   def coseAlgorithmOfJavaKey(key: PrivateKey): COSEAlgorithmIdentifier =
     Try(COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)) getOrElse
