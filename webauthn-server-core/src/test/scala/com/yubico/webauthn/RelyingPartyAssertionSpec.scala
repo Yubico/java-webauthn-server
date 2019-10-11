@@ -1494,6 +1494,32 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       result.getCredentialId should equal (credId)
     }
 
+    it("a generated Ed25519 key.") {
+      val registrationTestData = RegistrationTestData.Packed.BasicAttestationEdDsa
+      val testData = registrationTestData.assertion.get
+
+      val rp = RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("localhost").name("Test RP").build())
+        .credentialRepository(credRepoWithUser(registrationTestData.userId, RegisteredCredential.builder()
+          .credentialId(registrationTestData.response.getId)
+          .userHandle(registrationTestData.userId.getId)
+          .publicKeyCose(registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
+          .signatureCount(0)
+          .build()))
+        .build()
+
+      val result = rp.finishAssertion(FinishAssertionOptions.builder()
+        .request(testData.request)
+        .response(testData.response)
+        .build()
+      )
+
+      result.isSuccess should be (true)
+      result.getUserHandle should equal (registrationTestData.userId.getId)
+      result.getCredentialId should equal (registrationTestData.response.getId)
+      result.getCredentialId should equal (testData.response.getId)
+    }
+
     describe("an RS1 key") {
       def test(registrationTestData: RegistrationTestData): Unit = {
         val testData = registrationTestData.assertion.get
