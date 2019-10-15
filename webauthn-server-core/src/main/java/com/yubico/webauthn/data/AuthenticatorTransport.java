@@ -28,6 +28,9 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
+import java.util.stream.Stream;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -50,6 +53,7 @@ import lombok.Value;
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AuthenticatorTransport implements Comparable<AuthenticatorTransport>, JsonStringSerializable {
 
     @NonNull
@@ -84,13 +88,25 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
     }
 
     /**
+     * @return If <code>id</code> is the same as that of any of {@link #USB}, {@link #NFC}, {@link #BLE} or {@link
+     * #INTERNAL}, returns that constant instance. Otherwise returns a new instance containing <code>id</code>.
+     * @see #valueOf(String)
+     */
+    public static AuthenticatorTransport of(@NonNull String id) {
+        return Stream.of(values())
+            .filter(v -> v.getId().equals(id))
+            .findAny()
+            .orElseGet(() -> new AuthenticatorTransport(id));
+    }
+
+    /**
      * @return If <code>name</code> equals <code>"USB"</code>, <code>"NFC"</code>, <code>"BLE"</code> or
      * <code>"INTERNAL"</code>, returns the constant by that name.
      * @throws IllegalArgumentException
      *     if <code>name</code> is anything else.
-     * @deprecated Use the constructor {@link #AuthenticatorTransport(String)} instead.
+     *
+     * @see #of(String)
      */
-    @Deprecated
     public static AuthenticatorTransport valueOf(String name) {
         switch (name) {
             case "USB": return USB;

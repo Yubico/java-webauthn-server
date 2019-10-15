@@ -67,7 +67,15 @@ class AuthenticatorTransportSpec extends FunSpec with Matchers with GeneratorDri
 
     it("can contain any value.") {
       forAll { transport: String =>
-        new AuthenticatorTransport(transport).getId should equal (transport)
+        AuthenticatorTransport.of(transport).getId should equal (transport)
+      }
+    }
+
+    it("has an of(id) function which returns the corresponding constant instance if applicable, and a new instance otherwise.") {
+      for { constant <- AuthenticatorTransport.values() } {
+        AuthenticatorTransport.of(constant.getId) should equal (constant)
+        AuthenticatorTransport.of(constant.getId) should be theSameInstanceAs constant
+        AuthenticatorTransport.of(constant.getId.toUpperCase) should not equal constant
       }
     }
   }

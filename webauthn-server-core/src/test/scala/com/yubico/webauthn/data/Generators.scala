@@ -186,7 +186,7 @@ object Generators {
   implicit val arbitraryAuthenticatorTransport: Arbitrary[AuthenticatorTransport] = Arbitrary(
     Gen.oneOf(
       Gen.oneOf(AuthenticatorTransport.values()),
-      arbitrary[String] map (new AuthenticatorTransport(_))
+      arbitrary[String] map AuthenticatorTransport.of
     ))
 
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
