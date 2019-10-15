@@ -4,6 +4,8 @@ Changes:
 
 * `RelyingParty` now makes an immutable copy of the `origins` argument, instead
   of storing a reference to a possibly mutable value.
+* The enum `AuthenticatorTransport` has been replaced by a value class
+  containing methods and value constants equivalent to the previous enum.
 * The return type of `PublicKeyCredentialDescriptor.getTransports()` is now a
   `SortedSet` instead of `Set`. The builder still accepts a plain `Set`.
 
@@ -14,6 +16,9 @@ New features:
   * `allowOriginSubdomain` (default `false`): Allow any subdomain of any origin
     listed in `RelyingParty.origins`
   * See JavaDoc for details and examples.
+* The new `AuthenticatorTransport` can now contain any string value as the
+  transport identifier, as required in the editor's draft of the L2 spec. See:
+  https://github.com/w3c/webauthn/pull/1275
 
 
 == Version 1.4.1 ==
