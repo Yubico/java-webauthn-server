@@ -30,6 +30,7 @@ import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ComparableUtil;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
@@ -65,7 +66,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
      * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
      * credential the caller is referring to.
      */
-    private final Set<AuthenticatorTransport> transports;
+    private final SortedSet<AuthenticatorTransport> transports;
 
     @JsonCreator
     private PublicKeyCredentialDescriptor(
@@ -136,7 +137,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         }
     }
 
-    public Optional<Set<AuthenticatorTransport>> getTransports() {
+    public Optional<SortedSet<AuthenticatorTransport>> getTransports() {
         return Optional.ofNullable(transports);
     }
 

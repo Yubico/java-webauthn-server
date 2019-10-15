@@ -4,6 +4,8 @@ Changes:
 
 * `RelyingParty` now makes an immutable copy of the `origins` argument, instead
   of storing a reference to a possibly mutable value.
+* The return type of `PublicKeyCredentialDescriptor.getTransports()` is now a
+  `SortedSet` instead of `Set`. The builder still accepts a plain `Set`.
 
 New features:
 
