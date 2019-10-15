@@ -27,7 +27,7 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
-import com.yubico.internal.util.EnumUtil;
+import com.yubico.internal.util.ComparableUtil;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -94,7 +94,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         } else if (getTransports().isPresent() && !other.getTransports().isPresent()) {
             return 1;
         } else if (getTransports().isPresent() && other.getTransports().isPresent()) {
-            int transportsComparison = EnumUtil.compareComparableSets(getTransports().get(), other.getTransports().get());
+            int transportsComparison = ComparableUtil.compareComparableSets(getTransports().get(), other.getTransports().get());
             if (transportsComparison != 0) {
                 return transportsComparison;
             }

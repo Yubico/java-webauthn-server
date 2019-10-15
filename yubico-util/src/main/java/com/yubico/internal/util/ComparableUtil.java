@@ -28,7 +28,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 
-public class EnumUtil {
+public class ComparableUtil {
 
     public static <T extends Comparable<T>> int compareComparableSets(Set<T> a, Set<T> b) {
         if (a.size() == b.size()) {
