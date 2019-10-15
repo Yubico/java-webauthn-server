@@ -56,7 +56,10 @@ class AuthenticatorTransportSpec extends FunSpec with Matchers with GeneratorDri
     }
 
     it("has a valueOf(name) function mimicking that of an enum type.") {
-      AuthenticatorTransport.valueOf("USB") should equal (AuthenticatorTransport.USB)
+      AuthenticatorTransport.valueOf("USB") should be theSameInstanceAs AuthenticatorTransport.USB
+      AuthenticatorTransport.valueOf("NFC") should be theSameInstanceAs AuthenticatorTransport.NFC
+      AuthenticatorTransport.valueOf("BLE") should be theSameInstanceAs AuthenticatorTransport.BLE
+      AuthenticatorTransport.valueOf("INTERNAL") should be theSameInstanceAs AuthenticatorTransport.INTERNAL
       an[IllegalArgumentException] should be thrownBy {
         AuthenticatorTransport.valueOf("foo")
       }

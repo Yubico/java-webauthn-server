@@ -93,11 +93,10 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
     @Deprecated
     public static AuthenticatorTransport valueOf(String name) {
         switch (name) {
-            case "USB":
-            case "NFC":
-            case "BLE":
-            case "INTERNAL":
-                return new AuthenticatorTransport(name.toLowerCase());
+            case "USB": return USB;
+            case "NFC": return NFC;
+            case "BLE": return BLE;
+            case "INTERNAL": return INTERNAL;
         default:
             throw new IllegalArgumentException("No enum constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
         }
