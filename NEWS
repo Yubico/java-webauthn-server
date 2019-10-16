@@ -12,6 +12,12 @@ New features:
   * `allowOriginSubdomain` (default `false`): Allow any subdomain of any origin
     listed in `RelyingParty.origins`
   * See JavaDoc for details and examples.
+* Added support for RS1 credentials. Registration of RS1 credentials is not
+  enabled by default, but can be enabled by setting
+  `RelyingParty.preferredPubKeyCredParams` to a list containing
+  `PublicKeyCredentialParameters.RS1`.
+  * New constant `PublicKeyCredentialParameters.RS1`
+  * New constant `COSEAlgorithmIdentifier.RS1`
 
 
 == Version 1.4.1 ==
