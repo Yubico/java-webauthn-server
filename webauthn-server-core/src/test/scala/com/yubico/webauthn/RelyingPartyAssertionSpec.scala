@@ -119,7 +119,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     else
       ???
 
-  private def getPublicKeyBytes(credentialKey: KeyPair): ByteArray = WebAuthnCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey])
+  private def getPublicKeyBytes(credentialKey: KeyPair): ByteArray = WebAuthnTestCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey])
 
   def finishAssertion(
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
