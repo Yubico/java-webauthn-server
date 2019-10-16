@@ -27,7 +27,10 @@ package com.yubico.webauthn.meta;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
+import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 /**
  * A representation of Web Authentication specification document statuses.
@@ -61,6 +64,10 @@ public enum DocumentStatus implements JsonStringSerializable {
     RECOMMENDATION("recommendation");
 
     private final String id;
+
+    static Optional<DocumentStatus> fromString(@NonNull String id) {
+        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+    }
 
     /**
      * Used by JSON serializer.

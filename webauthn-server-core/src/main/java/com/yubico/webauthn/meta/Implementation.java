@@ -42,6 +42,7 @@ public class Implementation {
     /**
      * The version number of this release of the library.
      */
+    @NonNull
     private final String version;
 
     /**
@@ -50,8 +51,10 @@ public class Implementation {
     @NonNull
     private final URL sourceCodeUrl;
 
-    public Optional<String> getVersion() {
-        return Optional.ofNullable(version);
-    }
+    /**
+     * The commit ID of the source code the library was built from, if known.
+     */
+    @NonNull
+    private final String gitCommit;
 
 }
