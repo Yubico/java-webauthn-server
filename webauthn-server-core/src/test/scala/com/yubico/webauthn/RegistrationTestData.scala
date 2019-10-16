@@ -114,7 +114,7 @@ object RegistrationTestDataGenerator extends App {
 object RegistrationTestData {
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
-  def validExamples = List(
+  def defaultSettingsValidExamples = List(
     AndroidSafetynet.RealExample,
     AndroidSafetynet.BasicAttestation,
     FidoU2f.BasicAttestation,
@@ -123,10 +123,8 @@ object RegistrationTestData {
     Packed.BasicAttestation,
     Packed.BasicAttestationEdDsa,
     Packed.BasicAttestationRsa,
-    Packed.BasicAttestationRs1,
     Packed.BasicAttestationRsaReal,
     Packed.SelfAttestation,
-    Packed.SelfAttestationRs1,
   )
 
   object AndroidKey {

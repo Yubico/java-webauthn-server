@@ -1977,7 +1977,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         describe("accept all test examples in the validExamples list.") {
-          RegistrationTestData.validExamples.zipWithIndex.foreach { case (testData, i) =>
+          RegistrationTestData.defaultSettingsValidExamples.zipWithIndex.foreach { case (testData, i) =>
             it(s"Succeeds for example index ${i}.") {
               val rp = {
                 val builder = RelyingParty.builder()
