@@ -93,7 +93,7 @@ final class WebAuthnCodecs {
         return (ECPublicKey) new OneKey(cose).AsPublicKey();
     }
 
-    private static PublicKey importCoseEdDsaPublicKey(CBORObject cose) {
+    private static PublicKey importCoseEdDsaPublicKey(CBORObject cose) throws InvalidKeySpecException, NoSuchAlgorithmException {
         final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
         switch (curveId) {
             case 6: return importCoseEd25519PublicKey(cose);
@@ -102,19 +102,15 @@ final class WebAuthnCodecs {
         }
     }
 
-    private static PublicKey importCoseEd25519PublicKey(CBORObject cose) {
+    private static PublicKey importCoseEd25519PublicKey(CBORObject cose) throws InvalidKeySpecException, NoSuchAlgorithmException {
         final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
         final ByteArray x509Key = new ByteArray(new byte[]{0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size()) })
             .concat(ED25519_CURVE_OID)
             .concat(new ByteArray(new byte[]{ 0x03, (byte) (rawKey.size() + 1), 0}))
             .concat(rawKey);
 
-        try {
-            KeyFactory kFact = KeyFactory.getInstance("EdDSA", new BouncyCastleProvider());
-            return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        KeyFactory kFact = KeyFactory.getInstance("EdDSA", new BouncyCastleProvider());
+        return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
     }
 
     static Optional<COSEAlgorithmIdentifier> getCoseKeyAlg(ByteArray key) {
