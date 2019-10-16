@@ -47,6 +47,7 @@ import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -56,6 +57,8 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.exception.RegistrationFailedException
 import com.yubico.webauthn.test.Util.toStepWithUtilities
+import com.yubico.webauthn.TestAuthenticator.AttestationCert
+import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -912,11 +915,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           describe("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
             val testAuthenticator = TestAuthenticator
 
-            def checkRejected(keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+            def checkRejected(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, Some(keypair)))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
+                  alg = COSEAlgorithmIdentifier.ES256,
                   attestationObject = credential.getResponse.getAttestationObject,
                   clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")
                 ),
@@ -939,11 +943,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               standaloneVerification.failed.get shouldBe an [IllegalArgumentException]
             }
 
-            def checkAccepted(keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+            def checkAccepted(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, Some(keypair)))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
+                  alg = COSEAlgorithmIdentifier.ES256,
                   attestationObject = credential.getResponse.getAttestationObject,
                   clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")
                 ),
@@ -965,19 +970,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             it("An RSA attestation certificate is rejected.") {
-              checkRejected(testAuthenticator.generateRsaKeypair())
+              checkRejected(COSEAlgorithmIdentifier.RS256, testAuthenticator.generateRsaKeypair())
             }
 
             it("A secp256r1 attestation certificate is accepted.") {
-              checkAccepted(testAuthenticator.generateEcKeypair(curve = "secp256r1"))
+              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256r1"))
             }
 
             it("A secp256k1 attestation certificate is rejected.") {
-              checkRejected(testAuthenticator.generateEcKeypair(curve = "secp256k1"))
+              checkRejected(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256k1"))
             }
 
             it("A P-256 attestation certificate is accepted.") {
-              checkAccepted(testAuthenticator.generateEcKeypair(curve = "P-256"))
+              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "P-256"))
             }
           }
         }
@@ -1099,12 +1104,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               describe("2. Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate Requirements.") {
                 it("Fails for an attestation signature with an invalid country code.") {
                   val authenticator = TestAuthenticator
+                  val alg = COSEAlgorithmIdentifier.ES256
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
+                    alg = alg,
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val ((credential, _), _) = authenticator.createBasicAttestedCredential(
-                    attestationCertAndKey = Some(badCert, key),
-                    attestationStatementFormat = "packed"
+                  val (credential, _) = authenticator.createBasicAttestedCredential(
+                    attestationMaker = AttestationMaker.packed(new AttestationCert(alg, (badCert, key))),
                   )
                   val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON)))
 
@@ -1173,7 +1179,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.BASIC)
                 step.attestationTrustPath.asScala should not be empty
-                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert))
+                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert, testData.attestationCaCert.get))
               }
             }
 
@@ -1927,26 +1933,27 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
         }
 
-        it("accept all test examples in the validExamples list.") {
-          RegistrationTestData.validExamples.foreach { testData =>
-            val rp = {
-              val builder = RelyingParty.builder()
-                .identity(testData.rpId)
-                .credentialRepository(emptyCredentialRepository)
-              testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
-              builder.build()
+        describe("accept all test examples in the validExamples list.") {
+          RegistrationTestData.validExamples.zipWithIndex.foreach { case (testData, i) =>
+            it(s"Succeeds for example index ${i}.") {
+              val rp = {
+                val builder = RelyingParty.builder()
+                  .identity(testData.rpId)
+                  .credentialRepository(emptyCredentialRepository)
+                testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
+                builder.build()
+              }
+
+              val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+                .request(testData.request)
+                .response(testData.response)
+                .build()
+              )
+
+              result.getKeyId.getId should equal (testData.response.getId)
             }
-
-            val result = rp.finishRegistration(FinishRegistrationOptions.builder()
-              .request(testData.request)
-              .response(testData.response)
-              .build()
-            )
-
-            result.getKeyId.getId should equal (testData.response.getId)
           }
         }
-
       }
 
       describe("RelyingParty supports registering") {

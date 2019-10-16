@@ -27,9 +27,10 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
-import com.yubico.internal.util.EnumUtil;
+import com.yubico.internal.util.ComparableUtil;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import lombok.Builder;
 import lombok.NonNull;
@@ -65,7 +66,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
      * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
      * credential the caller is referring to.
      */
-    private final Set<AuthenticatorTransport> transports;
+    private final SortedSet<AuthenticatorTransport> transports;
 
     @JsonCreator
     private PublicKeyCredentialDescriptor(
@@ -94,7 +95,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         } else if (getTransports().isPresent() && !other.getTransports().isPresent()) {
             return 1;
         } else if (getTransports().isPresent() && other.getTransports().isPresent()) {
-            int transportsComparison = EnumUtil.compareSets(getTransports().get(), other.getTransports().get(), AuthenticatorTransport.class);
+            int transportsComparison = ComparableUtil.compareComparableSets(getTransports().get(), other.getTransports().get());
             if (transportsComparison != 0) {
                 return transportsComparison;
             }
@@ -136,7 +137,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
         }
     }
 
-    public Optional<Set<AuthenticatorTransport>> getTransports() {
+    public Optional<SortedSet<AuthenticatorTransport>> getTransports() {
         return Optional.ofNullable(transports);
     }
 
