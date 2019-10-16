@@ -58,6 +58,7 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -1990,6 +1991,46 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               )
 
               result.getKeyId.getId should equal (testData.response.getId)
+            }
+          }
+        }
+
+        describe("generate pubKeyCredParams which") {
+          val rp = RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test RP").build())
+            .credentialRepository(emptyCredentialRepository)
+            .build()
+          val pkcco = rp.startRegistration(StartRegistrationOptions.builder()
+            .user(UserIdentity.builder()
+              .name("foo")
+              .displayName("Foo")
+              .id(ByteArray.fromHex("aabbccdd"))
+              .build())
+            .build())
+
+          val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+          describe("include") {
+            it("ES256.") {
+              pubKeyCredParams should contain (PublicKeyCredentialParameters.ES256)
+              pubKeyCredParams map (_.getAlg) should contain (COSEAlgorithmIdentifier.ES256)
+            }
+
+            it("EdDSA.") {
+              pubKeyCredParams should contain (PublicKeyCredentialParameters.EdDSA)
+              pubKeyCredParams map (_.getAlg) should contain (COSEAlgorithmIdentifier.EdDSA)
+            }
+
+            it("RS256.") {
+              pubKeyCredParams should contain (PublicKeyCredentialParameters.RS256)
+              pubKeyCredParams map (_.getAlg) should contain (COSEAlgorithmIdentifier.RS256)
+            }
+          }
+
+          describe("do not include") {
+            it("RS1.") {
+              pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
+              pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
             }
           }
         }
