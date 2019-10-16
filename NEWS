@@ -22,6 +22,12 @@ New features:
 * The new `AuthenticatorTransport` can now contain any string value as the
   transport identifier, as required in the editor's draft of the L2 spec. See:
   https://github.com/w3c/webauthn/pull/1275
+* Added support for RS1 credentials. Registration of RS1 credentials is not
+  enabled by default, but can be enabled by setting
+  `RelyingParty.preferredPubKeyCredParams` to a list containing
+  `PublicKeyCredentialParameters.RS1`.
+  * New constant `PublicKeyCredentialParameters.RS1`
+  * New constant `COSEAlgorithmIdentifier.RS1`
 
 
 == Version 1.4.1 ==
