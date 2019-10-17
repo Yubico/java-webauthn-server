@@ -7,12 +7,12 @@ description = 'Yubico internal Scala utilities'
 dependencies {
 
   implementation(
-    'org.scala-lang:scala-library:2.12.8',
-    'org.scalacheck:scalacheck_2.12:1.14.0',
+    addVersion('org.scala-lang:scala-library'),
+    addVersion('org.scalacheck:scalacheck_2.12'),
   )
 
   testImplementation(
-    'org.scalatest:scalatest_2.12:3.0.4',
+    addVersion('org.scalatest:scalatest_2.12'),
   )
 }
 
