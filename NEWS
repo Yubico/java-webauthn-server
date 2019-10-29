@@ -1,9 +1,19 @@
 == Version 1.5.1 (unreleased) ==
 
+`webauthn-server-core`:
+
 Bug fixes:
 
 - Fixed bug introduced in 1.4.0, which caused
   `RegistrationResult.attestationMetadata` to always be empty.
+
+
+`webauthn-server-attestation`:
+
+- Fixed transports field of YubiKey NEO/NEO-n in `metadata.json`.
+- Added YubiKey 5Ci to `metadata.json`.
+- Most `deviceUrl` fields in `metadata.json` changed to point to stable
+  addresses in Yubico knowledge base instead of dead redirects in store.
 
 
 == Version 1.5.0 ==

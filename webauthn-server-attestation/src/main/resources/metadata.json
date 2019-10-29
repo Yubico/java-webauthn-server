@@ -1,6 +1,6 @@
 {
   "identifier": "2fb54029-7613-4f1d-94f1-fb876c14a6fe",
-  "version": 5,
+  "version": 11,
   "vendorInfo": {
     "url": "https://yubico.com",
     "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
@@ -14,7 +14,7 @@
       "deviceId": "1.3.6.1.4.1.41482.1.1",
       "displayName": "Security Key NFC by Yubico",
       "transports": 12,
-      "deviceUrl": "https://www.yubico.com/product/security-key-nfc-by-yubico/",
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000019469-security-key-nfc",
       "imageUrl": "https://developers.yubico.com/U2F/Images/SKY-NFC.png",
       "selectors": [
         {
@@ -34,7 +34,7 @@
       "deviceId": "1.3.6.1.4.1.41482.1.1",
       "displayName": "Security Key by Yubico",
       "transports": 4,
-      "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/fido-u2f-security-key/",
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000006900-security-key-by-yubico",
       "imageUrl": "https://developers.yubico.com/U2F/Images/SKY.png",
       "selectors": [
         {
@@ -55,8 +55,8 @@
     {
       "deviceId": "1.3.6.1.4.1.41482.1.2",
       "displayName": "YubiKey NEO/NEO-n",
-      "transports": 4,
-      "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/yubikey-neo/",
+      "transports": 12,
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000006494-yubikey-neo",
       "imageUrl": "https://developers.yubico.com/U2F/Images/NEO.png",
       "selectors": [
         {
@@ -100,7 +100,7 @@
       "deviceId": "1.3.6.1.4.1.41482.1.4",
       "displayName": "YubiKey Edge",
       "transports": 4,
-      "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/",
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000006492-yubikey-edge",
       "imageUrl": "https://developers.yubico.com/U2F/Images/YKE.png",
       "selectors": [
         {
@@ -116,7 +116,7 @@
       "deviceId": "1.3.6.1.4.1.41482.1.5",
       "displayName": "YubiKey 4/YubiKey 4 Nano",
       "transports": 4,
-      "deviceUrl": "https://www.yubico.com/products/yubikey-hardware/yubikey4/",
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000006486-yubikey-4",
       "imageUrl": "https://developers.yubico.com/U2F/Images/YK4.png",
       "selectors": [
         {
@@ -132,7 +132,7 @@
       "deviceId": "1.3.6.1.4.1.41482.1.7",
       "displayName": "YubiKey 5 NFC",
       "transports": 12,
-      "deviceUrl": "https://www.yubico.com/products/yubikey-5-overview/",
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000014174--yubikey-5-nfc",
       "imageUrl": "https://developers.yubico.com/U2F/Images/YK5.png",
       "selectors": [
         {
@@ -151,7 +151,7 @@
       "deviceId": "1.3.6.1.4.1.41482.1.7",
       "displayName": "YubiKey 5 Series security key",
       "transports": 4,
-      "deviceUrl": "https://www.yubico.com/products/yubikey-5-overview/",
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000014180-yubikey-5c",
       "imageUrl": "https://developers.yubico.com/U2F/Images/YK5-series.png",
       "selectors": [
         {
@@ -161,6 +161,25 @@
             "value": {
               "type": "hex",
               "value": "cb69481e8ff7403993ec0a2729a154a8"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "deviceId": "1.3.6.1.4.1.41482.1.7",
+      "displayName": "YubiKey 5Ci",
+      "transports": 20,
+      "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000027140-yubikey-5ci",
+      "imageUrl": "https://developers.yubico.com/U2F/Images/YK5Ci.png",
+      "selectors": [
+        {
+          "type": "x509Extension",
+          "parameters": {
+            "key": "1.3.6.1.4.1.45724.1.1.4",
+            "value": {
+              "type": "hex",
+              "value": "c5ef55ffad9a4b9fb580adebafe026d0"
             }
           }
         }
