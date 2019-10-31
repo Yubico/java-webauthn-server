@@ -112,9 +112,8 @@ public class RegistrationResult {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
      */
-    @Builder.Default
     @Builder.ObtainVia(method = "getAttestationMetadata")
-    private final Attestation attestationMetadata = null;
+    private final Attestation attestationMetadata;
 
     @JsonCreator
     private RegistrationResult(
