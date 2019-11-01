@@ -103,7 +103,7 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
 
         registrationResult.getKeyId.getId should equal (testData.attestation.credential.getId)
         registrationResult.isAttestationTrusted should be (false)
-        registrationResult.getAttestationMetadata shouldBe empty
+        registrationResult.getAttestationMetadata.isPresent should be (false)
 
         val assertionRp = newRp(testData, credentialRepoWithUser(testData, registrationResult))
 

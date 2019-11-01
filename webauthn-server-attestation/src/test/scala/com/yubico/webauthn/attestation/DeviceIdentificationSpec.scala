@@ -88,8 +88,8 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           .build());
 
         result.isAttestationTrusted should be (true)
-        result.getAttestationMetadata should not be empty
-        result.getAttestationMetadata.get.getDeviceProperties should not be empty
+        result.getAttestationMetadata.isPresent should be (true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be (true)
         result.getAttestationMetadata.get.getDeviceProperties.get().get("displayName") should equal (expectedName)
       }
 
@@ -122,8 +122,8 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
       def check(expectedName: String, testData: RealExamples.Example) {
         val cert = CertificateParser.parseDer(testData.attestationCert.getBytes)
         val resolved = StandardMetadataService.createDefaultAttestationResolver().resolve(cert)
-        resolved should not be empty
-        resolved.get.getDeviceProperties should not be empty
+        resolved.isPresent should be (true)
+        resolved.get.getDeviceProperties.isPresent should be (true)
         resolved.get.getDeviceProperties.get.get("displayName") should equal (expectedName)
       }
 
