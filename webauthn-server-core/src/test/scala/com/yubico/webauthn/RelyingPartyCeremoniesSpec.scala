@@ -24,14 +24,11 @@
 
 package com.yubico.webauthn
 
-import java.util.Optional
-
-import com.yubico.internal.util.scala.JavaConverters._
-import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
@@ -50,46 +47,11 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
       .credentialRepository(credentialRepo)
       .build()
 
-  private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
-    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
-    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
-  }
-
-  private def credentialRepoWithUser(testData: RealExamples.Example, reg: RegistrationResult): CredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
-      if (username == testData.user.getName)
-        Set(PublicKeyCredentialDescriptor.builder().id(reg.getKeyId.getId).build()).asJava
-      else Set.empty.asJava
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] =
-      if (username == testData.user.getName)
-        Some(testData.user.getId).asJava
-      else None.asJava
-    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
-      if (userHandle == testData.user.getId)
-        Some(testData.user.getName).asJava
-      else None.asJava
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
-      if (credentialId == reg.getKeyId.getId && userHandle == testData.user.getId)
-        Some(RegisteredCredential.builder()
-          .credentialId(reg.getKeyId.getId)
-          .userHandle(testData.user.getId)
-          .publicKeyCose(reg.getPublicKeyCose)
-          .build()).asJava
-      else None.asJava
-    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
-      if (credentialId == reg.getKeyId.getId)
-        Set(lookup(credentialId, testData.user.getId).get()).asJava
-      else Set.empty.asJava
-  }
-
   describe("The default RelyingParty settings") {
 
     describe("can register and then authenticate") {
       def check(testData: RealExamples.Example) {
-        val registrationRp = newRp(testData, emptyCredentialRepository)
+        val registrationRp = newRp(testData, Helpers.CredentialRepository.empty)
 
         val registrationResult = registrationRp.finishRegistration(FinishRegistrationOptions.builder()
           .request(PublicKeyCredentialCreationOptions.builder()
@@ -105,7 +67,13 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
         registrationResult.isAttestationTrusted should be (false)
         registrationResult.getAttestationMetadata.isPresent should be (false)
 
-        val assertionRp = newRp(testData, credentialRepoWithUser(testData, registrationResult))
+        val assertionRp = newRp(
+          testData,
+          Helpers.CredentialRepository.withUser(
+            testData.user,
+            Helpers.toRegisteredCredential(testData.user, registrationResult)
+          )
+        )
 
         val assertionResult = assertionRp.finishAssertion(FinishAssertionOptions.builder()
           .request(AssertionRequest.builder()

@@ -25,22 +25,17 @@
 package com.yubico.webauthn.attestation
 
 import java.util.Collections
-import java.util.Optional
 
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
 import com.yubico.webauthn.test.RealExamples
-import com.yubico.webauthn.CredentialRepository
-import com.yubico.webauthn.RelyingParty
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.FinishRegistrationOptions
-import com.yubico.webauthn.RegisteredCredential
+import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.test.Helpers
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -59,21 +54,13 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
     )
   }
 
-  private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
-    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
-    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
-  }
-
   describe("A RelyingParty with the default StandardMetadataService") {
 
     describe("correctly identifies") {
       def check(expectedName: String, testData: RealExamples.Example) {
         val rp = RelyingParty.builder()
           .identity(testData.rp)
-          .credentialRepository(emptyCredentialRepository)
+          .credentialRepository(Helpers.CredentialRepository.empty)
           .metadataService(new StandardMetadataService())
           .build()
 
