@@ -92,6 +92,9 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
       it("a YubiKey 5 Nano.") {
         check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano)
       }
+      it("a YubiKey 5Ci.") {
+        check("YubiKey 5Ci", RealExamples.YubiKey5Ci)
+      }
       it("a Security Key by Yubico.") {
         check("Security Key by Yubico", RealExamples.SecurityKey)
       }
@@ -125,6 +128,9 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
       }
       it("a YubiKey 5 Nano.") {
         check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano)
+      }
+      it("a YubiKey 5Ci.") {
+        check("YubiKey 5Ci", RealExamples.YubiKey5Ci)
       }
       it("a Security Key by Yubico.") {
         check("Security Key by Yubico", RealExamples.SecurityKey)

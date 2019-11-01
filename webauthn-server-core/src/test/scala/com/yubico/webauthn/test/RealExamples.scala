@@ -123,6 +123,21 @@ object RealExamples {
     )
   )
 
+  val YubiKey5Ci = Example(
+    RelyingPartyIdentity.builder().id("example.com").name("Example RP").build(),
+    UserIdentity.builder().name("test@example.org").displayName("A. User").id(ByteArray.fromBase64Url("dXNlcl9pZA==")).build(),
+    AttestationExample(
+      """{"type": "webauthn.create", "clientExtensions": {}, "challenge": "Y2hhbGxlbmdl", "origin": "https://example.com"}""",
+      ByteArray.fromBase64Url("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEYwRAIgXOZEuIaBrKT5VYJu9_D410HgJRm1SenwlKiXtcQxe0ICIG1_ycPCKHPjEsgRFVr4WdK5IY8K7aCyAc03c1-wnBJCY3g1Y4FZAsEwggK9MIIBpaADAgECAgQr8Xx4MA0GCSqGSIb3DQEBCwUAMC4xLDAqBgNVBAMTI1l1YmljbyBVMkYgUm9vdCBDQSBTZXJpYWwgNDU3MjAwNjMxMCAXDTE0MDgwMTAwMDAwMFoYDzIwNTAwOTA0MDAwMDAwWjBuMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMScwJQYDVQQDDB5ZdWJpY28gVTJGIEVFIFNlcmlhbCA3MzcyNDYzMjgwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAR0wseEI8hxLptI8llYZvxwQK5M3wfXd9WFrwSTme36kjy-tJ-XFvn1WnhsNCUfyPNePehbVnBQOMcLoScZYHmLo2wwajAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuNzATBgsrBgEEAYLlHAIBAQQEAwICJDAhBgsrBgEEAYLlHAEBBAQSBBDF71X_rZpLn7WAreuv4CbQMAwGA1UdEwEB_wQCMAAwDQYJKoZIhvcNAQELBQADggEBAItuk3adeE1u6dkA0nECf8J35Lgm5mw5udSIucstLQU9ZrTVNjwXugnxsT5oVriRN7o1BB-Lz7KJmtDw34kvh_uA11A9Ksf6veIV3hK-ugN7WNok7gn0t6IWOZF1xVr7lyo0XgbV88Kh-_D1biUqc5u49qSvTH-Jx1WrUxeFh1S1CTpmvmYGdzgWE32qLsNeoscPkbtkVSYbB8hwPb7SbV_WbBBLzJEPn79oMJ_e-63B12iLdyu2K_PKuibBsqSVHioe6cnvksZktkDykn-ZedRDpNOyBGo-89eBA9tLIYx_bP8Mg9tCoIP8GZzh2P2joujOF4F0O1xkICNI9MB3-6JoYXV0aERhdGFYxKN5pvbur7mlXjeMEYA04nUeaC-rny0wqxPSElWGzhlHQQAAAATF71X_rZpLn7WAreuv4CbQAEDDAvEvv-vY_dFxV_gwT7mhKUN9M6PatW8FqDSEjXAaJL4EjL5exyo-FIaoqgH4lfmw-19_6ao6j9zPlFGHBmUOpQECAyYgASFYILUgImoYph7H0FqX_aKS3A4Ph1Aki_Edg9YB6oxw7nrIIlgghBKeVu0Z4cV6-Cya1H2ZTeeWdisBlK6QWDM89ne6794=")
+    ),
+    AssertionExample(
+      id = ByteArray.fromBase64Url("wwLxL7_r2P3RcVf4ME-5oSlDfTOj2rVvBag0hI1wGiS-BIy-XscqPhSGqKoB-JX5sPtff-mqOo_cz5RRhwZlDg=="),
+      clientData = """{"type": "webauthn.get", "clientExtensions": {}, "challenge": "Q0hBTExFTkdF", "origin": "https://example.com"}""",
+      authDataBytes = ByteArray.fromBase64Url("o3mm9u6vuaVeN4wRgDTidR5oL6ufLTCrE9ISVYbOGUcBAAAABw=="),
+      sig = ByteArray.fromBase64Url("MEQCIHqWh09siRtXwUCVOnTrWUTfJfe9zv0_-WYd376qUcBqAiBMdsCPp-LpUEhgSbOz8y6hS1YTKFgpN-nIrpYDTxQhiA=="),
+    )
+  )
+
   val SecurityKey = Example(
     RelyingPartyIdentity.builder().id("example.com").name("Example RP").build(),
     UserIdentity.builder().name("test@example.org").displayName("A. User").id(ByteArray.fromBase64Url("dXNlcl9pZA==")).build(),
