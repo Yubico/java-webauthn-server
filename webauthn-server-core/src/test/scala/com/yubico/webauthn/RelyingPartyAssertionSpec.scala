@@ -98,6 +98,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
     // These values are not signed over
     val username: String = "foo-user"
     val userHandle: ByteArray = ByteArray.fromHex("6d8972d9603ce4f3fa5d520ce6d024bf")
+    val user: UserIdentity = UserIdentity.builder().name(username).displayName("Test user").id(userHandle).build()
 
     // These values are defined by the attestationObject and clientDataJson above
     val clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
@@ -406,20 +407,17 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         }
 
         it("Succeeds if the credential ID is known.") {
-          val steps = finishAssertion(credentialRepository = Some(new CredentialRepository {
-            override def lookup(id: ByteArray, uh: ByteArray) = Some(
+          val steps = finishAssertion(
+            credentialRepository = Some(credRepoWithUser(
+              Defaults.user,
               RegisteredCredential.builder()
-                .credentialId(id)
-                .userHandle(uh)
+                .credentialId(Defaults.credentialId)
+                .userHandle(Defaults.userHandle)
                 .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                 .signatureCount(0)
                 .build()
-            ).asJava
-            override def lookupAll(id: ByteArray) = ???
-            override def getCredentialIdsForUsername(username: String) = ???
-            override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
-            override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
-          }))
+            ))
+          )
           val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
           step.validations shouldBe a [Success[_]]
@@ -1146,20 +1144,15 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       describe("17. If the signature counter value authData.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
         describe("If the signature counter value authData.signCount is") {
           def credentialRepository(signatureCount: Long) =
-            new CredentialRepository {
-              override def lookup(id: ByteArray, uh: ByteArray) = Some(
-                RegisteredCredential.builder()
-                  .credentialId(id)
-                  .userHandle(uh)
-                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(signatureCount)
-                  .build()
-              ).asJava
-              override def lookupAll(id: ByteArray) = ???
-              override def getCredentialIdsForUsername(username: String) = ???
-              override def getUserHandleForUsername(username: String): Optional[ByteArray] = getUserHandleIfDefault(username)
-              override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = getUsernameIfDefault(userHandle)
-            }
+            credRepoWithUser(
+              Defaults.user,
+              RegisteredCredential.builder()
+                .credentialId(Defaults.credentialId)
+                .userHandle(Defaults.userHandle)
+                .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
+                .signatureCount(signatureCount)
+                .build()
+            )
 
           describe("zero, then the stored signature counter value must also be zero.") {
             val authenticatorData = new ByteArray(Defaults.authenticatorData.getBytes.updated(33, 0: Byte).updated(34, 0: Byte).updated(35, 0: Byte).updated(36, 0: Byte))
@@ -1311,43 +1304,20 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
         new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){}
       )
 
-      val credRepo = new CredentialRepository {
-        override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
-          if (username == testData.userId.getName)
-            Set(PublicKeyCredentialDescriptor.builder().id(credId).build()).asJava
-          else Set.empty.asJava
-        override def getUserHandleForUsername(username: String): Optional[ByteArray] =
-          if (username == testData.userId.getName)
-            Some(testData.userId.getId).asJava
-          else None.asJava
-        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
-          if (userHandle == testData.userId.getId)
-            Some(testData.userId.getName).asJava
-          else None.asJava
-        override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
-          if (credentialId == credId && userHandle == testData.userId.getId)
-            Some(RegisteredCredential.builder()
-              .credentialId(credId)
-              .userHandle(testData.userId.getId)
-              .publicKeyCose(publicKeyBytes)
-              .build()).asJava
-          else None.asJava
-        override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
-          if (credentialId == credId)
-            Set(RegisteredCredential.builder()
-              .credentialId(credId)
-              .userHandle(testData.userId.getId)
-              .publicKeyCose(publicKeyBytes)
-              .build()).asJava
-          else Set.empty.asJava
-      }
+      val credRepo = credRepoWithUser(
+        testData.userId,
+        RegisteredCredential.builder()
+          .credentialId(testData.response.getId)
+          .userHandle(testData.userId.getId)
+          .publicKeyCose(publicKeyBytes)
+          .build()
+      )
 
       val rp = RelyingParty.builder()
         .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
         .credentialRepository(credRepo)
         .origins(Set("https://demo3.yubico.test:8443").asJava)
         .build()
-
 
       val result = rp.finishAssertion(FinishAssertionOptions.builder()
         .request(request)
@@ -1443,36 +1413,14 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with GeneratorDriv
       val credId: ByteArray = credData.getCredentialId
       val publicKeyBytes: ByteArray = credData.getCredentialPublicKey
 
-      val credRepo = new CredentialRepository {
-        override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
-          if (username == registrationRequest.getUser.getName)
-            Set(PublicKeyCredentialDescriptor.builder().id(credId).build()).asJava
-          else Set.empty.asJava
-        override def getUserHandleForUsername(username: String): Optional[ByteArray] =
-          if (username == registrationRequest.getUser.getName)
-            Some(registrationRequest.getUser.getId).asJava
-          else None.asJava
-        override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
-          if (userHandle == registrationRequest.getUser.getId)
-            Some(registrationRequest.getUser.getName).asJava
-          else None.asJava
-        override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
-          if (credentialId == credId && userHandle == registrationRequest.getUser.getId)
-            Some(RegisteredCredential.builder()
-              .credentialId(credId)
-              .userHandle(registrationRequest.getUser.getId)
-              .publicKeyCose(publicKeyBytes)
-              .build()).asJava
-          else None.asJava
-        override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
-          if (credentialId == credId)
-            Set(RegisteredCredential.builder()
-              .credentialId(credId)
-              .userHandle(registrationRequest.getUser.getId)
-              .publicKeyCose(publicKeyBytes)
-              .build()).asJava
-          else Set.empty.asJava
-      }
+      val credRepo = credRepoWithUser(
+        registrationRequest.getUser,
+        RegisteredCredential.builder()
+          .credentialId(registrationResponse.getId)
+          .userHandle(registrationRequest.getUser.getId)
+          .publicKeyCose(publicKeyBytes)
+          .build()
+      )
 
       val rp = RelyingParty.builder()
         .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
