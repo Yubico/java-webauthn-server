@@ -91,8 +91,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -109,7 +109,7 @@ public class WebAuthnServer {
     private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
     private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
     private final RegistrationStorage userStorage;
-    private final Cache<AssertionRequestWrapper, AuthenticatedAction> authenticatedActions = newCache();
+    private final SessionManager sessions = new SessionManager();
 
 
     private final TrustResolver trustResolver = new CompositeTrustResolver(Arrays.asList(
@@ -203,79 +203,49 @@ public class WebAuthnServer {
 
     public Either<String, RegistrationRequest> startRegistration(
         @NonNull String username,
-        @NonNull String displayName,
+        Optional<String> displayName,
         Optional<String> credentialNickname,
-        boolean requireResidentKey
-    ) {
+        boolean requireResidentKey,
+        Optional<ByteArray> sessionToken
+    ) throws ExecutionException {
         logger.trace("startRegistration username: {}, credentialNickname: {}", username, credentialNickname);
 
-        if (userStorage.getRegistrationsByUsername(username).isEmpty()) {
+        final Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
+        final Optional<UserIdentity> existingUser =
+            registrations.stream().findAny().map(CredentialRegistration::getUserIdentity);
+        final boolean permissionGranted = existingUser
+            .map(userIdentity ->
+                sessions.isSessionForUser(userIdentity.getId(), sessionToken))
+            .orElse(true);
+
+        if (permissionGranted) {
+            final UserIdentity registrationUserId = existingUser.orElseGet(() ->
+                UserIdentity.builder()
+                    .name(username)
+                    .displayName(displayName.get())
+                    .id(generateRandom(32))
+                    .build()
+            );
+
             RegistrationRequest request = new RegistrationRequest(
                 username,
                 credentialNickname,
                 generateRandom(32),
                 rp.startRegistration(
                     StartRegistrationOptions.builder()
-                        .user(UserIdentity.builder()
-                            .name(username)
-                            .displayName(displayName)
-                            .id(generateRandom(32))
-                            .build()
-                        )
+                        .user(registrationUserId)
                         .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
                             .requireResidentKey(requireResidentKey)
                             .build()
                         )
                         .build()
-                )
+                ),
+                Optional.of(sessions.createSession(registrationUserId.getId()))
             );
             registerRequestStorage.put(request.getRequestId(), request);
             return Either.right(request);
         } else {
             return Either.left("The username \"" + username + "\" is already registered.");
-        }
-    }
-
-    public <T> Either<List<String>, AssertionRequestWrapper> startAddCredential(
-        @NonNull String username,
-        Optional<String> credentialNickname,
-        boolean requireResidentKey,
-        Function<RegistrationRequest, Either<List<String>, T>> whenAuthenticated
-    ) {
-        logger.trace("startAddCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
-
-        if (username == null || username.isEmpty()) {
-            return Either.left(Collections.singletonList("username must not be empty."));
-        }
-
-        Collection<CredentialRegistration> registrations = userStorage.getRegistrationsByUsername(username);
-
-        if (registrations.isEmpty()) {
-            return Either.left(Collections.singletonList("The username \"" + username + "\" is not registered."));
-        } else {
-            final UserIdentity existingUser = registrations.stream().findAny().get().getUserIdentity();
-
-            AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
-                RegistrationRequest request = new RegistrationRequest(
-                    username,
-                    credentialNickname,
-                    generateRandom(32),
-                    rp.startRegistration(
-                        StartRegistrationOptions.builder()
-                            .user(existingUser)
-                            .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
-                                .requireResidentKey(requireResidentKey)
-                                .build()
-                            )
-                            .build()
-                    )
-                );
-                registerRequestStorage.put(request.getRequestId(), request);
-
-                return whenAuthenticated.apply(request);
-            };
-
-            return startAuthenticatedAction(Optional.of(username), action);
         }
     }
 
@@ -289,8 +259,10 @@ public class WebAuthnServer {
         Optional<AttestationCertInfo> attestationCert;
         @JsonSerialize(using = AuthDataSerializer.class)
         AuthenticatorData authData;
+        String username;
+        ByteArray sessionToken;
 
-        public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted) {
+        public SuccessfulRegistrationResult(RegistrationRequest request, RegistrationResponse response, CredentialRegistration registration, boolean attestationTrusted, ByteArray sessionToken) {
             this.request = request;
             this.response = response;
             this.registration = registration;
@@ -308,6 +280,8 @@ public class WebAuthnServer {
             })
             .map(AttestationCertInfo::new);
             this.authData = response.getCredential().getResponse().getParsedAuthenticatorData();
+            this.username = request.getUsername();
+            this.sessionToken = sessionToken;
         }
 
     }
@@ -320,6 +294,8 @@ public class WebAuthnServer {
         final CredentialRegistration registration;
         boolean attestationTrusted;
         Optional<AttestationCertInfo> attestationCert;
+        final String username;
+        final ByteArray sessionToken;
     }
 
     @Value
@@ -367,6 +343,31 @@ public class WebAuthnServer {
                         .build()
                 );
 
+                if (userStorage.userExists(request.getUsername())) {
+                    boolean permissionGranted = false;
+
+                    final boolean isValidSession = request.getSessionToken().map(token ->
+                        sessions.isSessionForUser(request.getPublicKeyCredentialCreationOptions().getUser().getId(), token)
+                    ).orElse(false);
+
+                    logger.debug("Session token: {}", request.getSessionToken());
+                    logger.debug("Valid session: {}", isValidSession);
+
+                    if (isValidSession) {
+                        permissionGranted = true;
+                        logger.info("Session token accepted for user {}", request.getPublicKeyCredentialCreationOptions().getUser().getId());
+                    }
+
+                    logger.debug("permissionGranted: {}", permissionGranted);
+
+                    if (!permissionGranted) {
+                        throw new RegistrationFailedException(new IllegalArgumentException(String.format(
+                            "User %s already exists",
+                            request.getUsername()
+                        )));
+                    }
+                }
+
                 return Either.right(
                     new SuccessfulRegistrationResult(
                         request,
@@ -377,7 +378,8 @@ public class WebAuthnServer {
                             response,
                             registration
                         ),
-                        registration.isAttestationTrusted()
+                        registration.isAttestationTrusted(),
+                        sessions.createSession(request.getPublicKeyCredentialCreationOptions().getUser().getId())
                     )
                 );
             } catch (RegistrationFailedException e) {
@@ -390,7 +392,7 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, SuccessfulU2fRegistrationResult> finishU2fRegistration(String responseJson) {
+    public Either<List<String>, SuccessfulU2fRegistrationResult> finishU2fRegistration(String responseJson) throws ExecutionException {
         logger.trace("finishU2fRegistration responseJson: {}", responseJson);
         U2fRegistrationResponse response = null;
         try {
@@ -452,7 +454,9 @@ public class WebAuthnServer {
                         result
                     ),
                     result.isAttestationTrusted(),
-                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCertAndSignature()))
+                    Optional.of(new AttestationCertInfo(response.getCredential().getU2fResponse().getAttestationCertAndSignature())),
+                    request.getUsername(),
+                    sessions.createSession(request.getPublicKeyCredentialCreationOptions().getUser().getId())
                 )
             );
         }
@@ -461,7 +465,7 @@ public class WebAuthnServer {
     public Either<List<String>, AssertionRequestWrapper> startAuthentication(Optional<String> username) {
         logger.trace("startAuthentication username: {}", username);
 
-        if (username.isPresent() && userStorage.getRegistrationsByUsername(username.get()).isEmpty()) {
+        if (username.isPresent() && !userStorage.userExists(username.get())) {
             return Either.left(Collections.singletonList("The username \"" + username.get() + "\" is not registered."));
         } else {
             AssertionRequestWrapper request = new AssertionRequestWrapper(
@@ -487,14 +491,18 @@ public class WebAuthnServer {
         private final AssertionResponse response;
         private final Collection<CredentialRegistration> registrations;
         @JsonSerialize(using = AuthDataSerializer.class) AuthenticatorData authData;
+        private final String username;
+        private final ByteArray sessionToken;
         private final List<String> warnings;
 
-        public SuccessfulAuthenticationResult(AssertionRequestWrapper request, AssertionResponse response, Collection<CredentialRegistration> registrations, List<String> warnings) {
+        public SuccessfulAuthenticationResult(AssertionRequestWrapper request, AssertionResponse response, Collection<CredentialRegistration> registrations, String username, ByteArray sessionToken, List<String> warnings) {
             this(
                 request,
                 response,
                 registrations,
                 response.getCredential().getResponse().getParsedAuthenticatorData(),
+                username,
+                sessionToken,
                 warnings
             );
         }
@@ -542,6 +550,8 @@ public class WebAuthnServer {
                             request,
                             response,
                             userStorage.getRegistrationsByUsername(result.getUsername()),
+                            result.getUsername(),
+                            sessions.createSession(result.getUserHandle()),
                             result.getWarnings()
                         )
                     );
@@ -558,54 +568,46 @@ public class WebAuthnServer {
         }
     }
 
-    public Either<List<String>, AssertionRequestWrapper> startAuthenticatedAction(Optional<String> username, AuthenticatedAction<?> action) {
-        return startAuthentication(username)
-            .map(request -> {
-                synchronized (authenticatedActions) {
-                    authenticatedActions.put(request, action);
-                }
-                return request;
-            });
+    @Value
+    public static final class DeregisterCredentialResult {
+        boolean success = true;
+        CredentialRegistration droppedRegistration;
+        boolean accountDeleted;
     }
 
-    public Either<List<String>, ?> finishAuthenticatedAction(String responseJson) {
-        return finishAuthentication(responseJson)
-            .flatMap(result -> {
-                AuthenticatedAction<?> action = authenticatedActions.getIfPresent(result.request);
-                authenticatedActions.invalidate(result.request);
-                if (action == null) {
-                    return Either.left(Collections.singletonList(
-                        "No action was associated with assertion request ID: " + result.getRequest().getRequestId()
-                    ));
-                } else {
-                    return action.apply(result);
-                }
-            });
-    }
-
-    public <T> Either<List<String>, AssertionRequestWrapper> deregisterCredential(String username, ByteArray credentialId, Function<CredentialRegistration, T> resultMapper) {
-        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialId);
-
-        if (username == null || username.isEmpty()) {
-            return Either.left(Collections.singletonList("Username must not be empty."));
-        }
+    public Either<List<String>, DeregisterCredentialResult> deregisterCredential(
+        @NonNull ByteArray sessionToken,
+        ByteArray credentialId
+    ) {
+        logger.trace("deregisterCredential session: {}, credentialId: {}", sessionToken, credentialId);
 
         if (credentialId == null || credentialId.getBytes().length == 0) {
             return Either.left(Collections.singletonList("Credential ID must not be empty."));
         }
 
-        AuthenticatedAction<T> action = (SuccessfulAuthenticationResult result) -> {
-            Optional<CredentialRegistration> credReg = userStorage.getRegistrationByUsernameAndCredentialId(username, credentialId);
+        Optional<ByteArray> session = sessions.getSession(sessionToken);
+        if (session.isPresent()) {
+            ByteArray userHandle = session.get();
+            Optional<String> username = userStorage.getUsernameForUserHandle(userHandle);
 
-            if (credReg.isPresent()) {
-                userStorage.removeRegistrationByUsername(username, credReg.get());
-                return Either.right(resultMapper.apply(credReg.get()));
+            if (username.isPresent()) {
+                Optional<CredentialRegistration> credReg = userStorage.getRegistrationByUsernameAndCredentialId(username.get(), credentialId);
+                if (credReg.isPresent()) {
+                    userStorage.removeRegistrationByUsername(username.get(), credReg.get());
+
+                    return Either.right(new DeregisterCredentialResult(
+                        credReg.get(),
+                        !userStorage.userExists(username.get())
+                    ));
+                } else {
+                    return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
+                }
             } else {
-                return Either.left(Collections.singletonList("Credential ID not registered:" + credentialId));
+                return Either.left(Collections.singletonList("Invalid user handle"));
             }
-        };
-
-        return startAuthenticatedAction(Optional.of(username), action);
+        } else {
+            return Either.left(Collections.singletonList("Invalid session"));
+        }
     }
 
     public <T> Either<List<String>, T> deleteAccount(String username, Supplier<T> onSuccess) {

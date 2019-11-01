@@ -39,6 +39,10 @@ public interface RegistrationStorage extends CredentialRepository {
     Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, ByteArray credentialId);
     Collection<CredentialRegistration> getRegistrationsByUserHandle(ByteArray userHandle);
 
+    default boolean userExists(String username) {
+        return !getRegistrationsByUsername(username).isEmpty();
+    }
+
     boolean removeRegistrationByUsername(String username, CredentialRegistration credentialRegistration);
     boolean removeAllRegistrations(String username);
 

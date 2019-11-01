@@ -3,8 +3,8 @@
 A simple self-contained demo server supporting multiple authenticators per user.
 It illustrates how to use the required integration points, the most important of
 which is the user and credential registration storage, and also illustrates how
-one can build on API to enable advanced features like *authenticated actions*,
-such as adding an additional authenticator or deregistering a credential.
+one can perform auxiliary actions such as adding an additional authenticator or
+deregistering a credential.
 
 The central part is the
 https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[WebAuthnServer]
