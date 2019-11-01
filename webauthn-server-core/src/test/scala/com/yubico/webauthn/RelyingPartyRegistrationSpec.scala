@@ -106,6 +106,29 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
     override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
   }
 
+  private def credRepoWithUser(user: UserIdentity, credential: RegisteredCredential): CredentialRepository = new CredentialRepository {
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] =
+      if (username == user.getName)
+        Set(PublicKeyCredentialDescriptor.builder().id(credential.getCredentialId).build()).asJava
+      else Set.empty.asJava
+    override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+      if (username == user.getName)
+        Some(user.getId).asJava
+      else None.asJava
+    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] =
+      if (userHandle == user.getId)
+        Some(user.getName).asJava
+      else None.asJava
+    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
+      if (credentialId == credential.getCredentialId && userHandle == user.getId)
+        Some(credential).asJava
+      else None.asJava
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] =
+      if (credentialId == credential.getCredentialId)
+        Set(credential).asJava
+      else Set.empty.asJava
+  }
+
   private def finishRegistration(
     allowOriginPort: Boolean = false,
     allowOriginSubdomain: Boolean = false,
@@ -1792,32 +1815,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         val testData = RegistrationTestData.FidoU2f.SelfAttestation
 
         it("Registration is aborted if the given credential ID is already registered.") {
-          val credentialRepository = new CredentialRepository {
-            override def lookup(id: ByteArray, uh: ByteArray) = Some(
-              RegisteredCredential.builder()
-                .credentialId(id)
-                .userHandle(uh)
-                .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
-                .signatureCount(1337)
-                .build()
-            ).asJava
-
-            override def lookupAll(id: ByteArray) = id match {
-              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId =>
-                Set(
-                  RegisteredCredential.builder()
-                    .credentialId(id)
-                    .userHandle(testData.request.getUser.getId)
-                    .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
-                    .signatureCount(1337)
-                    .build()
-                ).asJava
-              case _ => Set.empty.asJava
-            }
-            override def getCredentialIdsForUsername(username: String) = ???
-            override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-            override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-          }
+          val credentialRepository = credRepoWithUser(
+            testData.userId,
+            RegisteredCredential.builder()
+              .credentialId(testData.response.getId)
+              .userHandle(testData.userId.getId)
+              .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
+              .signatureCount(1337)
+              .build()
+          )
 
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
@@ -1832,18 +1838,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Registration proceeds if the given credential ID is not already registered.") {
-          val credentialRepository = new CredentialRepository {
-            override def lookup(id: ByteArray, uh: ByteArray) = None.asJava
-            override def lookupAll(id: ByteArray) = Set.empty.asJava
-            override def getCredentialIdsForUsername(username: String) = ???
-            override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-            override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-          }
-
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
             testData = testData,
-            credentialRepository = credentialRepository
+            credentialRepository = emptyCredentialRepository
           )
           val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
