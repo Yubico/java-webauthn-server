@@ -29,10 +29,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.Enumeration;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.jar.Manifest;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,35 +63,35 @@ public class VersionInfo {
      * Represents the specification this implementation is based on
      */
     private final Specification specification = Specification.builder()
-        .url(new URL("https://www.w3.org/TR/2019/REC-webauthn-1-20190304/"))
-        .latestVersionUrl(new URL("https://www.w3.org/TR/webauthn/"))
-        .status(DocumentStatus.RECOMMENDATION)
-        .releaseDate(LocalDate.parse("2019-03-04"))
+        .url(new URL(findValueInManifest("Specification-Url")))
+        .latestVersionUrl(new URL(findValueInManifest("Specification-Url-Latest")))
+        .status(DocumentStatus.fromString(findValueInManifest("Specification-W3c-Status")).get())
+        .releaseDate(LocalDate.parse(findValueInManifest("Specification-Release-Date")))
         .build();
 
     /**
      * Description of this version of this library
      */
     private final Implementation implementation = new Implementation(
-        findImplementationVersionInManifest().orElse(null),
-        new URL("https://github.com/Yubico/java-webauthn-server")
+        findValueInManifest("Implementation-Version"),
+        new URL(findValueInManifest("Implementation-Source-Url")),
+        findValueInManifest("Git-Commit")
     );
 
     private VersionInfo() throws IOException {
     }
 
-    private Optional<String> findImplementationVersionInManifest() throws IOException {
+    private String findValueInManifest(String key) throws IOException {
         final Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
 
         while (resources.hasMoreElements()) {
             final URL resource = resources.nextElement();
             final Manifest manifest = new Manifest(resource.openStream());
             if ("java-webauthn-server".equals(manifest.getMainAttributes().getValue("Implementation-Id"))) {
-                return Optional.ofNullable(manifest.getMainAttributes().getValue("Implementation-Version"));
+                return manifest.getMainAttributes().getValue(key);
             }
         }
-
-        return Optional.empty();
+        throw new NoSuchElementException("Could not find \"" + key + "\" in manifest.");
     }
 
 }

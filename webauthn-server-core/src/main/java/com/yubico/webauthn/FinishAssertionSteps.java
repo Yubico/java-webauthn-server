@@ -29,6 +29,7 @@ import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
@@ -66,10 +67,10 @@ final class FinishAssertionSteps {
     private final String rpId;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean validateSignatureCounter = true;
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowOriginPort = false;
+    @Builder.Default private final boolean allowOriginSubdomain = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean validateSignatureCounter = true;
 
     public Step0 begin() {
         return new Step0();
@@ -372,12 +373,16 @@ final class FinishAssertionSteps {
 
         @Override
         public void validate() {
-            final String responseOrigin;
-            responseOrigin = response.getResponse().getClientData().getOrigin();
-
-            if (origins.stream().noneMatch(o -> o.equals(responseOrigin))) {
-                throw new IllegalArgumentException("Incorrect origin: " + responseOrigin);
-            }
+            final String responseOrigin = response.getResponse().getClientData().getOrigin();
+            assure(
+                OriginMatcher.isAllowed(
+                    responseOrigin,
+                    origins,
+                    allowOriginPort,
+                    allowOriginSubdomain
+                ),
+                "Incorrect origin: " + responseOrigin
+            );
         }
 
         @Override
@@ -561,11 +566,15 @@ final class FinishAssertionSteps {
                 throw new RuntimeException(e);
             }
 
+            final COSEAlgorithmIdentifier alg = WebAuthnCodecs.getCoseKeyAlg(cose).orElseThrow(() ->
+                new IllegalArgumentException(String.format("Failed to decode \"alg\" from COSE key: %s", cose)));
+
             if (!
                 crypto.verifySignature(
                     key,
                     signedBytes(),
-                    response.getResponse().getSignature()
+                    response.getResponse().getSignature(),
+                    alg
                 )
             ) {
                 throw new IllegalArgumentException("Invalid assertion signature.");

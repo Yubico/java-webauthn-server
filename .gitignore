@@ -9,6 +9,7 @@ out/
 *.iml
 *.iws
 */out/
+.attach_pid*
 
 # Mac
 .DS_Store
@@ -19,5 +20,4 @@ target/
 
 # Gradle
 .gradle/
-/build/
-/*/build/
+build/

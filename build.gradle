@@ -7,9 +7,9 @@ buildscript {
   }
 }
 plugins {
-  id 'com.github.kt3k.coveralls' version '2.8.2'
+  id 'com.github.kt3k.coveralls' version '2.8.4'
   id 'io.codearte.nexus-staging' version '0.9.0'
-  id 'io.franzbecker.gradle-lombok' version '1.14'
+  id 'io.franzbecker.gradle-lombok' version '3.1.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
@@ -34,19 +34,47 @@ wrapper {
 }
 
 allprojects {
+  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+  ext.dirtyMarker = "-DIRTY"
+
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'idea'
 
   group = 'com.yubico'
-
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
-  ext.dirtyMarker = "-DIRTY"
 
   idea.module {
     downloadJavadoc = true
     downloadSources = true
   }
 }
+
+Map<String, String> dependencyVersions = [
+  'ch.qos.logback:logback-classic:1.2.3',
+  'com.augustcellars.cose:cose-java:1.0.0',
+  'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
+  'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.9',
+  'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
+  'com.google.guava:guava:19.0',
+  'com.upokecenter:cbor:4.0.1',
+  'javax.activation:activation:1.1.1',
+  'javax.ws.rs:javax.ws.rs-api:2.1',
+  'javax.xml.bind:jaxb-api:2.3.0',
+  'junit:junit:4.12',
+  'org.apache.httpcomponents:httpclient:4.5.2',
+  'org.bouncycastle:bcpkix-jdk15on:1.62',
+  'org.bouncycastle:bcprov-jdk15on:1.62',
+  'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
+  'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
+  'org.glassfish.jersey.containers:jersey-container-servlet-core:2.26',
+  'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
+  'org.glassfish.jersey.inject:jersey-hk2:2.26',
+  'org.mockito:mockito-core:2.27.0',
+  'org.scala-lang:scala-library:2.12.8',
+  'org.scalacheck:scalacheck_2.12:1.14.0',
+  'org.scalatest:scalatest_2.12:3.0.4',
+  'org.slf4j:slf4j-api:1.7.25',
+].collectEntries { [(it.split(':')[0..1].join(':')): it] }
+rootProject.ext.addVersion = { dep -> dependencyVersions[dep] }
 
 subprojects {
   apply plugin: LombokPlugin
@@ -63,13 +91,24 @@ subprojects {
   }
 }
 
-evaluationDependsOnChildren()
+allprojects {
+  evaluationDependsOnChildren()
+}
 
 task assembleJavadoc(type: Sync) {
   from("docs/index.html") {
     expand project.properties
   }
   destinationDir = file("${rootProject.buildDir}/javadoc")
+}
+
+String getGitCommit() {
+  def proc = "git rev-parse HEAD".execute(null, projectDir)
+  proc.waitFor()
+  if (proc.exitValue() != 0) {
+    throw new RuntimeException("Failed to get git commit ID");
+  }
+  return proc.text.trim()
 }
 
 subprojects { project ->
@@ -86,6 +125,10 @@ subprojects { project ->
     from(rootProject.file('COPYING'))
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+  }
+
+  tasks.withType(Sign) {
+    it.dependsOn check
   }
 
   test {

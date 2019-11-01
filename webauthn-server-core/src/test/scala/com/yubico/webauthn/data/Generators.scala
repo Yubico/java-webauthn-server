@@ -163,7 +163,7 @@ object Generators {
     attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
     extensions <- arbitrary[Option[CBORObject]]
 
-    extensionsBytes = extensions map { exts => new ByteArray(exts.EncodeToBytes(CBOREncodeOptions.NoDuplicateKeys.And(CBOREncodeOptions.NoIndefLengthStrings))) }
+    extensionsBytes = extensions map { exts => new ByteArray(exts.EncodeToBytes(CBOREncodeOptions.DefaultCtap2Canonical)) }
     atFlag = attestedCredentialDataBytes.isDefined
     edFlag = extensionsBytes.isDefined
     flagsByte: Byte = setFlag(setFlag(fixedBytes.getBytes()(32), 0x40, atFlag), BinaryUtil.singleFromHex("80"), edFlag)
@@ -182,6 +182,12 @@ object Generators {
     .requireResidentKey(requireResidentKey)
     .userVerification(userVerification)
     .build())
+
+  implicit val arbitraryAuthenticatorTransport: Arbitrary[AuthenticatorTransport] = Arbitrary(
+    Gen.oneOf(
+      Gen.oneOf(AuthenticatorTransport.values()),
+      arbitrary[String] map AuthenticatorTransport.of
+    ))
 
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(arbitrary[Array[Byte]].map(new ByteArray(_)))
   def byteArray(size: Int): Gen[ByteArray] = Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))

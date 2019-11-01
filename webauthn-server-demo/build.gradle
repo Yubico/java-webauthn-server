@@ -13,8 +13,6 @@ project.ext.dockerName = project.name
 
 description = 'WebAuthn demo'
 
-apply from: 'gretty-2.2.0.plugin'
-
 configurations {
   forJdk10
 }
@@ -26,38 +24,38 @@ dependencies {
     project(':webauthn-server-core'),
     project(':yubico-util'),
 
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
-    'com.google.guava:guava:19.0',
-    'com.upokecenter:cbor:2.4.1',
-    'javax.ws.rs:javax.ws.rs-api:2.1',
-    'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
-    'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
-    'org.glassfish.jersey.containers:jersey-container-servlet-core:2.26',
-    'org.slf4j:slf4j-api:1.7.25',
+    addVersion('com.google.guava:guava'),
+    addVersion('com.fasterxml.jackson.core:jackson-databind'),
+    addVersion('com.upokecenter:cbor'),
+    addVersion('javax.ws.rs:javax.ws.rs-api'),
+    addVersion('org.eclipse.jetty:jetty-server'),
+    addVersion('org.eclipse.jetty:jetty-servlet'),
+    addVersion('org.glassfish.jersey.containers:jersey-container-servlet-core'),
+    addVersion('org.slf4j:slf4j-api'),
   )
 
   forJdk10(
-    'javax.activation:activation:1.1.1',
-    'javax.xml.bind:jaxb-api:2.3.0',
+    addVersion('javax.activation:activation'),
+    addVersion('javax.xml.bind:jaxb-api'),
   )
 
   runtimeOnly(
     configurations.forJdk10,
 
-    'ch.qos.logback:logback-classic:1.2.3',
-    'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
-    'org.glassfish.jersey.inject:jersey-hk2:2.26',
+    addVersion('ch.qos.logback:logback-classic'),
+    addVersion('org.glassfish.jersey.containers:jersey-container-servlet'),
+    addVersion('org.glassfish.jersey.inject:jersey-hk2'),
   )
 
   testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 
-    'junit:junit:4.12',
-    'org.mockito:mockito-core:2.27.0',
-    'org.scala-lang:scala-library:2.12.8',
-    'org.scalacheck:scalacheck_2.12:1.14.0',
-    'org.scalatest:scalatest_2.12:3.0.4',
+    addVersion('junit:junit'),
+    addVersion('org.mockito:mockito-core'),
+    addVersion('org.scala-lang:scala-library'),
+    addVersion('org.scalacheck:scalacheck_2.12'),
+    addVersion('org.scalatest:scalatest_2.12'),
   )
 
   modules {

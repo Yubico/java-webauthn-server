@@ -10,25 +10,29 @@ project.ext.publishMe = true
 
 dependencies {
 
-  implementation(
+  api(
     project(':yubico-util'),
-    'com.augustcellars.cose:cose-java:0.9.10',
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
-    'com.google.guava:guava:19.0',
-    'org.apache.httpcomponents:httpclient:4.5.2',
-    'org.bouncycastle:bcprov-jdk15on:1.62',
-    'org.slf4j:slf4j-api:1.7.25',
+  )
+
+  implementation(
+    addVersion('com.augustcellars.cose:cose-java'),
+    addVersion('com.google.guava:guava'),
+    addVersion('com.fasterxml.jackson.core:jackson-databind'),
+    addVersion('com.upokecenter:cbor'),
+    addVersion('org.apache.httpcomponents:httpclient'),
+    addVersion('org.bouncycastle:bcprov-jdk15on'),
+    addVersion('org.slf4j:slf4j-api'),
   )
 
   testImplementation(
     project(':yubico-util-scala'),
-    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.9.9',
-    'junit:junit:4.12',
-    'org.bouncycastle:bcpkix-jdk15on:1.62',
-    'org.mockito:mockito-core:2.27.0',
-    'org.scala-lang:scala-library:2.12.8',
-    'org.scalacheck:scalacheck_2.12:1.14.0',
-    'org.scalatest:scalatest_2.12:3.0.4',
+    addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
+    addVersion('junit:junit'),
+    addVersion('org.bouncycastle:bcpkix-jdk15on'),
+    addVersion('org.mockito:mockito-core'),
+    addVersion('org.scala-lang:scala-library'),
+    addVersion('org.scalacheck:scalacheck_2.12'),
+    addVersion('org.scalatest:scalatest_2.12'),
   )
 
 }
@@ -38,12 +42,20 @@ jar {
   manifest {
     attributes([
       'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
-      'Specification-Version': 'Level 1 Proposed Recommendation 2019-01-17',
+      'Specification-Version': 'Level 1 Recommendation 2019-03-04',
       'Specification-Vendor': 'World Wide Web Consortium',
+
+      'Specification-Url': 'https://www.w3.org/TR/2019/REC-webauthn-1-20190304/',
+      'Specification-Url-Latest': 'https://www.w3.org/TR/webauthn/',
+      'Specification-W3c-Status': 'recommendation',
+      'Specification-Release-Date': '2019-03-04',
+
       'Implementation-Id': 'java-webauthn-server',
       'Implementation-Title': 'Yubico Web Authentication server library',
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
+      'Implementation-Source-Url': 'https://github.com/Yubico/java-webauthn-server',
+      'Git-Commit': getGitCommit(),
     ])
   }
 }

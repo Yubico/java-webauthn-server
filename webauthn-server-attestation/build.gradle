@@ -11,27 +11,30 @@ evaluationDependsOn(':webauthn-server-core')
 
 dependencies {
 
-  implementation(
+  api(
     project(':webauthn-server-core'),
+  )
+
+  implementation(
     project(':yubico-util'),
-    'com.fasterxml.jackson.core:jackson-databind:2.9.9.3',
-    'com.google.guava:guava:19.0',
-    'org.bouncycastle:bcprov-jdk15on:1.62',
-    'org.slf4j:slf4j-api:1.7.25',
+    addVersion('com.google.guava:guava'),
+    addVersion('com.fasterxml.jackson.core:jackson-databind'),
+    addVersion('org.bouncycastle:bcprov-jdk15on'),
+    addVersion('org.slf4j:slf4j-api'),
   )
 
   testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
-    'junit:junit:4.12',
-    'org.mockito:mockito-core:2.27.0',
-    'org.scala-lang:scala-library:2.12.8',
-    'org.scalacheck:scalacheck_2.12:1.14.0',
-    'org.scalatest:scalatest_2.12:3.0.4',
+    addVersion('junit:junit'),
+    addVersion('org.mockito:mockito-core'),
+    addVersion('org.scala-lang:scala-library'),
+    addVersion('org.scalacheck:scalacheck_2.12'),
+    addVersion('org.scalatest:scalatest_2.12'),
   )
   testRuntimeOnly(
     // Transitive dependency from :webauthn-server-core:test
-    'org.bouncycastle:bcpkix-jdk15on:1.62',
+    addVersion('org.bouncycastle:bcpkix-jdk15on'),
   )
 }
 
@@ -43,6 +46,7 @@ jar {
       'Implementation-Title': project.description,
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
+      'Git-Commit': getGitCommit(),
     ])
   }
 }

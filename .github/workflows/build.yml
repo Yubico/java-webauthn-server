@@ -1,10 +1,7 @@
 # This name is shown in the status badge in the README
 name: build
 
-on:
-  push:
-    branches:
-      - master
+on: [push, pull_request]
 
 jobs:
   test:
@@ -13,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 10, 11, 12]
+        java: [8, 11]
 
     steps:
     - name: Check out code

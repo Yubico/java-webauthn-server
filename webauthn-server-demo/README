@@ -13,6 +13,14 @@ https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/
 class which provides the REST API on top of it.
 
 
+== Quick start
+
+```
+$ ./gradlew run
+$ $BROWSER https://localhost:8443/
+```
+
+
 == Architecture
 
 The example webapp is made up of three main layers, the bottom of which is the

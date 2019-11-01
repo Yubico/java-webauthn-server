@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 import COSE.CoseException;
+import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataService;
@@ -40,19 +41,23 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 import static com.yubico.internal.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 
 @Builder
 @Slf4j
@@ -71,8 +76,9 @@ final class FinishRegistrationSteps {
     private final Optional<MetadataService> metadataService;
     private final CredentialRepository credentialRepository;
 
-    @Builder.Default
-    private final boolean allowUnrequestedExtensions = false;
+    @Builder.Default private final boolean allowOriginPort = false;
+    @Builder.Default private final boolean allowOriginSubdomain = false;
+    @Builder.Default private final boolean allowUnrequestedExtensions = false;
 
 
     public Step1 begin() {
@@ -213,9 +219,15 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
+            final String responseOrigin = clientData.getOrigin();
             assure(
-                origins.stream().anyMatch(o -> o.equals(clientData.getOrigin())),
-                "Incorrect origin: " + clientData.getOrigin()
+                OriginMatcher.isAllowed(
+                    responseOrigin,
+                    origins,
+                    allowOriginPort,
+                    allowOriginSubdomain
+                ),
+                "Incorrect origin: " + responseOrigin
             );
         }
 
@@ -308,7 +320,10 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            assure(response.getResponse().getParsedAuthenticatorData().getFlags().UP, "User Presence is required.");
+            assure(
+                response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+                "User Presence is required."
+            );
         }
 
         @Override
@@ -325,8 +340,16 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
-            if (request.getAuthenticatorSelection().map(AuthenticatorSelectionCriteria::getUserVerification).orElse(UserVerificationRequirement.PREFERRED) == UserVerificationRequirement.REQUIRED) {
-                assure(response.getResponse().getParsedAuthenticatorData().getFlags().UV, "User Verification is required.");
+            if (
+                request.getAuthenticatorSelection()
+                    .map(AuthenticatorSelectionCriteria::getUserVerification)
+                    .orElse(UserVerificationRequirement.PREFERRED)
+                    == UserVerificationRequirement.REQUIRED
+            ) {
+                assure(
+                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
+                    "User Verification is required."
+                );
             }
         }
 
@@ -625,7 +648,7 @@ final class FinishRegistrationSteps {
     }
 
     @Value
-    class Step19 implements Step<Finished> {
+    class Step19 implements Step<CustomLastStep> {
         private final AttestationType attestationType;
         private final Optional<Attestation> attestationMetadata;
         private final boolean attestationTrusted;
@@ -633,6 +656,40 @@ final class FinishRegistrationSteps {
 
         @Override
         public void validate() {
+        }
+
+        @Override
+        public CustomLastStep nextStep() {
+            return new CustomLastStep(attestationType, attestationMetadata, attestationTrusted, allWarnings());
+        }
+    }
+
+    /**
+     * Steps that aren't yet standardised in a stable edition of the spec
+     */
+    @Value
+    class CustomLastStep implements Step<Finished> {
+        private final AttestationType attestationType;
+        private final Optional<Attestation> attestationMetadata;
+        private final boolean attestationTrusted;
+        private final List<String> prevWarnings;
+
+        @Override
+        public void validate() {
+            ByteArray publicKeyCose = response.getResponse().getAttestation().getAuthenticatorData().getAttestedCredentialData().get().getCredentialPublicKey();
+            CBORObject publicKeyCbor = CBORObject.DecodeFromBytes(publicKeyCose.getBytes());
+            int alg = publicKeyCbor.get(CBORObject.FromObject(3)).AsInt32();
+            assure(
+                request.getPubKeyCredParams().stream().anyMatch(pkcparam -> pkcparam.getAlg().getId() == alg),
+                "Unrequested credential key algorithm: got %d, expected one of: %s",
+                alg,
+                request.getPubKeyCredParams().stream().map(pkcparam -> pkcparam.getAlg()).collect(Collectors.toList())
+            );
+            try {
+                WebAuthnCodecs.importCosePublicKey(publicKeyCose);
+            } catch (CoseException | IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+                throw wrapAndLog(log, "Failed to parse credential public key", e);
+            }
         }
 
         @Override

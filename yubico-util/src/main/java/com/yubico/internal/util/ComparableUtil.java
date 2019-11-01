@@ -24,19 +24,33 @@
 
 package com.yubico.internal.util;
 
-import java.util.Set;
+import java.util.Iterator;
+import java.util.SortedSet;
 
-public class EnumUtil {
+public class ComparableUtil {
 
-    public static <T extends Enum<?>> int compareSets(Set<T> a, Set<T> b, Class<T> clazz) {
-        for (T value : clazz.getEnumConstants()) {
-            if (a.contains(value) && !b.contains(value)) {
-                return 1;
-            } else if (!a.contains(value) && b.contains(value)) {
-                return -1;
+    public static <T extends Comparable<T>> int compareComparableSets(SortedSet<T> a, SortedSet<T> b) {
+        if (a.size() == b.size()) {
+            final Iterator<T> as = a.iterator();
+            final Iterator<T> bs = b.iterator();
+
+            while (as.hasNext() && bs.hasNext()) {
+                final int comp = as.next().compareTo(bs.next());
+                if (comp != 0) {
+                    return comp;
+                }
             }
+
+            if (as.hasNext()) {
+                return 1;
+            } else if (bs.hasNext()) {
+                return -1;
+            } else {
+                return 0;
+            }
+        } else {
+            return a.size() - b.size();
         }
-        return 0;
     }
 
 }

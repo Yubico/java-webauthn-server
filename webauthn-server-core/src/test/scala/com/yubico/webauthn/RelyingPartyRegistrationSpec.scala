@@ -24,14 +24,14 @@
 
 package com.yubico.webauthn
 
-import java.util
 import java.io.IOException
 import java.nio.charset.Charset
-import java.security.MessageDigest
 import java.security.KeyPair
+import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.SignatureException
 import java.security.cert.X509Certificate
+import java.security.interfaces.RSAPublicKey
 import java.util.Optional
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -40,22 +40,27 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.data.AttestationObject
-import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.data.AttestationType
-import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.RegistrationExtensionInputs
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.AttestationConveyancePreference
+import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.RegistrationExtensionInputs
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
+import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.exception.RegistrationFailedException
 import com.yubico.webauthn.test.Util.toStepWithUtilities
+import com.yubico.webauthn.TestAuthenticator.AttestationCert
+import com.yubico.webauthn.TestAuthenticator.AttestationMaker
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -94,29 +99,38 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   }
 
   private val unimplementedCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): util.Set[PublicKeyCredentialDescriptor] = ???
+    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = ???
     override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
     override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
     override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
-    override def lookupAll(credentialId: ByteArray): util.Set[RegisteredCredential] = ???
+    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
   }
 
   private def finishRegistration(
+    allowOriginPort: Boolean = false,
+    allowOriginSubdomain: Boolean = false,
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
     credentialId: Option[ByteArray] = None,
-    credentialRepository: Option[CredentialRepository] = None,
+    credentialRepository: CredentialRepository = unimplementedCredentialRepository,
     metadataService: Option[MetadataService] = None,
+    origins: Option[Set[String]] = None,
+    preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
     rp: RelyingPartyIdentity = RelyingPartyIdentity.builder().id("localhost").name("Test party").build(),
     testData: RegistrationTestData
   ): FinishRegistrationSteps = {
-    RelyingParty.builder()
+    val builder = RelyingParty.builder()
       .identity(rp)
-      .credentialRepository(credentialRepository.getOrElse(unimplementedCredentialRepository))
-      .preferredPubkeyParams(Nil.asJava)
-      .origins(Set("https://" + rp.getId).asJava)
+      .credentialRepository(credentialRepository)
+      .preferredPubkeyParams(preferredPubkeyParams.asJava)
+      .allowOriginPort(allowOriginPort)
+      .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
+
+    origins.map(_.asJava).foreach(builder.origins _)
+
+    builder
       .build()
       ._finishRegistration(testData.request, testData.response, callerTokenBindingId.asJava)
   }
@@ -211,15 +225,201 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         step.tryNext shouldBe a [Failure[_]]
       }
 
-      it("5. Verify that the value of C.origin matches the Relying Party's origin.") {
-        val steps = finishRegistration(
-          testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", "https://root.evil")
-        )
-        val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
+      describe("5. Verify that the value of C.origin matches the Relying Party's origin.") {
 
-        step.validations shouldBe a [Failure[_]]
-        step.validations.failed.get shouldBe an [IllegalArgumentException]
-        step.tryNext shouldBe a [Failure[_]]
+        def checkAccepted(
+          origin: String,
+          origins: Option[Set[String]] = None,
+          allowOriginPort: Boolean = false,
+          allowOriginSubdomain: Boolean = false
+        ): Unit = {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", origin),
+            origins = origins,
+            allowOriginPort = allowOriginPort,
+            allowOriginSubdomain = allowOriginSubdomain
+          )
+          val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
+
+          step.validations shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
+        }
+
+        def checkRejected(
+          origin: String,
+          origins: Option[Set[String]] = None,
+          allowOriginPort: Boolean = false,
+          allowOriginSubdomain: Boolean = false
+        ): Unit = {
+          val steps = finishRegistration(
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData("origin", origin),
+            origins = origins,
+            allowOriginPort = allowOriginPort,
+            allowOriginSubdomain = allowOriginSubdomain
+          )
+          val step: FinishRegistrationSteps#Step5 = steps.begin.next.next.next.next
+
+          step.validations shouldBe a [Failure[_]]
+          step.validations.failed.get shouldBe an [IllegalArgumentException]
+          step.tryNext shouldBe a [Failure[_]]
+        }
+
+        it("Fails if origin is different.") {
+          checkRejected(origin = "https://root.evil")
+        }
+
+        describe("Explicit ports are") {
+          val origin = "https://localhost:8080"
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("allowed if RP opts in to it.") {
+            checkAccepted(origin = origin, allowOriginPort = true)
+          }
+        }
+
+        describe("Subdomains are") {
+          val origin = "https://foo.localhost"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("allowed if RP opts in to it.") {
+            checkAccepted(origin = origin, allowOriginSubdomain = true)
+          }
+        }
+
+        describe("Subdomains and explicit ports at the same time are") {
+          val origin   = "https://foo.localhost:8080"
+
+          it("by default not allowed.") {
+            checkRejected(origin = origin)
+          }
+
+          it("not allowed if only subdomains are allowed.") {
+            checkRejected(origin = origin, allowOriginPort = false, allowOriginSubdomain = true)
+          }
+
+          it("not allowed if only explicit ports are allowed.") {
+            checkRejected(origin = origin, allowOriginPort = true, allowOriginSubdomain = false)
+          }
+
+          it("allowed if RP opts in to both.") {
+            checkAccepted(origin = origin, allowOriginPort = true, allowOriginSubdomain = true)
+          }
+        }
+
+        describe("The examples in JavaDoc are correct:") {
+          def check(
+            origins: Set[String],
+            acceptOrigins: Iterable[String],
+            rejectOrigins: Iterable[String],
+            allowOriginPort: Boolean = false,
+            allowOriginSubdomain: Boolean = false
+          ): Unit = {
+            for { origin <- acceptOrigins } {
+              it(s"${origin} is accepted.") {
+                checkAccepted(
+                  origin = origin,
+                  origins = Some(origins),
+                  allowOriginPort = allowOriginPort,
+                  allowOriginSubdomain = allowOriginSubdomain
+                )
+              }
+            }
+
+            for { origin <- rejectOrigins } {
+              it(s"${origin} is rejected.") {
+                checkRejected(
+                  origin = origin,
+                  origins = Some(origins),
+                  allowOriginPort = allowOriginPort,
+                  allowOriginSubdomain = allowOriginSubdomain
+                )
+              }
+            }
+          }
+
+          describe("For allowOriginPort:") {
+            val origins = Set("https://example.org", "https://accounts.example.org", "https://acme.com:8443")
+
+            describe("false,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://accounts.example.org",
+                  "https://acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://shop.example.org",
+                  "https://acme.com",
+                  "https://acme.com:9000"
+                ),
+                allowOriginPort = false
+              )
+            }
+
+            describe("true,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://example.org:8443",
+                  "https://accounts.example.org",
+                  "https://acme.com",
+                  "https://acme.com:8443",
+                  "https://acme.com:9000"
+                ),
+                rejectOrigins = List(
+                  "https://shop.example.org"
+                ),
+                allowOriginPort = true
+              )
+            }
+          }
+
+          describe("For allowOriginSubdomain:") {
+            val origins = Set("https://example.org", "https://acme.com:8443")
+
+            describe("false,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://accounts.example.org",
+                  "https://acme.com",
+                  "https://shop.acme.com:8443"
+                ),
+                allowOriginSubdomain = false
+              )
+            }
+
+            describe("true,") {
+              check(
+                origins = origins,
+                acceptOrigins = List(
+                  "https://example.org",
+                  "https://accounts.example.org",
+                  "https://acme.com:8443",
+                  "https://shop.acme.com:8443"
+                ),
+                rejectOrigins = List(
+                  "https://example.org:8443",
+                  "https://acme.com"
+                ),
+                allowOriginSubdomain = true
+              )
+            }
+          }
+        }
       }
 
       describe("6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.") {
@@ -717,11 +917,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           describe("if x5c is not a certificate for an ECDSA public key over the P-256 curve, stop verification and return an error.") {
             val testAuthenticator = TestAuthenticator
 
-            def checkRejected(keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+            def checkRejected(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, Some(keypair)))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
+                  alg = COSEAlgorithmIdentifier.ES256,
                   attestationObject = credential.getResponse.getAttestationObject,
                   clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")
                 ),
@@ -744,11 +945,12 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               standaloneVerification.failed.get shouldBe an [IllegalArgumentException]
             }
 
-            def checkAccepted(keypair: KeyPair): Unit = {
-              val ((credential, _), _) = testAuthenticator.createBasicAttestedCredential(attestationCertAndKey = Some(testAuthenticator.generateAttestationCertificate(keypair)))
+            def checkAccepted(attestationAlg: COSEAlgorithmIdentifier, keypair: KeyPair): Unit = {
+              val (credential, _) = testAuthenticator.createBasicAttestedCredential(attestationMaker = AttestationMaker.fidoU2f(new AttestationCert(attestationAlg, testAuthenticator.generateAttestationCertificate(attestationAlg, Some(keypair)))))
 
               val steps = finishRegistration(
                 testData = RegistrationTestData(
+                  alg = COSEAlgorithmIdentifier.ES256,
                   attestationObject = credential.getResponse.getAttestationObject,
                   clientDataJson = new String(credential.getResponse.getClientDataJSON.getBytes, "UTF-8")
                 ),
@@ -770,19 +972,19 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
             }
 
             it("An RSA attestation certificate is rejected.") {
-              checkRejected(testAuthenticator.generateRsaKeypair())
+              checkRejected(COSEAlgorithmIdentifier.RS256, testAuthenticator.generateRsaKeypair())
             }
 
             it("A secp256r1 attestation certificate is accepted.") {
-              checkAccepted(testAuthenticator.generateEcKeypair(curve = "secp256r1"))
+              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256r1"))
             }
 
             it("A secp256k1 attestation certificate is rejected.") {
-              checkRejected(testAuthenticator.generateEcKeypair(curve = "secp256k1"))
+              checkRejected(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256k1"))
             }
 
             it("A P-256 attestation certificate is accepted.") {
-              checkAccepted(testAuthenticator.generateEcKeypair(curve = "P-256"))
+              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "P-256"))
             }
           }
         }
@@ -884,6 +1086,16 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   result should equal (Success(true))
                 }
 
+                it("Succeeds for an RS1 test case.") {
+                  val testData = RegistrationTestData.Packed.BasicAttestationRs1
+
+                  val result = verifier.verifyAttestationSignature(
+                    new AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
+                  )
+                  result should equal (true)
+                }
+
                 it("Fail if the default test case is mutated.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
 
@@ -904,12 +1116,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               describe("2. Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate Requirements.") {
                 it("Fails for an attestation signature with an invalid country code.") {
                   val authenticator = TestAuthenticator
+                  val alg = COSEAlgorithmIdentifier.ES256
                   val (badCert, key): (X509Certificate, PrivateKey) = authenticator.generateAttestationCertificate(
+                    alg = alg,
                     name = new X500Name("O=Yubico, C=AA, OU=Authenticator Attestation")
                   )
-                  val ((credential, _), _) = authenticator.createBasicAttestedCredential(
-                    attestationCertAndKey = Some(badCert, key),
-                    attestationStatementFormat = "packed"
+                  val (credential, _) = authenticator.createBasicAttestedCredential(
+                    attestationMaker = AttestationMaker.packed(new AttestationCert(alg, (badCert, key))),
                   )
                   val result = Try(verifier.verifyAttestationSignature(credential.getResponse.getAttestation, sha256(credential.getResponse.getClientDataJSON)))
 
@@ -978,7 +1191,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 step.tryNext shouldBe a [Success[_]]
                 step.attestationType should be (AttestationType.BASIC)
                 step.attestationTrustPath.asScala should not be empty
-                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert))
+                step.attestationTrustPath.get.asScala should be (List(testData.packedAttestationCert, testData.attestationCaCert.get))
               }
             }
 
@@ -1017,14 +1230,33 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                 }
 
                 it("Fails if the alg is a different value.") {
-                  val testData = RegistrationTestData.Packed.SelfAttestationWithWrongAlgValue
+                  def modifyAuthdataPubkeyAlg(authDataBytes: Array[Byte]): Array[Byte] = {
+                    val authData = new AuthenticatorData(new ByteArray(authDataBytes))
+                    val key = WebAuthnCodecs.importCosePublicKey(authData.getAttestedCredentialData.get.getCredentialPublicKey).asInstanceOf[RSAPublicKey]
+                    val reencodedKey = WebAuthnTestCodecs.rsaPublicKeyToCose(key, COSEAlgorithmIdentifier.RS256)
+                    new ByteArray(java.util.Arrays.copyOfRange(authDataBytes, 0, 32 + 1 + 4 + 16 + 2))
+                      .concat(authData.getAttestedCredentialData.get.getCredentialId)
+                      .concat(reencodedKey)
+                      .getBytes
+                  }
+                  def modifyAttobjPubkeyAlg(attObjBytes: ByteArray): ByteArray = {
+                    val attObj = JacksonCodecs.cbor.readTree(attObjBytes.getBytes)
+                    new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
+                      attObj.asInstanceOf[ObjectNode]
+                        .set("authData", jsonFactory.binaryNode(modifyAuthdataPubkeyAlg(attObj.get("authData").binaryValue())))
+                    ))
+                  }
+
+                  val testData = RegistrationTestData.Packed.SelfAttestationRs1
+                  val attObj = new AttestationObject(modifyAttobjPubkeyAlg(testData.response.getResponse.getAttestationObject))
+
                   val result = Try(verifier.verifyAttestationSignature(
-                    new AttestationObject(testData.attestationObject),
+                    attObj,
                     testData.clientDataJsonHash
                   ))
 
-                  CBORObject.DecodeFromBytes(new AttestationObject(testData.attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-7)
-                  new AttestationObject(testData.attestationObject).getAttestationStatement.get("alg").longValue should equal (-257)
+                  CBORObject.DecodeFromBytes(attObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes).get(CBORObject.FromObject(3)).AsInt64 should equal (-257)
+                  attObj.getAttestationStatement.get("alg").longValue should equal (-65535)
                   result shouldBe a [Failure[_]]
                   result.failed.get shouldBe an [IllegalArgumentException]
                 }
@@ -1035,6 +1267,18 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
                   val result = verifier.verifyAttestationSignature(
                     new AttestationObject(testDataBase.attestationObject),
                     testDataBase.clientDataJsonHash
+                  )
+                  result should equal (true)
+                }
+
+                it("Succeeds for an RS1 test case.") {
+                  val testData = RegistrationTestData.Packed.SelfAttestationRs1
+                  val alg = WebAuthnCodecs.getCoseKeyAlg(testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey).get
+                  alg should be (COSEAlgorithmIdentifier.RS1)
+
+                  val result = verifier.verifyAttestationSignature(
+                    new AttestationObject(testData.attestationObject),
+                    testData.clientDataJsonHash
                   )
                   result should equal (true)
                 }
@@ -1578,7 +1822,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
             testData = testData,
-            credentialRepository = Some(credentialRepository)
+            credentialRepository = credentialRepository
           )
           val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1599,7 +1843,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
             testData = testData,
-            credentialRepository = Some(credentialRepository)
+            credentialRepository = credentialRepository
           )
           val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1614,7 +1858,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             metadataService = Some(new TestMetadataService(Some(Attestation.builder().trusted(true).build()))),
-            credentialRepository = Some(emptyCredentialRepository)
+            credentialRepository = emptyCredentialRepository
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
           steps.run.isAttestationTrusted should be (true)
@@ -1627,7 +1871,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
-            credentialRepository = Some(emptyCredentialRepository)
+            credentialRepository = emptyCredentialRepository
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
           steps.run.isAttestationTrusted should be (false)
@@ -1638,7 +1882,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
-            credentialRepository = Some(emptyCredentialRepository)
+            credentialRepository = emptyCredentialRepository
           )
           val result = Try(steps.run)
           result.failed.get shouldBe an [IllegalArgumentException]
@@ -1656,7 +1900,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = testData,
               metadataService = None,
               allowUntrustedAttestation = true,
-              credentialRepository = Some(emptyCredentialRepository)
+              credentialRepository = emptyCredentialRepository
             )
             steps.run.getKeyId.getId should be (testData.response.getId)
             steps.run.isAttestationTrusted should be (false)
@@ -1732,26 +1976,67 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           result.getKeyId.getId should equal (RegistrationTestData.Tpm.PrivacyCa.response.getId)
         }
 
-        it("accept all test examples in the validExamples list.") {
-          RegistrationTestData.validExamples.foreach { testData =>
-            val rp = {
-              val builder = RelyingParty.builder()
-                .identity(testData.rpId)
-                .credentialRepository(emptyCredentialRepository)
-              testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
-              builder.build()
+        describe("accept all test examples in the validExamples list.") {
+          RegistrationTestData.defaultSettingsValidExamples.zipWithIndex.foreach { case (testData, i) =>
+            it(s"Succeeds for example index ${i}.") {
+              val rp = {
+                val builder = RelyingParty.builder()
+                  .identity(testData.rpId)
+                  .credentialRepository(emptyCredentialRepository)
+                testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
+                builder.build()
+              }
+
+              val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+                .request(testData.request)
+                .response(testData.response)
+                .build()
+              )
+
+              result.getKeyId.getId should equal (testData.response.getId)
             }
-
-            val result = rp.finishRegistration(FinishRegistrationOptions.builder()
-              .request(testData.request)
-              .response(testData.response)
-              .build()
-            )
-
-            result.getKeyId.getId should equal (testData.response.getId)
           }
         }
 
+        describe("generate pubKeyCredParams which") {
+          val rp = RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test RP").build())
+            .credentialRepository(emptyCredentialRepository)
+            .build()
+          val pkcco = rp.startRegistration(StartRegistrationOptions.builder()
+            .user(UserIdentity.builder()
+              .name("foo")
+              .displayName("Foo")
+              .id(ByteArray.fromHex("aabbccdd"))
+              .build())
+            .build())
+
+          val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+          describe("include") {
+            it("ES256.") {
+              pubKeyCredParams should contain (PublicKeyCredentialParameters.ES256)
+              pubKeyCredParams map (_.getAlg) should contain (COSEAlgorithmIdentifier.ES256)
+            }
+
+            it("EdDSA.") {
+              pubKeyCredParams should contain (PublicKeyCredentialParameters.EdDSA)
+              pubKeyCredParams map (_.getAlg) should contain (COSEAlgorithmIdentifier.EdDSA)
+            }
+
+            it("RS256.") {
+              pubKeyCredParams should contain (PublicKeyCredentialParameters.RS256)
+              pubKeyCredParams map (_.getAlg) should contain (COSEAlgorithmIdentifier.RS256)
+            }
+          }
+
+          describe("do not include") {
+            it("RS1.") {
+              pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
+              pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
+            }
+          }
+        }
       }
 
       describe("RelyingParty supports registering") {
@@ -1774,6 +2059,41 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
       }
 
+    }
+
+  }
+
+  describe("Additions in L2-WD02 editor's draft:") {
+
+    describe("Verify that the \"alg\" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.") {
+      it("An ES256 key succeeds if ES256 was a requested algorithm.") {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+        val result = finishRegistration(
+          testData = testData,
+          credentialRepository = emptyCredentialRepository,
+          allowUntrustedAttestation = true
+        ).run
+
+        result should not be null
+        result.getPublicKeyCose should not be null
+      }
+
+      it("An ES256 key fails if only RSA and EdDSA are allowed.") {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+        val result = Try(finishRegistration(
+          testData = testData.copy(
+            overrideRequest = Some(testData.request.toBuilder
+              .pubKeyCredParams(List(PublicKeyCredentialParameters.EdDSA, PublicKeyCredentialParameters.RS256).asJava)
+              .build()
+            )
+          ),
+          credentialRepository = emptyCredentialRepository,
+          allowUntrustedAttestation = true
+        ).run)
+
+        result shouldBe a [Failure[_]]
+        result.failed.get shouldBe an [IllegalArgumentException]
+      }
     }
 
   }
