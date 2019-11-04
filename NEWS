@@ -10,6 +10,7 @@ Bug fixes:
 
 `webauthn-server-attestation`:
 
+- New enum constant `Transport.LIGHTNING`
 - Fixed transports field of YubiKey NEO/NEO-n in `metadata.json`.
 - Added YubiKey 5Ci to `metadata.json`.
 - Most `deviceUrl` fields in `metadata.json` changed to point to stable
