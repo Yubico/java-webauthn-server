@@ -33,6 +33,8 @@ import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RelyingParty
+import com.yubico.webauthn.attestation.Transport.NFC
+import com.yubico.webauthn.attestation.Transport.USB
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.test.Helpers
@@ -57,7 +59,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
   describe("A RelyingParty with the default StandardMetadataService") {
 
     describe("correctly identifies") {
-      def check(expectedName: String, testData: RealExamples.Example) {
+      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]) {
         val rp = RelyingParty.builder()
           .identity(testData.rp)
           .credentialRepository(Helpers.CredentialRepository.empty)
@@ -78,68 +80,72 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         result.getAttestationMetadata.isPresent should be (true)
         result.getAttestationMetadata.get.getDeviceProperties.isPresent should be (true)
         result.getAttestationMetadata.get.getDeviceProperties.get().get("displayName") should equal (expectedName)
+        result.getAttestationMetadata.get.getTransports.isPresent should be (true)
+        result.getAttestationMetadata.get.getTransports.get.asScala should equal (transports)
       }
 
       it("a YubiKey NEO.") {
-        check("YubiKey NEO/NEO-n", RealExamples.YubiKeyNeo)
+        check("YubiKey NEO/NEO-n", RealExamples.YubiKeyNeo, Set(USB, NFC))
       }
       it("a YubiKey 4.") {
-        check("YubiKey 4/YubiKey 4 Nano", RealExamples.YubiKey4)
+        check("YubiKey 4/YubiKey 4 Nano", RealExamples.YubiKey4, Set(USB))
       }
       it("a YubiKey 5 NFC.") {
-        check("YubiKey 5 NFC", RealExamples.YubiKey5)
+        check("YubiKey 5 NFC", RealExamples.YubiKey5, Set(USB, NFC))
       }
       it("a YubiKey 5 Nano.") {
-        check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano)
+        check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano, Set(USB))
       }
       it("a YubiKey 5Ci.") {
-        check("YubiKey 5Ci", RealExamples.YubiKey5Ci)
+        check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB))
       }
       it("a Security Key by Yubico.") {
-        check("Security Key by Yubico", RealExamples.SecurityKey)
+        check("Security Key by Yubico", RealExamples.SecurityKey, Set(USB))
       }
       it("a Security Key 2 by Yubico.") {
-        check("Security Key by Yubico", RealExamples.SecurityKey2)
+        check("Security Key by Yubico", RealExamples.SecurityKey2, Set(USB))
       }
       it("a Security Key NFC by Yubico.") {
-        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc)
+        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc, Set(USB, NFC))
       }
     }
   }
 
   describe("The default AttestationResolver") {
     describe("successfully identifies") {
-      def check(expectedName: String, testData: RealExamples.Example) {
+      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]) {
         val cert = CertificateParser.parseDer(testData.attestationCert.getBytes)
         val resolved = StandardMetadataService.createDefaultAttestationResolver().resolve(cert)
         resolved.isPresent should be (true)
         resolved.get.getDeviceProperties.isPresent should be (true)
         resolved.get.getDeviceProperties.get.get("displayName") should equal (expectedName)
+        resolved.get.getTransports.isPresent should be (true)
+        resolved.get.getTransports.get.asScala should equal (transports)
       }
 
       it("a YubiKey NEO.") {
-        check("YubiKey NEO/NEO-n", RealExamples.YubiKeyNeo)
+        check("YubiKey NEO/NEO-n", RealExamples.YubiKeyNeo, Set(USB, NFC))
       }
       it("a YubiKey 4.") {
-        check("YubiKey 4/YubiKey 4 Nano", RealExamples.YubiKey4)
+        check("YubiKey 4/YubiKey 4 Nano", RealExamples.YubiKey4, Set(USB))
       }
       it("a YubiKey 5 NFC.") {
-        check("YubiKey 5 NFC", RealExamples.YubiKey5)
+        check("YubiKey 5 NFC", RealExamples.YubiKey5, Set(USB, NFC))
       }
       it("a YubiKey 5 Nano.") {
-        check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano)
+        check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano, Set(USB))
       }
       it("a YubiKey 5Ci.") {
-        check("YubiKey 5Ci", RealExamples.YubiKey5Ci)
+        check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB))
       }
       it("a Security Key by Yubico.") {
-        check("Security Key by Yubico", RealExamples.SecurityKey)
+        check("Security Key by Yubico", RealExamples.SecurityKey, Set(USB))
       }
       it("a Security Key 2 by Yubico.") {
-        check("Security Key by Yubico", RealExamples.SecurityKey2)
+        check("Security Key by Yubico", RealExamples.SecurityKey2, Set(USB))
       }
       it("a Security Key NFC by Yubico.") {
-        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc)
+        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc, Set(USB, NFC))
       }
     }
   }
