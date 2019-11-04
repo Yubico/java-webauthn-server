@@ -33,6 +33,7 @@ import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RelyingParty
+import com.yubico.webauthn.attestation.Transport.LIGHTNING
 import com.yubico.webauthn.attestation.Transport.NFC
 import com.yubico.webauthn.attestation.Transport.USB
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -97,7 +98,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano, Set(USB))
       }
       it("a YubiKey 5Ci.") {
-        check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB))
+        check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB, LIGHTNING))
       }
       it("a Security Key by Yubico.") {
         check("Security Key by Yubico", RealExamples.SecurityKey, Set(USB))
@@ -136,7 +137,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano, Set(USB))
       }
       it("a YubiKey 5Ci.") {
-        check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB))
+        check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB, LIGHTNING))
       }
       it("a Security Key by Yubico.") {
         check("Security Key by Yubico", RealExamples.SecurityKey, Set(USB))
