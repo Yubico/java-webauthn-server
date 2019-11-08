@@ -1,5 +1,9 @@
 == Version 1.6.0 (unreleased) ==
 
+Security fixes:
+
+- Bumped Jackson dependency to version 2.9.10.1 which has patched CVE-2019-16942
+
 `webauthn-server-core`:
 
 Bug fixes:
