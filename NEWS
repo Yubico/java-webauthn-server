@@ -1,5 +1,9 @@
 == Version 1.5.1 (unreleased) ==
 
+Security fixes:
+
+- Bumped Jackson dependency to version 2.9.10.1 which has patched CVE-2019-16942
+
 Bug fixes:
 
 - Fixed bug introduced in 1.4.0, which caused
