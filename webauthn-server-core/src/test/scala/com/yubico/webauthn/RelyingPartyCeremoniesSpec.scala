@@ -106,6 +106,9 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
       it("a YubiKey 5 Nano.") {
         check(RealExamples.YubiKey5Nano)
       }
+      it("a YubiKey 5Ci.") {
+        check(RealExamples.YubiKey5Ci)
+      }
       it("a Security Key by Yubico.") {
         check(RealExamples.SecurityKey)
       }

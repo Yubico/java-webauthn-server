@@ -50,7 +50,12 @@ public enum Transport {
     /**
      * The authenticator supports communication via Near Field Communication (NFC).
      */
-    NFC(8);
+    NFC(8),
+
+    /**
+     * The authenticator supports communication via Lightning.
+     */
+    LIGHTNING(16);
 
     private final int bitpos;
 
