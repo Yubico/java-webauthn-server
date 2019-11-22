@@ -50,7 +50,9 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
+import demo.webauthn.WebAuthnServer.DeregisterCredentialResult;
 import demo.webauthn.data.AssertionRequestWrapper;
+import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -59,6 +61,7 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import org.slf4j.Logger;
@@ -91,7 +94,6 @@ public class WebAuthnRestResource {
         }
     }
     private final class Index {
-        public final URL addCredential;
         public final URL authenticate;
         public final URL deleteAccount;
         public final URL deregister;
@@ -99,7 +101,6 @@ public class WebAuthnRestResource {
 
 
         public Index() throws MalformedURLException {
-            addCredential = uriInfo.getAbsolutePathBuilder().path("action").path("add-credential").build().toURL();
             authenticate = uriInfo.getAbsolutePathBuilder().path("authenticate").build().toURL();
             deleteAccount = uriInfo.getAbsolutePathBuilder().path("delete-account").build().toURL();
             deregister = uriInfo.getAbsolutePathBuilder().path("action").path("deregister").build().toURL();
@@ -151,14 +152,22 @@ public class WebAuthnRestResource {
         @NonNull @FormParam("username") String username,
         @NonNull @FormParam("displayName") String displayName,
         @FormParam("credentialNickname") String credentialNickname,
-        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
-    ) throws MalformedURLException {
+        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey,
+        @FormParam("sessionToken") String sessionTokenBase64
+    ) throws MalformedURLException, ExecutionException {
         logger.trace("startRegistration username: {}, displayName: {}, credentialNickname: {}, requireResidentKey: {}", username, displayName, credentialNickname, requireResidentKey);
         Either<String, RegistrationRequest> result = server.startRegistration(
             username,
-            displayName,
+            Optional.of(displayName),
             Optional.ofNullable(credentialNickname),
-            requireResidentKey
+            requireResidentKey,
+            Optional.ofNullable(sessionTokenBase64).map(base64 -> {
+                try {
+                    return ByteArray.fromBase64Url(base64);
+                } catch (Base64UrlException e) {
+                    throw new RuntimeException(e);
+                }
+            })
         );
 
         if (result.isRight()) {
@@ -186,7 +195,7 @@ public class WebAuthnRestResource {
 
     @Path("register/finish-u2f")
     @POST
-    public Response finishU2fRegistration(@NonNull String responseJson) {
+    public Response finishU2fRegistration(@NonNull String responseJson) throws ExecutionException {
         logger.trace("finishRegistration responseJson: {}", responseJson);
         Either<List<String>, WebAuthnServer.SuccessfulU2fRegistrationResult> result = server.finishU2fRegistration(responseJson);
         return finishResponse(
@@ -239,85 +248,13 @@ public class WebAuthnRestResource {
         );
     }
 
-    @Path("action/{action}/finish")
-    @POST
-    public Response finishAuthenticatedAction(
-        @NonNull @PathParam("action") String action,
-        @NonNull String responseJson
-    ) {
-        logger.trace("finishAuthenticatedAction: {}, responseJson: {}", action, responseJson);
-        Either<List<String>, ?> mappedResult = server.finishAuthenticatedAction(responseJson);
-
-        return finishResponse(
-            mappedResult,
-            "Action succeeded; further error message(s) were unfortunately lost to an internal server error.",
-            "finishAuthenticatedAction",
-            responseJson
-        );
-    }
-
-    private final class StartAuthenticatedActionResponse {
-        public final boolean success = true;
-        public final AssertionRequestWrapper request;
-        public final StartAuthenticatedActionActions actions = new StartAuthenticatedActionActions();
-        private StartAuthenticatedActionResponse(AssertionRequestWrapper request) throws MalformedURLException {
-            this.request = request;
-        }
-    }
-    private final class StartAuthenticatedActionActions {
-        public final URL finish = uriInfo.getAbsolutePathBuilder().path("finish").build().toURL();
-        public final URL finishU2f = uriInfo.getAbsolutePathBuilder().path("finish-u2f").build().toURL();
-        private StartAuthenticatedActionActions() throws MalformedURLException {
-        }
-    }
-
-    @Path("action/add-credential")
-    @POST
-    public Response addCredential(
-        @NonNull @FormParam("username") String username,
-        @FormParam("credentialNickname") String credentialNickname,
-        @FormParam("requireResidentKey") @DefaultValue("false") boolean requireResidentKey
-    ) throws MalformedURLException {
-        logger.trace("addCredential username: {}, credentialNickname: {}, requireResidentKey: {}", username, credentialNickname, requireResidentKey);
-
-        Either<List<String>, AssertionRequestWrapper> result = server.startAddCredential(username, Optional.ofNullable(credentialNickname), requireResidentKey, (RegistrationRequest request) -> {
-            try {
-                return Either.right(new StartRegistrationResponse(request));
-            } catch (MalformedURLException e) {
-                logger.error("Failed to construct registration response", e);
-                return Either.left(Arrays.asList("Failed to construct response. This is probably a bug in the server."));
-            }
-        });
-
-        if (result.isRight()) {
-            return startResponse("addCredential", new StartAuthenticatedActionResponse(result.right().get()));
-        } else {
-            return messagesJson(
-                Response.status(Status.BAD_REQUEST),
-                result.left().get()
-            );
-        }
-    }
-
-    @Path("action/add-credential/finish/finish")
-    @POST
-    public Response finishAddCredential(@NonNull String responseJson) {
-        return finishRegistration(responseJson);
-    }
-
-    @Path("action/add-credential/finish/finish-u2f")
-    @POST
-    public Response finishU2fAddCredential(@NonNull String responseJson) {
-        return finishU2fRegistration(responseJson);
-    }
-
     @Path("action/deregister")
     @POST
     public Response deregisterCredential(
-        @NonNull @FormParam("username") String username,
+        @NonNull @FormParam("sessionToken") String sessionTokenBase64,
         @NonNull @FormParam("credentialId") String credentialIdBase64
-    ) throws MalformedURLException {
-        logger.trace("deregisterCredential username: {}, credentialId: {}", username, credentialIdBase64);
+    ) throws MalformedURLException, Base64UrlException {
+        logger.trace("deregisterCredential sesion: {}, credentialId: {}", sessionTokenBase64, credentialIdBase64);
 
         final ByteArray credentialId;
         try {
@@ -329,20 +266,18 @@ public class WebAuthnRestResource {
             );
         }
 
-        Either<List<String>, AssertionRequestWrapper> result = server.deregisterCredential(username, credentialId, (credentialRegistration -> {
-            try {
-                return ((ObjectNode) jsonFactory.objectNode()
-                        .set("success", jsonFactory.booleanNode(true)))
-                        .set("droppedRegistration", jsonMapper.readTree(writeJson(credentialRegistration)))
-                ;
-            } catch (IOException e) {
-                logger.error("Failed to write response as JSON", e);
-                throw new RuntimeException(e);
-            }
-        }));
+        Either<List<String>, DeregisterCredentialResult> result = server.deregisterCredential(
+            ByteArray.fromBase64Url(sessionTokenBase64),
+            credentialId
+        );
 
         if (result.isRight()) {
-            return startResponse("deregisterCredential", new StartAuthenticatedActionResponse(result.right().get()));
+            return finishResponse(
+                result,
+                "Failed to deregister credential; further error message(s) were unfortunately lost to an internal server error.",
+                "deregisterCredential",
+                ""
+            );
         } else {
             return messagesJson(
                 Response.status(Status.BAD_REQUEST),

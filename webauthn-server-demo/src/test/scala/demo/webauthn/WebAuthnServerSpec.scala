@@ -40,17 +40,17 @@ import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.WebAuthnTestCodecs
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import demo.webauthn.data.RegistrationResponse
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.when
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatest.junit.JUnitRunner
@@ -77,7 +77,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
       it("has a start method whose output can be serialized to JSON.") {
         val server = newServer
-        val request = server.startRegistration(username, displayName, credentialNickname, requireResidentKey)
+        val request = server.startRegistration(username, Optional.of(displayName), credentialNickname, requireResidentKey, Optional.empty())
         val json = jsonMapper.writeValueAsString(request.right.get)
 
         json should not be null
@@ -90,7 +90,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
         val response = new RegistrationResponse(
           requestId,
-          RegistrationTestData.FidoU2f.BasicAttestation.response
+          RegistrationTestData.FidoU2f.BasicAttestation.response,
+          Optional.empty()
         )
 
         val authenticationAttestationResponseJson = """{"attestationObject":"v2hhdXRoRGF0YVikSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NBAAAFOQABAgMEBQYHCAkKCwwNDg8AIIjjhj6nH3qL2QF3tkUogilFykuaXjJTw35O4m-0NSX0pSJYIA5Nt8eYkLco-NQfKPXaA6dD9UfX_SHaYo-L-YQb78HsAyYBAiFYIOuzRl1o1Hem2jVRYhjkbSeIydhqLln9iltAgsDYjXRTIAFjZm10aGZpZG8tdTJmZ2F0dFN0bXS_Y3g1Y59ZAekwggHlMIIBjKADAgECAgIFOTAKBggqhkjOPQQDAjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTAeFw0xODA5MDYxNzQyMDBaFw0xODA5MDYxNzQyMDBaMGcxIzAhBgNVBAMMGll1YmljbyBXZWJBdXRobiB1bml0IHRlc3RzMQ8wDQYDVQQKDAZZdWJpY28xIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0ZXN0YXRpb24xCzAJBgNVBAYTAlNFMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEJ-8bFED9TnFhaArujgB0foNaV4gQIulP1mC5DO1wvSByw4eOyXujpPHkTw9y5e5J2J3N9coSReZJgBRpvFzYD6MlMCMwIQYLKwYBBAGC5RwBAQQEEgQQAAECAwQFBgcICQoLDA0ODzAKBggqhkjOPQQDAgNHADBEAiB4bL25EH06vPBOVnReObXrS910ARVOLJPPnKNoZbe64gIgX1Rg5oydH45zEMEVDjNPStwv6Z3nE_isMeY-szlQhv3_Y3NpZ1hHMEUCIQDBs1nbSuuKQ6yoHMQoRp8eCT_HZvR45F_aVP6qFX_wKgIgMCL58bv-crkLwTwiEL9ibCV4nDYM-DZuW5_BFCJbcxn__w","clientDataJSON":"eyJjaGFsbGVuZ2UiOiJBQUVCQWdNRkNBMFZJamRaRUdsNVlscyIsIm9yaWdpbiI6ImxvY2FsaG9zdCIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUiLCJ0b2tlbkJpbmRpbmciOnsic3RhdHVzIjoic3VwcG9ydGVkIn19"}"""
@@ -157,16 +158,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
               .build()
         ))
 
-        val userStorage = makeUserStorage(testData)
-        when(userStorage.getUserHandleForUsername(testData.userId.getName)).thenReturn(Some(testData.userId.getId).asJava)
-        when(userStorage.lookup(testData.response.getId, testData.userId.getId)).thenReturn(Some(RegisteredCredential.builder()
-          .credentialId(testData.response.getId)
-          .userHandle(testData.userId.getId)
-          .publicKeyCose(WebAuthnTestCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey]))
-          .signatureCount(0)
-          .build()
-        ).asJava)
-
+        val userStorage = makeUserStorage(testData, credentialPubkey = Some(WebAuthnTestCodecs.ecPublicKeyToCose(credentialKey.getPublic.asInstanceOf[ECPublicKey])))
         new WebAuthnServer(userStorage, newCache(), assertionRequests, rpId, origins, appId)
       }
     }
@@ -181,9 +173,10 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
     new WebAuthnServer(userStorage, newCache(), newCache(), rpId, origins, appId)
   }
 
-  private def makeUserStorage(testData: RegistrationTestData) = {
-    val userStorage = mock(classOf[RegistrationStorage])
-
+  private def makeUserStorage(
+    testData: RegistrationTestData,
+    credentialPubkey: Option[ByteArray] = None
+  ) = {
     val registrations = util.Arrays.asList(CredentialRegistration.builder()
       .signatureCount(testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter)
       .userIdentity(testData.request.getUser)
@@ -197,9 +190,30 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       )
       .build())
 
-    when(userStorage.getRegistrationsByUsername(testData.userId.getName)).thenReturn(registrations)
-
-    userStorage
+    new RegistrationStorage {
+      override def addRegistrationByUsername(username: String, reg: CredentialRegistration): Boolean = ???
+      override def getRegistrationsByUsername(username: String): java.util.Collection[CredentialRegistration] =
+        if (username == testData.userId.getName) registrations else Nil.asJava
+      override def getRegistrationByUsernameAndCredentialId(username: String, credentialId: ByteArray): Optional[CredentialRegistration] = ???
+      override def getRegistrationsByUserHandle(userHandle: ByteArray): java.util.Collection[CredentialRegistration] = ???
+      override def removeRegistrationByUsername(username: String, credentialRegistration: CredentialRegistration): Boolean = ???
+      override def removeAllRegistrations(username: String): Boolean = ???
+      override def updateSignatureCount(result: AssertionResult): Unit = {}
+      override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+      override def getUserHandleForUsername(username: String): Optional[ByteArray] =
+        if (username == testData.userId.getName) Optional.of(testData.userId.getId) else Optional.empty()
+      override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
+      override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] =
+        if ((credentialId, userHandle) == (testData.response.getId, testData.userId.getId))
+          Optional.of(RegisteredCredential.builder()
+            .credentialId(testData.response.getId)
+            .userHandle(testData.userId.getId)
+            .publicKeyCose(credentialPubkey getOrElse testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
+            .signatureCount(0)
+            .build())
+        else Optional.empty()
+      override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
+    }
   }
 
   private def newServerWithRegistrationRequest(testData: RegistrationTestData) = {
@@ -209,7 +223,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       testData.userId.getName,
       credentialNickname,
       requestId,
-      testData.request
+      testData.request,
+      Optional.empty()
     ))
 
     new WebAuthnServer(new InMemoryRegistrationStorage, registrationRequests, newCache(), rpId, origins, appId)

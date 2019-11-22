@@ -21,7 +21,7 @@ class ComparableUtilSpec extends FunSpec with Matchers with GeneratorDrivenPrope
   } yield (a, b)
 
   def toJava(s: Set[Int]): java.util.SortedSet[Integer] =
-    new java.util.TreeSet[Integer](s.map(new Integer(_)).asJava)
+    new java.util.TreeSet[Integer](s.map(_.asInstanceOf[java.lang.Integer]).asJava)
 
   describe("compareComparableSets") {
     it("sorts differently-sized sets in order of cardinality.") {

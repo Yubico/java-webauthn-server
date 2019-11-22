@@ -32,7 +32,6 @@ import java.security.PrivateKey
 import java.security.SignatureException
 import java.security.cert.X509Certificate
 import java.security.interfaces.RSAPublicKey
-import java.util.Optional
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
@@ -50,17 +49,15 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.Generators._
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
-import com.yubico.webauthn.exception.RegistrationFailedException
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.test.Helpers
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -90,29 +87,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
   def flipByte(index: Int, bytes: ByteArray): ByteArray = editByte(bytes, index, b => (0xff ^ b).toByte)
   def editByte(bytes: ByteArray, index: Int, updater: Byte => Byte): ByteArray = new ByteArray(bytes.getBytes.updated(index, updater(bytes.getBytes()(index))))
 
-  private val emptyCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] = None.asJava
-    override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = None.asJava
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = None.asJava
-    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = Set.empty.asJava
-  }
-
-  private val unimplementedCredentialRepository = new CredentialRepository {
-    override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = ???
-    override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-    override def getUsernameForUserHandle(userHandleBase64: ByteArray): Optional[String] = ???
-    override def lookup(credentialId: ByteArray, userHandle: ByteArray): Optional[RegisteredCredential] = ???
-    override def lookupAll(credentialId: ByteArray): java.util.Set[RegisteredCredential] = ???
-  }
-
   private def finishRegistration(
     allowOriginPort: Boolean = false,
     allowOriginSubdomain: Boolean = false,
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
     credentialId: Option[ByteArray] = None,
-    credentialRepository: CredentialRepository = unimplementedCredentialRepository,
+    credentialRepository: CredentialRepository = Helpers.CredentialRepository.unimplemented,
     metadataService: Option[MetadataService] = None,
     origins: Option[Set[String]] = None,
     preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
@@ -1792,32 +1773,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         val testData = RegistrationTestData.FidoU2f.SelfAttestation
 
         it("Registration is aborted if the given credential ID is already registered.") {
-          val credentialRepository = new CredentialRepository {
-            override def lookup(id: ByteArray, uh: ByteArray) = Some(
-              RegisteredCredential.builder()
-                .credentialId(id)
-                .userHandle(uh)
-                .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
-                .signatureCount(1337)
-                .build()
-            ).asJava
-
-            override def lookupAll(id: ByteArray) = id match {
-              case id if id == testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialId =>
-                Set(
-                  RegisteredCredential.builder()
-                    .credentialId(id)
-                    .userHandle(testData.request.getUser.getId)
-                    .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
-                    .signatureCount(1337)
-                    .build()
-                ).asJava
-              case _ => Set.empty.asJava
-            }
-            override def getCredentialIdsForUsername(username: String) = ???
-            override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-            override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-          }
+          val credentialRepository = com.yubico.webauthn.test.Helpers.CredentialRepository.withUser(
+            testData.userId,
+            RegisteredCredential.builder()
+              .credentialId(testData.response.getId)
+              .userHandle(testData.userId.getId)
+              .publicKeyCose(testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey)
+              .signatureCount(1337)
+              .build()
+          )
 
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
@@ -1832,18 +1796,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         }
 
         it("Registration proceeds if the given credential ID is not already registered.") {
-          val credentialRepository = new CredentialRepository {
-            override def lookup(id: ByteArray, uh: ByteArray) = None.asJava
-            override def lookupAll(id: ByteArray) = Set.empty.asJava
-            override def getCredentialIdsForUsername(username: String) = ???
-            override def getUserHandleForUsername(username: String): Optional[ByteArray] = ???
-            override def getUsernameForUserHandle(userHandle: ByteArray): Optional[String] = ???
-          }
-
           val steps = finishRegistration(
             allowUntrustedAttestation = true,
             testData = testData,
-            credentialRepository = credentialRepository
+            credentialRepository = Helpers.CredentialRepository.empty
           )
           val step: FinishRegistrationSteps#Step17 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -1858,7 +1814,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             metadataService = Some(new TestMetadataService(Some(Attestation.builder().trusted(true).build()))),
-            credentialRepository = emptyCredentialRepository
+            credentialRepository = Helpers.CredentialRepository.empty
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
           steps.run.isAttestationTrusted should be (true)
@@ -1871,7 +1827,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
-            credentialRepository = emptyCredentialRepository
+            credentialRepository = Helpers.CredentialRepository.empty
           )
           steps.run.getKeyId.getId should be (testData.response.getId)
           steps.run.isAttestationTrusted should be (false)
@@ -1882,7 +1838,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
-            credentialRepository = emptyCredentialRepository
+            credentialRepository = Helpers.CredentialRepository.empty
           )
           val result = Try(steps.run)
           result.failed.get shouldBe an [IllegalArgumentException]
@@ -1900,7 +1856,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               testData = testData,
               metadataService = None,
               allowUntrustedAttestation = true,
-              credentialRepository = emptyCredentialRepository
+              credentialRepository = Helpers.CredentialRepository.empty
             )
             steps.run.getKeyId.getId should be (testData.response.getId)
             steps.run.isAttestationTrusted should be (false)
@@ -1933,7 +1889,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
 
         val rp = RelyingParty.builder()
           .identity(RelyingPartyIdentity.builder().id("localhost").name("Test party").build())
-          .credentialRepository(emptyCredentialRepository)
+          .credentialRepository(Helpers.CredentialRepository.empty)
           .build()
 
         val request = rp.startRegistration(StartRegistrationOptions.builder()
@@ -1982,7 +1938,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               val rp = {
                 val builder = RelyingParty.builder()
                   .identity(testData.rpId)
-                  .credentialRepository(emptyCredentialRepository)
+                  .credentialRepository(Helpers.CredentialRepository.empty)
                 testData.origin.foreach({ o => builder.origins(Set(o).asJava) })
                 builder.build()
               }
@@ -2001,7 +1957,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         describe("generate pubKeyCredParams which") {
           val rp = RelyingParty.builder()
             .identity(RelyingPartyIdentity.builder().id("localhost").name("Test RP").build())
-            .credentialRepository(emptyCredentialRepository)
+            .credentialRepository(Helpers.CredentialRepository.empty)
             .build()
           val pkcco = rp.startRegistration(StartRegistrationOptions.builder()
             .user(UserIdentity.builder()
@@ -2043,7 +1999,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         it("a real packed attestation with an RSA key.") {
           val rp = RelyingParty.builder()
             .identity(RelyingPartyIdentity.builder().id("demo3.yubico.test").name("Yubico WebAuthn demo").build())
-            .credentialRepository(emptyCredentialRepository)
+            .credentialRepository(Helpers.CredentialRepository.empty)
             .origins(Set("https://demo3.yubico.test:8443").asJava)
             .build()
 
@@ -2070,7 +2026,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
         val testData = RegistrationTestData.FidoU2f.BasicAttestation
         val result = finishRegistration(
           testData = testData,
-          credentialRepository = emptyCredentialRepository,
+          credentialRepository = Helpers.CredentialRepository.empty,
           allowUntrustedAttestation = true
         ).run
 
@@ -2087,7 +2043,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorD
               .build()
             )
           ),
-          credentialRepository = emptyCredentialRepository,
+          credentialRepository = Helpers.CredentialRepository.empty,
           allowUntrustedAttestation = true
         ).run)
 

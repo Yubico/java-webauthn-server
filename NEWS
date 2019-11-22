@@ -1,3 +1,26 @@
+== Version 1.6.0 ==
+
+Security fixes:
+
+- Bumped Jackson dependency to version 2.9.10.1 which has patched CVE-2019-16942
+
+`webauthn-server-core`:
+
+Bug fixes:
+
+- Fixed bug introduced in 1.4.0, which caused
+  `RegistrationResult.attestationMetadata` to always be empty.
+
+
+`webauthn-server-attestation`:
+
+- New enum constant `Transport.LIGHTNING`
+- Fixed transports field of YubiKey NEO/NEO-n in `metadata.json`.
+- Added YubiKey 5Ci to `metadata.json`.
+- Most `deviceUrl` fields in `metadata.json` changed to point to stable
+  addresses in Yubico knowledge base instead of dead redirects in store.
+
+
 == Version 1.5.0 ==
 
 Changes:
