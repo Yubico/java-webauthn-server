@@ -1,4 +1,5 @@
 name: static code analysis
+# Documentation: https://github.com/Yubico/yes-static-code-analysis
 
 on:
   push:
