@@ -30,7 +30,7 @@ if (publishEnabled) {
 }
 
 wrapper {
-  gradleVersion = '5.4'
+  gradleVersion = '6.1'
 }
 
 allprojects {
