@@ -46,6 +46,9 @@ dependencies {
     addVersion('org.scalatest:scalatest_2.13'),
   )
 
+  testRuntimeOnly(
+    addVersion('ch.qos.logback:logback-classic'),
+  )
 }
 
 
