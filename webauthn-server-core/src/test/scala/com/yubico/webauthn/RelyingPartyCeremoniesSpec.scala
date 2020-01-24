@@ -33,9 +33,9 @@ import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])
@@ -50,7 +50,7 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
   describe("The default RelyingParty settings") {
 
     describe("can register and then authenticate") {
-      def check(testData: RealExamples.Example) {
+      def check(testData: RealExamples.Example): Unit = {
         val registrationRp = newRp(testData, Helpers.CredentialRepository.empty)
 
         val registrationResult = registrationRp.finishRegistration(FinishRegistrationOptions.builder()

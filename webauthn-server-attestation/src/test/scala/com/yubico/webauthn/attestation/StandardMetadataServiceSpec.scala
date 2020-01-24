@@ -34,16 +34,15 @@ import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
-import com.yubico.webauthn.WebAuthnCodecs
-import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERBitString
+import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
-import org.scalatest.Matchers
 import org.scalatest.FunSpec
-import org.scalatest.junit.JUnitRunner
+import org.scalatest.Matchers
+import org.scalatestplus.junit.JUnitRunner
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])

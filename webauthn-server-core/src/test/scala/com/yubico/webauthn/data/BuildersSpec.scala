@@ -36,14 +36,14 @@ import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.reflectiveCalls
 
 
 @RunWith(classOf[JUnitRunner])
-class BuildersSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class BuildersSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   type ToBuilder[A] = { def toBuilder(): { def build(): A } }
 

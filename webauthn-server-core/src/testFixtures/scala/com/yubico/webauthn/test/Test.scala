@@ -42,7 +42,7 @@ import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.WebAuthnTestCodecs
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 object Test extends App {

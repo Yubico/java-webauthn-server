@@ -27,7 +27,7 @@ package com.yubico.webauthn.data
 import org.junit.runner.RunWith
 import org.scalatest.Matchers
 import org.scalatest.FunSpec
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 
 @RunWith(classOf[JUnitRunner])

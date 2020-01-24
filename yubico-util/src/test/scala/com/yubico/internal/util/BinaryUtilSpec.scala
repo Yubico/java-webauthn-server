@@ -26,14 +26,14 @@ package com.yubico.internal.util
 
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
-import org.scalatest.Matchers
 import org.scalatest.FunSpec
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.Matchers
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 
 @RunWith(classOf[JUnitRunner])
-class BinaryUtilSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class BinaryUtilSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   describe("BinaryUtil.fromHex") {
 

@@ -66,20 +66,20 @@ import org.mockito.Mockito
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyRegistrationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private def toJsonObject(obj: Map[String, JsonNode]): JsonNode = jsonFactory.objectNode().setAll(obj.asJava)
-  private def toJson(obj: Map[String, String]): JsonNode = toJsonObject(obj.mapValues(jsonFactory.textNode))
+  private def toJson(obj: Map[String, String]): JsonNode = toJsonObject(obj.view.mapValues(jsonFactory.textNode).toMap)
 
   private val crypto = new BouncyCastleCrypto
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)

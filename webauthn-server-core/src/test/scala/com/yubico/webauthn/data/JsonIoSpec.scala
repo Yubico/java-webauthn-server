@@ -44,12 +44,12 @@ import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 
 @RunWith(classOf[JUnitRunner])
-class JsonIoSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   def json: ObjectMapper = new ObjectMapper()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)

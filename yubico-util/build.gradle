@@ -24,14 +24,14 @@ dependencies {
 
   testFixturesApi(
     addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.12'),
+    addVersion('org.scalacheck:scalacheck_2.13'),
   )
 
   testImplementation(
     addVersion('junit:junit'),
     addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.12'),
-    addVersion('org.scalatest:scalatest_2.12'),
+    addVersion('org.scalacheck:scalacheck_2.13'),
+    addVersion('org.scalatest:scalatest_2.13'),
   )
 }
 
