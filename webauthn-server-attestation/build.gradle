@@ -24,7 +24,7 @@ dependencies {
   )
 
   testImplementation(
-    project(':yubico-util-scala'),
+    testFixtures(project(':yubico-util')),
     testFixtures(project(':webauthn-server-core')),
     addVersion('junit:junit'),
     addVersion('org.mockito:mockito-core'),
