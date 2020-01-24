@@ -33,6 +33,10 @@ dependencies {
   testRuntimeOnly(
     'ch.qos.logback:logback-classic',
   )
+
+  testRuntimeOnly(
+    'ch.qos.logback:logback-classic',
+  )
 }
 
 

@@ -40,6 +40,10 @@ dependencies {
     // Transitive dependency from :webauthn-server-core:test
     'org.bouncycastle:bcpkix-jdk15on',
   )
+
+  testRuntimeOnly(
+    'ch.qos.logback:logback-classic',
+  )
 }
 
 
