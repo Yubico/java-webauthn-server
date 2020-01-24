@@ -187,9 +187,7 @@ subprojects { project ->
     publishing {
       publications {
         jars(MavenPublication) {
-          from components.java
-          artifact javadocJar
-          artifact sourcesJar
+          setArtifacts([jar, javadocJar, sourcesJar])
 
           pom {
             name = project.name
