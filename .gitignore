@@ -9,6 +9,7 @@ out/
 *.iml
 *.iws
 */out/
+*/bin/
 .attach_pid*
 
 # Mac
