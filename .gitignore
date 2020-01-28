@@ -3,13 +3,12 @@
 .project
 .settings/
 
-# Intellij
+# IntelliJ
 .idea/
+bin/
 out/
 *.iml
 *.iws
-*/out/
-*/bin/
 .attach_pid*
 
 # Mac
