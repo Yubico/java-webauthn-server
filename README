@@ -26,7 +26,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.5.0</version>
+  <version>1.6.0</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -34,7 +34,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.5.0'
+compile 'com.yubico:webauthn-server-core:1.6.0'
 ----------
 
 
