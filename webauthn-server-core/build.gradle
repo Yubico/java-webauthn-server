@@ -61,7 +61,7 @@ jar {
 }
 
 pitest {
-  pitestVersion = '1.4.9'
+  pitestVersion = '1.4.11'
 
   timestampedReports = false
   outputFormats = ['XML', 'HTML']
