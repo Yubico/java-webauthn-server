@@ -42,9 +42,9 @@ import com.yubico.webauthn.test.Helpers
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])
@@ -60,7 +60,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
   describe("A RelyingParty with the default StandardMetadataService") {
 
     describe("correctly identifies") {
-      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]) {
+      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]): Unit = {
         val rp = RelyingParty.builder()
           .identity(testData.rp)
           .credentialRepository(Helpers.CredentialRepository.empty)
@@ -114,7 +114,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
 
   describe("The default AttestationResolver") {
     describe("successfully identifies") {
-      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]) {
+      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]): Unit = {
         val cert = CertificateParser.parseDer(testData.attestationCert.getBytes)
         val resolved = StandardMetadataService.createDefaultAttestationResolver().resolve(cert)
         resolved.isPresent should be (true)

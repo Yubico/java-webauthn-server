@@ -1,5 +1,6 @@
 plugins {
   id 'java-library'
+  id 'java-test-fixtures'
   id 'scala'
   id 'info.solidsoft.pitest'
 }
@@ -24,17 +25,30 @@ dependencies {
     addVersion('org.slf4j:slf4j-api'),
   )
 
-  testImplementation(
-    project(':yubico-util-scala'),
-    addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
-    addVersion('junit:junit'),
-    addVersion('org.bouncycastle:bcpkix-jdk15on'),
-    addVersion('org.mockito:mockito-core'),
+  testFixturesApi(
+    addVersion('com.augustcellars.cose:cose-java'),
     addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.12'),
-    addVersion('org.scalatest:scalatest_2.12'),
+    addVersion('org.scalacheck:scalacheck_2.13'),
   )
 
+  testFixturesImplementation(
+    testFixtures(project(':yubico-util')),
+    addVersion('com.upokecenter:cbor'),
+    addVersion('org.bouncycastle:bcpkix-jdk15on'),
+  )
+
+  testImplementation(
+    testFixtures(project(':yubico-util')),
+    addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
+    addVersion('junit:junit'),
+    addVersion('org.mockito:mockito-core'),
+    addVersion('org.scala-lang:scala-library'),
+    addVersion('org.scalatest:scalatest_2.13'),
+  )
+
+  testRuntimeOnly(
+    addVersion('ch.qos.logback:logback-classic'),
+  )
 }
 
 
@@ -63,6 +77,10 @@ jar {
 pitest {
   pitestVersion = '1.4.11'
 
+  // Workaround to an incompatibility issue between Gradle and gradle-pitest
+  // See https://github.com/szpak/gradle-pitest-plugin/issues/173
+  testSourceSets.add(sourceSets.main)
+
   timestampedReports = false
   outputFormats = ['XML', 'HTML']
 
@@ -75,3 +93,6 @@ pitest {
   ]
 }
 
+// Workaround to an incompatibility issue between Gradle and gradle-pitest
+// See https://github.com/szpak/gradle-pitest-plugin/issues/173
+task mainClasses {}

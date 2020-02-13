@@ -27,11 +27,12 @@ package com.yubico.webauthn.data
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
-class AuthenticatorTransportSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class AuthenticatorTransportSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   describe("The AuthenticatorTransport type") {
 

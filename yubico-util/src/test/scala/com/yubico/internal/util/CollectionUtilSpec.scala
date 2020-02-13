@@ -4,11 +4,11 @@ import com.yubico.scalacheck.gen.JavaGenerators._
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
-class CollectionUtilSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class CollectionUtilSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   describe("immutableMap") {
     it("returns a Map instance which throws exceptions on modification attempts.") {

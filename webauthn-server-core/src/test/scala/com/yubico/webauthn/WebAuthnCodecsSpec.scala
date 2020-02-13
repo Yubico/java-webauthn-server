@@ -30,16 +30,16 @@ import com.yubico.webauthn.data.ByteArray
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import org.scalatest.Matchers
 import org.scalatest.FunSpec
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.Matchers
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.util.Try
 
 
 @RunWith(classOf[JUnitRunner])
-class WebAuthnCodecsSpec  extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class WebAuthnCodecsSpec  extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   private val javaCryptoProvider: java.security.Provider = new BouncyCastleCrypto().getProvider
 

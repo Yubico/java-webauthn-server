@@ -31,22 +31,21 @@ import java.util.Optional
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.scala.JavaConverters._
-import com.yubico.webauthn.data.CollectedClientData
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
-import com.yubico.webauthn.data.PublicKeyCredential
-import com.yubico.webauthn.data.RelyingPartyIdentity
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
+import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.RelyingPartyIdentity
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
-import scala.collection.JavaConverters._
-import scala.util.Success
+import scala.jdk.CollectionConverters._
 import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 

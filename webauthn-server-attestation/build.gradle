@@ -17,24 +17,24 @@ dependencies {
 
   implementation(
     project(':yubico-util'),
-    addVersion('com.google.guava:guava'),
     addVersion('com.fasterxml.jackson.core:jackson-databind'),
+    addVersion('com.google.guava:guava'),
     addVersion('org.bouncycastle:bcprov-jdk15on'),
     addVersion('org.slf4j:slf4j-api'),
   )
 
   testImplementation(
-    project(':webauthn-server-core').sourceSets.test.output,
-    project(':yubico-util-scala'),
+    testFixtures(project(':yubico-util')),
+    testFixtures(project(':webauthn-server-core')),
     addVersion('junit:junit'),
     addVersion('org.mockito:mockito-core'),
     addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.12'),
-    addVersion('org.scalatest:scalatest_2.12'),
+    addVersion('org.scalacheck:scalacheck_2.13'),
+    addVersion('org.scalatest:scalatest_2.13'),
   )
+
   testRuntimeOnly(
-    // Transitive dependency from :webauthn-server-core:test
-    addVersion('org.bouncycastle:bcpkix-jdk15on'),
+    addVersion('ch.qos.logback:logback-classic'),
   )
 }
 

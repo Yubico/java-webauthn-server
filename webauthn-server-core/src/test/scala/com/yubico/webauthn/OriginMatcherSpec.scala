@@ -32,13 +32,13 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 @RunWith(classOf[JUnitRunner])
-class OriginMatcherSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   private def urlWithMaybePort(protocol: String, host: String, port: Option[Int], file: String): URL =
     port

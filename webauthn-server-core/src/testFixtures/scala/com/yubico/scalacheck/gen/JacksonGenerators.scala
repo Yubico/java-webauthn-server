@@ -32,7 +32,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 object JacksonGenerators {
