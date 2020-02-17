@@ -186,7 +186,7 @@ function getRegisterRequest(urls, username, displayName, credentialNickname, req
   return fetch(urls.register, {
     body: new URLSearchParams({
       username,
-      displayName,
+      displayName: displayName || username,
       credentialNickname,
       requireResidentKey,
       sessionToken: session.sessionToken || null,
@@ -522,6 +522,11 @@ function deregister() {
     });
 }
 
+function usernameChanged(event) {
+  const displayNameField = document.getElementById("displayName");
+  displayNameField.placeholder = event.target.value;
+}
+
 function init() {
   hideDeviceInfo();
   return false;
@@ -548,7 +553,7 @@ window.onload = init;
     <form class="horizontal">
       <div class="row">
         <label for="username">Username:</label>
-        <div><input type="text" id="username"/></div>
+        <div><input type="text" id="username" onInput="javascript:usernameChanged(event)" /></div>
       </div>
       <div class="row">
         <label for="displayName">Display name:</label>
