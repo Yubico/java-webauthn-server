@@ -1,3 +1,11 @@
+== Version 1.6.1 (unreleased) ==
+
+Security fixes:
+
+- Bumped Jackson dependency to version 2.9.10.3 in response to CVE-2019-20330
+  and CVE-2020-8840
+
+
 == Version 1.6.0 ==
 
 Security fixes:
