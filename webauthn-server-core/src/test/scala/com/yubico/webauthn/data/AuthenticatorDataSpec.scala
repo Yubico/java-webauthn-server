@@ -32,7 +32,7 @@ import com.yubico.webauthn.WebAuthnTestCodecs
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
 import scala.util.Failure
 import scala.util.Try

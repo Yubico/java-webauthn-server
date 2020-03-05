@@ -30,27 +30,26 @@ import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.UserIdentity
-import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
-import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import com.yubico.webauthn.data.Generators._
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyStartOperationSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class RelyingPartyStartOperationSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   def credRepo(credentials: Set[PublicKeyCredentialDescriptor]): CredentialRepository = new CredentialRepository {
     override def getCredentialIdsForUsername(username: String): java.util.Set[PublicKeyCredentialDescriptor] = credentials.asJava
@@ -127,7 +126,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
           .user(userId)
           .timeout(Optional.empty[java.lang.Long])
           .build())
-      pkcco.getTimeout.asScala shouldBe 'empty
+      pkcco.getTimeout.asScala shouldBe empty
     }
 
     it("allows setting the timeout to a positive value.") {
@@ -224,7 +223,7 @@ class RelyingPartyStartOperationSpec extends FunSpec with Matchers with Generato
         StartAssertionOptions.builder()
           .timeout(Optional.empty[java.lang.Long])
           .build())
-      req.getPublicKeyCredentialRequestOptions.getTimeout.asScala shouldBe 'empty
+      req.getPublicKeyCredentialRequestOptions.getTimeout.asScala shouldBe empty
     }
 
     it("allows setting the timeout to a positive value.") {

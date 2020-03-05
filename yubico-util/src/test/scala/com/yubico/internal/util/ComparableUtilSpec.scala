@@ -1,18 +1,18 @@
 package com.yubico.internal.util
 
 import org.junit.runner.RunWith
-import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalacheck.Gen
+import org.scalatestplus.junit.JUnitRunner
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import _root_.scala.collection.JavaConverters._
+import _root_.scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])
-class ComparableUtilSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class ComparableUtilSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   def sameSizeSets[T](implicit gent: Gen[T]): Gen[(Set[T], Set[T])] = for {
     n: Int <- Gen.chooseNum(0, 100)

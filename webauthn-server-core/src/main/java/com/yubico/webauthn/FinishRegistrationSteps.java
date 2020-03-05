@@ -507,6 +507,7 @@ final class FinishRegistrationSteps {
 
         public Optional<AttestationTrustResolver> trustResolver() {
             switch (attestationType) {
+                case NONE:
                 case SELF_ATTESTATION:
                     return Optional.empty();
 
@@ -525,9 +526,6 @@ final class FinishRegistrationSteps {
                                 attestationType, attestation.getFormat()
                             ));
                     }
-
-                case NONE:
-                    return Optional.empty();
 
                 default:
                     throw new UnsupportedOperationException("Attestation type not implemented: " + attestationType);

@@ -10,7 +10,7 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.RegistrationResult
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 object Helpers {

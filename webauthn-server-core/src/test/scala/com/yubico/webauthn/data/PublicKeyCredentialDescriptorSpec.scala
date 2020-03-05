@@ -24,13 +24,13 @@
 
 package com.yubico.webauthn.data
 
-import org.scalatest.Matchers
+import com.yubico.webauthn.data.Generators._
 import org.scalatest.FunSpec
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import Generators._
+import org.scalatest.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 
-class PublicKeyCredentialDescriptorSpec extends FunSpec with Matchers with GeneratorDrivenPropertyChecks {
+class PublicKeyCredentialDescriptorSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
 
   describe("PublicKeyCredentialDescriptor") {
 

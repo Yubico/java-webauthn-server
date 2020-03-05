@@ -4,7 +4,6 @@ java-webauthn-server
 :toc-placement: macro
 :toc-title:
 
-image:https://travis-ci.org/Yubico/java-webauthn-server.svg?branch=master["Build Status", link="https://travis-ci.org/Yubico/java-webauthn-server"]
 image:https://github.com/Yubico/java-webauthn-server/workflows/build/badge.svg["Build Status", link="https://github.com/Yubico/java-webauthn-server/actions"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
 
@@ -26,7 +25,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.5.0</version>
+  <version>1.6.1</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -34,7 +33,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.5.0'
+compile 'com.yubico:webauthn-server-core:1.6.1'
 ----------
 
 

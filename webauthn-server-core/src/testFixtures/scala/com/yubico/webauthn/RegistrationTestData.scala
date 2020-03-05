@@ -55,7 +55,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import org.bouncycastle.asn1.x500.X500Name
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -287,7 +287,7 @@ case class RegistrationTestData(
     )
   })
 
-  protected def validate() {
+  protected def validate(): Unit = {
     val alg = WebAuthnCodecs.getCoseKeyAlg(response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey).get
     assert(alg == this.alg, s"Expected alg: ${this.alg}; was: ${alg}")
   }

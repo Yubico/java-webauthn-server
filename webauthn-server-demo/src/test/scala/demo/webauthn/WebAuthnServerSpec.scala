@@ -53,9 +53,9 @@ import demo.webauthn.data.RegistrationResponse
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
-import org.scalatest.junit.JUnitRunner
+import org.scalatestplus.junit.JUnitRunner
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])

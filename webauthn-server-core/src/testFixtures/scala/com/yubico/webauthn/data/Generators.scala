@@ -47,7 +47,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 
 object Generators {
@@ -185,7 +185,7 @@ object Generators {
 
   implicit val arbitraryAuthenticatorTransport: Arbitrary[AuthenticatorTransport] = Arbitrary(
     Gen.oneOf(
-      Gen.oneOf(AuthenticatorTransport.values()),
+      Gen.oneOf(AuthenticatorTransport.values().toIndexedSeq),
       arbitrary[String] map AuthenticatorTransport.of
     ))
 
@@ -238,7 +238,7 @@ object Generators {
     }
   } yield new ByteArray(JacksonCodecs.json().writeValueAsBytes(json))
 
-  implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values()))
+  implicit val arbitraryCOSEAlgorithmIdentifier: Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(Gen.oneOf(COSEAlgorithmIdentifier.values().toIndexedSeq))
 
   implicit val arbitraryPublicKeyCredentialWithAssertion: Arbitrary[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]] = Arbitrary(for {
     id <- arbitrary[ByteArray]
