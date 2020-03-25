@@ -77,10 +77,6 @@ jar {
 pitest {
   pitestVersion = '1.4.11'
 
-  // Workaround to an incompatibility issue between Gradle and gradle-pitest
-  // See https://github.com/szpak/gradle-pitest-plugin/issues/173
-  testSourceSets.add(sourceSets.main)
-
   timestampedReports = false
   outputFormats = ['XML', 'HTML']
 
@@ -93,6 +89,3 @@ pitest {
   ]
 }
 
-// Workaround to an incompatibility issue between Gradle and gradle-pitest
-// See https://github.com/szpak/gradle-pitest-plugin/issues/173
-task mainClasses {}
