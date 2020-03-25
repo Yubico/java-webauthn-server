@@ -1,6 +1,5 @@
 plugins {
   id 'java-library'
-  id 'java-test-fixtures'
   id 'scala'
 }
 
@@ -22,12 +21,8 @@ dependencies {
     addVersion('org.slf4j:slf4j-api'),
   )
 
-  testFixturesApi(
-    addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.13'),
-  )
-
   testImplementation(
+    project(':yubico-util-scala'),
     addVersion('junit:junit'),
     addVersion('org.scala-lang:scala-library'),
     addVersion('org.scalacheck:scalacheck_2.13'),

@@ -48,7 +48,7 @@ dependencies {
   )
 
   testImplementation(
-    testFixtures(project(':yubico-util')),
+    project(':yubico-util-scala'),
     testFixtures(project(':webauthn-server-core')),
 
     addVersion('junit:junit'),

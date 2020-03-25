@@ -32,13 +32,13 @@ dependencies {
   )
 
   testFixturesImplementation(
-    testFixtures(project(':yubico-util')),
+    project(':yubico-util-scala'),
     addVersion('com.upokecenter:cbor'),
     addVersion('org.bouncycastle:bcpkix-jdk15on'),
   )
 
   testImplementation(
-    testFixtures(project(':yubico-util')),
+    project(':yubico-util-scala'),
     addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
     addVersion('junit:junit'),
     addVersion('org.mockito:mockito-core'),
