@@ -11,5 +11,8 @@ dependencies {
     addVersion('org.scalacheck:scalacheck_2.13'),
   )
 
+  testImplementation(
+    addVersion('org.scalatest:scalatest_2.13'),
+  )
 }
 
