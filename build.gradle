@@ -138,9 +138,9 @@ subprojects { project ->
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
-    java {
-      withJavadocJar()
-      withSourcesJar()
+    task sourcesJar(type: Jar) {
+      archiveClassifier = 'sources'
+      from sourceSets.main.allSource
     }
 
     task delombok(type: DelombokTask, dependsOn: classes) {
@@ -165,6 +165,11 @@ subprojects { project ->
       options.addStringOption('charset', 'UTF-8')
     }
 
+    task javadocJar(type: Jar) {
+      archiveClassifier = 'javadoc'
+      from javadoc
+    }
+
     rootProject.tasks.assembleJavadoc {
       dependsOn javadoc
       inputs.dir javadoc.destinationDir
@@ -182,7 +187,9 @@ subprojects { project ->
     publishing {
       publications {
         jars(MavenPublication) {
-          setArtifacts([jar, javadocJar, sourcesJar])
+          from components.java
+          artifact javadocJar
+          artifact sourcesJar
 
           pom {
             name = project.name

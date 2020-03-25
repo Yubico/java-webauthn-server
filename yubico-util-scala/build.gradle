@@ -1,0 +1,18 @@
+plugins {
+  id 'scala'
+}
+
+description = 'Yubico internal Scala utilities'
+
+dependencies {
+
+  implementation(
+    addVersion('org.scala-lang:scala-library'),
+    addVersion('org.scalacheck:scalacheck_2.13'),
+  )
+
+  testImplementation(
+    addVersion('org.scalatest:scalatest_2.13'),
+  )
+}
+

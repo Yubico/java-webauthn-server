@@ -48,8 +48,8 @@ dependencies {
   )
 
   testImplementation(
-    testFixtures(project(':yubico-util')),
-    testFixtures(project(':webauthn-server-core')),
+    project(':webauthn-server-core').sourceSets.test.output,
+    project(':yubico-util-scala'),
 
     addVersion('junit:junit'),
     addVersion('org.mockito:mockito-core'),
