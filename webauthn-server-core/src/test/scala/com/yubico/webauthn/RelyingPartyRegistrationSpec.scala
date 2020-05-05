@@ -794,7 +794,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
 
         describe("If allowUntrustedAttestation is set,") {
           it("a fido-u2f attestation is still rejected if invalid.") {
-            val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("attStmt", { attStmtNode: JsonNode =>
+            val testData = RegistrationTestData.FidoU2f.BasicAttestation.updateAttestationObject("attStmt", { attStmtNode: JsonNode =>
               attStmtNode.asInstanceOf[ObjectNode]
                 .set("sig", jsonFactory.binaryNode(Array(0, 0, 0, 0)))
             })
@@ -1457,25 +1457,25 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             describe("1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.") {
               it("Fails if attStmt.ver is a number value.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("ver", jsonFactory.numberNode(123)))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("ver", jsonFactory.numberNode(123)))
                 checkFails(testData)
               }
 
               it("Fails if attStmt.ver is missing.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("ver"))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("ver"))
                 checkFails(testData)
               }
 
               it("Fails if attStmt.response is a text value.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.textNode(new ByteArray(attStmt.get("response").binaryValue()).getBase64Url)))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.textNode(new ByteArray(attStmt.get("response").binaryValue()).getBase64Url)))
                 checkFails(testData)
               }
 
               it("Fails if attStmt.response is missing.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("response"))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("response"))
                 checkFails(testData)
               }
             }
@@ -1483,7 +1483,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             describe("2. Verify that response is a valid SafetyNet response of version ver.") {
               it("Fails if there's a difference in the signature.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
 
                 val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                   new AttestationObject(testData.attestationObject),

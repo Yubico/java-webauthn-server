@@ -333,7 +333,7 @@ case class RegistrationTestData(
         .set(name, value)
     ))
   )
-  def editAttestationObject[A <: JsonNode](name: String, updater: JsonNode => A): RegistrationTestData = {
+  def updateAttestationObject(name: String, updater: JsonNode => JsonNode): RegistrationTestData = {
     val attObj = JacksonCodecs.cbor.readTree(attestationObject.getBytes)
     copy(
       attestationObject = new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
