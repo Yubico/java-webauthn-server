@@ -309,13 +309,13 @@ case class RegistrationTestData(
     .map(x5c => x5c.elements().asScala.toList.last)
     .map(node => CertificateParser.parseDer(node.binaryValue()))
 
-  def editClientData[A <: JsonNode](updater: ObjectNode => A): RegistrationTestData = copy(
+  def editClientData(updater: ObjectNode => JsonNode): RegistrationTestData = copy(
     clientDataJson = JacksonCodecs.json.writeValueAsString(
       updater(JacksonCodecs.json.readTree(clientDataJson).asInstanceOf[ObjectNode])
     )
   )
 
-  def editClientData[A <: JsonNode](name: String, value: A): RegistrationTestData = editClientData { clientData: ObjectNode =>
+  def editClientData(name: String, value: JsonNode): RegistrationTestData = editClientData { clientData: ObjectNode =>
     clientData.set(name, value)
   }
   def editClientData(name: String, value: String): RegistrationTestData = editClientData(name, RegistrationTestData.jsonFactory.textNode(value))
@@ -327,7 +327,7 @@ case class RegistrationTestData(
       RegistrationTestData.jsonFactory.textNode(value.getBase64Url)
     )
 
-  def editAttestationObject[A <: JsonNode](name: String, value: A): RegistrationTestData = copy(
+  def editAttestationObject(name: String, value: JsonNode): RegistrationTestData = copy(
     attestationObject = new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
       JacksonCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
         .set(name, value)
