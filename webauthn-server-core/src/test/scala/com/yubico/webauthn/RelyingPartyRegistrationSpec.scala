@@ -749,7 +749,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
       describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name [WebAuthn-Registries].") {
         def setup(format: String): FinishRegistrationSteps = {
           finishRegistration(
-            testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", format)
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat(format)
           )
         }
 
@@ -1555,7 +1555,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         }
 
         it("Unknown attestation statement formats fail.") {
-          val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", "urgel"))
+          val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel"))
           val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
@@ -1834,7 +1834,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         }
 
         it("The test case with unknown attestation fails.") {
-          val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", "urgel")
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel")
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,

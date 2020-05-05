@@ -128,7 +128,7 @@ object RegistrationTestData {
   )
 
   object AndroidKey {
-    val BasicAttestation: RegistrationTestData = Packed.SelfAttestation.editAttestationObject("fmt", "android-key")
+    val BasicAttestation: RegistrationTestData = Packed.SelfAttestation.setAttestationStatementFormat("android-key")
   }
   object AndroidSafetynet {
     val RealExample: RegistrationTestData = new RegistrationTestData(
@@ -254,7 +254,7 @@ object RegistrationTestData {
     ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(AttestationMaker.packed(_), keyAlgorithm = COSEAlgorithmIdentifier.RS1) }
   }
   object Tpm {
-    val PrivacyCa: RegistrationTestData = Packed.BasicAttestation.editAttestationObject("fmt", "tpm")
+    val PrivacyCa: RegistrationTestData = Packed.BasicAttestation.setAttestationStatementFormat("tpm")
   }
 }
 
@@ -344,8 +344,8 @@ case class RegistrationTestData(
     )
   }
 
-  def editAttestationObject(name: String, value: String): RegistrationTestData =
-    editAttestationObject(name, RegistrationTestData.jsonFactory.textNode(value))
+  def setAttestationStatementFormat(value: String): RegistrationTestData =
+    editAttestationObject("fmt", RegistrationTestData.jsonFactory.textNode(value))
 
   def editAuthenticatorData(updater: ByteArray => ByteArray): RegistrationTestData = {
     val attObj: ObjectNode = JacksonCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
