@@ -103,12 +103,12 @@ object Generators {
     alg <- arbitrary[COSEAlgorithmIdentifier]
     sig <- arbitrary[ByteArray]
     x5c <- arbitrary[List[ByteArray]]
-    attStmt = jsonFactory.objectNode().setAll(Map(
+    attStmt = jsonFactory.objectNode().setAll[ObjectNode](Map(
       "alg" -> jsonFactory.numberNode(alg.getId),
       "sig" -> jsonFactory.binaryNode(sig.getBytes),
       "x5c" -> jsonFactory.arrayNode().addAll(x5c.map(cert => jsonFactory.binaryNode(cert.getBytes)).asJava)
     ).asJava)
-    attObj = jsonFactory.objectNode().setAll(Map(
+    attObj = jsonFactory.objectNode().setAll[ObjectNode](Map(
       "authData" -> jsonFactory.binaryNode(authData.getBytes),
       "fmt" -> jsonFactory.textNode("packed"),
       "attStmt" -> attStmt
@@ -120,11 +120,11 @@ object Generators {
     alg <- arbitrary[COSEAlgorithmIdentifier]
     sig <- arbitrary[ByteArray]
     x5c <- arbitrary[List[ByteArray]]
-    attStmt = jsonFactory.objectNode().setAll(Map(
+    attStmt = jsonFactory.objectNode().setAll[ObjectNode](Map(
       "sig" -> jsonFactory.binaryNode(sig.getBytes),
       "x5c" -> jsonFactory.arrayNode().addAll(x5c.map(cert => jsonFactory.binaryNode(cert.getBytes)).asJava)
     ).asJava)
-    attObj = jsonFactory.objectNode().setAll(Map(
+    attObj = jsonFactory.objectNode().setAll[ObjectNode](Map(
       "authData" -> jsonFactory.binaryNode(authData.getBytes),
       "fmt" -> jsonFactory.textNode("fido-u2f"),
       "attStmt" -> attStmt
@@ -223,15 +223,15 @@ object Generators {
         .set("type", jsonFactory.textNode(tpe)).asInstanceOf[ObjectNode]
 
       tokenBinding.asScala foreach { tb =>
-        json.set("tokenBinding", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(tb)))
+        json.set[ObjectNode]("tokenBinding", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(tb)))
       }
 
       authenticatorExtensions.asScala foreach { ae =>
-        json.set("authenticatorExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(ae)))
+        json.set[ObjectNode]("authenticatorExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(ae)))
       }
 
       clientExtensions.asScala foreach { ce =>
-        json.set("clientExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(ce)))
+        json.set[ObjectNode]("clientExtensions", JacksonCodecs.json().readTree(JacksonCodecs.json().writeValueAsString(ce)))
       }
 
       json

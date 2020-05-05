@@ -316,7 +316,7 @@ case class RegistrationTestData(
   )
 
   def editClientData(name: String, value: JsonNode): RegistrationTestData = editClientData { clientData: ObjectNode =>
-    clientData.set(name, value)
+    clientData.set[ObjectNode](name, value)
   }
   def editClientData(name: String, value: String): RegistrationTestData = editClientData(name, RegistrationTestData.jsonFactory.textNode(value))
   def responseChallenge: ByteArray = clientData.getChallenge
