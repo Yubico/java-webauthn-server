@@ -91,8 +91,13 @@ public class AssertionResult {
     private final long signatureCount;
 
     /**
-     * <code>true</code> if and only if the {@link AuthenticatorData#getSignatureCounter() signature counter value}
-     * in the assertion was strictly greater than {@link RegisteredCredential#getSignatureCount() the stored one}.
+     * <code>true</code> if and only if at least one of the following is true:
+     * <ul>
+     *   <li>The {@link AuthenticatorData#getSignatureCounter() signature counter value} in the assertion was strictly
+     *   greater than {@link RegisteredCredential#getSignatureCount() the stored one}.</li>
+     *   <li>The {@link AuthenticatorData#getSignatureCounter() signature counter value} in the assertion and
+     *   {@link RegisteredCredential#getSignatureCount() the stored one} were both zero.</li>
+     * </ul>
      *
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1. Authenticator
      * Data</a>
