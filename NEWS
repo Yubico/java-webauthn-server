@@ -1,5 +1,12 @@
 == Version 1.6.3 (unreleased) ==
 
+webauthn-server-attestation:
+
+- Added new YubiKey AAGUIDs to metadata.json
+
+
+webauthn-server-core:
+
 - Bumped Jackson dependency to version 2.11.0 in response to CVEs:
   - CVE-2020-9546
   - CVE-2020-10672
