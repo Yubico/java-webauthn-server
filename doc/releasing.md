@@ -28,13 +28,19 @@ Release candidate versions
     $ ./gradlew publish closeAndReleaseRepository
     ```
 
- 6. Push to GitHub:
+ 6. Wait for the artifacts to become downloadable at
+    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
+    is needed for one of the GitHub Actions release workflows and usually takes
+    less than 30 minutes (long before the artifacts become searchable on the
+    main Maven Central website).
+
+ 7. Push to GitHub:
 
     ```
     $ git push origin master 1.4.0-RC1
     ```
 
- 7. Make GitHub release.
+ 8. Make GitHub release.
 
     - Use the new tag as the release tag
     - Check the pre-release checkbox
@@ -106,13 +112,19 @@ Release versions
     $ ./gradlew publish closeAndReleaseRepository
     ```
 
- 9. Push to GitHub:
+ 9. Wait for the artifacts to become downloadable at
+    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
+    is needed for one of the GitHub Actions release workflows and usually takes
+    less than 30 minutes (long before the artifacts become searchable on the
+    main Maven Central website).
+
+10. Push to GitHub:
 
     ```
     $ git push origin master 1.4.0
     ```
 
-10. Make GitHub release.
+11. Make GitHub release.
 
     - Use the new tag as the release tag
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
