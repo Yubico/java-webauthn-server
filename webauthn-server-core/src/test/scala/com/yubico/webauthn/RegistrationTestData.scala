@@ -128,7 +128,7 @@ object RegistrationTestData {
   )
 
   object AndroidKey {
-    val BasicAttestation: RegistrationTestData = Packed.SelfAttestation.editAttestationObject("fmt", "android-key")
+    val BasicAttestation: RegistrationTestData = Packed.SelfAttestation.setAttestationStatementFormat("android-key")
   }
   object AndroidSafetynet {
     val RealExample: RegistrationTestData = new RegistrationTestData(
@@ -254,7 +254,7 @@ object RegistrationTestData {
     ) { override def regenerate() = TestAuthenticator.createSelfAttestedCredential(AttestationMaker.packed(_), keyAlgorithm = COSEAlgorithmIdentifier.RS1) }
   }
   object Tpm {
-    val PrivacyCa: RegistrationTestData = Packed.BasicAttestation.editAttestationObject("fmt", "tpm")
+    val PrivacyCa: RegistrationTestData = Packed.BasicAttestation.setAttestationStatementFormat("tpm")
   }
 }
 
@@ -309,14 +309,14 @@ case class RegistrationTestData(
     .map(x5c => x5c.elements().asScala.toList.last)
     .map(node => CertificateParser.parseDer(node.binaryValue()))
 
-  def editClientData[A <: JsonNode](updater: ObjectNode => A): RegistrationTestData = copy(
+  def editClientData(updater: ObjectNode => JsonNode): RegistrationTestData = copy(
     clientDataJson = JacksonCodecs.json.writeValueAsString(
       updater(JacksonCodecs.json.readTree(clientDataJson).asInstanceOf[ObjectNode])
     )
   )
 
-  def editClientData[A <: JsonNode](name: String, value: A): RegistrationTestData = editClientData { clientData: ObjectNode =>
-    clientData.set(name, value)
+  def editClientData(name: String, value: JsonNode): RegistrationTestData = editClientData { clientData: ObjectNode =>
+    clientData.set[ObjectNode](name, value)
   }
   def editClientData(name: String, value: String): RegistrationTestData = editClientData(name, RegistrationTestData.jsonFactory.textNode(value))
   def responseChallenge: ByteArray = clientData.getChallenge
@@ -327,13 +327,13 @@ case class RegistrationTestData(
       RegistrationTestData.jsonFactory.textNode(value.getBase64Url)
     )
 
-  def editAttestationObject[A <: JsonNode](name: String, value: A): RegistrationTestData = copy(
+  def editAttestationObject(name: String, value: JsonNode): RegistrationTestData = copy(
     attestationObject = new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
       JacksonCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]
         .set(name, value)
     ))
   )
-  def editAttestationObject[A <: JsonNode](name: String, updater: JsonNode => A): RegistrationTestData = {
+  def updateAttestationObject(name: String, updater: JsonNode => JsonNode): RegistrationTestData = {
     val attObj = JacksonCodecs.cbor.readTree(attestationObject.getBytes)
     copy(
       attestationObject = new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(
@@ -344,8 +344,8 @@ case class RegistrationTestData(
     )
   }
 
-  def editAttestationObject(name: String, value: String): RegistrationTestData =
-    editAttestationObject(name, RegistrationTestData.jsonFactory.textNode(value))
+  def setAttestationStatementFormat(value: String): RegistrationTestData =
+    editAttestationObject("fmt", RegistrationTestData.jsonFactory.textNode(value))
 
   def editAuthenticatorData(updater: ByteArray => ByteArray): RegistrationTestData = {
     val attObj: ObjectNode = JacksonCodecs.cbor.readTree(attestationObject.getBytes).asInstanceOf[ObjectNode]

@@ -50,7 +50,7 @@ object JacksonGenerators {
       } yield {
         val o = jsonFactory.objectNode()
         for { (name, value) <- names.zip(values) } {
-          o.set(name, value)
+          o.set[ObjectNode](name, value)
         }
         o
       }

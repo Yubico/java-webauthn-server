@@ -160,7 +160,7 @@ object TestAuthenticator {
       clientDataJson: String,
     ): ByteArray = {
       val f = JsonNodeFactory.instance
-      val attObj = f.objectNode().setAll(Map(
+      val attObj = f.objectNode().setAll[ObjectNode](Map(
         "authData" -> f.binaryNode(authDataBytes.getBytes),
         "fmt" -> f.textNode(format),
         "attStmt" -> makeAttestationStatement(authDataBytes, clientDataJson),

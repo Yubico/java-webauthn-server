@@ -1,3 +1,21 @@
+== Version 1.6.3 ==
+
+webauthn-server-attestation:
+
+- Added new YubiKey AAGUIDs to metadata.json
+
+
+webauthn-server-core:
+
+- Bumped Jackson dependency to version 2.11.0 in response to CVEs:
+  - CVE-2020-9546
+  - CVE-2020-10672
+  - CVE-2020-10969
+  - CVE-2020-11620
+- Fixed incorrect JavaDoc on AssertionResult.isSignatureCounterValid(): it will
+  also return true if both counters are zero.
+
+
 == Version 1.6.2 ==
 
 - Fixed dependencies missing from release POM metadata

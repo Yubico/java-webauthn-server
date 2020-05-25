@@ -414,7 +414,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
 
         it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation
-            .editClientData(_.without("tokenBinding"))
+            .editClientData(_.without[ObjectNode]("tokenBinding"))
           )
           val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -435,7 +435,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         it("Verification fails if client data does not specify token binding status and RP specifies token binding ID.") {
           val steps = finishRegistration(
             callerTokenBindingId = Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
-            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without[ObjectNode]("tokenBinding"))
           )
           val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -447,7 +447,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         it("Verification succeeds if client data does not specify token binding status and RP does not specify token binding ID.") {
           val steps = finishRegistration(
             callerTokenBindingId = None,
-            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without[ObjectNode]("tokenBinding"))
           )
           val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -493,7 +493,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
           it("Verification fails if RP specifies token binding ID but client does not support it.") {
             val steps = finishRegistration(
               callerTokenBindingId = Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
-              testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without("tokenBinding"))
+              testData = RegistrationTestData.FidoU2f.BasicAttestation.editClientData(_.without[ObjectNode]("tokenBinding"))
             )
             val step: FinishRegistrationSteps#Step6 = steps.begin.next.next.next.next.next
 
@@ -749,7 +749,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
       describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name [WebAuthn-Registries].") {
         def setup(format: String): FinishRegistrationSteps = {
           finishRegistration(
-            testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", format)
+            testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat(format)
           )
         }
 
@@ -794,9 +794,9 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
 
         describe("If allowUntrustedAttestation is set,") {
           it("a fido-u2f attestation is still rejected if invalid.") {
-            val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("attStmt", { attStmtNode: JsonNode =>
+            val testData = RegistrationTestData.FidoU2f.BasicAttestation.updateAttestationObject("attStmt", { attStmtNode: JsonNode =>
               attStmtNode.asInstanceOf[ObjectNode]
-                .set("sig", jsonFactory.binaryNode(Array(0, 0, 0, 0)))
+                .set[ObjectNode]("sig", jsonFactory.binaryNode(Array(0, 0, 0, 0)))
             })
             val steps = finishRegistration(
               testData = testData,
@@ -1457,25 +1457,25 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             describe("1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.") {
               it("Fails if attStmt.ver is a number value.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("ver", jsonFactory.numberNode(123)))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set[ObjectNode]("ver", jsonFactory.numberNode(123)))
                 checkFails(testData)
               }
 
               it("Fails if attStmt.ver is missing.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("ver"))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without[ObjectNode]("ver"))
                 checkFails(testData)
               }
 
               it("Fails if attStmt.response is a text value.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.textNode(new ByteArray(attStmt.get("response").binaryValue()).getBase64Url)))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set[ObjectNode]("response", jsonFactory.textNode(new ByteArray(attStmt.get("response").binaryValue()).getBase64Url)))
                 checkFails(testData)
               }
 
               it("Fails if attStmt.response is missing.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without("response"))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].without[ObjectNode]("response"))
                 checkFails(testData)
               }
             }
@@ -1483,7 +1483,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             describe("2. Verify that response is a valid SafetyNet response of version ver.") {
               it("Fails if there's a difference in the signature.") {
                 val testData = defaultTestData
-                  .editAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
+                  .updateAttestationObject("attStmt", attStmt => attStmt.asInstanceOf[ObjectNode].set[ObjectNode]("response", jsonFactory.binaryNode(editByte(new ByteArray(attStmt.get("response").binaryValue()), 2000, b => ((b + 1) % 26 + 0x41).toByte).getBytes)))
 
                 val result: Try[Boolean] = Try(verifier.verifyAttestationSignature(
                   new AttestationObject(testData.attestationObject),
@@ -1555,7 +1555,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         }
 
         it("Unknown attestation statement formats fail.") {
-          val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", "urgel"))
+          val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel"))
           val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a [Failure[_]]
@@ -1834,7 +1834,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         }
 
         it("The test case with unknown attestation fails.") {
-          val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAttestationObject("fmt", "urgel")
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel")
           val steps = finishRegistration(
             testData = testData,
             allowUntrustedAttestation = true,
