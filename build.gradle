@@ -62,7 +62,7 @@ Map<String, String> dependencyVersions = [
   'junit:junit:4.12',
   'org.apache.httpcomponents:httpclient:4.5.2',
   'org.bouncycastle:bcpkix-jdk15on:1.65',
-  'org.bouncycastle:bcprov-jdk15on:1.62',
+  'org.bouncycastle:bcprov-jdk15on:1.65.01',
   'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
   'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
   'org.glassfish.jersey.containers:jersey-container-servlet-core:2.26',
