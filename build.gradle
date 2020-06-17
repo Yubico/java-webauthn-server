@@ -3,7 +3,7 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.cinnober.gradle:semver-git:2.4.0'
+    classpath 'com.cinnober.gradle:semver-git:2.5.0'
   }
 }
 plugins {
