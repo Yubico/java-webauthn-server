@@ -58,7 +58,7 @@ Map<String, String> dependencyVersions = [
   'com.upokecenter:cbor:4.0.1',
   'javax.activation:activation:1.1.1',
   'javax.ws.rs:javax.ws.rs-api:2.1',
-  'javax.xml.bind:jaxb-api:2.3.0',
+  'javax.xml.bind:jaxb-api:2.3.1',
   'junit:junit:4.12',
   'org.apache.httpcomponents:httpclient:4.5.2',
   'org.bouncycastle:bcpkix-jdk15on:1.62',
