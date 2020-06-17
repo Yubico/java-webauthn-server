@@ -55,7 +55,7 @@ Map<String, String> dependencyVersions = [
   'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.11.0',
   'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.11.0',
   'com.google.guava:guava:19.0',
-  'com.upokecenter:cbor:4.0.1',
+  'com.upokecenter:cbor:4.1.3',
   'javax.activation:activation:1.1.1',
   'javax.ws.rs:javax.ws.rs-api:2.1',
   'javax.xml.bind:jaxb-api:2.3.0',
