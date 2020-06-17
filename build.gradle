@@ -72,7 +72,7 @@ Map<String, String> dependencyVersions = [
   'org.scala-lang:scala-library:2.13.1',
   'org.scalacheck:scalacheck_2.13:1.14.3',
   'org.scalatest:scalatest_2.13:3.0.8',
-  'org.slf4j:slf4j-api:1.7.25',
+  'org.slf4j:slf4j-api:1.7.30',
 ].collectEntries { [(it.split(':')[0..1].join(':')): it] }
 rootProject.ext.addVersion = { dep -> dependencyVersions[dep] }
 
