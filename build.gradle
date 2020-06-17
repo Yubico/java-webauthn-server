@@ -61,18 +61,18 @@ Map<String, String> dependencyVersions = [
   'javax.xml.bind:jaxb-api:2.3.0',
   'junit:junit:4.12',
   'org.apache.httpcomponents:httpclient:4.5.2',
-  'org.bouncycastle:bcpkix-jdk15on:1.65',
-  'org.bouncycastle:bcprov-jdk15on:1.65.01',
+  'org.bouncycastle:bcpkix-jdk15on:1.62',
+  'org.bouncycastle:bcprov-jdk15on:1.62',
   'org.eclipse.jetty:jetty-server:9.4.9.v20180320',
   'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
-  'org.glassfish.jersey.containers:jersey-container-servlet-core:2.31',
+  'org.glassfish.jersey.containers:jersey-container-servlet-core:2.26',
   'org.glassfish.jersey.containers:jersey-container-servlet:2.26',
   'org.glassfish.jersey.inject:jersey-hk2:2.26',
   'org.mockito:mockito-core:2.27.0',
   'org.scala-lang:scala-library:2.13.1',
-  'org.scalacheck:scalacheck_2.13:1.14.3',
+  'org.scalacheck:scalacheck_2.13:1.14.0',
   'org.scalatest:scalatest_2.13:3.0.8',
-  'org.slf4j:slf4j-api:1.7.30',
+  'org.slf4j:slf4j-api:1.7.25',
 ].collectEntries { [(it.split(':')[0..1].join(':')): it] }
 rootProject.ext.addVersion = { dep -> dependencyVersions[dep] }
 
