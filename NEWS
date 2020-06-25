@@ -1,37 +1,37 @@
 == Version 1.6.4 ==
 
-- Changed dependency declarations to version ranges
-- Bumped Guava dependency to version [24.1.1,30) in response to CVE-2018-10237
+* Changed dependency declarations to version ranges
+* Bumped Guava dependency to version [24.1.1,30) in response to CVE-2018-10237
 
 
 == Version 1.6.3 ==
 
 webauthn-server-attestation:
 
-- Added new YubiKey AAGUIDs to metadata.json
+* Added new YubiKey AAGUIDs to metadata.json
 
 
 webauthn-server-core:
 
-- Bumped Jackson dependency to version 2.11.0 in response to CVEs:
-  - CVE-2020-9546
-  - CVE-2020-10672
-  - CVE-2020-10969
-  - CVE-2020-11620
-- Fixed incorrect JavaDoc on AssertionResult.isSignatureCounterValid(): it will
+* Bumped Jackson dependency to version 2.11.0 in response to CVEs:
+ ** CVE-2020-9546
+ ** CVE-2020-10672
+ ** CVE-2020-10969
+ ** CVE-2020-11620
+* Fixed incorrect JavaDoc on AssertionResult.isSignatureCounterValid(): it will
   also return true if both counters are zero.
 
 
 == Version 1.6.2 ==
 
-- Fixed dependencies missing from release POM metadata
+* Fixed dependencies missing from release POM metadata
 
 
 == Version 1.6.1 ==
 
 Security fixes:
 
-- Bumped Jackson dependency to version 2.9.10.3 in response to CVE-2019-20330
+* Bumped Jackson dependency to version 2.9.10.3 in response to CVE-2019-20330
   and CVE-2020-8840
 
 
@@ -39,22 +39,22 @@ Security fixes:
 
 Security fixes:
 
-- Bumped Jackson dependency to version 2.9.10.1 which has patched CVE-2019-16942
+* Bumped Jackson dependency to version 2.9.10.1 which has patched CVE-2019-16942
 
 `webauthn-server-core`:
 
 Bug fixes:
 
-- Fixed bug introduced in 1.4.0, which caused
+* Fixed bug introduced in 1.4.0, which caused
   `RegistrationResult.attestationMetadata` to always be empty.
 
 
 `webauthn-server-attestation`:
 
-- New enum constant `Transport.LIGHTNING`
-- Fixed transports field of YubiKey NEO/NEO-n in `metadata.json`.
-- Added YubiKey 5Ci to `metadata.json`.
-- Most `deviceUrl` fields in `metadata.json` changed to point to stable
+* New enum constant `Transport.LIGHTNING`
+* Fixed transports field of YubiKey NEO/NEO-n in `metadata.json`.
+* Added YubiKey 5Ci to `metadata.json`.
+* Most `deviceUrl` fields in `metadata.json` changed to point to stable
   addresses in Yubico knowledge base instead of dead redirects in store.
 
 
