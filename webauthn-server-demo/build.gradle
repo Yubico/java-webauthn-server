@@ -3,13 +3,7 @@ plugins {
   id 'war'
   id 'application'
   id 'scala'
-  id 'com.bmuschko.docker-remote-api' version '3.6.1'
 }
-
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-
-project.ext.dockerGroup = 'yubico'
-project.ext.dockerName = project.name
 
 description = 'WebAuthn demo'
 
@@ -75,22 +69,4 @@ mainClassName = 'demo.webauthn.EmbeddedServer'
       into 'src/main/webapp'
     }
   }
-}
-
-task dockerPrepare(type: Sync) {
-  from file('docker')
-  from file('keystore.jks')
-  from(war.outputs) {
-    rename ~/${war.baseName}.*\.${war.extension}/, "${war.baseName}.${war.extension}"
-  }
-  into file("${project.buildDir}/docker")
-}
-
-task dockerBuild(type: DockerBuildImage) {
-  inputs.files dockerPrepare.outputs.files
-  inputDir = dockerPrepare.destinationDir
-  tags = [
-    "${project.dockerGroup}/${project.dockerName}:${project.version}",
-    "${project.dockerGroup}/${project.dockerName}:latest",
-  ]
 }
