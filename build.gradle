@@ -83,6 +83,11 @@ subprojects {
     version '1.18.8'
     sha256 = '0396952823579b316a0fe85cbd871bbb3508143c2bcbd985dd7800e806cb24fc'
   }
+  tasks.withType(AbstractCompile) {
+    if (tasks.findByName('verifyLombok')) {
+      dependsOn tasks.verifyLombok
+    }
+  }
 
   repositories {
     mavenLocal()
