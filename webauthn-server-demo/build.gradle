@@ -3,7 +3,7 @@ plugins {
   id 'war'
   id 'application'
   id 'scala'
-  id 'com.bmuschko.docker-remote-api' version '3.6.1'
+  id 'com.bmuschko.docker-remote-api' version '6.4.0'
 }
 
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
