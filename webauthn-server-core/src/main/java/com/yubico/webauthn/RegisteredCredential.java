@@ -24,14 +24,14 @@
 
 package com.yubico.webauthn;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -46,9 +46,8 @@ import lombok.Value;
  * </p>
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
-public class RegisteredCredential {
+public final class RegisteredCredential {
 
     /**
      * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a> of the
@@ -102,6 +101,19 @@ public class RegisteredCredential {
      */
     @Builder.Default
     private final long signatureCount = 0;
+
+    @JsonCreator
+    private RegisteredCredential(
+        @NonNull @JsonProperty("credentialId") ByteArray credentialId,
+        @NonNull @JsonProperty("userHandle") ByteArray userHandle,
+        @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+        @JsonProperty("signatureCount") long signatureCount
+    ) {
+        this.credentialId = credentialId;
+        this.userHandle = userHandle;
+        this.publicKeyCose = publicKeyCose;
+        this.signatureCount = signatureCount;
+    }
 
     public static RegisteredCredentialBuilder.MandatoryStages builder() {
         return new RegisteredCredentialBuilder.MandatoryStages();

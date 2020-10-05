@@ -7,6 +7,11 @@ Changes:
     attestation statements will now pass as untrusted attestations, instead of
     throwing an IllegalArgumentException.
 
+New features:
+
+* Class `RegisteredCredential` can now be serialized to and deserialized from
+  JSON.
+
 
 == Version 1.6.4 ==
 
