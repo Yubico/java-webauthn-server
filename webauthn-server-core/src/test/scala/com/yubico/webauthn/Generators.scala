@@ -49,4 +49,16 @@ object Generators {
     .warnings(warnings)
     .build())
 
+  implicit val arbitraryRegisteredCredential: Arbitrary[RegisteredCredential] = Arbitrary(for {
+    credentialId <- arbitrary[ByteArray]
+    userHandle <- arbitrary[ByteArray]
+    publicKeyCose <- arbitrary[ByteArray]
+    signatureCount <- arbitrary[Int]
+  } yield RegisteredCredential.builder()
+    .credentialId(credentialId)
+    .userHandle(userHandle)
+    .publicKeyCose(publicKeyCose)
+    .signatureCount(signatureCount)
+    .build())
+
 }
