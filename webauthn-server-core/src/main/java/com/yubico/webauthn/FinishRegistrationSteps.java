@@ -463,7 +463,7 @@ final class FinishRegistrationSteps {
                                 return AttestationType.ECDAA;
                             }
                         default:
-                            throw new IllegalArgumentException("Failed to resolve attestation type; unknown attestation statement format: " + attestation.getFormat());
+                            return AttestationType.UNKNOWN;
                     }
                 }
             } catch (IOException | CoseException | CertificateException e) {
@@ -509,6 +509,7 @@ final class FinishRegistrationSteps {
             switch (attestationType) {
                 case NONE:
                 case SELF_ATTESTATION:
+                case UNKNOWN:
                     return Optional.empty();
 
                 case ATTESTATION_CA:
@@ -562,6 +563,10 @@ final class FinishRegistrationSteps {
                     assure(allowUntrustedAttestation, "No attestation is not allowed.");
                     break;
 
+                case UNKNOWN:
+                    assure(allowUntrustedAttestation, "Unknown attestation statement formats are not allowed.");
+                    break;
+
                 default:
                     throw new UnsupportedOperationException("Attestation type not implemented: " + attestationType);
             }
@@ -574,8 +579,9 @@ final class FinishRegistrationSteps {
 
         public boolean attestationTrusted() {
             switch (attestationType) {
-                case SELF_ATTESTATION:
                 case NONE:
+                case SELF_ATTESTATION:
+                case UNKNOWN:
                     return false;
 
                 case ATTESTATION_CA:

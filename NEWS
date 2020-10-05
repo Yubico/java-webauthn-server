@@ -1,3 +1,13 @@
+== Version 1.7.0 (unreleased) ==
+
+Changes:
+
+* Fixed crash on unknown attestation statement formats
+ ** Unless `RelyingParty.allowUntrustedAttestation` is set to `false`, unknown
+    attestation statements will now pass as untrusted attestations, instead of
+    throwing an IllegalArgumentException.
+
+
 == Version 1.6.4 ==
 
 * Changed dependency declarations to version ranges
