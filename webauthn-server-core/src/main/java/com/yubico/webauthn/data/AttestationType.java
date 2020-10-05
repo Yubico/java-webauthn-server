@@ -96,5 +96,19 @@ public enum AttestationType {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None Attestation Statement
      * Format</a>
      */
-    NONE
+    NONE,
+
+    /**
+     * In this case, attestation information is present but was not understood by the library.
+     * <p>
+     * For example, the attestation statement might be using a new attestation statement format not yet supported by the
+     * library.
+     * </p>
+     *
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3. Attestation
+     * Types</a>
+     * @see <a href="https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#defined-attestation-formats">§8. Defined
+     * Attestation Statement Formats</a>
+     */
+    UNKNOWN
 }

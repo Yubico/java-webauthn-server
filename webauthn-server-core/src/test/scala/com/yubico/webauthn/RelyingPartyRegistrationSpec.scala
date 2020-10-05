@@ -1554,15 +1554,15 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
           step.tryNext shouldBe a [Success[_]]
         }
 
-        it("Unknown attestation statement formats fail.") {
+        it("Unknown attestation statement formats are identified as such.") {
           val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel"))
           val step: FinishRegistrationSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-          step.validations shouldBe a [Failure[_]]
-          step.validations.failed.get shouldBe an [IllegalArgumentException]
-          step.tryNext shouldBe a [Failure[_]]
+          step.validations shouldBe a [Success[_]]
+          step.tryNext shouldBe a [Success[_]]
+          step.attestationType should be (AttestationType.UNKNOWN)
+          step.attestationTrustPath.asScala shouldBe empty
         }
-
       }
 
       describe("15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
@@ -1619,6 +1619,17 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             step.tryNext shouldBe a [Success[_]]
           }
         }
+
+        describe("For unknown attestation statement formats") {
+          it("no trust anchors are returned.") {
+            val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel"))
+            val step: FinishRegistrationSteps#Step15 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a [Success[_]]
+            step.trustResolver.asScala shouldBe empty
+            step.tryNext shouldBe a [Success[_]]
+          }
+        }
       }
 
       describe("16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:") {
@@ -1641,6 +1652,37 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             it("is accepted if untrusted attestation is allowed.") {
               val steps = finishRegistration(
                 testData = RegistrationTestData.NoneAttestation.Default,
+                allowUntrustedAttestation = true
+              )
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Success[_]]
+              step.attestationTrusted should be (false)
+              step.tryNext shouldBe a [Success[_]]
+            }
+          }
+        }
+
+        describe("If an unknown attestation statement format was used, check if no attestation is acceptable under Relying Party policy.") {
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel")
+
+          describe("The default test case") {
+            it("is rejected if untrusted attestation is not allowed.") {
+              val steps = finishRegistration(
+                testData = testData,
+                allowUntrustedAttestation = false
+              )
+              val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Failure[_]]
+              step.validations.failed.get shouldBe an [IllegalArgumentException]
+              step.attestationTrusted should be (false)
+              step.tryNext shouldBe a [Failure[_]]
+            }
+
+            it("is accepted if untrusted attestation is allowed.") {
+              val steps = finishRegistration(
+                testData = testData,
                 allowUntrustedAttestation = true
               )
               val step: FinishRegistrationSteps#Step16 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1833,15 +1875,32 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
           steps.run.isAttestationTrusted should be (false)
         }
 
-        it("The test case with unknown attestation fails.") {
+        describe("The test case with unknown attestation") {
           val testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel")
-          val steps = finishRegistration(
-            testData = testData,
-            allowUntrustedAttestation = true,
-            credentialRepository = Helpers.CredentialRepository.empty
-          )
-          val result = Try(steps.run)
-          result.failed.get shouldBe an [IllegalArgumentException]
+
+          it("passes if the RP allows untrusted attestation.") {
+            val steps = finishRegistration(
+              testData = testData,
+              allowUntrustedAttestation = true,
+              credentialRepository = Helpers.CredentialRepository.empty
+            )
+            val result = Try(steps.run)
+            result shouldBe a [Success[_]]
+            result.get.isAttestationTrusted should be (false)
+            result.get.getAttestationType should be (AttestationType.UNKNOWN)
+            result.get.getAttestationMetadata.asScala shouldBe empty
+          }
+
+          it("fails if the RP required trusted attestation.") {
+            val steps = finishRegistration(
+              testData = testData,
+              allowUntrustedAttestation = false,
+              credentialRepository = Helpers.CredentialRepository.empty
+            )
+            val result = Try(steps.run)
+            result shouldBe a [Failure[_]]
+            result.failed.get shouldBe an [IllegalArgumentException]
+          }
         }
 
         describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.4.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
@@ -1907,7 +1966,21 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
           )
 
           result.isAttestationTrusted should be (false)
+          result.getAttestationType should be (AttestationType.NONE)
           result.getKeyId.getId should equal (RegistrationTestData.NoneAttestation.Default.response.getId)
+        }
+
+        it("accept registrations with unknown attestation statement format.") {
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation.setAttestationStatementFormat("urgel")
+          val result = rp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(request)
+            .response(testData.response)
+            .build()
+          )
+
+          result.isAttestationTrusted should be (false)
+          result.getAttestationType should be (AttestationType.UNKNOWN)
+          result.getKeyId.getId should equal (testData.response.getId)
         }
 
         it("accept android-key attestations but report they're untrusted.") {
