@@ -1,5 +1,11 @@
 == Version 1.7.0 (unreleased) ==
 
+webauthn-server-attestation:
+
+* Updated name of AAGUID `2fc0579f811347eab116bb5a8db9202a` to "YubiKey 5/5C NFC"
+
+webauthn-server-core:
+
 Changes:
 
 * Fixed crash on unknown attestation statement formats
