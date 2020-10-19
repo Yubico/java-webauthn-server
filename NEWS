@@ -6,6 +6,7 @@ Changes:
  ** Unless `RelyingParty.allowUntrustedAttestation` is set to `false`, unknown
     attestation statements will now pass as untrusted attestations, instead of
     throwing an IllegalArgumentException.
+* Disambiguated Jackson deserialization of class `AuthenticatorTransport`
 
 New features:
 
