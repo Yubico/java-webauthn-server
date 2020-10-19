@@ -25,6 +25,7 @@
 package com.yubico.webauthn.data;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
@@ -92,6 +93,7 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
      * #INTERNAL}, returns that constant instance. Otherwise returns a new instance containing <code>id</code>.
      * @see #valueOf(String)
      */
+    @JsonCreator
     public static AuthenticatorTransport of(@NonNull String id) {
         return Stream.of(values())
             .filter(v -> v.getId().equals(id))
@@ -114,7 +116,7 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
             case "BLE": return BLE;
             case "INTERNAL": return INTERNAL;
         default:
-            throw new IllegalArgumentException("No enum constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
+            throw new IllegalArgumentException("No constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
         }
     }
 

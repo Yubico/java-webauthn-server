@@ -103,6 +103,15 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
       it("a YubiKey 5 NFC.") {
         check(RealExamples.YubiKey5)
       }
+      it("an early YubiKey 5 NFC.") {
+        check(RealExamples.YubiKey5Nfc)
+      }
+      it("a newer YubiKey 5 NFC.") {
+        check(RealExamples.YubiKey5NfcPost5cNfc)
+      }
+      it("a YubiKey 5C NFC.") {
+        check(RealExamples.YubiKey5cNfc)
+      }
       it("a YubiKey 5 Nano.") {
         check(RealExamples.YubiKey5Nano)
       }

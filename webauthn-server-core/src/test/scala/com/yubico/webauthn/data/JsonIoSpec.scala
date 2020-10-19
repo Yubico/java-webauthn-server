@@ -40,6 +40,7 @@ import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
+import com.yubico.webauthn.RegisteredCredential
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
@@ -119,6 +120,7 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
     test(new TypeReference[PublicKeyCredentialParameters]() {})
     test(new TypeReference[PublicKeyCredentialRequestOptions]() {})
     test(new TypeReference[PublicKeyCredentialType]() {})
+    test(new TypeReference[RegisteredCredential]() {})
     test(new TypeReference[RegistrationExtensionInputs]() {})
     test(new TypeReference[RegistrationResult]() {})
     test(new TypeReference[RelyingPartyIdentity]() {})
