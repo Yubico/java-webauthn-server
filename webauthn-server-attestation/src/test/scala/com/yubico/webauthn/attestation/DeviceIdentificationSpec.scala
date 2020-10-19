@@ -104,7 +104,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5/5C NFC", RealExamples.YubiKey5cNfc, Set(USB, NFC))
       }
       it("a YubiKey 5 Nano.") {
-        check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano, Set(USB))
+        check("YubiKey 5 Series", RealExamples.YubiKey5Nano, Set(USB))
       }
       it("a YubiKey 5Ci.") {
         check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB, LIGHTNING))
@@ -152,7 +152,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5/5C NFC", RealExamples.YubiKey5cNfc, Set(USB, NFC))
       }
       it("a YubiKey 5 Nano.") {
-        check("YubiKey 5 Series security key", RealExamples.YubiKey5Nano, Set(USB))
+        check("YubiKey 5 Series", RealExamples.YubiKey5Nano, Set(USB))
       }
       it("a YubiKey 5Ci.") {
         check("YubiKey 5Ci", RealExamples.YubiKey5Ci, Set(USB, LIGHTNING))

@@ -1,6 +1,6 @@
 {
   "identifier": "2fb54029-7613-4f1d-94f1-fb876c14a6fe",
-  "version": 13,
+  "version": 14,
   "vendorInfo": {
     "url": "https://yubico.com",
     "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
@@ -195,7 +195,7 @@
 
     {
       "deviceId": "1.3.6.1.4.1.41482.1.7",
-      "displayName": "YubiKey 5 Series security key",
+      "displayName": "YubiKey 5 Series",
       "transports": 4,
       "deviceUrl": "https://support.yubico.com/support/solutions/articles/15000014180-yubikey-5c",
       "imageUrl": "https://developers.yubico.com/U2F/Images/YK5-series.png",
