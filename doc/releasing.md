@@ -85,20 +85,22 @@ Release versions
 
  4. Remove the "(unreleased)" tag from `NEWS`.
 
- 5. Amend this change into the merge commit:
+ 5. Update the version in the dependency snippets in the README.
+
+ 6. Amend these changes into the merge commit:
 
     ```
     $ git add NEWS
     $ git commit --amend --reset-author
     ```
 
- 6. Run the tests one more time:
+ 7. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 7. Tag the merge commit with an `X.Y.Z` tag:
+ 8. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -106,25 +108,25 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
- 8. Publish to Sonatype Nexus:
+ 9. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publish closeAndReleaseRepository
     ```
 
- 9. Wait for the artifacts to become downloadable at
+10. Wait for the artifacts to become downloadable at
     https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
     is needed for one of the GitHub Actions release workflows and usually takes
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
-10. Push to GitHub:
+11. Push to GitHub:
 
     ```
     $ git push origin master 1.4.0
     ```
 
-11. Make GitHub release.
+12. Make GitHub release.
 
     - Use the new tag as the release tag
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
