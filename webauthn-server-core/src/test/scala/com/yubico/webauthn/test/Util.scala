@@ -28,9 +28,16 @@ import java.io.InputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.security.cert.X509Certificate
+import java.security.GeneralSecurityException
+import java.security.KeyFactory
+import java.security.PublicKey
 
 import com.yubico.internal.util.CertificateParser
+import com.yubico.webauthn.data.ByteArray
+import org.bouncycastle.asn1.sec.SECNamedCurves
 import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jce.spec.{ECParameterSpec, ECPublicKeySpec}
 import org.bouncycastle.openssl.PEMParser
 
 import scala.language.reflectiveCalls
@@ -47,6 +54,20 @@ object Util {
         .getEncoded
     )
 
+  def decodePublicKey(encodedPublicKey: ByteArray): PublicKey = try {
+    val curve = SECNamedCurves.getByName("secp256r1")
+    val point = curve.getCurve.decodePoint(encodedPublicKey.getBytes)
+
+    KeyFactory.getInstance("ECDSA", new BouncyCastleProvider)
+      .generatePublic(new ECPublicKeySpec(point, new ECParameterSpec(curve.getCurve, curve.getG, curve.getN, curve.getH)))
+  } catch {
+    case e: RuntimeException =>
+      throw new IllegalArgumentException("Could not parse user public key: " + encodedPublicKey.getBase64Url, e)
+    case e: GeneralSecurityException =>
+      //This should not happen
+      throw new RuntimeException("Failed to decode public key: " + encodedPublicKey.getBase64Url, e)
+  }
+
   type Stepish[A] = { def validate(): Unit; def next(): A }
   case class StepWithUtilities[A](a: Stepish[A]) {
     def validations: Try[Unit] = Try(a.validate())
@@ -54,4 +75,6 @@ object Util {
   }
   implicit def toStepWithUtilities[A](a: Stepish[A]): StepWithUtilities[A] = StepWithUtilities(a)
 
+  val useBouncyCastle: Boolean = System.getenv("NO_BOUNCY_CASTLE") == null
+  val noBouncyCastle: Boolean = !useBouncyCastle
 }

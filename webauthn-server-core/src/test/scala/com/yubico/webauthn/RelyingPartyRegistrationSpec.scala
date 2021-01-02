@@ -29,6 +29,7 @@ import java.nio.charset.Charset
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
+import java.security.Security
 import java.security.SignatureException
 import java.security.cert.X509Certificate
 import java.security.interfaces.RSAPublicKey
@@ -53,7 +54,9 @@ import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.test.Util.noBouncyCastle
 import com.yubico.webauthn.test.Util.toStepWithUtilities
+import com.yubico.webauthn.test.Util.useBouncyCastle
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -61,6 +64,7 @@ import com.yubico.webauthn.test.Helpers
 import javax.security.auth.x500.X500Principal
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.scalacheck.Gen
@@ -81,7 +85,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
   private def toJsonObject(obj: Map[String, JsonNode]): JsonNode = jsonFactory.objectNode().setAll(obj.asJava)
   private def toJson(obj: Map[String, String]): JsonNode = toJsonObject(obj.view.mapValues(jsonFactory.textNode).toMap)
 
-  private val crypto = new BouncyCastleCrypto
+  private val crypto = new Crypto
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
 
   def flipByte(index: Int, bytes: ByteArray): ByteArray = editByte(bytes, index, b => (0xff ^ b).toByte)
@@ -532,10 +536,13 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
       it("7. Compute the hash of response.clientDataJSON using SHA-256.") {
         val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
         val step: FinishRegistrationSteps#Step7 = steps.begin.next.next.next.next.next.next
+        val digest = if (noBouncyCastle)
+          MessageDigest.getInstance("SHA-256") else
+          MessageDigest.getInstance("SHA-256", new BouncyCastleProvider())
 
         step.validations shouldBe a [Success[_]]
         step.tryNext shouldBe a [Success[_]]
-        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(RegistrationTestData.FidoU2f.BasicAttestation.clientDataJsonBytes.getBytes)))
+        step.clientDataJsonHash should equal (new ByteArray(digest.digest(RegistrationTestData.FidoU2f.BasicAttestation.clientDataJsonBytes.getBytes)))
       }
 
       it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
@@ -833,7 +840,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             val testData = RegistrationTestData.FidoU2f.SelfAttestation
             val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
             val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-              new BouncyCastleCrypto().hash(new ByteArray(testData.clientDataJsonBytes.getBytes.updated(20, (testData.clientDataJsonBytes.getBytes()(20) + 1).toByte))),
+              new Crypto().hash(new ByteArray(testData.clientDataJsonBytes.getBytes.updated(20, (testData.clientDataJsonBytes.getBytes()(20) + 1).toByte))),
               new AttestationObject(testData.attestationObject),
               Some(new FidoU2fAttestationStatementVerifier).asJava,
               Nil.asJava
@@ -852,7 +859,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               credentialId = Some(new ByteArray(Array.fill(16)(0)))
             )
             val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-              new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
+              new Crypto().hash(testData.clientDataJsonBytes),
               new AttestationObject(testData.attestationObject),
               Some(new FidoU2fAttestationStatementVerifier).asJava,
               Nil.asJava
@@ -884,7 +891,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               credentialId = Some(new ByteArray(Array.fill(16)(0)))
             )
             val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-              new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
+              new Crypto().hash(testData.clientDataJsonBytes),
               new AttestationObject(testData.attestationObject),
               Some(new FidoU2fAttestationStatementVerifier).asJava,
               Nil.asJava
@@ -914,7 +921,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               val standaloneVerification = Try {
                 new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
                   credential.getResponse.getAttestation,
-                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
+                  new Crypto().hash(credential.getResponse.getClientDataJSON)
                 )
               }
 
@@ -942,7 +949,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               val standaloneVerification = Try {
                 new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
                   credential.getResponse.getAttestation,
-                  new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
+                  new Crypto().hash(credential.getResponse.getClientDataJSON)
                 )
               }
 
@@ -963,10 +970,6 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
             it("A secp256k1 attestation certificate is rejected.") {
               checkRejected(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "secp256k1"))
             }
-
-            it("A P-256 attestation certificate is accepted.") {
-              checkAccepted(COSEAlgorithmIdentifier.ES256, testAuthenticator.generateEcKeypair(curve = "P-256"))
-            }
           }
         }
 
@@ -981,7 +984,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
 
               val steps = finishRegistration(testData = testData)
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                new BouncyCastleCrypto().hash(testData.clientDataJsonBytes),
+                new Crypto().hash(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new NoneAttestationStatementVerifier).asJava,
                 Nil.asJava
@@ -2008,6 +2011,10 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
         describe("accept all test examples in the validExamples list.") {
           RegistrationTestData.defaultSettingsValidExamples.zipWithIndex.foreach { case (testData, i) =>
             it(s"Succeeds for example index ${i}.") {
+              if (useBouncyCastle) {
+                Security.addProvider(new BouncyCastleProvider())
+              }
+
               val rp = {
                 val builder = RelyingParty.builder()
                   .identity(testData.rpId)

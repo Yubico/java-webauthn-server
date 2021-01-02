@@ -28,6 +28,7 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.security.KeyPair
 import java.security.MessageDigest
+import java.security.Security
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 
@@ -53,8 +54,11 @@ import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.Util.toStepWithUtilities
+import com.yubico.webauthn.test.Util.useBouncyCastle
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
@@ -66,13 +70,19 @@ import scala.util.Success
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks with BeforeAndAfterAll {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  private val crypto = new BouncyCastleCrypto()
+  private val crypto = new Crypto()
 
   private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
   private def sha256(data: String): ByteArray = sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
+
+  override def beforeAll(): Unit = {
+    if (useBouncyCastle) {
+      Security.addProvider(new BouncyCastleProvider())
+    }
+  }
 
   private object Defaults {
 
@@ -1046,7 +1056,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
 
         step.validations shouldBe a [Success[_]]
         step.tryNext shouldBe a [Success[_]]
-        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256", crypto.getProvider).digest(Defaults.clientDataJsonBytes.getBytes)))
+        step.clientDataJsonHash should equal (new ByteArray(MessageDigest.getInstance("SHA-256").digest(Defaults.clientDataJsonBytes.getBytes)))
       }
 
       describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of authData and hash.") {

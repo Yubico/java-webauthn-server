@@ -30,7 +30,7 @@ import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 @Slf4j
 class AndroidSafetynetAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
-    private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
+    private final Crypto crypto = new Crypto();
 
     private static final DefaultHostnameVerifier HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
@@ -109,7 +109,7 @@ class AndroidSafetynetAttestationStatementVerifier implements AttestationStateme
 
         Signature signatureVerifier;
         try {
-            signatureVerifier = Signature.getInstance(signatureAlgorithmName, crypto.getProvider());
+            signatureVerifier = Signature.getInstance(signatureAlgorithmName);
         } catch (NoSuchAlgorithmException e) {
             throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
         }

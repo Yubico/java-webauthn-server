@@ -58,7 +58,7 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 final class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
-    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
+    private static final Crypto crypto = new Crypto();
 
     private final AssertionRequest request;
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;

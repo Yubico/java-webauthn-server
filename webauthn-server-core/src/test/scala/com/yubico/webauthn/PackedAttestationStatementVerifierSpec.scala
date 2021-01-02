@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import com.yubico.webauthn.Crypto.isP256
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.Util
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
@@ -34,6 +35,7 @@ import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
+import java.security.interfaces.ECPrivateKey
 import scala.util.Success
 import scala.util.Try
 
@@ -68,10 +70,11 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
         val result = verifier.verifyAttestationSignature(
           credential.getResponse.getAttestation,
-          new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
+          new Crypto().hash(credential.getResponse.getClientDataJSON)
         )
 
-        key.getAlgorithm should be ("ECDSA")
+        key.getAlgorithm should be ("EC")
+        isP256(key.asInstanceOf[ECPrivateKey].getParams) should be (true)
         result should be (true)
       }
 
@@ -83,7 +86,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers {
 
         val result = verifier.verifyAttestationSignature(
           credential.getResponse.getAttestation,
-          new BouncyCastleCrypto().hash(credential.getResponse.getClientDataJSON)
+          new Crypto().hash(credential.getResponse.getClientDataJSON)
         )
 
         key.getAlgorithm should be ("RSA")

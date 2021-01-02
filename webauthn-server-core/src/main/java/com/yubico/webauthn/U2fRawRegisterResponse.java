@@ -42,7 +42,7 @@ import lombok.Value;
 @Value
 class U2fRawRegisterResponse {
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
-    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
+    private static final Crypto crypto = new Crypto();
 
     /**
      * The (uncompressed) x,y-representation of a curve point on the P-256

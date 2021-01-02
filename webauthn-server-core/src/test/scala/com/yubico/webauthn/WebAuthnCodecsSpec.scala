@@ -27,27 +27,36 @@ package com.yubico.webauthn
 import java.security.interfaces.ECPublicKey
 
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.test.Util
+import com.yubico.webauthn.test.Util.useBouncyCastle
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.security.Security
 import scala.util.Try
 
 
 @RunWith(classOf[JUnitRunner])
-class WebAuthnCodecsSpec  extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class WebAuthnCodecsSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks with BeforeAndAfterAll {
 
-  private val javaCryptoProvider: java.security.Provider = new BouncyCastleCrypto().getProvider
+  override def beforeAll(): Unit = {
+    if (useBouncyCastle) {
+      Security.addProvider(new BouncyCastleProvider())
+    }
+  }
 
   implicit def arbitraryEcPublicKey: Arbitrary[ECPublicKey] = Arbitrary(
     for {
       ySign: Byte <- Gen.oneOf(0x02: Byte, 0x03: Byte)
       rawBytes: Seq[Byte] <- Gen.listOfN[Byte](32, Arbitrary.arbitrary[Byte])
-      key = Try(new BouncyCastleCrypto().decodePublicKey(new ByteArray((ySign +: rawBytes).toArray)).asInstanceOf[ECPublicKey])
+      key = Try(Util.decodePublicKey(new ByteArray((ySign +: rawBytes).toArray)).asInstanceOf[ECPublicKey])
       if key.isSuccess
     } yield key.get
   )

@@ -53,7 +53,7 @@ import scala.util.Try
 class RelyingPartyUserIdentificationSpec  extends FunSpec with Matchers {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  private val crypto: BouncyCastleCrypto = new BouncyCastleCrypto()
+  private val crypto: Crypto = new Crypto()
 
   private object Defaults {
 

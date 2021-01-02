@@ -29,29 +29,31 @@
 
 package com.yubico.webauthn;
 
+import com.google.common.hash.Hashing;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
+
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
-import org.bouncycastle.asn1.sec.SECNamedCurves;
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.math.ec.ECPoint;
+import java.security.spec.ECFieldFp;
+import java.security.spec.ECParameterSpec;
+import java.security.spec.EllipticCurve;
 
-final class BouncyCastleCrypto {
+final class Crypto
+{
+    // Values from https://apps.nsa.gov/iaarchive/library/ia-guidance/ia-solutions-for-classified/algorithm-guidance/mathematical-routines-for-the-nist-prime-elliptic-curves.cfm
+    private static final EllipticCurve P256 = new EllipticCurve(
+            new ECFieldFp(
+                    new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853951")),
+            new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853948"),
+            new BigInteger("41058363725152142129326129780047268409114441015993725554835256314039467401291"));
 
-    private static final Provider provider = new BouncyCastleProvider();
-
-    public Provider getProvider() {
-        return provider;
+    static boolean isP256(ECParameterSpec params) {
+        return P256.equals(params.getCurve());
     }
 
     public boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature, COSEAlgorithmIdentifier alg) {
@@ -60,7 +62,7 @@ final class BouncyCastleCrypto {
 
     public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signatureBytes, COSEAlgorithmIdentifier alg) {
         try {
-            Signature signature = Signature.getInstance(WebAuthnCodecs.getJavaAlgorithmName(alg), provider);
+            Signature signature = Signature.getInstance(WebAuthnCodecs.getJavaAlgorithmName(alg));
             signature.initVerify(publicKey);
             signature.update(signedBytes.getBytes());
             return signature.verify(signatureBytes.getBytes());
@@ -77,46 +79,12 @@ final class BouncyCastleCrypto {
         }
     }
 
-    public PublicKey decodePublicKey(ByteArray encodedPublicKey) {
-        try {
-            X9ECParameters curve = SECNamedCurves.getByName("secp256r1");
-            ECPoint point;
-            try {
-                point = curve.getCurve().decodePoint(encodedPublicKey.getBytes());
-            } catch (RuntimeException e) {
-                throw new IllegalArgumentException(
-                    "Could not parse user public key: " + encodedPublicKey.getBase64Url(),
-                    e
-                );
-            }
-
-            return KeyFactory.getInstance("ECDSA", provider).generatePublic(
-                    new ECPublicKeySpec(point,
-                            new ECParameterSpec(
-                                    curve.getCurve(),
-                                    curve.getG(),
-                                    curve.getN(),
-                                    curve.getH()
-                            )
-                    )
-            );
-        } catch (GeneralSecurityException e) { //This should not happen
-            throw new RuntimeException(
-                "Failed to decode public key: " + encodedPublicKey.getBase64Url(),
-                e
-            );
-        }
-    }
-
     public ByteArray hash(ByteArray bytes) {
-        try {
-            return new ByteArray(MessageDigest.getInstance("SHA-256", provider).digest(bytes.getBytes()));
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        //noinspection UnstableApiUsage
+        return new ByteArray(Hashing.sha256().hashBytes(bytes.getBytes()).asBytes());
     }
 
     public ByteArray hash(String str) {
-        return hash(new ByteArray(str.getBytes()));
+        return hash(new ByteArray(str.getBytes(StandardCharsets.UTF_8)));
     }
 }
