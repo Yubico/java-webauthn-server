@@ -1,16 +1,15 @@
 package com.yubico.webauthn
 
+import java.security.KeyFactory
+import java.security.PrivateKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
-import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
-import java.security.PrivateKey
+
 import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import com.yubico.webauthn.test.Util.noBouncyCastle
 import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 
 
 /**
@@ -49,31 +48,23 @@ object WebAuthnTestCodecs {
 
   def importPrivateKey(encodedKey: ByteArray, alg: COSEAlgorithmIdentifier): PrivateKey = alg match {
     case COSEAlgorithmIdentifier.ES256 =>
-      val keyFactory: KeyFactory = if (noBouncyCastle)
-        KeyFactory.getInstance("EC") else
-        KeyFactory.getInstance("EC", new BouncyCastleProvider())
+      val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
       val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
       keyFactory.generatePrivate(spec)
 
     case COSEAlgorithmIdentifier.EdDSA =>
-      val keyFactory: KeyFactory = if (noBouncyCastle)
-        KeyFactory.getInstance("EdDSA") else
-        KeyFactory.getInstance("EdDSA", new BouncyCastleProvider())
+      val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA")
       val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
       keyFactory.generatePrivate(spec)
 
     case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS1 =>
-      val keyFactory: KeyFactory = if (noBouncyCastle)
-        KeyFactory.getInstance("RSA") else
-        KeyFactory.getInstance("RSA", new BouncyCastleProvider())
+      val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
       val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
       keyFactory.generatePrivate(spec)
   }
 
   def importEcdsaPrivateKey(encodedKey: ByteArray): PrivateKey = {
-    val keyFactory: KeyFactory = if (noBouncyCastle)
-      KeyFactory.getInstance("EC") else
-      KeyFactory.getInstance("EC", new BouncyCastleProvider())
+    val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
     val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
     keyFactory.generatePrivate(spec)
   }

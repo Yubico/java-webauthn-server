@@ -11,7 +11,6 @@ jobs:
     strategy:
       matrix:
         java: [8, 11, 15]
-        bouncy_castle: [true, false]
 
     steps:
     - name: Check out code
@@ -23,13 +22,13 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Run tests
-      run: USE_BOUNCY_CASTLE=${{matrix.bouncy_castle}} ./gradlew cleanTest check
+      run: ./gradlew cleanTest check
 
     - name: Archive test report
       if: ${{ always() }}
       uses: actions/upload-artifact@v2
       with:
-        name: test-reports-bc${{ matrix.bouncy_castle }}
+        name: test-reports
         path: "*/build/reports/**"
 
     - name: Build JavaDoc
