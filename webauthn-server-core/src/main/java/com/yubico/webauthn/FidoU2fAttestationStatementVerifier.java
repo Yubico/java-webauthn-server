@@ -137,7 +137,7 @@ final class FidoU2fAttestationStatementVerifier implements AttestationStatementV
                 try {
                     userPublicKey = getRawUserPublicKey(attestationObject);
                 } catch (IOException | CoseException e) {
-                    RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestedCredentialData));
+                    RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestedCredentialData), e);
                     log.error(err.getMessage(), err);
                     throw err;
                 }
