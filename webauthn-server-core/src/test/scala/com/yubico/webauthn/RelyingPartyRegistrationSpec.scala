@@ -877,9 +877,14 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               val testData = RegistrationTestData.FidoU2f.BasicAttestation.editAuthenticatorData { authenticatorData =>
                 val decoded = new AuthenticatorData(authenticatorData)
                 val L = decoded.getAttestedCredentialData.get.getCredentialId.getBytes.length
-                val evilPublicKey: Array[Byte] = decoded.getAttestedCredentialData.get.getCredentialPublicKey.getBytes.updated(30, 0: Byte)
+                val evilPublicKey: ByteArray =
+                  WebAuthnTestCodecs.publicKeyToCose(
+                    TestAuthenticator.generateKeypair(
+                      WebAuthnTestCodecs.getCoseAlgId(decoded.getAttestedCredentialData.get.getCredentialPublicKey)
+                    ).getPublic
+                  )
 
-                new ByteArray(authenticatorData.getBytes.take(32 + 1 + 4 + 16 + 2 + L) ++ evilPublicKey)
+                new ByteArray(authenticatorData.getBytes.take(32 + 1 + 4 + 16 + 2 + L) ++ evilPublicKey.getBytes)
               }
               val steps = finishRegistration(
                 testData = testData,

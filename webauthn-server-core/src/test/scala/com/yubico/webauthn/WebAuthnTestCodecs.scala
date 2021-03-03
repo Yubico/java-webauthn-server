@@ -2,6 +2,7 @@ package com.yubico.webauthn
 
 import java.security.KeyFactory
 import java.security.PrivateKey
+import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
@@ -44,6 +45,13 @@ object WebAuthnTestCodecs {
     coseKey.put(-3L, java.util.Arrays.copyOfRange(keyBytes, start + 32, start + 64)) // y
 
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
+  }
+
+  def publicKeyToCose(key: PublicKey): ByteArray = {
+    key match {
+      case k: ECPublicKey => ecPublicKeyToCose(k)
+      case other => throw new UnsupportedOperationException("Unknown key type: " + other.getClass.getCanonicalName)
+    }
   }
 
   def importPrivateKey(encodedKey: ByteArray, alg: COSEAlgorithmIdentifier): PrivateKey = alg match {
@@ -90,6 +98,13 @@ object WebAuthnTestCodecs {
     coseKey.put(-2L, key.getPublicExponent.toByteArray) // public exponent e
 
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
+  }
+
+  def getCoseAlgId(encodedPublicKey: ByteArray): COSEAlgorithmIdentifier = {
+    importCosePublicKey(encodedPublicKey).getAlgorithm match {
+      case "EC" => COSEAlgorithmIdentifier.ES256
+      case other => throw new UnsupportedOperationException("Unknown algorithm: " + other)
+    }
   }
 
 }
