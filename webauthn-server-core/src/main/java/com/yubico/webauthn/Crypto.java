@@ -46,11 +46,12 @@ import java.security.spec.EllipticCurve;
 final class Crypto
 {
     // Values from https://apps.nsa.gov/iaarchive/library/ia-guidance/ia-solutions-for-classified/algorithm-guidance/mathematical-routines-for-the-nist-prime-elliptic-curves.cfm
+    // cross-referenced with "secp256r1" in https://www.secg.org/sec2-v2.pdf
     private static final EllipticCurve P256 = new EllipticCurve(
             new ECFieldFp(
-                    new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853951")),
-            new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853948"),
-            new BigInteger("41058363725152142129326129780047268409114441015993725554835256314039467401291"));
+                    new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853951", 10)),
+            new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853948", 10),
+            new BigInteger("41058363725152142129326129780047268409114441015993725554835256314039467401291", 10));
 
     static boolean isP256(ECParameterSpec params) {
         return P256.equals(params.getCurve());
