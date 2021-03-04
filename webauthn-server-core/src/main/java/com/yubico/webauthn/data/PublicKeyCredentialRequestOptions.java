@@ -63,7 +63,6 @@ public class PublicKeyCredentialRequestOptions {
      * This is treated as a hint, and MAY be overridden by the client.
      * </p>
      */
-    @Builder.ObtainVia(method = "wrapTimeout")
     private final Long timeout;
 
     /**
@@ -156,6 +155,14 @@ public class PublicKeyCredentialRequestOptions {
             return this;
         }
 
+        /*
+         * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+         * Consider reverting this workaround if Lombok fixes that issue.
+         */
+        private PublicKeyCredentialRequestOptionsBuilder timeout(Long timeout) {
+            return this.timeout(Optional.ofNullable(timeout));
+        }
+
         /**
          * Specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
          * <p>
@@ -205,11 +212,6 @@ public class PublicKeyCredentialRequestOptions {
             this.allowCredentials = allowCredentials;
             return this;
         }
-    }
-
-    // Needed so that Lombok's .toBuilder() doesn't call .timeout(null: long)
-    private Optional<Long> wrapTimeout() {
-        return Optional.ofNullable(timeout);
     }
 
 }

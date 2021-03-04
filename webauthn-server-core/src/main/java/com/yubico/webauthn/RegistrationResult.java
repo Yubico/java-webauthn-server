@@ -112,7 +112,6 @@ public class RegistrationResult {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
      * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
      */
-    @Builder.ObtainVia(method = "getAttestationMetadata")
     private final Attestation attestationMetadata;
 
     @JsonCreator
@@ -173,6 +172,14 @@ public class RegistrationResult {
         RegistrationResultBuilder attestationMetadata(@NonNull Optional<Attestation> attestationMetadata) {
             this.attestationMetadata = attestationMetadata.orElse(null);
             return this;
+        }
+
+        /*
+         * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+         * Consider reverting this workaround if Lombok fixes that issue.
+         */
+        private RegistrationResultBuilder attestationMetadata(Attestation attestationMetadata) {
+            return this.attestationMetadata(Optional.ofNullable(attestationMetadata));
         }
     }
 

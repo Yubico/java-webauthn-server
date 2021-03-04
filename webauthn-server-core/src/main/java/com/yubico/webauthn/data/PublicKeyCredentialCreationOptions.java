@@ -85,7 +85,6 @@ public class PublicKeyCredentialCreationOptions {
      * A time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint,
      * and MAY be overridden by the client.
      */
-    @Builder.ObtainVia(method = "wrapTimeout")
     private final Long timeout;
 
     /**
@@ -216,6 +215,14 @@ public class PublicKeyCredentialCreationOptions {
             return this;
         }
 
+        /*
+         * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+         * Consider reverting this workaround if Lombok fixes that issue.
+         */
+        private PublicKeyCredentialCreationOptionsBuilder timeout(Long timeout) {
+            return this.timeout(Optional.ofNullable(timeout));
+        }
+
         /**
          * A time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint,
          * and MAY be overridden by the client.
@@ -259,11 +266,6 @@ public class PublicKeyCredentialCreationOptions {
             this.authenticatorSelection = authenticatorSelection;
             return this;
         }
-    }
-
-    // Needed so that Lombok's .toBuilder() doesn't call .timeout(null: long)
-    private Optional<Long> wrapTimeout() {
-        return Optional.ofNullable(timeout);
     }
 
 }
