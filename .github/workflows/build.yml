@@ -23,7 +23,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Run tests
-      run: USE_BOUNCY_CASTLE=${{matrix.bouncy_castle}} ./gradlew check
+      run: USE_BOUNCY_CASTLE=${{matrix.bouncy_castle}} ./gradlew cleanTest check
 
     - name: Archive test report
       if: ${{ always() }}
