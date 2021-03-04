@@ -75,6 +75,6 @@ object Util {
   }
   implicit def toStepWithUtilities[A](a: Stepish[A]): StepWithUtilities[A] = StepWithUtilities(a)
 
-  val useBouncyCastle: Boolean = System.getenv("NO_BOUNCY_CASTLE") == null
-  val noBouncyCastle: Boolean = !useBouncyCastle
+  val noBouncyCastle: Boolean = "false".equals(System.getenv("USE_BOUNCY_CASTLE"))
+  val useBouncyCastle: Boolean = !noBouncyCastle
 }
