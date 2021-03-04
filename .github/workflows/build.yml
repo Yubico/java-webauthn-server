@@ -25,5 +25,12 @@ jobs:
     - name: Run tests
       run: USE_BOUNCY_CASTLE=${{matrix.bouncy_castle}} ./gradlew check
 
+    - name: Archive test report
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-reports
+        path: "*/build/reports/**"
+
     - name: Build JavaDoc
       run: ./gradlew assembleJavadoc
