@@ -11,6 +11,7 @@ jobs:
     strategy:
       matrix:
         java: [8, 11, 15]
+        bouncy_castle: [true, false]
 
     steps:
     - name: Check out code
@@ -22,7 +23,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Run tests
-      run: ./gradlew check
+      run: USE_BOUNCY_CASTLE=${{matrix.bouncy_castle}} ./gradlew check
 
     - name: Build JavaDoc
       run: ./gradlew assembleJavadoc
