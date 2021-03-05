@@ -24,6 +24,7 @@
 
 package demo.webauthn;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
@@ -146,6 +147,7 @@ public class WebAuthnRestResource {
         }
     }
 
+    @Consumes("application/x-www-form-urlencoded")
     @Path("register")
     @POST
     public Response startRegistration(
@@ -219,6 +221,8 @@ public class WebAuthnRestResource {
         private StartAuthenticationActions() throws MalformedURLException {
         }
     }
+
+    @Consumes("application/x-www-form-urlencoded")
     @Path("authenticate")
     @POST
     public Response startAuthentication(
