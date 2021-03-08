@@ -25,7 +25,6 @@
 package com.yubico.webauthn.meta;
 
 import java.net.URL;
-import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;

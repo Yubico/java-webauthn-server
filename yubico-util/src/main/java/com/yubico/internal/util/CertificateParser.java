@@ -26,14 +26,12 @@ package com.yubico.internal.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class CertificateParser {
 //    private static final Provider BC_PROVIDER = new BouncyCastleProvider();
