@@ -46,19 +46,24 @@ import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -68,6 +73,11 @@ import lombok.extern.slf4j.Slf4j;
  * This class has no mutable state. An instance of this class may therefore be thought of as a container for specialized
  * versions (function closures) of these four operations rather than a stateful object.
  * </p>
+ *
+ * NOTE: Constructing this class may cause side effects in some cases.
+ * If the JCA security providers do not provide the <code>RSA</code>, <code>EC</code> and <code>EdDSA</code> algorithms,
+ * this class will attempt to create and add a {@link BouncyCastleProvider} to the global JCA context.
+ * If the {@link BouncyCastleProvider} class does not exist in the classpath, a warning will be logged.
  */
 @Slf4j
 @Builder(toBuilder = true)
@@ -414,12 +424,53 @@ public class RelyingParty {
         this.allowUnrequestedExtensions = allowUnrequestedExtensions;
         this.allowUntrustedAttestation = allowUntrustedAttestation;
         this.validateSignatureCounter = validateSignatureCounter;
+
+        tryLoadBouncyCastleIfNeeded();
     }
 
     private static ByteArray generateChallenge() {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         return new ByteArray(bytes);
+    }
+
+    /*
+     * TODO: Delete this in the next major version release
+     */
+    private static void tryLoadBouncyCastleIfNeeded() {
+        String[] algs = new String[]{"RSA", "EC", "EdDSA"};
+
+        for (String alg : algs) {
+            try {
+                KeyFactory.getInstance(alg);
+            } catch (NoSuchAlgorithmException e) {
+                log.debug("JCA algorithm provider not available: {}. Attempting to load BouncyCastle...", alg);
+                try {
+                    BouncyCastleLoader.loadBouncyCastleProvider();
+                    log.debug("Successfully loaded BouncyCastle provider.");
+                } catch (NoClassDefFoundError e2) {
+                    log.info("Failed to load BouncyCastle security provider. Some key decoding and/or signature verification may fail.", e2);
+                }
+                break;
+            }
+        }
+
+        for (String alg : algs) {
+            try {
+                KeyFactory.getInstance(alg);
+            } catch (NoSuchAlgorithmException e) {
+                log.warn("JCA algorithm provider not available: {}. Keys and signatures using this algorithm will cause crashes.", alg);
+            }
+        }
+    }
+
+    /*
+     * TODO: Delete this in the next major version release
+     */
+    private static class BouncyCastleLoader {
+        private static void loadBouncyCastleProvider() {
+            Security.addProvider(new BouncyCastleProvider());
+        }
     }
 
     public PublicKeyCredentialCreationOptions startRegistration(StartRegistrationOptions startRegistrationOptions) {
