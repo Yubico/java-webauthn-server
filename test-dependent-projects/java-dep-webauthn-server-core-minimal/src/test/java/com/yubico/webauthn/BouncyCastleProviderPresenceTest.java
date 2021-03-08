@@ -10,7 +10,8 @@ import java.util.Arrays;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test that the BouncyCastle provider is not loaded by default.
+ * Test that the BouncyCastle provider is not loaded by default
+ * when depending on the <code>webauthn-server-core-minimal</code> package.
  *
  * Motivation: https://github.com/Yubico/java-webauthn-server/issues/97
  */

@@ -7,12 +7,12 @@ description = 'Yubico WebAuthn attestation subsystem'
 
 project.ext.publishMe = true
 
-evaluationDependsOn(':webauthn-server-core')
+evaluationDependsOn(':webauthn-server-core-minimal')
 
 dependencies {
 
   api(
-    project(':webauthn-server-core'),
+    project(':webauthn-server-core-minimal'),
   )
 
   implementation(
@@ -24,7 +24,7 @@ dependencies {
   )
 
   testImplementation(
-    project(':webauthn-server-core').sourceSets.test.output,
+    project(':webauthn-server-core-minimal').sourceSets.test.output,
     project(':yubico-util-scala'),
     addVersion('junit:junit'),
     addVersion('org.mockito:mockito-core'),
