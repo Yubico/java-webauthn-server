@@ -175,11 +175,14 @@ subprojects { project ->
       from javadoc
     }
 
-    rootProject.tasks.assembleJavadoc {
-      dependsOn javadoc
-      inputs.dir javadoc.destinationDir
-      from(javadoc.destinationDir) {
-        into project.name
+    // TODO: Revert this if statement in the next major release
+    if (project.projectDir.name != "webauthn-server-core-bundle") {
+      rootProject.tasks.assembleJavadoc {
+        dependsOn javadoc
+        inputs.dir javadoc.destinationDir
+        from(javadoc.destinationDir) {
+          into project.projectDir.name
+        }
       }
     }
   }
