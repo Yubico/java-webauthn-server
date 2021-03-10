@@ -79,7 +79,7 @@ final class Crypto
             log.debug("Caught {}. Attempting fallback to BouncyCastle...", e.toString());
             try {
                 return KeyFactory.getInstance(algorithm, BouncyCastleLoader.getProvider());
-            } catch (NoSuchAlgorithmException e2) {
+            } catch (NoSuchAlgorithmException | NoClassDefFoundError e2) {
                 throw e;
             }
         }
@@ -95,7 +95,7 @@ final class Crypto
             log.debug("Caught {}. Attempting fallback to BouncyCastle...", e.toString());
             try {
                 return Signature.getInstance(algorithm, BouncyCastleLoader.getProvider());
-            } catch (NoSuchAlgorithmException e2) {
+            } catch (NoSuchAlgorithmException | NoClassDefFoundError e2) {
                 throw e;
             }
         }
