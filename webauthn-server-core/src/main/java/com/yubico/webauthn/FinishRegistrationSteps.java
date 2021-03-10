@@ -66,8 +66,6 @@ final class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
 
-    private static final Crypto crypto = new Crypto();
-
     private final PublicKeyCredentialCreationOptions request;
     private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
     private final Optional<ByteArray> callerTokenBindingId;
@@ -269,7 +267,7 @@ final class FinishRegistrationSteps {
         }
 
         public ByteArray clientDataJsonHash() {
-            return crypto.hash(response.getResponse().getClientDataJSON());
+            return Crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
 
@@ -302,7 +300,7 @@ final class FinishRegistrationSteps {
         @Override
         public void validate() {
             assure(
-                crypto.hash(rpId).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
+                Crypto.hash(rpId).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
                 "Wrong RP ID hash."
             );
         }

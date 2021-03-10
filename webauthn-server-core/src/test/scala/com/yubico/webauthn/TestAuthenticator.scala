@@ -125,8 +125,6 @@ object TestAuthenticator {
     println(s"Client data: ${new String(assertion.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
   }
 
-  val crypto = new Crypto
-
   object Defaults {
     val aaguid: ByteArray = new ByteArray(Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
     val challenge: ByteArray = new ByteArray(Array(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91))
@@ -415,7 +413,7 @@ object TestAuthenticator {
       .signature(
         makeAssertionSignature(
           authDataBytes,
-          crypto.hash(clientDataJsonBytes),
+          Crypto.hash(clientDataJsonBytes),
           credentialKey.getPrivate,
           alg
         )
@@ -445,7 +443,7 @@ object TestAuthenticator {
     ): ByteArray = {
       new ByteArray((Vector[Byte](0)
         ++ rpIdHash.getBytes
-        ++ crypto.hash(clientDataJson).getBytes
+        ++ Crypto.hash(clientDataJson).getBytes
         ++ credentialId.getBytes
         ++ credentialPublicKeyRawBytes.getBytes
         ).toArray)
@@ -478,7 +476,7 @@ object TestAuthenticator {
     clientDataJson: String,
     signer: AttestationSigner,
   ): JsonNode = {
-    val signedData = new ByteArray(authDataBytes.getBytes ++ crypto.hash(clientDataJson).getBytes)
+    val signedData = new ByteArray(authDataBytes.getBytes ++ Crypto.hash(clientDataJson).getBytes)
     val signature = signer match {
       case SelfAttestation(keypair, alg) => sign(signedData, keypair.getPrivate, alg)
       case AttestationCert(_, key, alg, _) => sign(signedData, key, alg)
@@ -505,7 +503,7 @@ object TestAuthenticator {
     cert: AttestationCert,
     ctsProfileMatch: Boolean = true
   ): JsonNode = {
-    val nonce = crypto.hash(authDataBytes concat crypto.hash(clientDataJson))
+    val nonce = Crypto.hash(authDataBytes concat Crypto.hash(clientDataJson))
 
     val f = JsonNodeFactory.instance
 
@@ -520,9 +518,9 @@ object TestAuthenticator {
       "nonce" -> f.textNode(nonce.getBase64),
       "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
       "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
-      "apkDigestSha256" -> f.textNode(crypto.hash("foo").getBase64),
+      "apkDigestSha256" -> f.textNode(Crypto.hash("foo").getBase64),
       "ctsProfileMatch" -> f.booleanNode(ctsProfileMatch),
-      "aplCertificateDigestSha256" -> f.arrayNode().add(f.textNode(crypto.hash("foo").getBase64)),
+      "aplCertificateDigestSha256" -> f.arrayNode().add(f.textNode(Crypto.hash("foo").getBase64)),
       "basicIntegrity" -> f.booleanNode(true)
     ).asJava)
     val jwsPayloadBase64 = new ByteArray(JacksonCodecs.json().writeValueAsBytes(jwsPayload)).getBase64Url
@@ -635,7 +633,7 @@ object TestAuthenticator {
     sig.update(signedDataBytes.getBytes)
 
     sig.verify(signatureBytes.getBytes) &&
-      crypto.verifySignature(pubKey, signedDataBytes, signatureBytes, COSEAlgorithmIdentifier.ES256)
+      Crypto.verifySignature(pubKey, signedDataBytes, signatureBytes, COSEAlgorithmIdentifier.ES256)
   }
 
   def verifyU2fExampleWithCert(

@@ -60,8 +60,6 @@ import lombok.val;
 @Slf4j
 final class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
-    private final Crypto crypto = new Crypto();
-
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {
         if (attestation.getAttestationStatement().hasNonNull("x5c")) {
@@ -133,7 +131,7 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
             throw ExceptionUtil.wrapAndLog(log, ".binaryValue() of \"sig\" failed", e);
         }
 
-        return crypto.verifySignature(pubkey, signedData, signature, keyAlg);
+        return Crypto.verifySignature(pubkey, signedData, signature, keyAlg);
     }
 
     private boolean verifyX5cSignature(AttestationObject attestationObject, ByteArray clientDataHash) {

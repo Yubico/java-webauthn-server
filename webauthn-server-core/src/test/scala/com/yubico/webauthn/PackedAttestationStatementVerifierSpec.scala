@@ -71,7 +71,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers with 
 
           val result = verifier.verifyAttestationSignature(
             credential.getResponse.getAttestation,
-            new Crypto().hash(credential.getResponse.getClientDataJSON)
+            Crypto.hash(credential.getResponse.getClientDataJSON)
           )
 
           key.getAlgorithm should be ("EC")
@@ -87,7 +87,7 @@ class PackedAttestationStatementVerifierSpec extends FunSpec with Matchers with 
 
           val result = verifier.verifyAttestationSignature(
             credential.getResponse.getAttestation,
-            new Crypto().hash(credential.getResponse.getClientDataJSON)
+            Crypto.hash(credential.getResponse.getClientDataJSON)
           )
 
           key.getAlgorithm should be ("RSA")

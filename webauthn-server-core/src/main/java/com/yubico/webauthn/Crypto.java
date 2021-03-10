@@ -32,7 +32,6 @@ package com.yubico.webauthn;
 import com.google.common.hash.Hashing;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
-
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -42,7 +41,9 @@ import java.security.cert.X509Certificate;
 import java.security.spec.ECFieldFp;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.EllipticCurve;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 final class Crypto
 {
     // Values from https://apps.nsa.gov/iaarchive/library/ia-guidance/ia-solutions-for-classified/algorithm-guidance/mathematical-routines-for-the-nist-prime-elliptic-curves.cfm
@@ -57,11 +58,11 @@ final class Crypto
         return P256.equals(params.getCurve());
     }
 
-    public boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature, COSEAlgorithmIdentifier alg) {
+    public static boolean verifySignature(X509Certificate attestationCertificate, ByteArray signedBytes, ByteArray signature, COSEAlgorithmIdentifier alg) {
         return verifySignature(attestationCertificate.getPublicKey(), signedBytes, signature, alg);
     }
 
-    public boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signatureBytes, COSEAlgorithmIdentifier alg) {
+    public static boolean verifySignature(PublicKey publicKey, ByteArray signedBytes, ByteArray signatureBytes, COSEAlgorithmIdentifier alg) {
         try {
             Signature signature = Signature.getInstance(WebAuthnCodecs.getJavaAlgorithmName(alg));
             signature.initVerify(publicKey);
@@ -80,12 +81,12 @@ final class Crypto
         }
     }
 
-    public ByteArray hash(ByteArray bytes) {
+    public static ByteArray hash(ByteArray bytes) {
         //noinspection UnstableApiUsage
         return new ByteArray(Hashing.sha256().hashBytes(bytes.getBytes()).asBytes());
     }
 
-    public ByteArray hash(String str) {
+    public static ByteArray hash(String str) {
         return hash(new ByteArray(str.getBytes(StandardCharsets.UTF_8)));
     }
 }

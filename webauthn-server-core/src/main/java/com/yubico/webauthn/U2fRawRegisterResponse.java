@@ -42,7 +42,6 @@ import lombok.Value;
 @Value
 class U2fRawRegisterResponse {
     private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
-    private static final Crypto crypto = new Crypto();
 
     /**
      * The (uncompressed) x,y-representation of a curve point on the P-256
@@ -73,7 +72,7 @@ class U2fRawRegisterResponse {
 
     boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
         ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
-        return crypto.verifySignature(attestationCertificate, signedBytes, signature, COSEAlgorithmIdentifier.ES256);
+        return Crypto.verifySignature(attestationCertificate, signedBytes, signature, COSEAlgorithmIdentifier.ES256);
     }
 
     private static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {

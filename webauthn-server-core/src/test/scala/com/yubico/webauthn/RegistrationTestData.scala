@@ -294,7 +294,7 @@ case class RegistrationTestData(
 
   def clientDataJsonBytes: ByteArray = new ByteArray(clientDataJson.getBytes("UTF-8"))
   def clientData = new CollectedClientData(clientDataJsonBytes)
-  def clientDataJsonHash: ByteArray = new Crypto().hash(clientDataJsonBytes)
+  def clientDataJsonHash: ByteArray = Crypto.hash(clientDataJsonBytes)
   def aaguid: ByteArray = new AttestationObject(attestationObject).getAuthenticatorData.getAttestedCredentialData.get.getAaguid
   def packedAttestationCert: X509Certificate =
     CertificateParser.parseDer(

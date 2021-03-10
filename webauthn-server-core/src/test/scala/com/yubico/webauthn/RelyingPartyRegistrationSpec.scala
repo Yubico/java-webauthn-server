@@ -80,8 +80,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
   private def toJsonObject(obj: Map[String, JsonNode]): JsonNode = jsonFactory.objectNode().setAll(obj.asJava)
   private def toJson(obj: Map[String, String]): JsonNode = toJsonObject(obj.view.mapValues(jsonFactory.textNode).toMap)
 
-  private val crypto = new Crypto
-  private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
+  private def sha256(bytes: ByteArray): ByteArray = Crypto.hash(bytes)
 
   def flipByte(index: Int, bytes: ByteArray): ByteArray = editByte(bytes, index, b => (0xff ^ b).toByte)
   def editByte(bytes: ByteArray, index: Int, updater: Byte => Byte): ByteArray = new ByteArray(bytes.getBytes.updated(index, updater(bytes.getBytes()(index))))
@@ -835,7 +834,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               val testData = RegistrationTestData.FidoU2f.SelfAttestation
               val steps = finishRegistration(testData = RegistrationTestData.FidoU2f.BasicAttestation)
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                new Crypto().hash(new ByteArray(testData.clientDataJsonBytes.getBytes.updated(20, (testData.clientDataJsonBytes.getBytes()(20) + 1).toByte))),
+                Crypto.hash(new ByteArray(testData.clientDataJsonBytes.getBytes.updated(20, (testData.clientDataJsonBytes.getBytes()(20) + 1).toByte))),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava
@@ -854,7 +853,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
                 credentialId = Some(new ByteArray(Array.fill(16)(0)))
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                new Crypto().hash(testData.clientDataJsonBytes),
+                Crypto.hash(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava
@@ -891,7 +890,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
                 credentialId = Some(new ByteArray(Array.fill(16)(0)))
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                new Crypto().hash(testData.clientDataJsonBytes),
+                Crypto.hash(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava
@@ -921,7 +920,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
                 val standaloneVerification = Try {
                   new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
                     credential.getResponse.getAttestation,
-                    new Crypto().hash(credential.getResponse.getClientDataJSON)
+                    Crypto.hash(credential.getResponse.getClientDataJSON)
                   )
                 }
 
@@ -949,7 +948,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
                 val standaloneVerification = Try {
                   new FidoU2fAttestationStatementVerifier().verifyAttestationSignature(
                     credential.getResponse.getAttestation,
-                    new Crypto().hash(credential.getResponse.getClientDataJSON)
+                    Crypto.hash(credential.getResponse.getClientDataJSON)
                   )
                 }
 
@@ -984,7 +983,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
 
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                  new Crypto().hash(testData.clientDataJsonBytes),
+                  Crypto.hash(testData.clientDataJsonBytes),
                   new AttestationObject(testData.attestationObject),
                   Some(new NoneAttestationStatementVerifier).asJava,
                   Nil.asJava

@@ -58,7 +58,6 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 final class FinishAssertionSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.get";
-    private static final Crypto crypto = new Crypto();
 
     private final AssertionRequest request;
     private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
@@ -420,14 +419,14 @@ final class FinishAssertionSteps {
         public void validate() {
             try {
                 assure(
-                    crypto.hash(rpId).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+                    Crypto.hash(rpId).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
                     "Wrong RP ID hash."
                 );
             } catch (IllegalArgumentException e) {
                 Optional<AppId> appid = request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
                 if (appid.isPresent()) {
                     assure(
-                        crypto.hash(appid.get().getId()).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+                        Crypto.hash(appid.get().getId()).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
                         "Wrong RP ID hash."
                     );
                 } else {
@@ -534,7 +533,7 @@ final class FinishAssertionSteps {
         }
 
         public ByteArray clientDataJsonHash() {
-            return crypto.hash(response.getResponse().getClientDataJSON());
+            return Crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
 
@@ -570,7 +569,7 @@ final class FinishAssertionSteps {
                 new IllegalArgumentException(String.format("Failed to decode \"alg\" from COSE key: %s", cose)));
 
             if (!
-                crypto.verifySignature(
+                Crypto.verifySignature(
                     key,
                     signedBytes(),
                     response.getResponse().getSignature(),

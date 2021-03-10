@@ -68,9 +68,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestWithEachProvider {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  private val crypto = new Crypto()
 
-  private def sha256(bytes: ByteArray): ByteArray = crypto.hash(bytes)
+  private def sha256(bytes: ByteArray): ByteArray = Crypto.hash(bytes)
   private def sha256(data: String): ByteArray = sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
 
   private object Defaults {
@@ -1075,7 +1074,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
 
           it("A test case with a different signed RP ID hash fails.") {
             val rpId = "ARGHABLARGHLER"
-            val rpIdHash: ByteArray = crypto.hash(rpId)
+            val rpIdHash: ByteArray = Crypto.hash(rpId)
             val steps = finishAssertion(
               authenticatorData = new ByteArray((rpIdHash.getBytes.toVector ++ Defaults.authenticatorData.getBytes.toVector.drop(32)).toArray),
               rpId = Defaults.rpId.toBuilder.id(rpId).build(),
@@ -1126,7 +1125,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
 
             describe("zero, then the stored signature counter value must also be zero.") {
               val authenticatorData = new ByteArray(Defaults.authenticatorData.getBytes.updated(33, 0: Byte).updated(34, 0: Byte).updated(35, 0: Byte).updated(36, 0: Byte))
-              val signature = TestAuthenticator.makeAssertionSignature(authenticatorData, crypto.hash(Defaults.clientDataJsonBytes), Defaults.credentialKey.getPrivate)
+              val signature = TestAuthenticator.makeAssertionSignature(authenticatorData, Crypto.hash(Defaults.clientDataJsonBytes), Defaults.credentialKey.getPrivate)
 
               it("Succeeds if the stored signature counter value is zero.") {
                 val cr = credentialRepository(0)

@@ -30,8 +30,6 @@ import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 @Slf4j
 class AndroidSafetynetAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
-    private final Crypto crypto = new Crypto();
-
     private static final DefaultHostnameVerifier HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
     @Override
@@ -66,7 +64,7 @@ class AndroidSafetynetAttestationStatementVerifier implements AttestationStateme
         JsonNode payload = jws.getPayload();
 
         ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
-        ByteArray hashSignedData = crypto.hash(signedData);
+        ByteArray hashSignedData = Crypto.hash(signedData);
         ByteArray nonceByteArray = ByteArray.fromBase64(payload.get("nonce").textValue());
         ExceptionUtil.assure(
             hashSignedData.equals(nonceByteArray),
