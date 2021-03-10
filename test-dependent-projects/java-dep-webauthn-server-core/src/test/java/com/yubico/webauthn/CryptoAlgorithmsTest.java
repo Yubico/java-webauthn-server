@@ -44,11 +44,6 @@ public class CryptoAlgorithmsTest {
     }
 
     @Test
-    public void generateRsa() {
-        TestAuthenticator.generateRsaKeypair();
-    }
-
-    @Test
     public void importRsa() throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
         PublicKey key = WebAuthnCodecs.importCosePublicKey(
             new AttestationObject(RegistrationTestData.Packed$.MODULE$.BasicAttestationRsa().attestationObject())
@@ -61,11 +56,6 @@ public class CryptoAlgorithmsTest {
     }
 
     @Test
-    public void generateEcdsa() {
-        TestAuthenticator.generateEcKeypair("secp256r1");
-    }
-
-    @Test
     public void importEcdsa() throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
         PublicKey key = WebAuthnCodecs.importCosePublicKey(
             new AttestationObject(RegistrationTestData.Packed$.MODULE$.BasicAttestation().attestationObject())
@@ -75,11 +65,6 @@ public class CryptoAlgorithmsTest {
                 .getCredentialPublicKey()
         );
         assertEquals(key.getAlgorithm(), "EC");
-    }
-
-    @Test
-    public void generateEddsa() {
-        TestAuthenticator.generateEddsaKeypair();
     }
 
     @Test
