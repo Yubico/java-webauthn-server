@@ -36,6 +36,32 @@ Gradle:
 compile 'com.yubico:webauthn-server-core:1.7.0'
 ----------
 
+=== Semantic versioning
+
+This library uses link:https://semver.org/[semantic versioning].
+The public API consists of all public classes, methods and fields in the `com.yubico.webauthn` package and its subpackages,
+i.e., everything covered by the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/package-summary.html[Javadoc].
+
+Package-private classes and methods are NOT part of the public API.
+The `com.yubico:yubico-util` module is NOT part of the public API.
+Breaking changes to these will NOT be reflected in version numbers.
+
+
+=== Additional modules
+
+In addition to the main `webauthn-server-core` module, there are also:
+
+- `webauthn-server-attestation`: A simple implementation of the
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/attestation/MetadataService.html[`MetadataService`]
+  interface, which by default comes preloaded with attestation metadata for Yubico devices.
+
+- `webauthn-server-core-minimal`: Alternative distribution of `webauthn-server-core`,
+  without a dependency on BouncyCastle.
+  If depending on this module instead of `webauthn-server-core`,
+  you may have to add your own JCA providers to support some signature algorithms.
+  In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms.
+
 
 == Features
 
