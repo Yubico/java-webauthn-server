@@ -58,8 +58,13 @@ trait TestWithEachProvider extends Matchers {
    */
   def testWithEachProvider(registerTests: (String => (=> Any) => Unit) => Any): Unit = {
     val defaultProviders: List[Provider] = Security.getProviders.toList
+
+    // TODO: Uncomment this in the next major version
     //it should behave like wrapItFunctionWithProviderContext("default", defaultProviders, registerTests)
+
     it should behave like wrapItFunctionWithProviderContext("BouncyCastle", List(new BouncyCastleProvider()), registerTests)
+
+    // TODO: Delete this in the next major version
     it should behave like wrapItFunctionWithProviderContext("default and BouncyCastle", defaultProviders.appended(new BouncyCastleProvider()), registerTests)
   }
 
