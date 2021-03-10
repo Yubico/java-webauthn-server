@@ -173,7 +173,7 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
                 final String signatureAlgorithmName = WebAuthnCodecs.getJavaAlgorithmName(sigAlg);
                 Signature signatureVerifier;
                 try {
-                    signatureVerifier = Signature.getInstance(signatureAlgorithmName);
+                    signatureVerifier = Crypto.getSignature(signatureAlgorithmName);
                 } catch (NoSuchAlgorithmException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
                 }

@@ -107,7 +107,7 @@ class AndroidSafetynetAttestationStatementVerifier implements AttestationStateme
 
         Signature signatureVerifier;
         try {
-            signatureVerifier = Signature.getInstance(signatureAlgorithmName);
+            signatureVerifier = Crypto.getSignature(signatureAlgorithmName);
         } catch (NoSuchAlgorithmException e) {
             throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
         }
