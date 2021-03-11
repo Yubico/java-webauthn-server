@@ -84,15 +84,32 @@ public class PublicKeyCredential<A extends AuthenticatorResponse, B extends Clie
 
     @JsonCreator
     private PublicKeyCredential(
-        @NonNull @JsonProperty("id") ByteArray id,
+        @JsonProperty("id") ByteArray id,
+        @JsonProperty("rawId") ByteArray rawId,
         @NonNull @JsonProperty("response") A response,
         @NonNull @JsonProperty("clientExtensionResults") B clientExtensionResults,
         @NonNull @JsonProperty("type") PublicKeyCredentialType type
     ) {
-        this.id = id;
+        if (id == null && rawId == null) {
+            throw new NullPointerException("At least one of \"id\" and \"rawId\" must be non-null.");
+        }
+        if (id != null && rawId != null && !id.equals(rawId)) {
+            throw new IllegalArgumentException(String.format("\"id\" and \"rawId\" are not equal: %s != %s", id, rawId));
+        }
+
+        this.id = id == null ? rawId : id;
         this.response = response;
         this.clientExtensionResults = clientExtensionResults;
         this.type = type;
+    }
+
+    private PublicKeyCredential(
+            ByteArray id,
+            @NonNull A response,
+            @NonNull B clientExtensionResults,
+            @NonNull PublicKeyCredentialType type
+    ) {
+        this(id, null, response, clientExtensionResults, type);
     }
 
     public static <A extends AuthenticatorResponse, B extends ClientExtensionOutputs> PublicKeyCredentialBuilder<A, B>.MandatoryStages builder() {
