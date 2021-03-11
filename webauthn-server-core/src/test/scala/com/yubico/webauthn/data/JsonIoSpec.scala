@@ -29,10 +29,14 @@ import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.exc.ValueInstantiationException
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
+import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationResult
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
@@ -40,7 +44,6 @@ import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
-import com.yubico.webauthn.RegisteredCredential
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
@@ -160,6 +163,106 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
         }
       }
       test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+    }
+
+    it("allows rawId to be present without id.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+        forAll { value: P =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded = json.readTree(encoded)
+          decoded.asInstanceOf[ObjectNode]
+            .set[ObjectNode]("rawId", new TextNode(value.getId.getBase64Url))
+            .remove("id")
+          val reencoded = json.writeValueAsString(decoded)
+          val restored: P = json.readValue(reencoded, tpe)
+
+          restored.getId should equal (value.getId)
+          restored should equal (value)
+        }
+      }
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+    }
+
+    it("allows id to be present without rawId.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+        forAll { value: P =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded = json.readTree(encoded)
+          decoded.asInstanceOf[ObjectNode]
+            .set[ObjectNode]("id", new TextNode(value.getId.getBase64Url))
+            .remove("rawId")
+          val reencoded = json.writeValueAsString(decoded)
+          val restored: P = json.readValue(reencoded, tpe)
+
+          restored should equal (value)
+        }
+      }
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+    }
+
+    it("allows both id and rawId to be present if equal.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+        forAll { value: P =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded = json.readTree(encoded)
+          decoded.asInstanceOf[ObjectNode].set("id", new TextNode(value.getId.getBase64Url))
+          decoded.asInstanceOf[ObjectNode].set("rawId", new TextNode(value.getId.getBase64Url))
+          val reencoded = json.writeValueAsString(decoded)
+          val restored: P = json.readValue(reencoded, tpe)
+
+          restored should equal (value)
+        }
+      }
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+    }
+
+    it("does not allow both id and rawId to be absent.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+        forAll { value: P =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded = json.readTree(encoded).asInstanceOf[ObjectNode]
+          decoded.remove("id")
+          decoded.remove("rawId")
+          val reencoded = json.writeValueAsString(decoded)
+
+          an [ValueInstantiationException] should be thrownBy {
+            json.readValue(reencoded, tpe)
+          }
+        }
+      }
+
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+    }
+
+    it("does not allow both id and rawId to be present and not equal.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+        forAll { value: P =>
+          val modId = new ByteArray(
+            if (value.getId.getBytes.isEmpty)
+              Array(0)
+            else
+              value.getId.getBytes.updated(0, (value.getId.getBytes()(0) + 1 % 127).byteValue)
+          )
+
+          val encoded: String = json.writeValueAsString(value)
+          val decoded = json.readTree(encoded)
+          decoded.asInstanceOf[ObjectNode]
+            .set[ObjectNode]("id", new TextNode(value.getId.getBase64Url))
+            .set[ObjectNode]("rawId", new TextNode(modId.getBase64Url))
+          val reencoded = json.writeValueAsString(decoded)
+
+          an [ValueInstantiationException] should be thrownBy {
+            json.readValue(reencoded, tpe)
+          }
+        }
+      }
+
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
     }
   }
 
