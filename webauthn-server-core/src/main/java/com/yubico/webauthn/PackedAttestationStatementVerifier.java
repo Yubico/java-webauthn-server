@@ -38,6 +38,7 @@ import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -54,14 +55,10 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.DEROctetString;
 
 
 @Slf4j
 final class PackedAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
-
-    private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     @Override
     public AttestationType getAttestationType(AttestationObject attestation) {
@@ -134,7 +131,7 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
             throw ExceptionUtil.wrapAndLog(log, ".binaryValue() of \"sig\" failed", e);
         }
 
-        return crypto.verifySignature(pubkey, signedData, signature, keyAlg);
+        return Crypto.verifySignature(pubkey, signedData, signature, keyAlg);
     }
 
     private boolean verifyX5cSignature(AttestationObject attestationObject, ByteArray clientDataHash) {
@@ -176,7 +173,7 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
                 final String signatureAlgorithmName = WebAuthnCodecs.getJavaAlgorithmName(sigAlg);
                 Signature signatureVerifier;
                 try {
-                    signatureVerifier = Signature.getInstance(signatureAlgorithmName, crypto.getProvider());
+                    signatureVerifier = Crypto.getSignature(signatureAlgorithmName);
                 } catch (NoSuchAlgorithmException e) {
                     throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
                 }
@@ -245,15 +242,7 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
         );
 
         Optional.ofNullable(cert.getExtensionValue(idFidoGenCeAaguid))
-            .map(ext -> {
-                try {
-                    return new ByteArray(((DEROctetString) ASN1Primitive.fromByteArray(
-                        ((DEROctetString) ASN1Primitive.fromByteArray(ext)).getOctets()
-                    )).getOctets());
-                } catch (IOException e) {
-                    throw new IllegalArgumentException("Failed to read id-fido-gen-ce-aaguid certificate extension value.");
-                }
-            })
+            .map(ext -> new ByteArray(parseAaguid(ext)))
             .ifPresent((ByteArray value) -> {
                 ExceptionUtil.assure(
                     value.equals(aaguid),
@@ -277,4 +266,33 @@ final class PackedAttestationStatementVerifier implements AttestationStatementVe
         return true;
     }
 
+    /**
+     * Parses an AAGUID into bytes. Refer to <a
+     * href="https://www.w3.org/TR/webauthn/#sctn-packed-attestation-cert-requirements">Packed Attestation Statement
+     * Certificate Requirements</a> on the W3C web site for details of the ASN.1 structure that this method parses.
+     *
+     * @param bytes the bytes making up value of the extension
+     * @return the bytes of the AAGUID
+     */
+    private byte[] parseAaguid(byte[] bytes) {
+
+        if (bytes != null && bytes.length == 20)
+        {
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+            if (buffer.get() == (byte) 0x04 &&
+                    buffer.get() == (byte) 0x12 &&
+                    buffer.get() == (byte) 0x04 &&
+                    buffer.get() == (byte) 0x10)
+            {
+                byte[] aaguidBytes = new byte[16];
+                buffer.get(aaguidBytes);
+
+                return aaguidBytes;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "X.509 extension 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) is not valid.");
+    }
 }

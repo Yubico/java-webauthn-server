@@ -40,12 +40,15 @@ import java.security.Signature
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
+import java.security.spec.ECGenParameterSpec
 import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Date
+import scala.jdk.CollectionConverters._
+import scala.util.Try
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -55,14 +58,13 @@ import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
-import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.UserIdentity
@@ -79,15 +81,13 @@ import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
 import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey
 import org.bouncycastle.jce.ECNamedCurveTable
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
 import org.bouncycastle.openssl.PEMKeyPair
 import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
-
-import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 
 object TestAuthenticator {
@@ -125,9 +125,6 @@ object TestAuthenticator {
     println(s"Client data: ${new String(assertion.getResponse.getClientDataJSON.getBytes, "UTF-8")}")
   }
 
-  val crypto = new BouncyCastleCrypto
-  val javaCryptoProvider: java.security.Provider = crypto.getProvider
-
   object Defaults {
     val aaguid: ByteArray = new ByteArray(Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
     val challenge: ByteArray = new ByteArray(Array(0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 16, 105, 121, 98, 91))
@@ -147,7 +144,7 @@ object TestAuthenticator {
   private def toBytes(s: String): ByteArray = new ByteArray(s.getBytes("UTF-8"))
   private def toJson(node: JsonNode): String = new ObjectMapper().writeValueAsString(node)
   private def sha256(s: String): ByteArray = sha256(toBytes(s))
-  private def sha256(b: ByteArray): ByteArray = new ByteArray(MessageDigest.getInstance("SHA-256", javaCryptoProvider).digest(b.getBytes))
+  private def sha256(b: ByteArray): ByteArray = new ByteArray(MessageDigest.getInstance("SHA-256").digest(b.getBytes))
 
 
   sealed trait AttestationMaker {
@@ -416,7 +413,7 @@ object TestAuthenticator {
       .signature(
         makeAssertionSignature(
           authDataBytes,
-          crypto.hash(clientDataJsonBytes),
+          Crypto.hash(clientDataJsonBytes),
           credentialKey.getPrivate,
           alg
         )
@@ -446,7 +443,7 @@ object TestAuthenticator {
     ): ByteArray = {
       new ByteArray((Vector[Byte](0)
         ++ rpIdHash.getBytes
-        ++ crypto.hash(clientDataJson).getBytes
+        ++ Crypto.hash(clientDataJson).getBytes
         ++ credentialId.getBytes
         ++ credentialPublicKeyRawBytes.getBytes
         ).toArray)
@@ -479,7 +476,7 @@ object TestAuthenticator {
     clientDataJson: String,
     signer: AttestationSigner,
   ): JsonNode = {
-    val signedData = new ByteArray(authDataBytes.getBytes ++ crypto.hash(clientDataJson).getBytes)
+    val signedData = new ByteArray(authDataBytes.getBytes ++ Crypto.hash(clientDataJson).getBytes)
     val signature = signer match {
       case SelfAttestation(keypair, alg) => sign(signedData, keypair.getPrivate, alg)
       case AttestationCert(_, key, alg, _) => sign(signedData, key, alg)
@@ -506,7 +503,7 @@ object TestAuthenticator {
     cert: AttestationCert,
     ctsProfileMatch: Boolean = true
   ): JsonNode = {
-    val nonce = crypto.hash(authDataBytes concat crypto.hash(clientDataJson))
+    val nonce = Crypto.hash(authDataBytes concat Crypto.hash(clientDataJson))
 
     val f = JsonNodeFactory.instance
 
@@ -521,9 +518,9 @@ object TestAuthenticator {
       "nonce" -> f.textNode(nonce.getBase64),
       "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
       "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
-      "apkDigestSha256" -> f.textNode(crypto.hash("foo").getBase64),
+      "apkDigestSha256" -> f.textNode(Crypto.hash("foo").getBase64),
       "ctsProfileMatch" -> f.booleanNode(ctsProfileMatch),
-      "aplCertificateDigestSha256" -> f.arrayNode().add(f.textNode(crypto.hash("foo").getBase64)),
+      "aplCertificateDigestSha256" -> f.arrayNode().add(f.textNode(Crypto.hash("foo").getBase64)),
       "basicIntegrity" -> f.booleanNode(true)
     ).asJava)
     val jwsPayloadBase64 = new ByteArray(JacksonCodecs.json().writeValueAsBytes(jwsPayload)).getBase64Url
@@ -576,7 +573,11 @@ object TestAuthenticator {
     sign(authenticatorData.concat(clientDataHash), key, alg)
 
   def sign(data: ByteArray, key: PrivateKey, alg: COSEAlgorithmIdentifier): ByteArray = {
-    val sig = Signature.getInstance(WebAuthnCodecs.getJavaAlgorithmName(alg), javaCryptoProvider)
+    val jAlg = WebAuthnCodecs.getJavaAlgorithmName(alg)
+
+    // Need to use BouncyCastle provider here because JDK15 standard providers do not support secp256k1
+    val sig = Signature.getInstance(jAlg, new BouncyCastleProvider())
+
     sig.initSign(key)
     sig.update(data.getBytes)
     new ByteArray(sig.sign())
@@ -589,20 +590,26 @@ object TestAuthenticator {
     case COSEAlgorithmIdentifier.RS1 => generateRsaKeypair()
   }
 
-  def generateEcKeypair(curve: String = "P-256"): KeyPair = {
-    val ecSpec  = ECNamedCurveTable.getParameterSpec(curve)
-    val g: KeyPairGenerator = KeyPairGenerator.getInstance("ECDSA", javaCryptoProvider)
+  def generateEcKeypair(curve: String = "secp256r1"): KeyPair = {
+    val ecSpec = new ECGenParameterSpec(curve)
+
+    // Need to use BouncyCastle provider here because JDK15 standard providers do not support secp256k1
+    val g: KeyPairGenerator = KeyPairGenerator.getInstance("EC", new BouncyCastleProvider())
+
     g.initialize(ecSpec, new SecureRandom())
 
     g.generateKeyPair()
   }
 
   def generateEddsaKeypair(): KeyPair = {
-    KeyPairGenerator.getInstance("Ed25519", javaCryptoProvider).generateKeyPair()
+    val alg = "Ed25519"
+    val keyPairGenerator = KeyPairGenerator.getInstance(alg)
+    keyPairGenerator.generateKeyPair()
   }
 
   def importEcKeypair(privateBytes: ByteArray, publicBytes: ByteArray): KeyPair = {
-    val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", javaCryptoProvider)
+    val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
+
     new KeyPair(
       keyFactory.generatePublic(new X509EncodedKeySpec(publicBytes.getBytes)),
       keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateBytes.getBytes))
@@ -610,7 +617,7 @@ object TestAuthenticator {
   }
 
   def generateRsaKeypair(): KeyPair = {
-    val g: KeyPairGenerator = KeyPairGenerator.getInstance("RSA", javaCryptoProvider)
+    val g: KeyPairGenerator = KeyPairGenerator.getInstance("RSA")
     g.initialize(2048, new SecureRandom())
     g.generateKeyPair()
   }
@@ -620,12 +627,13 @@ object TestAuthenticator {
     signedDataBytes: ByteArray,
     signatureBytes: ByteArray
   ): Boolean = {
-    val sig: Signature = Signature.getInstance("SHA256withECDSA", javaCryptoProvider)
+    val alg = "SHA256withECDSA"
+    val sig: Signature = Signature.getInstance(alg)
     sig.initVerify(pubKey)
     sig.update(signedDataBytes.getBytes)
 
     sig.verify(signatureBytes.getBytes) &&
-      crypto.verifySignature(pubKey, signedDataBytes, signatureBytes, COSEAlgorithmIdentifier.ES256)
+      Crypto.verifySignature(pubKey, signedDataBytes, signatureBytes, COSEAlgorithmIdentifier.ES256)
   }
 
   def verifyU2fExampleWithCert(
@@ -647,7 +655,8 @@ object TestAuthenticator {
     val namedSpec = ECNamedCurveTable.getParameterSpec("P-256")
     val curveSpec: ECNamedCurveSpec = new ECNamedCurveSpec("P-256", namedSpec.getCurve, namedSpec.getG, namedSpec.getN)
     val pubKeySpec: ECPublicKeySpec = new ECPublicKeySpec(pubKeyPoint, curveSpec)
-    val pubKey: PublicKey = KeyFactory.getInstance("EC", javaCryptoProvider).generatePublic(pubKeySpec)
+    val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
+    val pubKey: PublicKey = keyFactory.generatePublic(pubKeySpec)
     verifyEcSignature(pubKey, signedDataBytes, signatureBytes)
   }
 
@@ -723,7 +732,10 @@ object TestAuthenticator {
         builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
       }
 
-      builder.build(new JcaContentSignerBuilder(WebAuthnCodecs.getJavaAlgorithmName(signingAlg)).setProvider(javaCryptoProvider).build(signingKey)).getEncoded
+      val signerBuilder = new JcaContentSignerBuilder(WebAuthnCodecs.getJavaAlgorithmName(signingAlg))
+        .setProvider(new BouncyCastleProvider()) // Needed because JDK15 standard providers do not support secp256k1
+
+      builder.build(signerBuilder.build(signingKey)).getEncoded
     })
   }
 
@@ -736,7 +748,9 @@ object TestAuthenticator {
     val priKeyParser = new PEMParser(new BufferedReader(new InputStreamReader(keyPem)))
     priKeyParser.readObject() // Throw away the EC params part
 
-    val key: PrivateKey = new JcaPEMKeyConverter().setProvider(javaCryptoProvider)
+    val converter = new JcaPEMKeyConverter()
+
+    val key: PrivateKey = converter
       .getKeyPair(
         priKeyParser.readObject()
           .asInstanceOf[PEMKeyPair]

@@ -46,6 +46,10 @@ import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.SecureRandom;
@@ -55,10 +59,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 
 /**

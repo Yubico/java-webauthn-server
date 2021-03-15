@@ -24,10 +24,11 @@
 
 package com.yubico.internal.util;
 
+import com.google.common.io.BaseEncoding;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 
 
 public class BinaryUtil {
@@ -41,7 +42,7 @@ public class BinaryUtil {
      *     Bytes to encode
      */
     public static String toHex(byte[] bytes) {
-        return Hex.toHexString(bytes);
+        return BaseEncoding.base16().encode(bytes).toLowerCase();
     }
 
     /**
@@ -49,7 +50,7 @@ public class BinaryUtil {
      *     String of hexadecimal digits to decode as bytes.
      */
     public static byte[] fromHex(String hex) {
-        return Hex.decode(hex);
+        return BaseEncoding.base16().decode(hex.toUpperCase());
     }
 
     /**

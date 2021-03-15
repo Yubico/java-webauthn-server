@@ -41,11 +41,9 @@ import java.security.cert.X509Certificate;
 
 public class U2fVerifier {
 
-    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
-
     public static boolean verify(AppId appId,  RegistrationRequest request, U2fRegistrationResponse response) throws CertificateException, IOException, Base64UrlException {
-        final ByteArray appIdHash = crypto.hash(appId.getId());
-        final ByteArray clientDataHash = crypto.hash(response.getCredential().getU2fResponse().getClientDataJSON());
+        final ByteArray appIdHash = Crypto.hash(appId.getId());
+        final ByteArray clientDataHash = Crypto.hash(response.getCredential().getU2fResponse().getClientDataJSON());
 
         final JsonNode clientData = JacksonCodecs.json().readTree(response.getCredential().getU2fResponse().getClientDataJSON().getBytes());
         final String challengeBase64 = clientData.get("challenge").textValue();

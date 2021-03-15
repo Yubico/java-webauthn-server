@@ -64,7 +64,6 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
      * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
      * (appid)</a>
      */
-    @Builder.ObtainVia(method = "getAppid")
     private final Boolean appid;
 
     @JsonCreator
@@ -115,6 +114,14 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
         public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
             this.appid = appid.orElse(null);
             return this;
+        }
+
+        /*
+         * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+         * Consider reverting this workaround if Lombok fixes that issue.
+         */
+        private ClientAssertionExtensionOutputsBuilder appid(Boolean appid) {
+            return this.appid(Optional.ofNullable(appid));
         }
 
         /**

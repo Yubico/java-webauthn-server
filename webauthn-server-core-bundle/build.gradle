@@ -1,0 +1,30 @@
+plugins {
+  id 'java-library'
+}
+
+description = 'Yubico WebAuthn server core API'
+
+project.ext.publishMe = true
+
+dependencies {
+  api(
+    project(':webauthn-server-core-minimal'),
+  )
+
+  implementation(
+    addVersion('org.bouncycastle:bcprov-jdk15on'),
+  )
+}
+
+
+jar {
+  manifest {
+    attributes([
+      'Implementation-Title': 'Yubico Web Authentication server library meta-package',
+      'Implementation-Version': project.version,
+      'Implementation-Vendor': 'Yubico',
+      'Implementation-Source-Url': 'https://github.com/Yubico/java-webauthn-server',
+      'Git-Commit': getGitCommit(),
+    ])
+  }
+}

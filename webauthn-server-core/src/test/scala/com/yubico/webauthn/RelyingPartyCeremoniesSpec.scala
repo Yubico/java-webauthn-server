@@ -39,7 +39,7 @@ import scala.jdk.CollectionConverters._
 
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
+class RelyingPartyCeremoniesSpec extends FunSpec with Matchers with TestWithEachProvider {
 
   private def newRp(testData: RealExamples.Example, credentialRepo: CredentialRepository): RelyingParty =
     RelyingParty.builder()
@@ -47,85 +47,88 @@ class RelyingPartyCeremoniesSpec extends FunSpec with Matchers {
       .credentialRepository(credentialRepo)
       .build()
 
-  describe("The default RelyingParty settings") {
+  testWithEachProvider { it =>
 
-    describe("can register and then authenticate") {
-      def check(testData: RealExamples.Example): Unit = {
-        val registrationRp = newRp(testData, Helpers.CredentialRepository.empty)
+    describe("The default RelyingParty settings") {
 
-        val registrationResult = registrationRp.finishRegistration(FinishRegistrationOptions.builder()
-          .request(PublicKeyCredentialCreationOptions.builder()
-            .rp(testData.rp)
-            .user(testData.user)
-            .challenge(testData.attestation.challenge)
-            .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
-            .build())
-          .response(testData.attestation.credential)
-          .build());
+      describe("can register and then authenticate") {
+        def check(testData: RealExamples.Example): Unit = {
+          val registrationRp = newRp(testData, Helpers.CredentialRepository.empty)
 
-        registrationResult.getKeyId.getId should equal (testData.attestation.credential.getId)
-        registrationResult.isAttestationTrusted should be (false)
-        registrationResult.getAttestationMetadata.isPresent should be (false)
-
-        val assertionRp = newRp(
-          testData,
-          Helpers.CredentialRepository.withUser(
-            testData.user,
-            Helpers.toRegisteredCredential(testData.user, registrationResult)
-          )
-        )
-
-        val assertionResult = assertionRp.finishAssertion(FinishAssertionOptions.builder()
-          .request(AssertionRequest.builder()
-            .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
-              .challenge(testData.assertion.challenge)
-              .allowCredentials(List(PublicKeyCredentialDescriptor.builder().id(testData.assertion.id).build()).asJava)
+          val registrationResult = registrationRp.finishRegistration(FinishRegistrationOptions.builder()
+            .request(PublicKeyCredentialCreationOptions.builder()
+              .rp(testData.rp)
+              .user(testData.user)
+              .challenge(testData.attestation.challenge)
+              .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
               .build())
-            .username(testData.user.getName)
+            .response(testData.attestation.credential)
+            .build());
+
+          registrationResult.getKeyId.getId should equal (testData.attestation.credential.getId)
+          registrationResult.isAttestationTrusted should be (false)
+          registrationResult.getAttestationMetadata.isPresent should be (false)
+
+          val assertionRp = newRp(
+            testData,
+            Helpers.CredentialRepository.withUser(
+              testData.user,
+              Helpers.toRegisteredCredential(testData.user, registrationResult)
+            )
+          )
+
+          val assertionResult = assertionRp.finishAssertion(FinishAssertionOptions.builder()
+            .request(AssertionRequest.builder()
+              .publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions.builder()
+                .challenge(testData.assertion.challenge)
+                .allowCredentials(List(PublicKeyCredentialDescriptor.builder().id(testData.assertion.id).build()).asJava)
+                .build())
+              .username(testData.user.getName)
+              .build())
+            .response(testData.assertion.credential)
             .build())
-          .response(testData.assertion.credential)
-          .build())
 
-        assertionResult.isSuccess should be (true)
-        assertionResult.getCredentialId should equal (testData.assertion.id)
-        assertionResult.getUserHandle should equal (testData.user.getId)
-        assertionResult.getUsername should equal (testData.user.getName)
-        assertionResult.getSignatureCount should be >= testData.attestation.authenticatorData.getSignatureCounter
-        assertionResult.isSignatureCounterValid should be (true)
-      }
+          assertionResult.isSuccess should be (true)
+          assertionResult.getCredentialId should equal (testData.assertion.id)
+          assertionResult.getUserHandle should equal (testData.user.getId)
+          assertionResult.getUsername should equal (testData.user.getName)
+          assertionResult.getSignatureCount should be >= testData.attestation.authenticatorData.getSignatureCounter
+          assertionResult.isSignatureCounterValid should be (true)
+        }
 
-      it("a YubiKey NEO.") {
-        check(RealExamples.YubiKeyNeo)
-      }
-      it("a YubiKey 4.") {
-        check(RealExamples.YubiKey4)
-      }
-      it("a YubiKey 5 NFC.") {
-        check(RealExamples.YubiKey5)
-      }
-      it("an early YubiKey 5 NFC.") {
-        check(RealExamples.YubiKey5Nfc)
-      }
-      it("a newer YubiKey 5 NFC.") {
-        check(RealExamples.YubiKey5NfcPost5cNfc)
-      }
-      it("a YubiKey 5C NFC.") {
-        check(RealExamples.YubiKey5cNfc)
-      }
-      it("a YubiKey 5 Nano.") {
-        check(RealExamples.YubiKey5Nano)
-      }
-      it("a YubiKey 5Ci.") {
-        check(RealExamples.YubiKey5Ci)
-      }
-      it("a Security Key by Yubico.") {
-        check(RealExamples.SecurityKey)
-      }
-      it("a Security Key 2 by Yubico.") {
-        check(RealExamples.SecurityKey2)
-      }
-      it("a Security Key NFC by Yubico.") {
-        check(RealExamples.SecurityKeyNfc)
+        it("a YubiKey NEO.") {
+          check(RealExamples.YubiKeyNeo)
+        }
+        it("a YubiKey 4.") {
+          check(RealExamples.YubiKey4)
+        }
+        it("a YubiKey 5 NFC.") {
+          check(RealExamples.YubiKey5)
+        }
+        it("an early YubiKey 5 NFC.") {
+          check(RealExamples.YubiKey5Nfc)
+        }
+        it("a newer YubiKey 5 NFC.") {
+          check(RealExamples.YubiKey5NfcPost5cNfc)
+        }
+        it("a YubiKey 5C NFC.") {
+          check(RealExamples.YubiKey5cNfc)
+        }
+        it("a YubiKey 5 Nano.") {
+          check(RealExamples.YubiKey5Nano)
+        }
+        it("a YubiKey 5Ci.") {
+          check(RealExamples.YubiKey5Ci)
+        }
+        it("a Security Key by Yubico.") {
+          check(RealExamples.SecurityKey)
+        }
+        it("a Security Key 2 by Yubico.") {
+          check(RealExamples.SecurityKey2)
+        }
+        it("a Security Key NFC by Yubico.") {
+          check(RealExamples.SecurityKeyNfc)
+        }
       }
     }
   }
