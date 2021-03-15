@@ -179,6 +179,12 @@ public class RelyingParty {
      * </p>
      *
      * <p>
+     * If you set this, you may want to explicitly set
+     * {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+     * {@link RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
+     * </p>
+     *
+     * <p>
      * By default, this is not set.
      * </p>
      *
@@ -631,6 +637,12 @@ public class RelyingParty {
          * </p>
          *
          * <p>
+         * If you set this, you may want to explicitly set
+         * {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+         * {@link RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
+         * </p>
+         *
+         * <p>
          * By default, this is not set.
          * </p>
          *
@@ -649,6 +661,12 @@ public class RelyingParty {
          * <p>
          * Unless your application has a concrete policy for authenticator attestation, it is recommended to leave this
          * parameter undefined.
+         * </p>
+         *
+         * <p>
+         * If you set this, you may want to explicitly set
+         * {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+         * {@link RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
          * </p>
          *
          * <p>
