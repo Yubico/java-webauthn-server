@@ -27,7 +27,6 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 

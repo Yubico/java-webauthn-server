@@ -26,6 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.primitives.Bytes;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
@@ -35,7 +36,6 @@ import java.util.Base64;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
-import org.bouncycastle.util.Arrays;
 
 /**
  * An immutable byte array with support for encoding/decoding to/from various encodings.
@@ -108,7 +108,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
      * @return a new instance containing a copy of this instance followed by a copy of <code>tail</code>.
      */
     public ByteArray concat(@NonNull ByteArray tail) {
-        return new ByteArray(Arrays.concatenate(this.bytes, tail.bytes));
+        return new ByteArray(Bytes.concat(this.bytes, tail.bytes));
     }
 
     public boolean isEmpty() {

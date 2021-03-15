@@ -46,6 +46,10 @@ import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.SecureRandom;
@@ -55,10 +59,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -176,6 +176,12 @@ public class RelyingParty {
      * <p>
      * Unless your application has a concrete policy for authenticator attestation, it is recommended to leave this
      * parameter undefined.
+     * </p>
+     *
+     * <p>
+     * If you set this, you may want to explicitly set
+     * {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+     * {@link RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
      * </p>
      *
      * <p>
@@ -631,6 +637,12 @@ public class RelyingParty {
          * </p>
          *
          * <p>
+         * If you set this, you may want to explicitly set
+         * {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+         * {@link RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
+         * </p>
+         *
+         * <p>
          * By default, this is not set.
          * </p>
          *
@@ -649,6 +661,12 @@ public class RelyingParty {
          * <p>
          * Unless your application has a concrete policy for authenticator attestation, it is recommended to leave this
          * parameter undefined.
+         * </p>
+         *
+         * <p>
+         * If you set this, you may want to explicitly set
+         * {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+         * {@link RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
          * </p>
          *
          * <p>

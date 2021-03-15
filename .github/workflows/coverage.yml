@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    name: JDK ${{matrix.java}}
+    name: Measure mutation test coverage
 
     runs-on: ubuntu-latest
 

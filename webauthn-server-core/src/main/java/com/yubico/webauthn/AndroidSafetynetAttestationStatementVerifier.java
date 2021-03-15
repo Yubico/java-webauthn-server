@@ -30,8 +30,6 @@ import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 @Slf4j
 class AndroidSafetynetAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
-    private final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
-
     private static final DefaultHostnameVerifier HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
     @Override
@@ -66,7 +64,7 @@ class AndroidSafetynetAttestationStatementVerifier implements AttestationStateme
         JsonNode payload = jws.getPayload();
 
         ByteArray signedData = attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
-        ByteArray hashSignedData = crypto.hash(signedData);
+        ByteArray hashSignedData = Crypto.hash(signedData);
         ByteArray nonceByteArray = ByteArray.fromBase64(payload.get("nonce").textValue());
         ExceptionUtil.assure(
             hashSignedData.equals(nonceByteArray),
@@ -109,7 +107,7 @@ class AndroidSafetynetAttestationStatementVerifier implements AttestationStateme
 
         Signature signatureVerifier;
         try {
-            signatureVerifier = Signature.getInstance(signatureAlgorithmName, crypto.getProvider());
+            signatureVerifier = Crypto.getSignature(signatureAlgorithmName);
         } catch (NoSuchAlgorithmException e) {
             throw ExceptionUtil.wrapAndLog(log, "Failed to get a Signature instance for " + signatureAlgorithmName, e);
         }

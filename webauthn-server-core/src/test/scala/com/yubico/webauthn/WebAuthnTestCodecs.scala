@@ -1,10 +1,11 @@
 package com.yubico.webauthn
 
+import java.security.KeyFactory
+import java.security.PrivateKey
+import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
-import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
-import java.security.PrivateKey
 
 import com.upokecenter.cbor.CBORObject
 import com.yubico.webauthn.data.ByteArray
@@ -46,25 +47,32 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
+  def publicKeyToCose(key: PublicKey): ByteArray = {
+    key match {
+      case k: ECPublicKey => ecPublicKeyToCose(k)
+      case other => throw new UnsupportedOperationException("Unknown key type: " + other.getClass.getCanonicalName)
+    }
+  }
+
   def importPrivateKey(encodedKey: ByteArray, alg: COSEAlgorithmIdentifier): PrivateKey = alg match {
     case COSEAlgorithmIdentifier.ES256 =>
-      val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", new BouncyCastleCrypto().getProvider)
+      val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
       val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
       keyFactory.generatePrivate(spec)
 
     case COSEAlgorithmIdentifier.EdDSA =>
-      val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA", new BouncyCastleCrypto().getProvider)
+      val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA")
       val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
       keyFactory.generatePrivate(spec)
 
     case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS1 =>
-      val keyFactory: KeyFactory = KeyFactory.getInstance("RSA", new BouncyCastleCrypto().getProvider)
+      val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
       val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
       keyFactory.generatePrivate(spec)
   }
 
   def importEcdsaPrivateKey(encodedKey: ByteArray): PrivateKey = {
-    val keyFactory: KeyFactory = KeyFactory.getInstance("ECDSA", new BouncyCastleCrypto().getProvider)
+    val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
     val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
     keyFactory.generatePrivate(spec)
   }
@@ -90,6 +98,13 @@ object WebAuthnTestCodecs {
     coseKey.put(-2L, key.getPublicExponent.toByteArray) // public exponent e
 
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
+  }
+
+  def getCoseAlgId(encodedPublicKey: ByteArray): COSEAlgorithmIdentifier = {
+    importCosePublicKey(encodedPublicKey).getAlgorithm match {
+      case "EC" => COSEAlgorithmIdentifier.ES256
+      case other => throw new UnsupportedOperationException("Unknown algorithm: " + other)
+    }
   }
 
 }

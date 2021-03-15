@@ -4,7 +4,7 @@ plugins {
   id 'info.solidsoft.pitest'
 }
 
-description = 'Yubico WebAuthn server core API'
+description = 'Yubico WebAuthn server core API (fewer dependencies)'
 
 project.ext.publishMe = true
 
@@ -14,13 +14,16 @@ dependencies {
     project(':yubico-util'),
   )
 
+  compileOnly(
+    addVersion('org.bouncycastle:bcprov-jdk15on'),
+  )
+
   implementation(
     addVersion('com.augustcellars.cose:cose-java'),
     addVersion('com.google.guava:guava'),
     addVersion('com.fasterxml.jackson.core:jackson-databind'),
     addVersion('com.upokecenter:cbor'),
     addVersion('org.apache.httpcomponents:httpclient'),
-    addVersion('org.bouncycastle:bcprov-jdk15on'),
     addVersion('org.slf4j:slf4j-api'),
   )
 
@@ -29,6 +32,7 @@ dependencies {
     addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
     addVersion('junit:junit'),
     addVersion('org.bouncycastle:bcpkix-jdk15on'),
+    addVersion('org.bouncycastle:bcprov-jdk15on'),
     addVersion('org.mockito:mockito-core'),
     addVersion('org.scala-lang:scala-library'),
     addVersion('org.scalacheck:scalacheck_2.13'),

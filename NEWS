@@ -1,3 +1,20 @@
+== Version 1.8.0 ==
+
+Changes:
+
+* BouncyCastle dependency is now optional.
+
+  In order to opt out, depend on `webauthn-server-core-minimal` instead of
+  `webauthn-server-core`.
+  This is not recommended unless you know your JVM includes JCA providers for
+  all signature algorithms.
+
+  Note that `webauthn-server-attestation` still depends on BouncyCastle.
+
+* Jackson deserializer for `PublicKeyCredential` now allows a `rawId` property
+  to be present if `id` is not present, or if `rawId` equals `id`.
+
+
 == Version 1.7.0 ==
 
 webauthn-server-attestation:

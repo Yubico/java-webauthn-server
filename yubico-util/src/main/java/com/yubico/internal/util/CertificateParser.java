@@ -26,17 +26,15 @@ package com.yubico.internal.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.security.Provider;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class CertificateParser {
-    private static final Provider BC_PROVIDER = new BouncyCastleProvider();
+//    private static final Provider BC_PROVIDER = new BouncyCastleProvider();
     private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
     private final static List<String> FIXSIG = Arrays.asList(
@@ -63,7 +61,7 @@ public class CertificateParser {
     }
 
     public static X509Certificate parseDer(InputStream is) throws CertificateException {
-        X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509", BC_PROVIDER).generateCertificate(is);
+        X509Certificate cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(is);
         //Some known certs have an incorrect "unused bits" value, which causes problems on newer versions of BouncyCastle.
         if(FIXSIG.contains(cert.getSubjectDN().getName())) {
             byte[] encoded = cert.getEncoded();
@@ -79,7 +77,7 @@ public class CertificateParser {
                 ));
             }
 
-            cert = (X509Certificate) CertificateFactory.getInstance("X.509", BC_PROVIDER).generateCertificate(new ByteArrayInputStream(encoded));
+            cert = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(encoded));
         }
         return cert;
     }

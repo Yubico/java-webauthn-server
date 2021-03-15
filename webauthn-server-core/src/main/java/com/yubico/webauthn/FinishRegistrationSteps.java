@@ -42,6 +42,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -64,8 +65,6 @@ import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 final class FinishRegistrationSteps {
 
     private static final String CLIENT_DATA_TYPE = "webauthn.create";
-
-    private static final BouncyCastleCrypto crypto = new BouncyCastleCrypto();
 
     private final PublicKeyCredentialCreationOptions request;
     private final PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> response;
@@ -268,7 +267,7 @@ final class FinishRegistrationSteps {
         }
 
         public ByteArray clientDataJsonHash() {
-            return crypto.hash(response.getResponse().getClientDataJSON());
+            return Crypto.hash(response.getResponse().getClientDataJSON());
         }
     }
 
@@ -301,7 +300,7 @@ final class FinishRegistrationSteps {
         @Override
         public void validate() {
             assure(
-                crypto.hash(rpId).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
+                Crypto.hash(rpId).equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
                 "Wrong RP ID hash."
             );
         }

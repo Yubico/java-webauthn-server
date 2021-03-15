@@ -32,33 +32,19 @@ import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.ByteArray;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.ECParameterSpec;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
+import static com.yubico.webauthn.Crypto.isP256;
 
 @Slf4j
 final class FidoU2fAttestationStatementVerifier implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
-
-    private static boolean isP256(ECParameterSpec params) {
-        ECNamedCurveParameterSpec p256 = ECNamedCurveTable.getParameterSpec("P-256");
-
-        return (Objects.equals(p256.getN(), params.getOrder())
-            && Objects.equals(p256.getG().getAffineXCoord().toBigInteger(), params.getGenerator().getAffineX())
-            && Objects.equals(p256.getG().getAffineYCoord().toBigInteger(), params.getGenerator().getAffineY())
-            && Objects.equals(p256.getH(), BigInteger.valueOf(params.getCofactor()))
-        );
-    }
 
     private X509Certificate getAttestationCertificate(AttestationObject attestationObject) throws CertificateException {
         return getX5cAttestationCertificate(attestationObject).map(attestationCertificate -> {
@@ -151,7 +137,7 @@ final class FidoU2fAttestationStatementVerifier implements AttestationStatementV
                 try {
                     userPublicKey = getRawUserPublicKey(attestationObject);
                 } catch (IOException | CoseException e) {
-                    RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestedCredentialData));
+                    RuntimeException err = new RuntimeException(String.format("Failed to parse public key from attestation data %s", attestedCredentialData), e);
                     log.error(err.getMessage(), err);
                     throw err;
                 }

@@ -24,17 +24,24 @@
 
 package com.yubico.webauthn.test
 
-import java.io.InputStream
 import java.io.BufferedReader
+import java.io.InputStream
 import java.io.InputStreamReader
+import java.security.GeneralSecurityException
+import java.security.KeyFactory
+import java.security.PublicKey
 import java.security.cert.X509Certificate
-
-import com.yubico.internal.util.CertificateParser
-import org.bouncycastle.cert.X509CertificateHolder
-import org.bouncycastle.openssl.PEMParser
-
 import scala.language.reflectiveCalls
 import scala.util.Try
+
+import com.yubico.internal.util.CertificateParser
+import com.yubico.webauthn.data.ByteArray
+import org.bouncycastle.asn1.sec.SECNamedCurves
+import org.bouncycastle.cert.X509CertificateHolder
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jce.spec.ECParameterSpec
+import org.bouncycastle.jce.spec.ECPublicKeySpec
+import org.bouncycastle.openssl.PEMParser
 
 
 object Util {
@@ -47,11 +54,24 @@ object Util {
         .getEncoded
     )
 
+  def decodePublicKey(encodedPublicKey: ByteArray): PublicKey = try {
+    val curve = SECNamedCurves.getByName("secp256r1")
+    val point = curve.getCurve.decodePoint(encodedPublicKey.getBytes)
+
+    KeyFactory.getInstance("ECDSA", new BouncyCastleProvider)
+      .generatePublic(new ECPublicKeySpec(point, new ECParameterSpec(curve.getCurve, curve.getG, curve.getN, curve.getH)))
+  } catch {
+    case e: RuntimeException =>
+      throw new IllegalArgumentException("Could not parse user public key: " + encodedPublicKey.getBase64Url, e)
+    case e: GeneralSecurityException =>
+      //This should not happen
+      throw new RuntimeException("Failed to decode public key: " + encodedPublicKey.getBase64Url, e)
+  }
+
   type Stepish[A] = { def validate(): Unit; def next(): A }
   case class StepWithUtilities[A](a: Stepish[A]) {
     def validations: Try[Unit] = Try(a.validate())
     def tryNext: Try[A] = Try(a.next())
   }
   implicit def toStepWithUtilities[A](a: Stepish[A]): StepWithUtilities[A] = StepWithUtilities(a)
-
 }

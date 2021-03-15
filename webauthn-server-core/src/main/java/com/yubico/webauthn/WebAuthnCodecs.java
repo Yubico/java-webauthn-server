@@ -26,6 +26,7 @@ package com.yubico.webauthn;
 
 import COSE.CoseException;
 import COSE.OneKey;
+import com.google.common.primitives.Bytes;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
@@ -40,7 +41,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Optional;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 final class WebAuthnCodecs {
@@ -56,13 +56,13 @@ final class WebAuthnCodecs {
         Arrays.fill(xPadding, (byte) 0);
         Arrays.fill(yPadding, (byte) 0);
 
-        return new ByteArray(org.bouncycastle.util.Arrays.concatenate(
+        return new ByteArray(Bytes.concat(
             new byte[]{ 0x04 },
-            org.bouncycastle.util.Arrays.concatenate(
+            Bytes.concat(
                 xPadding,
                 Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)
             ),
-            org.bouncycastle.util.Arrays.concatenate(
+            Bytes.concat(
                 yPadding,
                 Arrays.copyOfRange(y, Math.max(0, y.length - 32), y.length)
             )
@@ -86,7 +86,7 @@ final class WebAuthnCodecs {
             new BigInteger(1, cose.get(CBORObject.FromObject(-1)).GetByteString()),
             new BigInteger(1, cose.get(CBORObject.FromObject(-2)).GetByteString())
         );
-        return KeyFactory.getInstance("RSA", new BouncyCastleProvider()).generatePublic(spec);
+        return Crypto.getKeyFactory("RSA").generatePublic(spec);
     }
 
     private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
@@ -109,7 +109,7 @@ final class WebAuthnCodecs {
             .concat(new ByteArray(new byte[]{ 0x03, (byte) (rawKey.size() + 1), 0}))
             .concat(rawKey);
 
-        KeyFactory kFact = KeyFactory.getInstance("EdDSA", new BouncyCastleProvider());
+        KeyFactory kFact = Crypto.getKeyFactory("EdDSA");
         return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
     }
 

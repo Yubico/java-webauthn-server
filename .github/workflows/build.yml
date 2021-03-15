@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 13]
+        java: [8, 11, 15]
 
     steps:
     - name: Check out code
@@ -22,7 +22,14 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Run tests
-      run: ./gradlew check
+      run: ./gradlew cleanTest check
+
+    - name: Archive test report
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-reports
+        path: "*/build/reports/**"
 
     - name: Build JavaDoc
       run: ./gradlew assembleJavadoc
