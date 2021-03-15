@@ -66,7 +66,7 @@ Map<String, String> dependencyVersions = [
   'org.eclipse.jetty:jetty-server:[9.4.9.v20180320,10)',
   'org.eclipse.jetty:jetty-servlet:[9.4.9.v20180320,10)',
   'org.glassfish.jersey.containers:jersey-container-servlet-core:[2.26,3)',
-  'org.glassfish.jersey.containers:jersey-container-servlet:[2.26,2.33)',
+  'org.glassfish.jersey.containers:jersey-container-servlet:[2.26,3)',
   'org.glassfish.jersey.inject:jersey-hk2:[2.26,3)',
   'org.mockito:mockito-core:[2.27.0,3)',
   'org.scala-lang:scala-library:[2.13.1,3)',
