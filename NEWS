@@ -11,6 +11,9 @@ Changes:
 
   Note that `webauthn-server-attestation` still depends on BouncyCastle.
 
+* Jackson deserializer for `PublicKeyCredential` now allows a `rawId` property
+  to be present if `id` is not present, or if `rawId` equals `id`.
+
 
 == Version 1.7.0 ==
 
