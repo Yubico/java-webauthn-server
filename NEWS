@@ -4,8 +4,10 @@ Changes:
 
 * BouncyCastle dependency is now optional.
 
-  In order to opt out, depend on `webauthn-server-core-minimal` instead of `webauthn-server-core`.
-  This is not recommended unless you know your JVM includes JCA providers for all signature algorithms.
+  In order to opt out, depend on `webauthn-server-core-minimal` instead of
+  `webauthn-server-core`.
+  This is not recommended unless you know your JVM includes JCA providers for
+  all signature algorithms.
 
   Note that `webauthn-server-attestation` still depends on BouncyCastle.
 
