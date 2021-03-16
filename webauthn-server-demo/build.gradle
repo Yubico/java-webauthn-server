@@ -12,44 +12,45 @@ configurations {
 }
 
 dependencies {
+  implementation(platform(rootProject))
 
   implementation(
     project(':webauthn-server-attestation'),
     project(':webauthn-server-core-minimal'),
     project(':yubico-util'),
 
-    addVersion('com.google.guava:guava'),
-    addVersion('com.fasterxml.jackson.core:jackson-databind'),
-    addVersion('com.upokecenter:cbor'),
-    addVersion('javax.ws.rs:javax.ws.rs-api'),
-    addVersion('org.eclipse.jetty:jetty-server'),
-    addVersion('org.eclipse.jetty:jetty-servlet'),
-    addVersion('org.glassfish.jersey.containers:jersey-container-servlet-core'),
-    addVersion('org.slf4j:slf4j-api'),
+    'com.google.guava:guava',
+    'com.fasterxml.jackson.core:jackson-databind',
+    'com.upokecenter:cbor',
+    'javax.ws.rs:javax.ws.rs-api',
+    'org.eclipse.jetty:jetty-server',
+    'org.eclipse.jetty:jetty-servlet',
+    'org.glassfish.jersey.containers:jersey-container-servlet-core',
+    'org.slf4j:slf4j-api',
   )
 
   forJdk10(
-    addVersion('javax.activation:activation'),
-    addVersion('javax.xml.bind:jaxb-api'),
+    'javax.activation:activation',
+    'javax.xml.bind:jaxb-api',
   )
 
   runtimeOnly(
     configurations.forJdk10,
 
-    addVersion('ch.qos.logback:logback-classic'),
-    addVersion('org.glassfish.jersey.containers:jersey-container-servlet'),
-    addVersion('org.glassfish.jersey.inject:jersey-hk2'),
+    'ch.qos.logback:logback-classic',
+    'org.glassfish.jersey.containers:jersey-container-servlet',
+    'org.glassfish.jersey.inject:jersey-hk2',
   )
 
   testImplementation(
     project(':webauthn-server-core-minimal').sourceSets.test.output,
     project(':yubico-util-scala'),
 
-    addVersion('junit:junit'),
-    addVersion('org.mockito:mockito-core'),
-    addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.13'),
-    addVersion('org.scalatest:scalatest_2.13'),
+    'junit:junit',
+    'org.mockito:mockito-core',
+    'org.scala-lang:scala-library',
+    'org.scalacheck:scalacheck_2.13',
+    'org.scalatest:scalatest_2.13',
   )
 
   modules {

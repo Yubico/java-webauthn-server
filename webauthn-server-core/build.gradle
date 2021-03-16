@@ -9,38 +9,40 @@ description = 'Yubico WebAuthn server core API (fewer dependencies)'
 project.ext.publishMe = true
 
 dependencies {
+  api(platform(rootProject))
 
   api(
     project(':yubico-util'),
   )
 
   compileOnly(
-    addVersion('org.bouncycastle:bcprov-jdk15on'),
+    platform(rootProject),
+    'org.bouncycastle:bcprov-jdk15on',
   )
 
   implementation(
-    addVersion('com.augustcellars.cose:cose-java'),
-    addVersion('com.google.guava:guava'),
-    addVersion('com.fasterxml.jackson.core:jackson-databind'),
-    addVersion('com.upokecenter:cbor'),
-    addVersion('org.apache.httpcomponents:httpclient'),
-    addVersion('org.slf4j:slf4j-api'),
+    'com.augustcellars.cose:cose-java',
+    'com.google.guava:guava',
+    'com.fasterxml.jackson.core:jackson-databind',
+    'com.upokecenter:cbor',
+    'org.apache.httpcomponents:httpclient',
+    'org.slf4j:slf4j-api',
   )
 
   testImplementation(
     project(':yubico-util-scala'),
-    addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
-    addVersion('junit:junit'),
-    addVersion('org.bouncycastle:bcpkix-jdk15on'),
-    addVersion('org.bouncycastle:bcprov-jdk15on'),
-    addVersion('org.mockito:mockito-core'),
-    addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.13'),
-    addVersion('org.scalatest:scalatest_2.13'),
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
+    'junit:junit',
+    'org.bouncycastle:bcpkix-jdk15on',
+    'org.bouncycastle:bcprov-jdk15on',
+    'org.mockito:mockito-core',
+    'org.scala-lang:scala-library',
+    'org.scalacheck:scalacheck_2.13',
+    'org.scalatest:scalatest_2.13',
   )
 
   testRuntimeOnly(
-    addVersion('ch.qos.logback:logback-classic'),
+    'ch.qos.logback:logback-classic',
   )
 }
 

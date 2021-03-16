@@ -12,7 +12,7 @@ dependencies {
   )
 
   implementation(
-    addVersion('org.bouncycastle:bcprov-jdk15on'),
+    'org.bouncycastle:bcprov-jdk15on',
   )
 }
 
