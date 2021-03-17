@@ -118,6 +118,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
     allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] = Some(List(PublicKeyCredentialDescriptor.builder().id(Defaults.credentialId).build()).asJava),
     allowOriginPort: Boolean = false,
     allowOriginSubdomain: Boolean = false,
+    allowUnrequestedExtensions: Boolean = false,
     authenticatorData: ByteArray = Defaults.authenticatorData,
     callerTokenBindingId: Option[ByteArray] = None,
     challenge: ByteArray = Defaults.challenge,
@@ -192,6 +193,7 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(false)
+      .allowUnrequestedExtensions(allowUnrequestedExtensions)
       .validateSignatureCounter(validateSignatureCounter)
 
     origins.map(_.asJava).foreach(builder.origins _)
@@ -988,6 +990,23 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
               // }
             }
 
+            it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              val extensionInputs = AssertionExtensionInputs.builder().build()
+              val clientExtensionOutputs = ClientAssertionExtensionOutputs.builder().appid(true).build()
+
+              // forAll(unrequestedAssertionExtensions, minSuccessful(1)) { case (extensionInputs, clientExtensionOutputs) =>
+              val steps = finishAssertion(
+                allowUnrequestedExtensions = true,
+                requestedExtensions = extensionInputs,
+                clientExtensionResults = clientExtensionOutputs
+              )
+              val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a [Success[_]]
+              step.tryNext shouldBe a [Success[_]]
+              // }
+            }
+
             it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
               forAll(subsetAssertionExtensions) { case (extensionInputs, clientExtensionOutputs) =>
                 val steps = finishAssertion(
@@ -1017,6 +1036,24 @@ class RelyingPartyAssertionSpec extends FunSpec with Matchers with ScalaCheckDri
                   step.validations shouldBe a [Failure[_]]
                   step.validations.failed.get shouldBe an [IllegalArgumentException]
                   step.tryNext shouldBe a [Failure[_]]
+                }
+              }
+            }
+
+            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(anyAuthenticatorExtensions[AssertionExtensionInputs]) { case (extensionInputs: AssertionExtensionInputs, authenticatorExtensionOutputs: ObjectNode) =>
+                whenever(authenticatorExtensionOutputs.fieldNames().asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
+                  val steps = finishAssertion(
+                    allowUnrequestedExtensions = true,
+                    requestedExtensions = extensionInputs,
+                    authenticatorData = TestAuthenticator.makeAuthDataBytes(
+                      extensionsCborBytes = Some(new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)))
+                    )
+                  )
+                  val step: FinishAssertionSteps#Step14 = steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a [Success[_]]
+                  step.tryNext shouldBe a [Success[_]]
                 }
               }
             }

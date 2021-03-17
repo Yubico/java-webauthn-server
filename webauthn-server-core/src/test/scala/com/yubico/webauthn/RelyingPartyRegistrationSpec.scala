@@ -88,6 +88,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
   private def finishRegistration(
     allowOriginPort: Boolean = false,
     allowOriginSubdomain: Boolean = false,
+    allowUnrequestedExtensions: Boolean = false,
     allowUntrustedAttestation: Boolean = false,
     callerTokenBindingId: Option[ByteArray] = None,
     credentialId: Option[ByteArray] = None,
@@ -104,6 +105,7 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
       .preferredPubkeyParams(preferredPubkeyParams.asJava)
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
+      .allowUnrequestedExtensions(allowUnrequestedExtensions)
       .allowUntrustedAttestation(allowUntrustedAttestation)
       .metadataService(metadataService.asJava)
 
@@ -686,6 +688,24 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
               }
             }
 
+            ignore("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(anyRegistrationExtensions) { case (extensionInputs, clientExtensionOutputs) =>
+                whenever(clientExtensionOutputs.getExtensionIds.asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
+                  val steps = finishRegistration(
+                    allowUnrequestedExtensions = true,
+                    testData = RegistrationTestData.Packed.BasicAttestation.copy(
+                      requestedExtensions = extensionInputs,
+                      clientExtensionResults = clientExtensionOutputs
+                    )
+                  )
+                  val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a [Success[_]]
+                  step.tryNext shouldBe a [Success[_]]
+                }
+              }
+            }
+
             it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
               forAll(subsetRegistrationExtensions) { case (extensionInputs, clientExtensionOutputs) =>
                 val steps = finishRegistration(
@@ -721,6 +741,28 @@ class RelyingPartyRegistrationSpec extends FunSpec with Matchers with ScalaCheck
                   step.validations shouldBe a [Failure[_]]
                   step.validations.failed.get shouldBe an [IllegalArgumentException]
                   step.tryNext shouldBe a [Failure[_]]
+                }
+              }
+            }
+
+            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(anyAuthenticatorExtensions[RegistrationExtensionInputs]) { case (extensionInputs: RegistrationExtensionInputs, authenticatorExtensionOutputs: ObjectNode) =>
+                whenever(authenticatorExtensionOutputs.fieldNames().asScala.exists(id => !extensionInputs.getExtensionIds.contains(id))) {
+                  val steps = finishRegistration(
+                    allowUnrequestedExtensions = true,
+                    testData = RegistrationTestData.Packed.BasicAttestation.copy(
+                      requestedExtensions = extensionInputs
+                    ).editAuthenticatorData(
+                      authData => new ByteArray(
+                        authData.getBytes.updated(32, (authData.getBytes()(32) | 0x80).toByte) ++
+                          JacksonCodecs.cbor.writeValueAsBytes(authenticatorExtensionOutputs)
+                      )
+                    )
+                  )
+                  val step: FinishRegistrationSteps#Step12 = steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a [Success[_]]
+                  step.tryNext shouldBe a [Success[_]]
                 }
               }
             }
