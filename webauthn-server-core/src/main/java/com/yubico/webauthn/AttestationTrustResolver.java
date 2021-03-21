@@ -29,9 +29,8 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
-
 interface AttestationTrustResolver {
 
-    Attestation resolveTrustAnchor(List<X509Certificate> certificateChain) throws CertificateEncodingException;
-
+  Attestation resolveTrustAnchor(List<X509Certificate> certificateChain)
+      throws CertificateEncodingException;
 }

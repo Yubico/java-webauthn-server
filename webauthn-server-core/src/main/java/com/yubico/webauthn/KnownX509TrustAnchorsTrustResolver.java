@@ -32,17 +32,15 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j
 @AllArgsConstructor
 final class KnownX509TrustAnchorsTrustResolver implements AttestationTrustResolver {
 
-    private final MetadataService metadataService;
+  private final MetadataService metadataService;
 
-    @Override
-    public Attestation resolveTrustAnchor(List<X509Certificate> certificateChain) throws CertificateEncodingException {
-        return metadataService.getAttestation(certificateChain);
-    }
-
+  @Override
+  public Attestation resolveTrustAnchor(List<X509Certificate> certificateChain)
+      throws CertificateEncodingException {
+    return metadataService.getAttestation(certificateChain);
+  }
 }
-

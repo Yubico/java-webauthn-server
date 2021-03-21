@@ -29,71 +29,75 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
  * Used to supply additional parameters when creating a new credential.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialparameters">§5.3.
- * Parameters for Credential Generation (dictionary PublicKeyCredentialParameters)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialparameters">§5.3.
+ *     Parameters for Credential Generation (dictionary PublicKeyCredentialParameters) </a>
  */
 @Value
 @Builder(toBuilder = true)
 public class PublicKeyCredentialParameters {
 
-    /**
-     * Specifies the cryptographic signature algorithm with which the newly generated credential will be used, and thus
-     * also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
-     */
-    @NonNull
-    private final COSEAlgorithmIdentifier alg;
+  /**
+   * Specifies the cryptographic signature algorithm with which the newly generated credential will
+   * be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic
+   * Curve.
+   */
+  @NonNull private final COSEAlgorithmIdentifier alg;
 
-    /**
-     * Specifies the type of credential to be created.
-     */
-    @NonNull
-    @Builder.Default
-    private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
+  /** Specifies the type of credential to be created. */
+  @NonNull @Builder.Default
+  private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
 
-    private PublicKeyCredentialParameters(
-        @NonNull @JsonProperty("alg") COSEAlgorithmIdentifier alg,
-        @NonNull @JsonProperty("type") PublicKeyCredentialType type
-    ) {
-        this.alg = alg;
-        this.type = type;
+  private PublicKeyCredentialParameters(
+      @NonNull @JsonProperty("alg") COSEAlgorithmIdentifier alg,
+      @NonNull @JsonProperty("type") PublicKeyCredentialType type) {
+    this.alg = alg;
+    this.type = type;
+  }
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#EdDSA} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters EdDSA =
+      builder().alg(COSEAlgorithmIdentifier.EdDSA).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#ES256} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters ES256 =
+      builder().alg(COSEAlgorithmIdentifier.ES256).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#RS1} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters RS1 =
+      builder().alg(COSEAlgorithmIdentifier.RS1).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#RS256} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters RS256 =
+      builder().alg(COSEAlgorithmIdentifier.RS256).build();
+
+  public static PublicKeyCredentialParametersBuilder.MandatoryStages builder() {
+    return new PublicKeyCredentialParametersBuilder.MandatoryStages();
+  }
+
+  public static class PublicKeyCredentialParametersBuilder {
+    public static class MandatoryStages {
+      private PublicKeyCredentialParametersBuilder builder =
+          new PublicKeyCredentialParametersBuilder();
+
+      public PublicKeyCredentialParametersBuilder alg(COSEAlgorithmIdentifier alg) {
+        return builder.alg(alg);
+      }
     }
-
-    /**
-     * Algorithm {@link COSEAlgorithmIdentifier#EdDSA} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.
-     */
-    public static final PublicKeyCredentialParameters EdDSA = builder().alg(COSEAlgorithmIdentifier.EdDSA).build();
-
-    /**
-     * Algorithm {@link COSEAlgorithmIdentifier#ES256} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.
-     */
-    public static final PublicKeyCredentialParameters ES256 = builder().alg(COSEAlgorithmIdentifier.ES256).build();
-
-    /**
-     * Algorithm {@link COSEAlgorithmIdentifier#RS1} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.
-     */
-    public static final PublicKeyCredentialParameters RS1 = builder().alg(COSEAlgorithmIdentifier.RS1).build();
-
-    /**
-     * Algorithm {@link COSEAlgorithmIdentifier#RS256} and type {@link PublicKeyCredentialType#PUBLIC_KEY}.
-     */
-    public static final PublicKeyCredentialParameters RS256 = builder().alg(COSEAlgorithmIdentifier.RS256).build();
-
-    public static PublicKeyCredentialParametersBuilder.MandatoryStages builder() {
-        return new PublicKeyCredentialParametersBuilder.MandatoryStages();
-    }
-
-    public static class PublicKeyCredentialParametersBuilder {
-        public static class MandatoryStages {
-            private PublicKeyCredentialParametersBuilder builder = new PublicKeyCredentialParametersBuilder();
-
-            public PublicKeyCredentialParametersBuilder alg(COSEAlgorithmIdentifier alg) {
-                return builder.alg(alg);
-            }
-        }
-    }
+  }
 }

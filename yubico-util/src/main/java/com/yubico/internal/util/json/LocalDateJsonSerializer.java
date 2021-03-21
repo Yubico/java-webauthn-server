@@ -30,12 +30,12 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 import java.time.LocalDate;
 
-
 public class LocalDateJsonSerializer extends JsonSerializer<LocalDate> {
 
-    @Override
-    public void serialize(LocalDate t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        jsonGenerator.writeString(t.toString());
-    }
-
+  @Override
+  public void serialize(
+      LocalDate t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+      throws IOException {
+    jsonGenerator.writeString(t.toString());
+  }
 }

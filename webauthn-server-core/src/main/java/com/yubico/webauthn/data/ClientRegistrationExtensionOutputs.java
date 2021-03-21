@@ -31,31 +31,26 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
-
 /**
- * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
- * outputs</a> from a
- * <code>navigator.credentials.create()</code> operation.
+ * Contains <a
+ * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
+ * outputs</a> from a <code>navigator.credentials.create()</code> operation.
  *
- * <p>
- * Note that there is no guarantee that any extension input present in {@link AssertionExtensionInputs} will have a
- * corresponding output present here.
- * </p>
+ * <p>Note that there is no guarantee that any extension input present in {@link
+ * AssertionExtensionInputs} will have a corresponding output present here.
  *
- * <p>
- * The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
- * </p>
+ * <p>The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn Extensions</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ *     Extensions</a>
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class ClientRegistrationExtensionOutputs implements ClientExtensionOutputs {
 
-    @Override
-    public Set<String> getExtensionIds() {
-        return Collections.emptySet();
-    }
-
+  @Override
+  public Set<String> getExtensionIds() {
+    return Collections.emptySet();
+  }
 }

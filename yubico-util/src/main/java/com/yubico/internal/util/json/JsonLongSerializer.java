@@ -31,10 +31,9 @@ import java.io.IOException;
 
 public class JsonLongSerializer<T extends JsonLongSerializable> extends JsonSerializer<T> {
 
-    @Override
-    public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        jsonGenerator.writeNumber(t.toJsonNumber());
-    }
-
+  @Override
+  public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+      throws IOException {
+    jsonGenerator.writeNumber(t.toJsonNumber());
+  }
 }
-

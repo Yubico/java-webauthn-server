@@ -24,91 +24,98 @@
 
 package com.yubico.webauthn.data;
 
-
 /**
- * Web Authentication supports several attestation types, defining the semantics of attestation statements and their
- * underlying trust models.
+ * Web Authentication supports several attestation types, defining the semantics of attestation
+ * statements and their underlying trust models.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3. Attestation Types</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+ *     Attestation Types</a>
  */
 public enum AttestationType {
-    /**
-     * In the case of basic attestation, the authenticator’s attestation key pair is specific to an authenticator model.
-     * Thus, authenticators of the same model often share the same attestation key pair. See <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-attestation-privacy">§14.4 Attestation Privacy</a> for
-     * further information.
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#basic-attestation">Basic Attestation</a>
-     */
-    BASIC,
+  /**
+   * In the case of basic attestation, the authenticator’s attestation key pair is specific to an
+   * authenticator model. Thus, authenticators of the same model often share the same attestation
+   * key pair. See <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-attestation-privacy">§14.4
+   * Attestation Privacy</a> for further information.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#basic-attestation">Basic
+   *     Attestation</a>
+   */
+  BASIC,
 
-    /**
-     * In the case of self attestation, also known as surrogate basic attestation, the authenticator does not have any
-     * specific attestation key. Instead it uses the credential private key to create the attestation signature.
-     * Authenticators without meaningful protection measures for an attestation private key typically use this
-     * attestation type.
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#self-attestation">Self Attestation</a>
-     */
-    SELF_ATTESTATION,
+  /**
+   * In the case of self attestation, also known as surrogate basic attestation, the authenticator
+   * does not have any specific attestation key. Instead it uses the credential private key to
+   * create the attestation signature. Authenticators without meaningful protection measures for an
+   * attestation private key typically use this attestation type.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#self-attestation">Self
+   *     Attestation</a>
+   */
+  SELF_ATTESTATION,
 
-    /**
-     * In this case, an authenticator is based on a Trusted Platform Module (TPM) and holds an authenticator-specific
-     * "endorsement key" (EK). This key is used to securely communicate with a trusted third party, the Attestation CA
-     * (formerly known as a "Privacy CA"). The authenticator can generate multiple attestation identity key pairs (AIK)
-     * and requests an Attestation CA to issue an AIK certificate for each. Using this approach, such an authenticator
-     * can limit the exposure of the EK (which is a global correlation handle) to Attestation CA(s). AIKs can be
-     * requested for each authenticator-generated public key credential individually, and conveyed to Relying Parties as
-     * attestation certificates.
-     * <p>
-     * Note: This concept typically leads to multiple attestation certificates. The attestation certificate requested
-     * most recently is called "active".
-     * </p>
-     * <p>
-     * Note: Attestation statements conveying attestations of this type use the same data structure as attestation
-     * statements conveying attestations of type #BASIC, so the two attestation types are, in general, distinguishable
-     * only with externally provided knowledge regarding the contents of the attestation certificates conveyed in the
-     * attestation statement.
-     * </p>
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attestation-ca">Attestation CA</a>
-     */
-    ATTESTATION_CA,
+  /**
+   * In this case, an authenticator is based on a Trusted Platform Module (TPM) and holds an
+   * authenticator-specific "endorsement key" (EK). This key is used to securely communicate with a
+   * trusted third party, the Attestation CA (formerly known as a "Privacy CA"). The authenticator
+   * can generate multiple attestation identity key pairs (AIK) and requests an Attestation CA to
+   * issue an AIK certificate for each. Using this approach, such an authenticator can limit the
+   * exposure of the EK (which is a global correlation handle) to Attestation CA(s). AIKs can be
+   * requested for each authenticator-generated public key credential individually, and conveyed to
+   * Relying Parties as attestation certificates.
+   *
+   * <p>Note: This concept typically leads to multiple attestation certificates. The attestation
+   * certificate requested most recently is called "active".
+   *
+   * <p>Note: Attestation statements conveying attestations of this type use the same data structure
+   * as attestation statements conveying attestations of type #BASIC, so the two attestation types
+   * are, in general, distinguishable only with externally provided knowledge regarding the contents
+   * of the attestation certificates conveyed in the attestation statement.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attestation-ca">Attestation
+   *     CA</a>
+   */
+  ATTESTATION_CA,
 
-    /**
-     * In this case, the Authenticator receives direct anonymous attestation (DAA) credentials from a single DAA-Issuer.
-     * These DAA credentials are used along with blinding to sign the attested credential data. The concept of blinding
-     * avoids the DAA credentials being misused as global correlation handle. WebAuthn supports DAA using elliptic curve
-     * cryptography and bilinear pairings, called ECDAA. See the <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
-     * ECDAA Algorithm</a> for details.
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#ecdaa">Elliptic Curve based Direct Anonymous
-     * Attestation (ECDAA)</a>
-     * @see <a href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
-     * ECDAA Algorithm</a>
-     */
-    ECDAA,
+  /**
+   * In this case, the Authenticator receives direct anonymous attestation (DAA) credentials from a
+   * single DAA-Issuer. These DAA credentials are used along with blinding to sign the attested
+   * credential data. The concept of blinding avoids the DAA credentials being misused as global
+   * correlation handle. WebAuthn supports DAA using elliptic curve cryptography and bilinear
+   * pairings, called ECDAA. See the <a
+   * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
+   * ECDAA Algorithm</a> for details.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#ecdaa">Elliptic Curve based
+   *     Direct Anonymous Attestation (ECDAA)</a>
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
+   *     ECDAA Algorithm</a>
+   */
+  ECDAA,
 
-    /**
-     * In this case, no attestation information is available. See also <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7
-     * None Attestation Statement Format</a>.
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None Attestation Statement
-     * Format</a>
-     */
-    NONE,
+  /**
+   * In this case, no attestation information is available. See also <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None Attestation
+   * Statement Format</a>.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None
+   *     Attestation Statement Format</a>
+   */
+  NONE,
 
-    /**
-     * In this case, attestation information is present but was not understood by the library.
-     * <p>
-     * For example, the attestation statement might be using a new attestation statement format not yet supported by the
-     * library.
-     * </p>
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3. Attestation
-     * Types</a>
-     * @see <a href="https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#defined-attestation-formats">§8. Defined
-     * Attestation Statement Formats</a>
-     */
-    UNKNOWN
+  /**
+   * In this case, attestation information is present but was not understood by the library.
+   *
+   * <p>For example, the attestation statement might be using a new attestation statement format not
+   * yet supported by the library.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   *     Attestation Types</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#defined-attestation-formats">§8.
+   *     Defined Attestation Statement Formats</a>
+   */
+  UNKNOWN
 }

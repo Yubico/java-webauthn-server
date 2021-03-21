@@ -42,99 +42,106 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Optional;
 
-
 final class WebAuthnCodecs {
 
-    private static final ByteArray ED25519_CURVE_OID = new ByteArray(new byte[]{0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
+  private static final ByteArray ED25519_CURVE_OID =
+      new ByteArray(new byte[] {0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
 
-    static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
-        byte[] x = key.getW().getAffineX().toByteArray();
-        byte[] y = key.getW().getAffineY().toByteArray();
-        byte[] xPadding = new byte[Math.max(0, 32 - x.length)];
-        byte[] yPadding = new byte[Math.max(0, 32 - y.length)];
+  static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
+    byte[] x = key.getW().getAffineX().toByteArray();
+    byte[] y = key.getW().getAffineY().toByteArray();
+    byte[] xPadding = new byte[Math.max(0, 32 - x.length)];
+    byte[] yPadding = new byte[Math.max(0, 32 - y.length)];
 
-        Arrays.fill(xPadding, (byte) 0);
-        Arrays.fill(yPadding, (byte) 0);
+    Arrays.fill(xPadding, (byte) 0);
+    Arrays.fill(yPadding, (byte) 0);
 
-        return new ByteArray(Bytes.concat(
-            new byte[]{ 0x04 },
-            Bytes.concat(
-                xPadding,
-                Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)
-            ),
-            Bytes.concat(
-                yPadding,
-                Arrays.copyOfRange(y, Math.max(0, y.length - 32), y.length)
-            )
-        ));
+    return new ByteArray(
+        Bytes.concat(
+            new byte[] {0x04},
+            Bytes.concat(xPadding, Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)),
+            Bytes.concat(yPadding, Arrays.copyOfRange(y, Math.max(0, y.length - 32), y.length))));
+  }
+
+  static PublicKey importCosePublicKey(ByteArray key)
+      throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
+    final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
+    switch (kty) {
+      case 1:
+        return importCoseEdDsaPublicKey(cose);
+      case 2:
+        return importCoseP256PublicKey(cose);
+      case 3:
+        return importCoseRsaPublicKey(cose);
+      default:
+        throw new IllegalArgumentException("Unsupported key type: " + kty);
     }
+  }
 
-    static PublicKey importCosePublicKey(ByteArray key) throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
-        final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
-        switch (kty) {
-            case 1: return importCoseEdDsaPublicKey(cose);
-            case 2: return importCoseP256PublicKey(cose);
-            case 3: return importCoseRsaPublicKey(cose);
-            default:
-                throw new IllegalArgumentException("Unsupported key type: " + kty);
-        }
-    }
-
-    private static PublicKey importCoseRsaPublicKey(CBORObject cose) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        RSAPublicKeySpec spec = new RSAPublicKeySpec(
+  private static PublicKey importCoseRsaPublicKey(CBORObject cose)
+      throws NoSuchAlgorithmException, InvalidKeySpecException {
+    RSAPublicKeySpec spec =
+        new RSAPublicKeySpec(
             new BigInteger(1, cose.get(CBORObject.FromObject(-1)).GetByteString()),
-            new BigInteger(1, cose.get(CBORObject.FromObject(-2)).GetByteString())
-        );
-        return Crypto.getKeyFactory("RSA").generatePublic(spec);
-    }
+            new BigInteger(1, cose.get(CBORObject.FromObject(-2)).GetByteString()));
+    return Crypto.getKeyFactory("RSA").generatePublic(spec);
+  }
 
-    private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
-        return (ECPublicKey) new OneKey(cose).AsPublicKey();
-    }
+  private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
+    return (ECPublicKey) new OneKey(cose).AsPublicKey();
+  }
 
-    private static PublicKey importCoseEdDsaPublicKey(CBORObject cose) throws InvalidKeySpecException, NoSuchAlgorithmException {
-        final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
-        switch (curveId) {
-            case 6: return importCoseEd25519PublicKey(cose);
-            default:
-                throw new IllegalArgumentException("Unsupported EdDSA curve: " + curveId);
-        }
+  private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
+      throws InvalidKeySpecException, NoSuchAlgorithmException {
+    final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
+    switch (curveId) {
+      case 6:
+        return importCoseEd25519PublicKey(cose);
+      default:
+        throw new IllegalArgumentException("Unsupported EdDSA curve: " + curveId);
     }
+  }
 
-    private static PublicKey importCoseEd25519PublicKey(CBORObject cose) throws InvalidKeySpecException, NoSuchAlgorithmException {
-        final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
-        final ByteArray x509Key = new ByteArray(new byte[]{0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size()) })
+  private static PublicKey importCoseEd25519PublicKey(CBORObject cose)
+      throws InvalidKeySpecException, NoSuchAlgorithmException {
+    final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
+    final ByteArray x509Key =
+        new ByteArray(new byte[] {0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size())})
             .concat(ED25519_CURVE_OID)
-            .concat(new ByteArray(new byte[]{ 0x03, (byte) (rawKey.size() + 1), 0}))
+            .concat(new ByteArray(new byte[] {0x03, (byte) (rawKey.size() + 1), 0}))
             .concat(rawKey);
 
-        KeyFactory kFact = Crypto.getKeyFactory("EdDSA");
-        return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
-    }
+    KeyFactory kFact = Crypto.getKeyFactory("EdDSA");
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
+  }
 
-    static Optional<COSEAlgorithmIdentifier> getCoseKeyAlg(ByteArray key) {
-        CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
-        final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
-        return COSEAlgorithmIdentifier.fromId(alg);
-    }
+  static Optional<COSEAlgorithmIdentifier> getCoseKeyAlg(ByteArray key) {
+    CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
+    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
+    return COSEAlgorithmIdentifier.fromId(alg);
+  }
 
-    static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
-        switch (alg) {
-            case EdDSA: return "EDDSA";
-            case ES256: return "SHA256withECDSA";
-            case RS256: return "SHA256withRSA";
-            case RS1: return "SHA1withRSA";
-            default: throw new IllegalArgumentException("Unknown algorithm: " + alg);
-        }
-    }
-
-    static String jwsAlgorithmNameToJavaAlgorithmName(String alg) {
-        switch (alg) {
-            case "RS256":
-                return "SHA256withRSA";
-        }
+  static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case EdDSA:
+        return "EDDSA";
+      case ES256:
+        return "SHA256withECDSA";
+      case RS256:
+        return "SHA256withRSA";
+      case RS1:
+        return "SHA1withRSA";
+      default:
         throw new IllegalArgumentException("Unknown algorithm: " + alg);
     }
+  }
 
+  static String jwsAlgorithmNameToJavaAlgorithmName(String alg) {
+    switch (alg) {
+      case "RS256":
+        return "SHA256withRSA";
+    }
+    throw new IllegalArgumentException("Unknown algorithm: " + alg);
+  }
 }

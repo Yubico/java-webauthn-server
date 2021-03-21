@@ -34,7 +34,6 @@ import java.util.jar.Manifest;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-
 /**
  * Contains version information for the com.yubico.webauthn package.
  *
@@ -44,53 +43,50 @@ import lombok.extern.slf4j.Slf4j;
 @Value
 public class VersionInfo {
 
-    private static VersionInfo instance;
+  private static VersionInfo instance;
 
-    public static VersionInfo getInstance() {
-        if (instance == null) {
-            try {
-                instance = new VersionInfo();
-            } catch (IOException e) {
-                throw ExceptionUtil.wrapAndLog(log, "Failed to create VersionInfo", e);
-            }
-        }
-
-        return instance;
+  public static VersionInfo getInstance() {
+    if (instance == null) {
+      try {
+        instance = new VersionInfo();
+      } catch (IOException e) {
+        throw ExceptionUtil.wrapAndLog(log, "Failed to create VersionInfo", e);
+      }
     }
 
-    /**
-     * Represents the specification this implementation is based on
-     */
-    private final Specification specification = Specification.builder()
-        .url(new URL(findValueInManifest("Specification-Url")))
-        .latestVersionUrl(new URL(findValueInManifest("Specification-Url-Latest")))
-        .status(DocumentStatus.fromString(findValueInManifest("Specification-W3c-Status")).get())
-        .releaseDate(LocalDate.parse(findValueInManifest("Specification-Release-Date")))
-        .build();
+    return instance;
+  }
 
-    /**
-     * Description of this version of this library
-     */
-    private final Implementation implementation = new Implementation(
-        findValueInManifest("Implementation-Version"),
-        new URL(findValueInManifest("Implementation-Source-Url")),
-        findValueInManifest("Git-Commit")
-    );
+  /** Represents the specification this implementation is based on */
+  private final Specification specification =
+      Specification.builder()
+          .url(new URL(findValueInManifest("Specification-Url")))
+          .latestVersionUrl(new URL(findValueInManifest("Specification-Url-Latest")))
+          .status(DocumentStatus.fromString(findValueInManifest("Specification-W3c-Status")).get())
+          .releaseDate(LocalDate.parse(findValueInManifest("Specification-Release-Date")))
+          .build();
 
-    private VersionInfo() throws IOException {
+  /** Description of this version of this library */
+  private final Implementation implementation =
+      new Implementation(
+          findValueInManifest("Implementation-Version"),
+          new URL(findValueInManifest("Implementation-Source-Url")),
+          findValueInManifest("Git-Commit"));
+
+  private VersionInfo() throws IOException {}
+
+  private String findValueInManifest(String key) throws IOException {
+    final Enumeration<URL> resources =
+        getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
+
+    while (resources.hasMoreElements()) {
+      final URL resource = resources.nextElement();
+      final Manifest manifest = new Manifest(resource.openStream());
+      if ("java-webauthn-server"
+          .equals(manifest.getMainAttributes().getValue("Implementation-Id"))) {
+        return manifest.getMainAttributes().getValue(key);
+      }
     }
-
-    private String findValueInManifest(String key) throws IOException {
-        final Enumeration<URL> resources = getClass().getClassLoader().getResources("META-INF/MANIFEST.MF");
-
-        while (resources.hasMoreElements()) {
-            final URL resource = resources.nextElement();
-            final Manifest manifest = new Manifest(resource.openStream());
-            if ("java-webauthn-server".equals(manifest.getMainAttributes().getValue("Implementation-Id"))) {
-                return manifest.getMainAttributes().getValue(key);
-            }
-        }
-        throw new NoSuchElementException("Could not find \"" + key + "\" in manifest.");
-    }
-
+    throw new NoSuchElementException("Could not find \"" + key + "\" in manifest.");
+  }
 }

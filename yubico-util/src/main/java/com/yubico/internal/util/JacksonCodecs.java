@@ -13,30 +13,28 @@ import java.io.IOException;
 
 public class JacksonCodecs {
 
-    public static ObjectMapper cbor() {
-        return new ObjectMapper(new CBORFactory()).setBase64Variant(Base64Variants.MODIFIED_FOR_URL);
-    }
+  public static ObjectMapper cbor() {
+    return new ObjectMapper(new CBORFactory()).setBase64Variant(Base64Variants.MODIFIED_FOR_URL);
+  }
 
-    public static ObjectMapper json() {
-        return new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-            .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-            .setSerializationInclusion(Include.NON_ABSENT)
-            .setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
-            .registerModule(new Jdk8Module())
-        ;
-    }
+  public static ObjectMapper json() {
+    return new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+        .setSerializationInclusion(Include.NON_ABSENT)
+        .setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
+        .registerModule(new Jdk8Module());
+  }
 
-    public static CBORObject deepCopy(CBORObject a) {
-        return CBORObject.DecodeFromBytes(a.EncodeToBytes());
-    }
+  public static CBORObject deepCopy(CBORObject a) {
+    return CBORObject.DecodeFromBytes(a.EncodeToBytes());
+  }
 
-    public static ObjectNode deepCopy(ObjectNode a) {
-        try {
-            return (ObjectNode) json().readTree(json().writeValueAsString(a));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+  public static ObjectNode deepCopy(ObjectNode a) {
+    try {
+      return (ObjectNode) json().readTree(json().writeValueAsString(a));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-
+  }
 }

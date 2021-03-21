@@ -33,54 +33,57 @@ import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-
 /**
- * A WebAuthn Relying Party may require <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
- * verification</a> for some of its operations but not for others, and may use this type to express its needs.
+ * A WebAuthn Relying Party may require <a
+ * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user verification</a>
+ * for some of its operations but not for others, and may use this type to express its needs.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-userverificationrequirement">§5.10.6. User
- * Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-userverificationrequirement">§5.10.6.
+ *     User Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum UserVerificationRequirement implements JsonStringSerializable {
 
-    /**
-     * This value indicates that the Relying Party does not want user verification employed during the operation (e.g.,
-     * in the interest of minimizing disruption to the user interaction flow).
-     */
-    DISCOURAGED("discouraged"),
+  /**
+   * This value indicates that the Relying Party does not want user verification employed during the
+   * operation (e.g., in the interest of minimizing disruption to the user interaction flow).
+   */
+  DISCOURAGED("discouraged"),
 
-    /**
-     * This value indicates that the Relying Party prefers user verification for the operation if possible, but will not
-     * fail the operation if the response does not have the {@link AuthenticatorDataFlags#UV} flag set.
-     */
-    PREFERRED("preferred"),
+  /**
+   * This value indicates that the Relying Party prefers user verification for the operation if
+   * possible, but will not fail the operation if the response does not have the {@link
+   * AuthenticatorDataFlags#UV} flag set.
+   */
+  PREFERRED("preferred"),
 
-    /**
-     * Indicates that the Relying Party requires user verification for the operation and will fail the operation if the
-     * response does not have the {@link AuthenticatorDataFlags#UV} flag set.
-     */
-    REQUIRED("required");
+  /**
+   * Indicates that the Relying Party requires user verification for the operation and will fail the
+   * operation if the response does not have the {@link AuthenticatorDataFlags#UV} flag set.
+   */
+  REQUIRED("required");
 
-    @NonNull
-    private final String id;
+  @NonNull private final String id;
 
-    private static Optional<UserVerificationRequirement> fromString(@NonNull String id) {
-        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
-    }
+  private static Optional<UserVerificationRequirement> fromString(@NonNull String id) {
+    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  }
 
-    @JsonCreator
-    private static UserVerificationRequirement fromJsonString(@NonNull String id) {
-        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
-            "Unknown %s value: %s", UserVerificationRequirement.class.getSimpleName(), id
-        )));
-    }
+  @JsonCreator
+  private static UserVerificationRequirement fromJsonString(@NonNull String id) {
+    return fromString(id)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Unknown %s value: %s",
+                        UserVerificationRequirement.class.getSimpleName(), id)));
+  }
 
-    @Override
-    public String toJsonString() {
-        return id;
-    }
-
+  @Override
+  public String toJsonString() {
+    return id;
+  }
 }
-

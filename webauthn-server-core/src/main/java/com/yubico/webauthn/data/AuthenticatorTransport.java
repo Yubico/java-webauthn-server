@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn.data;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
@@ -36,98 +35,104 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * Authenticators may communicate with Clients using a variety of transports. This enumeration defines a hint as to how
- * Clients might communicate with a particular Authenticator in order to obtain an assertion for a specific credential.
- * Note that these hints represent the Relying Party's best belief as to how an Authenticator may be reached. A Relying
- * Party may obtain a list of transports hints from some attestation statement formats or via some out-of-band
- * mechanism; it is outside the scope of this specification to define that mechanism.
- * <p>
- * Authenticators may implement various transports for communicating with clients. This enumeration defines hints as to
- * how clients might communicate with a particular authenticator in order to obtain an assertion for a specific
- * credential. Note that these hints represent the WebAuthn Relying Party's best belief as to how an authenticator may
- * be reached. A Relying Party may obtain a list of transports hints from some attestation statement formats or via some
- * out-of-band mechanism; it is outside the scope of the Web Authentication specification to define that mechanism.
- * </p>
+ * Authenticators may communicate with Clients using a variety of transports. This enumeration
+ * defines a hint as to how Clients might communicate with a particular Authenticator in order to
+ * obtain an assertion for a specific credential. Note that these hints represent the Relying
+ * Party's best belief as to how an Authenticator may be reached. A Relying Party may obtain a list
+ * of transports hints from some attestation statement formats or via some out-of-band mechanism; it
+ * is outside the scope of this specification to define that mechanism.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatortransport">§5.10.4. Authenticator
- * Transport Enumeration (enum AuthenticatorTransport)</a>
+ * <p>Authenticators may implement various transports for communicating with clients. This
+ * enumeration defines hints as to how clients might communicate with a particular authenticator in
+ * order to obtain an assertion for a specific credential. Note that these hints represent the
+ * WebAuthn Relying Party's best belief as to how an authenticator may be reached. A Relying Party
+ * may obtain a list of transports hints from some attestation statement formats or via some
+ * out-of-band mechanism; it is outside the scope of the Web Authentication specification to define
+ * that mechanism.
+ *
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatortransport">§5.10.4.
+ *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class AuthenticatorTransport implements Comparable<AuthenticatorTransport>, JsonStringSerializable {
+public class AuthenticatorTransport
+    implements Comparable<AuthenticatorTransport>, JsonStringSerializable {
 
-    @NonNull
-    private final String id;
+  @NonNull private final String id;
 
-    /**
-     * Indicates the respective authenticator can be contacted over removable USB.
-     */
-    public static final AuthenticatorTransport USB = new AuthenticatorTransport("usb");
+  /** Indicates the respective authenticator can be contacted over removable USB. */
+  public static final AuthenticatorTransport USB = new AuthenticatorTransport("usb");
 
-    /**
-     * Indicates the respective authenticator can be contacted over Near Field Communication (NFC).
-     */
-    public static final AuthenticatorTransport NFC = new AuthenticatorTransport("nfc");
+  /**
+   * Indicates the respective authenticator can be contacted over Near Field Communication (NFC).
+   */
+  public static final AuthenticatorTransport NFC = new AuthenticatorTransport("nfc");
 
-    /**
-     * Indicates the respective authenticator can be contacted over Bluetooth Smart (Bluetooth Low Energy / BLE).
-     */
-    public static final AuthenticatorTransport BLE = new AuthenticatorTransport("ble");
+  /**
+   * Indicates the respective authenticator can be contacted over Bluetooth Smart (Bluetooth Low
+   * Energy / BLE).
+   */
+  public static final AuthenticatorTransport BLE = new AuthenticatorTransport("ble");
 
-    /**
-     * Indicates the respective authenticator is contacted using a client device-specific transport. These
-     * authenticators are not removable from the client device.
-     */
-    public static final AuthenticatorTransport INTERNAL = new AuthenticatorTransport("internal");
+  /**
+   * Indicates the respective authenticator is contacted using a client device-specific transport.
+   * These authenticators are not removable from the client device.
+   */
+  public static final AuthenticatorTransport INTERNAL = new AuthenticatorTransport("internal");
 
-    /**
-     * @return An array containing all predefined values of {@link AuthenticatorTransport} known by this implementation.
-     */
-    public static AuthenticatorTransport[] values() {
-        return new AuthenticatorTransport[]{ USB, NFC, BLE, INTERNAL };
+  /**
+   * @return An array containing all predefined values of {@link AuthenticatorTransport} known by
+   *     this implementation.
+   */
+  public static AuthenticatorTransport[] values() {
+    return new AuthenticatorTransport[] {USB, NFC, BLE, INTERNAL};
+  }
+
+  /**
+   * @return If <code>id</code> is the same as that of any of {@link #USB}, {@link #NFC}, {@link
+   *     #BLE} or {@link #INTERNAL}, returns that constant instance. Otherwise returns a new
+   *     instance containing <code>id</code>.
+   * @see #valueOf(String)
+   */
+  @JsonCreator
+  public static AuthenticatorTransport of(@NonNull String id) {
+    return Stream.of(values())
+        .filter(v -> v.getId().equals(id))
+        .findAny()
+        .orElseGet(() -> new AuthenticatorTransport(id));
+  }
+
+  /**
+   * @return If <code>name</code> equals <code>"USB"</code>, <code>"NFC"</code>, <code>"BLE"</code>
+   *     or <code>"INTERNAL"</code>, returns the constant by that name.
+   * @throws IllegalArgumentException if <code>name</code> is anything else.
+   * @see #of(String)
+   */
+  public static AuthenticatorTransport valueOf(String name) {
+    switch (name) {
+      case "USB":
+        return USB;
+      case "NFC":
+        return NFC;
+      case "BLE":
+        return BLE;
+      case "INTERNAL":
+        return INTERNAL;
+      default:
+        throw new IllegalArgumentException(
+            "No constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
     }
+  }
 
-    /**
-     * @return If <code>id</code> is the same as that of any of {@link #USB}, {@link #NFC}, {@link #BLE} or {@link
-     * #INTERNAL}, returns that constant instance. Otherwise returns a new instance containing <code>id</code>.
-     * @see #valueOf(String)
-     */
-    @JsonCreator
-    public static AuthenticatorTransport of(@NonNull String id) {
-        return Stream.of(values())
-            .filter(v -> v.getId().equals(id))
-            .findAny()
-            .orElseGet(() -> new AuthenticatorTransport(id));
-    }
+  @Override
+  public String toJsonString() {
+    return id;
+  }
 
-    /**
-     * @return If <code>name</code> equals <code>"USB"</code>, <code>"NFC"</code>, <code>"BLE"</code> or
-     * <code>"INTERNAL"</code>, returns the constant by that name.
-     * @throws IllegalArgumentException
-     *     if <code>name</code> is anything else.
-     *
-     * @see #of(String)
-     */
-    public static AuthenticatorTransport valueOf(String name) {
-        switch (name) {
-            case "USB": return USB;
-            case "NFC": return NFC;
-            case "BLE": return BLE;
-            case "INTERNAL": return INTERNAL;
-        default:
-            throw new IllegalArgumentException("No constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
-        }
-    }
-
-    @Override
-    public String toJsonString() {
-        return id;
-    }
-
-    @Override
-    public int compareTo(AuthenticatorTransport other) {
-        return id.compareTo(other.id);
-    }
-
+  @Override
+  public int compareTo(AuthenticatorTransport other) {
+    return id.compareTo(other.id);
+  }
 }

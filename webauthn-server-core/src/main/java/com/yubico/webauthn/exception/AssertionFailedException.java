@@ -26,12 +26,11 @@ package com.yubico.webauthn.exception;
 
 public class AssertionFailedException extends Exception {
 
-    public AssertionFailedException(IllegalArgumentException e) {
-        super(e);
-    }
+  public AssertionFailedException(IllegalArgumentException e) {
+    super(e);
+  }
 
-    public AssertionFailedException(String message) {
-        super(message);
-    }
-
+  public AssertionFailedException(String message) {
+    super(message);
+  }
 }

@@ -31,9 +31,9 @@ import java.io.IOException;
 
 public class JsonStringSerializer<T extends JsonStringSerializable> extends JsonSerializer<T> {
 
-    @Override
-    public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        jsonGenerator.writeString(t.toJsonString());
-    }
-
+  @Override
+  public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+      throws IOException {
+    jsonGenerator.writeString(t.toJsonString());
+  }
 }

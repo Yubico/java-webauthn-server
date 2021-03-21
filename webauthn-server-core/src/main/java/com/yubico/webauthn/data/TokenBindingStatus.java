@@ -34,47 +34,47 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
- * Indicators of whether a {@link TokenBindingInfo}'s {@link TokenBindingInfo#getId() id} member is present and, if not,
- * whether the client supports token binding.
+ * Indicators of whether a {@link TokenBindingInfo}'s {@link TokenBindingInfo#getId() id} member is
+ * present and, if not, whether the client supports token binding.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-tokenbindingstatus">enum TokenBindingStatus</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-tokenbindingstatus">enum
+ *     TokenBindingStatus</a>
  * @see TokenBindingInfo
  */
 @AllArgsConstructor
 @JsonSerialize(using = JsonStringSerializer.class)
 public enum TokenBindingStatus implements JsonStringSerializable {
 
-    /**
-     * Indicates token binding was used when communicating with the Relying Party. In this case, the {@link
-     * TokenBindingStatus#id} member MUST be present.
-     */
-    PRESENT("present"),
+  /**
+   * Indicates token binding was used when communicating with the Relying Party. In this case, the
+   * {@link TokenBindingStatus#id} member MUST be present.
+   */
+  PRESENT("present"),
 
-    /**
-     * Indicates the client supports token binding, but it was not negotiated when communicating with the Relying
-     * Party.
-     */
-    SUPPORTED("supported");
+  /**
+   * Indicates the client supports token binding, but it was not negotiated when communicating with
+   * the Relying Party.
+   */
+  SUPPORTED("supported");
 
-    @NonNull
-    private final String id;
+  @NonNull private final String id;
 
-    private static Optional<TokenBindingStatus> fromString(@NonNull String value) {
-        return Arrays.stream(values())
-            .filter(v -> v.id.equals(value))
-            .findAny();
-    }
+  private static Optional<TokenBindingStatus> fromString(@NonNull String value) {
+    return Arrays.stream(values()).filter(v -> v.id.equals(value)).findAny();
+  }
 
-    @JsonCreator
-    public static TokenBindingStatus fromJsonString(@NonNull String id) {
-        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
-            "Unknown %s value: %s", TokenBindingStatus.class.getSimpleName(), id
-        )));
-    }
+  @JsonCreator
+  public static TokenBindingStatus fromJsonString(@NonNull String id) {
+    return fromString(id)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Unknown %s value: %s", TokenBindingStatus.class.getSimpleName(), id)));
+  }
 
-    @Override
-    public String toJsonString() {
-        return id;
-    }
-
+  @Override
+  public String toJsonString() {
+    return id;
+  }
 }

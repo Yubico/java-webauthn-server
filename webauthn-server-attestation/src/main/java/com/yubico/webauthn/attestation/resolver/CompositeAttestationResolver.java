@@ -32,40 +32,37 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * An {@link AttestationResolver} whose {@link #resolve(X509Certificate, List)}
- * method calls {@link AttestationResolver#resolve(X509Certificate, List)} on
- * each of the subordinate {@link AttestationResolver}s in turn, and returns
- * the first non-<code>null</code> result.
+ * An {@link AttestationResolver} whose {@link #resolve(X509Certificate, List)} method calls {@link
+ * AttestationResolver#resolve(X509Certificate, List)} on each of the subordinate {@link
+ * AttestationResolver}s in turn, and returns the first non-<code>null</code> result.
  */
 public final class CompositeAttestationResolver implements AttestationResolver {
 
-    private final List<AttestationResolver> resolvers;
+  private final List<AttestationResolver> resolvers;
 
-    public CompositeAttestationResolver(List<AttestationResolver> resolvers) {
-        this.resolvers = CollectionUtil.immutableList(resolvers);
+  public CompositeAttestationResolver(List<AttestationResolver> resolvers) {
+    this.resolvers = CollectionUtil.immutableList(resolvers);
+  }
+
+  @Override
+  public Optional<Attestation> resolve(
+      X509Certificate attestationCertificate, List<X509Certificate> certificateChain) {
+    for (AttestationResolver resolver : resolvers) {
+      Optional<Attestation> result = resolver.resolve(attestationCertificate, certificateChain);
+      if (result.isPresent()) {
+        return result;
+      }
     }
+    return Optional.empty();
+  }
 
-    @Override
-    public Optional<Attestation> resolve(X509Certificate attestationCertificate, List<X509Certificate> certificateChain) {
-        for (AttestationResolver resolver : resolvers) {
-            Optional<Attestation> result = resolver.resolve(attestationCertificate, certificateChain);
-            if (result.isPresent()) {
-                return result;
-            }
-        }
-        return Optional.empty();
+  /** Delegates to the first subordinate resolver, or throws an exception if there is none. */
+  @Override
+  public Attestation untrustedFromCertificate(X509Certificate attestationCertificate) {
+    if (resolvers.isEmpty()) {
+      throw new UnsupportedOperationException("Cannot do this without any sub-resolver.");
+    } else {
+      return resolvers.get(0).untrustedFromCertificate(attestationCertificate);
     }
-
-    /**
-     * Delegates to the first subordinate resolver, or throws an exception if there is none.
-     */
-    @Override
-    public Attestation untrustedFromCertificate(X509Certificate attestationCertificate) {
-        if (resolvers.isEmpty()) {
-            throw new UnsupportedOperationException("Cannot do this without any sub-resolver.");
-        } else {
-            return resolvers.get(0).untrustedFromCertificate(attestationCertificate);
-        }
-    }
-
+  }
 }

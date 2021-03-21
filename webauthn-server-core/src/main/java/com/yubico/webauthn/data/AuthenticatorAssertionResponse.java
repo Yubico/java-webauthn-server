@@ -34,118 +34,123 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
- * Represents an authenticator's response to a client’s request for generation of a new authentication assertion given
- * the WebAuthn Relying Party's {@linkplain PublicKeyCredentialRequestOptions#challenge challenge} and OPTIONAL
- * {@linkplain PublicKeyCredentialRequestOptions#allowCredentials list of credentials} it is aware of. This response
- * contains a cryptographic {@linkplain #signature} proving possession of the credential private key, and optionally
- * evidence of user consent to a specific transaction.
+ * Represents an authenticator's response to a client’s request for generation of a new
+ * authentication assertion given the WebAuthn Relying Party's {@linkplain
+ * PublicKeyCredentialRequestOptions#challenge challenge} and OPTIONAL {@linkplain
+ * PublicKeyCredentialRequestOptions#allowCredentials list of credentials} it is aware of. This
+ * response contains a cryptographic {@linkplain #signature} proving possession of the credential
+ * private key, and optionally evidence of user consent to a specific transaction.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorassertionresponse">§5.2.2. Web
- * Authentication Assertion (interface AuthenticatorAssertionResponse)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorassertionresponse">§5.2.2.
+ *     Web Authentication Assertion (interface AuthenticatorAssertionResponse) </a>
  */
 @Value
 public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final ByteArray authenticatorData;
+  @NonNull
+  @Getter(onMethod = @__({@Override}))
+  private final ByteArray authenticatorData;
 
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final ByteArray clientDataJSON;
+  @NonNull
+  @Getter(onMethod = @__({@Override}))
+  private final ByteArray clientDataJSON;
+
+  /**
+   * The raw signature returned from the authenticator. See <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * authenticatorGetAssertion Operation</a>.
+   */
+  @NonNull private final ByteArray signature;
+
+  /**
+   * The user handle returned from the authenticator, or empty if the authenticator did not return a
+   * user handle. See <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * authenticatorGetAssertion Operation</a>.
+   */
+  private final ByteArray userHandle;
+
+  @NonNull
+  @Getter(onMethod = @__({@Override}))
+  private final transient CollectedClientData clientData;
+
+  @JsonCreator
+  @Builder(toBuilder = true)
+  private AuthenticatorAssertionResponse(
+      @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
+      @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJSON,
+      @NonNull @JsonProperty("signature") final ByteArray signature,
+      @JsonProperty("userHandle") final ByteArray userHandle)
+      throws IOException, Base64UrlException {
+    this.authenticatorData = authenticatorData;
+    this.clientDataJSON = clientDataJSON;
+    this.signature = signature;
+    this.userHandle = userHandle;
+    this.clientData = new CollectedClientData(this.clientDataJSON);
+  }
+
+  /**
+   * The user handle returned from the authenticator, or empty if the authenticator did not return a
+   * user handle. See <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * authenticatorGetAssertion Operation</a>.
+   */
+  public Optional<ByteArray> getUserHandle() {
+    return Optional.ofNullable(userHandle);
+  }
+
+  public static AuthenticatorAssertionResponseBuilder.MandatoryStages builder() {
+    return new AuthenticatorAssertionResponseBuilder.MandatoryStages();
+  }
+
+  public static class AuthenticatorAssertionResponseBuilder {
+    private ByteArray userHandle = null;
+
+    public static class MandatoryStages {
+      private final AuthenticatorAssertionResponseBuilder builder =
+          new AuthenticatorAssertionResponseBuilder();
+
+      public Step2 authenticatorData(ByteArray authenticatorData) {
+        builder.authenticatorData(authenticatorData);
+        return new Step2();
+      }
+
+      public class Step2 {
+        public Step3 clientDataJSON(ByteArray clientDataJSON) {
+          builder.clientDataJSON(clientDataJSON);
+          return new Step3();
+        }
+      }
+
+      public class Step3 {
+        public AuthenticatorAssertionResponseBuilder signature(ByteArray signature) {
+          return builder.signature(signature);
+        }
+      }
+    }
 
     /**
-     * The raw signature returned from the authenticator. See <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3
-     * The authenticatorGetAssertion Operation</a>.
+     * The user handle returned from the authenticator, or empty if the authenticator did not return
+     * a user handle. See <a
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+     * authenticatorGetAssertion Operation</a>.
      */
-    @NonNull
-    private final ByteArray signature;
-
-    /**
-     * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
-     * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
-     * Operation</a>.
-     */
-    private final ByteArray userHandle;
-
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final transient CollectedClientData clientData;
-
-    @JsonCreator
-    @Builder(toBuilder = true)
-    private AuthenticatorAssertionResponse(
-        @NonNull @JsonProperty("authenticatorData") final ByteArray authenticatorData,
-        @NonNull @JsonProperty("clientDataJSON") final ByteArray clientDataJSON,
-        @NonNull @JsonProperty("signature") final ByteArray signature,
-        @JsonProperty("userHandle") final ByteArray userHandle
-    ) throws IOException, Base64UrlException {
-        this.authenticatorData = authenticatorData;
-        this.clientDataJSON = clientDataJSON;
-        this.signature = signature;
-        this.userHandle = userHandle;
-        this.clientData = new CollectedClientData(this.clientDataJSON);
+    public AuthenticatorAssertionResponseBuilder userHandle(
+        @NonNull Optional<ByteArray> userHandle) {
+      return this.userHandle(userHandle.orElse(null));
     }
 
     /**
-     * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
-     * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
-     * Operation</a>.
+     * The user handle returned from the authenticator, or empty if the authenticator did not return
+     * a user handle. See <a
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+     * authenticatorGetAssertion Operation</a>.
      */
-    public Optional<ByteArray> getUserHandle() {
-        return Optional.ofNullable(userHandle);
+    public AuthenticatorAssertionResponseBuilder userHandle(ByteArray userHandle) {
+      this.userHandle = userHandle;
+      return this;
     }
-
-    public static AuthenticatorAssertionResponseBuilder.MandatoryStages builder() {
-        return new AuthenticatorAssertionResponseBuilder.MandatoryStages();
-    }
-
-    public static class AuthenticatorAssertionResponseBuilder {
-        private ByteArray userHandle = null;
-
-        public static class MandatoryStages {
-            private final AuthenticatorAssertionResponseBuilder builder = new AuthenticatorAssertionResponseBuilder();
-
-            public Step2 authenticatorData(ByteArray authenticatorData) {
-                builder.authenticatorData(authenticatorData);
-                return new Step2();
-            }
-
-            public class Step2 {
-                public Step3 clientDataJSON(ByteArray clientDataJSON) {
-                    builder.clientDataJSON(clientDataJSON);
-                    return new Step3();
-                }
-            }
-
-            public class Step3 {
-                public AuthenticatorAssertionResponseBuilder signature(ByteArray signature) {
-                    return builder.signature(signature);
-                }
-            }
-        }
-
-        /**
-         * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
-         * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
-         * Operation</a>.
-         */
-        public AuthenticatorAssertionResponseBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
-            return this.userHandle(userHandle.orElse(null));
-        }
-
-        /**
-         * The user handle returned from the authenticator, or empty if the authenticator did not return a user handle. See
-         * <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The authenticatorGetAssertion
-         * Operation</a>.
-         */
-        public AuthenticatorAssertionResponseBuilder userHandle(ByteArray userHandle) {
-            this.userHandle = userHandle;
-            return this;
-        }
-    }
-
+  }
 }

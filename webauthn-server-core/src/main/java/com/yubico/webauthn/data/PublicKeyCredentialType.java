@@ -35,41 +35,41 @@ import lombok.NonNull;
 
 /**
  * Defines the valid credential types.
- * <p>
- * It is an extensions point; values may be added to it in the future, as more credential types are defined. The values
- * of this enumeration are used for versioning the Authentication Assertion and attestation structures according to the
- * type of the authenticator.
- * </p>
- * <p>
- * Currently one credential type is defined, namely {@link #PUBLIC_KEY}.
- * </p>
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-publickeycredentialtype">§5.10.2. Credential Type Enumeration
- * (enum PublicKeyCredentialType)</a>
+ * <p>It is an extensions point; values may be added to it in the future, as more credential types
+ * are defined. The values of this enumeration are used for versioning the Authentication Assertion
+ * and attestation structures according to the type of the authenticator.
+ *
+ * <p>Currently one credential type is defined, namely {@link #PUBLIC_KEY}.
+ *
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-publickeycredentialtype">§5.10.2.
+ *     Credential Type Enumeration (enum PublicKeyCredentialType)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum PublicKeyCredentialType implements JsonStringSerializable {
-    PUBLIC_KEY("public-key");
+  PUBLIC_KEY("public-key");
 
-    @NonNull
-    private final String id;
+  @NonNull private final String id;
 
-    private static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
-        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
-    }
+  private static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
+    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  }
 
-    @JsonCreator
-    private static PublicKeyCredentialType fromJsonString(@NonNull String id) {
-        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
-            "Unknown %s value: %s", PublicKeyCredentialType.class.getSimpleName(), id
-        )));
-    }
+  @JsonCreator
+  private static PublicKeyCredentialType fromJsonString(@NonNull String id) {
+    return fromString(id)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Unknown %s value: %s",
+                        PublicKeyCredentialType.class.getSimpleName(), id)));
+  }
 
-    @Override
-    public String toJsonString() {
-        return id;
-    }
-
+  @Override
+  public String toJsonString() {
+    return id;
+  }
 }
-
