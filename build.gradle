@@ -4,6 +4,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.11.0'
   }
 }
 plugins {
@@ -63,6 +64,7 @@ allprojects {
   ext.dirtyMarker = "-DIRTY"
 
   apply plugin: 'com.cinnober.gradle.semver-git'
+  apply plugin: 'com.diffplug.spotless'
   apply plugin: 'idea'
 
   group = 'com.yubico'
@@ -91,6 +93,13 @@ subprojects {
 
     maven { url "https://repo.maven.apache.org/maven2" }
   }
+
+  spotless {
+    java {
+      googleJavaFormat()
+    }
+  }
+  tasks.check.dependsOn spotlessCheck
 }
 
 allprojects {
