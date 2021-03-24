@@ -34,88 +34,86 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
- * Represents the authenticator's response to a client's request for the creation of a new public key credential. It
- * contains information about the new credential that can be used to identify it for later use, and metadata that can be
- * used by the WebAuthn Relying Party to assess the characteristics of the credential during registration.
+ * Represents the authenticator's response to a client's request for the creation of a new public
+ * key credential. It contains information about the new credential that can be used to identify it
+ * for later use, and metadata that can be used by the WebAuthn Relying Party to assess the
+ * characteristics of the credential during registration.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorattestationresponse">§5.2.1. Information
- * About Public Key Credential (interface AuthenticatorAttestationResponse)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorattestationresponse">§5.2.1.
+ *     Information About Public Key Credential (interface AuthenticatorAttestationResponse) </a>
  */
 @Value
 public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
-    /**
-     * Contains an attestation object, which is opaque to, and cryptographically protected against tampering by, the
-     * client. The attestation object contains both authenticator data and an attestation statement. The former contains
-     * the AAGUID, a unique credential ID, and the credential public key. The contents of the attestation statement are
-     * determined by the attestation statement format used by the authenticator. It also contains any additional
-     * information that the Relying Party's server requires to validate the attestation statement, as well as to decode
-     * and validate the authenticator data along with the JSON-serialized client data. For more details, see <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4 Attestation</a>, <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#generating-an-attestation-object">§6.4.4 Generating an
-     * Attestation Object</a>, and <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#fig-attStructs">Figure
-     * 5</a>.
-     */
-    @NonNull
-    private final ByteArray attestationObject;
+  /**
+   * Contains an attestation object, which is opaque to, and cryptographically protected against
+   * tampering by, the client. The attestation object contains both authenticator data and an
+   * attestation statement. The former contains the AAGUID, a unique credential ID, and the
+   * credential public key. The contents of the attestation statement are determined by the
+   * attestation statement format used by the authenticator. It also contains any additional
+   * information that the Relying Party's server requires to validate the attestation statement, as
+   * well as to decode and validate the authenticator data along with the JSON-serialized client
+   * data. For more details, see <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4 Attestation</a>,
+   * <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#generating-an-attestation-object">§6.4.4
+   * Generating an Attestation Object</a>, and <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#fig-attStructs">Figure 5</a>.
+   */
+  @NonNull private final ByteArray attestationObject;
 
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final ByteArray clientDataJSON;
+  @NonNull
+  @Getter(onMethod = @__({@Override}))
+  private final ByteArray clientDataJSON;
 
-    /**
-     * The {@link #attestationObject} parsed as a domain object.
-     */
-    @NonNull
-    @JsonIgnore
-    private final transient AttestationObject attestation;
+  /** The {@link #attestationObject} parsed as a domain object. */
+  @NonNull @JsonIgnore private final transient AttestationObject attestation;
 
-    @NonNull
-    @JsonIgnore
-    @Getter(onMethod = @__({ @Override }))
-    private final transient CollectedClientData clientData;
+  @NonNull
+  @JsonIgnore
+  @Getter(onMethod = @__({@Override}))
+  private final transient CollectedClientData clientData;
 
-    @Override
-    @JsonIgnore
-    public ByteArray getAuthenticatorData() {
-        return attestation.getAuthenticatorData().getBytes();
-    }
+  @Override
+  @JsonIgnore
+  public ByteArray getAuthenticatorData() {
+    return attestation.getAuthenticatorData().getBytes();
+  }
 
-    @Builder(toBuilder = true)
-    @JsonCreator
-    private AuthenticatorAttestationResponse(
-        @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
-        @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON
-    ) throws IOException, Base64UrlException {
-        this.attestationObject = attestationObject;
-        this.clientDataJSON = clientDataJSON;
+  @Builder(toBuilder = true)
+  @JsonCreator
+  private AuthenticatorAttestationResponse(
+      @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
+      @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON)
+      throws IOException, Base64UrlException {
+    this.attestationObject = attestationObject;
+    this.clientDataJSON = clientDataJSON;
 
-        attestation = new AttestationObject(attestationObject);
-        this.clientData = new CollectedClientData(clientDataJSON);
-    }
+    attestation = new AttestationObject(attestationObject);
+    this.clientData = new CollectedClientData(clientDataJSON);
+  }
 
-    public static AuthenticatorAttestationResponseBuilder.MandatoryStages builder() {
-        return new AuthenticatorAttestationResponseBuilder.MandatoryStages();
-    }
+  public static AuthenticatorAttestationResponseBuilder.MandatoryStages builder() {
+    return new AuthenticatorAttestationResponseBuilder.MandatoryStages();
+  }
 
-    public static class AuthenticatorAttestationResponseBuilder {
-        public static class MandatoryStages {
-            private final AuthenticatorAttestationResponseBuilder builder = new AuthenticatorAttestationResponseBuilder();
+  public static class AuthenticatorAttestationResponseBuilder {
+    public static class MandatoryStages {
+      private final AuthenticatorAttestationResponseBuilder builder =
+          new AuthenticatorAttestationResponseBuilder();
 
-            public Step2 attestationObject(ByteArray attestationObject) {
-                builder.attestationObject(attestationObject);
-                return new Step2();
-            }
+      public Step2 attestationObject(ByteArray attestationObject) {
+        builder.attestationObject(attestationObject);
+        return new Step2();
+      }
 
-            public class Step2 {
-                public AuthenticatorAttestationResponseBuilder clientDataJSON(ByteArray clientDataJSON) {
-                    return builder.clientDataJSON(clientDataJSON);
-                }
-            }
+      public class Step2 {
+        public AuthenticatorAttestationResponseBuilder clientDataJSON(ByteArray clientDataJSON) {
+          return builder.clientDataJSON(clientDataJSON);
         }
+      }
     }
-
+  }
 }

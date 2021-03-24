@@ -36,109 +36,106 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
- * The attributes that are specified by a caller when referring to a public key credential as an input parameter to the
- * <code>navigator.credentials.create()</code> or <code>navigator.credentials.get()</code> methods. It mirrors the
- * fields of the {@link PublicKeyCredential} object returned by the latter methods.
+ * The attributes that are specified by a caller when referring to a public key credential as an
+ * input parameter to the <code>navigator.credentials.create()</code> or <code>
+ * navigator.credentials.get()</code> methods. It mirrors the fields of the {@link
+ * PublicKeyCredential} object returned by the latter methods.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialdescriptor">§5.10.3.
- * Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialdescriptor">§5.10.3.
+ *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
  */
 @Value
 @Builder(toBuilder = true)
 public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCredentialDescriptor> {
 
+  /** The type of the credential the caller is referring to. */
+  @NonNull @Builder.Default
+  private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
+
+  /** The credential ID of the public key credential the caller is referring to. */
+  @NonNull private final ByteArray id;
+
+  /**
+   * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the
+   * public key credential the caller is referring to.
+   */
+  private final SortedSet<AuthenticatorTransport> transports;
+
+  @JsonCreator
+  private PublicKeyCredentialDescriptor(
+      @NonNull @JsonProperty("type") PublicKeyCredentialType type,
+      @NonNull @JsonProperty("id") ByteArray id,
+      @JsonProperty("transports") Set<AuthenticatorTransport> transports) {
+    this.type = type;
+    this.id = id;
+    this.transports =
+        transports == null ? null : CollectionUtil.immutableSortedSet(new TreeSet<>(transports));
+  }
+
+  @Override
+  public int compareTo(PublicKeyCredentialDescriptor other) {
+    int idComparison = id.compareTo(other.id);
+    if (idComparison != 0) {
+      return idComparison;
+    }
+
+    if (type.compareTo(other.type) != 0) {
+      return type.compareTo(other.type);
+    }
+
+    if (!getTransports().isPresent() && other.getTransports().isPresent()) {
+      return -1;
+    } else if (getTransports().isPresent() && !other.getTransports().isPresent()) {
+      return 1;
+    } else if (getTransports().isPresent() && other.getTransports().isPresent()) {
+      int transportsComparison =
+          ComparableUtil.compareComparableSets(getTransports().get(), other.getTransports().get());
+      if (transportsComparison != 0) {
+        return transportsComparison;
+      }
+    }
+
+    return 0;
+  }
+
+  public static PublicKeyCredentialDescriptorBuilder.MandatoryStages builder() {
+    return new PublicKeyCredentialDescriptorBuilder.MandatoryStages();
+  }
+
+  public static class PublicKeyCredentialDescriptorBuilder {
+    private Set<AuthenticatorTransport> transports = null;
+
+    public static class MandatoryStages {
+      private PublicKeyCredentialDescriptorBuilder builder =
+          new PublicKeyCredentialDescriptorBuilder();
+
+      public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
+        return builder.id(id);
+      }
+    }
+
     /**
-     * The type of the credential the caller is referring to.
+     * An OPTIONAL hint as to how the client might communicate with the managing authenticator of
+     * the public key credential the caller is referring to.
      */
-    @NonNull
-    @Builder.Default
-    private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
+    public PublicKeyCredentialDescriptorBuilder transports(
+        @NonNull Optional<Set<AuthenticatorTransport>> transports) {
+      return this.transports(transports.orElse(null));
+    }
 
     /**
-     * The credential ID of the public key credential the caller is referring to.
+     * An OPTIONAL hint as to how the client might communicate with the managing authenticator of
+     * the public key credential the caller is referring to.
      */
-    @NonNull
-    private final ByteArray id;
-
-    /**
-     * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
-     * credential the caller is referring to.
-     */
-    private final SortedSet<AuthenticatorTransport> transports;
-
-    @JsonCreator
-    private PublicKeyCredentialDescriptor(
-        @NonNull @JsonProperty("type") PublicKeyCredentialType type,
-        @NonNull @JsonProperty("id") ByteArray id,
-        @JsonProperty("transports") Set<AuthenticatorTransport> transports
-    ) {
-        this.type = type;
-        this.id = id;
-        this.transports = transports == null ? null : CollectionUtil.immutableSortedSet(new TreeSet<>(transports));
+    public PublicKeyCredentialDescriptorBuilder transports(Set<AuthenticatorTransport> transports) {
+      this.transports = transports;
+      return this;
     }
+  }
 
-    @Override
-    public int compareTo(PublicKeyCredentialDescriptor other) {
-        int idComparison = id.compareTo(other.id);
-        if (idComparison != 0) {
-            return idComparison;
-        }
-
-        if (type.compareTo(other.type) != 0) {
-            return type.compareTo(other.type);
-        }
-
-        if (!getTransports().isPresent() && other.getTransports().isPresent()) {
-            return -1;
-        } else if (getTransports().isPresent() && !other.getTransports().isPresent()) {
-            return 1;
-        } else if (getTransports().isPresent() && other.getTransports().isPresent()) {
-            int transportsComparison = ComparableUtil.compareComparableSets(getTransports().get(), other.getTransports().get());
-            if (transportsComparison != 0) {
-                return transportsComparison;
-            }
-        }
-
-        return 0;
-    }
-
-    public static PublicKeyCredentialDescriptorBuilder.MandatoryStages builder() {
-        return new PublicKeyCredentialDescriptorBuilder.MandatoryStages();
-    }
-
-    public static class PublicKeyCredentialDescriptorBuilder {
-        private Set<AuthenticatorTransport> transports = null;
-
-        public static class MandatoryStages {
-            private PublicKeyCredentialDescriptorBuilder builder = new PublicKeyCredentialDescriptorBuilder();
-
-            public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
-                return builder.id(id);
-            }
-        }
-
-        /**
-         * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
-         * credential the caller is referring to.
-         */
-        public PublicKeyCredentialDescriptorBuilder transports(@NonNull Optional<Set<AuthenticatorTransport>> transports) {
-            return this.transports(transports.orElse(null));
-        }
-
-        /**
-         * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the public key
-         * credential the caller is referring to.
-         */
-        public PublicKeyCredentialDescriptorBuilder transports(Set<AuthenticatorTransport> transports) {
-            this.transports = transports;
-            return this;
-        }
-    }
-
-    public Optional<SortedSet<AuthenticatorTransport>> getTransports() {
-        return Optional.ofNullable(transports);
-    }
-
+  public Optional<SortedSet<AuthenticatorTransport>> getTransports() {
+    return Optional.ofNullable(transports);
+  }
 }

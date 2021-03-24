@@ -37,138 +37,120 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
 
-/**
- * An immutable byte array with support for encoding/decoding to/from various encodings.
- */
+/** An immutable byte array with support for encoding/decoding to/from various encodings. */
 @JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
 @ToString(includeFieldNames = false, onlyExplicitlyIncluded = true)
 public final class ByteArray implements Comparable<ByteArray>, JsonStringSerializable {
 
-    private final static Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
-    private final static Base64.Decoder BASE64_DECODER = Base64.getDecoder();
+  private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
+  private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
-    private final static Base64.Encoder BASE64URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
-    private final static Base64.Decoder BASE64URL_DECODER = Base64.getUrlDecoder();
+  private static final Base64.Encoder BASE64URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
+  private static final Base64.Decoder BASE64URL_DECODER = Base64.getUrlDecoder();
 
-    @NonNull
-    private final byte[] bytes;
+  @NonNull private final byte[] bytes;
 
-    @NonNull
-    private final String base64;
+  @NonNull private final String base64;
 
-    /**
-     * Create a new instance by copying the contents of <code>bytes</code>.
-     */
-    public ByteArray(@NonNull byte[] bytes) {
-        this.bytes = BinaryUtil.copy(bytes);
-        this.base64 = BASE64URL_ENCODER.encodeToString(this.bytes);
+  /** Create a new instance by copying the contents of <code>bytes</code>. */
+  public ByteArray(@NonNull byte[] bytes) {
+    this.bytes = BinaryUtil.copy(bytes);
+    this.base64 = BASE64URL_ENCODER.encodeToString(this.bytes);
+  }
+
+  private ByteArray(String base64) throws Base64UrlException {
+    try {
+      this.bytes = BASE64URL_DECODER.decode(base64);
+    } catch (IllegalArgumentException e) {
+      throw new Base64UrlException("Invalid Base64Url encoding: " + base64, e);
+    }
+    this.base64 = base64;
+  }
+
+  /** Create a new instance by decoding <code>base64</code> as classic Base64 data. */
+  public static ByteArray fromBase64(@NonNull final String base64) {
+    return new ByteArray(BASE64_DECODER.decode(base64));
+  }
+
+  /**
+   * Create a new instance by decoding <code>base64</code> as Base64Url data.
+   *
+   * @throws Base64UrlException if <code>base64</code> is not valid Base64Url data.
+   */
+  @JsonCreator
+  public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
+    return new ByteArray(base64);
+  }
+
+  /**
+   * Create a new instance by decoding <code>hex</code> as hexadecimal data.
+   *
+   * @throws HexException if <code>hex</code> is not valid hexadecimal data.
+   */
+  public static ByteArray fromHex(@NonNull final String hex) throws HexException {
+    try {
+      return new ByteArray(BinaryUtil.fromHex(hex));
+    } catch (Exception e) {
+      throw new HexException("Invalid hexadecimal encoding: " + hex, e);
+    }
+  }
+
+  /**
+   * @return a new instance containing a copy of this instance followed by a copy of <code>tail
+   *     </code>.
+   */
+  public ByteArray concat(@NonNull ByteArray tail) {
+    return new ByteArray(Bytes.concat(this.bytes, tail.bytes));
+  }
+
+  public boolean isEmpty() {
+    return size() == 0;
+  }
+
+  public int size() {
+    return this.bytes.length;
+  }
+
+  /** @return a copy of the raw byte contents. */
+  public byte[] getBytes() {
+    return BinaryUtil.copy(bytes);
+  }
+
+  /** @return the content bytes encoded as classic Base64 data. */
+  public String getBase64() {
+    return BASE64_ENCODER.encodeToString(bytes);
+  }
+
+  /** @return the content bytes encoded as Base64Url data. */
+  public String getBase64Url() {
+    return base64;
+  }
+
+  /** @return the content bytes encoded as hexadecimal data. */
+  @ToString.Include
+  public String getHex() {
+    return BinaryUtil.toHex(bytes);
+  }
+
+  /** Used by JSON serializer. */
+  @Override
+  public String toJsonString() {
+    return base64;
+  }
+
+  @Override
+  public int compareTo(ByteArray other) {
+    if (bytes.length != other.bytes.length) {
+      return bytes.length - other.bytes.length;
     }
 
-    private ByteArray(String base64) throws Base64UrlException {
-        try {
-            this.bytes = BASE64URL_DECODER.decode(base64);
-        } catch (IllegalArgumentException e) {
-            throw new Base64UrlException("Invalid Base64Url encoding: " + base64, e);
-        }
-        this.base64 = base64;
+    for (int i = 0; i < bytes.length; ++i) {
+      if (bytes[i] != other.bytes[i]) {
+        return bytes[i] - other.bytes[i];
+      }
     }
 
-    /**
-     * Create a new instance by decoding <code>base64</code> as classic Base64 data.
-     */
-    public static ByteArray fromBase64(@NonNull final String base64) {
-        return new ByteArray(BASE64_DECODER.decode(base64));
-    }
-
-    /**
-     * Create a new instance by decoding <code>base64</code> as Base64Url data.
-     *
-     * @throws Base64UrlException if <code>base64</code> is not valid Base64Url data.
-     */
-    @JsonCreator
-    public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
-        return new ByteArray(base64);
-    }
-
-    /**
-     * Create a new instance by decoding <code>hex</code> as hexadecimal data.
-     *
-     * @throws HexException if <code>hex</code> is not valid hexadecimal data.
-     */
-    public static ByteArray fromHex(@NonNull final String hex) throws HexException {
-        try {
-            return new ByteArray(BinaryUtil.fromHex(hex));
-        } catch (Exception e) {
-            throw new HexException("Invalid hexadecimal encoding: " + hex, e);
-        }
-    }
-
-    /**
-     * @return a new instance containing a copy of this instance followed by a copy of <code>tail</code>.
-     */
-    public ByteArray concat(@NonNull ByteArray tail) {
-        return new ByteArray(Bytes.concat(this.bytes, tail.bytes));
-    }
-
-    public boolean isEmpty() {
-        return size() == 0;
-    }
-
-    public int size() {
-        return this.bytes.length;
-    }
-
-    /**
-     * @return a copy of the raw byte contents.
-     */
-    public byte[] getBytes() {
-        return BinaryUtil.copy(bytes);
-    }
-
-    /**
-     * @return the content bytes encoded as classic Base64 data.
-     */
-    public String getBase64() {
-        return BASE64_ENCODER.encodeToString(bytes);
-    }
-
-    /**
-     * @return the content bytes encoded as Base64Url data.
-     */
-    public String getBase64Url() {
-        return base64;
-    }
-
-    /**
-     * @return the content bytes encoded as hexadecimal data.
-     */
-    @ToString.Include
-    public String getHex() {
-        return BinaryUtil.toHex(bytes);
-    }
-
-    /**
-     * Used by JSON serializer.
-     */
-    @Override
-    public String toJsonString() {
-        return base64;
-    }
-
-    @Override
-    public int compareTo(ByteArray other) {
-        if (bytes.length != other.bytes.length) {
-            return bytes.length - other.bytes.length;
-        }
-
-        for (int i = 0; i < bytes.length; ++i) {
-            if (bytes[i] != other.bytes[i]) {
-                return bytes[i] - other.bytes[i];
-            }
-        }
-
-        return 0;
-    }
-
+    return 0;
+  }
 }

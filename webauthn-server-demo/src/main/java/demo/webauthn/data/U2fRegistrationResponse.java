@@ -34,19 +34,17 @@ import lombok.Value;
 @Value
 public class U2fRegistrationResponse {
 
-    private final ByteArray requestId;
-    private final U2fCredential credential;
-    private final Optional<ByteArray> sessionToken;
+  private final ByteArray requestId;
+  private final U2fCredential credential;
+  private final Optional<ByteArray> sessionToken;
 
-    @JsonCreator
-    public U2fRegistrationResponse(
-        @NonNull @JsonProperty("requestId") ByteArray requestId,
-        @NonNull @JsonProperty("credential") U2fCredential credential,
-        @NonNull @JsonProperty("sessionToken") Optional<ByteArray> sessionToken
-    ) {
-        this.requestId = requestId;
-        this.credential = credential;
-        this.sessionToken = sessionToken;
-    }
-
+  @JsonCreator
+  public U2fRegistrationResponse(
+      @NonNull @JsonProperty("requestId") ByteArray requestId,
+      @NonNull @JsonProperty("credential") U2fCredential credential,
+      @NonNull @JsonProperty("sessionToken") Optional<ByteArray> sessionToken) {
+    this.requestId = requestId;
+    this.credential = credential;
+    this.sessionToken = sessionToken;
+  }
 }

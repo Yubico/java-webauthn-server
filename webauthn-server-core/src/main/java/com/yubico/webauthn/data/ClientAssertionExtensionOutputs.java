@@ -34,110 +34,96 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
- * outputs</a> from a
- * <code>navigator.credentials.get()</code> operation.
+ * Contains <a
+ * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
+ * outputs</a> from a <code>navigator.credentials.get()</code> operation.
  *
- * <p>
- * Note that there is no guarantee that any extension input present in {@link AssertionExtensionInputs} will have a
- * corresponding output present here.
- * </p>
+ * <p>Note that there is no guarantee that any extension input present in {@link
+ * AssertionExtensionInputs} will have a corresponding output present here.
  *
- * <p>
- * The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
- * </p>
+ * <p>The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn Extensions</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ *     Extensions</a>
  */
 @Value
 @Builder(toBuilder = true)
 public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
+  /**
+   * The output from the FIDO AppID Extension (<code>appid</code>).
+   *
+   * <p>This value should be ignored because its behaviour is underspecified, see: <a
+   * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   *     FIDO AppID Extension (appid)</a>
+   */
+  private final Boolean appid;
+
+  @JsonCreator
+  private ClientAssertionExtensionOutputs(@JsonProperty("appid") Boolean appid) {
+    this.appid = appid;
+  }
+
+  @Override
+  public Set<String> getExtensionIds() {
+    Set<String> ids = new HashSet<>();
+
+    getAppid().ifPresent((id) -> ids.add("appid"));
+
+    return ids;
+  }
+
+  /**
+   * The output from the FIDO AppID Extension (<code>appid</code>).
+   *
+   * <p>This value should be ignored because its behaviour is underspecified, see: <a
+   * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   *     FIDO AppID Extension (appid)</a>
+   */
+  public Optional<Boolean> getAppid() {
+    return Optional.ofNullable(appid);
+  }
+
+  public static class ClientAssertionExtensionOutputsBuilder {
+    private Boolean appid = null;
+
     /**
      * The output from the FIDO AppID Extension (<code>appid</code>).
      *
-     * <p>
-     * This value should be ignored because its behaviour is underspecified, see: <a
+     * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
-     * </p>
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
-     * (appid)</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     *     FIDO AppID Extension (appid)</a>
      */
-    private final Boolean appid;
-
-    @JsonCreator
-    private ClientAssertionExtensionOutputs(
-        @JsonProperty("appid") Boolean appid
-    ) {
-        this.appid = appid;
+    public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
+      this.appid = appid.orElse(null);
+      return this;
     }
 
-    @Override
-    public Set<String> getExtensionIds() {
-        Set<String> ids = new HashSet<>();
-
-        getAppid().ifPresent((id) -> ids.add("appid"));
-
-        return ids;
+    /*
+     * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+     * Consider reverting this workaround if Lombok fixes that issue.
+     */
+    private ClientAssertionExtensionOutputsBuilder appid(Boolean appid) {
+      return this.appid(Optional.ofNullable(appid));
     }
 
     /**
      * The output from the FIDO AppID Extension (<code>appid</code>).
      *
-     * <p>
-     * This value should be ignored because its behaviour is underspecified, see: <a
+     * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
-     * </p>
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
-     * (appid)</a>
+     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     *     FIDO AppID Extension (appid)</a>
      */
-    public Optional<Boolean> getAppid() {
-        return Optional.ofNullable(appid);
+    public ClientAssertionExtensionOutputsBuilder appid(boolean appid) {
+      return this.appid(Optional.of(appid));
     }
-
-    public static class ClientAssertionExtensionOutputsBuilder {
-        private Boolean appid = null;
-
-        /**
-         * The output from the FIDO AppID Extension (<code>appid</code>).
-         *
-         * <p>
-         * This value should be ignored because its behaviour is underspecified, see: <a
-         * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
-         * </p>
-         *
-         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
-         * (appid)</a>
-         */
-        public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
-            this.appid = appid.orElse(null);
-            return this;
-        }
-
-        /*
-         * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
-         * Consider reverting this workaround if Lombok fixes that issue.
-         */
-        private ClientAssertionExtensionOutputsBuilder appid(Boolean appid) {
-            return this.appid(Optional.ofNullable(appid));
-        }
-
-        /**
-         * The output from the FIDO AppID Extension (<code>appid</code>).
-         *
-         * <p>
-         * This value should be ignored because its behaviour is underspecified, see: <a
-         * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
-         * </p>
-         *
-         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1. FIDO AppID Extension
-         * (appid)</a>
-         */
-        public ClientAssertionExtensionOutputsBuilder appid(boolean appid) {
-            return this.appid(Optional.of(appid));
-        }
-    }
-
+  }
 }

@@ -30,30 +30,17 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
 
-
-/**
- * Description of this version of this library
- */
+/** Description of this version of this library */
 @Value
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public class Implementation {
 
-    /**
-     * The version number of this release of the library.
-     */
-    @NonNull
-    private final String version;
+  /** The version number of this release of the library. */
+  @NonNull private final String version;
 
-    /**
-     * Address to where the source code for this library can be found.
-     */
-    @NonNull
-    private final URL sourceCodeUrl;
+  /** Address to where the source code for this library can be found. */
+  @NonNull private final URL sourceCodeUrl;
 
-    /**
-     * The commit ID of the source code the library was built from, if known.
-     */
-    @NonNull
-    private final String gitCommit;
-
+  /** The commit ID of the source code the library was built from, if known. */
+  @NonNull private final String gitCommit;
 }

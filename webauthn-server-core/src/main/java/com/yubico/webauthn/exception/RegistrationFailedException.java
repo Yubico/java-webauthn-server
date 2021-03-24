@@ -26,8 +26,7 @@ package com.yubico.webauthn.exception;
 
 public final class RegistrationFailedException extends Exception {
 
-    public RegistrationFailedException(IllegalArgumentException e) {
-        super(e);
-    }
-
+  public RegistrationFailedException(IllegalArgumentException e) {
+    super(e);
+  }
 }

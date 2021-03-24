@@ -7,14 +7,12 @@ import org.junit.Test;
 
 public class RelyingPartyIdentityTest {
 
-    @Test
-    public void itHasTheseBuilderMethods() throws MalformedURLException {
-        RelyingPartyIdentity.builder()
-            .id("")
-            .name("")
-            .icon(new URL("https://example.com"))
-            .icon(Optional.of(new URL("https://example.com")))
-        ;
-    }
-
+  @Test
+  public void itHasTheseBuilderMethods() throws MalformedURLException {
+    RelyingPartyIdentity.builder()
+        .id("")
+        .name("")
+        .icon(new URL("https://example.com"))
+        .icon(Optional.of(new URL("https://example.com")));
+  }
 }

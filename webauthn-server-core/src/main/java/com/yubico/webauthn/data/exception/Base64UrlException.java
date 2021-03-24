@@ -26,8 +26,7 @@ package com.yubico.webauthn.data.exception;
 
 public final class Base64UrlException extends Exception {
 
-    public Base64UrlException(String s, Throwable throwable) {
-        super(s, throwable);
-    }
-
+  public Base64UrlException(String s, Throwable throwable) {
+    super(s, throwable);
+  }
 }

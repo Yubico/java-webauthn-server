@@ -33,116 +33,108 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
  * Used to supply additional Relying Party attributes when creating a new credential.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrpentity">§5.4.2. Relying
- * Party Parameters for Credential Generation (dictionary PublicKeyCredentialRpEntity)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrpentity">§5.4.2.
+ *     Relying Party Parameters for Credential Generation (dictionary PublicKeyCredentialRpEntity)
+ *     </a>
  */
 @Value
 @Builder(toBuilder = true)
 public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
 
-    /**
-     * The human-palatable name of the Relaying Party.
-     *
-     * <p>
-     * For example: "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
-     * </p>
-     */
-    @NonNull
-    @Getter(onMethod = @__({ @Override }))
-    private final String name;
+  /**
+   * The human-palatable name of the Relaying Party.
+   *
+   * <p>For example: "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+   */
+  @NonNull
+  @Getter(onMethod = @__({@Override}))
+  private final String name;
+
+  /**
+   * A unique identifier for the Relying Party, which sets the <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
+   */
+  @NonNull private final String id;
+
+  /**
+   * A URL which resolves to an image associated with the entity. For example, this could be the
+   * Relying Party's logo.
+   *
+   * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
+   * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s
+   * value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches
+   * of the URL, at the cost of needing more storage.
+   */
+  private final URL icon;
+
+  @JsonCreator
+  private RelyingPartyIdentity(
+      @NonNull @JsonProperty("name") String name,
+      @NonNull @JsonProperty("id") String id,
+      @JsonProperty("icon") URL icon) {
+    this.name = name;
+    this.id = id;
+    this.icon = icon;
+  }
+
+  public static RelyingPartyIdentityBuilder.MandatoryStages builder() {
+    return new RelyingPartyIdentityBuilder.MandatoryStages();
+  }
+
+  public static class RelyingPartyIdentityBuilder {
+    private URL icon = null;
+
+    public static class MandatoryStages {
+      private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
+
+      public Step2 id(String id) {
+        builder.id(id);
+        return new Step2();
+      }
+
+      public class Step2 {
+        public RelyingPartyIdentityBuilder name(String name) {
+          return builder.name(name);
+        }
+      }
+    }
 
     /**
-     * A unique identifier for the Relying Party, which sets the <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP
-     * ID</a>.
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
-     */
-    @NonNull
-    private final String id;
-
-    /**
-     * A URL which resolves to an image associated with the entity. For example, this could be the Relying Party's
-     * logo.
+     * A URL which resolves to an image associated with the entity. For example, this could be the
+     * Relying Party's logo.
      *
      * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
-     * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its
-     * length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of
-     * needing more storage.
-     * </p>
+     * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
+     * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
+     * avoid fetches of the URL, at the cost of needing more storage.
      */
-    private final URL icon;
-
-    @JsonCreator
-    private RelyingPartyIdentity(
-        @NonNull @JsonProperty("name") String name,
-        @NonNull @JsonProperty("id") String id,
-        @JsonProperty("icon") URL icon
-    ) {
-        this.name = name;
-        this.id = id;
-        this.icon = icon;
+    public RelyingPartyIdentityBuilder icon(@NonNull Optional<URL> icon) {
+      return this.icon(icon.orElse(null));
     }
 
-    public static RelyingPartyIdentityBuilder.MandatoryStages builder() {
-        return new RelyingPartyIdentityBuilder.MandatoryStages();
+    /**
+     * A URL which resolves to an image associated with the entity. For example, this could be the
+     * Relying Party's logo.
+     *
+     * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
+     * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
+     * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
+     * avoid fetches of the URL, at the cost of needing more storage.
+     */
+    public RelyingPartyIdentityBuilder icon(URL icon) {
+      this.icon = icon;
+      return this;
     }
+  }
 
-    public static class RelyingPartyIdentityBuilder {
-        private URL icon = null;
-
-        public static class MandatoryStages {
-            private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
-
-            public Step2 id(String id) {
-                builder.id(id);
-                return new Step2();
-            }
-
-            public class Step2 {
-                public RelyingPartyIdentityBuilder name(String name) {
-                    return builder.name(name);
-                }
-            }
-        }
-
-        /**
-         * A URL which resolves to an image associated with the entity. For example, this could be the Relying Party's
-         * logo.
-         *
-         * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
-         * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its
-         * length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of
-         * needing more storage.
-         * </p>
-         */
-        public RelyingPartyIdentityBuilder icon(@NonNull Optional<URL> icon) {
-            return this.icon(icon.orElse(null));
-        }
-
-        /**
-         * A URL which resolves to an image associated with the entity. For example, this could be the Relying Party's
-         * logo.
-         *
-         * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
-         * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its
-         * length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of
-         * needing more storage.
-         * </p>
-         */
-        public RelyingPartyIdentityBuilder icon(URL icon) {
-            this.icon = icon;
-            return this;
-        }
-    }
-
-    @Override
-    public Optional<URL> getIcon() {
-        return Optional.ofNullable(icon);
-    }
-
+  @Override
+  public Optional<URL> getIcon() {
+    return Optional.ofNullable(icon);
+  }
 }

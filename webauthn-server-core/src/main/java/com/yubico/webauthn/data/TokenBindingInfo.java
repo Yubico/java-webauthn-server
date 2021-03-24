@@ -24,65 +24,61 @@
 
 package com.yubico.webauthn.data;
 
+import static com.yubico.internal.util.ExceptionUtil.assure;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Optional;
 import lombok.NonNull;
 import lombok.Value;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
-
 /**
- * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding protocol</a> used when
- * communicating with the Relying Party.
+ * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding
+ * protocol</a> used when communicating with the Relying Party.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-tokenbinding">dictionary TokenBinding</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-tokenbinding">dictionary
+ *     TokenBinding</a>
  */
 @Value
 public class TokenBindingInfo {
 
-    @NonNull
-    private final TokenBindingStatus status;
+  @NonNull private final TokenBindingStatus status;
 
-    /**
-     * This member MUST be present if {@link #status} is present, and MUST be a base64url encoding of the Token Binding
-     * ID that was used when communicating with the Relying Party.
-     */
-    private final ByteArray id;
+  /**
+   * This member MUST be present if {@link #status} is present, and MUST be a base64url encoding of
+   * the Token Binding ID that was used when communicating with the Relying Party.
+   */
+  private final ByteArray id;
 
-    @JsonCreator
-    TokenBindingInfo(
-        @NonNull @JsonProperty("status") TokenBindingStatus status,
-        @NonNull @JsonProperty("id") Optional<ByteArray> id
-    ) {
-        if (status == TokenBindingStatus.PRESENT) {
-            assure(
-                id.isPresent(),
-                "Token binding ID must be present if status is \"%s\".",
-                TokenBindingStatus.PRESENT
-            );
-        } else {
-            assure(
-                !id.isPresent(),
-                "Token binding ID must not be present if status is not \"%s\".",
-                TokenBindingStatus.PRESENT
-            );
-        }
-
-        this.status = status;
-        this.id = id.orElse(null);
+  @JsonCreator
+  TokenBindingInfo(
+      @NonNull @JsonProperty("status") TokenBindingStatus status,
+      @NonNull @JsonProperty("id") Optional<ByteArray> id) {
+    if (status == TokenBindingStatus.PRESENT) {
+      assure(
+          id.isPresent(),
+          "Token binding ID must be present if status is \"%s\".",
+          TokenBindingStatus.PRESENT);
+    } else {
+      assure(
+          !id.isPresent(),
+          "Token binding ID must not be present if status is not \"%s\".",
+          TokenBindingStatus.PRESENT);
     }
 
-    public static TokenBindingInfo present(@NonNull ByteArray id) {
-        return new TokenBindingInfo(TokenBindingStatus.PRESENT, Optional.of(id));
-    }
+    this.status = status;
+    this.id = id.orElse(null);
+  }
 
-    public static TokenBindingInfo supported() {
-        return new TokenBindingInfo(TokenBindingStatus.SUPPORTED, Optional.empty());
-    }
+  public static TokenBindingInfo present(@NonNull ByteArray id) {
+    return new TokenBindingInfo(TokenBindingStatus.PRESENT, Optional.of(id));
+  }
 
-    public Optional<ByteArray> getId() {
-        return Optional.ofNullable(id);
-    }
+  public static TokenBindingInfo supported() {
+    return new TokenBindingInfo(TokenBindingStatus.SUPPORTED, Optional.empty());
+  }
 
+  public Optional<ByteArray> getId() {
+    return Optional.ofNullable(id);
+  }
 }

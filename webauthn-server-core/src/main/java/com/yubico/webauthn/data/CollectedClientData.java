@@ -43,121 +43,121 @@ import lombok.Value;
 /**
  * The client data represents the contextual bindings of both the Relying Party and the client.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-collectedclientdata">§5.10.1. Client Data Used
- * in WebAuthn Signatures (dictionary CollectedClientData)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-collectedclientdata">§5.10.1.
+ *     Client Data Used in WebAuthn Signatures (dictionary CollectedClientData) </a>
  */
 @Value
 @JsonSerialize(using = CollectedClientData.JsonSerializer.class)
 public class CollectedClientData {
 
-    /**
-     * The client data returned from the client.
-     */
-    @NonNull
-    @Getter(AccessLevel.NONE)
-    private final ByteArray clientDataJson;
+  /** The client data returned from the client. */
+  @NonNull
+  @Getter(AccessLevel.NONE)
+  private final ByteArray clientDataJson;
 
-    @NonNull
-    @Getter(AccessLevel.NONE)
-    private final transient ObjectNode clientData;
+  @NonNull
+  @Getter(AccessLevel.NONE)
+  private final transient ObjectNode clientData;
 
-    /**
-     * The base64url encoding of the challenge provided by the Relying Party. See the <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1 Cryptographic
-     * Challenges</a> security consideration.
-     */
-    @NonNull
-    private final transient ByteArray challenge;
+  /**
+   * The base64url encoding of the challenge provided by the Relying Party. See the <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1
+   * Cryptographic Challenges</a> security consideration.
+   */
+  @NonNull private final transient ByteArray challenge;
 
-    /**
-     * The fully qualified origin of the requester, as provided to the authenticator by the client, in the syntax
-     * defined by <a href="https://tools.ietf.org/html/rfc6454">RFC 6454</a>.
-     */
-    @NonNull
-    private final transient String origin;
+  /**
+   * The fully qualified origin of the requester, as provided to the authenticator by the client, in
+   * the syntax defined by <a href="https://tools.ietf.org/html/rfc6454">RFC 6454</a>.
+   */
+  @NonNull private final transient String origin;
 
-    /**
-     * The type of the requested operation, set by the client.
-     */
-    @NonNull
-    private final transient String type;
+  /** The type of the requested operation, set by the client. */
+  @NonNull private final transient String type;
 
-    @JsonCreator
-    public CollectedClientData(@NonNull ByteArray clientDataJSON) throws IOException, Base64UrlException {
-        JsonNode clientData = JacksonCodecs.json().readTree(clientDataJSON.getBytes());
+  @JsonCreator
+  public CollectedClientData(@NonNull ByteArray clientDataJSON)
+      throws IOException, Base64UrlException {
+    JsonNode clientData = JacksonCodecs.json().readTree(clientDataJSON.getBytes());
 
-        ExceptionUtil.assure(
-            clientData != null && clientData.isObject(),
-            "Collected client data must be JSON object."
-        );
+    ExceptionUtil.assure(
+        clientData != null && clientData.isObject(), "Collected client data must be JSON object.");
 
-        this.clientDataJson = clientDataJSON;
-        this.clientData = (ObjectNode) clientData;
+    this.clientDataJson = clientDataJSON;
+    this.clientData = (ObjectNode) clientData;
 
-        try {
-            challenge = ByteArray.fromBase64Url(clientData.get("challenge").textValue());
-        } catch (NullPointerException e) {
-            throw new IllegalArgumentException("Missing field: \"challenge\"");
-        } catch (Base64UrlException e) {
-            throw new Base64UrlException("Invalid \"challenge\" value", e);
-        }
-
-        try {
-            origin = clientData.get("origin").textValue();
-        } catch (NullPointerException e) {
-            throw new IllegalArgumentException("Missing field: \"origin\"");
-        }
-
-        try {
-            type = clientData.get("type").textValue();
-        } catch (NullPointerException e) {
-            throw new IllegalArgumentException("Missing field: \"type\"");
-        }
-
-        final JsonNode authenticatorExtensions = clientData.get("authenticatorExtensions");
-        if (authenticatorExtensions != null && !authenticatorExtensions.isObject()) {
-            throw new IllegalArgumentException("Field \"authenticatorExtensions\" must be an object if present.");
-        }
-
-        final JsonNode clientExtensions = clientData.get("clientExtensions");
-        if (clientExtensions != null && !clientExtensions.isObject()) {
-            throw new IllegalArgumentException("Field \"clientExtensions\" must be an object if present.");
-        }
+    try {
+      challenge = ByteArray.fromBase64Url(clientData.get("challenge").textValue());
+    } catch (NullPointerException e) {
+      throw new IllegalArgumentException("Missing field: \"challenge\"");
+    } catch (Base64UrlException e) {
+      throw new Base64UrlException("Invalid \"challenge\" value", e);
     }
 
-    /**
-     * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding protocol</a> used
-     * when communicating with the Relying Party. Its absence indicates that the client doesn't support token binding.
-     */
-    public final Optional<TokenBindingInfo> getTokenBinding() {
-        return Optional.ofNullable(clientData.get("tokenBinding"))
-            .map(tb -> {
-                if (tb.isObject()) {
-                    String status = tb.get("status").textValue();
-                    return new TokenBindingInfo(
-                        TokenBindingStatus.fromJsonString(status),
-                        Optional.ofNullable(tb.get("id"))
-                            .map(JsonNode::textValue)
-                            .map(id -> {
-                                try {
-                                    return ByteArray.fromBase64Url(id);
-                                } catch (Base64UrlException e) {
-                                    throw new IllegalArgumentException("Property \"id\" is not valid Base64Url data", e);
-                                }
-                            })
-                    );
-                } else {
-                    throw new IllegalArgumentException("Property \"tokenBinding\" missing from client data.");
-                }
+    try {
+      origin = clientData.get("origin").textValue();
+    } catch (NullPointerException e) {
+      throw new IllegalArgumentException("Missing field: \"origin\"");
+    }
+
+    try {
+      type = clientData.get("type").textValue();
+    } catch (NullPointerException e) {
+      throw new IllegalArgumentException("Missing field: \"type\"");
+    }
+
+    final JsonNode authenticatorExtensions = clientData.get("authenticatorExtensions");
+    if (authenticatorExtensions != null && !authenticatorExtensions.isObject()) {
+      throw new IllegalArgumentException(
+          "Field \"authenticatorExtensions\" must be an object if present.");
+    }
+
+    final JsonNode clientExtensions = clientData.get("clientExtensions");
+    if (clientExtensions != null && !clientExtensions.isObject()) {
+      throw new IllegalArgumentException(
+          "Field \"clientExtensions\" must be an object if present.");
+    }
+  }
+
+  /**
+   * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding
+   * protocol</a> used when communicating with the Relying Party. Its absence indicates that the
+   * client doesn't support token binding.
+   */
+  public final Optional<TokenBindingInfo> getTokenBinding() {
+    return Optional.ofNullable(clientData.get("tokenBinding"))
+        .map(
+            tb -> {
+              if (tb.isObject()) {
+                String status = tb.get("status").textValue();
+                return new TokenBindingInfo(
+                    TokenBindingStatus.fromJsonString(status),
+                    Optional.ofNullable(tb.get("id"))
+                        .map(JsonNode::textValue)
+                        .map(
+                            id -> {
+                              try {
+                                return ByteArray.fromBase64Url(id);
+                              } catch (Base64UrlException e) {
+                                throw new IllegalArgumentException(
+                                    "Property \"id\" is not valid Base64Url data", e);
+                              }
+                            }));
+              } else {
+                throw new IllegalArgumentException(
+                    "Property \"tokenBinding\" missing from client data.");
+              }
             });
-    }
+  }
 
-    static class JsonSerializer extends com.fasterxml.jackson.databind.JsonSerializer<CollectedClientData> {
-        @Override
-        public void serialize(CollectedClientData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeString(value.clientDataJson.getBase64Url());
-        }
+  static class JsonSerializer
+      extends com.fasterxml.jackson.databind.JsonSerializer<CollectedClientData> {
+    @Override
+    public void serialize(
+        CollectedClientData value, JsonGenerator gen, SerializerProvider serializers)
+        throws IOException {
+      gen.writeString(value.clientDataJson.getBase64Url());
     }
-
+  }
 }

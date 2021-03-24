@@ -31,14 +31,13 @@ import java.util.Optional;
 
 public interface AttestationResolver {
 
-    /**
-     * Alias of <code>resolve(attestationCertificate, Collections.emptyList())</code>.
-     */
-    default Optional<Attestation> resolve(X509Certificate attestationCertificate) {
-        return resolve(attestationCertificate, Collections.emptyList());
-    }
+  /** Alias of <code>resolve(attestationCertificate, Collections.emptyList())</code>. */
+  default Optional<Attestation> resolve(X509Certificate attestationCertificate) {
+    return resolve(attestationCertificate, Collections.emptyList());
+  }
 
-    Optional<Attestation> resolve(X509Certificate attestationCertificate, List<X509Certificate> certificateChain);
-    Attestation untrustedFromCertificate(X509Certificate attestationCertificate);
+  Optional<Attestation> resolve(
+      X509Certificate attestationCertificate, List<X509Certificate> certificateChain);
 
+  Attestation untrustedFromCertificate(X509Certificate attestationCertificate);
 }

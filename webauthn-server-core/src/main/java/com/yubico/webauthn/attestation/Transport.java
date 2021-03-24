@@ -28,62 +28,49 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * Representations of communication modes supported by an authenticator.
- */
+/** Representations of communication modes supported by an authenticator. */
 public enum Transport {
-    /**
-     * The authenticator supports communication via classic Bluetooth.
-     */
-    BT_CLASSIC(1),
+  /** The authenticator supports communication via classic Bluetooth. */
+  BT_CLASSIC(1),
 
-    /**
-     * The authenticator supports communication via Bluetooth Low Energy (BLE).
-     */
-    BLE(2),
+  /** The authenticator supports communication via Bluetooth Low Energy (BLE). */
+  BLE(2),
 
-    /**
-     * The authenticator supports communication via USB.
-     */
-    USB(4),
+  /** The authenticator supports communication via USB. */
+  USB(4),
 
-    /**
-     * The authenticator supports communication via Near Field Communication (NFC).
-     */
-    NFC(8),
+  /** The authenticator supports communication via Near Field Communication (NFC). */
+  NFC(8),
 
-    /**
-     * The authenticator supports communication via Lightning.
-     */
-    LIGHTNING(16);
+  /** The authenticator supports communication via Lightning. */
+  LIGHTNING(16);
 
-    private final int bitpos;
+  private final int bitpos;
 
-    Transport(int bitpos) {
-        this.bitpos = bitpos;
+  Transport(int bitpos) {
+    this.bitpos = bitpos;
+  }
+
+  public static Set<Transport> fromInt(int bits) {
+    EnumSet<Transport> transports = EnumSet.noneOf(Transport.class);
+    for (Transport transport : Transport.values()) {
+      if ((transport.bitpos & bits) != 0) {
+        transports.add(transport);
+      }
     }
 
-    public static Set<Transport> fromInt(int bits) {
-        EnumSet<Transport> transports = EnumSet.noneOf(Transport.class);
-        for(Transport transport : Transport.values()) {
-            if((transport.bitpos & bits) != 0) {
-                transports.add(transport);
-            }
-        }
+    return transports;
+  }
 
-        return transports;
+  public static int toInt(Iterable<Transport> transports) {
+    int transportsInt = 0;
+    for (Transport transport : transports) {
+      transportsInt |= transport.bitpos;
     }
+    return transportsInt;
+  }
 
-    public static int toInt(Iterable<Transport> transports) {
-        int transportsInt = 0;
-        for(Transport transport : transports) {
-            transportsInt |= transport.bitpos;
-        }
-        return transportsInt;
-    }
-
-    public static int toInt(Transport...transports) {
-        return toInt(Arrays.asList(transports));
-    }
-
+  public static int toInt(Transport... transports) {
+    return toInt(Arrays.asList(transports));
+  }
 }

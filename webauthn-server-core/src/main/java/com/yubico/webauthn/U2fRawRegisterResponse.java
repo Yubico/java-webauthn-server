@@ -36,53 +36,47 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.security.cert.X509Certificate;
 import lombok.Value;
 
-/**
- * The register response produced by the token/key
- */
+/** The register response produced by the token/key */
 @Value
 class U2fRawRegisterResponse {
-    private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
+  private static final byte REGISTRATION_SIGNED_RESERVED_BYTE_VALUE = (byte) 0x00;
 
-    /**
-     * The (uncompressed) x,y-representation of a curve point on the P-256
-     * NIST elliptic curve.
-     */
-    private final ByteArray userPublicKey;
+  /** The (uncompressed) x,y-representation of a curve point on the P-256 NIST elliptic curve. */
+  private final ByteArray userPublicKey;
 
-    /**
-     * A handle that allows the U2F token to identify the generated key pair.
-     */
-    private final ByteArray keyHandle;
-    private final X509Certificate attestationCertificate;
+  /** A handle that allows the U2F token to identify the generated key pair. */
+  private final ByteArray keyHandle;
 
-    /**
-     * A ECDSA signature (on P-256)
-     */
-    private final ByteArray signature;
+  private final X509Certificate attestationCertificate;
 
-    U2fRawRegisterResponse(ByteArray userPublicKey,
-                                   ByteArray keyHandle,
-                                   X509Certificate attestationCertificate,
-                                   ByteArray signature) {
-        this.userPublicKey = userPublicKey;
-        this.keyHandle = keyHandle;
-        this.attestationCertificate = attestationCertificate;
-        this.signature = signature;
-    }
+  /** A ECDSA signature (on P-256) */
+  private final ByteArray signature;
 
-    boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
-        ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
-        return Crypto.verifySignature(attestationCertificate, signedBytes, signature, COSEAlgorithmIdentifier.ES256);
-    }
+  U2fRawRegisterResponse(
+      ByteArray userPublicKey,
+      ByteArray keyHandle,
+      X509Certificate attestationCertificate,
+      ByteArray signature) {
+    this.userPublicKey = userPublicKey;
+    this.keyHandle = keyHandle;
+    this.attestationCertificate = attestationCertificate;
+    this.signature = signature;
+  }
 
-    private static ByteArray packBytesToSign(ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
-        ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
-        encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
-        encoded.write(appIdHash.getBytes());
-        encoded.write(clientDataHash.getBytes());
-        encoded.write(keyHandle.getBytes());
-        encoded.write(userPublicKey.getBytes());
-        return new ByteArray(encoded.toByteArray());
-    }
+  boolean verifySignature(ByteArray appIdHash, ByteArray clientDataHash) {
+    ByteArray signedBytes = packBytesToSign(appIdHash, clientDataHash, keyHandle, userPublicKey);
+    return Crypto.verifySignature(
+        attestationCertificate, signedBytes, signature, COSEAlgorithmIdentifier.ES256);
+  }
 
+  private static ByteArray packBytesToSign(
+      ByteArray appIdHash, ByteArray clientDataHash, ByteArray keyHandle, ByteArray userPublicKey) {
+    ByteArrayDataOutput encoded = ByteStreams.newDataOutput();
+    encoded.write(REGISTRATION_SIGNED_RESERVED_BYTE_VALUE);
+    encoded.write(appIdHash.getBytes());
+    encoded.write(clientDataHash.getBytes());
+    encoded.write(keyHandle.getBytes());
+    encoded.write(userPublicKey.getBytes());
+    return new ByteArray(encoded.toByteArray());
+  }
 }

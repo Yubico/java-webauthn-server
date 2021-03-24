@@ -32,24 +32,22 @@ import lombok.Builder;
 import lombok.Value;
 
 /**
- * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-input">client extension
- * inputs</a> to a
- * <code>navigator.credentials.create()</code> operation. All members are optional.
+ * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-input">client
+ * extension inputs</a> to a <code>navigator.credentials.create()</code> operation. All members are
+ * optional.
  *
- * <p>
- * The authenticator extension inputs are derived from these client extension inputs.
- * </p>
+ * <p>The authenticator extension inputs are derived from these client extension inputs.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn Extensions</a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ *     Extensions</a>
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
 public class RegistrationExtensionInputs implements ExtensionInputs {
 
-    @Override
-    public Set<String> getExtensionIds() {
-        return Collections.emptySet();
-    }
-
+  @Override
+  public Set<String> getExtensionIds() {
+    return Collections.emptySet();
+  }
 }

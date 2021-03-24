@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import static com.yubico.internal.util.ExceptionUtil.assure;
 
 import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
@@ -50,617 +51,610 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
-
-
 @Builder
 @Slf4j
 final class FinishAssertionSteps {
 
-    private static final String CLIENT_DATA_TYPE = "webauthn.get";
+  private static final String CLIENT_DATA_TYPE = "webauthn.get";
 
-    private final AssertionRequest request;
-    private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response;
-    private final Optional<ByteArray> callerTokenBindingId;
-    private final Set<String> origins;
-    private final String rpId;
-    private final CredentialRepository credentialRepository;
+  private final AssertionRequest request;
+  private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
+      response;
+  private final Optional<ByteArray> callerTokenBindingId;
+  private final Set<String> origins;
+  private final String rpId;
+  private final CredentialRepository credentialRepository;
 
-    @Builder.Default private final boolean allowOriginPort = false;
-    @Builder.Default private final boolean allowOriginSubdomain = false;
-    @Builder.Default private final boolean allowUnrequestedExtensions = false;
-    @Builder.Default private final boolean validateSignatureCounter = true;
+  @Builder.Default private final boolean allowOriginPort = false;
+  @Builder.Default private final boolean allowOriginSubdomain = false;
+  @Builder.Default private final boolean allowUnrequestedExtensions = false;
+  @Builder.Default private final boolean validateSignatureCounter = true;
 
-    public Step0 begin() {
-        return new Step0();
+  public Step0 begin() {
+    return new Step0();
+  }
+
+  public AssertionResult run() throws InvalidSignatureCountException {
+    return begin().run();
+  }
+
+  interface Step<Next extends Step<?>> {
+    Next nextStep();
+
+    void validate() throws InvalidSignatureCountException;
+
+    List<String> getPrevWarnings();
+
+    default Optional<AssertionResult> result() {
+      return Optional.empty();
     }
 
-    public AssertionResult run() throws InvalidSignatureCountException {
-        return begin().run();
+    default List<String> getWarnings() {
+      return Collections.emptyList();
     }
 
-    interface Step<Next extends Step<?>> {
-        Next nextStep();
-
-        void validate() throws InvalidSignatureCountException;
-
-        List<String> getPrevWarnings();
-
-        default Optional<AssertionResult> result() {
-            return Optional.empty();
-        }
-
-        default List<String> getWarnings() {
-            return Collections.emptyList();
-        }
-
-        default List<String> allWarnings() {
-            List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
-            result.addAll(getPrevWarnings());
-            result.addAll(getWarnings());
-            return CollectionUtil.immutableList(result);
-        }
-
-        default Next next() throws InvalidSignatureCountException {
-            validate();
-            return nextStep();
-        }
-
-        default AssertionResult run() throws InvalidSignatureCountException {
-            if (result().isPresent()) {
-                return result().get();
-            } else {
-                return next().run();
-            }
-        }
+    default List<String> allWarnings() {
+      List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
+      result.addAll(getPrevWarnings());
+      result.addAll(getWarnings());
+      return CollectionUtil.immutableList(result);
     }
 
-    @Value
-    class Step0 implements Step<Step1> {
-        @Override
-        public Step1 nextStep() {
-            return new Step1(username().get(), userHandle().get(), allWarnings());
-        }
-
-        @Override
-        public void validate() {
-            assure(
-                request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
-                "At least one of username and user handle must be given; none was."
-            );
-            assure(
-                userHandle().isPresent(),
-                "No user found for username: %s, userHandle: %s",
-                request.getUsername(), response.getResponse().getUserHandle()
-            );
-            assure(
-                username().isPresent(),
-                "No user found for username: %s, userHandle: %s",
-                request.getUsername(), response.getResponse().getUserHandle()
-            );
-        }
-
-        @Override
-        public List<String> getPrevWarnings() {
-            return Collections.emptyList();
-        }
-
-        private Optional<ByteArray> userHandle() {
-            return response.getResponse().getUserHandle()
-                .map(Optional::of)
-                .orElseGet(() -> credentialRepository.getUserHandleForUsername(request.getUsername().get()));
-        }
-
-        private Optional<String> username() {
-            return request.getUsername()
-                .map(Optional::of)
-                .orElseGet(() -> credentialRepository.getUsernameForUserHandle(response.getResponse().getUserHandle().get()));
-        }
+    default Next next() throws InvalidSignatureCountException {
+      validate();
+      return nextStep();
     }
 
-    @Value
-    class Step1 implements Step<Step2> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final List<String> prevWarnings;
+    default AssertionResult run() throws InvalidSignatureCountException {
+      if (result().isPresent()) {
+        return result().get();
+      } else {
+        return next().run();
+      }
+    }
+  }
 
-        @Override
-        public Step2 nextStep() {
-            return new Step2(username, userHandle, allWarnings());
-        }
+  @Value
+  class Step0 implements Step<Step1> {
+    @Override
+    public Step1 nextStep() {
+      return new Step1(username().get(), userHandle().get(), allWarnings());
+    }
 
-        @Override
-        public void validate() {
-            request.getPublicKeyCredentialRequestOptions().getAllowCredentials().ifPresent(allowed -> {
+    @Override
+    public void validate() {
+      assure(
+          request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
+          "At least one of username and user handle must be given; none was.");
+      assure(
+          userHandle().isPresent(),
+          "No user found for username: %s, userHandle: %s",
+          request.getUsername(),
+          response.getResponse().getUserHandle());
+      assure(
+          username().isPresent(),
+          "No user found for username: %s, userHandle: %s",
+          request.getUsername(),
+          response.getResponse().getUserHandle());
+    }
+
+    @Override
+    public List<String> getPrevWarnings() {
+      return Collections.emptyList();
+    }
+
+    private Optional<ByteArray> userHandle() {
+      return response
+          .getResponse()
+          .getUserHandle()
+          .map(Optional::of)
+          .orElseGet(
+              () -> credentialRepository.getUserHandleForUsername(request.getUsername().get()));
+    }
+
+    private Optional<String> username() {
+      return request
+          .getUsername()
+          .map(Optional::of)
+          .orElseGet(
+              () ->
+                  credentialRepository.getUsernameForUserHandle(
+                      response.getResponse().getUserHandle().get()));
+    }
+  }
+
+  @Value
+  class Step1 implements Step<Step2> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final List<String> prevWarnings;
+
+    @Override
+    public Step2 nextStep() {
+      return new Step2(username, userHandle, allWarnings());
+    }
+
+    @Override
+    public void validate() {
+      request
+          .getPublicKeyCredentialRequestOptions()
+          .getAllowCredentials()
+          .ifPresent(
+              allowed -> {
                 assure(
                     allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId())),
                     "Unrequested credential ID: %s",
-                    response.getId()
-                );
-            });
-        }
+                    response.getId());
+              });
+    }
+  }
+
+  @Value
+  class Step2 implements Step<Step3> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final List<String> prevWarnings;
+
+    @Override
+    public Step3 nextStep() {
+      return new Step3(username, userHandle, allWarnings());
     }
 
-    @Value
-    class Step2 implements Step<Step3> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final List<String> prevWarnings;
+    @Override
+    public void validate() {
+      Optional<RegisteredCredential> registration =
+          credentialRepository.lookup(response.getId(), userHandle);
 
-        @Override
-        public Step3 nextStep() {
-            return new Step3(username, userHandle, allWarnings());
-        }
+      assure(registration.isPresent(), "Unknown credential: %s", response.getId());
 
-        @Override
-        public void validate() {
-            Optional<RegisteredCredential> registration = credentialRepository.lookup(response.getId(), userHandle);
+      assure(
+          userHandle.equals(registration.get().getUserHandle()),
+          "User handle %s does not own credential %s",
+          userHandle,
+          response.getId());
+    }
+  }
 
-            assure(
-                registration.isPresent(),
-                "Unknown credential: %s",
-                response.getId()
-            );
+  @Value
+  class Step3 implements Step<Step4> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final List<String> prevWarnings;
 
-            assure(
-                userHandle.equals(registration.get().getUserHandle()),
-                "User handle %s does not own credential %s",
-                userHandle, response.getId()
-            );
-        }
+    @Override
+    public Step4 nextStep() {
+      return new Step4(username, userHandle, credential(), allWarnings());
     }
 
-    @Value
-    class Step3 implements Step<Step4> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final List<String> prevWarnings;
-
-        @Override
-        public Step4 nextStep() {
-            return new Step4(username, userHandle, credential(), allWarnings());
-        }
-
-        @Override
-        public void validate() {
-            assure(
-                maybeCredential().isPresent(),
-                "Unknown credential. Credential ID: %s, user handle: %s",
-                response.getId(), userHandle
-            );
-        }
-
-        private Optional<RegisteredCredential> maybeCredential() {
-            return credentialRepository.lookup(response.getId(), userHandle);
-        }
-
-        public RegisteredCredential credential() {
-            return maybeCredential().get();
-        }
+    @Override
+    public void validate() {
+      assure(
+          maybeCredential().isPresent(),
+          "Unknown credential. Credential ID: %s, user handle: %s",
+          response.getId(),
+          userHandle);
     }
 
-    @Value
-    class Step4 implements Step<Step5> {
-
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
-
-        @Override
-        public void validate() {
-            assure(clientData() != null, "Missing client data.");
-            assure(authenticatorData() != null, "Missing authenticator data.");
-            assure(signature() != null, "Missing signature.");
-        }
-
-        @Override
-        public Step5 nextStep() {
-            return new Step5(username, userHandle, credential, allWarnings());
-        }
-
-        public ByteArray authenticatorData() {
-            return response.getResponse().getAuthenticatorData();
-        }
-
-        public ByteArray clientData() {
-            return response.getResponse().getClientDataJSON();
-        }
-
-        public ByteArray signature() {
-            return response.getResponse().getSignature();
-        }
+    private Optional<RegisteredCredential> maybeCredential() {
+      return credentialRepository.lookup(response.getId(), userHandle);
     }
 
-    @Value
-    class Step5 implements Step<Step6> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
+    public RegisteredCredential credential() {
+      return maybeCredential().get();
+    }
+  }
 
-        // Nothing to do
-        @Override
-        public void validate() {
-        }
+  @Value
+  class Step4 implements Step<Step5> {
 
-        @Override
-        public Step6 nextStep() {
-            return new Step6(username, userHandle, credential, allWarnings());
-        }
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() {
+      assure(clientData() != null, "Missing client data.");
+      assure(authenticatorData() != null, "Missing authenticator data.");
+      assure(signature() != null, "Missing signature.");
     }
 
-    @Value
-    class Step6 implements Step<Step7> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
-
-        @Override
-        public void validate() {
-            assure(clientData() != null, "Missing client data.");
-        }
-
-        @Override
-        public Step7 nextStep() {
-            return new Step7(username, userHandle, credential, clientData(), allWarnings());
-        }
-
-        public CollectedClientData clientData() {
-            return response.getResponse().getClientData();
-        }
+    @Override
+    public Step5 nextStep() {
+      return new Step5(username, userHandle, credential, allWarnings());
     }
 
-    @Value
-    class Step7 implements Step<Step8> {
-
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final CollectedClientData clientData;
-        private final List<String> prevWarnings;
-
-        private List<String> warnings = new LinkedList<>();
-
-        @Override
-        public List<String> getWarnings() {
-            return CollectionUtil.immutableList(warnings);
-        }
-
-        @Override
-        public void validate() {
-            assure(CLIENT_DATA_TYPE.equals(clientData.getType()),
-                "The \"type\" in the client data must be exactly \"%s\", was: %s",
-                CLIENT_DATA_TYPE, clientData.getType()
-            );
-        }
-
-        @Override
-        public Step8 nextStep() {
-            return new Step8(username, userHandle, credential, allWarnings());
-        }
+    public ByteArray authenticatorData() {
+      return response.getResponse().getAuthenticatorData();
     }
 
-    @Value
-    class Step8 implements Step<Step9> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
-
-        @Override
-        public void validate() {
-            assure(
-                request.getPublicKeyCredentialRequestOptions().getChallenge().equals(response.getResponse().getClientData().getChallenge()),
-                "Incorrect challenge."
-            );
-        }
-
-        @Override
-        public Step9 nextStep() {
-            return new Step9(username, userHandle, credential, allWarnings());
-        }
+    public ByteArray clientData() {
+      return response.getResponse().getClientDataJSON();
     }
 
-    @Value
-    class Step9 implements Step<Step10> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
+    public ByteArray signature() {
+      return response.getResponse().getSignature();
+    }
+  }
 
-        @Override
-        public void validate() {
-            final String responseOrigin = response.getResponse().getClientData().getOrigin();
-            assure(
-                OriginMatcher.isAllowed(
-                    responseOrigin,
-                    origins,
-                    allowOriginPort,
-                    allowOriginSubdomain
-                ),
-                "Incorrect origin: " + responseOrigin
-            );
-        }
+  @Value
+  class Step5 implements Step<Step6> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-        @Override
-        public Step10 nextStep() {
-            return new Step10(username, userHandle, credential, allWarnings());
-        }
+    // Nothing to do
+    @Override
+    public void validate() {}
+
+    @Override
+    public Step6 nextStep() {
+      return new Step6(username, userHandle, credential, allWarnings());
+    }
+  }
+
+  @Value
+  class Step6 implements Step<Step7> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() {
+      assure(clientData() != null, "Missing client data.");
     }
 
-    @Value
-    class Step10 implements Step<Step11> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
-
-        @Override
-        public void validate() {
-            TokenBindingValidator.validate(response.getResponse().getClientData().getTokenBinding(), callerTokenBindingId);
-        }
-
-        @Override
-        public Step11 nextStep() {
-            return new Step11(username, userHandle, credential, allWarnings());
-        }
+    @Override
+    public Step7 nextStep() {
+      return new Step7(username, userHandle, credential, clientData(), allWarnings());
     }
 
-    @Value
-    class Step11 implements Step<Step12> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
+    public CollectedClientData clientData() {
+      return response.getResponse().getClientData();
+    }
+  }
 
-        @Override
-        public void validate() {
-            try {
-                assure(
-                    Crypto.hash(rpId).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
-                    "Wrong RP ID hash."
-                );
-            } catch (IllegalArgumentException e) {
-                Optional<AppId> appid = request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
-                if (appid.isPresent()) {
-                    assure(
-                        Crypto.hash(appid.get().getId()).equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
-                        "Wrong RP ID hash."
-                    );
-                } else {
-                    throw e;
-                }
-            }
-        }
+  @Value
+  class Step7 implements Step<Step8> {
 
-        @Override
-        public Step12 nextStep() {
-            return new Step12(username, userHandle, credential, allWarnings());
-        }
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final CollectedClientData clientData;
+    private final List<String> prevWarnings;
+
+    private List<String> warnings = new LinkedList<>();
+
+    @Override
+    public List<String> getWarnings() {
+      return CollectionUtil.immutableList(warnings);
     }
 
-    @Value
-    class Step12 implements Step<Step13> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
-
-        @Override
-        public void validate() {
-            assure(
-                response.getResponse().getParsedAuthenticatorData().getFlags().UP,
-                "User Presence is required."
-            );
-        }
-
-        @Override
-        public Step13 nextStep() {
-            return new Step13(username, userHandle, credential, allWarnings());
-        }
+    @Override
+    public void validate() {
+      assure(
+          CLIENT_DATA_TYPE.equals(clientData.getType()),
+          "The \"type\" in the client data must be exactly \"%s\", was: %s",
+          CLIENT_DATA_TYPE,
+          clientData.getType());
     }
 
-    @Value
-    class Step13 implements Step<Step14> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
+    @Override
+    public Step8 nextStep() {
+      return new Step8(username, userHandle, credential, allWarnings());
+    }
+  }
 
-        @Override
-        public void validate() {
-            if (request.getPublicKeyCredentialRequestOptions().getUserVerification() == UserVerificationRequirement.REQUIRED) {
-                assure(
-                    response.getResponse().getParsedAuthenticatorData().getFlags().UV,
-                    "User Verification is required."
-                );
-            }
-        }
+  @Value
+  class Step8 implements Step<Step9> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-        @Override
-        public Step14 nextStep() {
-            return new Step14(username, userHandle, credential, allWarnings());
-        }
+    @Override
+    public void validate() {
+      assure(
+          request
+              .getPublicKeyCredentialRequestOptions()
+              .getChallenge()
+              .equals(response.getResponse().getClientData().getChallenge()),
+          "Incorrect challenge.");
     }
 
-    @Value
-    class Step14 implements Step<Step15> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
+    @Override
+    public Step9 nextStep() {
+      return new Step9(username, userHandle, credential, allWarnings());
+    }
+  }
 
-        @Override
-        public void validate() {
-            if (!allowUnrequestedExtensions) {
-                ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
-            }
-        }
+  @Value
+  class Step9 implements Step<Step10> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-        @Override
-        public List<String> getWarnings() {
-            try {
-                ExtensionsValidation.validate(request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
-                return Collections.emptyList();
-            } catch (Exception e) {
-                return CollectionUtil.immutableList(Collections.singletonList(e.getMessage()));
-            }
-        }
-
-        @Override
-        public Step15 nextStep() {
-            return new Step15(username, userHandle, credential, allWarnings());
-        }
+    @Override
+    public void validate() {
+      final String responseOrigin = response.getResponse().getClientData().getOrigin();
+      assure(
+          OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
+          "Incorrect origin: " + responseOrigin);
     }
 
-    @Value
-    class Step15 implements Step<Step16> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final List<String> prevWarnings;
+    @Override
+    public Step10 nextStep() {
+      return new Step10(username, userHandle, credential, allWarnings());
+    }
+  }
 
-        @Override
-        public void validate() {
-            assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
-        }
+  @Value
+  class Step10 implements Step<Step11> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-        @Override
-        public Step16 nextStep() {
-            return new Step16(username, userHandle, credential, clientDataJsonHash(), allWarnings());
-        }
-
-        public ByteArray clientDataJsonHash() {
-            return Crypto.hash(response.getResponse().getClientDataJSON());
-        }
+    @Override
+    public void validate() {
+      TokenBindingValidator.validate(
+          response.getResponse().getClientData().getTokenBinding(), callerTokenBindingId);
     }
 
-    @Value
-    class Step16 implements Step<Step17> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final RegisteredCredential credential;
-        private final ByteArray clientDataJsonHash;
-        private final List<String> prevWarnings;
+    @Override
+    public Step11 nextStep() {
+      return new Step11(username, userHandle, credential, allWarnings());
+    }
+  }
 
-        @Override
-        public void validate() {
-            final ByteArray cose = credential.getPublicKeyCose();
-            final PublicKey key;
+  @Value
+  class Step11 implements Step<Step12> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-            try {
-                key = WebAuthnCodecs.importCosePublicKey(cose);
-            } catch (CoseException | IOException | InvalidKeySpecException e) {
-                throw new IllegalArgumentException(
-                    String.format(
-                        "Failed to decode public key: Credential ID: %s COSE: %s",
-                        credential.getCredentialId().getBase64Url(),
-                        cose.getBase64Url()
-                    ),
-                    e
-                );
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            }
-
-            final COSEAlgorithmIdentifier alg = WebAuthnCodecs.getCoseKeyAlg(cose).orElseThrow(() ->
-                new IllegalArgumentException(String.format("Failed to decode \"alg\" from COSE key: %s", cose)));
-
-            if (!
-                Crypto.verifySignature(
-                    key,
-                    signedBytes(),
-                    response.getResponse().getSignature(),
-                    alg
-                )
-            ) {
-                throw new IllegalArgumentException("Invalid assertion signature.");
-            }
+    @Override
+    public void validate() {
+      try {
+        assure(
+            Crypto.hash(rpId)
+                .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+            "Wrong RP ID hash.");
+      } catch (IllegalArgumentException e) {
+        Optional<AppId> appid =
+            request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
+        if (appid.isPresent()) {
+          assure(
+              Crypto.hash(appid.get().getId())
+                  .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
+              "Wrong RP ID hash.");
+        } else {
+          throw e;
         }
-
-        @Override
-        public Step17 nextStep() {
-            return new Step17(username, userHandle, allWarnings());
-        }
-
-        public ByteArray signedBytes() {
-            return response.getResponse().getAuthenticatorData().concat(clientDataJsonHash);
-        }
+      }
     }
 
-    @Value
-    class Step17 implements Step<Finished> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final List<String> prevWarnings;
+    @Override
+    public Step12 nextStep() {
+      return new Step12(username, userHandle, credential, allWarnings());
+    }
+  }
 
-        @Override
-        public void validate() throws InvalidSignatureCountException {
-            if (validateSignatureCounter
-                && !
-                    signatureCounterValid()
-            ) {
-                throw new InvalidSignatureCountException(
-                    response.getId(),
-                    storedSignatureCountBefore() + 1,
-                    assertionSignatureCount()
-                );
-            }
-        }
+  @Value
+  class Step12 implements Step<Step13> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-        private boolean signatureCounterValid() {
-            return (assertionSignatureCount() == 0 && storedSignatureCountBefore() == 0)
-                || assertionSignatureCount() > storedSignatureCountBefore();
-        }
-
-        @Override
-        public Finished nextStep() {
-            return new Finished(username, userHandle, assertionSignatureCount(), signatureCounterValid(), allWarnings());
-        }
-
-        private long storedSignatureCountBefore() {
-            return credentialRepository.lookup(response.getId(), userHandle)
-                .map(RegisteredCredential::getSignatureCount)
-                .orElse(0L);
-        }
-
-        private long assertionSignatureCount() {
-            return response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
-        }
+    @Override
+    public void validate() {
+      assure(
+          response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+          "User Presence is required.");
     }
 
-    @Value
-    class Finished implements Step<Finished> {
-        private final String username;
-        private final ByteArray userHandle;
-        private final long assertionSignatureCount;
-        private final boolean signatureCounterValid;
-        private final List<String> prevWarnings;
+    @Override
+    public Step13 nextStep() {
+      return new Step13(username, userHandle, credential, allWarnings());
+    }
+  }
 
-        @Override
-        public void validate() { /* No-op */ }
+  @Value
+  class Step13 implements Step<Step14> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
 
-        @Override
-        public Finished nextStep() {
-            return this;
-        }
-
-        @Override
-        public Optional<AssertionResult> result() {
-            return Optional.of(AssertionResult.builder()
-                .success(true)
-                .credentialId(response.getId())
-                .userHandle(userHandle)
-                .username(username)
-                .signatureCount(assertionSignatureCount)
-                .signatureCounterValid(signatureCounterValid)
-                .warnings(allWarnings())
-                .build()
-            );
-        }
-
+    @Override
+    public void validate() {
+      if (request.getPublicKeyCredentialRequestOptions().getUserVerification()
+          == UserVerificationRequirement.REQUIRED) {
+        assure(
+            response.getResponse().getParsedAuthenticatorData().getFlags().UV,
+            "User Verification is required.");
+      }
     }
 
+    @Override
+    public Step14 nextStep() {
+      return new Step14(username, userHandle, credential, allWarnings());
+    }
+  }
+
+  @Value
+  class Step14 implements Step<Step15> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() {
+      if (!allowUnrequestedExtensions) {
+        ExtensionsValidation.validate(
+            request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
+      }
+    }
+
+    @Override
+    public List<String> getWarnings() {
+      try {
+        ExtensionsValidation.validate(
+            request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
+        return Collections.emptyList();
+      } catch (Exception e) {
+        return CollectionUtil.immutableList(Collections.singletonList(e.getMessage()));
+      }
+    }
+
+    @Override
+    public Step15 nextStep() {
+      return new Step15(username, userHandle, credential, allWarnings());
+    }
+  }
+
+  @Value
+  class Step15 implements Step<Step16> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() {
+      assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
+    }
+
+    @Override
+    public Step16 nextStep() {
+      return new Step16(username, userHandle, credential, clientDataJsonHash(), allWarnings());
+    }
+
+    public ByteArray clientDataJsonHash() {
+      return Crypto.hash(response.getResponse().getClientDataJSON());
+    }
+  }
+
+  @Value
+  class Step16 implements Step<Step17> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final RegisteredCredential credential;
+    private final ByteArray clientDataJsonHash;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() {
+      final ByteArray cose = credential.getPublicKeyCose();
+      final PublicKey key;
+
+      try {
+        key = WebAuthnCodecs.importCosePublicKey(cose);
+      } catch (CoseException | IOException | InvalidKeySpecException e) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Failed to decode public key: Credential ID: %s COSE: %s",
+                credential.getCredentialId().getBase64Url(), cose.getBase64Url()),
+            e);
+      } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+      }
+
+      final COSEAlgorithmIdentifier alg =
+          WebAuthnCodecs.getCoseKeyAlg(cose)
+              .orElseThrow(
+                  () ->
+                      new IllegalArgumentException(
+                          String.format("Failed to decode \"alg\" from COSE key: %s", cose)));
+
+      if (!Crypto.verifySignature(key, signedBytes(), response.getResponse().getSignature(), alg)) {
+        throw new IllegalArgumentException("Invalid assertion signature.");
+      }
+    }
+
+    @Override
+    public Step17 nextStep() {
+      return new Step17(username, userHandle, allWarnings());
+    }
+
+    public ByteArray signedBytes() {
+      return response.getResponse().getAuthenticatorData().concat(clientDataJsonHash);
+    }
+  }
+
+  @Value
+  class Step17 implements Step<Finished> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() throws InvalidSignatureCountException {
+      if (validateSignatureCounter && !signatureCounterValid()) {
+        throw new InvalidSignatureCountException(
+            response.getId(), storedSignatureCountBefore() + 1, assertionSignatureCount());
+      }
+    }
+
+    private boolean signatureCounterValid() {
+      return (assertionSignatureCount() == 0 && storedSignatureCountBefore() == 0)
+          || assertionSignatureCount() > storedSignatureCountBefore();
+    }
+
+    @Override
+    public Finished nextStep() {
+      return new Finished(
+          username, userHandle, assertionSignatureCount(), signatureCounterValid(), allWarnings());
+    }
+
+    private long storedSignatureCountBefore() {
+      return credentialRepository
+          .lookup(response.getId(), userHandle)
+          .map(RegisteredCredential::getSignatureCount)
+          .orElse(0L);
+    }
+
+    private long assertionSignatureCount() {
+      return response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
+    }
+  }
+
+  @Value
+  class Finished implements Step<Finished> {
+    private final String username;
+    private final ByteArray userHandle;
+    private final long assertionSignatureCount;
+    private final boolean signatureCounterValid;
+    private final List<String> prevWarnings;
+
+    @Override
+    public void validate() {
+      /* No-op */
+    }
+
+    @Override
+    public Finished nextStep() {
+      return this;
+    }
+
+    @Override
+    public Optional<AssertionResult> result() {
+      return Optional.of(
+          AssertionResult.builder()
+              .success(true)
+              .credentialId(response.getId())
+              .userHandle(userHandle)
+              .username(username)
+              .signatureCount(assertionSignatureCount)
+              .signatureCounterValid(signatureCounterValid)
+              .warnings(allWarnings())
+              .build());
+    }
+  }
 }

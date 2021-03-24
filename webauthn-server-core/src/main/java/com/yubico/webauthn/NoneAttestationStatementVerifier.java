@@ -28,17 +28,16 @@ import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
 
-
 final class NoneAttestationStatementVerifier implements AttestationStatementVerifier {
 
-    @Override
-    public AttestationType getAttestationType(AttestationObject attestation) {
-        return AttestationType.NONE;
-    }
+  @Override
+  public AttestationType getAttestationType(AttestationObject attestation) {
+    return AttestationType.NONE;
+  }
 
-    @Override
-    public boolean verifyAttestationSignature(AttestationObject attestationObject, ByteArray clientDataJsonHash) {
-        return true;
-    }
-
+  @Override
+  public boolean verifyAttestationSignature(
+      AttestationObject attestationObject, ByteArray clientDataJsonHash) {
+    return true;
+  }
 }

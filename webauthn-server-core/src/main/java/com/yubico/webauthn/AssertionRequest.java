@@ -32,95 +32,95 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
- * A combination of a {@link PublicKeyCredentialRequestOptions} and, optionally, a {@link #getUsername() username}.
+ * A combination of a {@link PublicKeyCredentialRequestOptions} and, optionally, a {@link
+ * #getUsername() username}.
  */
 @Value
 @Builder(toBuilder = true)
 public class AssertionRequest {
 
-    /**
-     * An object that can be serialized to JSON and passed as the <code>publicKey</code> argument to
-     * <code>navigator.credentials.get()</code>.
-     */
-    @NonNull
-    private final PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
+  /**
+   * An object that can be serialized to JSON and passed as the <code>publicKey</code> argument to
+   * <code>navigator.credentials.get()</code>.
+   */
+  @NonNull private final PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
 
-    /**
-     * The username of the user to authenticate, if the user has already been identified.
-     * <p>
-     * If this is absent, this indicates that this is a request for an assertion by a <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
-     * credential</a>, and identification of the user has been deferred until the response is received.
-     * </p>
-     */
-    private final String username;
+  /**
+   * The username of the user to authenticate, if the user has already been identified.
+   *
+   * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * credential</a>, and identification of the user has been deferred until the response is
+   * received.
+   */
+  private final String username;
 
-    @JsonCreator
-    private AssertionRequest(
-        @NonNull @JsonProperty("publicKeyCredentialRequestOptions") PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
-        @JsonProperty("username") String username
-    ) {
-        this.publicKeyCredentialRequestOptions = publicKeyCredentialRequestOptions;
-        this.username = username;
+  @JsonCreator
+  private AssertionRequest(
+      @NonNull @JsonProperty("publicKeyCredentialRequestOptions")
+          PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
+      @JsonProperty("username") String username) {
+    this.publicKeyCredentialRequestOptions = publicKeyCredentialRequestOptions;
+    this.username = username;
+  }
+
+  /**
+   * The username of the user to authenticate, if the user has already been identified.
+   *
+   * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * credential</a>, and identification of the user has been deferred until the response is
+   * received.
+   */
+  public Optional<String> getUsername() {
+    return Optional.ofNullable(username);
+  }
+
+  public static AssertionRequestBuilder.MandatoryStages builder() {
+    return new AssertionRequestBuilder.MandatoryStages();
+  }
+
+  public static class AssertionRequestBuilder {
+    private String username = null;
+
+    public static class MandatoryStages {
+      private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
+
+      /**
+       * {@link
+       * AssertionRequestBuilder#publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions)
+       * publicKeyCredentialRequestOptions} is a required parameter.
+       */
+      public AssertionRequestBuilder publicKeyCredentialRequestOptions(
+          PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {
+        return builder.publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions);
+      }
     }
 
     /**
      * The username of the user to authenticate, if the user has already been identified.
-     * <p>
-     * If this is absent, this indicates that this is a request for an assertion by a <a
+     *
+     * <p>If this is absent, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
-     * credential</a>, and identification of the user has been deferred until the response is received.
-     * </p>
+     * credential</a>, and identification of the user has been deferred until the response is
+     * received.
      */
-    public Optional<String> getUsername() {
-        return Optional.ofNullable(username);
+    public AssertionRequestBuilder username(@NonNull Optional<String> username) {
+      return this.username(username.orElse(null));
     }
 
-    public static AssertionRequestBuilder.MandatoryStages builder() {
-        return new AssertionRequestBuilder.MandatoryStages();
+    /**
+     * The username of the user to authenticate, if the user has already been identified.
+     *
+     * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+     * credential</a>, and identification of the user has been deferred until the response is
+     * received.
+     */
+    public AssertionRequestBuilder username(String username) {
+      this.username = username;
+      return this;
     }
-
-    public static class AssertionRequestBuilder {
-        private String username = null;
-
-        public static class MandatoryStages {
-            private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
-
-            /**
-             * {@link AssertionRequestBuilder#publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions)
-             * publicKeyCredentialRequestOptions} is a required parameter.
-             */
-            public AssertionRequestBuilder publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {
-                return builder.publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions);
-            }
-        }
-
-        /**
-         * The username of the user to authenticate, if the user has already been identified.
-         * <p>
-         * If this is absent, this indicates that this is a request for an assertion by a <a
-         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
-         * credential</a>, and identification of the user has been deferred until the response is received.
-         * </p>
-         */
-        public AssertionRequestBuilder username(@NonNull Optional<String> username) {
-            return this.username(username.orElse(null));
-        }
-
-        /**
-         * The username of the user to authenticate, if the user has already been identified.
-         * <p>
-         * If this is absent, this indicates that this is a request for an assertion by a <a
-         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
-         * credential</a>, and identification of the user has been deferred until the response is received.
-         * </p>
-         */
-        public AssertionRequestBuilder username(String username) {
-            this.username = username;
-            return this;
-        }
-    }
-
+  }
 }

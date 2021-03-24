@@ -24,8 +24,8 @@
 
 package demo.webauthn;
 
-import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.data.ByteArray;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
@@ -33,19 +33,23 @@ import java.util.Optional;
 
 public interface RegistrationStorage extends CredentialRepository {
 
-    boolean addRegistrationByUsername(String username, CredentialRegistration reg);
+  boolean addRegistrationByUsername(String username, CredentialRegistration reg);
 
-    Collection<CredentialRegistration> getRegistrationsByUsername(String username);
-    Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(String username, ByteArray credentialId);
-    Collection<CredentialRegistration> getRegistrationsByUserHandle(ByteArray userHandle);
+  Collection<CredentialRegistration> getRegistrationsByUsername(String username);
 
-    default boolean userExists(String username) {
-        return !getRegistrationsByUsername(username).isEmpty();
-    }
+  Optional<CredentialRegistration> getRegistrationByUsernameAndCredentialId(
+      String username, ByteArray credentialId);
 
-    boolean removeRegistrationByUsername(String username, CredentialRegistration credentialRegistration);
-    boolean removeAllRegistrations(String username);
+  Collection<CredentialRegistration> getRegistrationsByUserHandle(ByteArray userHandle);
 
-    void updateSignatureCount(AssertionResult result);
+  default boolean userExists(String username) {
+    return !getRegistrationsByUsername(username).isEmpty();
+  }
 
+  boolean removeRegistrationByUsername(
+      String username, CredentialRegistration credentialRegistration);
+
+  boolean removeAllRegistrations(String username);
+
+  void updateSignatureCount(AssertionResult result);
 }

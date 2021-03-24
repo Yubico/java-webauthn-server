@@ -34,30 +34,19 @@ import lombok.Value;
 @Value
 public class AssertionRequestWrapper {
 
-    @NonNull
-    private final ByteArray requestId;
+  @NonNull private final ByteArray requestId;
 
-    @NonNull
-    private final PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
+  @NonNull private final PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions;
 
-    @NonNull
-    private final Optional<String> username;
+  @NonNull private final Optional<String> username;
 
-    @NonNull
-    @JsonIgnore
-    private final transient com.yubico.webauthn.AssertionRequest request;
+  @NonNull @JsonIgnore private final transient com.yubico.webauthn.AssertionRequest request;
 
-    public AssertionRequestWrapper(
-        @NonNull
-        ByteArray requestId,
-        @NonNull
-            com.yubico.webauthn.AssertionRequest request
-    ) {
-        this.requestId = requestId;
-        this.publicKeyCredentialRequestOptions = request.getPublicKeyCredentialRequestOptions();
-        this.username = request.getUsername();
-        this.request = request;
-
-    }
-
+  public AssertionRequestWrapper(
+      @NonNull ByteArray requestId, @NonNull com.yubico.webauthn.AssertionRequest request) {
+    this.requestId = requestId;
+    this.publicKeyCredentialRequestOptions = request.getPublicKeyCredentialRequestOptions();
+    this.username = request.getUsername();
+    this.request = request;
+  }
 }

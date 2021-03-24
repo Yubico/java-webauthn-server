@@ -39,148 +39,133 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-
-/**
- * The result of a call to {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}.
- */
+/** The result of a call to {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}. */
 @Value
 @Builder(toBuilder = true)
 public class RegistrationResult {
 
-    /**
-     * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a> of the created
-     * credential.
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
-     * @see PublicKeyCredential#getId()
-     */
-    @NonNull
-    private final PublicKeyCredentialDescriptor keyId;
+  /**
+   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a>
+   * of the created credential.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
+   * @see PublicKeyCredential#getId()
+   */
+  @NonNull private final PublicKeyCredentialDescriptor keyId;
 
-    /**
-     * <code>true</code> if and only if the attestation signature was successfully linked to a trusted attestation
-     * root.
-     *
-     * <p>
-     * You can ignore this if authenticator attestation is not relevant to your application.
-     * </p>
-     */
-    private final boolean attestationTrusted;
+  /**
+   * <code>true</code> if and only if the attestation signature was successfully linked to a trusted
+   * attestation root.
+   *
+   * <p>You can ignore this if authenticator attestation is not relevant to your application.
+   */
+  private final boolean attestationTrusted;
 
-    /**
-     * The attestation type <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
-     * Attestation Types</a> that was used for the created credential.
-     *
-     * <p>
-     * You can ignore this if authenticator attestation is not relevant to your application.
-     * </p>
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3. Attestation
-     * Types</a>
-     */
-    @NonNull
-    private final AttestationType attestationType;
+  /**
+   * The attestation type <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   * Attestation Types</a> that was used for the created credential.
+   *
+   * <p>You can ignore this if authenticator attestation is not relevant to your application.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   *     Attestation Types</a>
+   */
+  @NonNull private final AttestationType attestationType;
 
-    /**
-     * The public key of the created credential.
-     *
-     * <p>
-     * This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the authentication
-     * signatures.
-     * </p>
-     *
-     * @see RegisteredCredential#getPublicKeyCose()
-     */
-    @NonNull
-    private final ByteArray publicKeyCose;
+  /**
+   * The public key of the created credential.
+   *
+   * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
+   * authentication signatures.
+   *
+   * @see RegisteredCredential#getPublicKeyCose()
+   */
+  @NonNull private final ByteArray publicKeyCose;
 
-    /**
-     * Zero or more human-readable messages about non-critical issues.
-     */
-    @NonNull
-    @Builder.Default
-    private final List<String> warnings = Collections.emptyList();
+  /** Zero or more human-readable messages about non-critical issues. */
+  @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
 
-    /**
-     * Additional information about the authenticator, identified based on the attestation certificate.
-     *
-     * <p>
-     * This will be absent unless you set a {@link com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
-     * metadataService} in {@link RelyingParty}.
-     * </p>
-     *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4. Attestation</a>
-     * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
-     */
-    private final Attestation attestationMetadata;
+  /**
+   * Additional information about the authenticator, identified based on the attestation
+   * certificate.
+   *
+   * <p>This will be absent unless you set a {@link
+   * com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional) metadataService}
+   * in {@link RelyingParty}.
+   *
+   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   *     Attestation</a>
+   * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
+   */
+  private final Attestation attestationMetadata;
 
-    @JsonCreator
-    private RegistrationResult(
-        @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
-        @JsonProperty("attestationTrusted") boolean attestationTrusted,
-        @NonNull @JsonProperty("attestationType") AttestationType attestationType,
-        @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
-        @NonNull @JsonProperty("warnings") List<String> warnings,
-        @JsonProperty("attestationMetadata") Attestation attestationMetadata
-    ) {
-        this.keyId = keyId;
-        this.attestationTrusted = attestationTrusted;
-        this.attestationType = attestationType;
-        this.publicKeyCose = publicKeyCose;
-        this.warnings = CollectionUtil.immutableList(warnings);
-        this.attestationMetadata = attestationMetadata;
-    }
+  @JsonCreator
+  private RegistrationResult(
+      @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
+      @JsonProperty("attestationTrusted") boolean attestationTrusted,
+      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
+      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+      @NonNull @JsonProperty("warnings") List<String> warnings,
+      @JsonProperty("attestationMetadata") Attestation attestationMetadata) {
+    this.keyId = keyId;
+    this.attestationTrusted = attestationTrusted;
+    this.attestationType = attestationType;
+    this.publicKeyCose = publicKeyCose;
+    this.warnings = CollectionUtil.immutableList(warnings);
+    this.attestationMetadata = attestationMetadata;
+  }
 
-    public Optional<Attestation> getAttestationMetadata() {
-        return Optional.ofNullable(attestationMetadata);
-    }
+  public Optional<Attestation> getAttestationMetadata() {
+    return Optional.ofNullable(attestationMetadata);
+  }
 
-    static RegistrationResultBuilder.MandatoryStages builder() {
-        return new RegistrationResultBuilder.MandatoryStages();
-    }
+  static RegistrationResultBuilder.MandatoryStages builder() {
+    return new RegistrationResultBuilder.MandatoryStages();
+  }
 
-    static class RegistrationResultBuilder {
-        static class MandatoryStages {
-            private RegistrationResultBuilder builder = new RegistrationResultBuilder();
+  static class RegistrationResultBuilder {
+    static class MandatoryStages {
+      private RegistrationResultBuilder builder = new RegistrationResultBuilder();
 
-            Step2 keyId(PublicKeyCredentialDescriptor keyId) {
-                builder.keyId(keyId);
-                return new Step2();
-            }
+      Step2 keyId(PublicKeyCredentialDescriptor keyId) {
+        builder.keyId(keyId);
+        return new Step2();
+      }
 
-            class Step2 {
-                Step3 attestationTrusted(boolean attestationTrusted) {
-                    builder.attestationTrusted(attestationTrusted);
-                    return new Step3();
-                }
-            }
-
-            class Step3 {
-                Step4 attestationType(AttestationType attestationType) {
-                    builder.attestationType(attestationType);
-                    return new Step4();
-                }
-            }
-
-            class Step4 {
-                RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
-                    return builder.publicKeyCose(publicKeyCose);
-                }
-            }
+      class Step2 {
+        Step3 attestationTrusted(boolean attestationTrusted) {
+          builder.attestationTrusted(attestationTrusted);
+          return new Step3();
         }
+      }
 
-        RegistrationResultBuilder attestationMetadata(@NonNull Optional<Attestation> attestationMetadata) {
-            this.attestationMetadata = attestationMetadata.orElse(null);
-            return this;
+      class Step3 {
+        Step4 attestationType(AttestationType attestationType) {
+          builder.attestationType(attestationType);
+          return new Step4();
         }
+      }
 
-        /*
-         * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
-         * Consider reverting this workaround if Lombok fixes that issue.
-         */
-        private RegistrationResultBuilder attestationMetadata(Attestation attestationMetadata) {
-            return this.attestationMetadata(Optional.ofNullable(attestationMetadata));
+      class Step4 {
+        RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
+          return builder.publicKeyCose(publicKeyCose);
         }
+      }
     }
 
+    RegistrationResultBuilder attestationMetadata(
+        @NonNull Optional<Attestation> attestationMetadata) {
+      this.attestationMetadata = attestationMetadata.orElse(null);
+      return this;
+    }
+
+    /*
+     * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+     * Consider reverting this workaround if Lombok fixes that issue.
+     */
+    private RegistrationResultBuilder attestationMetadata(Attestation attestationMetadata) {
+      return this.attestationMetadata(Optional.ofNullable(attestationMetadata));
+    }
+  }
 }

@@ -42,133 +42,117 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class Attestation implements Serializable {
 
-    /**
-     * <code>true</code> if and only if the contained information has been verified to be cryptographically supported by
-     * a trusted attestation root.
-     */
-    private final boolean trusted;
+  /**
+   * <code>true</code> if and only if the contained information has been verified to be
+   * cryptographically supported by a trusted attestation root.
+   */
+  private final boolean trusted;
 
-    /**
-     * A unique identifier for a particular version of the data source of the data in this object.
-     */
-    private final String metadataIdentifier;
+  /** A unique identifier for a particular version of the data source of the data in this object. */
+  private final String metadataIdentifier;
 
-    /**
-     * Free-form information about the authenticator vendor.
-     */
-    private final Map<String, String> vendorProperties;
+  /** Free-form information about the authenticator vendor. */
+  private final Map<String, String> vendorProperties;
 
-    /**
-     * Free-form information about the authenticator model.
-     */
-    private final Map<String, String> deviceProperties;
+  /** Free-form information about the authenticator model. */
+  private final Map<String, String> deviceProperties;
 
-    /**
-     * The set of communication modes supported by the authenticator.
-     */
-    private final Set<Transport> transports;
+  /** The set of communication modes supported by the authenticator. */
+  private final Set<Transport> transports;
 
-    @JsonCreator
-    private Attestation(
-        @JsonProperty("trusted") boolean trusted,
-        @JsonProperty("metadataIdentifier") String metadataIdentifier,
-        @JsonProperty("vendorProperties") Map<String, String> vendorProperties,
-        @JsonProperty("deviceProperties") Map<String, String> deviceProperties,
-        @JsonProperty("transports") Set<Transport> transports
-    ) {
-        this.trusted = trusted;
-        this.metadataIdentifier = metadataIdentifier;
-        this.vendorProperties = vendorProperties;
-        this.deviceProperties = deviceProperties;
-        this.transports = transports == null ? null : new TreeSet<>(transports);
+  @JsonCreator
+  private Attestation(
+      @JsonProperty("trusted") boolean trusted,
+      @JsonProperty("metadataIdentifier") String metadataIdentifier,
+      @JsonProperty("vendorProperties") Map<String, String> vendorProperties,
+      @JsonProperty("deviceProperties") Map<String, String> deviceProperties,
+      @JsonProperty("transports") Set<Transport> transports) {
+    this.trusted = trusted;
+    this.metadataIdentifier = metadataIdentifier;
+    this.vendorProperties = vendorProperties;
+    this.deviceProperties = deviceProperties;
+    this.transports = transports == null ? null : new TreeSet<>(transports);
+  }
+
+  /** A unique identifier for a particular version of the data source of the data in this object. */
+  public Optional<String> getMetadataIdentifier() {
+    return Optional.ofNullable(metadataIdentifier);
+  }
+
+  /** Free-form information about the authenticator vendor. */
+  public Optional<Map<String, String>> getVendorProperties() {
+    return Optional.ofNullable(vendorProperties);
+  }
+
+  /** Free-form information about the authenticator model. */
+  public Optional<Map<String, String>> getDeviceProperties() {
+    return Optional.ofNullable(deviceProperties);
+  }
+
+  /** The set of communication modes supported by the authenticator. */
+  public Optional<Set<Transport>> getTransports() {
+    return Optional.ofNullable(transports);
+  }
+
+  public static Attestation empty() {
+    return builder().trusted(false).build();
+  }
+
+  public static AttestationBuilder.MandatoryStages builder() {
+    return new AttestationBuilder.MandatoryStages();
+  }
+
+  public static class AttestationBuilder {
+    private boolean trusted;
+    private String metadataIdentifier;
+    private Map<String, String> vendorProperties;
+    private Map<String, String> deviceProperties;
+    private Set<Transport> transports;
+
+    public static class MandatoryStages {
+      private final AttestationBuilder builder = new AttestationBuilder();
+
+      public AttestationBuilder trusted(boolean trusted) {
+        return builder.trusted(trusted);
+      }
     }
 
-    /**
-     * A unique identifier for a particular version of the data source of the data in this object.
-     */
-    public Optional<String> getMetadataIdentifier() {
-        return Optional.ofNullable(metadataIdentifier);
+    public AttestationBuilder metadataIdentifier(@NonNull Optional<String> metadataIdentifier) {
+      return this.metadataIdentifier(metadataIdentifier.orElse(null));
     }
 
-    /**
-     * Free-form information about the authenticator vendor.
-     */
-    public Optional<Map<String, String>> getVendorProperties() {
-        return Optional.ofNullable(vendorProperties);
+    public AttestationBuilder metadataIdentifier(String metadataIdentifier) {
+      this.metadataIdentifier = metadataIdentifier;
+      return this;
     }
 
-    /**
-     * Free-form information about the authenticator model.
-     */
-    public Optional<Map<String, String>> getDeviceProperties() {
-        return Optional.ofNullable(deviceProperties);
+    public AttestationBuilder vendorProperties(
+        @NonNull Optional<Map<String, String>> vendorProperties) {
+      return this.vendorProperties(vendorProperties.orElse(null));
     }
 
-    /**
-     * The set of communication modes supported by the authenticator.
-     */
-    public Optional<Set<Transport>> getTransports() {
-        return Optional.ofNullable(transports);
+    public AttestationBuilder vendorProperties(Map<String, String> vendorProperties) {
+      this.vendorProperties = vendorProperties;
+      return this;
     }
 
-    public static Attestation empty() {
-        return builder().trusted(false).build();
+    public AttestationBuilder deviceProperties(
+        @NonNull Optional<Map<String, String>> deviceProperties) {
+      return this.deviceProperties(deviceProperties.orElse(null));
     }
 
-    public static AttestationBuilder.MandatoryStages builder() {
-        return new AttestationBuilder.MandatoryStages();
+    public AttestationBuilder deviceProperties(Map<String, String> deviceProperties) {
+      this.deviceProperties = deviceProperties;
+      return this;
     }
 
-    public static class AttestationBuilder {
-        private boolean trusted;
-        private String metadataIdentifier;
-        private Map<String, String> vendorProperties;
-        private Map<String, String> deviceProperties;
-        private Set<Transport> transports;
-
-        public static class MandatoryStages {
-            private final AttestationBuilder builder = new AttestationBuilder();
-
-            public AttestationBuilder trusted(boolean trusted) {
-                return builder.trusted(trusted);
-            }
-        }
-
-        public AttestationBuilder metadataIdentifier(@NonNull Optional<String> metadataIdentifier) {
-            return this.metadataIdentifier(metadataIdentifier.orElse(null));
-        }
-
-        public AttestationBuilder metadataIdentifier(String metadataIdentifier) {
-            this.metadataIdentifier = metadataIdentifier;
-            return this;
-        }
-
-        public AttestationBuilder vendorProperties(@NonNull Optional<Map<String, String>> vendorProperties) {
-            return this.vendorProperties(vendorProperties.orElse(null));
-        }
-
-        public AttestationBuilder vendorProperties(Map<String, String> vendorProperties) {
-            this.vendorProperties = vendorProperties;
-            return this;
-        }
-
-        public AttestationBuilder deviceProperties(@NonNull Optional<Map<String, String>> deviceProperties) {
-            return this.deviceProperties(deviceProperties.orElse(null));
-        }
-
-        public AttestationBuilder deviceProperties(Map<String, String> deviceProperties) {
-            this.deviceProperties = deviceProperties;
-            return this;
-        }
-
-        public AttestationBuilder transports(@NonNull Optional<Set<Transport>> transports) {
-            return this.transports(transports.orElse(null));
-        }
-
-        public AttestationBuilder transports(Set<Transport> transports) {
-            this.transports = transports;
-            return this;
-        }
+    public AttestationBuilder transports(@NonNull Optional<Set<Transport>> transports) {
+      return this.transports(transports.orElse(null));
     }
 
+    public AttestationBuilder transports(Set<Transport> transports) {
+      this.transports = transports;
+      return this;
+    }
+  }
 }
