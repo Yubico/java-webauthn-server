@@ -2,6 +2,7 @@ plugins {
   id 'java-library'
   id 'scala'
   id 'info.solidsoft.pitest'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'Yubico WebAuthn server core API (fewer dependencies)'
@@ -45,7 +46,6 @@ dependencies {
     'ch.qos.logback:logback-classic',
   )
 }
-
 
 jar {
   manifest {

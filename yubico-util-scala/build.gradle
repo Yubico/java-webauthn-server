@@ -1,5 +1,6 @@
 plugins {
   id 'scala'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'Yubico internal Scala utilities'

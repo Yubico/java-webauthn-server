@@ -34,7 +34,6 @@ import java.security.cert.X509Certificate
 import java.security.interfaces.RSAPublicKey
 import javax.security.auth.x500.X500Principal
 import scala.jdk.CollectionConverters._
-import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
@@ -54,19 +53,20 @@ import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import scala.util.Failure
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.RegistrationExtensionInputs
+import org.mockito.Mockito
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
-import org.mockito.Mockito
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

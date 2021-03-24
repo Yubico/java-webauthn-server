@@ -5,6 +5,7 @@ buildscript {
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.11.0'
+    classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.8'
   }
 }
 plugins {
@@ -127,6 +128,17 @@ String getGitCommit() {
 
 subprojects { project ->
 
+  if (project.plugins.hasPlugin('scala')) {
+    project.scalafix {
+      configFile = rootProject.file('scalafix.conf')
+    }
+    dependencies.scalafix('com.github.liancheng:organize-imports_2.13:0.5.0')
+    project.tasks.scalafix.dependsOn(project.tasks.spotlessApply)
+    project.tasks.checkScalafix.dependsOn(project.tasks.spotlessCheck)
+    project.tasks.spotlessApply.finalizedBy(project.tasks.scalafix)
+    project.tasks.spotlessCheck.finalizedBy(project.tasks.checkScalafix)
+  }
+
   if (project.hasProperty('sourceCompatibility')) {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -134,6 +146,9 @@ subprojects { project ->
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+  }
+  tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ['-Wunused']
   }
 
   tasks.withType(AbstractArchiveTask) {
