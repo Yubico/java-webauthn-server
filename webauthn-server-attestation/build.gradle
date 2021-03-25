@@ -8,6 +8,9 @@ description = 'Yubico WebAuthn attestation subsystem'
 
 project.ext.publishMe = true
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 evaluationDependsOn(':webauthn-server-core-minimal')
 
 dependencies {

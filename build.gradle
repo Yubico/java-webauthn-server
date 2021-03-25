@@ -139,11 +139,6 @@ subprojects { project ->
     project.tasks.spotlessCheck.finalizedBy(project.tasks.checkScalafix)
   }
 
-  if (project.hasProperty('sourceCompatibility')) {
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-  }
-
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
   }

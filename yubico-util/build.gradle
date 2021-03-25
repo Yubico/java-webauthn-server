@@ -8,6 +8,9 @@ description = 'Yubico internal utilities'
 
 project.ext.publishMe = true
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
   api(platform(rootProject))
 

@@ -5,6 +5,9 @@ plugins {
 
 description = 'Yubico internal Scala utilities'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
   implementation(platform(rootProject))
 
