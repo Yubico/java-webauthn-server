@@ -24,9 +24,6 @@
 
 package com.yubico.webauthn
 
-import java.security.interfaces.ECPublicKey
-import scala.util.Try
-
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
@@ -37,28 +34,40 @@ import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.security.interfaces.ECPublicKey
+import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class WebAuthnCodecsSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks with TestWithEachProvider {
+class WebAuthnCodecsSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with TestWithEachProvider {
 
-  implicit def arbitraryEcPublicKey: Arbitrary[ECPublicKey] = Arbitrary(
-    for {
-      ySign: Byte <- Gen.oneOf(0x02: Byte, 0x03: Byte)
-      rawBytes: Seq[Byte] <- Gen.listOfN[Byte](32, Arbitrary.arbitrary[Byte])
-      key = Try(Util.decodePublicKey(new ByteArray((ySign +: rawBytes).toArray)).asInstanceOf[ECPublicKey])
-      if key.isSuccess
-    } yield key.get
-  )
+  implicit def arbitraryEcPublicKey: Arbitrary[ECPublicKey] =
+    Arbitrary(
+      for {
+        ySign: Byte <- Gen.oneOf(0x02: Byte, 0x03: Byte)
+        rawBytes: Seq[Byte] <- Gen.listOfN[Byte](32, Arbitrary.arbitrary[Byte])
+        key = Try(
+          Util
+            .decodePublicKey(new ByteArray((ySign +: rawBytes).toArray))
+            .asInstanceOf[ECPublicKey]
+        )
+        if key.isSuccess
+      } yield key.get
+    )
 
   testWithEachProvider { it =>
     describe("The ecPublicKeyToRaw method") {
 
       it("outputs the correct x and y values") {
-        forAll (minSuccessful(500)) { pubkey: ECPublicKey =>
-          val rawkey: Array[Byte] = WebAuthnCodecs.ecPublicKeyToRaw(pubkey).getBytes
+        forAll(minSuccessful(500)) { pubkey: ECPublicKey =>
+          val rawkey: Array[Byte] =
+            WebAuthnCodecs.ecPublicKeyToRaw(pubkey).getBytes
 
-          rawkey.length should equal (65)
-          rawkey(0) should equal (0x04: Byte)
+          rawkey.length should equal(65)
+          rawkey(0) should equal(0x04: Byte)
 
           val x = rawkey.slice(1, 33)
           val y = rawkey.slice(33, 65)
@@ -66,8 +75,12 @@ class WebAuthnCodecsSpec extends FunSpec with Matchers with ScalaCheckDrivenProp
           val expectedX = pubkey.getW.getAffineX.toByteArray.toVector
           val expectedY = pubkey.getW.getAffineY.toByteArray.toVector
 
-          x.dropWhile(_ == (0: Byte)) should equal (expectedX.dropWhile(_ == (0: Byte)))
-          y.dropWhile(_ == (0: Byte)) should equal (expectedY.dropWhile(_ == (0: Byte)))
+          x.dropWhile(_ == (0: Byte)) should equal(
+            expectedX.dropWhile(_ == (0: Byte))
+          )
+          y.dropWhile(_ == (0: Byte)) should equal(
+            expectedY.dropWhile(_ == (0: Byte))
+          )
         }
       }
 
@@ -81,10 +94,13 @@ class WebAuthnCodecsSpec extends FunSpec with Matchers with ScalaCheckDrivenProp
 
           val coseKey = WebAuthnTestCodecs.rawEcdaKeyToCose(rawKey)
 
-          val importedPubkey: ECPublicKey = WebAuthnCodecs.importCosePublicKey(coseKey).asInstanceOf[ECPublicKey]
-          val rawImportedPubkey = WebAuthnCodecs.ecPublicKeyToRaw(importedPubkey)
+          val importedPubkey: ECPublicKey = WebAuthnCodecs
+            .importCosePublicKey(coseKey)
+            .asInstanceOf[ECPublicKey]
+          val rawImportedPubkey =
+            WebAuthnCodecs.ecPublicKeyToRaw(importedPubkey)
 
-          rawImportedPubkey should equal (rawKey)
+          rawImportedPubkey should equal(rawKey)
         }
       }
 
@@ -98,10 +114,13 @@ class WebAuthnCodecsSpec extends FunSpec with Matchers with ScalaCheckDrivenProp
 
           val coseKey = WebAuthnTestCodecs.ecPublicKeyToCose(originalPubkey)
 
-          val importedPubkey: ECPublicKey = WebAuthnCodecs.importCosePublicKey(coseKey).asInstanceOf[ECPublicKey]
-          val rawImportedPubkey = WebAuthnCodecs.ecPublicKeyToRaw(importedPubkey)
+          val importedPubkey: ECPublicKey = WebAuthnCodecs
+            .importCosePublicKey(coseKey)
+            .asInstanceOf[ECPublicKey]
+          val rawImportedPubkey =
+            WebAuthnCodecs.ecPublicKeyToRaw(importedPubkey)
 
-          rawImportedPubkey should equal (rawKey)
+          rawImportedPubkey should equal(rawKey)
         }
       }
 

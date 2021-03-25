@@ -28,39 +28,51 @@ import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
-class AuthenticatorTransportSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class AuthenticatorTransportSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
   describe("The AuthenticatorTransport type") {
 
     describe("has the constant") {
       it("USB.") {
-        AuthenticatorTransport.USB.getId should equal ("usb")
+        AuthenticatorTransport.USB.getId should equal("usb")
       }
       it("NFC.") {
-        AuthenticatorTransport.NFC.getId should equal ("nfc")
+        AuthenticatorTransport.NFC.getId should equal("nfc")
       }
       it("BLE.") {
-        AuthenticatorTransport.BLE.getId should equal ("ble")
+        AuthenticatorTransport.BLE.getId should equal("ble")
       }
       it("INTERNAL.") {
-        AuthenticatorTransport.INTERNAL.getId should equal ("internal")
+        AuthenticatorTransport.INTERNAL.getId should equal("internal")
       }
     }
 
     it("has a values() function.") {
-      AuthenticatorTransport.values().length should equal (4)
-      AuthenticatorTransport.values() should not be theSameInstanceAs (AuthenticatorTransport.values())
+      AuthenticatorTransport.values().length should equal(4)
+      AuthenticatorTransport.values() should not be theSameInstanceAs(
+        AuthenticatorTransport.values()
+      )
     }
 
     it("has a valueOf(name) function mimicking that of an enum type.") {
-      AuthenticatorTransport.valueOf("USB") should be theSameInstanceAs AuthenticatorTransport.USB
-      AuthenticatorTransport.valueOf("NFC") should be theSameInstanceAs AuthenticatorTransport.NFC
-      AuthenticatorTransport.valueOf("BLE") should be theSameInstanceAs AuthenticatorTransport.BLE
-      AuthenticatorTransport.valueOf("INTERNAL") should be theSameInstanceAs AuthenticatorTransport.INTERNAL
+      AuthenticatorTransport.valueOf(
+        "USB"
+      ) should be theSameInstanceAs AuthenticatorTransport.USB
+      AuthenticatorTransport.valueOf(
+        "NFC"
+      ) should be theSameInstanceAs AuthenticatorTransport.NFC
+      AuthenticatorTransport.valueOf(
+        "BLE"
+      ) should be theSameInstanceAs AuthenticatorTransport.BLE
+      AuthenticatorTransport.valueOf(
+        "INTERNAL"
+      ) should be theSameInstanceAs AuthenticatorTransport.INTERNAL
       an[IllegalArgumentException] should be thrownBy {
         AuthenticatorTransport.valueOf("foo")
       }
@@ -68,15 +80,19 @@ class AuthenticatorTransportSpec extends FunSpec with Matchers with ScalaCheckDr
 
     it("can contain any value.") {
       forAll { transport: String =>
-        AuthenticatorTransport.of(transport).getId should equal (transport)
+        AuthenticatorTransport.of(transport).getId should equal(transport)
       }
     }
 
     it("has an of(id) function which returns the corresponding constant instance if applicable, and a new instance otherwise.") {
       for { constant <- AuthenticatorTransport.values() } {
-        AuthenticatorTransport.of(constant.getId) should equal (constant)
-        AuthenticatorTransport.of(constant.getId) should be theSameInstanceAs constant
-        AuthenticatorTransport.of(constant.getId.toUpperCase) should not equal constant
+        AuthenticatorTransport.of(constant.getId) should equal(constant)
+        AuthenticatorTransport.of(
+          constant.getId
+        ) should be theSameInstanceAs constant
+        AuthenticatorTransport.of(
+          constant.getId.toUpperCase
+        ) should not equal constant
       }
     }
   }

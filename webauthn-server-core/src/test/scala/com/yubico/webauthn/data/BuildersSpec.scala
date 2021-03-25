@@ -41,21 +41,25 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.reflectiveCalls
 
-
 @RunWith(classOf[JUnitRunner])
-class BuildersSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class BuildersSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
   type ToBuilder[A] = { def toBuilder(): { def build(): A } }
 
   describe("The class") {
 
-    def test[A <: ToBuilder[A]](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+    def test[A <: ToBuilder[A]](tpe: TypeReference[A])(implicit
+        a: Arbitrary[A]
+    ): Unit = {
       val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
         it("has a working .toBuilder() method.") {
           forAll { value: A =>
             val rebuilt = value.toBuilder().build()
-            rebuilt should equal (value)
+            rebuilt should equal(value)
           }
         }
       }
@@ -71,8 +75,18 @@ class BuildersSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyCh
     test(new TypeReference[AuthenticatorSelectionCriteria]() {})
     test(new TypeReference[ClientAssertionExtensionOutputs]() {})
     test(new TypeReference[ClientRegistrationExtensionOutputs]() {})
-    test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]]() {})
-    test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]]() {})
+    test(
+      new TypeReference[PublicKeyCredential[
+        AuthenticatorAssertionResponse,
+        ClientAssertionExtensionOutputs,
+      ]]() {}
+    )
+    test(
+      new TypeReference[PublicKeyCredential[
+        AuthenticatorAttestationResponse,
+        ClientRegistrationExtensionOutputs,
+      ]]() {}
+    )
     test(new TypeReference[PublicKeyCredentialCreationOptions]() {})
     test(new TypeReference[PublicKeyCredentialDescriptor]() {})
     test(new TypeReference[PublicKeyCredentialParameters]() {})
