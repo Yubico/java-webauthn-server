@@ -1,11 +1,15 @@
 plugins {
   id 'java-library'
   id 'scala'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'Yubico internal utilities'
 
 project.ext.publishMe = true
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 dependencies {
   api(platform(rootProject))

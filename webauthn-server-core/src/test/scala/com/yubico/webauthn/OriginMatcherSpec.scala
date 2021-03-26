@@ -24,8 +24,6 @@
 
 package com.yubico.webauthn
 
-import java.net.URL
-
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
@@ -35,19 +33,29 @@ import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.net.URL
 import scala.jdk.CollectionConverters._
 
 @RunWith(classOf[JUnitRunner])
-class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class OriginMatcherSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
-  private def urlWithMaybePort(protocol: String, host: String, port: Option[Int], file: String): URL =
+  private def urlWithMaybePort(
+      protocol: String,
+      host: String,
+      port: Option[Int],
+      file: String,
+  ): URL =
     port
       .map(port => new URL(protocol, host, port, file))
       .getOrElse(new URL(protocol, host, file))
 
-  private def replacePort(url: URL, port: Int): URL = new URL(url.getProtocol, url.getHost, port, url.getFile)
+  private def replacePort(url: URL, port: Int): URL =
+    new URL(url.getProtocol, url.getHost, port, url.getFile)
 
-  private implicit val arbitraryUrl: Arbitrary[URL] = Arbitrary(for {
+  implicit private val arbitraryUrl: Arbitrary[URL] = Arbitrary(for {
     scheme <- Gen.oneOf("http", "https")
     host <- Gen.alphaNumStr suchThat { _.nonEmpty }
     port <- Gen.option(Gen.posNum[Int])
@@ -56,7 +64,7 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
 
   private val urlOrArbitraryString: Gen[String] = Gen.oneOf(
     arbitrary[URL].map(_.toExternalForm),
-    arbitrary[String]
+    arbitrary[String],
   )
 
   private val urlWithoutPort: Gen[URL] = for {
@@ -70,7 +78,9 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
 
   private val superAndSubdomain: Gen[(URL, URL)] = for {
     superdomain <- urlWithoutPort
-    subdomainPrefixParts <- Gen.nonEmptyListOf(Gen.alphaNumStr suchThat { _.nonEmpty })
+    subdomainPrefixParts <- Gen.nonEmptyListOf(Gen.alphaNumStr suchThat {
+      _.nonEmpty
+    })
     subdomainPrefix = subdomainPrefixParts.reduceLeft(_ + "." + _)
     host = subdomainPrefix + "." + superdomain.getHost
     subdomain = new URL(superdomain.getProtocol, host, superdomain.getFile)
@@ -89,38 +99,41 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
 
   describe("The origin matcher") {
     it("accepts nothing if no allowed origins are given.") {
-      forAll(urlOrArbitraryString, arbitrary[Boolean], arbitrary[Boolean]) { (origin, allowPort, allowSubdomain) =>
-        println(origin)
-        OriginMatcher.isAllowed(
-          origin,
-          Set.empty[String].asJava,
-          allowPort,
-          allowSubdomain
-        ) shouldBe (false)
+      forAll(urlOrArbitraryString, arbitrary[Boolean], arbitrary[Boolean]) {
+        (origin, allowPort, allowSubdomain) =>
+          println(origin)
+          OriginMatcher.isAllowed(
+            origin,
+            Set.empty[String].asJava,
+            allowPort,
+            allowSubdomain,
+          ) shouldBe (false)
       }
     }
 
     it("always accepts string equality even for invalid URLs.") {
-      forAll(urlOrArbitraryString, arbitrary[Boolean], arbitrary[Boolean]) { (origin, allowPort, allowSubdomain) =>
-        println(origin)
-        OriginMatcher.isAllowed(
-          origin,
-          Set(origin).asJava,
-          allowPort,
-          allowSubdomain
-        ) shouldBe (true)
+      forAll(urlOrArbitraryString, arbitrary[Boolean], arbitrary[Boolean]) {
+        (origin, allowPort, allowSubdomain) =>
+          println(origin)
+          OriginMatcher.isAllowed(
+            origin,
+            Set(origin).asJava,
+            allowPort,
+            allowSubdomain,
+          ) shouldBe (true)
       }
     }
 
     it("does not accept superdomains.") {
-      forAll(superAndSubdomain) { case (origin: URL, allowedOrigin: URL) =>
-        println(allowedOrigin, origin)
-        OriginMatcher.isAllowed(
-          origin.toExternalForm,
-          Set(allowedOrigin.toExternalForm).asJava,
-          true,
-          true
-        ) shouldBe (false)
+      forAll(superAndSubdomain) {
+        case (origin: URL, allowedOrigin: URL) =>
+          println(allowedOrigin, origin)
+          OriginMatcher.isAllowed(
+            origin.toExternalForm,
+            Set(allowedOrigin.toExternalForm).asJava,
+            true,
+            true,
+          ) shouldBe (false)
       }
     }
 
@@ -134,36 +147,38 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
             origin.toExternalForm,
             Set(allowedOrigin.toExternalForm).asJava,
             allowPort,
-            false
+            false,
           ) shouldBe (false)
         }
       }
 
       it("when allowed origin is an invalid URL.") {
-        forAll(superAndSubdomain) { case (allowedOrigin: URL, origin: URL) =>
-          val invalidAllowedOrigin = invalidize(allowedOrigin)
-          println(allowedOrigin, origin, invalidAllowedOrigin)
+        forAll(superAndSubdomain) {
+          case (allowedOrigin: URL, origin: URL) =>
+            val invalidAllowedOrigin = invalidize(allowedOrigin)
+            println(allowedOrigin, origin, invalidAllowedOrigin)
 
-          OriginMatcher.isAllowed(
-            origin.toExternalForm,
-            Set(invalidAllowedOrigin).asJava,
-            true,
-            true
-          ) shouldBe (false)
+            OriginMatcher.isAllowed(
+              origin.toExternalForm,
+              Set(invalidAllowedOrigin).asJava,
+              true,
+              true,
+            ) shouldBe (false)
         }
       }
 
       it("when client data origin is an invalid URL.") {
-        forAll(superAndSubdomain) { case (allowedOrigin: URL, origin: URL) =>
-          val invalidOrigin = invalidize(origin)
-          println(allowedOrigin, origin, invalidOrigin)
+        forAll(superAndSubdomain) {
+          case (allowedOrigin: URL, origin: URL) =>
+            val invalidOrigin = invalidize(origin)
+            println(allowedOrigin, origin, invalidOrigin)
 
-          OriginMatcher.isAllowed(
-            invalidOrigin,
-            Set(allowedOrigin.toExternalForm).asJava,
-            true,
-            true
-          ) shouldBe (false)
+            OriginMatcher.isAllowed(
+              invalidOrigin,
+              Set(allowedOrigin.toExternalForm).asJava,
+              true,
+              true,
+            ) shouldBe (false)
         }
       }
 
@@ -176,7 +191,7 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
             origin.toExternalForm,
             Set(allowedOrigin.toExternalForm).asJava,
             allowPort,
-            true
+            true,
           ) shouldBe (true)
         }
       }
@@ -184,45 +199,56 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
 
     describe("does not accept ports") {
       it("by default.") {
-        forAll(urlWithoutPort, Gen.posNum[Int], arbitrary[Boolean]) { (allowedOrigin, port, allowSubdomain) =>
-          whenever(port > 0) {
-            val origin = replacePort(allowedOrigin, port)
-            println(allowedOrigin, origin)
+        forAll(urlWithoutPort, Gen.posNum[Int], arbitrary[Boolean]) {
+          (allowedOrigin, port, allowSubdomain) =>
+            whenever(port > 0) {
+              val origin = replacePort(allowedOrigin, port)
+              println(allowedOrigin, origin)
 
-            OriginMatcher.isAllowed(
-              origin.toExternalForm,
-              Set(allowedOrigin.toExternalForm).asJava,
-              false,
-              allowSubdomain
-            ) shouldBe (false)
-          }
+              OriginMatcher.isAllowed(
+                origin.toExternalForm,
+                Set(allowedOrigin.toExternalForm).asJava,
+                false,
+                allowSubdomain,
+              ) shouldBe (false)
+            }
         }
       }
 
       it("unless the same port is specified in an allowed origin.") {
-        forAll(urlWithPort, arbitrary[Boolean]) { (origin: URL, allowSubdomain: Boolean) =>
-          println(origin)
+        forAll(urlWithPort, arbitrary[Boolean]) {
+          (origin: URL, allowSubdomain: Boolean) =>
+            println(origin)
 
-          OriginMatcher.isAllowed(
-            origin.toExternalForm,
-            Set(origin.toExternalForm).asJava,
-            false,
-            allowSubdomain
-          ) shouldBe (true)
+            OriginMatcher.isAllowed(
+              origin.toExternalForm,
+              Set(origin.toExternalForm).asJava,
+              false,
+              allowSubdomain,
+            ) shouldBe (true)
         }
       }
 
       it("unless configured to.") {
-        forAll(arbitrary[URL], Gen.option(Gen.posNum[Int]), arbitrary[Boolean]) { (allowedOrigin, port, allowSubdomain) =>
+        forAll(
+          arbitrary[URL],
+          Gen.option(Gen.posNum[Int]),
+          arbitrary[Boolean],
+        ) { (allowedOrigin, port, allowSubdomain) =>
           whenever(port.forall(_ > 0)) {
-            val origin = urlWithMaybePort(allowedOrigin.getProtocol, allowedOrigin.getHost, port, allowedOrigin.getFile)
+            val origin = urlWithMaybePort(
+              allowedOrigin.getProtocol,
+              allowedOrigin.getHost,
+              port,
+              allowedOrigin.getFile,
+            )
             println(allowedOrigin, origin)
 
             OriginMatcher.isAllowed(
               origin.toExternalForm,
               Set(allowedOrigin.toExternalForm).asJava,
               true,
-              allowSubdomain
+              allowSubdomain,
             ) shouldBe (true)
           }
         }
@@ -230,15 +256,16 @@ class OriginMatcherSpec extends FunSpec with Matchers with ScalaCheckDrivenPrope
     }
 
     it("accepts subdomains and arbitrary ports when configured to.") {
-      forAll(superAndSubdomainWithPorts) { case (allowedOrigin, origin) =>
-        println(allowedOrigin, origin)
+      forAll(superAndSubdomainWithPorts) {
+        case (allowedOrigin, origin) =>
+          println(allowedOrigin, origin)
 
-        OriginMatcher.isAllowed(
-          origin.toExternalForm,
-          Set(allowedOrigin.toExternalForm).asJava,
-          true,
-          true
-        ) shouldBe (true)
+          OriginMatcher.isAllowed(
+            origin.toExternalForm,
+            Set(allowedOrigin.toExternalForm).asJava,
+            true,
+            true,
+          ) shouldBe (true)
       }
     }
   }

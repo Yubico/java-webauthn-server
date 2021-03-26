@@ -6,6 +6,9 @@ description = 'Yubico WebAuthn server core API'
 
 project.ext.publishMe = true
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
   api(
     project(':webauthn-server-core-minimal'),

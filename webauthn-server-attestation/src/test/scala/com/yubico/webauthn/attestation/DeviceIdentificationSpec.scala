@@ -24,65 +24,89 @@
 
 package com.yubico.webauthn.attestation
 
-import java.util.Collections
-
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
-import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
-import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.attestation.Transport.LIGHTNING
 import com.yubico.webauthn.attestation.Transport.NFC
 import com.yubico.webauthn.attestation.Transport.USB
+import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.test.Helpers
+import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
+import java.util.Collections
 import scala.jdk.CollectionConverters._
-
 
 @RunWith(classOf[JUnitRunner])
 class DeviceIdentificationSpec extends FunSpec with Matchers {
 
   def metadataService(metadataJson: String): StandardMetadataService = {
-    val metadata = Collections.singleton(JacksonCodecs.json().readValue(metadataJson, classOf[MetadataObject]))
+    val metadata = Collections.singleton(
+      JacksonCodecs.json().readValue(metadataJson, classOf[MetadataObject])
+    )
     new StandardMetadataService(
-      new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
+      new SimpleAttestationResolver(
+        metadata,
+        SimpleTrustResolver.fromMetadata(metadata),
+      )
     )
   }
 
   describe("A RelyingParty with the default StandardMetadataService") {
 
     describe("correctly identifies") {
-      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]): Unit = {
-        val rp = RelyingParty.builder()
+      def check(
+          expectedName: String,
+          testData: RealExamples.Example,
+          transports: Set[Transport],
+      ): Unit = {
+        val rp = RelyingParty
+          .builder()
           .identity(testData.rp)
           .credentialRepository(Helpers.CredentialRepository.empty)
           .metadataService(new StandardMetadataService())
           .build()
 
-        val result = rp.finishRegistration(FinishRegistrationOptions.builder()
-          .request(PublicKeyCredentialCreationOptions.builder()
-            .rp(testData.rp)
-            .user(testData.user)
-            .challenge(testData.attestation.challenge)
-            .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
-            .build())
-          .response(testData.attestation.credential)
-          .build());
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        );
 
-        result.isAttestationTrusted should be (true)
-        result.getAttestationMetadata.isPresent should be (true)
-        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be (true)
-        result.getAttestationMetadata.get.getDeviceProperties.get().get("displayName") should equal (expectedName)
-        result.getAttestationMetadata.get.getTransports.isPresent should be (true)
-        result.getAttestationMetadata.get.getTransports.get.asScala should equal (transports)
+        result.isAttestationTrusted should be(true)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          true
+        )
+        result.getAttestationMetadata.get.getDeviceProperties
+          .get()
+          .get("displayName") should equal(expectedName)
+        result.getAttestationMetadata.get.getTransports.isPresent should be(
+          true
+        )
+        result.getAttestationMetadata.get.getTransports.get.asScala should equal(
+          transports
+        )
       }
 
       it("a YubiKey NEO.") {
@@ -98,7 +122,11 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5 NFC", RealExamples.YubiKey5Nfc, Set(USB, NFC))
       }
       it("a newer YubiKey 5 NFC.") {
-        check("YubiKey 5/5C NFC", RealExamples.YubiKey5NfcPost5cNfc, Set(USB, NFC))
+        check(
+          "YubiKey 5/5C NFC",
+          RealExamples.YubiKey5NfcPost5cNfc,
+          Set(USB, NFC),
+        )
       }
       it("a YubiKey 5C NFC.") {
         check("YubiKey 5/5C NFC", RealExamples.YubiKey5cNfc, Set(USB, NFC))
@@ -116,21 +144,33 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("Security Key by Yubico", RealExamples.SecurityKey2, Set(USB))
       }
       it("a Security Key NFC by Yubico.") {
-        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc, Set(USB, NFC))
+        check(
+          "Security Key NFC by Yubico",
+          RealExamples.SecurityKeyNfc,
+          Set(USB, NFC),
+        )
       }
     }
   }
 
   describe("The default AttestationResolver") {
     describe("successfully identifies") {
-      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]): Unit = {
+      def check(
+          expectedName: String,
+          testData: RealExamples.Example,
+          transports: Set[Transport],
+      ): Unit = {
         val cert = CertificateParser.parseDer(testData.attestationCert.getBytes)
-        val resolved = StandardMetadataService.createDefaultAttestationResolver().resolve(cert)
-        resolved.isPresent should be (true)
-        resolved.get.getDeviceProperties.isPresent should be (true)
-        resolved.get.getDeviceProperties.get.get("displayName") should equal (expectedName)
-        resolved.get.getTransports.isPresent should be (true)
-        resolved.get.getTransports.get.asScala should equal (transports)
+        val resolved = StandardMetadataService
+          .createDefaultAttestationResolver()
+          .resolve(cert)
+        resolved.isPresent should be(true)
+        resolved.get.getDeviceProperties.isPresent should be(true)
+        resolved.get.getDeviceProperties.get.get("displayName") should equal(
+          expectedName
+        )
+        resolved.get.getTransports.isPresent should be(true)
+        resolved.get.getTransports.get.asScala should equal(transports)
       }
 
       it("a YubiKey NEO.") {
@@ -146,7 +186,11 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5 NFC", RealExamples.YubiKey5Nfc, Set(USB, NFC))
       }
       it("a newer YubiKey 5 NFC.") {
-        check("YubiKey 5/5C NFC", RealExamples.YubiKey5NfcPost5cNfc, Set(USB, NFC))
+        check(
+          "YubiKey 5/5C NFC",
+          RealExamples.YubiKey5NfcPost5cNfc,
+          Set(USB, NFC),
+        )
       }
       it("a YubiKey 5C NFC.") {
         check("YubiKey 5/5C NFC", RealExamples.YubiKey5cNfc, Set(USB, NFC))
@@ -164,7 +208,11 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("Security Key by Yubico", RealExamples.SecurityKey2, Set(USB))
       }
       it("a Security Key NFC by Yubico.") {
-        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc, Set(USB, NFC))
+        check(
+          "Security Key NFC by Yubico",
+          RealExamples.SecurityKeyNfc,
+          Set(USB, NFC),
+        )
       }
     }
   }

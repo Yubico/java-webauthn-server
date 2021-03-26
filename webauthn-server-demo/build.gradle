@@ -3,6 +3,7 @@ plugins {
   id 'war'
   id 'application'
   id 'scala'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'WebAuthn demo'

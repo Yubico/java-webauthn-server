@@ -51,15 +51,18 @@ import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-
 @RunWith(classOf[JUnitRunner])
-class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class JsonIoSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
-  def json: ObjectMapper = new ObjectMapper()
-    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-    .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-    .setSerializationInclusion(Include.NON_ABSENT)
-    .registerModule(new Jdk8Module())
+  def json: ObjectMapper =
+    new ObjectMapper()
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      .setSerializationInclusion(Include.NON_ABSENT)
+      .registerModule(new Jdk8Module())
 
   describe("The class") {
 
@@ -79,7 +82,7 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
             val encoded: String = json.writeValueAsString(value)
             val decoded: A = json.readValue(encoded, tpe)
 
-            decoded should equal (value)
+            decoded should equal(value)
           }
         }
 
@@ -89,8 +92,8 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
             val decoded: A = json.readValue(encoded, tpe)
             val recoded: String = json.writeValueAsString(decoded)
 
-            decoded should equal (value)
-            recoded should equal (encoded)
+            decoded should equal(value)
+            recoded should equal(encoded)
           }
         }
       }
@@ -116,8 +119,18 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
     test(new TypeReference[ClientRegistrationExtensionOutputs]() {})
     test(new TypeReference[CollectedClientData]() {})
     test(new TypeReference[COSEAlgorithmIdentifier]() {})
-    test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]]() {})
-    test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]]() {})
+    test(
+      new TypeReference[PublicKeyCredential[
+        AuthenticatorAssertionResponse,
+        ClientAssertionExtensionOutputs,
+      ]]() {}
+    )
+    test(
+      new TypeReference[PublicKeyCredential[
+        AuthenticatorAttestationResponse,
+        ClientRegistrationExtensionOutputs,
+      ]]() {}
+    )
     test(new TypeReference[PublicKeyCredentialCreationOptions]() {})
     test(new TypeReference[PublicKeyCredentialDescriptor]() {})
     test(new TypeReference[PublicKeyCredentialParameters]() {})
@@ -135,92 +148,152 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
   }
 
   describe("The class PublicKeyCredential") {
-    it("has an alternative parseRegistrationResponseJson function as an alias.") {
+    it(
+      "has an alternative parseRegistrationResponseJson function as an alias."
+    ) {
       def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
         forAll { value: A =>
           val encoded: String = json.writeValueAsString(value)
           val decoded: A = json.readValue(encoded, tpe)
-          val altDecoded = PublicKeyCredential.parseRegistrationResponseJson(encoded)
+          val altDecoded =
+            PublicKeyCredential.parseRegistrationResponseJson(encoded)
           val altRecoded: String = json.writeValueAsString(altDecoded)
 
-          altDecoded should equal (decoded)
-          altRecoded should equal (encoded)
+          altDecoded should equal(decoded)
+          altRecoded should equal(encoded)
         }
       }
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
     }
 
-    it("has an alternative parseAuthenticationResponseJson function as an alias.") {
+    it(
+      "has an alternative parseAuthenticationResponseJson function as an alias."
+    ) {
       def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
         forAll { value: A =>
           val encoded: String = json.writeValueAsString(value)
           val decoded: A = json.readValue(encoded, tpe)
-          val altDecoded = PublicKeyCredential.parseAssertionResponseJson(encoded)
+          val altDecoded =
+            PublicKeyCredential.parseAssertionResponseJson(encoded)
           val altRecoded: String = json.writeValueAsString(altDecoded)
 
-          altDecoded should equal (decoded)
-          altRecoded should equal (encoded)
+          altDecoded should equal(decoded)
+          altRecoded should equal(encoded)
         }
       }
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
     }
 
     it("allows rawId to be present without id.") {
-      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
         forAll { value: P =>
           val encoded: String = json.writeValueAsString(value)
           val decoded = json.readTree(encoded)
-          decoded.asInstanceOf[ObjectNode]
+          decoded
+            .asInstanceOf[ObjectNode]
             .set[ObjectNode]("rawId", new TextNode(value.getId.getBase64Url))
             .remove("id")
           val reencoded = json.writeValueAsString(decoded)
           val restored: P = json.readValue(reencoded, tpe)
 
-          restored.getId should equal (value.getId)
-          restored should equal (value)
+          restored.getId should equal(value.getId)
+          restored should equal(value)
         }
       }
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
     }
 
     it("allows id to be present without rawId.") {
-      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
         forAll { value: P =>
           val encoded: String = json.writeValueAsString(value)
           val decoded = json.readTree(encoded)
-          decoded.asInstanceOf[ObjectNode]
+          decoded
+            .asInstanceOf[ObjectNode]
             .set[ObjectNode]("id", new TextNode(value.getId.getBase64Url))
             .remove("rawId")
           val reencoded = json.writeValueAsString(decoded)
           val restored: P = json.readValue(reencoded, tpe)
 
-          restored should equal (value)
+          restored should equal(value)
         }
       }
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
     }
 
     it("allows both id and rawId to be present if equal.") {
-      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
         forAll { value: P =>
           val encoded: String = json.writeValueAsString(value)
           val decoded = json.readTree(encoded)
-          decoded.asInstanceOf[ObjectNode].set("id", new TextNode(value.getId.getBase64Url))
-          decoded.asInstanceOf[ObjectNode].set("rawId", new TextNode(value.getId.getBase64Url))
+          decoded
+            .asInstanceOf[ObjectNode]
+            .set("id", new TextNode(value.getId.getBase64Url))
+          decoded
+            .asInstanceOf[ObjectNode]
+            .set("rawId", new TextNode(value.getId.getBase64Url))
           val reencoded = json.writeValueAsString(decoded)
           val restored: P = json.readValue(reencoded, tpe)
 
-          restored should equal (value)
+          restored should equal(value)
         }
       }
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
     }
 
     it("does not allow both id and rawId to be absent.") {
-      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
         forAll { value: P =>
           val encoded: String = json.writeValueAsString(value)
           val decoded = json.readTree(encoded).asInstanceOf[ObjectNode]
@@ -228,41 +301,65 @@ class JsonIoSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChec
           decoded.remove("rawId")
           val reencoded = json.writeValueAsString(decoded)
 
-          an [ValueInstantiationException] should be thrownBy {
+          an[ValueInstantiationException] should be thrownBy {
             json.readValue(reencoded, tpe)
           }
         }
       }
 
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
     }
 
     it("does not allow both id and rawId to be present and not equal.") {
-      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit a: Arbitrary[P]): Unit = {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
         forAll { value: P =>
           val modId = new ByteArray(
             if (value.getId.getBytes.isEmpty)
               Array(0)
             else
-              value.getId.getBytes.updated(0, (value.getId.getBytes()(0) + 1 % 127).byteValue)
+              value.getId.getBytes
+                .updated(0, (value.getId.getBytes()(0) + 1 % 127).byteValue)
           )
 
           val encoded: String = json.writeValueAsString(value)
           val decoded = json.readTree(encoded)
-          decoded.asInstanceOf[ObjectNode]
+          decoded
+            .asInstanceOf[ObjectNode]
             .set[ObjectNode]("id", new TextNode(value.getId.getBase64Url))
             .set[ObjectNode]("rawId", new TextNode(modId.getBase64Url))
           val reencoded = json.writeValueAsString(decoded)
 
-          an [ValueInstantiationException] should be thrownBy {
+          an[ValueInstantiationException] should be thrownBy {
             json.readValue(reencoded, tpe)
           }
         }
       }
 
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs]](){})
-      test(new TypeReference[PublicKeyCredential[AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs]](){})
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
     }
   }
 
