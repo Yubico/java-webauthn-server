@@ -133,10 +133,10 @@ subprojects { project ->
       configFile = rootProject.file('scalafix.conf')
     }
     dependencies.scalafix('com.github.liancheng:organize-imports_2.13:0.5.0')
-    project.tasks.scalafix.dependsOn(project.tasks.spotlessApply)
-    project.tasks.checkScalafix.dependsOn(project.tasks.spotlessCheck)
-    project.tasks.spotlessApply.finalizedBy(project.tasks.scalafix)
-    project.tasks.spotlessCheck.finalizedBy(project.tasks.checkScalafix)
+    project.tasks.spotlessApply.dependsOn(project.tasks.scalafix)
+    project.tasks.spotlessCheck.dependsOn(project.tasks.checkScalafix)
+    project.tasks.scalafix.finalizedBy(project.tasks.spotlessApply)
+    project.tasks.checkScalafix.finalizedBy(project.tasks.spotlessCheck)
   }
 
   tasks.withType(JavaCompile) {
