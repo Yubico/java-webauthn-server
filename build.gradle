@@ -41,7 +41,7 @@ dependencies {
     api('ch.qos.logback:logback-classic:[1.2.3,2)')
     api('com.augustcellars.cose:cose-java:[1.0.0,2)')
     api('com.fasterxml.jackson.core:jackson-databind:[2.11.0,3)')
-    api('com.google.guava:guava:[24.1.1,30)')
+    api('com.google.guava:guava:[24.1.1,31)')
     api('com.upokecenter:cbor:[4.0.1,5)')
     api('javax.ws.rs:javax.ws.rs-api:[2.1,3)')
     api('javax.xml.bind:jaxb-api:[2.3.0,3)')
