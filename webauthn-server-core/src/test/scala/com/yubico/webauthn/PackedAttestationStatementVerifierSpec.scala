@@ -82,7 +82,7 @@ class PackedAttestationStatementVerifierSpec
 
           val result = verifier.verifyAttestationSignature(
             credential.getResponse.getAttestation,
-            Crypto.hash(credential.getResponse.getClientDataJSON),
+            Crypto.sha256(credential.getResponse.getClientDataJSON),
           )
 
           key.getAlgorithm should be("EC")
@@ -100,7 +100,7 @@ class PackedAttestationStatementVerifierSpec
 
           val result = verifier.verifyAttestationSignature(
             credential.getResponse.getAttestation,
-            Crypto.hash(credential.getResponse.getClientDataJSON),
+            Crypto.sha256(credential.getResponse.getClientDataJSON),
           )
 
           key.getAlgorithm should be("RSA")

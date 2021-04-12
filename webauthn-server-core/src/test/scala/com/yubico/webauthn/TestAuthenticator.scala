@@ -579,7 +579,7 @@ object TestAuthenticator {
       .signature(
         makeAssertionSignature(
           authDataBytes,
-          Crypto.hash(clientDataJsonBytes),
+          Crypto.sha256(clientDataJsonBytes),
           credentialKey.getPrivate,
           alg,
         )
@@ -611,7 +611,7 @@ object TestAuthenticator {
       new ByteArray(
         (Vector[Byte](0)
           ++ rpIdHash.getBytes
-          ++ Crypto.hash(clientDataJson).getBytes
+          ++ Crypto.sha256(clientDataJson).getBytes
           ++ credentialId.getBytes
           ++ credentialPublicKeyRawBytes.getBytes).toArray
       )
@@ -655,7 +655,7 @@ object TestAuthenticator {
       signer: AttestationSigner,
   ): JsonNode = {
     val signedData = new ByteArray(
-      authDataBytes.getBytes ++ Crypto.hash(clientDataJson).getBytes
+      authDataBytes.getBytes ++ Crypto.sha256(clientDataJson).getBytes
     )
     val signature = signer match {
       case SelfAttestation(keypair, alg) =>
@@ -693,7 +693,8 @@ object TestAuthenticator {
       cert: AttestationCert,
       ctsProfileMatch: Boolean = true,
   ): JsonNode = {
-    val nonce = Crypto.hash(authDataBytes concat Crypto.hash(clientDataJson))
+    val nonce =
+      Crypto.sha256(authDataBytes concat Crypto.sha256(clientDataJson))
 
     val f = JsonNodeFactory.instance
 
@@ -722,11 +723,11 @@ object TestAuthenticator {
           "nonce" -> f.textNode(nonce.getBase64),
           "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
           "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
-          "apkDigestSha256" -> f.textNode(Crypto.hash("foo").getBase64),
+          "apkDigestSha256" -> f.textNode(Crypto.sha256("foo").getBase64),
           "ctsProfileMatch" -> f.booleanNode(ctsProfileMatch),
           "aplCertificateDigestSha256" -> f
             .arrayNode()
-            .add(f.textNode(Crypto.hash("foo").getBase64)),
+            .add(f.textNode(Crypto.sha256("foo").getBase64)),
           "basicIntegrity" -> f.booleanNode(true),
         ).asJava
       )

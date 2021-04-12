@@ -137,12 +137,12 @@ final class Crypto {
     }
   }
 
-  public static ByteArray hash(ByteArray bytes) {
+  public static ByteArray sha256(ByteArray bytes) {
     //noinspection UnstableApiUsage
     return new ByteArray(Hashing.sha256().hashBytes(bytes.getBytes()).asBytes());
   }
 
-  public static ByteArray hash(String str) {
-    return hash(new ByteArray(str.getBytes(StandardCharsets.UTF_8)));
+  public static ByteArray sha256(String str) {
+    return sha256(new ByteArray(str.getBytes(StandardCharsets.UTF_8)));
   }
 }

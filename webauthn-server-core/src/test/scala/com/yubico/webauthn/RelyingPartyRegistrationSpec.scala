@@ -86,7 +86,7 @@ class RelyingPartyRegistrationSpec
   private def toJson(obj: Map[String, String]): JsonNode =
     toJsonObject(obj.view.mapValues(jsonFactory.textNode).toMap)
 
-  private def sha256(bytes: ByteArray): ByteArray = Crypto.hash(bytes)
+  private def sha256(bytes: ByteArray): ByteArray = Crypto.sha256(bytes)
 
   def flipByte(index: Int, bytes: ByteArray): ByteArray =
     editByte(bytes, index, b => (0xff ^ b).toByte)
@@ -1142,7 +1142,7 @@ class RelyingPartyRegistrationSpec
                 RegistrationTestData.FidoU2f.BasicAttestation
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                Crypto.hash(
+                Crypto.sha256(
                   new ByteArray(
                     testData.clientDataJsonBytes.getBytes.updated(
                       20,
@@ -1169,7 +1169,7 @@ class RelyingPartyRegistrationSpec
                 credentialId = Some(new ByteArray(Array.fill(16)(0))),
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                Crypto.hash(testData.clientDataJsonBytes),
+                Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava,
@@ -1218,7 +1218,7 @@ class RelyingPartyRegistrationSpec
                 credentialId = Some(new ByteArray(Array.fill(16)(0))),
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                Crypto.hash(testData.clientDataJsonBytes),
+                Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava,
@@ -1268,7 +1268,7 @@ class RelyingPartyRegistrationSpec
                   new FidoU2fAttestationStatementVerifier()
                     .verifyAttestationSignature(
                       credential.getResponse.getAttestation,
-                      Crypto.hash(credential.getResponse.getClientDataJSON),
+                      Crypto.sha256(credential.getResponse.getClientDataJSON),
                     )
                 }
 
@@ -1320,7 +1320,7 @@ class RelyingPartyRegistrationSpec
                   new FidoU2fAttestationStatementVerifier()
                     .verifyAttestationSignature(
                       credential.getResponse.getAttestation,
-                      Crypto.hash(credential.getResponse.getClientDataJSON),
+                      Crypto.sha256(credential.getResponse.getClientDataJSON),
                     )
                 }
 
@@ -1372,7 +1372,7 @@ class RelyingPartyRegistrationSpec
 
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                  Crypto.hash(testData.clientDataJsonBytes),
+                  Crypto.sha256(testData.clientDataJsonBytes),
                   new AttestationObject(testData.attestationObject),
                   Some(new NoneAttestationStatementVerifier).asJava,
                   Nil.asJava,

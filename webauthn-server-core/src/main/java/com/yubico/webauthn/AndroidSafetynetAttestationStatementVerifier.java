@@ -68,7 +68,7 @@ class AndroidSafetynetAttestationStatementVerifier
 
     ByteArray signedData =
         attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
-    ByteArray hashSignedData = Crypto.hash(signedData);
+    ByteArray hashSignedData = Crypto.sha256(signedData);
     ByteArray nonceByteArray = ByteArray.fromBase64(payload.get("nonce").textValue());
     ExceptionUtil.assure(
         hashSignedData.equals(nonceByteArray),
