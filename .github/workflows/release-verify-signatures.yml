@@ -40,7 +40,7 @@ jobs:
 
         gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${TAGNAME}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${TAGNAME}.jar
         gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${TAGNAME}.jar.asc webauthn-server-core-bundle/build/libs/webauthn-server-core-${TAGNAME}.jar
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-minimal${TAGNAME}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-minimal-${TAGNAME}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-minimal-${TAGNAME}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-minimal-${TAGNAME}.jar
 
     - name: Verify signatures from Maven Central
       run: |
