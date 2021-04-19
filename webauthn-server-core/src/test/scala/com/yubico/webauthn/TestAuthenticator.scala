@@ -46,6 +46,8 @@ import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERSequence
+import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
@@ -244,6 +246,41 @@ object TestAuthenticator {
             ctsProfileMatch = ctsProfileMatch,
           )
       }
+    def apple(
+        addNonceExtension: Boolean = true,
+        nonceValue: Option[ByteArray] = None,
+        certSubjectPublicKey: Option[PublicKey] = None,
+    ): (AttestationMaker, X509Certificate, PrivateKey) = {
+      val (caCert, caKey) =
+        generateAttestationCertificate(
+          COSEAlgorithmIdentifier.ES256,
+          name = new X500Name(
+            "CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Apple Attestation"
+          ),
+        )
+
+      (
+        new AttestationMaker {
+          override val format = "apple"
+          override def makeAttestationStatement(
+              authDataBytes: ByteArray,
+              clientDataJson: String,
+          ): JsonNode =
+            makeAppleAttestationStatement(
+              caCert,
+              caKey,
+              authDataBytes,
+              clientDataJson,
+              addNonceExtension,
+              nonceValue,
+              certSubjectPublicKey,
+            )
+        },
+        caCert,
+        caKey,
+      )
+    }
+
     def none(): AttestationMaker =
       new AttestationMaker {
         override val format = "none"
@@ -755,6 +792,69 @@ object TestAuthenticator {
       )
 
     attStmt
+  }
+
+  def makeAppleAttestationStatement(
+      caCert: X509Certificate,
+      caKey: PrivateKey,
+      authDataBytes: ByteArray,
+      clientDataJson: String,
+      addNonceExtension: Boolean = true,
+      nonceValue: Option[ByteArray] = None,
+      certSubjectPublicKey: Option[PublicKey] = None,
+  ): JsonNode = {
+    val clientDataJSON = new ByteArray(
+      clientDataJson.getBytes(StandardCharsets.UTF_8)
+    )
+    val clientDataJsonHash = Crypto.sha256(clientDataJSON)
+    val nonceToHash = authDataBytes.concat(clientDataJsonHash)
+    val nonce = Crypto.sha256(nonceToHash)
+
+    val subjectCert = buildCertificate(
+      certSubjectPublicKey.getOrElse(
+        WebAuthnTestCodecs.importCosePublicKey(
+          new AuthenticatorData(
+            authDataBytes
+          ).getAttestedCredentialData.get.getCredentialPublicKey
+        )
+      ),
+      new X500Name(
+        "CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Apple Attestation"
+      ),
+      new X500Name(
+        "CN=Apple attestation test credential, O=Yubico, OU=Apple Attestation"
+      ),
+      caKey,
+      COSEAlgorithmIdentifier.ES256,
+      extensions = if (addNonceExtension) {
+        List(
+          (
+            "1.2.840.113635.100.8.2",
+            false,
+            new DERSequence(
+              new DERTaggedObject(
+                1,
+                new DEROctetString(nonceValue.getOrElse(nonce).getBytes),
+              )
+            ),
+          )
+        )
+      } else Nil,
+    )
+
+    val f = JsonNodeFactory.instance
+    f.objectNode()
+      .setAll(
+        Map(
+          "x5c" -> f
+            .arrayNode()
+            .addAll(
+              List(subjectCert, caCert)
+                .map(crt => f.binaryNode(crt.getEncoded))
+                .asJava
+            )
+        ).asJava
+      )
   }
 
   def makeAuthDataBytes(

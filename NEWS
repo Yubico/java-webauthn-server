@@ -5,6 +5,10 @@ webauthn-server-attestation:
 * Fixed that `SimpleAttestationResolver` would return empty transports when
   transports are unknown.
 
+webauthn-server-core:
+
+* Added support for the `"apple"` attestation statement format.
+
 
 == Version 1.8.0 ==
 

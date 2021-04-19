@@ -48,6 +48,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.test.Helpers
+import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -2804,6 +2805,86 @@ class RelyingPartyRegistrationSpec
             result.getKeyId.getId should equal(
               RegistrationTestData.Tpm.PrivacyCa.response.getId
             )
+          }
+
+          describe("accept apple attestations but report they're untrusted:") {
+            it("iOS") {
+              val result = rp
+                .toBuilder()
+                .identity(RealExamples.AppleAttestationIos.rp)
+                .origins(
+                  Set(
+                    RealExamples.AppleAttestationIos.attestation.collectedClientData.getOrigin
+                  ).asJava
+                )
+                .build()
+                .finishRegistration(
+                  FinishRegistrationOptions
+                    .builder()
+                    .request(
+                      request
+                        .toBuilder()
+                        .challenge(
+                          RealExamples.AppleAttestationIos.attestation.collectedClientData.getChallenge
+                        )
+                        .build()
+                    )
+                    .response(
+                      RealExamples.AppleAttestationIos.attestation.credential
+                    )
+                    .build()
+                )
+
+              result.isAttestationTrusted should be(false)
+              RealExamples.AppleAttestationIos.attestation.credential.getResponse.getAttestation.getFormat should be(
+                "apple"
+              )
+              result.getAttestationType should be(
+                AttestationType.ANONYMIZATION_CA
+              )
+              result.getKeyId.getId should equal(
+                RealExamples.AppleAttestationIos.attestation.credential.getId
+              )
+            }
+
+            it("MacOS") {
+              val result = rp
+                .toBuilder()
+                .identity(RealExamples.AppleAttestationMacos.rp)
+                .origins(
+                  Set(
+                    RealExamples.AppleAttestationMacos.attestation.collectedClientData.getOrigin
+                  ).asJava
+                )
+                .build()
+                .finishRegistration(
+                  FinishRegistrationOptions
+                    .builder()
+                    .request(
+                      request
+                        .toBuilder()
+                        .challenge(
+                          RealExamples.AppleAttestationMacos.attestation.collectedClientData.getChallenge
+                        )
+                        .build()
+                    )
+                    .response(
+                      RealExamples.AppleAttestationMacos.attestation.credential
+                    )
+                    .build()
+                )
+
+              result.isAttestationTrusted should be(false)
+              RealExamples.AppleAttestationMacos.attestation.credential.getResponse.getAttestation.getFormat should be(
+                "apple"
+              )
+              result.getAttestationType should be(
+                AttestationType.ANONYMIZATION_CA
+              )
+              result.getKeyId.getId should equal(
+                RealExamples.AppleAttestationMacos.attestation.credential.getId
+              )
+            }
           }
 
           describe("accept all test examples in the validExamples list.") {
