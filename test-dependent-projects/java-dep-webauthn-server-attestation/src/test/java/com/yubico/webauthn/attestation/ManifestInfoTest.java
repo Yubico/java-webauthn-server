@@ -36,6 +36,7 @@ public class ManifestInfoTest {
 
   @Test
   public void customImplementationPropertiesAreSet() throws IOException {
-    assertTrue(lookup("Git-Commit").matches("^[a-f0-9]{40}$"));
+    assertTrue(
+        lookup("Git-Commit").matches("^[a-f0-9]{40}$") || lookup("Git-Commit").equals("UNKNOWN"));
   }
 }

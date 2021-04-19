@@ -28,14 +28,17 @@ public class VersionInfoTest {
     final Implementation impl = versionInfo.getImplementation();
     assertTrue(impl.getSourceCodeUrl().toExternalForm().startsWith("https://"));
     assertTrue(impl.getVersion().matches("^\\d+\\.\\d+\\.\\d+(-.*)?"));
-    assertTrue(impl.getGitCommit().matches("^[a-f0-9]{40}$"));
+    assertTrue(
+        impl.getGitCommit().matches("^[a-f0-9]{40}$") || impl.getGitCommit().equals("UNKNOWN"));
   }
 
   @Test
-  public void majorVersionIsAtLeast1() {
+  public void majorVersionIsUnknownOrAtLeast1() {
     final String version = versionInfo.getImplementation().getVersion();
-    String[] splits = version.split("\\.");
-    final int majorVersion = Integer.parseInt(splits[0]);
-    assertTrue(majorVersion >= 1);
+    if (!"0.1.0-SNAPSHOT".equals(version)) {
+      String[] splits = version.split("\\.");
+      final int majorVersion = Integer.parseInt(splits[0]);
+      assertTrue(majorVersion >= 1);
+    }
   }
 }

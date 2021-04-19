@@ -121,9 +121,13 @@ String getGitCommit() {
   def proc = "git rev-parse HEAD".execute(null, projectDir)
   proc.waitFor()
   if (proc.exitValue() != 0) {
-    throw new RuntimeException("Failed to get git commit ID");
+    return null
   }
   return proc.text.trim()
+}
+
+String getGitCommitOrUnknown() {
+  return getGitCommit() ?: 'UNKNOWN'
 }
 
 subprojects { project ->
@@ -211,6 +215,10 @@ subprojects { project ->
 
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
+
+    if (getGitCommit() == null) {
+      throw new RuntimeException("Failed to get git commit ID");
+    }
 
     publishing {
       publications {
