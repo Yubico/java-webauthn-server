@@ -29,8 +29,8 @@ Release candidate versions
     ```
 
  6. Wait for the artifacts to become downloadable at
-    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
-    is needed for one of the GitHub Actions release workflows and usually takes
+    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
+    needed for one of the GitHub Actions release workflows and usually takes
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
@@ -116,8 +116,8 @@ Release versions
     ```
 
 10. Wait for the artifacts to become downloadable at
-    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
-    is needed for one of the GitHub Actions release workflows and usually takes
+    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
+    needed for one of the GitHub Actions release workflows and usually takes
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
