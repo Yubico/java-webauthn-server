@@ -510,7 +510,7 @@ case class RegistrationTestData(
   def clientDataJsonBytes: ByteArray =
     new ByteArray(clientDataJson.getBytes("UTF-8"))
   def clientData = new CollectedClientData(clientDataJsonBytes)
-  def clientDataJsonHash: ByteArray = Crypto.hash(clientDataJsonBytes)
+  def clientDataJsonHash: ByteArray = Crypto.sha256(clientDataJsonBytes)
   def aaguid: ByteArray =
     new AttestationObject(
       attestationObject

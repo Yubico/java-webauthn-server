@@ -79,6 +79,28 @@ public enum AttestationType {
   ATTESTATION_CA,
 
   /**
+   * In this case, the authenticator uses an Anonymization CA which dynamically generates
+   * per-credential attestation certificates such that the attestation statements presented to
+   * Relying Parties do not provide uniquely identifiable information, e.g., that might be used for
+   * tracking purposes.
+   *
+   * <p>Note: Attestation statements conveying attestations of type AttCA or AnonCA use the same
+   * data structure as those of type Basic, so the three attestation types are, in general,
+   * distinguishable only with externally provided knowledge regarding the contents of the
+   * attestation certificates conveyed in the attestation statement.
+   *
+   * <p>Note: Attestation statements conveying attestations of this type use the same data structure
+   * as attestation statements conveying attestations of type #BASIC, so the two attestation types
+   * are, in general, distinguishable only with externally provided knowledge regarding the contents
+   * of the attestation certificates conveyed in the attestation statement.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#anonymization-ca">Anonymization
+   *     CA</a>
+   */
+  ANONYMIZATION_CA,
+
+  /**
    * In this case, the Authenticator receives direct anonymous attestation (DAA) credentials from a
    * single DAA-Issuer. These DAA credentials are used along with blinding to sign the attested
    * credential data. The concept of blinding avoids the DAA credentials being misused as global

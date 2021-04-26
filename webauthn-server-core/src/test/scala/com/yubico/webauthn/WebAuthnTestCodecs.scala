@@ -13,9 +13,11 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 
 /**
-  * Re-exports from [[WebAuthnCodecs]] so tests can use it
+  * Re-exports from [[WebAuthnCodecs]] and [[Crypto]] so tests can use it
   */
 object WebAuthnTestCodecs {
+
+  def sha256(bytes: ByteArray): ByteArray = Crypto.sha256(bytes)
 
   def ecPublicKeyToRaw = WebAuthnCodecs.ecPublicKeyToRaw _
   def importCosePublicKey = WebAuthnCodecs.importCosePublicKey _

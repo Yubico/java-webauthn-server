@@ -73,7 +73,7 @@ class RelyingPartyAssertionSpec
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
-  private def sha256(bytes: ByteArray): ByteArray = Crypto.hash(bytes)
+  private def sha256(bytes: ByteArray): ByteArray = Crypto.sha256(bytes)
   private def sha256(data: String): ByteArray =
     sha256(new ByteArray(data.getBytes(Charset.forName("UTF-8"))))
 
@@ -1419,7 +1419,7 @@ class RelyingPartyAssertionSpec
 
           it("A test case with a different signed RP ID hash fails.") {
             val rpId = "ARGHABLARGHLER"
-            val rpIdHash: ByteArray = Crypto.hash(rpId)
+            val rpIdHash: ByteArray = Crypto.sha256(rpId)
             val steps = finishAssertion(
               authenticatorData = new ByteArray(
                 (rpIdHash.getBytes.toVector ++ Defaults.authenticatorData.getBytes.toVector
@@ -1499,7 +1499,7 @@ class RelyingPartyAssertionSpec
               )
               val signature = TestAuthenticator.makeAssertionSignature(
                 authenticatorData,
-                Crypto.hash(Defaults.clientDataJsonBytes),
+                Crypto.sha256(Defaults.clientDataJsonBytes),
                 Defaults.credentialKey.getPrivate,
               )
 

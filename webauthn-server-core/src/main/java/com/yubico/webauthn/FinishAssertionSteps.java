@@ -421,7 +421,7 @@ final class FinishAssertionSteps {
     public void validate() {
       try {
         assure(
-            Crypto.hash(rpId)
+            Crypto.sha256(rpId)
                 .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
             "Wrong RP ID hash.");
       } catch (IllegalArgumentException e) {
@@ -429,7 +429,7 @@ final class FinishAssertionSteps {
             request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
         if (appid.isPresent()) {
           assure(
-              Crypto.hash(appid.get().getId())
+              Crypto.sha256(appid.get().getId())
                   .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
               "Wrong RP ID hash.");
         } else {
@@ -537,7 +537,7 @@ final class FinishAssertionSteps {
     }
 
     public ByteArray clientDataJsonHash() {
-      return Crypto.hash(response.getResponse().getClientDataJSON());
+      return Crypto.sha256(response.getResponse().getClientDataJSON());
     }
   }
 

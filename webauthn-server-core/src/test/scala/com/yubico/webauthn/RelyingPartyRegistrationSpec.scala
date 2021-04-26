@@ -48,6 +48,7 @@ import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.test.Helpers
+import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
@@ -86,7 +87,7 @@ class RelyingPartyRegistrationSpec
   private def toJson(obj: Map[String, String]): JsonNode =
     toJsonObject(obj.view.mapValues(jsonFactory.textNode).toMap)
 
-  private def sha256(bytes: ByteArray): ByteArray = Crypto.hash(bytes)
+  private def sha256(bytes: ByteArray): ByteArray = Crypto.sha256(bytes)
 
   def flipByte(index: Int, bytes: ByteArray): ByteArray =
     editByte(bytes, index, b => (0xff ^ b).toByte)
@@ -1142,7 +1143,7 @@ class RelyingPartyRegistrationSpec
                 RegistrationTestData.FidoU2f.BasicAttestation
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                Crypto.hash(
+                Crypto.sha256(
                   new ByteArray(
                     testData.clientDataJsonBytes.getBytes.updated(
                       20,
@@ -1169,7 +1170,7 @@ class RelyingPartyRegistrationSpec
                 credentialId = Some(new ByteArray(Array.fill(16)(0))),
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                Crypto.hash(testData.clientDataJsonBytes),
+                Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava,
@@ -1218,7 +1219,7 @@ class RelyingPartyRegistrationSpec
                 credentialId = Some(new ByteArray(Array.fill(16)(0))),
               )
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                Crypto.hash(testData.clientDataJsonBytes),
+                Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
                 Nil.asJava,
@@ -1268,7 +1269,7 @@ class RelyingPartyRegistrationSpec
                   new FidoU2fAttestationStatementVerifier()
                     .verifyAttestationSignature(
                       credential.getResponse.getAttestation,
-                      Crypto.hash(credential.getResponse.getClientDataJSON),
+                      Crypto.sha256(credential.getResponse.getClientDataJSON),
                     )
                 }
 
@@ -1320,7 +1321,7 @@ class RelyingPartyRegistrationSpec
                   new FidoU2fAttestationStatementVerifier()
                     .verifyAttestationSignature(
                       credential.getResponse.getAttestation,
-                      Crypto.hash(credential.getResponse.getClientDataJSON),
+                      Crypto.sha256(credential.getResponse.getClientDataJSON),
                     )
                 }
 
@@ -1372,7 +1373,7 @@ class RelyingPartyRegistrationSpec
 
                 val steps = finishRegistration(testData = testData)
                 val step: FinishRegistrationSteps#Step14 = new steps.Step14(
-                  Crypto.hash(testData.clientDataJsonBytes),
+                  Crypto.sha256(testData.clientDataJsonBytes),
                   new AttestationObject(testData.attestationObject),
                   Some(new NoneAttestationStatementVerifier).asJava,
                   Nil.asJava,
@@ -2804,6 +2805,86 @@ class RelyingPartyRegistrationSpec
             result.getKeyId.getId should equal(
               RegistrationTestData.Tpm.PrivacyCa.response.getId
             )
+          }
+
+          describe("accept apple attestations but report they're untrusted:") {
+            it("iOS") {
+              val result = rp
+                .toBuilder()
+                .identity(RealExamples.AppleAttestationIos.rp)
+                .origins(
+                  Set(
+                    RealExamples.AppleAttestationIos.attestation.collectedClientData.getOrigin
+                  ).asJava
+                )
+                .build()
+                .finishRegistration(
+                  FinishRegistrationOptions
+                    .builder()
+                    .request(
+                      request
+                        .toBuilder()
+                        .challenge(
+                          RealExamples.AppleAttestationIos.attestation.collectedClientData.getChallenge
+                        )
+                        .build()
+                    )
+                    .response(
+                      RealExamples.AppleAttestationIos.attestation.credential
+                    )
+                    .build()
+                )
+
+              result.isAttestationTrusted should be(false)
+              RealExamples.AppleAttestationIos.attestation.credential.getResponse.getAttestation.getFormat should be(
+                "apple"
+              )
+              result.getAttestationType should be(
+                AttestationType.ANONYMIZATION_CA
+              )
+              result.getKeyId.getId should equal(
+                RealExamples.AppleAttestationIos.attestation.credential.getId
+              )
+            }
+
+            it("MacOS") {
+              val result = rp
+                .toBuilder()
+                .identity(RealExamples.AppleAttestationMacos.rp)
+                .origins(
+                  Set(
+                    RealExamples.AppleAttestationMacos.attestation.collectedClientData.getOrigin
+                  ).asJava
+                )
+                .build()
+                .finishRegistration(
+                  FinishRegistrationOptions
+                    .builder()
+                    .request(
+                      request
+                        .toBuilder()
+                        .challenge(
+                          RealExamples.AppleAttestationMacos.attestation.collectedClientData.getChallenge
+                        )
+                        .build()
+                    )
+                    .response(
+                      RealExamples.AppleAttestationMacos.attestation.credential
+                    )
+                    .build()
+                )
+
+              result.isAttestationTrusted should be(false)
+              RealExamples.AppleAttestationMacos.attestation.credential.getResponse.getAttestation.getFormat should be(
+                "apple"
+              )
+              result.getAttestationType should be(
+                AttestationType.ANONYMIZATION_CA
+              )
+              result.getKeyId.getId should equal(
+                RealExamples.AppleAttestationMacos.attestation.credential.getId
+              )
+            }
           }
 
           describe("accept all test examples in the validExamples list.") {

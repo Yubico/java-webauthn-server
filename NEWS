@@ -1,3 +1,20 @@
+== Version 1.9.0 (unreleased) ==
+
+webauthn-server-attestation:
+
+* Fixed that `SimpleAttestationResolver` would return empty transports when
+  transports are unknown.
+
+webauthn-server-core:
+
+* Added support for the `"apple"` attestation statement format.
+
+Other:
+
+* Dependency versions moved to new meta-module `webauthn-server-parent`. Users
+  should never need to depend on `webauthn-server-parent` directly.
+
+
 == Version 1.8.0 ==
 
 Changes:

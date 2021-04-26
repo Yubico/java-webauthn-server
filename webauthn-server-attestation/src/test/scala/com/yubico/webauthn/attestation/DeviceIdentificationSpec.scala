@@ -151,6 +151,51 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         )
       }
     }
+
+    describe("fails to identify") {
+      def check(testData: RealExamples.Example): Unit = {
+        val rp = RelyingParty
+          .builder()
+          .identity(testData.rp)
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .metadataService(new StandardMetadataService())
+          .build()
+
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        );
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          false
+        )
+        result.getAttestationMetadata.get.getVendorProperties.isPresent should be(
+          false
+        )
+        result.getAttestationMetadata.get.getTransports.isPresent should be(
+          false
+        )
+      }
+
+      it("an Apple iOS device.") {
+        check(RealExamples.AppleAttestationIos)
+      }
+    }
   }
 
   describe("The default AttestationResolver") {
@@ -213,6 +258,136 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           RealExamples.SecurityKeyNfc,
           Set(USB, NFC),
         )
+      }
+    }
+  }
+
+  describe(
+    "A StandardMetadataService configured with an Apple root certificate"
+  ) {
+    // Apple WebAuthn Root CA cert downloaded from https://www.apple.com/certificateauthority/private/ on 2021-04-12
+    // https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem
+    val mds = metadataService("""{
+        |  "identifier": "98cf2729-e2b9-4633-8b6a-b295cda99ccf",
+        |  "version": 1,
+        |  "vendorInfo": {
+        |    "name": "Apple Inc. (Metadata file by Yubico)"
+        |  },
+        |  "trustedCertificates": [
+        |    "-----BEGIN CERTIFICATE-----\nMIICEjCCAZmgAwIBAgIQaB0BbHo84wIlpQGUKEdXcTAKBggqhkjOPQQDAzBLMR8w\nHQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJ\nbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4XDTIwMDMxODE4MjEzMloXDTQ1MDMx\nNTAwMDAwMFowSzEfMB0GA1UEAwwWQXBwbGUgV2ViQXV0aG4gUm9vdCBDQTETMBEG\nA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTB2MBAGByqGSM49\nAgEGBSuBBAAiA2IABCJCQ2pTVhzjl4Wo6IhHtMSAzO2cv+H9DQKev3//fG59G11k\nxu9eI0/7o6V5uShBpe1u6l6mS19S1FEh6yGljnZAJ+2GNP1mi/YK2kSXIuTHjxA/\npcoRf7XkOtO4o1qlcaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUJtdk\n2cV4wlpn0afeaxLQG2PxxtcwDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2cA\nMGQCMFrZ+9DsJ1PW9hfNdBywZDsWDbWFp28it1d/5w2RPkRX3Bbn/UbDTNLx7Jr3\njAGGiQIwHFj+dJZYUJR786osByBelJYsVZd2GbHQu209b5RCmGQ21gpSAk9QZW4B\n1bWeT0vT\n-----END CERTIFICATE-----"
+        |  ],
+        |  "devices": [
+        |    {
+        |      "displayName": "Apple device",
+        |      "selectors": [
+        |        {
+        |          "type": "x509Extension",
+        |          "parameters": {
+        |            "key": "1.2.840.113635.100.8.2"
+        |          }
+        |        }
+        |      ]
+        |    }
+        |  ]
+        |}""".stripMargin)
+
+    describe("successfully identifies") {
+      def check(
+          expectedName: String,
+          testData: RealExamples.Example,
+      ): Unit = {
+        val rp = RelyingParty
+          .builder()
+          .identity(testData.rp)
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .metadataService(mds)
+          .build()
+
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(true)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          true
+        )
+        result.getAttestationMetadata.get.getDeviceProperties
+          .get()
+          .get("displayName") should equal(expectedName)
+        result.getAttestationMetadata.get.getTransports.isPresent should be(
+          false
+        )
+      }
+
+      it("an Apple iOS device.") {
+        check(
+          "Apple device",
+          RealExamples.AppleAttestationIos,
+        )
+      }
+
+      it("an Apple MacOS device.") {
+        check(
+          "Apple device",
+          RealExamples.AppleAttestationMacos,
+        )
+      }
+    }
+
+    describe("fails to identify") {
+      def check(testData: RealExamples.Example): Unit = {
+        val rp = RelyingParty
+          .builder()
+          .identity(testData.rp)
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .metadataService(mds)
+          .build()
+
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getVendorProperties.isPresent should be(
+          false
+        )
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          false
+        )
+      }
+
+      it("a YubiKey 5 NFC.") {
+        check(RealExamples.YubiKey5)
       }
     }
   }

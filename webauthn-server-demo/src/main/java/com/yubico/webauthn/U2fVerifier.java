@@ -44,9 +44,9 @@ public class U2fVerifier {
   public static boolean verify(
       AppId appId, RegistrationRequest request, U2fRegistrationResponse response)
       throws CertificateException, IOException, Base64UrlException {
-    final ByteArray appIdHash = Crypto.hash(appId.getId());
+    final ByteArray appIdHash = Crypto.sha256(appId.getId());
     final ByteArray clientDataHash =
-        Crypto.hash(response.getCredential().getU2fResponse().getClientDataJSON());
+        Crypto.sha256(response.getCredential().getU2fResponse().getClientDataJSON());
 
     final JsonNode clientData =
         JacksonCodecs.json()

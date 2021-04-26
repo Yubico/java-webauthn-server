@@ -272,6 +272,16 @@ object Generators {
   def byteArray(size: Int): Gen[ByteArray] =
     Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
+  def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
+    for {
+      byteIndex: Int <- Gen.choose(0, bytes.size() - 1)
+      bitIndex: Int <- Gen.choose(0, 7)
+      flipMask: Byte = (1 << bitIndex).toByte
+    } yield new ByteArray(
+      bytes.getBytes
+        .updated(byteIndex, (bytes.getBytes()(byteIndex) ^ flipMask).toByte)
+    )
+
   implicit val arbitraryClientAssertionExtensionOutputs
       : Arbitrary[ClientAssertionExtensionOutputs] = Arbitrary(
     for {

@@ -31,6 +31,7 @@ import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.AttestationResolver;
 import com.yubico.webauthn.attestation.DeviceMatcher;
@@ -135,9 +136,11 @@ public final class SimpleAttestationResolver implements AttestationResolver {
                   .vendorProperties(Optional.of(vendorProperties))
                   .deviceProperties(Optional.ofNullable(deviceProperties))
                   .transports(
-                      Optional.of(
-                          Transport.fromInt(
-                              getTransports(attestationCertificate) | metadataTransports)))
+                      OptionalUtil.zipWith(
+                              getTransports(attestationCertificate),
+                              Optional.of(metadataTransports).filter(t -> t != 0),
+                              (a, b) -> a | b)
+                          .map(Transport::fromInt))
                   .build();
             });
   }
@@ -158,11 +161,11 @@ public final class SimpleAttestationResolver implements AttestationResolver {
     }
   }
 
-  private static int getTransports(X509Certificate cert) {
+  private static Optional<Integer> getTransports(X509Certificate cert) {
     byte[] extensionValue = cert.getExtensionValue(TRANSPORTS_EXT_OID);
 
     if (extensionValue == null) {
-      return 0;
+      return Optional.empty();
     }
 
     ExceptionUtil.assure(
@@ -186,14 +189,14 @@ public final class SimpleAttestationResolver implements AttestationResolver {
       }
     }
 
-    return transports;
+    return Optional.of(transports);
   }
 
   @Override
   public Attestation untrustedFromCertificate(X509Certificate attestationCertificate) {
     return Attestation.builder()
         .trusted(false)
-        .transports(Optional.of(Transport.fromInt(getTransports(attestationCertificate))))
+        .transports(getTransports(attestationCertificate).map(Transport::fromInt))
         .build();
   }
 }

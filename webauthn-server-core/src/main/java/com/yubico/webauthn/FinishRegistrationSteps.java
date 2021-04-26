@@ -259,7 +259,7 @@ final class FinishRegistrationSteps {
     }
 
     public ByteArray clientDataJsonHash() {
-      return Crypto.hash(response.getResponse().getClientDataJSON());
+      return Crypto.sha256(response.getResponse().getClientDataJSON());
     }
   }
 
@@ -292,7 +292,7 @@ final class FinishRegistrationSteps {
     @Override
     public void validate() {
       assure(
-          Crypto.hash(rpId)
+          Crypto.sha256(rpId)
               .equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
           "Wrong RP ID hash.");
     }
@@ -405,6 +405,8 @@ final class FinishRegistrationSteps {
           return Optional.of(new PackedAttestationStatementVerifier());
         case "android-safetynet":
           return Optional.of(new AndroidSafetynetAttestationStatementVerifier());
+        case "apple":
+          return Optional.of(new AppleAttestationStatementVerifier());
         default:
           return Optional.empty();
       }
@@ -502,11 +504,13 @@ final class FinishRegistrationSteps {
         case UNKNOWN:
           return Optional.empty();
 
+        case ANONYMIZATION_CA:
         case ATTESTATION_CA:
         case BASIC:
           switch (attestation.getFormat()) {
             case "android-key":
             case "android-safetynet":
+            case "apple":
             case "fido-u2f":
             case "packed":
             case "tpm":
@@ -544,6 +548,7 @@ final class FinishRegistrationSteps {
           assure(allowUntrustedAttestation, "Self attestation is not allowed.");
           break;
 
+        case ANONYMIZATION_CA:
         case ATTESTATION_CA:
         case BASIC:
           assure(
@@ -579,6 +584,7 @@ final class FinishRegistrationSteps {
         case UNKNOWN:
           return false;
 
+        case ANONYMIZATION_CA:
         case ATTESTATION_CA:
         case BASIC:
           return attestationMetadata().filter(Attestation::isTrusted).isPresent();

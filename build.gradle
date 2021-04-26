@@ -18,6 +18,8 @@ plugins {
 import io.franzbecker.gradle.lombok.LombokPlugin
 import io.franzbecker.gradle.lombok.task.DelombokTask
 
+rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
+
 project.ext.isCiBuild = System.env.CI == 'true'
 
 project.ext.publishEnabled = !isCiBuild &&
@@ -273,6 +275,66 @@ subprojects { project ->
       useGpgCmd()
       sign publishing.publications.jars
     }
+  }
+}
+
+// The root project has no sources, but the dependency platform also needs to be published as an artifact
+// See https://docs.gradle.org/current/userguide/java_platform_plugin.html
+// See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
+if (publishEnabled) {
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
+  publishing {
+    publications {
+      jars(MavenPublication) {
+        from components.javaPlatform
+
+        pom {
+          name = project.name
+          description = project.description
+          url = 'https://developers.yubico.com/java-webauthn-server/'
+
+          developers {
+            developer {
+              id = 'emil'
+              name = 'Emil Lundberg'
+              email = 'emil@yubico.com'
+            }
+          }
+
+          licenses {
+            license {
+              name = 'BSD-license'
+              comments = 'Revised 2-clause BSD license'
+            }
+          }
+
+          scm {
+            url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+            connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+            developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
+            tag = 'HEAD'
+          }
+        }
+      }
+    }
+
+    repositories {
+      maven {
+        name = "sonatypeNexus"
+        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        credentials {
+          username ossrhUsername
+          password ossrhPassword
+        }
+      }
+    }
+  }
+
+  signing {
+    useGpgCmd()
+    sign publishing.publications.jars
   }
 }
 
