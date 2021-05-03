@@ -24,65 +24,89 @@
 
 package com.yubico.webauthn.attestation
 
-import java.util.Collections
-
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
-import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
-import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.attestation.Transport.LIGHTNING
 import com.yubico.webauthn.attestation.Transport.NFC
 import com.yubico.webauthn.attestation.Transport.USB
+import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
+import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.test.Helpers
+import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
+import java.util.Collections
 import scala.jdk.CollectionConverters._
-
 
 @RunWith(classOf[JUnitRunner])
 class DeviceIdentificationSpec extends FunSpec with Matchers {
 
   def metadataService(metadataJson: String): StandardMetadataService = {
-    val metadata = Collections.singleton(JacksonCodecs.json().readValue(metadataJson, classOf[MetadataObject]))
+    val metadata = Collections.singleton(
+      JacksonCodecs.json().readValue(metadataJson, classOf[MetadataObject])
+    )
     new StandardMetadataService(
-      new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
+      new SimpleAttestationResolver(
+        metadata,
+        SimpleTrustResolver.fromMetadata(metadata),
+      )
     )
   }
 
   describe("A RelyingParty with the default StandardMetadataService") {
 
     describe("correctly identifies") {
-      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]): Unit = {
-        val rp = RelyingParty.builder()
+      def check(
+          expectedName: String,
+          testData: RealExamples.Example,
+          transports: Set[Transport],
+      ): Unit = {
+        val rp = RelyingParty
+          .builder()
           .identity(testData.rp)
           .credentialRepository(Helpers.CredentialRepository.empty)
           .metadataService(new StandardMetadataService())
           .build()
 
-        val result = rp.finishRegistration(FinishRegistrationOptions.builder()
-          .request(PublicKeyCredentialCreationOptions.builder()
-            .rp(testData.rp)
-            .user(testData.user)
-            .challenge(testData.attestation.challenge)
-            .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
-            .build())
-          .response(testData.attestation.credential)
-          .build());
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        );
 
-        result.isAttestationTrusted should be (true)
-        result.getAttestationMetadata.isPresent should be (true)
-        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be (true)
-        result.getAttestationMetadata.get.getDeviceProperties.get().get("displayName") should equal (expectedName)
-        result.getAttestationMetadata.get.getTransports.isPresent should be (true)
-        result.getAttestationMetadata.get.getTransports.get.asScala should equal (transports)
+        result.isAttestationTrusted should be(true)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          true
+        )
+        result.getAttestationMetadata.get.getDeviceProperties
+          .get()
+          .get("displayName") should equal(expectedName)
+        result.getAttestationMetadata.get.getTransports.isPresent should be(
+          true
+        )
+        result.getAttestationMetadata.get.getTransports.get.asScala should equal(
+          transports
+        )
       }
 
       it("a YubiKey NEO.") {
@@ -98,7 +122,11 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5 NFC", RealExamples.YubiKey5Nfc, Set(USB, NFC))
       }
       it("a newer YubiKey 5 NFC.") {
-        check("YubiKey 5/5C NFC", RealExamples.YubiKey5NfcPost5cNfc, Set(USB, NFC))
+        check(
+          "YubiKey 5/5C NFC",
+          RealExamples.YubiKey5NfcPost5cNfc,
+          Set(USB, NFC),
+        )
       }
       it("a YubiKey 5C NFC.") {
         check("YubiKey 5/5C NFC", RealExamples.YubiKey5cNfc, Set(USB, NFC))
@@ -116,21 +144,78 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("Security Key by Yubico", RealExamples.SecurityKey2, Set(USB))
       }
       it("a Security Key NFC by Yubico.") {
-        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc, Set(USB, NFC))
+        check(
+          "Security Key NFC by Yubico",
+          RealExamples.SecurityKeyNfc,
+          Set(USB, NFC),
+        )
+      }
+    }
+
+    describe("fails to identify") {
+      def check(testData: RealExamples.Example): Unit = {
+        val rp = RelyingParty
+          .builder()
+          .identity(testData.rp)
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .metadataService(new StandardMetadataService())
+          .build()
+
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        );
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          false
+        )
+        result.getAttestationMetadata.get.getVendorProperties.isPresent should be(
+          false
+        )
+        result.getAttestationMetadata.get.getTransports.isPresent should be(
+          false
+        )
+      }
+
+      it("an Apple iOS device.") {
+        check(RealExamples.AppleAttestationIos)
       }
     }
   }
 
   describe("The default AttestationResolver") {
     describe("successfully identifies") {
-      def check(expectedName: String, testData: RealExamples.Example, transports: Set[Transport]): Unit = {
+      def check(
+          expectedName: String,
+          testData: RealExamples.Example,
+          transports: Set[Transport],
+      ): Unit = {
         val cert = CertificateParser.parseDer(testData.attestationCert.getBytes)
-        val resolved = StandardMetadataService.createDefaultAttestationResolver().resolve(cert)
-        resolved.isPresent should be (true)
-        resolved.get.getDeviceProperties.isPresent should be (true)
-        resolved.get.getDeviceProperties.get.get("displayName") should equal (expectedName)
-        resolved.get.getTransports.isPresent should be (true)
-        resolved.get.getTransports.get.asScala should equal (transports)
+        val resolved = StandardMetadataService
+          .createDefaultAttestationResolver()
+          .resolve(cert)
+        resolved.isPresent should be(true)
+        resolved.get.getDeviceProperties.isPresent should be(true)
+        resolved.get.getDeviceProperties.get.get("displayName") should equal(
+          expectedName
+        )
+        resolved.get.getTransports.isPresent should be(true)
+        resolved.get.getTransports.get.asScala should equal(transports)
       }
 
       it("a YubiKey NEO.") {
@@ -146,7 +231,11 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("YubiKey 5 NFC", RealExamples.YubiKey5Nfc, Set(USB, NFC))
       }
       it("a newer YubiKey 5 NFC.") {
-        check("YubiKey 5/5C NFC", RealExamples.YubiKey5NfcPost5cNfc, Set(USB, NFC))
+        check(
+          "YubiKey 5/5C NFC",
+          RealExamples.YubiKey5NfcPost5cNfc,
+          Set(USB, NFC),
+        )
       }
       it("a YubiKey 5C NFC.") {
         check("YubiKey 5/5C NFC", RealExamples.YubiKey5cNfc, Set(USB, NFC))
@@ -164,7 +253,141 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
         check("Security Key by Yubico", RealExamples.SecurityKey2, Set(USB))
       }
       it("a Security Key NFC by Yubico.") {
-        check("Security Key NFC by Yubico", RealExamples.SecurityKeyNfc, Set(USB, NFC))
+        check(
+          "Security Key NFC by Yubico",
+          RealExamples.SecurityKeyNfc,
+          Set(USB, NFC),
+        )
+      }
+    }
+  }
+
+  describe(
+    "A StandardMetadataService configured with an Apple root certificate"
+  ) {
+    // Apple WebAuthn Root CA cert downloaded from https://www.apple.com/certificateauthority/private/ on 2021-04-12
+    // https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem
+    val mds = metadataService("""{
+        |  "identifier": "98cf2729-e2b9-4633-8b6a-b295cda99ccf",
+        |  "version": 1,
+        |  "vendorInfo": {
+        |    "name": "Apple Inc. (Metadata file by Yubico)"
+        |  },
+        |  "trustedCertificates": [
+        |    "-----BEGIN CERTIFICATE-----\nMIICEjCCAZmgAwIBAgIQaB0BbHo84wIlpQGUKEdXcTAKBggqhkjOPQQDAzBLMR8w\nHQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJ\nbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4XDTIwMDMxODE4MjEzMloXDTQ1MDMx\nNTAwMDAwMFowSzEfMB0GA1UEAwwWQXBwbGUgV2ViQXV0aG4gUm9vdCBDQTETMBEG\nA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTB2MBAGByqGSM49\nAgEGBSuBBAAiA2IABCJCQ2pTVhzjl4Wo6IhHtMSAzO2cv+H9DQKev3//fG59G11k\nxu9eI0/7o6V5uShBpe1u6l6mS19S1FEh6yGljnZAJ+2GNP1mi/YK2kSXIuTHjxA/\npcoRf7XkOtO4o1qlcaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUJtdk\n2cV4wlpn0afeaxLQG2PxxtcwDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2cA\nMGQCMFrZ+9DsJ1PW9hfNdBywZDsWDbWFp28it1d/5w2RPkRX3Bbn/UbDTNLx7Jr3\njAGGiQIwHFj+dJZYUJR786osByBelJYsVZd2GbHQu209b5RCmGQ21gpSAk9QZW4B\n1bWeT0vT\n-----END CERTIFICATE-----"
+        |  ],
+        |  "devices": [
+        |    {
+        |      "displayName": "Apple device",
+        |      "selectors": [
+        |        {
+        |          "type": "x509Extension",
+        |          "parameters": {
+        |            "key": "1.2.840.113635.100.8.2"
+        |          }
+        |        }
+        |      ]
+        |    }
+        |  ]
+        |}""".stripMargin)
+
+    describe("successfully identifies") {
+      def check(
+          expectedName: String,
+          testData: RealExamples.Example,
+      ): Unit = {
+        val rp = RelyingParty
+          .builder()
+          .identity(testData.rp)
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .metadataService(mds)
+          .build()
+
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(true)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          true
+        )
+        result.getAttestationMetadata.get.getDeviceProperties
+          .get()
+          .get("displayName") should equal(expectedName)
+        result.getAttestationMetadata.get.getTransports.isPresent should be(
+          false
+        )
+      }
+
+      it("an Apple iOS device.") {
+        check(
+          "Apple device",
+          RealExamples.AppleAttestationIos,
+        )
+      }
+
+      it("an Apple MacOS device.") {
+        check(
+          "Apple device",
+          RealExamples.AppleAttestationMacos,
+        )
+      }
+    }
+
+    describe("fails to identify") {
+      def check(testData: RealExamples.Example): Unit = {
+        val rp = RelyingParty
+          .builder()
+          .identity(testData.rp)
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .metadataService(mds)
+          .build()
+
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(testData.rp)
+                .user(testData.user)
+                .challenge(testData.attestation.challenge)
+                .pubKeyCredParams(
+                  List(PublicKeyCredentialParameters.ES256).asJava
+                )
+                .build()
+            )
+            .response(testData.attestation.credential)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationMetadata.isPresent should be(true)
+        result.getAttestationMetadata.get.getVendorProperties.isPresent should be(
+          false
+        )
+        result.getAttestationMetadata.get.getDeviceProperties.isPresent should be(
+          false
+        )
+      }
+
+      it("a YubiKey 5 NFC.") {
+        check(RealExamples.YubiKey5)
       }
     }
   }

@@ -14,3 +14,11 @@ and the `webauthn-server-core-minimal` module is hosted in `webauthn-server-core
 We intend to eliminate the `webauthn-server-core-bundle` subproject in the next major version release,
 and return the current `webauthn-server-core-minimal` module to the `webauthn-server-core` module name.
 This naming inconsistency should be fixed along with this.
+
+
+Code formatting
+---
+
+Use `./gradlew spotlessApply` to run the automatic code formatter.
+You can also run it in continuous mode as `./gradlew --continuous spotlessApply`
+to reformat whenever a file changes.

@@ -5,12 +5,8 @@ import org.junit.Test;
 
 public class ClientAssertionExtensionOutputsTest {
 
-    @Test
-    public void itHasTheseBuilderMethods() {
-        ClientAssertionExtensionOutputs.builder()
-            .appid(false)
-            .appid(Optional.of(false))
-            .build();
-    }
-
+  @Test
+  public void itHasTheseBuilderMethods() {
+    ClientAssertionExtensionOutputs.builder().appid(false).appid(Optional.of(false)).build();
+  }
 }

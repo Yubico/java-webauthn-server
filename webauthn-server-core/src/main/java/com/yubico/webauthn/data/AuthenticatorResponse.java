@@ -30,39 +30,35 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Authenticators respond to Relying Party requests by returning an object derived from the {@link
  * AuthenticatorResponse} interface.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorresponse">§5.2. Authenticator Responses
- * (interface AuthenticatorResponse)
- * </a>
+ * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorresponse">§5.2.
+ *     Authenticator Responses (interface AuthenticatorResponse) </a>
  */
 public interface AuthenticatorResponse {
 
-    /**
-     * The authenticator data returned by the authenticator. See <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1
-     * Authenticator Data</a>.
-     */
-    ByteArray getAuthenticatorData();
+  /**
+   * The authenticator data returned by the authenticator. See <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1
+   * Authenticator Data</a>.
+   */
+  ByteArray getAuthenticatorData();
 
-    /**
-     * {@link #getAuthenticatorData()} parsed as a domain object.
-     */
-    @JsonIgnore
-    default AuthenticatorData getParsedAuthenticatorData() {
-        return new AuthenticatorData(getAuthenticatorData());
-    }
+  /** {@link #getAuthenticatorData()} parsed as a domain object. */
+  @JsonIgnore
+  default AuthenticatorData getParsedAuthenticatorData() {
+    return new AuthenticatorData(getAuthenticatorData());
+  }
 
-    /**
-     * The JSON-serialized client data (see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-client-data">§5.10.1
-     * Client Data Used in WebAuthn Signatures</a> (dictionary {@link CollectedClientData})) passed to the authenticator
-     * by the client in the call to either <code>navigator.credentials.create()</code> or
-     * <code>navigator.credentials.get()</code>. The exact JSON serialization MUST be preserved, as the hash of the
-     * serialized client data has been computed over it.
-     */
-    ByteArray getClientDataJSON();
+  /**
+   * The JSON-serialized client data (see <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-client-data">§5.10.1 Client Data
+   * Used in WebAuthn Signatures</a> (dictionary {@link CollectedClientData})) passed to the
+   * authenticator by the client in the call to either <code>navigator.credentials.create()</code>
+   * or <code>navigator.credentials.get()</code>. The exact JSON serialization MUST be preserved, as
+   * the hash of the serialized client data has been computed over it.
+   */
+  ByteArray getClientDataJSON();
 
-    /**
-     * {@link #getClientDataJSON()} parsed as a domain object.
-     */
-    @JsonIgnore
-    CollectedClientData getClientData();
-
+  /** {@link #getClientDataJSON()} parsed as a domain object. */
+  @JsonIgnore
+  CollectedClientData getClientData();
 }

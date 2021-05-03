@@ -40,24 +40,22 @@ import lombok.experimental.Wither;
 @Wither
 public class CredentialRegistration {
 
-    long signatureCount;
+  long signatureCount;
 
-    UserIdentity userIdentity;
-    Optional<String> credentialNickname;
+  UserIdentity userIdentity;
+  Optional<String> credentialNickname;
 
-    @JsonIgnore
-    Instant registrationTime;
-    RegisteredCredential credential;
+  @JsonIgnore Instant registrationTime;
+  RegisteredCredential credential;
 
-    Optional<Attestation> attestationMetadata;
+  Optional<Attestation> attestationMetadata;
 
-    @JsonProperty("registrationTime")
-    public String getRegistrationTimestamp() {
-        return registrationTime.toString();
-    }
+  @JsonProperty("registrationTime")
+  public String getRegistrationTimestamp() {
+    return registrationTime.toString();
+  }
 
-    public String getUsername() {
-        return userIdentity.getName();
-    }
-
+  public String getUsername() {
+    return userIdentity.getName();
+  }
 }

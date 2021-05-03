@@ -32,203 +32,188 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-/**
- * Parameters for {@link RelyingParty#startAssertion(StartAssertionOptions)}.
- */
+/** Parameters for {@link RelyingParty#startAssertion(StartAssertionOptions)}. */
 @Value
 @Builder(toBuilder = true)
 public class StartAssertionOptions {
 
+  /**
+   * The username of the user to authenticate, if the user has already been identified.
+   *
+   * <p>If this is absent, that implies a first-factor authentication operation - meaning
+   * identification of the user is deferred until after receiving the response from the client.
+   *
+   * <p>The default is empty (absent).
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+   *     credential</a>
+   */
+  private final String username;
+
+  /**
+   * Extension inputs for this authentication operation.
+   *
+   * <p>If {@link RelyingParty#getAppId()} is set, {@link
+   * RelyingParty#startAssertion(StartAssertionOptions)} will overwrite any {@link
+   * AssertionExtensionInputs#getAppid() appId} extension input set herein.
+   *
+   * <p>The default specifies no extension inputs.
+   */
+  @NonNull @Builder.Default
+  private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
+
+  /**
+   * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
+   * authentication operation.
+   *
+   * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
+   */
+  private final UserVerificationRequirement userVerification;
+
+  /**
+   * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication
+   * operation.
+   *
+   * <p>This library does not take the timeout into account in any way, other than passing it
+   * through to the {@link PublicKeyCredentialRequestOptions} so it can be used as an argument to
+   * <code>navigator.credentials.get()</code> on the client side.
+   *
+   * <p>The default is empty.
+   */
+  private final Long timeout;
+
+  /**
+   * The username of the user to authenticate, if the user has already been identified.
+   *
+   * <p>If this is absent, that implies a first-factor authentication operation - meaning
+   * identification of the user is deferred until after receiving the response from the client.
+   *
+   * <p>The default is empty (absent).
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+   *     credential</a>
+   */
+  public Optional<String> getUsername() {
+    return Optional.ofNullable(username);
+  }
+
+  /**
+   * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
+   * authentication operation.
+   *
+   * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
+   */
+  public Optional<UserVerificationRequirement> getUserVerification() {
+    return Optional.ofNullable(userVerification);
+  }
+
+  /**
+   * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication
+   * operation.
+   *
+   * <p>This library does not take the timeout into account in any way, other than passing it
+   * through to the {@link PublicKeyCredentialRequestOptions} so it can be used as an argument to
+   * <code>navigator.credentials.get()</code> on the client side.
+   *
+   * <p>The default is empty.
+   */
+  public Optional<Long> getTimeout() {
+    return Optional.ofNullable(timeout);
+  }
+
+  public static class StartAssertionOptionsBuilder {
+    private String username = null;
+    private UserVerificationRequirement userVerification = null;
+    private Long timeout = null;
+
     /**
      * The username of the user to authenticate, if the user has already been identified.
-     * <p>
-     * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
-     * deferred until after receiving the response from the client.
-     * </p>
      *
-     * <p>
-     * The default is empty (absent).
-     * </p>
+     * <p>If this is absent, that implies a first-factor authentication operation - meaning
+     * identification of the user is deferred until after receiving the response from the client.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
-     * credential</a>
-     */
-    private final String username;
-
-    /**
-     * Extension inputs for this authentication operation.
-     * <p>
-     * If {@link RelyingParty#getAppId()} is set, {@link RelyingParty#startAssertion(StartAssertionOptions)} will
-     * overwrite any {@link AssertionExtensionInputs#getAppid() appId} extension input set herein.
-     * </p>
+     * <p>The default is empty (absent).
      *
-     * <p>
-     * The default specifies no extension inputs.
-     * </p>
+     * @see <a
+     *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     *     credential</a>
      */
-    @NonNull
-    @Builder.Default
-    private final AssertionExtensionInputs extensions = AssertionExtensionInputs.builder().build();
-
-    /**
-     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
-     * <p>
-     * The default is {@link UserVerificationRequirement#PREFERRED}.
-     * </p>
-     */
-    private final UserVerificationRequirement userVerification;
-
-    /**
-     * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
-     * <p>
-     * This library does not take the timeout into account in any way, other than passing it through to the {@link
-     * PublicKeyCredentialRequestOptions} so it can be used as an argument to
-     * <code>navigator.credentials.get()</code> on the client side.
-     * </p>
-     * <p>
-     * The default is empty.
-     * </p>
-     */
-    private final Long timeout;
+    public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
+      this.username = username.orElse(null);
+      return this;
+    }
 
     /**
      * The username of the user to authenticate, if the user has already been identified.
-     * <p>
-     * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
-     * deferred until after receiving the response from the client.
-     * </p>
      *
-     * <p>
-     * The default is empty (absent).
-     * </p>
+     * <p>If this is absent, that implies a first-factor authentication operation - meaning
+     * identification of the user is deferred until after receiving the response from the client.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
-     * credential</a>
+     * <p>The default is empty (absent).
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     *     credential</a>
      */
-    public Optional<String> getUsername() {
-        return Optional.ofNullable(username);
+    public StartAssertionOptionsBuilder username(@NonNull String username) {
+      return this.username(Optional.of(username));
     }
 
     /**
-     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
-     * <p>
-     * The default is {@link UserVerificationRequirement#PREFERRED}.
-     * </p>
+     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
+     * authentication operation.
+     *
+     * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */
-    public Optional<UserVerificationRequirement> getUserVerification() {
-        return Optional.ofNullable(userVerification);
+    public StartAssertionOptionsBuilder userVerification(
+        @NonNull Optional<UserVerificationRequirement> userVerification) {
+      this.userVerification = userVerification.orElse(null);
+      return this;
     }
 
     /**
-     * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
-     * <p>
-     * This library does not take the timeout into account in any way, other than passing it through to the {@link
-     * PublicKeyCredentialRequestOptions} so it can be used as an argument to
+     * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
+     * authentication operation.
+     *
+     * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
+     */
+    public StartAssertionOptionsBuilder userVerification(
+        @NonNull UserVerificationRequirement userVerification) {
+      return this.userVerification(Optional.of(userVerification));
+    }
+
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication
+     * operation.
+     *
+     * <p>This library does not take the timeout into account in any way, other than passing it
+     * through to the {@link PublicKeyCredentialRequestOptions} so it can be used as an argument to
      * <code>navigator.credentials.get()</code> on the client side.
-     * </p>
-     * <p>
-     * The default is empty.
-     * </p>
+     *
+     * <p>The default is empty.
      */
-    public Optional<Long> getTimeout() {
-        return Optional.ofNullable(timeout);
+    public StartAssertionOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
+      if (timeout.isPresent() && timeout.get() <= 0) {
+        throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
+      }
+      this.timeout = timeout.orElse(null);
+      return this;
     }
 
-    public static class StartAssertionOptionsBuilder {
-        private String username = null;
-        private UserVerificationRequirement userVerification = null;
-        private Long timeout = null;
-
-        /**
-         * The username of the user to authenticate, if the user has already been identified.
-         * <p>
-         * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
-         * deferred until after receiving the response from the client.
-         * </p>
-         *
-         * <p>
-         * The default is empty (absent).
-         * </p>
-         *
-         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
-         * credential</a>
-         */
-        public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
-            this.username = username.orElse(null);
-            return this;
-        }
-
-        /**
-         * The username of the user to authenticate, if the user has already been identified.
-         * <p>
-         * If this is absent, that implies a first-factor authentication operation - meaning identification of the user is
-         * deferred until after receiving the response from the client.
-         * </p>
-         *
-         * <p>
-         * The default is empty (absent).
-         * </p>
-         *
-         * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
-         * credential</a>
-         */
-        public StartAssertionOptionsBuilder username(@NonNull String username) {
-            return this.username(Optional.of(username));
-        }
-
-        /**
-         * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
-         * <p>
-         * The default is {@link UserVerificationRequirement#PREFERRED}.
-         * </p>
-         */
-        public StartAssertionOptionsBuilder userVerification(@NonNull Optional<UserVerificationRequirement> userVerification) {
-            this.userVerification = userVerification.orElse(null);
-            return this;
-        }
-
-        /**
-         * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this authentication operation.
-         * <p>
-         * The default is {@link UserVerificationRequirement#PREFERRED}.
-         * </p>
-         */
-        public StartAssertionOptionsBuilder userVerification(@NonNull UserVerificationRequirement userVerification) {
-            return this.userVerification(Optional.of(userVerification));
-        }
-
-        /**
-         * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
-         * <p>
-         * This library does not take the timeout into account in any way, other than passing it through to the {@link
-         * PublicKeyCredentialRequestOptions} so it can be used as an argument to
-         * <code>navigator.credentials.get()</code> on the client side.
-         * </p>
-         * <p>
-         * The default is empty.
-         * </p>
-         */
-        public StartAssertionOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
-            if (timeout.isPresent() && timeout.get() <= 0) {
-                throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
-            }
-            this.timeout = timeout.orElse(null);
-            return this;
-        }
-
-        /**
-         * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication operation.
-         * <p>
-         * This library does not take the timeout into account in any way, other than passing it through to the {@link
-         * PublicKeyCredentialRequestOptions} so it can be used as an argument to
-         * <code>navigator.credentials.get()</code> on the client side.
-         * </p>
-         * <p>
-         * The default is empty.
-         * </p>
-         */
-        public StartAssertionOptionsBuilder timeout(long timeout) {
-            return this.timeout(Optional.of(timeout));
-        }
+    /**
+     * The value for {@link PublicKeyCredentialRequestOptions#getTimeout()} for this authentication
+     * operation.
+     *
+     * <p>This library does not take the timeout into account in any way, other than passing it
+     * through to the {@link PublicKeyCredentialRequestOptions} so it can be used as an argument to
+     * <code>navigator.credentials.get()</code> on the client side.
+     *
+     * <p>The default is empty.
+     */
+    public StartAssertionOptionsBuilder timeout(long timeout) {
+      return this.timeout(Optional.of(timeout));
     }
+  }
 }

@@ -1,5 +1,8 @@
 package com.yubico.webauthn;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import COSE.CoseException;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
@@ -17,66 +20,71 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class CryptoAlgorithmsTest {
 
-    private List<Provider> providersBefore;
+  private List<Provider> providersBefore;
 
-    @Before
-    public void setUp() {
-        providersBefore = Stream.of(Security.getProviders()).collect(Collectors.toList());
+  @Before
+  public void setUp() {
+    providersBefore = Stream.of(Security.getProviders()).collect(Collectors.toList());
 
-        // The RelyingParty constructor has the possible side-effect of loading the BouncyCastle provider
-        RelyingParty.builder()
-            .identity(RelyingPartyIdentity.builder().id("foo").name("foo").build())
-            .credentialRepository(Mockito.mock(CredentialRepository.class))
-            .build();
+    // The RelyingParty constructor has the possible side-effect of loading the BouncyCastle
+    // provider
+    RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("foo").name("foo").build())
+        .credentialRepository(Mockito.mock(CredentialRepository.class))
+        .build();
+  }
+
+  @After
+  public void tearDown() {
+    for (Provider prov : Security.getProviders()) {
+      Security.removeProvider(prov.getName());
     }
+    providersBefore.forEach(Security::addProvider);
+  }
 
-    @After
-    public void tearDown() {
-        for (Provider prov : Security.getProviders()) {
-            Security.removeProvider(prov.getName());
-        }
-        providersBefore.forEach(Security::addProvider);
-    }
-
-    @Test
-    public void importRsa() throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
-        PublicKey key = WebAuthnCodecs.importCosePublicKey(
-            new AttestationObject(RegistrationTestData.Packed$.MODULE$.BasicAttestationRsa().attestationObject())
+  @Test
+  public void importRsa()
+      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+    PublicKey key =
+        WebAuthnCodecs.importCosePublicKey(
+            new AttestationObject(
+                    RegistrationTestData.Packed$.MODULE$.BasicAttestationRsa().attestationObject())
                 .getAuthenticatorData()
                 .getAttestedCredentialData()
                 .get()
-                .getCredentialPublicKey()
-        );
-        assertEquals(key.getAlgorithm(), "RSA");
-    }
+                .getCredentialPublicKey());
+    assertEquals(key.getAlgorithm(), "RSA");
+  }
 
-    @Test
-    public void importEcdsa() throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
-        PublicKey key = WebAuthnCodecs.importCosePublicKey(
-            new AttestationObject(RegistrationTestData.Packed$.MODULE$.BasicAttestation().attestationObject())
+  @Test
+  public void importEcdsa()
+      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+    PublicKey key =
+        WebAuthnCodecs.importCosePublicKey(
+            new AttestationObject(
+                    RegistrationTestData.Packed$.MODULE$.BasicAttestation().attestationObject())
                 .getAuthenticatorData()
                 .getAttestedCredentialData()
                 .get()
-                .getCredentialPublicKey()
-        );
-        assertEquals(key.getAlgorithm(), "EC");
-    }
+                .getCredentialPublicKey());
+    assertEquals(key.getAlgorithm(), "EC");
+  }
 
-    @Test
-    public void importEddsa() throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
-        PublicKey key = WebAuthnCodecs.importCosePublicKey(
-            new AttestationObject(RegistrationTestData.Packed$.MODULE$.BasicAttestationEdDsa().attestationObject())
+  @Test
+  public void importEddsa()
+      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+    PublicKey key =
+        WebAuthnCodecs.importCosePublicKey(
+            new AttestationObject(
+                    RegistrationTestData.Packed$.MODULE$
+                        .BasicAttestationEdDsa()
+                        .attestationObject())
                 .getAuthenticatorData()
                 .getAttestedCredentialData()
                 .get()
-                .getCredentialPublicKey()
-        );
-        assertTrue("EdDSA".equals(key.getAlgorithm()) || "Ed25519".equals(key.getAlgorithm()));
-    }
-
+                .getCredentialPublicKey());
+    assertTrue("EdDSA".equals(key.getAlgorithm()) || "Ed25519".equals(key.getAlgorithm()));
+  }
 }

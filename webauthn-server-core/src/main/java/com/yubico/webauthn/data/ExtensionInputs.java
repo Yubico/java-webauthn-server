@@ -29,10 +29,7 @@ import java.util.Set;
 
 public interface ExtensionInputs {
 
-    /**
-     * Returns a {@link Set} of the extension IDs for which an extension input is present.
-     */
-    @JsonIgnore
-    Set<String> getExtensionIds();
-
+  /** Returns a {@link Set} of the extension IDs for which an extension input is present. */
+  @JsonIgnore
+  Set<String> getExtensionIds();
 }

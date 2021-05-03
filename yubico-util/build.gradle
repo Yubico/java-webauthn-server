@@ -1,36 +1,45 @@
 plugins {
   id 'java-library'
   id 'scala'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'Yubico internal utilities'
 
 project.ext.publishMe = true
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
+  api(platform(rootProject))
 
   api(
-    addVersion('com.fasterxml.jackson.core:jackson-databind'),
+    'com.fasterxml.jackson.core:jackson-databind',
   )
 
   implementation(
-    addVersion('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'),
-    addVersion('com.fasterxml.jackson.datatype:jackson-datatype-jdk8'),
-    addVersion('com.google.guava:guava'),
-    addVersion('com.upokecenter:cbor'),
-    addVersion('org.slf4j:slf4j-api'),
+    'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor',
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
+    'com.google.guava:guava',
+    'com.upokecenter:cbor',
+    'org.slf4j:slf4j-api',
   )
 
   testImplementation(
     project(':yubico-util-scala'),
-    addVersion('junit:junit'),
-    addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.13'),
-    addVersion('org.scalatest:scalatest_2.13'),
+    'junit:junit',
+    'org.scala-lang:scala-library',
+    'org.scalacheck:scalacheck_2.13',
+    'org.scalatest:scalatest_2.13',
   )
 
   testRuntimeOnly(
-    addVersion('ch.qos.logback:logback-classic'),
+    'ch.qos.logback:logback-classic',
+  )
+
+  testRuntimeOnly(
+    'ch.qos.logback:logback-classic',
   )
 }
 

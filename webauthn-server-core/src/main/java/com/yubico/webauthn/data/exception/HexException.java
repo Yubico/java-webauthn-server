@@ -26,8 +26,7 @@ package com.yubico.webauthn.data.exception;
 
 public final class HexException extends Exception {
 
-    public HexException(String s, Throwable cause) {
-        super(s, cause);
-    }
-
+  public HexException(String s, Throwable cause) {
+    super(s, cause);
+  }
 }

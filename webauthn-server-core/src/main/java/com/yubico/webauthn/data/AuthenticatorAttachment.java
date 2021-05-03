@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn.data;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
@@ -35,66 +34,64 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /**
- * This enumeration’s values describe authenticators' <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticator-attachment-modality">attachment
+ * This enumeration’s values describe authenticators' <a
+ * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticator-attachment-modality">attachment
  * modalities</a>. Relying Parties use this for two purposes:
  *
  * <ul>
- * <li>
- * to express a preferred authenticator attachment modality when calling <code>navigator.credentials.create()</code> to
- * create a credential, and
- * </li>
- *
- * <li>
- * to inform the client of the Relying Party's best belief about how to locate the managing authenticators of the
- * credentials listed in {@link PublicKeyCredentialRequestOptions#allowCredentials} when calling
- * <code>navigator.credentials.get()</code>.
- * </li>
+ *   <li>to express a preferred authenticator attachment modality when calling <code>
+ *       navigator.credentials.create()</code> to create a credential, and
+ *   <li>to inform the client of the Relying Party's best belief about how to locate the managing
+ *       authenticators of the credentials listed in {@link
+ *       PublicKeyCredentialRequestOptions#allowCredentials} when calling <code>
+ *       navigator.credentials.get()</code>.
  * </ul>
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatorattachment">§5.4.5. Authenticator
- * Attachment Enumeration (enum AuthenticatorAttachment)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatorattachment">§5.4.5.
+ *     Authenticator Attachment Enumeration (enum AuthenticatorAttachment) </a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum AuthenticatorAttachment implements JsonStringSerializable {
 
-    /**
-     * Indicates <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cross-platform-attachment">cross-platform
-     * attachment</a>.
-     * <p>
-     * Authenticators of this class are removable from, and can "roam" among, client platforms.
-     * </p>
-     */
-    CROSS_PLATFORM("cross-platform"),
+  /**
+   * Indicates <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cross-platform-attachment">cross-platform
+   * attachment</a>.
+   *
+   * <p>Authenticators of this class are removable from, and can "roam" among, client platforms.
+   */
+  CROSS_PLATFORM("cross-platform"),
 
-    /**
-     * Indicates <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#platform-attachment">platform
-     * attachment</a>.
-     * <p>
-     * Usually, authenticators of this class are not removable from the platform.
-     * </p>
-     */
-    PLATFORM("platform");
+  /**
+   * Indicates <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#platform-attachment">platform
+   * attachment</a>.
+   *
+   * <p>Usually, authenticators of this class are not removable from the platform.
+   */
+  PLATFORM("platform");
 
-    @NonNull
-    private final String id;
+  @NonNull private final String id;
 
-    private static Optional<AuthenticatorAttachment> fromString(@NonNull String id) {
-        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
-    }
+  private static Optional<AuthenticatorAttachment> fromString(@NonNull String id) {
+    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  }
 
-    @JsonCreator
-    private static AuthenticatorAttachment fromJsonString(@NonNull String id) {
-        return fromString(id).orElseThrow(() -> new IllegalArgumentException(String.format(
-            "Unknown %s value: %s", AuthenticatorAttachment.class.getSimpleName(), id
-        )));
-    }
+  @JsonCreator
+  private static AuthenticatorAttachment fromJsonString(@NonNull String id) {
+    return fromString(id)
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Unknown %s value: %s",
+                        AuthenticatorAttachment.class.getSimpleName(), id)));
+  }
 
-    @Override
-    public String toJsonString() {
-        return id;
-    }
-
+  @Override
+  public String toJsonString() {
+    return id;
+  }
 }
-

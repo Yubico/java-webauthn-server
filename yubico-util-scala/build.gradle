@@ -1,18 +1,22 @@
 plugins {
   id 'scala'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'Yubico internal Scala utilities'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
+  implementation(platform(rootProject))
 
   implementation(
-    addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.13'),
+    'org.scala-lang:scala-library',
+    'org.scalacheck:scalacheck_2.13',
   )
 
   testImplementation(
-    addVersion('org.scalatest:scalatest_2.13'),
+    'org.scalatest:scalatest_2.13',
   )
 }
-

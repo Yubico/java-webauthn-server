@@ -24,13 +24,9 @@
 
 package com.yubico.webauthn.attestation
 
-import java.security.cert.X509Certificate
-import java.util.Base64
-import java.util.Collections
-
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.internal.util.JacksonCodecs
+import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver
 import com.yubico.webauthn.attestation.resolver.SimpleTrustResolver
@@ -42,8 +38,10 @@ import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
+import java.security.cert.X509Certificate
+import java.util.Base64
+import java.util.Collections
 import scala.jdk.CollectionConverters._
-
 
 @RunWith(classOf[JUnitRunner])
 class StandardMetadataServiceSpec extends FunSpec with Matchers {
@@ -56,17 +54,27 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
   private val ooidB = "1.3.6.1.4.1.41482.1.2"
 
   def metadataService(metadataJson: String): StandardMetadataService = {
-    val metadata = Collections.singleton(JacksonCodecs.json().readValue(metadataJson, classOf[MetadataObject]))
+    val metadata = Collections.singleton(
+      JacksonCodecs.json().readValue(metadataJson, classOf[MetadataObject])
+    )
     new StandardMetadataService(
-      new SimpleAttestationResolver(metadata, SimpleTrustResolver.fromMetadata(metadata))
+      new SimpleAttestationResolver(
+        metadata,
+        SimpleTrustResolver.fromMetadata(metadata),
+      )
     )
   }
 
-  def toPem(cert: X509Certificate): String = (
-    "-----BEGIN CERTIFICATE-----\n"
-      + Base64.getMimeEncoder(64, System.getProperty("line.separator").getBytes("UTF-8"))
-      .encodeToString(cert.getEncoded)
-      + "\n-----END CERTIFICATE-----\n"
+  def toPem(cert: X509Certificate): String =
+    (
+      "-----BEGIN CERTIFICATE-----\n"
+        + Base64
+          .getMimeEncoder(
+            64,
+            System.getProperty("line.separator").getBytes("UTF-8"),
+          )
+          .encodeToString(cert.getEncoded)
+        + "\n-----END CERTIFICATE-----\n"
     )
 
   describe("StandardMetadataService") {
@@ -75,17 +83,17 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
       val cacaca = TestAuthenticator.generateAttestationCaCertificate(
         name = new X500Name("CN=CA CA CA"),
-        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]()))),
       )
       val caca = TestAuthenticator.generateAttestationCaCertificate(
         name = new X500Name("CN=CA CA"),
         superCa = Some(cacaca),
-        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]()))),
       )
       val (caCert, caKey) = TestAuthenticator.generateAttestationCaCertificate(
         name = new X500Name("CN=CA"),
         superCa = Some(caca),
-        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]()))),
       )
 
       val (certA, _) = TestAuthenticator.generateAttestationCertificate(
@@ -93,24 +101,26 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         caCertAndKey = Some((caCert, caKey)),
         extensions = List(
           (ooidA, false, new DEROctetString(Array[Byte]())),
-          (TRANSPORTS_EXT_OID, false, new DERBitString(Array[Byte](0x60)))
-        )
+          (TRANSPORTS_EXT_OID, false, new DERBitString(Array[Byte](0x60))),
+        ),
       )
       val (certB, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Cert B"),
         caCertAndKey = Some((caCert, caKey)),
-        extensions = List((ooidB, false, new DEROctetString(Array[Byte]())))
+        extensions = List((ooidB, false, new DEROctetString(Array[Byte]()))),
       )
       val (unknownCert, _) = TestAuthenticator.generateAttestationCertificate(
         name = new X500Name("CN=Unknown Cert"),
-        extensions = List((ooidA, false, new DEROctetString(Array[Byte]())))
+        extensions = List((ooidA, false, new DEROctetString(Array[Byte]()))),
       )
 
       val metadataJson =
         s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${toPem(caCert).linesIterator.mkString(raw"\n")}"],
+          "trustedCertificates": ["${toPem(caCert).linesIterator.mkString(
+          raw"\n"
+        )}"],
           "vendorInfo": {},
           "devices": [
             {
@@ -139,28 +149,32 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
             }
           ]
         }"""
-      val service  = metadataService(metadataJson)
+      val service = metadataService(metadataJson)
 
       it("returns the trusted attestation matching the single cert passed, if it is signed by a trusted certificate.") {
-        val attestationA: Attestation = service.getAttestation(List(certA).asJava)
-        val attestationB: Attestation = service.getAttestation(List(certB).asJava)
+        val attestationA: Attestation =
+          service.getAttestation(List(certA).asJava)
+        val attestationB: Attestation =
+          service.getAttestation(List(certB).asJava)
 
-        attestationA.isTrusted should be (true)
-        attestationA.getDeviceProperties.get.get("deviceId") should be ("DevA")
+        attestationA.isTrusted should be(true)
+        attestationA.getDeviceProperties.get.get("deviceId") should be("DevA")
 
-        attestationB.isTrusted should be (true)
-        attestationB.getDeviceProperties.get.get("deviceId") should be ("DevB")
+        attestationB.isTrusted should be(true)
+        attestationB.getDeviceProperties.get.get("deviceId") should be("DevB")
       }
 
       it("returns the trusted attestation matching the first cert in the chain if it is signed by a trusted certificate.") {
-        val attestationA: Attestation = service.getAttestation(List(certA, certB).asJava)
-        val attestationB: Attestation = service.getAttestation(List(certB, certA).asJava)
+        val attestationA: Attestation =
+          service.getAttestation(List(certA, certB).asJava)
+        val attestationB: Attestation =
+          service.getAttestation(List(certB, certA).asJava)
 
-        attestationA.isTrusted should be (true)
-        attestationA.getDeviceProperties.get.get("deviceId") should be ("DevA")
+        attestationA.isTrusted should be(true)
+        attestationA.getDeviceProperties.get.get("deviceId") should be("DevA")
 
-        attestationB.isTrusted should be (true)
-        attestationB.getDeviceProperties.get.get("deviceId") should be ("DevB")
+        attestationB.isTrusted should be(true)
+        attestationB.getDeviceProperties.get.get("deviceId") should be("DevB")
       }
 
       it("returns a trusted best-effort attestation if the certificate is trusted but matches no known metadata.") {
@@ -168,17 +182,22 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${toPem(caCert).linesIterator.mkString(raw"\n")}"],
+          "trustedCertificates": ["${toPem(caCert).linesIterator.mkString(
+            raw"\n"
+          )}"],
           "vendorInfo": {},
           "devices": []
         }"""
         val service = metadataService(metadataJson)
 
-        val attestation: Attestation = service.getAttestation(List(certA).asJava)
+        val attestation: Attestation =
+          service.getAttestation(List(certA).asJava)
 
-        attestation.isTrusted should be (true)
+        attestation.isTrusted should be(true)
         attestation.getDeviceProperties.asScala shouldBe empty
-        attestation.getTransports.get.asScala should equal (Set(Transport.BLE, Transport.USB))
+        attestation.getTransports.get.asScala should equal(
+          Set(Transport.BLE, Transport.USB)
+        )
       }
 
       it("returns an untrusted attestation with transports if the certificate is not trusted.") {
@@ -192,13 +211,16 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         }"""
         val service = metadataService(metadataJson)
 
-        val attestation: Attestation = service.getAttestation(List(certA).asJava)
+        val attestation: Attestation =
+          service.getAttestation(List(certA).asJava)
 
-        attestation.isTrusted should be (false)
+        attestation.isTrusted should be(false)
         attestation.getMetadataIdentifier.asScala shouldBe empty
         attestation.getVendorProperties.asScala shouldBe empty
         attestation.getDeviceProperties.asScala shouldBe empty
-        attestation.getTransports.get.asScala should equal (Set(Transport.BLE, Transport.USB))
+        attestation.getTransports.get.asScala should equal(
+          Set(Transport.BLE, Transport.USB)
+        )
       }
 
       it("returns the trusted attestation matching the first cert in the chain if the chain resolves to a trusted certificate.") {
@@ -206,7 +228,8 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${toPem(cacaca._1).linesIterator.mkString(raw"\n")}"],
+          "trustedCertificates": ["${toPem(cacaca._1).linesIterator
+            .mkString(raw"\n")}"],
           "vendorInfo": {},
           "devices": [
             {
@@ -225,10 +248,11 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         }"""
         val service = metadataService(metadataJson)
 
-        val attestation: Attestation = service.getAttestation(List(certA, caCert, caca._1).asJava)
+        val attestation: Attestation =
+          service.getAttestation(List(certA, caCert, caca._1).asJava)
 
-        attestation.isTrusted should be (true)
-        attestation.getDeviceProperties.get.get("deviceId") should be ("DevA")
+        attestation.isTrusted should be(true)
+        attestation.getDeviceProperties.get.get("deviceId") should be("DevA")
       }
 
       it("matches any certificate to a device with no selectors.") {
@@ -236,7 +260,9 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
           s"""{
           "identifier": "44c87ead-4455-423e-88eb-9248e0ebe847",
           "version": 1,
-          "trustedCertificates": ["${toPem(caCert).linesIterator.mkString(raw"\n")}"],
+          "trustedCertificates": ["${toPem(caCert).linesIterator.mkString(
+            raw"\n"
+          )}"],
           "vendorInfo": {},
           "devices": [
             {
@@ -249,8 +275,8 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
 
         val resultA = service.getAttestation(List(certA).asJava)
         val resultB = service.getAttestation(List(certB).asJava)
-        resultA.getDeviceProperties.get.get("deviceId") should be ("DevA")
-        resultB.getDeviceProperties.get.get("deviceId") should be ("DevA")
+        resultA.getDeviceProperties.get.get("deviceId") should be("DevA")
+        resultB.getDeviceProperties.get.get("deviceId") should be("DevA")
       }
 
     }

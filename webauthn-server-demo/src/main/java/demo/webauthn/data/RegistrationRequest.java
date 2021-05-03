@@ -34,10 +34,9 @@ import lombok.Value;
 @EqualsAndHashCode(callSuper = false)
 public class RegistrationRequest {
 
-    String username;
-    Optional<String> credentialNickname;
-    ByteArray requestId;
-    PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
-    Optional<ByteArray> sessionToken;
-
+  String username;
+  Optional<String> credentialNickname;
+  ByteArray requestId;
+  PublicKeyCredentialCreationOptions publicKeyCredentialCreationOptions;
+  Optional<ByteArray> sessionToken;
 }

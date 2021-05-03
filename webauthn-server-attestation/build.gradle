@@ -1,11 +1,15 @@
 plugins {
   id 'java-library'
   id 'scala'
+  id 'io.github.cosmicsilence.scalafix'
 }
 
 description = 'Yubico WebAuthn attestation subsystem'
 
 project.ext.publishMe = true
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 evaluationDependsOn(':webauthn-server-core-minimal')
 
@@ -17,28 +21,32 @@ dependencies {
 
   implementation(
     project(':yubico-util'),
-    addVersion('com.google.guava:guava'),
-    addVersion('com.fasterxml.jackson.core:jackson-databind'),
-    addVersion('org.bouncycastle:bcprov-jdk15on'),
-    addVersion('org.slf4j:slf4j-api'),
+    'com.google.guava:guava',
+    'com.fasterxml.jackson.core:jackson-databind',
+    'org.bouncycastle:bcprov-jdk15on',
+    'org.slf4j:slf4j-api',
   )
 
   testImplementation(
     project(':webauthn-server-core-minimal').sourceSets.test.output,
     project(':yubico-util-scala'),
-    addVersion('junit:junit'),
-    addVersion('org.mockito:mockito-core'),
-    addVersion('org.scala-lang:scala-library'),
-    addVersion('org.scalacheck:scalacheck_2.13'),
-    addVersion('org.scalatest:scalatest_2.13'),
+    'junit:junit',
+    'org.mockito:mockito-core',
+    'org.scala-lang:scala-library',
+    'org.scalacheck:scalacheck_2.13',
+    'org.scalatest:scalatest_2.13',
   )
 
   testRuntimeOnly(
-    addVersion('ch.qos.logback:logback-classic'),
+    'ch.qos.logback:logback-classic',
   )
   testRuntimeOnly(
     // Transitive dependency from :webauthn-server-core:test
-    addVersion('org.bouncycastle:bcpkix-jdk15on'),
+    'org.bouncycastle:bcpkix-jdk15on',
+  )
+
+  testRuntimeOnly(
+    'ch.qos.logback:logback-classic',
   )
 }
 
@@ -50,7 +58,7 @@ jar {
       'Implementation-Title': project.description,
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
-      'Git-Commit': getGitCommit(),
+      'Git-Commit': getGitCommitOrUnknown(),
     ])
   }
 }

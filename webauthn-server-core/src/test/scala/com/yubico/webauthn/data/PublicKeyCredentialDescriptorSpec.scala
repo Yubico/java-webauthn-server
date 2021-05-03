@@ -29,8 +29,10 @@ import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-
-class PublicKeyCredentialDescriptorSpec extends FunSpec with Matchers with ScalaCheckDrivenPropertyChecks {
+class PublicKeyCredentialDescriptorSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
   describe("PublicKeyCredentialDescriptor") {
 
@@ -38,29 +40,38 @@ class PublicKeyCredentialDescriptorSpec extends FunSpec with Matchers with Scala
 
       describe("which is consistent with") {
 
-        implicit val generatorDrivenConfig = PropertyCheckConfiguration(minSuccessful = 300)
+        implicit val generatorDrivenConfig =
+          PropertyCheckConfiguration(minSuccessful = 300)
 
         it("equals.") {
-          forAll { (a: PublicKeyCredentialDescriptor, b: PublicKeyCredentialDescriptor) =>
-            val comparison = a.compareTo(b)
+          forAll {
+            (
+                a: PublicKeyCredentialDescriptor,
+                b: PublicKeyCredentialDescriptor,
+            ) =>
+              val comparison = a.compareTo(b)
 
-            if (a == b) {
-              comparison should equal (0)
-            } else {
-              comparison should not equal 0
-            }
+              if (a == b) {
+                comparison should equal(0)
+              } else {
+                comparison should not equal 0
+              }
           }
         }
 
         it("hashCode.") {
-          forAll { (a: PublicKeyCredentialDescriptor, b: PublicKeyCredentialDescriptor) =>
-            if (a.compareTo(b) == 0) {
-              a.hashCode() should equal (b.hashCode())
-            }
+          forAll {
+            (
+                a: PublicKeyCredentialDescriptor,
+                b: PublicKeyCredentialDescriptor,
+            ) =>
+              if (a.compareTo(b) == 0) {
+                a.hashCode() should equal(b.hashCode())
+              }
 
-            if (a.hashCode() != b.hashCode()) {
-              a.compareTo(b) should not be 0
-            }
+              if (a.hashCode() != b.hashCode()) {
+                a.compareTo(b) should not be 0
+              }
           }
         }
 

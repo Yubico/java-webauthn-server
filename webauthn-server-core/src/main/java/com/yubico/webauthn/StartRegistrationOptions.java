@@ -33,130 +33,122 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-/**
- * Parameters for {@link RelyingParty#startRegistration(StartRegistrationOptions)}.
- */
+/** Parameters for {@link RelyingParty#startRegistration(StartRegistrationOptions)}. */
 @Value
 @Builder(toBuilder = true)
 public class StartRegistrationOptions {
 
-    /**
-     * Identifiers for the user creating a credential.
-     */
-    @NonNull
-    private final UserIdentity user;
+  /** Identifiers for the user creating a credential. */
+  @NonNull private final UserIdentity user;
+
+  /**
+   * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+   */
+  private final AuthenticatorSelectionCriteria authenticatorSelection;
+
+  /** Extension inputs for this registration operation. */
+  @NonNull @Builder.Default
+  private final RegistrationExtensionInputs extensions =
+      RegistrationExtensionInputs.builder().build();
+
+  /**
+   * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration
+   * operation.
+   *
+   * <p>This library does not take the timeout into account in any way, other than passing it
+   * through to the {@link PublicKeyCredentialCreationOptions} so it can be used as an argument to
+   * <code>navigator.credentials.create()</code> on the client side.
+   *
+   * <p>The default is empty.
+   */
+  private final Long timeout;
+
+  /**
+   * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+   */
+  public Optional<AuthenticatorSelectionCriteria> getAuthenticatorSelection() {
+    return Optional.ofNullable(authenticatorSelection);
+  }
+
+  /**
+   * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration
+   * operation.
+   *
+   * <p>This library does not take the timeout into account in any way, other than passing it
+   * through to the {@link PublicKeyCredentialCreationOptions} so it can be used as an argument to
+   * <code>navigator.credentials.create()</code> on the client side.
+   *
+   * <p>The default is empty.
+   */
+  public Optional<Long> getTimeout() {
+    return Optional.ofNullable(timeout);
+  }
+
+  public static StartRegistrationOptionsBuilder.MandatoryStages builder() {
+    return new StartRegistrationOptionsBuilder.MandatoryStages();
+  }
+
+  public static class StartRegistrationOptionsBuilder {
+    private AuthenticatorSelectionCriteria authenticatorSelection = null;
+    private Long timeout = null;
+
+    public static class MandatoryStages {
+      private final StartRegistrationOptionsBuilder builder = new StartRegistrationOptionsBuilder();
+
+      public StartRegistrationOptionsBuilder user(UserIdentity user) {
+        return builder.user(user);
+      }
+    }
 
     /**
-     * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+     * Constraints on what kind of authenticator the user is allowed to use to create the
+     * credential.
      */
-    private final AuthenticatorSelectionCriteria authenticatorSelection;
+    public StartRegistrationOptionsBuilder authenticatorSelection(
+        @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
+      return this.authenticatorSelection(authenticatorSelection.orElse(null));
+    }
 
     /**
-     * Extension inputs for this registration operation.
+     * Constraints on what kind of authenticator the user is allowed to use to create the
+     * credential.
      */
-    @NonNull
-    @Builder.Default
-    private final RegistrationExtensionInputs extensions = RegistrationExtensionInputs.builder().build();
+    public StartRegistrationOptionsBuilder authenticatorSelection(
+        AuthenticatorSelectionCriteria authenticatorSelection) {
+      this.authenticatorSelection = authenticatorSelection;
+      return this;
+    }
 
     /**
-     * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
-     * <p>
-     * This library does not take the timeout into account in any way, other than passing it through to the {@link
-     * PublicKeyCredentialCreationOptions} so it can be used as an argument to
+     * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration
+     * operation.
+     *
+     * <p>This library does not take the timeout into account in any way, other than passing it
+     * through to the {@link PublicKeyCredentialCreationOptions} so it can be used as an argument to
      * <code>navigator.credentials.create()</code> on the client side.
-     * </p>
-     * <p>
-     * The default is empty.
-     * </p>
+     *
+     * <p>The default is empty.
      */
-    private final Long timeout;
-
-    /**
-     * Constraints on what kind of authenticator the user is allowed to use to create the credential.
-     */
-    public Optional<AuthenticatorSelectionCriteria> getAuthenticatorSelection() {
-        return Optional.ofNullable(authenticatorSelection);
+    public StartRegistrationOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
+      if (timeout.isPresent() && timeout.get() <= 0) {
+        throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
+      }
+      this.timeout = timeout.orElse(null);
+      return this;
     }
 
     /**
-     * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
-     * <p>
-     * This library does not take the timeout into account in any way, other than passing it through to the {@link
-     * PublicKeyCredentialCreationOptions} so it can be used as an argument to
+     * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration
+     * operation.
+     *
+     * <p>This library does not take the timeout into account in any way, other than passing it
+     * through to the {@link PublicKeyCredentialCreationOptions} so it can be used as an argument to
      * <code>navigator.credentials.create()</code> on the client side.
-     * </p>
-     * <p>
-     * The default is empty.
-     * </p>
+     *
+     * <p>The default is empty.
      */
-    public Optional<Long> getTimeout() {
-        return Optional.ofNullable(timeout);
+    public StartRegistrationOptionsBuilder timeout(long timeout) {
+      return this.timeout(Optional.of(timeout));
     }
-
-    public static StartRegistrationOptionsBuilder.MandatoryStages builder() {
-        return new StartRegistrationOptionsBuilder.MandatoryStages();
-    }
-
-    public static class StartRegistrationOptionsBuilder {
-        private AuthenticatorSelectionCriteria authenticatorSelection = null;
-        private Long timeout = null;
-
-        public static class MandatoryStages {
-            private final StartRegistrationOptionsBuilder builder = new StartRegistrationOptionsBuilder();
-
-            public StartRegistrationOptionsBuilder user(UserIdentity user) {
-                return builder.user(user);
-            }
-        }
-
-        /**
-         * Constraints on what kind of authenticator the user is allowed to use to create the credential.
-         */
-        public StartRegistrationOptionsBuilder authenticatorSelection(@NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
-            return this.authenticatorSelection(authenticatorSelection.orElse(null));
-        }
-
-        /**
-         * Constraints on what kind of authenticator the user is allowed to use to create the credential.
-         */
-        public StartRegistrationOptionsBuilder authenticatorSelection(AuthenticatorSelectionCriteria authenticatorSelection) {
-            this.authenticatorSelection = authenticatorSelection;
-            return this;
-        }
-
-        /**
-         * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
-         * <p>
-         * This library does not take the timeout into account in any way, other than passing it through to the {@link
-         * PublicKeyCredentialCreationOptions} so it can be used as an argument to
-         * <code>navigator.credentials.create()</code> on the client side.
-         * </p>
-         * <p>
-         * The default is empty.
-         * </p>
-         */
-        public StartRegistrationOptionsBuilder timeout(@NonNull Optional<Long> timeout) {
-            if (timeout.isPresent() && timeout.get() <= 0) {
-                throw new IllegalArgumentException("timeout must be positive, was: " + timeout.get());
-            }
-            this.timeout = timeout.orElse(null);
-            return this;
-        }
-
-        /**
-         * The value for {@link PublicKeyCredentialCreationOptions#getTimeout()} for this registration operation.
-         * <p>
-         * This library does not take the timeout into account in any way, other than passing it through to the {@link
-         * PublicKeyCredentialCreationOptions} so it can be used as an argument to
-         * <code>navigator.credentials.create()</code> on the client side.
-         * </p>
-         * <p>
-         * The default is empty.
-         * </p>
-         */
-        public StartRegistrationOptionsBuilder timeout(long timeout) {
-            return this.timeout(Optional.of(timeout));
-        }
-    }
-
+  }
 }

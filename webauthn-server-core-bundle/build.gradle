@@ -6,13 +6,16 @@ description = 'Yubico WebAuthn server core API'
 
 project.ext.publishMe = true
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 dependencies {
   api(
     project(':webauthn-server-core-minimal'),
   )
 
   implementation(
-    addVersion('org.bouncycastle:bcprov-jdk15on'),
+    'org.bouncycastle:bcprov-jdk15on',
   )
 }
 
@@ -24,7 +27,7 @@ jar {
       'Implementation-Version': project.version,
       'Implementation-Vendor': 'Yubico',
       'Implementation-Source-Url': 'https://github.com/Yubico/java-webauthn-server',
-      'Git-Commit': getGitCommit(),
+      'Git-Commit': getGitCommitOrUnknown(),
     ])
   }
 }

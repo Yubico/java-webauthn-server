@@ -29,28 +29,28 @@ import java.util.SortedSet;
 
 public class ComparableUtil {
 
-    public static <T extends Comparable<T>> int compareComparableSets(SortedSet<T> a, SortedSet<T> b) {
-        if (a.size() == b.size()) {
-            final Iterator<T> as = a.iterator();
-            final Iterator<T> bs = b.iterator();
+  public static <T extends Comparable<T>> int compareComparableSets(
+      SortedSet<T> a, SortedSet<T> b) {
+    if (a.size() == b.size()) {
+      final Iterator<T> as = a.iterator();
+      final Iterator<T> bs = b.iterator();
 
-            while (as.hasNext() && bs.hasNext()) {
-                final int comp = as.next().compareTo(bs.next());
-                if (comp != 0) {
-                    return comp;
-                }
-            }
-
-            if (as.hasNext()) {
-                return 1;
-            } else if (bs.hasNext()) {
-                return -1;
-            } else {
-                return 0;
-            }
-        } else {
-            return a.size() - b.size();
+      while (as.hasNext() && bs.hasNext()) {
+        final int comp = as.next().compareTo(bs.next());
+        if (comp != 0) {
+          return comp;
         }
-    }
+      }
 
+      if (as.hasNext()) {
+        return 1;
+      } else if (bs.hasNext()) {
+        return -1;
+      } else {
+        return 0;
+      }
+    } else {
+      return a.size() - b.size();
+    }
+  }
 }

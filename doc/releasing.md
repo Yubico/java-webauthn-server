@@ -29,8 +29,8 @@ Release candidate versions
     ```
 
  6. Wait for the artifacts to become downloadable at
-    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
-    is needed for one of the GitHub Actions release workflows and usually takes
+    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
+    needed for one of the GitHub Actions release workflows and usually takes
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
@@ -48,9 +48,10 @@ Release candidate versions
       from ASCIIdoc to Markdown and remove line wraps. Include only
       changes/additions since the previous release or pre-release.
     - Attach the signature files from
-      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z-RCN.jar.asc`
+      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z-RCN.jar.asc`,
+      `webauthn-server-core/build/libs/webauthn-server-core-minimal-X.Y.Z-RCN.jar.asc`
       and
-      `webauthn-server-core/build/libs/webauthn-server-core-X.Y.Z-RCN.jar.asc`.
+      `webauthn-server-core-bundle/build/libs/webauthn-server-core-X.Y.Z-RCN.jar.asc`.
     - Note which JDK version was used to build the artifacts.
 
 
@@ -115,8 +116,8 @@ Release versions
     ```
 
 10. Wait for the artifacts to become downloadable at
-    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0/ . This
-    is needed for one of the GitHub Actions release workflows and usually takes
+    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
+    needed for one of the GitHub Actions release workflows and usually takes
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
@@ -133,6 +134,9 @@ Release versions
       from ASCIIdoc to Markdown and remove line wraps. Include all changes since
       the previous release (not just changes since the previous pre-release).
     - Attach the signature files from
-      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z.jar.asc`
-      and `webauthn-server-core/build/libs/webauthn-server-core-X.Y.Z.jar.asc`.
+      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z.jar.asc`,
+      `webauthn-server-core/build/libs/webauthn-server-core-minimal-X.Y.Z.jar.asc`
+      and
+      `webauthn-server-core-bundle/build/libs/webauthn-server-core-X.Y.Z.jar.asc`.
+
     - Note which JDK version was used to build the artifacts.

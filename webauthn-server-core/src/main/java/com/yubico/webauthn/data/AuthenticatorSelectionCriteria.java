@@ -31,83 +31,82 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
-
 /**
  * This class may be used to specify requirements regarding authenticator attributes.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-authenticatorselectioncriteria">§5.4.4.
- * Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria)
- * </a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-authenticatorselectioncriteria">§5.4.4.
+ *     Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria) </a>
  */
 @Value
 @Builder(toBuilder = true)
 public class AuthenticatorSelectionCriteria {
 
-    /**
-     * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
-     * (enum AuthenticatorAttachment)</a>.
-     */
-    private final AuthenticatorAttachment authenticatorAttachment;
+  /**
+   * If present, eligible authenticators are filtered to only authenticators attached with the
+   * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+   * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
+   */
+  private final AuthenticatorAttachment authenticatorAttachment;
+
+  /**
+   * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true
+   * </code>, the authenticator MUST create a <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * public key credential source</a> when creating a public key credential.
+   */
+  @Builder.Default private final boolean requireResidentKey = false;
+
+  /**
+   * Describes the Relying Party's requirements regarding <a
+   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user verification</a>
+   * for the <code>navigator.credentials.create()</code> operation. Eligible authenticators are
+   * filtered to only those capable of satisfying this requirement.
+   */
+  @NonNull @Builder.Default
+  private UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
+
+  /**
+   * If present, eligible authenticators are filtered to only authenticators attached with the
+   * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+   * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
+   */
+  public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+    return Optional.ofNullable(authenticatorAttachment);
+  }
+
+  @JsonCreator
+  private AuthenticatorSelectionCriteria(
+      @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
+      @JsonProperty("requireResidentKey") boolean requireResidentKey,
+      @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification) {
+    this.authenticatorAttachment = authenticatorAttachment;
+    this.requireResidentKey = requireResidentKey;
+    this.userVerification = userVerification;
+  }
+
+  public static class AuthenticatorSelectionCriteriaBuilder {
+    private AuthenticatorAttachment authenticatorAttachment = null;
 
     /**
-     * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true</code>, the
-     * authenticator MUST create a <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
-     * public key credential source</a> when creating a public key credential.
+     * If present, eligible authenticators are filtered to only authenticators attached with the
+     * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+     * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
      */
-    @Builder.Default
-    private final boolean requireResidentKey = false;
-
-    /**
-     * Describes the Relying Party's requirements regarding <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user
-     * verification</a> for the
-     * <code>navigator.credentials.create()</code> operation. Eligible authenticators are filtered to only those
-     * capable of satisfying this requirement.
-     */
-    @NonNull
-    @Builder.Default
-    private UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
-
-    /**
-     * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
-     * (enum AuthenticatorAttachment)</a>.
-     */
-    public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
-        return Optional.ofNullable(authenticatorAttachment);
+    public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(
+        @NonNull Optional<AuthenticatorAttachment> authenticatorAttachment) {
+      return this.authenticatorAttachment(authenticatorAttachment.orElse(null));
     }
 
-    @JsonCreator
-    private AuthenticatorSelectionCriteria(
-        @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
-        @JsonProperty("requireResidentKey") boolean requireResidentKey,
-        @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification
-    ) {
-        this.authenticatorAttachment = authenticatorAttachment;
-        this.requireResidentKey = requireResidentKey;
-        this.userVerification = userVerification;
+    /**
+     * If present, eligible authenticators are filtered to only authenticators attached with the
+     * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+     * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
+     */
+    public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(
+        AuthenticatorAttachment authenticatorAttachment) {
+      this.authenticatorAttachment = authenticatorAttachment;
+      return this;
     }
-
-    public static class AuthenticatorSelectionCriteriaBuilder {
-        private AuthenticatorAttachment authenticatorAttachment = null;
-
-        /**
-         * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
-         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
-         * (enum AuthenticatorAttachment)</a>.
-         */
-        public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(@NonNull Optional<AuthenticatorAttachment> authenticatorAttachment) {
-            return this.authenticatorAttachment(authenticatorAttachment.orElse(null));
-        }
-
-        /**
-         * If present, eligible authenticators are filtered to only authenticators attached with the specified <a
-         * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5 Authenticator Attachment Enumeration
-         * (enum AuthenticatorAttachment)</a>.
-         */
-        public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(AuthenticatorAttachment authenticatorAttachment) {
-            this.authenticatorAttachment = authenticatorAttachment;
-            return this;
-        }
-    }
+  }
 }

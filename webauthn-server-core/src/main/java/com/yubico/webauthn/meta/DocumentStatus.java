@@ -32,49 +32,34 @@ import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-/**
- * A representation of Web Authentication specification document statuses.
- */
+/** A representation of Web Authentication specification document statuses. */
 @JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
 public enum DocumentStatus implements JsonStringSerializable {
-    /**
-     * An editor's draft is a changing work in progress.
-     */
-    EDITORS_DRAFT("editors-draft"),
+  /** An editor's draft is a changing work in progress. */
+  EDITORS_DRAFT("editors-draft"),
 
-    /**
-     * A working draft is a named snapshot of a particular state of an editor's draft.
-     */
-    WORKING_DRAFT("working-draft"),
+  /** A working draft is a named snapshot of a particular state of an editor's draft. */
+  WORKING_DRAFT("working-draft"),
 
-    /**
-     * A candidate recommendation is a specification release candidate.
-     */
-    CANDIDATE_RECOMMENDATION("candidate-recommendation"),
+  /** A candidate recommendation is a specification release candidate. */
+  CANDIDATE_RECOMMENDATION("candidate-recommendation"),
 
-    /**
-     * A proposed recommendation is a finished draft intended for release.
-     */
-    PROPOSED_RECOMMENDATION("proposed-recommendation"),
+  /** A proposed recommendation is a finished draft intended for release. */
+  PROPOSED_RECOMMENDATION("proposed-recommendation"),
 
-    /**
-     * A recommendation is a finished and released specification.
-     */
-    RECOMMENDATION("recommendation");
+  /** A recommendation is a finished and released specification. */
+  RECOMMENDATION("recommendation");
 
-    private final String id;
+  private final String id;
 
-    static Optional<DocumentStatus> fromString(@NonNull String id) {
-        return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
-    }
+  static Optional<DocumentStatus> fromString(@NonNull String id) {
+    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  }
 
-    /**
-     * Used by JSON serializer.
-     */
-    @Override
-    public String toJsonString() {
-        return id;
-    }
-
+  /** Used by JSON serializer. */
+  @Override
+  public String toJsonString() {
+    return id;
+  }
 }

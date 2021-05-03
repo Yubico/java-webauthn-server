@@ -14,19 +14,14 @@ import lombok.Value;
 @Builder
 public class U2fRegistrationResult {
 
-    @NonNull
-    private final PublicKeyCredentialDescriptor keyId;
+  @NonNull private final PublicKeyCredentialDescriptor keyId;
 
-    private final boolean attestationTrusted;
+  private final boolean attestationTrusted;
 
-    @NonNull
-    private final ByteArray publicKeyCose;
+  @NonNull private final ByteArray publicKeyCose;
 
-    @NonNull
-    @Builder.Default
-    private final List<String> warnings = Collections.emptyList();
+  @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
 
-    @NonNull
-    @Builder.Default
-    private final Optional<Attestation> attestationMetadata = Optional.empty();
+  @NonNull @Builder.Default
+  private final Optional<Attestation> attestationMetadata = Optional.empty();
 }

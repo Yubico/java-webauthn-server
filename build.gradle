@@ -4,16 +4,21 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.12.4'
+    classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.8'
   }
 }
 plugins {
-  id 'com.github.kt3k.coveralls' version '2.11.0'
+  id 'java-platform'
+  id 'com.github.kt3k.coveralls' version '2.12.0'
   id 'io.codearte.nexus-staging' version '0.30.0'
   id 'io.franzbecker.gradle-lombok' version '4.0.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
 import io.franzbecker.gradle.lombok.task.DelombokTask
+
+rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
 
 project.ext.isCiBuild = System.env.CI == 'true'
 
@@ -33,11 +38,36 @@ wrapper {
   gradleVersion = '6.8'
 }
 
+dependencies {
+  constraints {
+    api('ch.qos.logback:logback-classic:[1.2.3,2)')
+    api('com.augustcellars.cose:cose-java:[1.0.0,2)')
+    api('com.fasterxml.jackson.core:jackson-databind:[2.11.0,3)')
+    api('com.google.guava:guava:[24.1.1,31)')
+    api('com.upokecenter:cbor:[4.0.1,5)')
+    api('javax.ws.rs:javax.ws.rs-api:[2.1,3)')
+    api('javax.xml.bind:jaxb-api:[2.3.0,3)')
+    api('junit:junit:[4.12,5)')
+    api('org.apache.httpcomponents:httpclient:[4.5.2,5)')
+    api('org.bouncycastle:bcpkix-jdk15on:[1.62,2)')
+    api('org.bouncycastle:bcprov-jdk15on:[1.62,2)')
+    api('org.eclipse.jetty:jetty-servlet:[9.4.9.v20180320,10)')
+    api('org.glassfish.jersey.containers:jersey-container-servlet-core:[2.26,3)')
+    api('org.glassfish.jersey.containers:jersey-container-servlet:[2.26,3)')
+    api('org.glassfish.jersey.inject:jersey-hk2:[2.26,3)')
+    api('org.mockito:mockito-core:[2.27.0,3)')
+    api('org.scalacheck:scalacheck_2.13:[1.14.0,2)')
+    api('org.scalatest:scalatest_2.13:[3.0.8,3.1)')
+    api('org.slf4j:slf4j-api:[1.7.25,2)')
+  }
+}
+
 allprojects {
   ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
   ext.dirtyMarker = "-DIRTY"
 
   apply plugin: 'com.cinnober.gradle.semver-git'
+  apply plugin: 'com.diffplug.spotless'
   apply plugin: 'idea'
 
   group = 'com.yubico'
@@ -47,34 +77,6 @@ allprojects {
     downloadSources = true
   }
 }
-
-Map<String, String> dependencyVersions = [
-  'ch.qos.logback:logback-classic:[1.2.3,2)',
-  'com.augustcellars.cose:cose-java:[1.0.0,2)',
-  'com.fasterxml.jackson.core:jackson-databind:[2.11.0,3)',
-  'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:[2.11.0,3)',
-  'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:[2.11.0,3)',
-  'com.google.guava:guava:[24.1.1,30)',
-  'com.upokecenter:cbor:[4.0.1,5)',
-  'javax.activation:activation:[1.1.1,2)',
-  'javax.ws.rs:javax.ws.rs-api:[2.1,3)',
-  'javax.xml.bind:jaxb-api:[2.3.0,3)',
-  'junit:junit:[4.12,5)',
-  'org.apache.httpcomponents:httpclient:[4.5.2,5)',
-  'org.bouncycastle:bcpkix-jdk15on:[1.62,2)',
-  'org.bouncycastle:bcprov-jdk15on:[1.62,2)',
-  'org.eclipse.jetty:jetty-server:[9.4.9.v20180320,10)',
-  'org.eclipse.jetty:jetty-servlet:[9.4.9.v20180320,10)',
-  'org.glassfish.jersey.containers:jersey-container-servlet-core:[2.26,3)',
-  'org.glassfish.jersey.containers:jersey-container-servlet:[2.26,3)',
-  'org.glassfish.jersey.inject:jersey-hk2:[2.26,3)',
-  'org.mockito:mockito-core:[2.27.0,3)',
-  'org.scala-lang:scala-library:[2.13.1,3)',
-  'org.scalacheck:scalacheck_2.13:[1.14.0,2)',
-  'org.scalatest:scalatest_2.13:[3.0.8,3.1)',
-  'org.slf4j:slf4j-api:[1.7.25,2)',
-].collectEntries { [(it.split(':')[0..1].join(':')): it] }
-rootProject.ext.addVersion = { dep -> dependencyVersions[dep] }
 
 subprojects {
   apply plugin: LombokPlugin
@@ -94,6 +96,16 @@ subprojects {
 
     maven { url "https://repo.maven.apache.org/maven2" }
   }
+
+  spotless {
+    java {
+      googleJavaFormat()
+    }
+    scala {
+      scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
+    }
+  }
+  tasks.check.dependsOn spotlessCheck
 }
 
 allprojects {
@@ -111,19 +123,33 @@ String getGitCommit() {
   def proc = "git rev-parse HEAD".execute(null, projectDir)
   proc.waitFor()
   if (proc.exitValue() != 0) {
-    throw new RuntimeException("Failed to get git commit ID");
+    return null
   }
   return proc.text.trim()
 }
 
+String getGitCommitOrUnknown() {
+  return getGitCommit() ?: 'UNKNOWN'
+}
+
 subprojects { project ->
 
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
-
+  if (project.plugins.hasPlugin('scala')) {
+    project.scalafix {
+      configFile = rootProject.file('scalafix.conf')
+    }
+    dependencies.scalafix('com.github.liancheng:organize-imports_2.13:0.5.0')
+    project.tasks.spotlessApply.dependsOn(project.tasks.scalafix)
+    project.tasks.spotlessCheck.dependsOn(project.tasks.checkScalafix)
+    project.tasks.scalafix.finalizedBy(project.tasks.spotlessApply)
+    project.tasks.checkScalafix.finalizedBy(project.tasks.spotlessCheck)
+  }
 
   tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+  }
+  tasks.withType(ScalaCompile) {
+    scalaCompileOptions.additionalParameters = ['-Wunused']
   }
 
   tasks.withType(AbstractArchiveTask) {
@@ -136,7 +162,7 @@ subprojects { project ->
     it.dependsOn check
   }
 
-  test {
+  tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild
     }
@@ -191,6 +217,10 @@ subprojects { project ->
 
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
+
+    if (getGitCommit() == null) {
+      throw new RuntimeException("Failed to get git commit ID");
+    }
 
     publishing {
       publications {
@@ -248,10 +278,70 @@ subprojects { project ->
   }
 }
 
+// The root project has no sources, but the dependency platform also needs to be published as an artifact
+// See https://docs.gradle.org/current/userguide/java_platform_plugin.html
+// See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
+if (publishEnabled) {
+  apply plugin: 'maven-publish'
+  apply plugin: 'signing'
+
+  publishing {
+    publications {
+      jars(MavenPublication) {
+        from components.javaPlatform
+
+        pom {
+          name = project.name
+          description = project.description
+          url = 'https://developers.yubico.com/java-webauthn-server/'
+
+          developers {
+            developer {
+              id = 'emil'
+              name = 'Emil Lundberg'
+              email = 'emil@yubico.com'
+            }
+          }
+
+          licenses {
+            license {
+              name = 'BSD-license'
+              comments = 'Revised 2-clause BSD license'
+            }
+          }
+
+          scm {
+            url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+            connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+            developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
+            tag = 'HEAD'
+          }
+        }
+      }
+    }
+
+    repositories {
+      maven {
+        name = "sonatypeNexus"
+        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        credentials {
+          username ossrhUsername
+          password ossrhPassword
+        }
+      }
+    }
+  }
+
+  signing {
+    useGpgCmd()
+    sign publishing.publications.jars
+  }
+}
+
 task pitestMerge(type: com.yubico.gradle.pitest.tasks.PitestMergeTask)
 
 coveralls {
-  sourceDirs = subprojects.sourceSets.main.allSource.srcDirs.flatten()
+  sourceDirs = subprojects.findAll({ project.hasProperty('sourceSets') }).sourceSets.main.allSource.srcDirs.flatten()
 }
 tasks.coveralls {
   inputs.files pitestMerge.outputs.files

@@ -24,12 +24,34 @@ jobs:
     - name: Run tests
       run: ./gradlew cleanTest check
 
-    - name: Archive test report
+    - name: Archive HTML test report
       if: ${{ always() }}
       uses: actions/upload-artifact@v2
       with:
-        name: test-reports
+        name: test-reports-java${{ matrix.java }}-html
         path: "*/build/reports/**"
+
+    - name: Archive JUnit test report
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-reports-java${{ matrix.java }}-xml
+        path: "*/build/test-results/**/*.xml"
 
     - name: Build JavaDoc
       run: ./gradlew assembleJavadoc
+
+  publish-test-results:
+    name: Publish test results
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ always() && github.event_name == 'pull_request' }}
+
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      with:
+        files: "**/*.xml"

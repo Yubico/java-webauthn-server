@@ -33,38 +33,40 @@ import java.util.stream.Stream;
 import lombok.Getter;
 
 /**
- * A number identifying a cryptographic algorithm. The algorithm identifiers SHOULD be values registered in the IANA
- * COSE Algorithms registry, for instance, -7 for "ES256" and -257 for "RS256".
+ * A number identifying a cryptographic algorithm. The algorithm identifiers SHOULD be values
+ * registered in the IANA COSE Algorithms registry, for instance, -7 for "ES256" and -257 for
+ * "RS256".
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#typedefdef-cosealgorithmidentifier">§5.10.5.
- * Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#typedefdef-cosealgorithmidentifier">§5.10.5.
+ *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
  */
 @JsonSerialize(using = JsonLongSerializer.class)
 public enum COSEAlgorithmIdentifier implements JsonLongSerializable {
-    EdDSA(-8),
-    ES256(-7),
-    RS256(-257),
-    RS1(-65535);
+  EdDSA(-8),
+  ES256(-7),
+  RS256(-257),
+  RS1(-65535);
 
-    @Getter
-    private final long id;
+  @Getter private final long id;
 
-    COSEAlgorithmIdentifier(long id) {
-        this.id = id;
-    }
+  COSEAlgorithmIdentifier(long id) {
+    this.id = id;
+  }
 
-    public static Optional<COSEAlgorithmIdentifier> fromId(long id) {
-        return Stream.of(values()).filter(v -> v.id == id).findAny();
-    }
+  public static Optional<COSEAlgorithmIdentifier> fromId(long id) {
+    return Stream.of(values()).filter(v -> v.id == id).findAny();
+  }
 
-    @JsonCreator
-    private static COSEAlgorithmIdentifier fromJson(long id) {
-        return fromId(id).orElseThrow(() -> new IllegalArgumentException("Unknown COSE algorithm identifier: " + id));
-    }
+  @JsonCreator
+  private static COSEAlgorithmIdentifier fromJson(long id) {
+    return fromId(id)
+        .orElseThrow(
+            () -> new IllegalArgumentException("Unknown COSE algorithm identifier: " + id));
+  }
 
-    @Override
-    public long toJsonNumber() {
-        return id;
-    }
-
+  @Override
+  public long toJsonNumber() {
+    return id;
+  }
 }

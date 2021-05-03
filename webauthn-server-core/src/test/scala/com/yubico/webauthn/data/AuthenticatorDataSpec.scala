@@ -24,8 +24,6 @@
 
 package com.yubico.webauthn.data
 
-import java.security.interfaces.ECPublicKey
-
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.WebAuthnTestCodecs
@@ -34,54 +32,81 @@ import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
+import java.security.interfaces.ECPublicKey
 import scala.util.Failure
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class AuthenticatorDataSpec extends FunSpec with Matchers {
 
-  def jsonToCbor(json: String): ByteArray = new ByteArray(CBORObject.FromJSONString(json).EncodeToBytes)
+  def jsonToCbor(json: String): ByteArray =
+    new ByteArray(CBORObject.FromJSONString(json).EncodeToBytes)
 
   describe("AuthenticatorData") {
 
-    def generateTests(authDataHex: String, hasAttestation: Boolean = false, hasExtensions: Boolean = false): Unit = {
+    def generateTests(
+        authDataHex: String,
+        hasAttestation: Boolean = false,
+        hasExtensions: Boolean = false,
+    ): Unit = {
 
       val authData = new AuthenticatorData(ByteArray.fromHex(authDataHex))
 
       it("gets the correct RP ID hash from the raw bytes.") {
-        authData.getRpIdHash.getHex should equal("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763")
+        authData.getRpIdHash.getHex should equal(
+          "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763"
+        )
       }
 
       it("gets the correct flags from the raw bytes.") {
-        authData.getFlags.UP should be (true)
-        authData.getFlags.UV should be (false)
-        authData.getFlags.AT should equal (hasAttestation)
-        authData.getFlags.ED should equal (hasExtensions)
+        authData.getFlags.UP should be(true)
+        authData.getFlags.UV should be(false)
+        authData.getFlags.AT should equal(hasAttestation)
+        authData.getFlags.ED should equal(hasExtensions)
       }
 
       it("gets the correct signature counter from the raw bytes.") {
         authData.getSignatureCounter should equal(1337)
 
-        val evilBytes = ByteArray.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976301ffffffff")
-        new AuthenticatorData(evilBytes).getSignatureCounter should equal(0xffffffffL)
-        new AuthenticatorData(evilBytes).getSignatureCounter should be > Int.MaxValue.toLong
+        val evilBytes =
+          ByteArray.fromHex("49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d976301ffffffff")
+        new AuthenticatorData(evilBytes).getSignatureCounter should equal(
+          0xffffffffL
+        )
+        new AuthenticatorData(
+          evilBytes
+        ).getSignatureCounter should be > Int.MaxValue.toLong
       }
 
       if (hasAttestation) {
         it("gets the correct attestation data from the raw bytes.") {
           authData.getAttestedCredentialData.asScala shouldBe defined
-          authData.getAttestedCredentialData.get.getAaguid.getHex should equal ("000102030405060708090a0b0c0d0e0f")
-          authData.getAttestedCredentialData.get.getCredentialId.getHex should equal ("7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec")
+          authData.getAttestedCredentialData.get.getAaguid.getHex should equal(
+            "000102030405060708090a0b0c0d0e0f"
+          )
+          authData.getAttestedCredentialData.get.getCredentialId.getHex should equal(
+            "7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec"
+          )
 
-          val pubkey: ByteArray = WebAuthnTestCodecs.ecPublicKeyToRaw(WebAuthnTestCodecs.importCosePublicKey(authData.getAttestedCredentialData.get.getCredentialPublicKey).asInstanceOf[ECPublicKey])
-          pubkey should equal (ByteArray.fromHex("04DAFE0DE5312BA080A5CCDF6B483B10EF19A2454D1E17A8350311A0B7FF0566EF8EC6324D2C81398D2E80BC985B910B26970A0F408C9DE19BECCF39899A41674D"))
+          val pubkey: ByteArray = WebAuthnTestCodecs.ecPublicKeyToRaw(
+            WebAuthnTestCodecs
+              .importCosePublicKey(
+                authData.getAttestedCredentialData.get.getCredentialPublicKey
+              )
+              .asInstanceOf[ECPublicKey]
+          )
+          pubkey should equal(
+            ByteArray.fromHex("04DAFE0DE5312BA080A5CCDF6B483B10EF19A2454D1E17A8350311A0B7FF0566EF8EC6324D2C81398D2E80BC985B910B26970A0F408C9DE19BECCF39899A41674D")
+          )
         }
       }
 
       if (hasExtensions) {
         it("gets the correct extension data from the raw bytes.") {
           authData.getExtensions.asScala shouldBe defined
-          new ByteArray(authData.getExtensions.get.EncodeToBytes()) should equal (jsonToCbor("""{ "foo": "bar" }"""))
+          new ByteArray(
+            authData.getExtensions.get.EncodeToBytes()
+          ) should equal(jsonToCbor("""{ "foo": "bar" }"""))
         }
       }
     }
@@ -89,22 +114,22 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
     describe("with neither attestation data nor extensions") {
       generateTests(
         "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763" // RP ID hash
-        + "01" // Flags
-        + "00000539" // Signature count
+          + "01" // Flags
+          + "00000539" // Signature count
       )
     }
 
     describe("with only attestation data") {
       generateTests(
         "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763" // RP ID hash
-        + "41" // Flags
-        + "00000539" // Signature count
-        + "000102030405060708090a0b0c0d0e0f" // AAGUID
-        + "0020" // Credential ID length
-        + "7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec" // Credential ID
-        + "a52258208ec6324d2c81398d2e80bc985b910b26970a0f408c9de19beccf39899a41674d03260102215820dafe0de5312ba080a5ccdf6b483b10ef19a2454d1e17a8350311a0b7ff0566ef2001" // Credential public key COSE_key
+          + "41" // Flags
+          + "00000539" // Signature count
+          + "000102030405060708090a0b0c0d0e0f" // AAGUID
+          + "0020" // Credential ID length
+          + "7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec" // Credential ID
+          + "a52258208ec6324d2c81398d2e80bc985b910b26970a0f408c9de19beccf39899a41674d03260102215820dafe0de5312ba080a5ccdf6b483b10ef19a2454d1e17a8350311a0b7ff0566ef2001" // Credential public key COSE_key
         ,
-        hasAttestation = true
+        hasAttestation = true,
       )
 
     }
@@ -112,11 +137,11 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
     describe("with only extensions") {
       generateTests(
         "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763" // RP ID hash
-        + "81" // Flags
-        + "00000539" // Signature count
-        + "a163666f6f63626172" // Extensions
+          + "81" // Flags
+          + "00000539" // Signature count
+          + "a163666f6f63626172" // Extensions
         ,
-        hasExtensions = true
+        hasExtensions = true,
       )
     }
 
@@ -132,35 +157,37 @@ class AuthenticatorDataSpec extends FunSpec with Matchers {
           + "a163666f6f63626172" // Extensions
         ,
         hasAttestation = true,
-        hasExtensions = true
+        hasExtensions = true,
       )
     }
 
-    describe("rejects a byte array with both attestation data and extensions if") {
+    describe(
+      "rejects a byte array with both attestation data and extensions if"
+    ) {
       def authDataBytes(flags: String): ByteArray =
         ByteArray.fromHex(
           "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763" // RP ID hash
-          + flags
-          + "00000539" // Signature count
-          + "000102030405060708090a0b0c0d0e0f" // AAGUID
-          + "0020" // Credential ID length
-          + "7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec" // Credential ID
-          + "a52258208ec6324d2c81398d2e80bc985b910b26970a0f408c9de19beccf39899a41674d03260102215820dafe0de5312ba080a5ccdf6b483b10ef19a2454d1e17a8350311a0b7ff0566ef2001" // Credential public key COSE_key
-          + "a163666f6f63626172" // Extensions
+            + flags
+            + "00000539" // Signature count
+            + "000102030405060708090a0b0c0d0e0f" // AAGUID
+            + "0020" // Credential ID length
+            + "7137c4e57894dce742723f9966c1e71c7c966f14e9429d5b2a2098a68416deec" // Credential ID
+            + "a52258208ec6324d2c81398d2e80bc985b910b26970a0f408c9de19beccf39899a41674d03260102215820dafe0de5312ba080a5ccdf6b483b10ef19a2454d1e17a8350311a0b7ff0566ef2001" // Credential public key COSE_key
+            + "a163666f6f63626172" // Extensions
         )
 
       it("flags indicate only attestation data") {
         val authData = Try(new AuthenticatorData(authDataBytes("41")))
 
-        authData shouldBe a [Failure[_]]
-        authData.failed.get shouldBe an [IllegalArgumentException]
+        authData shouldBe a[Failure[_]]
+        authData.failed.get shouldBe an[IllegalArgumentException]
       }
 
       it("flags indicate only extensions") {
         val authData = Try(new AuthenticatorData(authDataBytes("81")))
 
-        authData shouldBe a [Failure[_]]
-        authData.failed.get shouldBe an [IllegalArgumentException]
+        authData shouldBe a[Failure[_]]
+        authData.failed.get shouldBe an[IllegalArgumentException]
       }
     }
 

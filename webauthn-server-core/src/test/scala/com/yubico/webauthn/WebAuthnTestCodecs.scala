@@ -1,5 +1,10 @@
 package com.yubico.webauthn
 
+import com.upokecenter.cbor.CBORObject
+import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey
+
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -7,25 +12,24 @@ import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 
-import com.upokecenter.cbor.CBORObject
-import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPublicKey
-
-
 /**
-  * Re-exports from [[WebAuthnCodecs]] so tests can use it
+  * Re-exports from [[WebAuthnCodecs]] and [[Crypto]] so tests can use it
   */
 object WebAuthnTestCodecs {
+
+  def sha256(bytes: ByteArray): ByteArray = Crypto.sha256(bytes)
 
   def ecPublicKeyToRaw = WebAuthnCodecs.ecPublicKeyToRaw _
   def importCosePublicKey = WebAuthnCodecs.importCosePublicKey _
 
-  def ecPublicKeyToCose(key: ECPublicKey): ByteArray = rawEcdaKeyToCose(ecPublicKeyToRaw(key))
+  def ecPublicKeyToCose(key: ECPublicKey): ByteArray =
+    rawEcdaKeyToCose(ecPublicKeyToRaw(key))
 
   def rawEcdaKeyToCose(key: ByteArray): ByteArray = {
     val keyBytes = key.getBytes
-    if (!(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes(0) == 0x04))) {
+    if (
+      !(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes(0) == 0x04))
+    ) {
       throw new IllegalArgumentException(
         s"Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was ${keyBytes.length} bytes starting with ${keyBytes(0)}"
       )
@@ -40,9 +44,15 @@ object WebAuthnTestCodecs {
     coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId)
     coseKey.put(-1L, 1L) // Curve: P-256
 
-    coseKey.put(-2L, java.util.Arrays.copyOfRange(keyBytes, start, start + 32)) // x
+    coseKey.put(
+      -2L,
+      java.util.Arrays.copyOfRange(keyBytes, start, start + 32),
+    ) // x
 
-    coseKey.put(-3L, java.util.Arrays.copyOfRange(keyBytes, start + 32, start + 64)) // y
+    coseKey.put(
+      -3L,
+      java.util.Arrays.copyOfRange(keyBytes, start + 32, start + 64),
+    ) // y
 
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
@@ -50,26 +60,33 @@ object WebAuthnTestCodecs {
   def publicKeyToCose(key: PublicKey): ByteArray = {
     key match {
       case k: ECPublicKey => ecPublicKeyToCose(k)
-      case other => throw new UnsupportedOperationException("Unknown key type: " + other.getClass.getCanonicalName)
+      case other =>
+        throw new UnsupportedOperationException(
+          "Unknown key type: " + other.getClass.getCanonicalName
+        )
     }
   }
 
-  def importPrivateKey(encodedKey: ByteArray, alg: COSEAlgorithmIdentifier): PrivateKey = alg match {
-    case COSEAlgorithmIdentifier.ES256 =>
-      val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
-      val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
-      keyFactory.generatePrivate(spec)
+  def importPrivateKey(
+      encodedKey: ByteArray,
+      alg: COSEAlgorithmIdentifier,
+  ): PrivateKey =
+    alg match {
+      case COSEAlgorithmIdentifier.ES256 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
 
-    case COSEAlgorithmIdentifier.EdDSA =>
-      val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA")
-      val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
-      keyFactory.generatePrivate(spec)
+      case COSEAlgorithmIdentifier.EdDSA =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
 
-    case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS1 =>
-      val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
-      val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
-      keyFactory.generatePrivate(spec)
-  }
+      case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS1 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
+    }
 
   def importEcdsaPrivateKey(encodedKey: ByteArray): PrivateKey = {
     val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
@@ -88,7 +105,10 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
-  def rsaPublicKeyToCose(key: RSAPublicKey, alg: COSEAlgorithmIdentifier): ByteArray = {
+  def rsaPublicKeyToCose(
+      key: RSAPublicKey,
+      alg: COSEAlgorithmIdentifier,
+  ): ByteArray = {
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
     coseKey.put(1L, 3L) // Key type: RSA
 
@@ -103,7 +123,8 @@ object WebAuthnTestCodecs {
   def getCoseAlgId(encodedPublicKey: ByteArray): COSEAlgorithmIdentifier = {
     importCosePublicKey(encodedPublicKey).getAlgorithm match {
       case "EC" => COSEAlgorithmIdentifier.ES256
-      case other => throw new UnsupportedOperationException("Unknown algorithm: " + other)
+      case other =>
+        throw new UnsupportedOperationException("Unknown algorithm: " + other)
     }
   }
 

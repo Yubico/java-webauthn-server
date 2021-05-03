@@ -33,40 +33,28 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
-
-/**
- * Reference to a particular version of a specification document.
- */
+/** Reference to a particular version of a specification document. */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
 public class Specification {
 
-    /**
-     * Address to this version of the specification.
-     */
-    private final URL url;
+  /** Address to this version of the specification. */
+  private final URL url;
 
-    /**
-     * Address to the latest version of this specification.
-     */
-    private final URL latestVersionUrl;
+  /** Address to the latest version of this specification. */
+  private final URL latestVersionUrl;
 
-    /**
-     * An object indicating the status of the specification document.
-     */
-    private final DocumentStatus status;
+  /** An object indicating the status of the specification document. */
+  private final DocumentStatus status;
 
-    /**
-     * The release date of the specification document.
-     */
-    @JsonSerialize(using = LocalDateJsonSerializer.class)
-    private final LocalDate releaseDate;
+  /** The release date of the specification document. */
+  @JsonSerialize(using = LocalDateJsonSerializer.class)
+  private final LocalDate releaseDate;
 
-    static SpecificationBuilder builder() {
-        return new SpecificationBuilder();
-    }
+  static SpecificationBuilder builder() {
+    return new SpecificationBuilder();
+  }
 
-    static class SpecificationBuilder {
-    }
+  static class SpecificationBuilder {}
 }
