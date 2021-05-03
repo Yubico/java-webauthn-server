@@ -25,7 +25,6 @@
 package com.yubico.webauthn
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.BinaryUtil
@@ -41,7 +40,6 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Primitive
@@ -171,8 +169,6 @@ object TestAuthenticator {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private def toBytes(s: String): ByteArray = new ByteArray(s.getBytes("UTF-8"))
-  private def toJson(node: JsonNode): String =
-    new ObjectMapper().writeValueAsString(node)
   private def sha256(s: String): ByteArray = sha256(toBytes(s))
   private def sha256(b: ByteArray): ByteArray =
     new ByteArray(MessageDigest.getInstance("SHA-256").digest(b.getBytes))
@@ -348,7 +344,7 @@ object TestAuthenticator {
     """.stripMargin
 
   def makeAssertionExample(alg: COSEAlgorithmIdentifier): String = {
-    val (credential, keypair) =
+    val (_, keypair) =
       createCredential(attestationMaker = AttestationMaker.default())
     val assertion = createAssertion(alg, credentialKey = keypair)
 
@@ -383,15 +379,8 @@ object TestAuthenticator {
       credentialKeypair: Option[KeyPair] = None,
       keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
       origin: String = Defaults.origin,
-      rpId: String = Defaults.rpId,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
-      userId: UserIdentity = UserIdentity
-        .builder()
-        .name("Test")
-        .displayName("Test")
-        .id(new ByteArray(Array(42, 13, 37)))
-        .build(),
   ): (
       data.PublicKeyCredential[
         data.AuthenticatorAttestationResponse,
@@ -452,7 +441,6 @@ object TestAuthenticator {
         makeAttestedCredentialDataBytes(
           aaguid = aaguid,
           publicKeyCose = publicKeyCose,
-          rpId = Defaults.rpId,
         )
       ),
     )
@@ -544,7 +532,6 @@ object TestAuthenticator {
       credentialId = testData.response.getId,
       credentialKey = testData.keypair.get,
       origin = origin,
-      rpId = testData.rpId.getId,
       tokenBindingStatus = tokenBindingStatus,
       tokenBindingId = tokenBindingId,
       userHandle = if (withUserHandle) Some(testData.userId.getId) else None,
@@ -561,7 +548,6 @@ object TestAuthenticator {
       credentialId: ByteArray = Defaults.credentialId,
       credentialKey: KeyPair = Defaults.credentialKey,
       origin: String = Defaults.origin,
-      rpId: String = Defaults.rpId,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
       userHandle: Option[ByteArray] = None,
@@ -882,8 +868,6 @@ object TestAuthenticator {
 
   def makeAttestedCredentialDataBytes(
       publicKeyCose: ByteArray,
-      rpId: String = Defaults.rpId,
-      counterBytes: ByteArray = ByteArray.fromHex("0539"),
       aaguid: ByteArray = Defaults.aaguid,
   ): ByteArray = {
     val credentialId = sha256(publicKeyCose)
@@ -1083,7 +1067,7 @@ object TestAuthenticator {
       signingKey: PrivateKey,
       signingAlg: COSEAlgorithmIdentifier,
       isCa: Boolean = false,
-      extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil,
+      extensions: Iterable[(String, Boolean, ASN1Primitive)],
   ): X509Certificate = {
     CertificateParser.parseDer({
       val builder = new X509v3CertificateBuilder(

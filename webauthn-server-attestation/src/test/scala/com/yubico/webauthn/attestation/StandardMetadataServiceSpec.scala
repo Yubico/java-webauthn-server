@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn.attestation
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator
@@ -45,8 +44,6 @@ import scala.jdk.CollectionConverters._
 
 @RunWith(classOf[JUnitRunner])
 class StandardMetadataServiceSpec extends FunSpec with Matchers {
-
-  private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
   private val TRANSPORTS_EXT_OID = "1.3.6.1.4.1.45724.2.1.1"
 
@@ -108,10 +105,6 @@ class StandardMetadataServiceSpec extends FunSpec with Matchers {
         name = new X500Name("CN=Cert B"),
         caCertAndKey = Some((caCert, caKey)),
         extensions = List((ooidB, false, new DEROctetString(Array[Byte]()))),
-      )
-      val (unknownCert, _) = TestAuthenticator.generateAttestationCertificate(
-        name = new X500Name("CN=Unknown Cert"),
-        extensions = List((ooidA, false, new DEROctetString(Array[Byte]()))),
       )
 
       val metadataJson =
