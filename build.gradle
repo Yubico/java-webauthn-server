@@ -11,7 +11,7 @@ buildscript {
 plugins {
   id 'java-platform'
   id 'com.github.kt3k.coveralls' version '2.12.0'
-  id 'io.codearte.nexus-staging' version '0.30.0'
+  id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
   id 'io.franzbecker.gradle-lombok' version '4.0.0'
 }
 
@@ -27,10 +27,15 @@ project.ext.publishEnabled = !isCiBuild &&
   project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 
 if (publishEnabled) {
-  nexusStaging {
-    username = ossrhUsername
-    password = ossrhPassword
-    stagingProfileId = '6c61426e6529d'
+  nexusPublishing {
+    repositories {
+      sonatype {
+        stagingProfileId = '6c61426e6529d'
+
+        username = ossrhUsername
+        password = ossrhPassword
+      }
+    }
   }
 }
 
@@ -258,17 +263,6 @@ subprojects { project ->
           }
         }
       }
-
-      repositories {
-        maven {
-          name = "sonatypeNexus"
-          url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-          credentials {
-            username ossrhUsername
-            password ossrhPassword
-          }
-        }
-      }
     }
 
     signing {
@@ -316,17 +310,6 @@ if (publishEnabled) {
             developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
             tag = 'HEAD'
           }
-        }
-      }
-    }
-
-    repositories {
-      maven {
-        name = "sonatypeNexus"
-        url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-        credentials {
-          username ossrhUsername
-          password ossrhPassword
         }
       }
     }

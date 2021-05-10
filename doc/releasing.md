@@ -25,7 +25,7 @@ Release candidate versions
  5. Publish to Sonatype Nexus:
 
     ```
-    $ ./gradlew publish closeAndReleaseRepository
+    $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
  6. Wait for the artifacts to become downloadable at
@@ -112,7 +112,7 @@ Release versions
  9. Publish to Sonatype Nexus:
 
     ```
-    $ ./gradlew publish closeAndReleaseRepository
+    $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
 10. Wait for the artifacts to become downloadable at
