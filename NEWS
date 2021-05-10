@@ -1,8 +1,7 @@
 == Version 1.9.1 (unreleased) ==
 
-webauthn-server-core:
-
-* Added missing `<dependencyManagement>` declaration to `webauthn-server-core` POM.
+* Added missing `<dependencyManagement>` declaration to
+  `webauthn-server-attestation` and `webauthn-server-core` POMs.
 
 
 == Version 1.9.0 ==
