@@ -10,6 +10,8 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
+  api(platform(rootProject))
+
   api(
     project(':webauthn-server-core-minimal'),
   )
