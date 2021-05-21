@@ -25,7 +25,6 @@
 package com.yubico.webauthn
 
 import com.yubico.internal.util.scala.JavaConverters._
-import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
@@ -75,7 +74,7 @@ class RelyingPartyStartOperationSpec
     }
 
   def relyingParty(
-      appId: Optional[AppId] = None.asJava,
+      appId: Option[AppId] = None,
       credentials: Set[PublicKeyCredentialDescriptor] = Set.empty,
   ): RelyingParty =
     RelyingParty
@@ -84,7 +83,7 @@ class RelyingPartyStartOperationSpec
       .credentialRepository(credRepo(credentials))
       .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
       .origins(Set.empty.asJava)
-      .appId(appId)
+      .appId(appId.asJava)
       .build()
 
   val rpId = RelyingPartyIdentity
@@ -248,8 +247,8 @@ class RelyingPartyStartOperationSpec
     }
 
     it("sets the appid extension if the RP instance is given an AppId.") {
-      forAll { appId: Optional[AppId] =>
-        val rp = relyingParty(appId = appId)
+      forAll { appId: AppId =>
+        val rp = relyingParty(appId = Some(appId))
         val result = rp.startAssertion(
           StartAssertionOptions
             .builder()
@@ -257,10 +256,24 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid should equal(
-          appId
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+          Some(appId)
         )
       }
+    }
+
+    it("does not set the appid extension if the RP instance is not given an AppId.") {
+      val rp = relyingParty()
+      val result = rp.startAssertion(
+        StartAssertionOptions
+          .builder()
+          .username(userId.getName)
+          .build()
+      )
+
+      result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+        None
+      )
     }
 
     it("allows setting the timeout to empty.") {
