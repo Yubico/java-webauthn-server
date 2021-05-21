@@ -1,3 +1,16 @@
+== Version 1.11.0 (unreleased) ==
+
+Changes:
+
+* `RelyingParty.appId` setting now also activates the `appidExclude` extension in
+  addition to the `appid` extension.
+
+New features:
+
+* Added support for the `appidExclude`, `credProps`, `largeBlob` and `uvm`
+  extensions.
+
+
 == Version 1.10.1 ==
 
 webauthn-server-attestation:
