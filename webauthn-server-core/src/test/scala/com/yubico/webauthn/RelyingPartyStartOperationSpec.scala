@@ -31,6 +31,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.extension.appid.AppId
@@ -234,6 +235,24 @@ class RelyingPartyStartOperationSpec
       )
 
       result.getExtensions.getAppidExclude.asScala should equal(None)
+    }
+
+    it("by default always sets the credProps extension.") {
+      forAll { extensions: RegistrationExtensionInputs =>
+        println(extensions.getExtensionIds)
+        println(extensions)
+
+        val rp = relyingParty()
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .extensions(extensions)
+            .build()
+        )
+
+        result.getExtensions.getCredProps should be(true)
+      }
     }
   }
 
