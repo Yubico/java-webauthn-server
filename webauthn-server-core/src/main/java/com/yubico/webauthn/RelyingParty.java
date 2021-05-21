@@ -394,7 +394,10 @@ public class RelyingParty {
                     startRegistrationOptions.getUser().getName()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(
-                startRegistrationOptions.getExtensions().toBuilder().appidExclude(appId).build())
+                startRegistrationOptions.getExtensions().toBuilder()
+                    .appidExclude(appId)
+                    .credProps()
+                    .build())
             .timeout(startRegistrationOptions.getTimeout());
     attestationConveyancePreference.ifPresent(builder::attestation);
     return builder.build();

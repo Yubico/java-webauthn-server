@@ -4,6 +4,9 @@ Changes:
 
 * `RelyingParty.appId` setting now also activates the `appidExclude` extension in
   addition to the `appid` extension.
+* `RelyingParty.startRegistration()` now enables the `credProps` extension by
+  default. The extension output, if any, is available as
+  `RegistrationResult.getClientExtensionOutputs().getCredProps()`.
 
 New features:
 
