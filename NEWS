@@ -6,6 +6,7 @@ Changes:
   addition to the `appid` extension.
 * `RelyingParty.startRegistration()` now enables the `credProps` extension by
   default. The extension output, if any, is available as
+  `RegistrationResult.isDiscoverable()` and
   `RegistrationResult.getClientExtensionOutputs().getCredProps()`.
 
 New features:

@@ -41,7 +41,9 @@ import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -3095,6 +3097,88 @@ class RelyingPartyRegistrationSpec
                 pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
                 pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
               }
+            }
+          }
+
+          describe("expose the credProps extension output as RegistrationResult.isDiscoverable()") {
+            val rp = RelyingParty
+              .builder()
+              .identity(
+                RelyingPartyIdentity
+                  .builder()
+                  .id("localhost")
+                  .name("Test RP")
+                  .build()
+              )
+              .credentialRepository(Helpers.CredentialRepository.empty)
+              .build()
+            val testDataBase = RegistrationTestData.Packed.BasicAttestation
+            val testData = testDataBase.copy(requestedExtensions =
+              testDataBase.request.getExtensions.toBuilder.credProps().build()
+            )
+
+            it("when set to true.") {
+              val result = rp.finishRegistration(
+                FinishRegistrationOptions
+                  .builder()
+                  .request(testData.request)
+                  .response(
+                    testData.response.toBuilder
+                      .clientExtensionResults(
+                        ClientRegistrationExtensionOutputs
+                          .builder()
+                          .credProps(
+                            CredentialPropertiesOutput
+                              .builder()
+                              .rk(true)
+                              .build()
+                          )
+                          .build()
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+
+              result.isDiscoverable.asScala should equal(Some(true))
+            }
+
+            it("when set to false.") {
+              val result = rp.finishRegistration(
+                FinishRegistrationOptions
+                  .builder()
+                  .request(testData.request)
+                  .response(
+                    testData.response.toBuilder
+                      .clientExtensionResults(
+                        ClientRegistrationExtensionOutputs
+                          .builder()
+                          .credProps(
+                            CredentialPropertiesOutput
+                              .builder()
+                              .rk(false)
+                              .build()
+                          )
+                          .build()
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+
+              result.isDiscoverable.asScala should equal(Some(false))
+            }
+
+            it("when not available.") {
+              val result = rp.finishRegistration(
+                FinishRegistrationOptions
+                  .builder()
+                  .request(testData.request)
+                  .response(testData.response)
+                  .build()
+              )
+
+              result.isDiscoverable.asScala should equal(None)
             }
           }
         }
