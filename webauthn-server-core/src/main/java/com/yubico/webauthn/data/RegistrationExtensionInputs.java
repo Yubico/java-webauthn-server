@@ -163,6 +163,18 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
 
   public static class RegistrationExtensionInputsBuilder {
     /**
+     * Enable or disable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-appid-exclude-extension">§10.2.
+     *     FIDO AppID Exclusion Extension (appidExclude)</a>
+     */
+    public RegistrationExtensionInputsBuilder appidExclude(Optional<AppId> appidExclude) {
+      this.appidExclude = appidExclude.orElse(null);
+      return this;
+    }
+
+    /**
      * Enable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
      *
      * @see <a

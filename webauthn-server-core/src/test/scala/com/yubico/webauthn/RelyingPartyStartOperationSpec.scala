@@ -207,6 +207,34 @@ class RelyingPartyStartOperationSpec
         }
       }
     }
+
+    it(
+      "sets the appidExclude extension if the RP instance is given an AppId."
+    ) {
+      forAll { appId: AppId =>
+        val rp = relyingParty(appId = Some(appId))
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+
+        result.getExtensions.getAppidExclude.asScala should equal(Some(appId))
+      }
+    }
+
+    it("does not set the appidExclude extension if the RP instance is not given an AppId.") {
+      val rp = relyingParty()
+      val result = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .build()
+      )
+
+      result.getExtensions.getAppidExclude.asScala should equal(None)
+    }
   }
 
   describe("RelyingParty.startAssertion") {
