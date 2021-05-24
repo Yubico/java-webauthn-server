@@ -1,3 +1,13 @@
+== Version 1.9.1 ==
+
+* Added missing `<dependencyManagement>` declaration to
+  `webauthn-server-attestation` and `webauthn-server-core` POMs.
+
+webauthn-server-attestation:
+
+* Added attestation metadata for YubiKey 5 FIPS series.
+
+
 == Version 1.9.0 ==
 
 webauthn-server-attestation:

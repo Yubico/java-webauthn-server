@@ -47,7 +47,7 @@ jobs:
         export TAGNAME=${GITHUB_REF#refs/tags/}
 
         wget -O webauthn-server-core-${TAGNAME}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/${TAGNAME}/webauthn-server-core-${TAGNAME}.jar.asc
-        wget -O webauthn-server-core-minimal-${TAGNAME}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-core-minimal-/${TAGNAME}/webauthn-server-core-minimal-${TAGNAME}.jar.asc
+        wget -O webauthn-server-core-minimal-${TAGNAME}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-core-minimal/${TAGNAME}/webauthn-server-core-minimal-${TAGNAME}.jar.asc
         wget -O webauthn-server-attestation-${TAGNAME}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-attestation/${TAGNAME}/webauthn-server-attestation-${TAGNAME}.jar.asc
 
         gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${TAGNAME}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${TAGNAME}.jar

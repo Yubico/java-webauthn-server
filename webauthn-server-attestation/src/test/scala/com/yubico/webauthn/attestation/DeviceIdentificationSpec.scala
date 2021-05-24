@@ -73,6 +73,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           .identity(testData.rp)
           .credentialRepository(Helpers.CredentialRepository.empty)
           .metadataService(new StandardMetadataService())
+          .allowUnrequestedExtensions(true)
           .build()
 
         val result = rp.finishRegistration(
@@ -85,7 +86,10 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
                 .user(testData.user)
                 .challenge(testData.attestation.challenge)
                 .pubKeyCredParams(
-                  List(PublicKeyCredentialParameters.ES256).asJava
+                  List(
+                    PublicKeyCredentialParameters.ES256,
+                    PublicKeyCredentialParameters.EdDSA,
+                  ).asJava
                 )
                 .build()
             )
@@ -148,6 +152,21 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           "Security Key NFC by Yubico",
           RealExamples.SecurityKeyNfc,
           Set(USB, NFC),
+        )
+      }
+
+      it("a YubiKey 5.4 NFC FIPS.") {
+        check(
+          "YubiKey 5/5C NFC FIPS",
+          RealExamples.YubikeyFips5Nfc,
+          Set(USB, NFC),
+        )
+      }
+      it("a YubiKey 5.4 Ci FIPS.") {
+        check(
+          "YubiKey 5Ci FIPS",
+          RealExamples.Yubikey5ciFips,
+          Set(USB, LIGHTNING),
         )
       }
     }
@@ -257,6 +276,21 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           "Security Key NFC by Yubico",
           RealExamples.SecurityKeyNfc,
           Set(USB, NFC),
+        )
+      }
+
+      it("a YubiKey 5.4 NFC FIPS.") {
+        check(
+          "YubiKey 5/5C NFC FIPS",
+          RealExamples.YubikeyFips5Nfc,
+          Set(USB, NFC),
+        )
+      }
+      it("a YubiKey 5.4 Ci FIPS.") {
+        check(
+          "YubiKey 5Ci FIPS",
+          RealExamples.Yubikey5ciFips,
+          Set(USB, LIGHTNING),
         )
       }
     }

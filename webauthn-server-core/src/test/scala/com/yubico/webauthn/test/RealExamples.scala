@@ -460,4 +460,53 @@ object RealExamples {
     ),
   )
 
+  val YubikeyFips5Nfc = Example(
+    RelyingPartyIdentity.builder().id("demo.yubico.com").name("").build(),
+    UserIdentity
+      .builder()
+      .name("6vTZo5MBEbaH")
+      .displayName("6vTZo5MBEbaH")
+      .id(ByteArray.fromBase64("tabbiLeU61rCtgcNOC+9J6doMN8DQnm2IEaa4Ps+gqU="))
+      .build(),
+    AttestationExample(
+      """{"type":"webauthn.create","challenge":"BkRnXYHVbiUEJYPPcVAOig","origin":"https://demo.yubico.com","crossOrigin":false,"other_keys_can_be_added_here":"do not compare clientDataJSON against a template. See https://goo.gl/yabPex"}""",
+      ByteArray.fromBase64("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEcwRQIhAMrVMrCPZDK3RNFKKdDOYoSPsEqgSecbvfUIuPk84nIwAiA6VbneoEArKqgrwWnDcQi03kyWQrPmr3JqHtPUXNGitWN4NWOBWQLwMIIC7DCCAdSgAwIBAgIJAN1TJeaFJ6cVMA0GCSqGSIb3DQEBCwUAMC4xLDAqBgNVBAMTI1l1YmljbyBVMkYgUm9vdCBDQSBTZXJpYWwgNDU3MjAwNjMxMCAXDTE0MDgwMTAwMDAwMFoYDzIwNTAwOTA0MDAwMDAwWjBvMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMSgwJgYDVQQDDB9ZdWJpY28gVTJGIEVFIFNlcmlhbCAxNzEzNzIyMzMzMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDeoY3vFmcuLvf1SL2oqIV5WaVs9VGyB4GPmtxdHY84v/+R2wtLKvAfjIH9eTIq3+Ev3+UQLipTY0Bb9Xn9Sp3KOBlDCBkTATBgorBgEEAYLECg0BBAUEAwUEAjAQBgkrBgEEAYLECgwEAwIBBDAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuNzATBgsrBgEEAYLlHAIBAQQEAwIEMDAhBgsrBgEEAYLlHAEBBAQSBBDB+aC8HdJASrJ/jikEekP9MAwGA1UdEwEB/wQCMAAwDQYJKoZIhvcNAQELBQADggEBAGl5dmZIe5GOHFOAvVUaWFWyet89UCHWKmLBTXXfuoPwYqatxGhVqIeiV4nAuFF127294SzJcMgzycToui5/g8OUonTvs9xWF9yH23fXjGcBWoGErlF7DqkycOz2NtjPhGwEfBnE++0/KRc/IN6bu7u/XPXNwNmCLcg0reERI23NO/ZftcWebjRBCwY3p6l0ahalKmrgqOi7bhU1AjbHmiEvJgeBcpZphS87eikierMO5PmwvdbV3okNseEoaeoHDDQ7Av6RwCtKCXwYupRs6sULgUwo0fz2znURA+zSuTzK4iZ/hmQvRVJtQBPtfpwBEmNEdwwZ1A+VxfspsYzA7AVoYXV0aERhdGFYn8Rs74KtG1Rkd1kdAIsIdZ7D5tLstPOUdL/qaWmSXQO3xQAAAALB+aC8HdJASrJ/jikEekP9ADCoKvXSwuTSIXADOmvBwyJiDqQ6hh3epKxT2gFcv7/fe7KF6ZidYuy5hytIti+jyUSkAQEDJyAGIVggqCr10sLk0iFwAzprwb1UlYO/I5e1odNDyARvWzyHZkuha2NyZWRQcm90ZWN0Ag=="),
+    ),
+    AssertionExample(
+      id = ByteArray.fromBase64Url(
+        "qCr10sLk0iFwAzprwcMiYg6kOoYd3qSsU9oBXL-_33uyhemYnWLsuYcrSLYvo8lE"
+      ),
+      clientData = """{"type":"webauthn.get","challenge":"P0MvFaK3Bz-YYVYfCXfBig","origin":"https://demo.yubico.com","crossOrigin":false}""",
+      authDataBytes = ByteArray.fromBase64(
+        "xGzvgq0bVGR3WR0Aiwh1nsPm0uy085R0v+ppaZJdA7cFAAAAAw=="
+      ),
+      sig =
+        ByteArray.fromBase64("Q0omzU9kPFnxd9njE5+fWLDDFxPIXRrPJ3fSGniU2+UHp1NUZJtMwc4iddbXiYNZ2GN5frrG3tf72oAoI+i3BQ=="),
+    ),
+  )
+
+  val Yubikey5ciFips = Example(
+    RelyingPartyIdentity.builder().id("demo.yubico.com").name("").build(),
+    UserIdentity
+      .builder()
+      .name("6J8bPm5pgZxx")
+      .displayName("6J8bPm5pgZxx")
+      .id(ByteArray.fromBase64("cj5f7W52d8rucMRXw+F+k/tMcMjRZbWNmmayWQ/s1hY="))
+      .build(),
+    AttestationExample(
+      """{"type":"webauthn.create","challenge":"hnZ_h1C2W1hIvTv-TczSDQ","origin":"https://demo.yubico.com","crossOrigin":false}""",
+      ByteArray.fromBase64("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEcwRQIgNjV3981oAhwpWDaw0VT7o/KK/OZ4MJF1Gx3p68dfgSkCIQClgMNxOuNeWlX3OEekplBvZyEdnjrgXHPK4+qxbgb6yWN4NWOBWQLwMIIC7DCCAdSgAwIBAgIJAJt5F3hRiVnmMA0GCSqGSIb3DQEBCwUAMC4xLDAqBgNVBAMTI1l1YmljbyBVMkYgUm9vdCBDQSBTZXJpYWwgNDU3MjAwNjMxMCAXDTE0MDgwMTAwMDAwMFoYDzIwNTAwOTA0MDAwMDAwWjBvMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMSgwJgYDVQQDDB9ZdWJpY28gVTJGIEVFIFNlcmlhbCAyMDE0ODA0Mzc5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAETAZOKKrzwwAt0vCs9bDGCjmvATlCgCkn53Sp13iiRNQHa2HepLsy8Dm+h5K4wqkoKGuo16K1omdeUHSs8syPraOBlDCBkTATBgorBgEEAYLECg0BBAUEAwUEAjAQBgkrBgEEAYLECgwEAwIBBDAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuNzATBgsrBgEEAYLlHAIBAQQEAwICJDAhBgsrBgEEAYLlHAEBBAQSBBCFIDQhSPlDVZvIilOEblCDMAwGA1UdEwEB/wQCMAAwDQYJKoZIhvcNAQELBQADggEBAFybB6BcC0kstjohJiA8Aczi2MQqkVWOUaLTtdrWyPcbSHfiqjjtn2J4lDxrCossqvmwrpAJ6vZ4rvHpv8dcJAFCA8Q02SaMWU/HgBjf3EZsowaxJqTPYsq86UmQG0+Y9BGuLZ1higWE1Pptpgumwkimo7q/H6Hvv0Da2FReEzAHYpwwrDfak+O+s3HEiKRRoqAprheNSunp1YXCnq6PCMho+gFbM1ULgx7D3eN/AQfMlhwa7vN7SoDRA93o6Gojdh54Mm2M5KuxX5NmNgfcfn7csvhXuDEw3J6YUE1Nd79bOBFAdSc1ZcQLBGaggIYQwy7p0R8gWh0T4AZEk+GHsMdoYXV0aERhdGFYxMRs74KtG1Rkd1kdAIsIdZ7D5tLstPOUdL/qaWmSXQO3QQAAAAKFIDQhSPlDVZvIilOEblCDAECp43L1YZ3opECrhpd//EKA6uCMmhEftV7woLtQndymMNoWu/l6CvmQnuYGWsaIeVnQ6QP9e2x36VBO79iavVyupQECAyYgASFYIMMwT+xzGRGxDx68988LHQ2WBrHQ0/ikpBffxxPtyQ92Ilggq9B/tvF9OQzKJddRibjoYmYfZtVk20wt7OKpz/a4FLU="),
+    ),
+    AssertionExample(
+      id =
+        ByteArray.fromBase64Url("qeNy9WGd6KRAq4aXf_xCgOrgjJoRH7Ve8KC7UJ3cpjDaFrv5egr5kJ7mBlrGiHlZ0OkD_Xtsd-lQTu_Ymr1crg"),
+      clientData = """{"type":"webauthn.get","challenge":"gJQG3mUBQv5rR7mwUuHbxQ","origin":"https://demo.yubico.com","crossOrigin":false"}""",
+      authDataBytes = ByteArray.fromBase64(
+        "xGzvgq0bVGR3WR0Aiwh1nsPm0uy085R0v+ppaZJdA7cBAAAABQ=="
+      ),
+      sig =
+        ByteArray.fromBase64("MEQCIEZeZWSy5CfVPMIGnU1Fi3+K+8ID6YTDxdckc9174ICeAiA1qRNIbPoo2tMSR1wFi5PTb6s+nZ2q9apv9NhnDbNZig=="),
+    ),
+  )
+
 }

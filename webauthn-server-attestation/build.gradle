@@ -14,6 +14,7 @@ targetCompatibility = 1.8
 evaluationDependsOn(':webauthn-server-core-minimal')
 
 dependencies {
+  api(platform(rootProject))
 
   api(
     project(':webauthn-server-core-minimal'),
