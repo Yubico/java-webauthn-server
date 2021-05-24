@@ -74,6 +74,8 @@ In addition to the main `webauthn-server-core` module, there are also:
 - Optionally integrates with a "metadata service" to verify
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
   and annotate responses with additional authenticator metadata
+- Reproducible builds: release signatures match fresh builds from source. See
+  [Building](#Building) below.
 
 
 === Non-features
@@ -340,18 +342,25 @@ will have a plain `x.y.z` version number, while a build on any other commit will
 result in a version number containing the abbreviated commit hash.
 
 Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds from
-tagged commits should therefore be verifiable by signatures from Maven Central:
+tagged commits should therefore be verifiable by signatures from Maven Central
+and GitHub releases:
 
 ```
 $ git checkout 1.4.0-RC2
 $ ./gradlew :webauthn-server-core:jar
+
 $ wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/1.4.0-RC2/webauthn-server-core-1.4.0-RC2.jar.asc
+$ gpg --verify webauthn-server-core-1.4.0-RC2.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0-RC2.jar
+
+$ wget https://github.com/Yubico/java-webauthn-server/releases/download/1.4.0-RC2/webauthn-server-core-1.4.0-RC2.jar.asc
 $ gpg --verify webauthn-server-core-1.4.0-RC2.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0-RC2.jar
 ```
 
 Note that building with a different JDK may produce a different artifact. To
 ensure binary reproducibility, please build with the same JDK as specified in
-the release notes.
+the release notes. Reproducible builds also require building from a Git
+repository, since the build embeds version number and Git commit ID into the
+built artifacts.
 
 Official Yubico software signing keys are listed on the
 https://developers.yubico.com/Software_Projects/Software_Signing.html[Yubico
