@@ -37,6 +37,7 @@ object RealExamples {
   case class AttestationExample(
       clientData: String,
       attestationObjectBytes: ByteArray,
+      clientExtensionResultsJson: String = "{}",
   ) extends HasClientData {
     def attestationObject: AttestationObject =
       new AttestationObject(attestationObjectBytes)
@@ -53,7 +54,7 @@ object RealExamples {
           "clientDataJSON": "${clientDataJSON.getBase64Url}",
           "attestationObject": "${attestationObjectBytes.getBase64Url}"
         },
-        "clientExtensionResults": {}
+        "clientExtensionResults": ${clientExtensionResultsJson}
       }""")
   }
 
@@ -63,6 +64,7 @@ object RealExamples {
       clientData: String,
       authDataBytes: ByteArray,
       sig: ByteArray,
+      clientExtensionResultsJson: String = "{}",
   ) extends HasClientData {
     def authenticatorData: AuthenticatorData =
       new AuthenticatorData(authDataBytes)
@@ -78,7 +80,7 @@ object RealExamples {
           "authenticatorData": "${authDataBytes.getBase64Url}",
           "signature": "${sig.getBase64Url}"
         },
-        "clientExtensionResults": {}
+        "clientExtensionResults": ${clientExtensionResultsJson}
       }""")
   }
 
