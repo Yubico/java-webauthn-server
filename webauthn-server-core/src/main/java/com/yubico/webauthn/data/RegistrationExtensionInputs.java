@@ -206,19 +206,28 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     /**
      * Enable the Large blob storage extension (<code>largeBlob</code>).
      *
+     * <p>Alias of <code>largeBlob(new Extensions.LargeBlob.LargeBlobRegistrationInput(support))
+     * </code>.
+     *
+     * @param support an {@link
+     *     com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport}
+     *     value to set as the <code>support</code> attribute of the <code>largeBlob</code>
+     *     extension input.
+     * @see #largeBlob(Extensions.LargeBlob.LargeBlobRegistrationInput)
      * @see <a
      *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     public RegistrationExtensionInputsBuilder largeBlob(
-        Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport largeBlob) {
-      this.largeBlob = new Extensions.LargeBlob.LargeBlobRegistrationInput(largeBlob);
+        Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport support) {
+      this.largeBlob = new Extensions.LargeBlob.LargeBlobRegistrationInput(support);
       return this;
     }
 
     /**
      * Enable the Large blob storage extension (<code>largeBlob</code>).
      *
+     * @see #largeBlob(Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport)
      * @see <a
      *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
