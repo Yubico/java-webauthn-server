@@ -112,6 +112,14 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
     return Optional.ofNullable(credProps);
   }
 
+  /**
+   * Extension output for the Large blob storage extension (<code>largeBlob</code>), if any.
+   *
+   * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+   *     Large blob storage extension (largeBlob)</a>
+   */
   public Optional<Extensions.LargeBlob.LargeBlobRegistrationOutput> getLargeBlob() {
     return Optional.ofNullable(largeBlob);
   }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
+import com.yubico.webauthn.StartRegistrationOptions;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -110,15 +111,21 @@ public class Extensions {
       /**
        * The Relying Party's preference of whether the created credential should support the <code>
        * largeBlob</code> extension.
-       *
-       * <p>Currently the only valid values are {@link LargeBlobSupport#REQUIRED} and {@link
-       * LargeBlobSupport#PREFERRED}, but custom values MAY be constructed in case more values are
-       * added in future revisions of the extension.
        */
       @JsonProperty private final LargeBlobSupport support;
 
       @JsonCreator
-      public LargeBlobRegistrationInput(@JsonProperty("support") LargeBlobSupport support) {
+      public LargeBlobRegistrationInput(
+          /**
+           * The Relying Party's preference of whether the created credential should support the
+           * <code>
+           * largeBlob</code> extension.
+           *
+           * <p>Currently the only valid values are {@link LargeBlobSupport#REQUIRED} and {@link
+           * LargeBlobSupport#PREFERRED}, but custom values MAY be constructed in case more values
+           * are added in future revisions of the extension.
+           */
+          @JsonProperty("support") LargeBlobSupport support) {
         this.support = support;
       }
 
@@ -126,6 +133,12 @@ public class Extensions {
        * The known valid arguments for the Large blob storage extension (<code>largeBlob</code>)
        * input in registration ceremonies.
        *
+       * <p>Currently the only valid values are {@link LargeBlobSupport#REQUIRED} and {@link
+       * LargeBlobSupport#PREFERRED}, but custom values MAY be constructed in case more values are
+       * added in future revisions of the extension.
+       *
+       * @see #REQUIRED
+       * @see #PREFERRED
        * @see <a
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
        *     Large blob storage extension (largeBlob)</a>
@@ -133,6 +146,16 @@ public class Extensions {
       @Value
       public static class LargeBlobSupport {
         /**
+         * The authenticator used for registration MUST support the <code>largeBlob</code>
+         * extension.
+         *
+         * <p>Note: If the client does not support the <code>largeBlob</code> extension, this
+         * requirement MAY be ignored.
+         *
+         * <p>Note: CTAP authenticators only support <code>largeBlob</code> in combination with
+         * {@link AuthenticatorSelectionCriteria#isRequireResidentKey()} set to <code>true</code> in
+         * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
+         *
          * @see <a
          *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
          *     Large blob storage extension (largeBlob)</a>
@@ -140,6 +163,14 @@ public class Extensions {
         public static final LargeBlobSupport REQUIRED = new LargeBlobSupport("required");
 
         /**
+         * If the authenticator used for registration supports the <code>largeBlob</code> extension,
+         * it will be enabled for the created credential. If not supported, the credential will be
+         * created without large blob support.
+         *
+         * <p>Note: CTAP authenticators only support <code>largeBlob</code> in combination with
+         * {@link AuthenticatorSelectionCriteria#isRequireResidentKey()} set to <code>true</code> in
+         * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
+         *
          * @see <a
          *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
          *     Large blob storage extension (largeBlob)</a>
@@ -174,9 +205,10 @@ public class Extensions {
     @Value
     public static class LargeBlobAuthenticationInput {
       /**
-       * A boolean that indicates that the Relying Party would like to fetch the previously-written
-       * blob associated with the asserted credential. Only valid during authentication.
+       * If <code>true</code>, indicates that the Relying Party would like to fetch the
+       * previously-written blob associated with the asserted credential.
        *
+       * @see #read()
        * @see <a
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
        *     Large blob storage extension (largeBlob)</a>
@@ -185,8 +217,8 @@ public class Extensions {
 
       /**
        * An opaque byte string that the Relying Party wishes to store with the existing credential.
-       * Only valid during authentication.
        *
+       * @see #write(ByteArray)
        * @see <a
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-write">§10.5.
        *     Large blob storage extension (largeBlob)</a>
@@ -232,6 +264,14 @@ public class Extensions {
       }
     }
 
+    /**
+     * Extension outputs for the Large blob storage extension (<code>largeBlob</code>) in
+     * registration ceremonies.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     Large blob storage extension (largeBlob)</a>
+     */
     @Value
     public static class LargeBlobRegistrationOutput {
       /**
@@ -240,6 +280,7 @@ public class Extensions {
        * @see <a
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargebloboutputs-supported">§10.5.
        *     Large blob storage extension (largeBlob)</a>
+       * @see LargeBlobRegistrationInput#getSupport()
        */
       @JsonProperty private final boolean supported;
 
@@ -249,6 +290,14 @@ public class Extensions {
       }
     }
 
+    /**
+     * Extension outputs for the Large blob storage extension (<code>largeBlob</code>) in
+     * authentication ceremonies.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     Large blob storage extension (largeBlob)</a>
+     */
     @Value
     public static class LargeBlobAuthenticationOutput {
       @JsonProperty private final ByteArray blob;
@@ -264,7 +313,7 @@ public class Extensions {
       /**
        * The opaque byte string that was associated with the credential identified by {@link
        * PublicKeyCredential#getId()}. Only valid if {@link LargeBlobAuthenticationInput#getRead()}
-       * was true.
+       * was <code>true</code>.
        *
        * @see <a
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargebloboutputs-blob">§10.5.
@@ -279,6 +328,9 @@ public class Extensions {
        * LargeBlobAuthenticationInput#write(ByteArray)} were successfully stored on the
        * authenticator, associated with the specified credential.
        *
+       * @return Empty if {@link LargeBlobAuthenticationInput#getWrite()} was not present. Otherwise
+       *     <code>true</code> if and only if the value of {@link
+       *     LargeBlobAuthenticationInput#getWrite()} was successfully stored by the authenticator.
        * @see <a
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargebloboutputs-written">§10.5.
        *     Large blob storage extension (largeBlob)</a>
