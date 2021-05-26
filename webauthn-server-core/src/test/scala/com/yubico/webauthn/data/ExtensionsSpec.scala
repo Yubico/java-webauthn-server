@@ -3,8 +3,14 @@ package com.yubico.webauthn.data
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.scalacheck.gen.JacksonGenerators.arbitraryObjectNode
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 import com.yubico.webauthn.data.Generators.arbitraryClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators.arbitraryRegistrationExtensionInputs
+import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -13,8 +19,10 @@ import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
+import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.jdk.CollectionConverters.SetHasAsScala
+import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class ExtensionsSpec
@@ -75,6 +83,17 @@ class ExtensionsSpec
         json.readValue(reencoded, classOf[RegistrationExtensionInputs])
 
       decoded should not be null
+      decoded.getExtensionIds.asScala should equal(
+        Set("appidExclude", "credProps", "largeBlob", "uvm")
+      )
+      decoded.getAppidExclude.toScala should equal(
+        Some(new AppId("https://example.org"))
+      )
+      decoded.getLargeBlob.toScala should equal(
+        Some(new LargeBlobRegistrationInput(LargeBlobSupport.REQUIRED))
+      )
+      decoded.getUvm should be(true)
+
       redecoded should equal(decoded)
       json.readTree(reencoded) should equal(json.readTree(encoded))
     }
@@ -154,6 +173,51 @@ class ExtensionsSpec
         println(json)
         json.has(Extensions.AppidExclude.EXTENSION_ID) should be(false)
       }
+    }
+
+    it("can deserialize a real largeBlob write example.") {
+      val testData = RealExamples.LargeBlobWrite
+      val registrationCred = testData.attestation.credential
+      val assertionCred = testData.assertion.credential
+
+      registrationCred.getClientExtensionResults.getExtensionIds.asScala should equal(
+        Set("largeBlob")
+      )
+      registrationCred.getClientExtensionResults.getLargeBlob.toScala should equal(
+        Some(new LargeBlobRegistrationOutput(true))
+      )
+
+      assertionCred.getClientExtensionResults.getExtensionIds.asScala should equal(
+        Set("appid", "largeBlob")
+      )
+      assertionCred.getClientExtensionResults.getLargeBlob.toScala should equal(
+        Some(new LargeBlobAuthenticationOutput(null, true))
+      )
+    }
+
+    it("can deserialize a real largeBlob read example.") {
+      val testData = RealExamples.LargeBlobRead
+      val registrationCred = testData.attestation.credential
+      val assertionCred = testData.assertion.credential
+
+      registrationCred.getClientExtensionResults.getExtensionIds.asScala should equal(
+        Set("largeBlob")
+      )
+      registrationCred.getClientExtensionResults.getLargeBlob.toScala should equal(
+        Some(new LargeBlobRegistrationOutput(true))
+      )
+
+      assertionCred.getClientExtensionResults.getExtensionIds.asScala should equal(
+        Set("appid", "largeBlob")
+      )
+      assertionCred.getClientExtensionResults.getLargeBlob.toScala should equal(
+        Some(
+          new LargeBlobAuthenticationOutput(
+            new ByteArray("Hello, World!".getBytes(StandardCharsets.UTF_8)),
+            null,
+          )
+        )
+      )
     }
   }
 
