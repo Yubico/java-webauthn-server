@@ -517,4 +517,66 @@ object RealExamples {
     ),
   )
 
+  val LargeBlobWrite = Example(
+    RelyingPartyIdentity.builder().id("localhost").name("").build(),
+    UserIdentity
+      .builder()
+      .name("asdfa")
+      .displayName("asdfa")
+      .id(
+        ByteArray.fromBase64Url("-MR-ER2Nujmv3fWNlpb1mwcisVh6D962ZAxGz4W7XUQ")
+      )
+      .build(),
+    AttestationExample(
+      base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiUkpkSmt3UF9JejcyRHF3Y2xha0JYR3FuX2NqZy1ObEtQVDFOSEFvMDR2RSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      ByteArray.fromBase64Url("o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjCSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2PFAAAABAAAAAAAAAAAAAAAAAAAAAAAMC22Bw33qBCfiLRvJaun4zVZ4YOpIG3mxo2FhH99macgoYmxr-ICVNThjNJzkEGORqUBAgMmIAEhWCAttgcN96gQn4i0byWrpUb-jQhSjE9J49n5D_krK_f8byJYIFxGgNN7UDpueNRz_FgXoO7Pg5qIFA-LT9y3S7_JdPjboWtjcmVkUHJvdGVjdAI"),
+      clientExtensionResultsJson = """{"largeBlob":{"supported":true}}""",
+    ),
+    AssertionExample(
+      id = ByteArray.fromBase64Url(
+        "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G"
+      ),
+      clientData =
+        base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiWUZVZGY5SFI3UVY5a216R1ZicU5sVk1Ja2x5QXJEY2lISVM0TFdsQWhtUSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      authDataBytes = ByteArray.fromBase64Url(
+        "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAACA"
+      ),
+      sig =
+        ByteArray.fromBase64Url("MEQCIAgTCWKcpQ-kLkKc18UJlwRWx2WYmRWMxvndHXHgWmzzAiAC-my1SfSnO0fr4iRYxMkbw1k7e6HxrFY22nJ7e3Z3jw"),
+      clientExtensionResultsJson =
+        """{"appid":false,"largeBlob":{"written":true}}""",
+    ),
+  )
+
+  val LargeBlobRead = Example(
+    RelyingPartyIdentity.builder().id("localhost").name("").build(),
+    UserIdentity
+      .builder()
+      .name("asdfa")
+      .displayName("asdfa")
+      .id(
+        ByteArray.fromBase64Url("-MR-ER2Nujmv3fWNlpb1mwcisVh6D962ZAxGz4W7XUQ")
+      )
+      .build(),
+    AttestationExample(
+      base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiUkpkSmt3UF9JejcyRHF3Y2xha0JYR3FuX2NqZy1ObEtQVDFOSEFvMDR2RSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      ByteArray.fromBase64Url("o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjCSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2PFAAAABAAAAAAAAAAAAAAAAAAAAAAAMC22Bw33qBCfiLRvJaun4zVZ4YOpIG3mxo2FhH99macgoYmxr-ICVNThjNJzkEGORqUBAgMmIAEhWCAttgcN96gQn4i0byWrpUb-jQhSjE9J49n5D_krK_f8byJYIFxGgNN7UDpueNRz_FgXoO7Pg5qIFA-LT9y3S7_JdPjboWtjcmVkUHJvdGVjdAI"),
+      clientExtensionResultsJson = """{"largeBlob":{"supported":true}}""",
+    ),
+    AssertionExample(
+      id = ByteArray.fromBase64Url(
+        "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G"
+      ),
+      clientData =
+        base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiSjNlNjRnZThBamtOSl81aE5jaUo5NldrT3VQZzYycnJHTDc2d3AzTHRCQSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      authDataBytes = ByteArray.fromBase64Url(
+        "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAADQ"
+      ),
+      sig =
+        ByteArray.fromBase64Url("MEYCIQCJMxhKIBAvno05cjt7IeFrWLwPtWeDGS_yH9fOX-DQXAIhAIzU7uC4DM6oO_A0JNm90LUr0l158aacA4XH5auxqSqB"),
+      clientExtensionResultsJson =
+        """{"appid":false,"largeBlob":{"blob":"SGVsbG8sIFdvcmxkIQ"}}""",
+    ),
+  )
+
 }
