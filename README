@@ -178,7 +178,16 @@ Update your database:
 
 [source,java]
 ----------
-storeCredential("alice", result.getKeyId(), result.getPublicKeyCose());
+storeCredential(
+  "alice",                   // Username or other appropriate user identifier
+  result.getKeyId(),         // Credential ID for allowCredentials
+  result.getPublicKeyCose(), // Public key for verifying authentication signatures
+  result.isDiscoverable(),   // Can this key be used for username-less auth?
+  result.getTransports(),    // Transport hints to put in allowCredentials along with ID
+  result.signatureCount(),   // Initial signature counter value
+  pkc.getResponse().getAttestationObject(), // Store attestation object for future reference
+  pkc.getResponse().getClientDataJSON(),    // Store client data for re-verifying signature if needed
+);
 ----------
 
 
