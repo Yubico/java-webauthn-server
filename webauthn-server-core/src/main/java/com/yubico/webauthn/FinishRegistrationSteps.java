@@ -750,6 +750,8 @@ final class FinishRegistrationSteps {
                       .getAttestedCredentialData()
                       .get()
                       .getCredentialPublicKey())
+              .signatureCount(
+                  response.getResponse().getParsedAuthenticatorData().getSignatureCounter())
               .attestationMetadata(attestationMetadata)
               .warnings(allWarnings())
               .build());
