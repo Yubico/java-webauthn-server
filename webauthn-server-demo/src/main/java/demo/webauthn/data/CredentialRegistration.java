@@ -28,9 +28,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.UserIdentity;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.SortedSet;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Wither;
@@ -44,6 +46,7 @@ public class CredentialRegistration {
 
   UserIdentity userIdentity;
   Optional<String> credentialNickname;
+  SortedSet<AuthenticatorTransport> transports;
 
   @JsonIgnore Instant registrationTime;
   RegisteredCredential credential;

@@ -68,6 +68,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
             registration ->
                 PublicKeyCredentialDescriptor.builder()
                     .id(registration.getCredential().getCredentialId())
+                    .transports(registration.getTransports())
                     .build())
         .collect(Collectors.toSet());
   }

@@ -141,6 +141,7 @@
           response: {
             attestationObject: base64url.fromByteArray(response.response.attestationObject),
             clientDataJSON: base64url.fromByteArray(response.response.clientDataJSON),
+            transports: response.response.getTransports() || [],
           },
           clientExtensionResults,
         };
