@@ -756,6 +756,7 @@ class RelyingPartyRegistrationSpec
               authData.getBytes
                 .updated(32, (authData.getBytes()(32) | 0x01).toByte)
             )
+
           def upOff(authData: ByteArray): ByteArray =
             new ByteArray(
               authData.getBytes
@@ -767,6 +768,7 @@ class RelyingPartyRegistrationSpec
               authData.getBytes
                 .updated(32, (authData.getBytes()(32) | 0x04).toByte)
             )
+
           def uvOff(authData: ByteArray): ByteArray =
             new ByteArray(
               authData.getBytes
@@ -798,6 +800,7 @@ class RelyingPartyRegistrationSpec
               )
               chk(stepsToStep(steps))
             }
+
             def checkFailsWith(
                 stepsToStep: FinishRegistrationSteps => Step
             ): (UserVerificationRequirement, ByteArray => ByteArray) => Unit =
@@ -808,6 +811,7 @@ class RelyingPartyRegistrationSpec
                 ]
                 step.tryNext shouldBe a[Failure[_]]
               }
+
             def checkSucceedsWith(
                 stepsToStep: FinishRegistrationSteps => Step
             ): (UserVerificationRequirement, ByteArray => ByteArray) => Unit =
@@ -1293,7 +1297,9 @@ class RelyingPartyRegistrationSpec
 
             def checkByteFlipFails(index: Int): Unit = {
               val testData = RegistrationTestData.FidoU2f.BasicAttestation
-                .editAuthenticatorData { flipByte(index, _) }
+                .editAuthenticatorData {
+                  flipByte(index, _)
+                }
 
               val steps = finishRegistration(testData = testData)
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
@@ -1816,6 +1822,7 @@ class RelyingPartyRegistrationSpec
                         .concat(reencodedKey)
                         .getBytes
                     }
+
                     def modifyAttobjPubkeyAlg(attObjBytes: ByteArray)
                         : ByteArray = {
                       val attObj =
@@ -2823,391 +2830,389 @@ class RelyingPartyRegistrationSpec
           Try(steps.run) shouldBe a[Failure[_]]
           Try(steps.run).failed.get shouldBe an[IllegalArgumentException]
         }
+      }
+    }
 
-        describe("The default RelyingParty settings") {
+    describe("The default RelyingParty settings") {
 
-          val rp = RelyingParty
+      val rp = RelyingParty
+        .builder()
+        .identity(
+          RelyingPartyIdentity
             .builder()
-            .identity(
-              RelyingPartyIdentity
-                .builder()
-                .id("localhost")
-                .name("Test party")
-                .build()
-            )
-            .credentialRepository(Helpers.CredentialRepository.empty)
+            .id("localhost")
+            .name("Test party")
             .build()
+        )
+        .credentialRepository(Helpers.CredentialRepository.empty)
+        .build()
 
-          val request = rp
-            .startRegistration(
-              StartRegistrationOptions
+      val request = rp
+        .startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(
+              UserIdentity
                 .builder()
-                .user(
-                  UserIdentity
-                    .builder()
-                    .name("test")
-                    .displayName("Test Testsson")
-                    .id(new ByteArray(Array()))
-                    .build()
-                )
+                .name("test")
+                .displayName("Test Testsson")
+                .id(new ByteArray(Array()))
                 .build()
-            )
-            .toBuilder()
-            .challenge(
-              RegistrationTestData.NoneAttestation.Default.clientData.getChallenge
             )
             .build()
+        )
+        .toBuilder()
+        .challenge(
+          RegistrationTestData.NoneAttestation.Default.clientData.getChallenge
+        )
+        .build()
 
-          it("accept registrations with no attestation.") {
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(RegistrationTestData.NoneAttestation.Default.response)
-                .build()
-            )
+      it("accept registrations with no attestation.") {
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(RegistrationTestData.NoneAttestation.Default.response)
+            .build()
+        )
 
-            result.isAttestationTrusted should be(false)
-            result.getAttestationType should be(AttestationType.NONE)
-            result.getKeyId.getId should equal(
-              RegistrationTestData.NoneAttestation.Default.response.getId
-            )
-          }
-
-          it(
-            "accept registrations with unknown attestation statement format."
-          ) {
-            val testData = RegistrationTestData.FidoU2f.BasicAttestation
-              .setAttestationStatementFormat("urgel")
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(testData.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getAttestationType should be(AttestationType.UNKNOWN)
-            result.getKeyId.getId should equal(testData.response.getId)
-          }
-
-          it("accept android-key attestations but report they're untrusted.") {
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(
-                  RegistrationTestData.AndroidKey.BasicAttestation.response
-                )
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getKeyId.getId should equal(
-              RegistrationTestData.AndroidKey.BasicAttestation.response.getId
-            )
-          }
-
-          it("accept TPM attestations but report they're untrusted.") {
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(RegistrationTestData.Tpm.PrivacyCa.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getKeyId.getId should equal(
-              RegistrationTestData.Tpm.PrivacyCa.response.getId
-            )
-          }
-
-          describe("accept apple attestations but report they're untrusted:") {
-            it("iOS") {
-              val result = rp
-                .toBuilder()
-                .identity(RealExamples.AppleAttestationIos.rp)
-                .origins(
-                  Set(
-                    RealExamples.AppleAttestationIos.attestation.collectedClientData.getOrigin
-                  ).asJava
-                )
-                .build()
-                .finishRegistration(
-                  FinishRegistrationOptions
-                    .builder()
-                    .request(
-                      request
-                        .toBuilder()
-                        .challenge(
-                          RealExamples.AppleAttestationIos.attestation.collectedClientData.getChallenge
-                        )
-                        .build()
-                    )
-                    .response(
-                      RealExamples.AppleAttestationIos.attestation.credential
-                    )
-                    .build()
-                )
-
-              result.isAttestationTrusted should be(false)
-              RealExamples.AppleAttestationIos.attestation.credential.getResponse.getAttestation.getFormat should be(
-                "apple"
-              )
-              result.getAttestationType should be(
-                AttestationType.ANONYMIZATION_CA
-              )
-              result.getKeyId.getId should equal(
-                RealExamples.AppleAttestationIos.attestation.credential.getId
-              )
-            }
-
-            it("MacOS") {
-              val result = rp
-                .toBuilder()
-                .identity(RealExamples.AppleAttestationMacos.rp)
-                .origins(
-                  Set(
-                    RealExamples.AppleAttestationMacos.attestation.collectedClientData.getOrigin
-                  ).asJava
-                )
-                .build()
-                .finishRegistration(
-                  FinishRegistrationOptions
-                    .builder()
-                    .request(
-                      request
-                        .toBuilder()
-                        .challenge(
-                          RealExamples.AppleAttestationMacos.attestation.collectedClientData.getChallenge
-                        )
-                        .build()
-                    )
-                    .response(
-                      RealExamples.AppleAttestationMacos.attestation.credential
-                    )
-                    .build()
-                )
-
-              result.isAttestationTrusted should be(false)
-              RealExamples.AppleAttestationMacos.attestation.credential.getResponse.getAttestation.getFormat should be(
-                "apple"
-              )
-              result.getAttestationType should be(
-                AttestationType.ANONYMIZATION_CA
-              )
-              result.getKeyId.getId should equal(
-                RealExamples.AppleAttestationMacos.attestation.credential.getId
-              )
-            }
-          }
-
-          describe("accept all test examples in the validExamples list.") {
-            RegistrationTestData.defaultSettingsValidExamples.zipWithIndex
-              .foreach {
-                case (testData, i) =>
-                  it(s"Succeeds for example index ${i}.") {
-                    val rp = {
-                      val builder = RelyingParty
-                        .builder()
-                        .identity(testData.rpId)
-                        .credentialRepository(
-                          Helpers.CredentialRepository.empty
-                        )
-                      testData.origin.foreach({ o =>
-                        builder.origins(Set(o).asJava)
-                      })
-                      builder.build()
-                    }
-
-                    val result = rp.finishRegistration(
-                      FinishRegistrationOptions
-                        .builder()
-                        .request(testData.request)
-                        .response(testData.response)
-                        .build()
-                    )
-
-                    result.getKeyId.getId should equal(testData.response.getId)
-                  }
-              }
-          }
-
-          describe("generate pubKeyCredParams which") {
-            val rp = RelyingParty
-              .builder()
-              .identity(
-                RelyingPartyIdentity
-                  .builder()
-                  .id("localhost")
-                  .name("Test RP")
-                  .build()
-              )
-              .credentialRepository(Helpers.CredentialRepository.empty)
-              .build()
-            val pkcco = rp.startRegistration(
-              StartRegistrationOptions
-                .builder()
-                .user(
-                  UserIdentity
-                    .builder()
-                    .name("foo")
-                    .displayName("Foo")
-                    .id(ByteArray.fromHex("aabbccdd"))
-                    .build()
-                )
-                .build()
-            )
-
-            val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
-
-            describe("include") {
-              it("ES256.") {
-                pubKeyCredParams should contain(
-                  PublicKeyCredentialParameters.ES256
-                )
-                pubKeyCredParams map (_.getAlg) should contain(
-                  COSEAlgorithmIdentifier.ES256
-                )
-              }
-
-              it("EdDSA.") {
-                pubKeyCredParams should contain(
-                  PublicKeyCredentialParameters.EdDSA
-                )
-                pubKeyCredParams map (_.getAlg) should contain(
-                  COSEAlgorithmIdentifier.EdDSA
-                )
-              }
-
-              it("RS256.") {
-                pubKeyCredParams should contain(
-                  PublicKeyCredentialParameters.RS256
-                )
-                pubKeyCredParams map (_.getAlg) should contain(
-                  COSEAlgorithmIdentifier.RS256
-                )
-              }
-            }
-
-            describe("do not include") {
-              it("RS1.") {
-                pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
-                pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
-              }
-            }
-          }
-
-          describe("expose the credProps extension output as RegistrationResult.isDiscoverable()") {
-            val rp = RelyingParty
-              .builder()
-              .identity(
-                RelyingPartyIdentity
-                  .builder()
-                  .id("localhost")
-                  .name("Test RP")
-                  .build()
-              )
-              .credentialRepository(Helpers.CredentialRepository.empty)
-              .build()
-            val testDataBase = RegistrationTestData.Packed.BasicAttestation
-            val testData = testDataBase.copy(requestedExtensions =
-              testDataBase.request.getExtensions.toBuilder.credProps().build()
-            )
-
-            it("when set to true.") {
-              val result = rp.finishRegistration(
-                FinishRegistrationOptions
-                  .builder()
-                  .request(testData.request)
-                  .response(
-                    testData.response.toBuilder
-                      .clientExtensionResults(
-                        ClientRegistrationExtensionOutputs
-                          .builder()
-                          .credProps(
-                            newCredentialPropertiesOutput(true)
-                          )
-                          .build()
-                      )
-                      .build()
-                  )
-                  .build()
-              )
-
-              result.isDiscoverable.asScala should equal(Some(true))
-            }
-
-            it("when set to false.") {
-              val result = rp.finishRegistration(
-                FinishRegistrationOptions
-                  .builder()
-                  .request(testData.request)
-                  .response(
-                    testData.response.toBuilder
-                      .clientExtensionResults(
-                        ClientRegistrationExtensionOutputs
-                          .builder()
-                          .credProps(
-                            newCredentialPropertiesOutput(false)
-                          )
-                          .build()
-                      )
-                      .build()
-                  )
-                  .build()
-              )
-
-              result.isDiscoverable.asScala should equal(Some(false))
-            }
-
-            it("when not available.") {
-              val result = rp.finishRegistration(
-                FinishRegistrationOptions
-                  .builder()
-                  .request(testData.request)
-                  .response(testData.response)
-                  .build()
-              )
-
-              result.isDiscoverable.asScala should equal(None)
-            }
-          }
-        }
-
-        describe("RelyingParty supports registering") {
-          it("a real packed attestation with an RSA key.") {
-            val rp = RelyingParty
-              .builder()
-              .identity(
-                RelyingPartyIdentity
-                  .builder()
-                  .id("demo3.yubico.test")
-                  .name("Yubico WebAuthn demo")
-                  .build()
-              )
-              .credentialRepository(Helpers.CredentialRepository.empty)
-              .origins(Set("https://demo3.yubico.test:8443").asJava)
-              .build()
-
-            val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(testData.request)
-                .response(testData.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getKeyId.getId should equal(testData.response.getId)
-          }
-        }
-
+        result.isAttestationTrusted should be(false)
+        result.getAttestationType should be(AttestationType.NONE)
+        result.getKeyId.getId should equal(
+          RegistrationTestData.NoneAttestation.Default.response.getId
+        )
       }
 
+      it(
+        "accept registrations with unknown attestation statement format."
+      ) {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+          .setAttestationStatementFormat("urgel")
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationType should be(AttestationType.UNKNOWN)
+        result.getKeyId.getId should equal(testData.response.getId)
+      }
+
+      it("accept android-key attestations but report they're untrusted.") {
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(
+              RegistrationTestData.AndroidKey.BasicAttestation.response
+            )
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getKeyId.getId should equal(
+          RegistrationTestData.AndroidKey.BasicAttestation.response.getId
+        )
+      }
+
+      it("accept TPM attestations but report they're untrusted.") {
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(RegistrationTestData.Tpm.PrivacyCa.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getKeyId.getId should equal(
+          RegistrationTestData.Tpm.PrivacyCa.response.getId
+        )
+      }
+
+      describe("accept apple attestations but report they're untrusted:") {
+        it("iOS") {
+          val result = rp
+            .toBuilder()
+            .identity(RealExamples.AppleAttestationIos.rp)
+            .origins(
+              Set(
+                RealExamples.AppleAttestationIos.attestation.collectedClientData.getOrigin
+              ).asJava
+            )
+            .build()
+            .finishRegistration(
+              FinishRegistrationOptions
+                .builder()
+                .request(
+                  request
+                    .toBuilder()
+                    .challenge(
+                      RealExamples.AppleAttestationIos.attestation.collectedClientData.getChallenge
+                    )
+                    .build()
+                )
+                .response(
+                  RealExamples.AppleAttestationIos.attestation.credential
+                )
+                .build()
+            )
+
+          result.isAttestationTrusted should be(false)
+          RealExamples.AppleAttestationIos.attestation.credential.getResponse.getAttestation.getFormat should be(
+            "apple"
+          )
+          result.getAttestationType should be(
+            AttestationType.ANONYMIZATION_CA
+          )
+          result.getKeyId.getId should equal(
+            RealExamples.AppleAttestationIos.attestation.credential.getId
+          )
+        }
+
+        it("MacOS") {
+          val result = rp
+            .toBuilder()
+            .identity(RealExamples.AppleAttestationMacos.rp)
+            .origins(
+              Set(
+                RealExamples.AppleAttestationMacos.attestation.collectedClientData.getOrigin
+              ).asJava
+            )
+            .build()
+            .finishRegistration(
+              FinishRegistrationOptions
+                .builder()
+                .request(
+                  request
+                    .toBuilder()
+                    .challenge(
+                      RealExamples.AppleAttestationMacos.attestation.collectedClientData.getChallenge
+                    )
+                    .build()
+                )
+                .response(
+                  RealExamples.AppleAttestationMacos.attestation.credential
+                )
+                .build()
+            )
+
+          result.isAttestationTrusted should be(false)
+          RealExamples.AppleAttestationMacos.attestation.credential.getResponse.getAttestation.getFormat should be(
+            "apple"
+          )
+          result.getAttestationType should be(
+            AttestationType.ANONYMIZATION_CA
+          )
+          result.getKeyId.getId should equal(
+            RealExamples.AppleAttestationMacos.attestation.credential.getId
+          )
+        }
+      }
+
+      describe("accept all test examples in the validExamples list.") {
+        RegistrationTestData.defaultSettingsValidExamples.zipWithIndex
+          .foreach {
+            case (testData, i) =>
+              it(s"Succeeds for example index ${i}.") {
+                val rp = {
+                  val builder = RelyingParty
+                    .builder()
+                    .identity(testData.rpId)
+                    .credentialRepository(
+                      Helpers.CredentialRepository.empty
+                    )
+                  testData.origin.foreach({ o =>
+                    builder.origins(Set(o).asJava)
+                  })
+                  builder.build()
+                }
+
+                val result = rp.finishRegistration(
+                  FinishRegistrationOptions
+                    .builder()
+                    .request(testData.request)
+                    .response(testData.response)
+                    .build()
+                )
+
+                result.getKeyId.getId should equal(testData.response.getId)
+              }
+          }
+      }
+
+      describe("generate pubKeyCredParams which") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+        val pkcco = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(
+              UserIdentity
+                .builder()
+                .name("foo")
+                .displayName("Foo")
+                .id(ByteArray.fromHex("aabbccdd"))
+                .build()
+            )
+            .build()
+        )
+
+        val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+        describe("include") {
+          it("ES256.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.ES256
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.ES256
+            )
+          }
+
+          it("EdDSA.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.EdDSA
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.EdDSA
+            )
+          }
+
+          it("RS256.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.RS256
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.RS256
+            )
+          }
+        }
+
+        describe("do not include") {
+          it("RS1.") {
+            pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
+            pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
+          }
+        }
+      }
+
+      describe("expose the credProps extension output as RegistrationResult.isDiscoverable()") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+        val testDataBase = RegistrationTestData.Packed.BasicAttestation
+        val testData = testDataBase.copy(requestedExtensions =
+          testDataBase.request.getExtensions.toBuilder.credProps().build()
+        )
+
+        it("when set to true.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .credProps(
+                        newCredentialPropertiesOutput(true)
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.isDiscoverable.asScala should equal(Some(true))
+        }
+
+        it("when set to false.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .credProps(
+                        newCredentialPropertiesOutput(false)
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.isDiscoverable.asScala should equal(Some(false))
+        }
+
+        it("when not available.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(testData.response)
+              .build()
+          )
+
+          result.isDiscoverable.asScala should equal(None)
+        }
+      }
+    }
+
+    describe("RelyingParty supports registering") {
+      it("a real packed attestation with an RSA key.") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("demo3.yubico.test")
+              .name("Yubico WebAuthn demo")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .origins(Set("https://demo3.yubico.test:8443").asJava)
+          .build()
+
+        val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getKeyId.getId should equal(testData.response.getId)
+      }
     }
   }
 }
