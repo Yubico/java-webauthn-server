@@ -35,6 +35,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Closeables;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
@@ -60,6 +61,7 @@ import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -91,9 +93,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -718,6 +722,7 @@ public class WebAuthnServer {
                     .getParsedAuthenticatorData()
                     .getSignatureCounter())
             .build(),
+        result.getTransports(),
         result.getAttestationMetadata());
   }
 
@@ -736,6 +741,16 @@ public class WebAuthnServer {
             .publicKeyCose(result.getPublicKeyCose())
             .signatureCount(signatureCount)
             .build(),
+        result
+            .getAttestationMetadata()
+            .flatMap(Attestation::getTransports)
+            .map(
+                transports ->
+                    CollectionUtil.immutableSortedSet(
+                        transports.stream()
+                            .map(AuthenticatorTransport::fromU2fTransport)
+                            .collect(Collectors.toSet())))
+            .orElse(Collections.emptySortedSet()),
         result.getAttestationMetadata());
   }
 
@@ -744,6 +759,7 @@ public class WebAuthnServer {
       Optional<String> nickname,
       long signatureCount,
       RegisteredCredential credential,
+      SortedSet<AuthenticatorTransport> transports,
       Optional<Attestation> attestationMetadata) {
     CredentialRegistration reg =
         CredentialRegistration.builder()
@@ -752,6 +768,7 @@ public class WebAuthnServer {
             .registrationTime(clock.instant())
             .credential(credential)
             .signatureCount(signatureCount)
+            .transports(transports)
             .attestationMetadata(attestationMetadata)
             .build();
 
