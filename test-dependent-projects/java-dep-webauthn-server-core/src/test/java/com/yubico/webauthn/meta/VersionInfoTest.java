@@ -19,7 +19,7 @@ public class VersionInfoTest {
     final Specification spec = versionInfo.getSpecification();
     assertTrue(spec.getLatestVersionUrl().toExternalForm().startsWith("https://"));
     assertTrue(spec.getUrl().toExternalForm().startsWith("https://"));
-    assertTrue(spec.getReleaseDate().isAfter(LocalDate.of(2019, 3, 3)));
+    assertTrue(spec.getReleaseDate().isAfter(LocalDate.of(2021, 2, 24)));
     assertNotNull(spec.getStatus());
   }
 

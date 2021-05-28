@@ -27,8 +27,12 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.SortedSet;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -68,6 +72,15 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
   @Getter(onMethod = @__({@Override}))
   private final ByteArray clientDataJSON;
 
+  /**
+   * The return value from the <code>AuthenticatorAttestationResponse.getTransports()</code> method.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatorattestationresponse-gettransports">§5.2.1.
+   *     Information About Public Key Credential (interface AuthenticatorAttestationResponse)</a>
+   */
+  private final SortedSet<AuthenticatorTransport> transports;
+
   /** The {@link #attestationObject} parsed as a domain object. */
   @NonNull @JsonIgnore private final transient AttestationObject attestation;
 
@@ -86,10 +99,15 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
   @JsonCreator
   private AuthenticatorAttestationResponse(
       @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
-      @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON)
+      @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON,
+      @JsonProperty("transports") Set<AuthenticatorTransport> transports)
       throws IOException, Base64UrlException {
     this.attestationObject = attestationObject;
     this.clientDataJSON = clientDataJSON;
+    this.transports =
+        transports == null
+            ? Collections.emptySortedSet()
+            : CollectionUtil.immutableSortedSet(transports);
 
     attestation = new AttestationObject(attestationObject);
     this.clientData = new CollectedClientData(clientDataJSON);
