@@ -27,6 +27,7 @@ package com.yubico.webauthn
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
@@ -37,6 +38,7 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -279,6 +281,55 @@ class RelyingPartyStartOperationSpec
 
         result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala
           .map(_.asScala.toSet) should equal(Some(credentials))
+      }
+    }
+
+    it("includes transports in allowCredentials when available.") {
+      forAll(
+        Gen.nonEmptyContainerOf[Set, AuthenticatorTransport](
+          arbitrary[AuthenticatorTransport]
+        ),
+        arbitrary[PublicKeyCredentialDescriptor],
+        arbitrary[PublicKeyCredentialDescriptor],
+        arbitrary[PublicKeyCredentialDescriptor],
+      ) {
+        (
+            cred1Transports: Set[AuthenticatorTransport],
+            cred1: PublicKeyCredentialDescriptor,
+            cred2: PublicKeyCredentialDescriptor,
+            cred3: PublicKeyCredentialDescriptor,
+        ) =>
+          val rp = relyingParty(credentials =
+            Set(
+              cred1.toBuilder.transports(cred1Transports.asJava).build(),
+              cred2.toBuilder
+                .transports(
+                  Optional.of(Set.empty[AuthenticatorTransport].asJava)
+                )
+                .build(),
+              cred3.toBuilder
+                .transports(
+                  Optional.empty[java.util.Set[AuthenticatorTransport]]
+                )
+                .build(),
+            )
+          )
+          val result = rp.startAssertion(
+            StartAssertionOptions
+              .builder()
+              .username(userId.getName)
+              .build()
+          )
+
+          val requestCreds =
+            result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
+          requestCreds.head.getTransports.asScala should equal(
+            Some(cred1Transports.asJava)
+          )
+          requestCreds(1).getTransports.asScala should equal(
+            Some(Set.empty.asJava)
+          )
+          requestCreds(2).getTransports.asScala should equal(None)
       }
     }
 
