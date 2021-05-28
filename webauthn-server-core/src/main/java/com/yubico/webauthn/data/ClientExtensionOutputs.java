@@ -24,12 +24,4 @@
 
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Set;
-
-public interface ClientExtensionOutputs {
-
-  /** Returns a {@link Set} of the extension IDs for which an extension output is present. */
-  @JsonIgnore
-  Set<String> getExtensionIds();
-}
+public interface ClientExtensionOutputs extends ExtensionOutputs {}

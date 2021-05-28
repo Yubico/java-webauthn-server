@@ -27,11 +27,14 @@ package com.yubico.webauthn;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import java.util.List;
+import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -100,6 +103,10 @@ public class AssertionResult {
    */
   private final boolean signatureCounterValid;
 
+  private final ClientAssertionExtensionOutputs clientExtensionOutputs;
+
+  private final AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs;
+
   /** Zero or more human-readable messages about non-critical issues. */
   @NonNull private final List<String> warnings;
 
@@ -111,6 +118,10 @@ public class AssertionResult {
       @NonNull @JsonProperty("username") String username,
       @JsonProperty("signatureCount") long signatureCount,
       @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
+      @JsonProperty("clientExtensionOutputs")
+          ClientAssertionExtensionOutputs clientExtensionOutputs,
+      @JsonProperty("authenticatorExtensionOutputs")
+          AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs,
       @NonNull @JsonProperty("warnings") List<String> warnings) {
     this.success = success;
     this.credentialId = credentialId;
@@ -118,7 +129,46 @@ public class AssertionResult {
     this.username = username;
     this.signatureCount = signatureCount;
     this.signatureCounterValid = signatureCounterValid;
+    this.clientExtensionOutputs =
+        clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
+            ? null
+            : clientExtensionOutputs;
+    this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
     this.warnings = CollectionUtil.immutableList(warnings);
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-client-extension-processing">§9.4.
+   *     Client Extension Processing</a>
+   * @see ClientAssertionExtensionOutputs
+   * @see #getAuthenticatorExtensionOutputs() ()
+   */
+  public Optional<ClientAssertionExtensionOutputs> getClientExtensionOutputs() {
+    return Optional.ofNullable(clientExtensionOutputs);
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-extension-processing">§9.5.
+   *     Authenticator Extension Processing</a>
+   * @see AuthenticatorAssertionExtensionOutputs
+   * @see #getClientExtensionOutputs()
+   */
+  public Optional<AuthenticatorAssertionExtensionOutputs> getAuthenticatorExtensionOutputs() {
+    return Optional.ofNullable(authenticatorExtensionOutputs);
   }
 
   static AssertionResultBuilder.MandatoryStages builder() {
@@ -170,6 +220,22 @@ public class AssertionResult {
       }
 
       public class Step7 {
+        public Step8 clientExtensionOutputs(
+            ClientAssertionExtensionOutputs clientExtensionOutputs) {
+          builder.clientExtensionOutputs(clientExtensionOutputs);
+          return new Step8();
+        }
+      }
+
+      public class Step8 {
+        public Step9 assertionExtensionOutputs(
+            AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
+          builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
+          return new Step9();
+        }
+      }
+
+      public class Step9 {
         public AssertionResultBuilder warnings(List<String> warnings) {
           return builder.warnings(warnings);
         }

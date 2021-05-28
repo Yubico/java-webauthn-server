@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -61,17 +62,26 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    */
   private final Boolean appid;
 
+  private final Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob;
+
   @JsonCreator
-  private ClientAssertionExtensionOutputs(@JsonProperty("appid") Boolean appid) {
+  private ClientAssertionExtensionOutputs(
+      @JsonProperty("appid") Boolean appid,
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob) {
     this.appid = appid;
+    this.largeBlob = largeBlob;
   }
 
   @Override
+  @EqualsAndHashCode.Include
   public Set<String> getExtensionIds() {
-    Set<String> ids = new HashSet<>();
-
-    getAppid().ifPresent((id) -> ids.add("appid"));
-
+    HashSet<String> ids = new HashSet<>();
+    if (appid != null) {
+      ids.add(Extensions.Appid.EXTENSION_ID);
+    }
+    if (largeBlob != null) {
+      ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
     return ids;
   }
 
@@ -88,8 +98,11 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     return Optional.ofNullable(appid);
   }
 
+  public Optional<Extensions.LargeBlob.LargeBlobAuthenticationOutput> getLargeBlob() {
+    return Optional.ofNullable(largeBlob);
+  }
+
   public static class ClientAssertionExtensionOutputsBuilder {
-    private Boolean appid = null;
 
     /**
      * The output from the FIDO AppID Extension (<code>appid</code>).
