@@ -175,6 +175,30 @@ class ExtensionsSpec
       }
     }
 
+    it("can deserialize a real empty credProps example.") {
+      val cred = RealExamples.CredPropsEmpty.credential
+
+      cred.getClientExtensionResults.getExtensionIds.asScala should equal(
+        Set("credProps")
+      )
+      cred.getClientExtensionResults.getCredProps.toScala shouldBe a[Some[_]]
+      cred.getClientExtensionResults.getCredProps.toScala.get.getRk.toScala should equal(
+        None
+      )
+    }
+
+    it("can deserialize a real credProps example with rk=true.") {
+      val cred = RealExamples.CredPropsRkTrue.credential
+
+      cred.getClientExtensionResults.getExtensionIds.asScala should equal(
+        Set("credProps")
+      )
+      cred.getClientExtensionResults.getCredProps.toScala shouldBe a[Some[_]]
+      cred.getClientExtensionResults.getCredProps.toScala.get.getRk.toScala should equal(
+        Some(true)
+      )
+    }
+
     it("can deserialize a real largeBlob write example.") {
       val testData = RealExamples.LargeBlobWrite
       val registrationCred = testData.attestation.credential
