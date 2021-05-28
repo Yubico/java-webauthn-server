@@ -35,6 +35,7 @@ import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
@@ -752,6 +753,11 @@ final class FinishRegistrationSteps {
                       .getCredentialPublicKey())
               .signatureCount(
                   response.getResponse().getParsedAuthenticatorData().getSignatureCounter())
+              .clientExtensionOutputs(response.getClientExtensionResults())
+              .authenticatorExtensionOutputs(
+                  AuthenticatorRegistrationExtensionOutputs.fromAuthenticatorData(
+                          response.getResponse().getParsedAuthenticatorData())
+                      .orElse(null))
               .attestationMetadata(attestationMetadata)
               .warnings(allWarnings())
               .build());

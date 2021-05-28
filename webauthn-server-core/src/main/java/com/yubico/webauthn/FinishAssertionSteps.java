@@ -28,6 +28,7 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 
 import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
@@ -653,6 +654,11 @@ final class FinishAssertionSteps {
               .username(username)
               .signatureCount(assertionSignatureCount)
               .signatureCounterValid(signatureCounterValid)
+              .clientExtensionOutputs(response.getClientExtensionResults())
+              .assertionExtensionOutputs(
+                  AuthenticatorAssertionExtensionOutputs.fromAuthenticatorData(
+                          response.getResponse().getParsedAuthenticatorData())
+                      .orElse(null))
               .warnings(allWarnings())
               .build());
     }
