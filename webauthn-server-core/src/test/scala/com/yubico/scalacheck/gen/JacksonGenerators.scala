@@ -25,9 +25,15 @@
 package com.yubico.scalacheck.gen
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.node.NumericNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.upokecenter.cbor.CBORObject
+import com.yubico.internal.util.JacksonCodecs
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -37,43 +43,68 @@ import scala.jdk.CollectionConverters._
 object JacksonGenerators {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
-  implicit val arbitraryJsonNode: Arbitrary[JsonNode] = Arbitrary(
-    arbitrary[String] map (value => jsonFactory.textNode(value))
-  )
-  implicit val arbitraryObjectNode: Arbitrary[ObjectNode] = Arbitrary(
-    arbitrary[Map[String, _ <: JsonNode]] map (exts => {
-      val o = jsonFactory.objectNode(); o.setAll(exts.asJava); o
-    })
-  )
+
+  def arrayNode(g: Gen[JsonNode] = arbitrary[JsonNode]): Gen[ArrayNode] =
+    Gen.listOf(g) map { values =>
+      val result = jsonFactory.arrayNode()
+      result.addAll(values.asJavaCollection)
+      result
+    }
+
+  def booleanNode(g: Gen[Boolean] = arbitrary[Boolean]): Gen[BooleanNode] =
+    g map (value => jsonFactory.booleanNode(value))
+
+  val nullNode: Gen[NullNode] =
+    Gen.const(jsonFactory.nullNode())
+
+  def numberNode(g: Gen[Long] = arbitrary[Long]): Gen[NumericNode] =
+    g map (value => jsonFactory.numberNode(value))
 
   def objectNode(
       names: Gen[String] = arbitrary[String],
-      suggestedValues: Gen[JsonNode] = arbitrary[JsonNode],
+      values: Gen[JsonNode] = arbitrary[JsonNode],
   ): Gen[ObjectNode] =
-    Gen.sized { size =>
-      for {
-        numValues <- Gen.choose(0, size)
-        names: List[String] <- Gen.listOfN(numValues, names)
-        values: List[JsonNode] <- Gen.listOfN(
-          numValues,
-          Gen.oneOf(suggestedValues, arbitrary[JsonNode]),
-        )
-      } yield {
-        val o = jsonFactory.objectNode()
-        for { (name, value) <- names.zip(values) } {
-          o.set[ObjectNode](name, value)
-        }
-        o
+    for {
+      names: List[String] <- Gen.listOf(names)
+      values: LazyList[JsonNode] <- Gen.infiniteLazyList(values)
+    } yield {
+      val o = jsonFactory.objectNode()
+      for { (name, value) <- names.zip(values) } {
+        o.set[ObjectNode](name, value)
       }
+      o
     }
 
-  implicit val arbitraryCborObject: Arbitrary[CBORObject] = Arbitrary(for {
-    key <- arbitrary[String]
-    value <- arbitrary[String]
-  } yield {
-    val o = CBORObject.NewMap()
-    o.set(key, CBORObject.FromObject(value))
-    o
-  })
+  def textNode(g: Gen[String] = arbitrary[String]): Gen[TextNode] =
+    g map (value => jsonFactory.textNode(value))
+
+  implicit val arbitraryObjectNode: Arbitrary[ObjectNode] = Arbitrary(
+    objectNode()
+  )
+
+  implicit val arbitraryJsonNode: Arbitrary[JsonNode] = Arbitrary(
+    Gen.sized(size => {
+      val subsize = Math.max(0, size / 2)
+      Gen.oneOf(
+        Gen.resize(subsize, arrayNode()),
+        Gen.resize(subsize, booleanNode()),
+        nullNode,
+        Gen.resize(subsize, numberNode()),
+        Gen.resize(subsize, objectNode()),
+        Gen.resize(subsize, textNode()),
+      )
+    })
+  )
+
+  def cborValue(genJson: Gen[ObjectNode] = objectNode()): Gen[CBORObject] =
+    for {
+      jsonValue <- Gen.resize(
+        4,
+        genJson,
+      ) // CTAP canonical CBOR allows max 4 levels of nesting
+    } yield {
+      val bytes = JacksonCodecs.cbor().writeValueAsBytes(jsonValue)
+      CBORObject.DecodeFromBytes(bytes)
+    }
 
 }

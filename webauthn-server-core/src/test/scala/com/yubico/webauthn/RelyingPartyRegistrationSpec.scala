@@ -37,6 +37,7 @@ import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
@@ -186,11 +187,12 @@ class RelyingPartyRegistrationSpec
                   "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5jcmVhdGUiLA0KCSJjaGFsbGVuZ2UiIDogImxaMllKbUZ2YWkteGhYMElteG9fQlk1SkpVdmREa3JXd1ZGZllmcHQtNmciLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9"
                 },
                 "clientExtensionResults": {
+                  "appidExclude": true,
                   "org.example.foo": "bar"
                 }
               }""")
             pkc.getClientExtensionResults.getExtensionIds should contain(
-              "org.example.foo"
+              "appidExclude"
             )
           }
         }
@@ -927,10 +929,14 @@ class RelyingPartyRegistrationSpec
 
           describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
             it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
-              fail("TODO")
+              forAll(Extensions.subsetRegistrationExtensions) {
+                case (extensionInputs, clientExtensionOutputs, _) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    clientExtensionOutputs.getExtensionIds,
+                    clientExtensionOutputs,
+                  )
 
-              forAll(subsetRegistrationExtensions) {
-                case (extensionInputs, clientExtensionOutputs) =>
                   val steps = finishRegistration(
                     testData =
                       RegistrationTestData.Packed.BasicAttestation.copy(
@@ -946,44 +952,22 @@ class RelyingPartyRegistrationSpec
               }
             }
 
-            ignore("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
-              fail("TODO")
+            it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(Extensions.unrequestedClientRegistrationExtensions) {
+                case (extensionInputs, clientExtensionOutputs, _) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    clientExtensionOutputs.getExtensionIds,
+                    clientExtensionOutputs,
+                  )
 
-              forAll(anyRegistrationExtensions) {
-                case (extensionInputs, clientExtensionOutputs) =>
-                  whenever(
-                    clientExtensionOutputs.getExtensionIds.asScala.exists(id =>
-                      !extensionInputs.getExtensionIds.contains(id)
-                    )
-                  ) {
-                    val steps = finishRegistration(
-                      allowUnrequestedExtensions = true,
-                      testData =
-                        RegistrationTestData.Packed.BasicAttestation.copy(
-                          requestedExtensions = extensionInputs,
-                          clientExtensionResults = clientExtensionOutputs,
-                        ),
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
-
-                    step.validations shouldBe a[Success[_]]
-                    step.tryNext shouldBe a[Success[_]]
-                  }
-              }
-            }
-
-            it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-              fail("TODO")
-
-              forAll(anyRegistrationExtensions) {
-                case (extensionInputs, clientExtensionOutputs) =>
                   val steps = finishRegistration(
+                    allowUnrequestedExtensions = true,
                     testData =
                       RegistrationTestData.Packed.BasicAttestation.copy(
                         requestedExtensions = extensionInputs,
                         clientExtensionResults = clientExtensionOutputs,
-                      )
+                      ),
                   )
                   val step: FinishRegistrationSteps#Step12 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next
@@ -991,106 +975,59 @@ class RelyingPartyRegistrationSpec
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
               }
+            }
+
+            it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+              forAll(Extensions.unrequestedClientRegistrationExtensions) {
+                case (extensionInputs, clientExtensionOutputs, _) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    clientExtensionOutputs.getExtensionIds,
+                    clientExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    testData =
+                      RegistrationTestData.Packed.BasicAttestation.copy(
+                        requestedExtensions = extensionInputs,
+                        clientExtensionResults = clientExtensionOutputs,
+                      )
+                  )
+
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.validations.failed.get shouldBe an[
+                    IllegalArgumentException
+                  ]
+                  step.tryNext shouldBe a[Failure[_]]
+              }
+            }
+
+            ignore("TODO v2.0: Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+              fail("TODO")
+            }
+
+            ignore("TODO v2.0: Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party and the Relying Party has opted out of allowing unrequested extensions.") {
+              fail("TODO")
             }
           }
 
           describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-            it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
-              fail("TODO")
-
-              forAll(anyAuthenticatorExtensions[RegistrationExtensionInputs]) {
-                case (
-                      extensionInputs: RegistrationExtensionInputs,
-                      authenticatorExtensionOutputs: ObjectNode,
-                    ) =>
-                  whenever(
-                    authenticatorExtensionOutputs
-                      .fieldNames()
-                      .asScala
-                      .exists(id =>
-                        !extensionInputs.getExtensionIds.contains(id)
-                      )
-                  ) {
-                    val steps = finishRegistration(
-                      testData = RegistrationTestData.Packed.BasicAttestation
-                        .copy(
-                          requestedExtensions = extensionInputs
-                        )
-                        .editAuthenticatorData(authData =>
-                          new ByteArray(
-                            authData.getBytes.updated(
-                              32,
-                              (authData.getBytes()(32) | 0x80).toByte,
-                            ) ++
-                              JacksonCodecs.cbor.writeValueAsBytes(
-                                authenticatorExtensionOutputs
-                              )
-                          )
-                        )
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
-
-                    step.validations shouldBe a[Failure[_]]
-                    step.validations.failed.get shouldBe an[
-                      IllegalArgumentException
-                    ]
-                    step.tryNext shouldBe a[Failure[_]]
-                  }
-              }
-            }
-
-            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
-              forAll(anyAuthenticatorExtensions[RegistrationExtensionInputs]) {
-                case (
-                      extensionInputs: RegistrationExtensionInputs,
-                      authenticatorExtensionOutputs: ObjectNode,
-                    ) =>
-                  whenever(
-                    authenticatorExtensionOutputs
-                      .fieldNames()
-                      .asScala
-                      .exists(id =>
-                        !extensionInputs.getExtensionIds.contains(id)
-                      )
-                  ) {
-                    val steps = finishRegistration(
-                      allowUnrequestedExtensions = true,
-                      testData = RegistrationTestData.Packed.BasicAttestation
-                        .copy(
-                          requestedExtensions = extensionInputs
-                        )
-                        .editAuthenticatorData(authData =>
-                          new ByteArray(
-                            authData.getBytes.updated(
-                              32,
-                              (authData.getBytes()(32) | 0x80).toByte,
-                            ) ++
-                              JacksonCodecs.cbor.writeValueAsBytes(
-                                authenticatorExtensionOutputs
-                              )
-                          )
-                        ),
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
-
-                    step.validations shouldBe a[Success[_]]
-                    step.tryNext shouldBe a[Success[_]]
-                  }
-              }
-            }
-
             it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
-              fail("TODO")
-
-              forAll(
-                subsetAuthenticatorExtensions[RegistrationExtensionInputs]
-              ) {
+              forAll(Extensions.subsetRegistrationExtensions) {
                 case (
                       extensionInputs: RegistrationExtensionInputs,
-                      authenticatorExtensionOutputs: ObjectNode,
+                      _,
+                      authenticatorExtensionOutputs: CBORObject,
                     ) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    authenticatorExtensionOutputs.getKeys,
+                    authenticatorExtensionOutputs,
+                  )
+
                   val steps = finishRegistration(
                     testData = RegistrationTestData.Packed.BasicAttestation
                       .copy(
@@ -1101,9 +1038,7 @@ class RelyingPartyRegistrationSpec
                           authData.getBytes.updated(
                             32,
                             (authData.getBytes()(32) | 0x80).toByte,
-                          ) ++
-                            JacksonCodecs.cbor
-                              .writeValueAsBytes(authenticatorExtensionOutputs)
+                          ) ++ authenticatorExtensionOutputs.EncodeToBytes()
                         )
                       )
                   )
@@ -1112,7 +1047,114 @@ class RelyingPartyRegistrationSpec
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
+
+                  println(
+                    AuthenticatorRegistrationExtensionOutputs
+                      .fromAuthenticatorData(
+                        step.getAttestation.getAuthenticatorData
+                      )
+                  )
               }
+            }
+
+            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(
+                Extensions.unrequestedAuthenticatorRegistrationExtensions
+              ) {
+                case (
+                      extensionInputs: RegistrationExtensionInputs,
+                      _,
+                      authenticatorExtensionOutputs: CBORObject,
+                    ) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    authenticatorExtensionOutputs.getKeys,
+                    authenticatorExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    allowUnrequestedExtensions = true,
+                    testData = RegistrationTestData.Packed.BasicAttestation
+                      .copy(
+                        requestedExtensions = extensionInputs
+                      )
+                      .editAuthenticatorData(authData =>
+                        new ByteArray(
+                          authData.getBytes.updated(
+                            32,
+                            (authData.getBytes()(32) | 0x80).toByte,
+                          ) ++ authenticatorExtensionOutputs.EncodeToBytes()
+                        )
+                      ),
+                  )
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Success[_]]
+                  step.tryNext shouldBe a[Success[_]]
+
+                  println(
+                    AuthenticatorRegistrationExtensionOutputs
+                      .fromAuthenticatorData(
+                        step.getAttestation.getAuthenticatorData
+                      )
+                  )
+              }
+            }
+
+            it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
+              forAll(
+                Extensions.unrequestedAuthenticatorRegistrationExtensions
+              ) {
+                case (
+                      extensionInputs: RegistrationExtensionInputs,
+                      _,
+                      authenticatorExtensionOutputs: CBORObject,
+                    ) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    authenticatorExtensionOutputs.getKeys,
+                    authenticatorExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    testData = RegistrationTestData.Packed.BasicAttestation
+                      .copy(
+                        requestedExtensions = extensionInputs
+                      )
+                      .editAuthenticatorData(authData =>
+                        new ByteArray(
+                          authData.getBytes.updated(
+                            32,
+                            (authData.getBytes()(32) | 0x80).toByte,
+                          ) ++ authenticatorExtensionOutputs.EncodeToBytes()
+                        )
+                      )
+                  )
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.validations.failed.get shouldBe an[
+                    IllegalArgumentException
+                  ]
+                  step.tryNext shouldBe a[Failure[_]]
+
+                  println(
+                    AuthenticatorRegistrationExtensionOutputs
+                      .fromAuthenticatorData(
+                        step.getAttestation.getAuthenticatorData
+                      )
+                  )
+              }
+            }
+
+            ignore("TODO v2.0: Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
+              fail("TODO")
+            }
+
+            ignore("TODO v2.0: Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party and the Relying Party has opted out of allowing unrequested extensions.") {
+              fail("TODO")
             }
           }
 

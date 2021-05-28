@@ -29,8 +29,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
@@ -125,6 +127,10 @@ public class RegistrationResult {
    */
   @NonNull private final SortedSet<AuthenticatorTransport> transports;
 
+  private final ClientRegistrationExtensionOutputs clientExtensionOutputs;
+
+  private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
+
   @JsonCreator
   private RegistrationResult(
       @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
@@ -134,7 +140,11 @@ public class RegistrationResult {
       @JsonProperty("signatureCount") Long signatureCount,
       @NonNull @JsonProperty("warnings") List<String> warnings,
       @JsonProperty("attestationMetadata") Attestation attestationMetadata,
-      @JsonProperty("transports") Set<AuthenticatorTransport> transports) {
+      @JsonProperty("transports") Set<AuthenticatorTransport> transports,
+      @JsonProperty("clientExtensionOutputs")
+          ClientRegistrationExtensionOutputs clientExtensionOutputs,
+      @JsonProperty("authenticatorExtensionOutputs")
+          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
     this.keyId = keyId;
     this.attestationTrusted = attestationTrusted;
     this.attestationType = attestationType;
@@ -146,10 +156,49 @@ public class RegistrationResult {
             : CollectionUtil.immutableSortedSet(transports);
     this.warnings = CollectionUtil.immutableList(warnings);
     this.attestationMetadata = attestationMetadata;
+    this.clientExtensionOutputs =
+        clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
+            ? null
+            : clientExtensionOutputs;
+    this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
   }
 
   public Optional<Attestation> getAttestationMetadata() {
     return Optional.ofNullable(attestationMetadata);
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-client-extension-processing">§9.4.
+   *     Client Extension Processing</a>
+   * @see ClientRegistrationExtensionOutputs
+   * @see #getAuthenticatorExtensionOutputs() ()
+   */
+  public Optional<ClientRegistrationExtensionOutputs> getClientExtensionOutputs() {
+    return Optional.ofNullable(clientExtensionOutputs);
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-extension-processing">§9.5.
+   *     Authenticator Extension Processing</a>
+   * @see AuthenticatorRegistrationExtensionOutputs
+   * @see #getClientExtensionOutputs()
+   */
+  public Optional<AuthenticatorRegistrationExtensionOutputs> getAuthenticatorExtensionOutputs() {
+    return Optional.ofNullable(authenticatorExtensionOutputs);
   }
 
   static RegistrationResultBuilder.MandatoryStages builder() {
@@ -180,14 +229,30 @@ public class RegistrationResult {
       }
 
       class Step4 {
-        RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
-          return builder.publicKeyCose(publicKeyCose);
+        Step5 publicKeyCose(ByteArray publicKeyCose) {
+          builder.publicKeyCose(publicKeyCose);
+          return new Step5();
         }
       }
 
       class Step5 {
-        RegistrationResultBuilder signatureCount(long signatureCount) {
-          return builder.signatureCount(signatureCount);
+        Step6 signatureCount(long signatureCount) {
+          builder.signatureCount(signatureCount);
+          return new Step6();
+        }
+      }
+
+      class Step6 {
+        Step7 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
+          builder.clientExtensionOutputs(clientExtensionOutputs);
+          return new Step7();
+        }
+      }
+
+      class Step7 {
+        RegistrationResultBuilder authenticatorExtensionOutputs(
+            AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
+          return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
         }
       }
     }

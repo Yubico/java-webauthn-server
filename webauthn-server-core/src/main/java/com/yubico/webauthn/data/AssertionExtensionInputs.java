@@ -72,23 +72,41 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    */
   private final AppId appid;
 
+  private final Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob;
+
+  private final boolean uvm;
+
   @JsonCreator
-  private AssertionExtensionInputs(@JsonProperty("appid") AppId appid) {
+  private AssertionExtensionInputs(
+      @JsonProperty("appid") AppId appid,
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob,
+      @JsonProperty("uvm") Boolean uvm) {
     this.appid = appid;
+    this.largeBlob = largeBlob;
+    this.uvm = uvm != null && uvm;
   }
 
+  /**
+   * @return The extension identifiers of all extensions configured.
+   * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-extension-id">§9.1.
+   *     Extension Identifiers</a>
+   */
   @Override
   public Set<String> getExtensionIds() {
     Set<String> ids = new HashSet<>();
-
-    getAppid().ifPresent((id) -> ids.add("appid"));
-
+    if (appid != null) {
+      ids.add(Extensions.Appid.EXTENSION_ID);
+    }
+    if (largeBlob != null) {
+      ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    if (uvm) {
+      ids.add(Extensions.Uvm.EXTENSION_ID);
+    }
     return ids;
   }
 
   public static class AssertionExtensionInputsBuilder {
-    private AppId appid = null;
-
     /**
      * The input to the FIDO AppID Extension (<code>appid</code>).
      *
@@ -137,6 +155,42 @@ public class AssertionExtensionInputs implements ExtensionInputs {
       this.appid = appid;
       return this;
     }
+
+    /**
+     * Enable the Large blob storage extension (<code>largeBlob</code>).
+     *
+     * <p>Suitable arguments can be obtained using {@link
+     * Extensions.LargeBlob.LargeBlobAuthenticationInput#read()} or {@link
+     * Extensions.LargeBlob.LargeBlobAuthenticationInput#write(ByteArray)}.
+     *
+     * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#read()
+     * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#write(ByteArray)
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     Large blob storage extension (largeBlob)</a>
+     */
+    public AssertionExtensionInputsBuilder largeBlob(
+        Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob) {
+      this.largeBlob = largeBlob;
+      return this;
+    }
+
+    /**
+     * Enable the User Verification Method Extension (<code>uvm</code>).
+     *
+     * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-uvm-extension">§10.3.
+     *     User Verification Method Extension (uvm)</a>
+     */
+    public AssertionExtensionInputsBuilder uvm() {
+      this.uvm = true;
+      return this;
+    }
+
+    /** For compatibility with {@link Builder}(toBuilder = true) */
+    private AssertionExtensionInputsBuilder uvm(Boolean uvm) {
+      this.uvm = uvm;
+      return this;
+    }
   }
 
   /**
@@ -161,5 +215,31 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    */
   public Optional<AppId> getAppid() {
     return Optional.ofNullable(appid);
+  }
+
+  /**
+   * The input to the Large blob storage extension (<code>largeBlob</code>).
+   *
+   * <p>This extension allows a Relying Party to store opaque data associated with a credential.
+   *
+   * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#read()
+   * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#write(ByteArray)
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+   *     Large blob storage extension (largeBlob)</a>
+   */
+  public Optional<Extensions.LargeBlob.LargeBlobAuthenticationInput> getLargeBlob() {
+    return Optional.ofNullable(largeBlob);
+  }
+
+  /**
+   * @return <code>true</code> if the User Verification Method Extension (<code>uvm</code>) is
+   *     enabled, <code>false</code> otherwise.
+   * @see AssertionExtensionInputsBuilder#uvm()
+   * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-uvm-extension">§10.3.
+   *     User Verification Method Extension (uvm)</a>
+   */
+  public boolean getUvm() {
+    return uvm;
   }
 }

@@ -88,9 +88,16 @@ class JsonIoSpec
 
         it("is identical after multiple serialization round-trips..") {
           forAll { value: A =>
+            println(value)
+
             val encoded: String = json.writeValueAsString(value)
+            println(encoded)
+
             val decoded: A = json.readValue(encoded, tpe)
+            println(decoded)
+
             val recoded: String = json.writeValueAsString(decoded)
+            println(recoded)
 
             decoded should equal(value)
             recoded should equal(encoded)
