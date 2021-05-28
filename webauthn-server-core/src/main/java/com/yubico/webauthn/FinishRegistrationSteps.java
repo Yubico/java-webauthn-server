@@ -759,6 +759,7 @@ final class FinishRegistrationSteps {
                           response.getResponse().getParsedAuthenticatorData())
                       .orElse(null))
               .attestationMetadata(attestationMetadata)
+              .transports(response.getResponse().getTransports())
               .warnings(allWarnings())
               .build());
     }
