@@ -29,12 +29,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -83,6 +87,16 @@ public class RegistrationResult {
    */
   @NonNull private final ByteArray publicKeyCose;
 
+  /**
+   * The signature count returned with the created credential.
+   *
+   * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
+   * validity of future signature counter values.
+   *
+   * @see RegisteredCredential#getSignatureCount() ()
+   */
+  private final long signatureCount;
+
   /** Zero or more human-readable messages about non-critical issues. */
   @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
 
@@ -100,18 +114,36 @@ public class RegistrationResult {
    */
   private final Attestation attestationMetadata;
 
+  /**
+   * The transports returned with the created credential.
+   *
+   * <p>This is used in {@link RelyingParty#startAssertion(StartAssertionOptions)} to set the {@link
+   * PublicKeyCredentialDescriptor#getTransports() transports} members of {@link
+   * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials}.
+   *
+   * @see RegisteredCredential#getTransports()
+   */
+  @NonNull private final SortedSet<AuthenticatorTransport> transports;
+
   @JsonCreator
   private RegistrationResult(
       @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
       @JsonProperty("attestationTrusted") boolean attestationTrusted,
       @NonNull @JsonProperty("attestationType") AttestationType attestationType,
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+      @JsonProperty("signatureCount") Long signatureCount,
       @NonNull @JsonProperty("warnings") List<String> warnings,
-      @JsonProperty("attestationMetadata") Attestation attestationMetadata) {
+      @JsonProperty("attestationMetadata") Attestation attestationMetadata,
+      @JsonProperty("transports") Set<AuthenticatorTransport> transports) {
     this.keyId = keyId;
     this.attestationTrusted = attestationTrusted;
     this.attestationType = attestationType;
     this.publicKeyCose = publicKeyCose;
+    this.signatureCount = signatureCount == null ? 0 : signatureCount;
+    this.transports =
+        transports == null
+            ? Collections.emptySortedSet()
+            : CollectionUtil.immutableSortedSet(transports);
     this.warnings = CollectionUtil.immutableList(warnings);
     this.attestationMetadata = attestationMetadata;
   }
@@ -150,6 +182,12 @@ public class RegistrationResult {
       class Step4 {
         RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
           return builder.publicKeyCose(publicKeyCose);
+        }
+      }
+
+      class Step5 {
+        RegistrationResultBuilder signatureCount(long signatureCount) {
+          return builder.signatureCount(signatureCount);
         }
       }
     }
