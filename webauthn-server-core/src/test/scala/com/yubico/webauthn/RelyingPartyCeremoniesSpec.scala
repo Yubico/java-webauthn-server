@@ -161,6 +161,19 @@ class RelyingPartyCeremoniesSpec
         it("a Security Key NFC by Yubico.") {
           check(RealExamples.SecurityKeyNfc)
         }
+        it("a YubiKey 5 NFC FIPS.") {
+          check(RealExamples.YubikeyFips5Nfc)
+        }
+        it("a YubiKey 5Ci FIPS.") {
+          check(RealExamples.Yubikey5ciFips)
+        }
+
+        it("an Apple iOS device.") {
+          check(RealExamples.AppleAttestationIos)
+        }
+        it("an Apple MacOS device.") {
+          check(RealExamples.AppleAttestationMacos)
+        }
       }
     }
   }
