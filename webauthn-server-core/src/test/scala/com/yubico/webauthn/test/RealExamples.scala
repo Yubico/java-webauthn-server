@@ -477,7 +477,7 @@ object RealExamples {
     AssertionExample(
       id =
         ByteArray.fromBase64Url("qeNy9WGd6KRAq4aXf_xCgOrgjJoRH7Ve8KC7UJ3cpjDaFrv5egr5kJ7mBlrGiHlZ0OkD_Xtsd-lQTu_Ymr1crg"),
-      clientData = """{"type":"webauthn.get","challenge":"gJQG3mUBQv5rR7mwUuHbxQ","origin":"https://demo.yubico.com","crossOrigin":false"}""",
+      clientData = """{"type":"webauthn.get","challenge":"gJQG3mUBQv5rR7mwUuHbxQ","origin":"https://demo.yubico.com","crossOrigin":false}""",
       authDataBytes = ByteArray.fromBase64(
         "xGzvgq0bVGR3WR0Aiwh1nsPm0uy085R0v+ppaZJdA7cBAAAABQ=="
       ),
