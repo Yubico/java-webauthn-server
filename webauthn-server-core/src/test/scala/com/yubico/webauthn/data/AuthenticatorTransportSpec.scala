@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn.data
 
+import com.yubico.webauthn.attestation.Transport
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -94,6 +95,24 @@ class AuthenticatorTransportSpec
           constant.getId.toUpperCase
         ) should not equal constant
       }
+    }
+
+    it("has a fromU2fTransport(transport) function that can convert from Transport.") {
+      AuthenticatorTransport.fromU2fTransport(
+        Transport.BT_CLASSIC
+      ) should be theSameInstanceAs AuthenticatorTransport.BLE
+      AuthenticatorTransport.fromU2fTransport(
+        Transport.BLE
+      ) should be theSameInstanceAs AuthenticatorTransport.BLE
+      AuthenticatorTransport.fromU2fTransport(
+        Transport.USB
+      ) should be theSameInstanceAs AuthenticatorTransport.USB
+      AuthenticatorTransport.fromU2fTransport(
+        Transport.LIGHTNING
+      ) should be theSameInstanceAs AuthenticatorTransport.USB
+      AuthenticatorTransport.fromU2fTransport(
+        Transport.NFC
+      ) should be theSameInstanceAs AuthenticatorTransport.NFC
     }
   }
 }
