@@ -35,17 +35,20 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
+import com.yubico.webauthn.data.ReexportHelpers
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Helpers
+import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
@@ -1938,6 +1941,126 @@ class RelyingPartyAssertionSpec
         }
         it("with self attestation.") {
           test(RegistrationTestData.Packed.SelfAttestationRs1)
+        }
+      }
+    }
+
+    describe("The default RelyingParty settings") {
+      val testDataBase = RealExamples.YubiKey5Nfc
+      val rp = RelyingParty
+        .builder()
+        .identity(testDataBase.rp)
+        .credentialRepository(
+          Helpers.CredentialRepository.withUser(
+            testDataBase.user,
+            RegisteredCredential
+              .builder()
+              .credentialId(testDataBase.attestation.credential.getId)
+              .userHandle(testDataBase.user.getId)
+              .publicKeyCose(
+                testDataBase.attestation.credential.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+              )
+              .build(),
+          )
+        )
+        .build()
+
+      describe("support the largeBlob extension") {
+        it("for writing a blob.") {
+          val result = rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(
+                AssertionRequest
+                  .builder()
+                  .publicKeyCredentialRequestOptions(
+                    PublicKeyCredentialRequestOptions
+                      .builder()
+                      .challenge(testDataBase.assertion.challenge)
+                      .extensions(
+                        AssertionExtensionInputs
+                          .builder()
+                          .largeBlob(
+                            LargeBlobAuthenticationInput
+                              .write(ByteArray.fromHex("00010203"))
+                          )
+                          .build()
+                      )
+                      .build()
+                  )
+                  .username(testDataBase.user.getName)
+                  .build()
+              )
+              .response(
+                testDataBase.assertion.credential.toBuilder
+                  .clientExtensionResults(
+                    ClientAssertionExtensionOutputs
+                      .builder()
+                      .largeBlob(
+                        ReexportHelpers
+                          .newLargeBlobAuthenticationOutput(None, Some(true))
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.asScala should be(
+            Some(true)
+          )
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getBlob.asScala should be(
+            None
+          )
+        }
+
+        it("for reading a blob.") {
+          val result = rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(
+                AssertionRequest
+                  .builder()
+                  .publicKeyCredentialRequestOptions(
+                    PublicKeyCredentialRequestOptions
+                      .builder()
+                      .challenge(testDataBase.assertion.challenge)
+                      .extensions(
+                        AssertionExtensionInputs
+                          .builder()
+                          .largeBlob(LargeBlobAuthenticationInput.read())
+                          .build()
+                      )
+                      .build()
+                  )
+                  .username(testDataBase.user.getName)
+                  .build()
+              )
+              .response(
+                testDataBase.assertion.credential.toBuilder
+                  .clientExtensionResults(
+                    ClientAssertionExtensionOutputs
+                      .builder()
+                      .largeBlob(
+                        ReexportHelpers.newLargeBlobAuthenticationOutput(
+                          Some(ByteArray.fromHex("00010203")),
+                          None,
+                        )
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getBlob.asScala should be(
+            Some(ByteArray.fromHex("00010203"))
+          )
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.asScala should be(
+            None
+          )
         }
       }
     }
