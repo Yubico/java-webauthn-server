@@ -166,7 +166,7 @@ public class WebAuthnRestResource {
     Either<String, RegistrationRequest> result =
         server.startRegistration(
             username,
-            Optional.of(displayName),
+            displayName,
             Optional.ofNullable(credentialNickname),
             requireResidentKey,
             Optional.ofNullable(sessionTokenBase64)

@@ -223,7 +223,7 @@ public class WebAuthnServer {
 
   public Either<String, RegistrationRequest> startRegistration(
       @NonNull String username,
-      Optional<String> displayName,
+      @NonNull String displayName,
       Optional<String> credentialNickname,
       boolean requireResidentKey,
       Optional<ByteArray> sessionToken)
@@ -246,7 +246,7 @@ public class WebAuthnServer {
               () ->
                   UserIdentity.builder()
                       .name(username)
-                      .displayName(displayName.get())
+                      .displayName(displayName)
                       .id(generateRandom(32))
                       .build());
 

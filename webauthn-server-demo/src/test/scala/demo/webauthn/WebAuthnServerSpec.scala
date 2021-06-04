@@ -77,7 +77,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         val server = newServer
         val request = server.startRegistration(
           username,
-          Optional.of(displayName),
+          displayName,
           credentialNickname,
           requireResidentKey,
           Optional.empty(),
