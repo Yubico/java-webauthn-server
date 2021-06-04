@@ -162,6 +162,90 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         json should not be null
       }
 
+      it("has a finish method which updates the signature count.") {
+
+        val server = new WebAuthnServer(
+          new InMemoryRegistrationStorage(),
+          newCache(),
+          newCache(),
+          rpId,
+          Set("https://localhost").asJava,
+          appId,
+        )
+
+        val (cred, keypair) = {
+          val request = server
+            .startRegistration(
+              username,
+              displayName,
+              None.asJava,
+              false,
+              None.asJava,
+            )
+            .right
+            .get
+          val (cred, keypair) =
+            TestAuthenticator.createUnattestedCredential(challenge =
+              request.getPublicKeyCredentialCreationOptions.getChallenge
+            )
+
+          val publicKeyCredentialJson =
+            JacksonCodecs.json().writeValueAsString(cred)
+          val responseJson =
+            s"""{"requestId":"${request.getRequestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
+          val response = server.finishRegistration(responseJson)
+          response.isRight should be(true)
+
+          (cred, keypair)
+        }
+
+        {
+          val request =
+            server.startAuthentication(Optional.of(username)).right.get
+          val assertion = TestAuthenticator.createAssertion(
+            challenge =
+              request.getPublicKeyCredentialRequestOptions.getChallenge,
+            credentialId = cred.getId,
+            credentialKey = keypair,
+            signatureCount = Some(1340),
+          )
+          val publicKeyCredentialJson =
+            JacksonCodecs.json().writeValueAsString(assertion)
+          val responseJson =
+            s"""{"requestId":"${request.getRequestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
+          val response = server.finishAuthentication(responseJson)
+
+          response.right.get.getRegistrations.asScala
+            .find(_.getCredential.getCredentialId == cred.getId)
+            .get
+            .getCredential
+            .getSignatureCount should equal(1340)
+        }
+
+        {
+          val request =
+            server.startAuthentication(Optional.of(username)).right.get
+          val assertion = TestAuthenticator.createAssertion(
+            challenge =
+              request.getPublicKeyCredentialRequestOptions.getChallenge,
+            credentialId = cred.getId,
+            credentialKey = keypair,
+            signatureCount = Some(1341),
+          )
+          val publicKeyCredentialJson =
+            JacksonCodecs.json().writeValueAsString(assertion)
+          val responseJson =
+            s"""{"requestId":"${request.getRequestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
+          val response = server.finishAuthentication(responseJson)
+
+          response.right.get.getRegistrations.asScala
+            .find(_.getCredential.getCredentialId == cred.getId)
+            .get
+            .getCredential
+            .getSignatureCount should equal(1341)
+        }
+      }
+
       def newServerWithAuthenticationRequest(testData: RegistrationTestData) = {
         val assertionRequests: Cache[ByteArray, AssertionRequestWrapper] =
           newCache()
@@ -207,7 +291,10 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
   private def newServer = new WebAuthnServer
 
-  private def newServerWithUser(testData: RegistrationTestData) = {
+  private def newServerWithUser(
+      testData: RegistrationTestData,
+      origins: java.util.Set[String] = origins,
+  ) = {
     val userStorage: RegistrationStorage = makeUserStorage(testData)
 
     new WebAuthnServer(
@@ -241,6 +328,9 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
             .publicKeyCose(
               testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
             )
+            .signatureCount(
+              testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter
+            )
             .build()
         )
         .build()
@@ -270,7 +360,14 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       override def updateSignatureCount(result: AssertionResult): Unit = {}
       override def getCredentialIdsForUsername(
           username: String
-      ): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
+      ): java.util.Set[PublicKeyCredentialDescriptor] =
+        if (username == testData.userId.getName)
+          Set(
+            PublicKeyCredentialDescriptor.builder
+              .id(testData.response.getId)
+              .build()
+          ).asJava
+        else Set.empty.asJava
       override def getUserHandleForUsername(
           username: String
       ): Optional[ByteArray] =

@@ -106,12 +106,24 @@ public class BinaryUtil {
 
   public static byte[] encodeUint16(int value) {
     ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
-    ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^15=65536, was: %d", value);
+    ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^16=65536, was: %d", value);
 
     ByteBuffer b = ByteBuffer.allocate(4);
     b.order(ByteOrder.BIG_ENDIAN);
     b.putInt(value);
     b.rewind();
     return Arrays.copyOfRange(b.array(), 2, 4);
+  }
+
+  public static byte[] encodeUint32(long value) {
+    ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
+    ExceptionUtil.assure(
+        value < 4294967296L, "Argument must be smaller than 2^32=4294967296, was: %d", value);
+
+    ByteBuffer b = ByteBuffer.allocate(8);
+    b.order(ByteOrder.BIG_ENDIAN);
+    b.putLong(value);
+    b.rewind();
+    return Arrays.copyOfRange(b.array(), 4, 8);
   }
 }
