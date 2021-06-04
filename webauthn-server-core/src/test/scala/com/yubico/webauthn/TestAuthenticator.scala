@@ -412,16 +412,6 @@ object TestAuthenticator {
           },
         )
 
-        json.set(
-          "clientExtensions",
-          JacksonCodecs
-            .json()
-            .readTree(JacksonCodecs.json().writeValueAsString(clientExtensions)),
-        )
-        authenticatorExtensions foreach { extensions =>
-          json.set("authenticatorExtensions", extensions)
-        }
-
         json
       })
     val clientDataJsonBytes = toBytes(clientDataJson)
@@ -442,6 +432,9 @@ object TestAuthenticator {
           aaguid = aaguid,
           publicKeyCose = publicKeyCose,
         )
+      ),
+      extensionsCborBytes = authenticatorExtensions map (ext =>
+        new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(ext))
       ),
     )
 
