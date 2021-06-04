@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.json.JsonStringSerializable;
 import com.yubico.internal.util.json.JsonStringSerializer;
+import com.yubico.webauthn.attestation.Transport;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -123,6 +124,30 @@ public class AuthenticatorTransport
       default:
         throw new IllegalArgumentException(
             "No constant com.yubico.webauthn.data.AuthenticatorTransport." + name);
+    }
+  }
+
+  /**
+   * Convert a {@link Transport} from U2F metadata to a WebAuthn {@link AuthenticatorTransport}
+   * value.
+   *
+   * @throws IllegalArgumentException if <code>transport</code> has an unknown value.
+   */
+  public static AuthenticatorTransport fromU2fTransport(Transport transport) {
+    switch (transport) {
+      case BT_CLASSIC:
+      case BLE:
+        return BLE;
+
+      case USB:
+      case LIGHTNING:
+        return USB;
+
+      case NFC:
+        return NFC;
+
+      default:
+        throw new IllegalArgumentException("Unknown transport: " + transport);
     }
   }
 
