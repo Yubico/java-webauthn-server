@@ -496,7 +496,10 @@ object TestAuthenticator {
     )
   }
 
-  def createUnattestedCredential(challenge: ByteArray = Defaults.challenge): (
+  def createUnattestedCredential(
+      authenticatorExtensions: Option[JsonNode] = None,
+      challenge: ByteArray = Defaults.challenge,
+  ): (
       PublicKeyCredential[
         AuthenticatorAttestationResponse,
         ClientRegistrationExtensionOutputs,
@@ -505,6 +508,7 @@ object TestAuthenticator {
   ) =
     createCredential(
       attestationMaker = AttestationMaker.none(),
+      authenticatorExtensions = authenticatorExtensions,
       challenge = challenge,
     )
 
