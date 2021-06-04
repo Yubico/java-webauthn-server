@@ -42,8 +42,6 @@ import lombok.experimental.Wither;
 @Wither
 public class CredentialRegistration {
 
-  long signatureCount;
-
   UserIdentity userIdentity;
   Optional<String> credentialNickname;
   SortedSet<AuthenticatorTransport> transports;

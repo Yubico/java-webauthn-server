@@ -120,7 +120,11 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     Set<CredentialRegistration> regs = storage.getIfPresent(result.getUsername());
     regs.remove(registration);
-    regs.add(registration.withSignatureCount(result.getSignatureCount()));
+    regs.add(
+        registration.withCredential(
+            registration.getCredential().toBuilder()
+                .signatureCount(result.getSignatureCount())
+                .build()));
   }
 
   @Override
@@ -173,7 +177,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                     .credentialId(registration.getCredential().getCredentialId())
                     .userHandle(registration.getUserIdentity().getId())
                     .publicKeyCose(registration.getCredential().getPublicKeyCose())
-                    .signatureCount(registration.getSignatureCount())
+                    .signatureCount(registration.getCredential().getSignatureCount())
                     .build()));
   }
 
@@ -189,7 +193,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                         .credentialId(reg.getCredential().getCredentialId())
                         .userHandle(reg.getUserIdentity().getId())
                         .publicKeyCose(reg.getCredential().getPublicKeyCose())
-                        .signatureCount(reg.getSignatureCount())
+                        .signatureCount(reg.getCredential().getSignatureCount())
                         .build())
             .collect(Collectors.toSet()));
   }

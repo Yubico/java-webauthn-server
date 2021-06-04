@@ -314,9 +314,6 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
     val registrations = util.Arrays.asList(
       CredentialRegistration
         .builder()
-        .signatureCount(
-          testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter
-        )
         .userIdentity(testData.request.getUser)
         .credentialNickname(credentialNickname)
         .registrationTime(Instant.parse("2018-07-06T15:07:15Z"))

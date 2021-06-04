@@ -422,7 +422,6 @@ public class WebAuthnServer {
                 addRegistration(
                     request.getPublicKeyCredentialCreationOptions().getUser(),
                     request.getCredentialNickname(),
-                    response,
                     registration),
                 registration.isAttestationTrusted(),
                 sessions.createSession(
@@ -698,29 +697,15 @@ public class WebAuthnServer {
   }
 
   private CredentialRegistration addRegistration(
-      UserIdentity userIdentity,
-      Optional<String> nickname,
-      RegistrationResponse response,
-      RegistrationResult result) {
+      UserIdentity userIdentity, Optional<String> nickname, RegistrationResult result) {
     return addRegistration(
         userIdentity,
         nickname,
-        response
-            .getCredential()
-            .getResponse()
-            .getAttestation()
-            .getAuthenticatorData()
-            .getSignatureCounter(),
         RegisteredCredential.builder()
             .credentialId(result.getKeyId().getId())
             .userHandle(userIdentity.getId())
             .publicKeyCose(result.getPublicKeyCose())
-            .signatureCount(
-                response
-                    .getCredential()
-                    .getResponse()
-                    .getParsedAuthenticatorData()
-                    .getSignatureCounter())
+            .signatureCount(result.getSignatureCount())
             .build(),
         result.getTransports(),
         result.getAttestationMetadata());
@@ -734,7 +719,6 @@ public class WebAuthnServer {
     return addRegistration(
         userIdentity,
         nickname,
-        signatureCount,
         RegisteredCredential.builder()
             .credentialId(result.getKeyId().getId())
             .userHandle(userIdentity.getId())
@@ -757,7 +741,6 @@ public class WebAuthnServer {
   private CredentialRegistration addRegistration(
       UserIdentity userIdentity,
       Optional<String> nickname,
-      long signatureCount,
       RegisteredCredential credential,
       SortedSet<AuthenticatorTransport> transports,
       Optional<Attestation> attestationMetadata) {
@@ -767,7 +750,6 @@ public class WebAuthnServer {
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .credential(credential)
-            .signatureCount(signatureCount)
             .transports(transports)
             .attestationMetadata(attestationMetadata)
             .build();
