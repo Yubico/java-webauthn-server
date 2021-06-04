@@ -44,10 +44,12 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.ReexportHelpers
 import com.yubico.webauthn.data.ReexportHelpers.newCredentialPropertiesOutput
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -3184,6 +3186,55 @@ class RelyingPartyRegistrationSpec
           )
 
           result.isDiscoverable.asScala should equal(None)
+        }
+      }
+
+      describe("support the largeBlob extension") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+
+        it("being enabled at registration time.") {
+          val testData = RegistrationTestData.Packed.BasicAttestation
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(
+                testData.request.toBuilder
+                  .extensions(
+                    RegistrationExtensionInputs
+                      .builder()
+                      .largeBlob(LargeBlobSupport.REQUIRED)
+                      .build()
+                  )
+                  .build()
+              )
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .largeBlob(
+                        ReexportHelpers.newLargeBlobRegistrationOutput(true)
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.getClientExtensionOutputs.get.getLargeBlob.get.isSupported should be(
+            true
+          )
         }
       }
     }
