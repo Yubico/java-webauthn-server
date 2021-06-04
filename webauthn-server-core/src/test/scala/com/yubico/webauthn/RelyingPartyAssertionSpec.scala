@@ -36,6 +36,10 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.KeyProtectionType
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.MatcherProtectionType
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.UserVerificationMethod
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -2051,6 +2055,71 @@ class RelyingPartyAssertionSpec
           )
           result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.asScala should be(
             None
+          )
+        }
+      }
+
+      describe("support the uvm extension") {
+        it("at authentication time.") {
+
+          // Example from spec: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension
+          // A1                     -- extension: CBOR map of one element
+          //     63                 -- Key 1: CBOR text string of 3 bytes
+          //         75 76 6d       -- "uvm" [=UTF-8 encoded=] string
+          //     82                 -- Value 1: CBOR array of length 2 indicating two factor usage
+          //         83              -- Item 1: CBOR array of length 3
+          //             02           -- Subitem 1: CBOR integer for User Verification Method Fingerprint
+          //             04           -- Subitem 2: CBOR short for Key Protection Type TEE
+          //             02           -- Subitem 3: CBOR short for Matcher Protection Type TEE
+          //         83              -- Item 2: CBOR array of length 3
+          //             04           -- Subitem 1: CBOR integer for User Verification Method Passcode
+          //             01           -- Subitem 2: CBOR short for Key Protection Type Software
+          //             01           -- Subitem 3: CBOR short for Matcher Protection Type Software
+          val uvmCborExample = ByteArray.fromHex("A16375766d828302040283040101")
+
+          val cred = TestAuthenticator.createAssertionFromTestData(
+            testDataBase,
+            testDataBase.assertion.get.request.getPublicKeyCredentialRequestOptions,
+            authenticatorExtensions =
+              Some(JacksonCodecs.cbor().readTree(uvmCborExample.getBytes)),
+          )
+
+          val result = rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(
+                testDataBase.assertion.get.request.toBuilder
+                  .publicKeyCredentialRequestOptions(
+                    testDataBase.assertion.get.request.getPublicKeyCredentialRequestOptions.toBuilder
+                      .extensions(
+                        AssertionExtensionInputs
+                          .builder()
+                          .uvm()
+                          .build()
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .response(cred)
+              .build()
+          )
+
+          result.getAuthenticatorExtensionOutputs.get.getUvm.asScala should equal(
+            Some(
+              List(
+                new UvmEntry(
+                  UserVerificationMethod.USER_VERIFY_FINGERPRINT,
+                  KeyProtectionType.KEY_PROTECTION_TEE,
+                  MatcherProtectionType.MATCHER_PROTECTION_TEE,
+                ),
+                new UvmEntry(
+                  UserVerificationMethod.USER_VERIFY_PASSCODE,
+                  KeyProtectionType.KEY_PROTECTION_SOFTWARE,
+                  MatcherProtectionType.MATCHER_PROTECTION_SOFTWARE,
+                ),
+              ).asJava
+            )
           )
         }
       }

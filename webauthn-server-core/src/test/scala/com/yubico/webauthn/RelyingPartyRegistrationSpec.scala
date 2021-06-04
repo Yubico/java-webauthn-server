@@ -45,6 +45,10 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.KeyProtectionType
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.MatcherProtectionType
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.UserVerificationMethod
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -3234,6 +3238,99 @@ class RelyingPartyRegistrationSpec
 
           result.getClientExtensionOutputs.get.getLargeBlob.get.isSupported should be(
             true
+          )
+        }
+      }
+
+      describe("support the uvm extension") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+
+        it("at registration time.") {
+
+          // Example from spec: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension
+          // A1                     -- extension: CBOR map of one element
+          //     63                 -- Key 1: CBOR text string of 3 bytes
+          //         75 76 6d       -- "uvm" [=UTF-8 encoded=] string
+          //     82                 -- Value 1: CBOR array of length 2 indicating two factor usage
+          //         83              -- Item 1: CBOR array of length 3
+          //             02           -- Subitem 1: CBOR integer for User Verification Method Fingerprint
+          //             04           -- Subitem 2: CBOR short for Key Protection Type TEE
+          //             02           -- Subitem 3: CBOR short for Matcher Protection Type TEE
+          //         83              -- Item 2: CBOR array of length 3
+          //             04           -- Subitem 1: CBOR integer for User Verification Method Passcode
+          //             01           -- Subitem 2: CBOR short for Key Protection Type Software
+          //             01           -- Subitem 3: CBOR short for Matcher Protection Type Software
+          val uvmCborExample = ByteArray.fromHex("A16375766d828302040283040101")
+
+          val challenge = TestAuthenticator.Defaults.challenge
+          val (cred, _) = TestAuthenticator.createUnattestedCredential(
+            authenticatorExtensions =
+              Some(JacksonCodecs.cbor().readTree(uvmCborExample.getBytes)),
+            challenge = challenge,
+          )
+
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(
+                PublicKeyCredentialCreationOptions
+                  .builder()
+                  .rp(
+                    RelyingPartyIdentity
+                      .builder()
+                      .id(TestAuthenticator.Defaults.rpId)
+                      .name("Test RP")
+                      .build()
+                  )
+                  .user(
+                    UserIdentity
+                      .builder()
+                      .name("foo")
+                      .displayName("Foo User")
+                      .id(ByteArray.fromHex("00010203"))
+                      .build()
+                  )
+                  .challenge(challenge)
+                  .pubKeyCredParams(
+                    List(PublicKeyCredentialParameters.ES256).asJava
+                  )
+                  .extensions(
+                    RegistrationExtensionInputs
+                      .builder()
+                      .uvm()
+                      .build()
+                  )
+                  .build()
+              )
+              .response(cred)
+              .build()
+          )
+
+          result.getAuthenticatorExtensionOutputs.get.getUvm.asScala should equal(
+            Some(
+              List(
+                new UvmEntry(
+                  UserVerificationMethod.USER_VERIFY_FINGERPRINT,
+                  KeyProtectionType.KEY_PROTECTION_TEE,
+                  MatcherProtectionType.MATCHER_PROTECTION_TEE,
+                ),
+                new UvmEntry(
+                  UserVerificationMethod.USER_VERIFY_PASSCODE,
+                  KeyProtectionType.KEY_PROTECTION_SOFTWARE,
+                  MatcherProtectionType.MATCHER_PROTECTION_SOFTWARE,
+                ),
+              ).asJava
+            )
           )
         }
       }

@@ -25,6 +25,7 @@
 package com.yubico.webauthn
 
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
@@ -256,6 +257,32 @@ class RelyingPartyStartOperationSpec
         result.getExtensions.getCredProps should be(true)
       }
     }
+
+    it("by default does not set the uvm extension.") {
+      val rp = relyingParty()
+      val result = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .build()
+      )
+      result.getExtensions.getUvm should be(false)
+    }
+
+    it("sets the uvm extension if enabled in StartRegistrationOptions.") {
+      forAll { extensions: RegistrationExtensionInputs =>
+        val rp = relyingParty()
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .extensions(extensions.toBuilder.uvm().build())
+            .build()
+        )
+
+        result.getExtensions.getUvm should be(true)
+      }
+    }
   }
 
   describe("RelyingParty.startAssertion") {
@@ -426,6 +453,34 @@ class RelyingPartyStartOperationSpec
             .builder()
             .timeout(Optional.of[java.lang.Long](timeout))
         }
+      }
+    }
+
+    it("by default does not set the uvm extension.") {
+      val rp = relyingParty()
+      val result = rp.startAssertion(
+        StartAssertionOptions
+          .builder()
+          .build()
+      )
+      result.getPublicKeyCredentialRequestOptions.getExtensions.getUvm should be(
+        false
+      )
+    }
+
+    it("sets the uvm extension if enabled in StartRegistrationOptions.") {
+      forAll { extensions: AssertionExtensionInputs =>
+        val rp = relyingParty()
+        val result = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .extensions(extensions.toBuilder.uvm().build())
+            .build()
+        )
+
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getUvm should be(
+          true
+        )
       }
     }
   }
