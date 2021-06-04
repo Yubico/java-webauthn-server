@@ -503,14 +503,17 @@ object TestAuthenticator {
     )
   }
 
-  def createUnattestedCredential(): (
+  def createUnattestedCredential(challenge: ByteArray = Defaults.challenge): (
       PublicKeyCredential[
         AuthenticatorAttestationResponse,
         ClientRegistrationExtensionOutputs,
       ],
       KeyPair,
   ) =
-    createCredential(attestationMaker = AttestationMaker.none())
+    createCredential(
+      attestationMaker = AttestationMaker.none(),
+      challenge = challenge,
+    )
 
   def createAssertionFromTestData(
       testData: RegistrationTestData,
@@ -548,6 +551,7 @@ object TestAuthenticator {
       credentialId: ByteArray = Defaults.credentialId,
       credentialKey: KeyPair = Defaults.credentialKey,
       origin: String = Defaults.origin,
+      signatureCount: Option[Int] = None,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
       userHandle: Option[ByteArray] = None,
@@ -593,7 +597,8 @@ object TestAuthenticator {
       })
     val clientDataJsonBytes = toBytes(clientDataJson)
 
-    val authDataBytes: ByteArray = makeAuthDataBytes(rpId = Defaults.rpId)
+    val authDataBytes: ByteArray =
+      makeAuthDataBytes(signatureCount = signatureCount, rpId = Defaults.rpId)
 
     val response = AuthenticatorAssertionResponse
       .builder()
@@ -845,7 +850,7 @@ object TestAuthenticator {
 
   def makeAuthDataBytes(
       rpId: String = Defaults.rpId,
-      counterBytes: ByteArray = ByteArray.fromHex("00000539"),
+      signatureCount: Option[Int] = None,
       attestedCredentialDataBytes: Option[ByteArray] = None,
       extensionsCborBytes: Option[ByteArray] = None,
   ): ByteArray =
@@ -857,7 +862,9 @@ object TestAuthenticator {
                    else 0x00) | (if (extensionsCborBytes.isDefined) 0x80
                                  else 0x00)).toByte
         )
-        ++ counterBytes.getBytes.toVector
+        ++ BinaryUtil
+          .encodeUint32(signatureCount.getOrElse(1337).toLong)
+          .toVector
         ++ (attestedCredentialDataBytes map {
           _.getBytes.toVector
         } getOrElse Nil)
