@@ -44,9 +44,6 @@ import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
-import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.KeyProtectionTypeFlags
-import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.MatcherProtectionTypeFlags
-import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry.UserVerificationMethodFlags
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.scalacheck.Arbitrary
@@ -827,20 +824,20 @@ object Generators {
     object Uvm {
       def uvmEntry: Gen[UvmEntry] =
         for {
-          userVerificationMethods <- userVerificationMethodFlags
-          keyProtectionTypes <- keyProtectionTypeFlags
-          matcherProtectionTypes <- matcherProtectionTypeFlags
+          userVerificationMethod <- userVerificationMethod
+          keyProtectionType <- keyProtectionType
+          matcherProtectionType <- matcherProtectionType
         } yield new UvmEntry(
-          userVerificationMethods,
-          keyProtectionTypes,
-          matcherProtectionTypes,
+          userVerificationMethod,
+          keyProtectionType,
+          matcherProtectionType,
         )
 
       def encodeUvmEntry(entry: UvmEntry): Array[Int] =
         Array(
-          entry.getUserVerificationMethod.getValue,
-          entry.getKeyProtectionType.getValue,
-          entry.getMatcherProtectionType.getValue,
+          entry.getUserVerificationMethod.value,
+          entry.getKeyProtectionType.value,
+          entry.getMatcherProtectionType.value,
         )
 
       def authenticatorOutput: Gen[CBORObject] =
@@ -855,25 +852,12 @@ object Generators {
 
       def userVerificationMethod: Gen[UvmEntry.UserVerificationMethod] =
         Gen.oneOf(UvmEntry.UserVerificationMethod.values)
-      def userVerificationMethodFlags
-          : Gen[UvmEntry.UserVerificationMethodFlags] =
-        for {
-          flags <- Gen.listOf(userVerificationMethod)
-        } yield UserVerificationMethodFlags.fromFlags(flags.asJava)
 
       def keyProtectionType: Gen[UvmEntry.KeyProtectionType] =
         Gen.oneOf(UvmEntry.KeyProtectionType.values)
-      def keyProtectionTypeFlags: Gen[UvmEntry.KeyProtectionTypeFlags] =
-        for {
-          flags <- Gen.listOf(keyProtectionType)
-        } yield KeyProtectionTypeFlags.fromFlags(flags.asJava)
 
       def matcherProtectionType: Gen[UvmEntry.MatcherProtectionType] =
         Gen.oneOf(UvmEntry.MatcherProtectionType.values)
-      def matcherProtectionTypeFlags: Gen[UvmEntry.MatcherProtectionTypeFlags] =
-        for {
-          flags <- Gen.listOf(matcherProtectionType)
-        } yield MatcherProtectionTypeFlags.fromFlags(flags.asJava)
     }
   }
 

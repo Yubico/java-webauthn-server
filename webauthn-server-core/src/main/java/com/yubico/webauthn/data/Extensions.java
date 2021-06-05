@@ -6,13 +6,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
 import com.yubico.webauthn.StartRegistrationOptions;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.UtilityClass;
@@ -344,89 +343,33 @@ public class Extensions {
 
     @Value
     public static class UvmEntry {
-      private final UserVerificationMethodFlags userVerificationMethod;
-      private final KeyProtectionTypeFlags keyProtectionType;
-      private final MatcherProtectionTypeFlags matcherProtectionType;
+      private final UserVerificationMethod userVerificationMethod;
+      private final KeyProtectionType keyProtectionType;
+      private final MatcherProtectionType matcherProtectionType;
 
       public UvmEntry(
-          @JsonProperty("userVerificationMethod")
-              UserVerificationMethodFlags userVerificationMethod,
-          @JsonProperty("keyProtectionType") KeyProtectionTypeFlags keyProtectionType,
-          @JsonProperty("matcherProtectionType") MatcherProtectionTypeFlags matcherProtectionType) {
+          @JsonProperty("userVerificationMethod") UserVerificationMethod userVerificationMethod,
+          @JsonProperty("keyProtectionType") KeyProtectionType keyProtectionType,
+          @JsonProperty("matcherProtectionType") MatcherProtectionType matcherProtectionType) {
         this.userVerificationMethod = userVerificationMethod;
         this.keyProtectionType = keyProtectionType;
         this.matcherProtectionType = matcherProtectionType;
       }
 
       /**
-       * A set of <code>USER_VERIFY</code> flags, represented as a bit field.
+       * Enum-like collection of known <code>USER_VERIFY</code> values.
        *
-       * @see <a
-       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
-       *     User Verification Method Extension (uvm)</a>
+       * <p>Constants in this class behave like enum constants. Use {@link #of(int)} to parse raw
+       * <code>int</code> values.
+       *
+       * @see #of(int)
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
        *     Registry of Predefined Values §3.1 User Verification Methods</a>
        */
-      @Value
-      @AllArgsConstructor(onConstructor = @__({@JsonCreator}))
-      public static class UserVerificationMethodFlags {
-        /**
-         * The <code>USER_VERIFY</code> bit field representing this set of user verification
-         * methods.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
-         *     Registry of Predefined Values §3.1 User Verification Methods</a>
-         */
-        @JsonValue private final int value;
+      @EqualsAndHashCode
+      public static class UserVerificationMethod {
 
-        static UserVerificationMethodFlags fromFlags(Iterable<UserVerificationMethod> flags) {
-          int value = 0;
-          for (UserVerificationMethod flag : flags) {
-            value = value | flag.value;
-          }
-          return new UserVerificationMethodFlags(value);
-        }
-
-        /**
-         * The set of <code>USER_VERIFY</code> flags present in this bit field.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
-         *     Registry of Predefined Values §3.1 User Verification Methods</a>
-         */
-        public Set<UserVerificationMethod> flags() {
-          Set<UserVerificationMethod> flags = new HashSet<>();
-          for (UserVerificationMethod flag : UserVerificationMethod.values()) {
-            if ((flag.value & value) != 0) {
-              flags.add(flag);
-            }
-          }
-          return flags;
-        }
-
-        /**
-         * Check whether this bit field has the given <code>USER_VERIFY</code> flag set.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
-         *     Registry of Predefined Values §3.1 User Verification Methods</a>
-         */
-        public boolean has(UserVerificationMethod flag) {
-          return (flag.value & value) != 0;
-        }
-      }
-
-      /**
-       * The set of <code>USER_VERIFY</code> flags that can be present in a {@link
-       * UserVerificationMethodFlags} value.
-       *
-       * @see <a
-       *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
-       *     Registry of Predefined Values §3.1 User Verification Methods</a>
-       */
-      public enum UserVerificationMethod {
         /**
          * This flag MUST be set if the authenticator is able to confirm user presence in any
          * fashion. If this flag and no other is set for user verification, the guarantee is only
@@ -441,7 +384,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_PRESENCE(0x00000001),
+        public static final UserVerificationMethod USER_VERIFY_PRESENCE =
+            new UserVerificationMethod(0x00000001, "PRESENCE");
+
         /**
          * This flag MUST be set if the authenticator uses any type of measurement of a fingerprint
          * for user verification.
@@ -453,7 +398,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_FINGERPRINT(0x00000002),
+        public static final UserVerificationMethod USER_VERIFY_FINGERPRINT =
+            new UserVerificationMethod(0x00000002, "FINGERPRINT");
+
         /**
          * This flag MUST be set if the authenticator uses a local-only passcode (i.e. a passcode
          * not known by the server) for user verification.
@@ -465,7 +412,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_PASSCODE(0x00000004),
+        public static final UserVerificationMethod USER_VERIFY_PASSCODE =
+            new UserVerificationMethod(0x00000004, "PASSCODE");
+
         /**
          * This flag MUST be set if the authenticator uses a voiceprint (also known as speaker
          * recognition) for user verification.
@@ -477,7 +426,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_VOICEPRINT(0x00000008),
+        public static final UserVerificationMethod USER_VERIFY_VOICEPRINT =
+            new UserVerificationMethod(0x00000008, "VOICEPRINT");
+
         /**
          * This flag MUST be set if the authenticator uses any manner of face recognition to verify
          * the user.
@@ -489,7 +440,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_FACEPRINT(0x00000010),
+        public static final UserVerificationMethod USER_VERIFY_FACEPRINT =
+            new UserVerificationMethod(0x00000010, "FACEPRINT");
+
         /**
          * This flag MUST be set if the authenticator uses any form of location sensor or
          * measurement for user verification.
@@ -501,7 +454,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_LOCATION(0x00000020),
+        public static final UserVerificationMethod USER_VERIFY_LOCATION =
+            new UserVerificationMethod(0x00000020, "LOCATION");
+
         /**
          * This flag MUST be set if the authenticator uses any form of eye biometrics for user
          * verification.
@@ -513,7 +468,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_EYEPRINT(0x00000040),
+        public static final UserVerificationMethod USER_VERIFY_EYEPRINT =
+            new UserVerificationMethod(0x00000040, "EYEPRINT");
+
         /**
          * This flag MUST be set if the authenticator uses a drawn pattern for user verification.
          *
@@ -524,7 +481,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_PATTERN(0x00000080),
+        public static final UserVerificationMethod USER_VERIFY_PATTERN =
+            new UserVerificationMethod(0x00000080, "PATTERN");
+
         /**
          * This flag MUST be set if the authenticator uses any measurement of a full hand (including
          * palm-print, hand geometry or vein geometry) for user verification.
@@ -536,7 +495,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_HANDPRINT(0x00000100),
+        public static final UserVerificationMethod USER_VERIFY_HANDPRINT =
+            new UserVerificationMethod(0x00000100, "HANDPRINT");
+
         /**
          * This flag MUST be set if the authenticator will respond without any user interaction
          * (e.g. Silent Authenticator).
@@ -548,7 +509,9 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_NONE(0x00000200),
+        public static final UserVerificationMethod USER_VERIFY_NONE =
+            new UserVerificationMethod(0x00000200, "NONE");
+
         /**
          * If an authenticator sets multiple flags for user verification types, it MAY also set this
          * flag to indicate that all verification methods will be enforced (e.g. faceprint AND
@@ -562,83 +525,74 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
          *     Registry of Predefined Values §3.1 User Verification Methods</a>
          */
-        USER_VERIFY_ALL(0x00000400);
+        public static final UserVerificationMethod USER_VERIFY_ALL =
+            new UserVerificationMethod(0x00000400, "ALL");
 
-        private final int value;
+        @JsonValue public final int value;
 
-        UserVerificationMethod(int value) {
+        @EqualsAndHashCode.Exclude private final transient String name;
+
+        private UserVerificationMethod(int value, String name) {
           this.value = value;
+          this.name = name;
+        }
+
+        /**
+         * @return An array containing all predefined values of {@link UserVerificationMethod} known
+         *     by this implementation.
+         */
+        public static UserVerificationMethod[] values() {
+          return new UserVerificationMethod[] {
+            USER_VERIFY_PRESENCE,
+            USER_VERIFY_FINGERPRINT,
+            USER_VERIFY_PASSCODE,
+            USER_VERIFY_VOICEPRINT,
+            USER_VERIFY_FACEPRINT,
+            USER_VERIFY_LOCATION,
+            USER_VERIFY_EYEPRINT,
+            USER_VERIFY_PATTERN,
+            USER_VERIFY_HANDPRINT,
+            USER_VERIFY_NONE,
+            USER_VERIFY_ALL
+          };
+        }
+
+        /**
+         * @return If <code>value</code> is the same as that of any of the constants in {@link
+         *     UserVerificationMethod}, returns that constant instance. Otherwise returns a new
+         *     instance containing <code>value</code>.
+         */
+        @JsonCreator
+        public static UserVerificationMethod of(int value) {
+          return Stream.of(values())
+              .filter(v -> v.value == value)
+              .findAny()
+              .orElseGet(() -> new UserVerificationMethod(value, null));
+        }
+
+        @Override
+        public String toString() {
+          if (name == null) {
+            return String.format("%s(%04x)", UserVerificationMethod.class.getSimpleName(), value);
+          } else {
+            return name;
+          }
         }
       }
 
       /**
-       * A set of <code>KEY_PROTECTION</code> flags, represented as a bit field.
+       * Enum-like collection of known <code>KEY_PROTECTION</code> values.
        *
-       * @see <a
-       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
-       *     User Verification Method Extension (uvm)</a>
+       * <p>Constants in this class behave like enum constants. Use {@link #of(short)} to parse raw
+       * <code>int</code> values.
+       *
+       * @see #of(short)
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
        *     Registry of Predefined Values §3.2 Key Protection Types</a>
        */
-      @Value
-      @AllArgsConstructor(onConstructor = @__({@JsonCreator}))
-      public static class KeyProtectionTypeFlags {
-        /**
-         * The <code>KEY_PROTECTION</code> bit field representing this set of key protection types.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
-         *     Registry of Predefined Values §3.2 Key Protection Types</a>
-         */
-        @JsonValue private final short value;
-
-        static KeyProtectionTypeFlags fromFlags(Iterable<KeyProtectionType> flags) {
-          short value = 0;
-          for (KeyProtectionType flag : flags) {
-            value = (short) (value | flag.value);
-          }
-          return new KeyProtectionTypeFlags(value);
-        }
-
-        /**
-         * The set of <code>KEY_PROTECTION</code> flags present in this bit field.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
-         *     Registry of Predefined Values §3.2 Key Protection Types</a>
-         */
-        public Set<KeyProtectionType> flags() {
-          Set<KeyProtectionType> flags = new HashSet<>();
-          for (KeyProtectionType flag : KeyProtectionType.values()) {
-            if ((flag.value & value) != 0) {
-              flags.add(flag);
-            }
-          }
-          return flags;
-        }
-
-        /**
-         * Check whether this bit field has the given <code>KEY_PROTECTION</code> flag set.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
-         *     Registry of Predefined Values §3.2 Key Protection Types</a>
-         */
-        public boolean has(KeyProtectionType flag) {
-          return (flag.value & value) != 0;
-        }
-      }
-
-      /**
-       * The set of <code>KEY_PROTECTION</code> flags that can be present in a {@link
-       * KeyProtectionTypeFlags} value.
-       *
-       * @see <a
-       *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
-       *     Registry of Predefined Values §3.2 Key Protection Types</a>
-       */
-      public enum KeyProtectionType {
+      @EqualsAndHashCode
+      public static class KeyProtectionType {
 
         /**
          * This flag must be set if the authenticator uses software-based key management. Mutually
@@ -652,7 +606,8 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
          *     Registry of Predefined Values §3.2 Key Protection Types</a>
          */
-        KEY_PROTECTION_SOFTWARE((short) 0x0001),
+        public static final KeyProtectionType KEY_PROTECTION_SOFTWARE =
+            new KeyProtectionType((short) 0x0001, "SOFTWARE");
 
         /**
          * This flag should be set if the authenticator uses hardware-based key management. Mutually
@@ -665,7 +620,8 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
          *     Registry of Predefined Values §3.2 Key Protection Types</a>
          */
-        KEY_PROTECTION_HARDWARE((short) 0x0002),
+        public static final KeyProtectionType KEY_PROTECTION_HARDWARE =
+            new KeyProtectionType((short) 0x0002, "HARDWARE");
 
         /**
          * This flag should be set if the authenticator uses the Trusted Execution Environment for
@@ -680,7 +636,8 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
          *     Registry of Predefined Values §3.2 Key Protection Types</a>
          */
-        KEY_PROTECTION_TEE((short) 0x0004),
+        public static final KeyProtectionType KEY_PROTECTION_TEE =
+            new KeyProtectionType((short) 0x0004, "TEE");
 
         /**
          * This flag should be set if the authenticator uses a Secure Element for key management. In
@@ -695,7 +652,8 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#key-protection-types">FIDO
          *     Registry of Predefined Values §3.2 Key Protection Types</a>
          */
-        KEY_PROTECTION_SECURE_ELEMENT((short) 0x0008),
+        public static final KeyProtectionType KEY_PROTECTION_SECURE_ELEMENT =
+            new KeyProtectionType((short) 0x0008, "SECURE_ELEMENT");
 
         /**
          * This flag must be set if the authenticator does not store (wrapped) UAuth keys at the
@@ -716,84 +674,68 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-uaf-v1.2-rd-20171128/fido-uaf-protocol-v1.2-rd-20171128.html">FIDO
          *     UAF Protocol Specification [UAFProtocol]</a>
          */
-        KEY_PROTECTION_REMOTE_HANDLE((short) 0x0010);
+        public static final KeyProtectionType KEY_PROTECTION_REMOTE_HANDLE =
+            new KeyProtectionType((short) 0x0010, "REMOTE_HANDLE");
 
-        private final short value;
+        @JsonValue public final short value;
 
-        KeyProtectionType(short value) {
+        @EqualsAndHashCode.Exclude private final transient String name;
+
+        private KeyProtectionType(short value, String name) {
           this.value = value;
+          this.name = name;
+        }
+
+        /**
+         * @return An array containing all predefined values of {@link KeyProtectionType} known by
+         *     this implementation.
+         */
+        public static KeyProtectionType[] values() {
+          return new KeyProtectionType[] {
+            KEY_PROTECTION_SOFTWARE,
+            KEY_PROTECTION_HARDWARE,
+            KEY_PROTECTION_TEE,
+            KEY_PROTECTION_SECURE_ELEMENT,
+            KEY_PROTECTION_REMOTE_HANDLE
+          };
+        }
+
+        /**
+         * @return If <code>value</code> is the same as that of any of the constants in {@link
+         *     KeyProtectionType}, returns that constant instance. Otherwise returns a new instance
+         *     containing <code>value</code>.
+         */
+        @JsonCreator
+        public static KeyProtectionType of(short value) {
+          return Stream.of(values())
+              .filter(v -> v.value == value)
+              .findAny()
+              .orElseGet(() -> new KeyProtectionType(value, null));
+        }
+
+        @Override
+        public String toString() {
+          if (name == null) {
+            return String.format("%s(%04x)", KeyProtectionType.class.getSimpleName(), value);
+          } else {
+            return name;
+          }
         }
       }
 
       /**
-       * A set of <code>MATCHER_PROTECTION</code> flags, represented as a bit field.
+       * Enum-like collection of known <code>MATCHER_PROTECTION</code> values.
        *
-       * @see <a
-       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
-       *     User Verification Method Extension (uvm)</a>
+       * <p>Constants in this class behave like enum constants. Use {@link #of(short)} to parse raw
+       * <code>int</code> values.
+       *
+       * @see #of(short)
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
        *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
        */
-      @Value
-      @AllArgsConstructor(onConstructor = @__({@JsonCreator}))
-      public static class MatcherProtectionTypeFlags {
-        /**
-         * The <code>MATCHER_PROTECTION</code> bit field representing this set of matcher protection
-         * types.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
-         *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
-         */
-        @JsonValue private final short value;
-
-        static MatcherProtectionTypeFlags fromFlags(Iterable<MatcherProtectionType> flags) {
-          short value = 0;
-          for (MatcherProtectionType flag : flags) {
-            value = (short) (value | flag.value);
-          }
-          return new MatcherProtectionTypeFlags(value);
-        }
-
-        /**
-         * The set of <code>MATCHER_PROTECTION</code> flags present in this bit field.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
-         *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
-         */
-        public Set<MatcherProtectionType> flags() {
-          Set<MatcherProtectionType> flags = new HashSet<>();
-          for (MatcherProtectionType flag : MatcherProtectionType.values()) {
-            if ((flag.value & value) != 0) {
-              flags.add(flag);
-            }
-          }
-          return flags;
-        }
-
-        /**
-         * Check whether this bit field has the given <code>MATCHER_PROTECTION</code> flag set.
-         *
-         * @see <a
-         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
-         *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
-         */
-        public boolean has(KeyProtectionType flag) {
-          return (flag.value & value) != 0;
-        }
-      }
-
-      /**
-       * The set of <code>MATCHER_PROTECTION</code> flags that can be present in a {@link
-       * MatcherProtectionTypeFlags} value.
-       *
-       * @see <a
-       *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
-       *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
-       */
-      public enum MatcherProtectionType {
+      @EqualsAndHashCode
+      public static class MatcherProtectionType {
 
         /**
          * This flag must be set if the authenticator's matcher is running in software. Mutually
@@ -806,7 +748,8 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
          *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
          */
-        MATCHER_PROTECTION_SOFTWARE((short) 0x0001),
+        public static final MatcherProtectionType MATCHER_PROTECTION_SOFTWARE =
+            new MatcherProtectionType((short) 0x0001, "SOFTWARE");
 
         /**
          * This flag should be set if the authenticator's matcher is running inside the Trusted
@@ -820,7 +763,8 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
          *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
          */
-        MATCHER_PROTECTION_TEE((short) 0x0002),
+        public static final MatcherProtectionType MATCHER_PROTECTION_TEE =
+            new MatcherProtectionType((short) 0x0002, "TEE");
 
         /**
          * This flag should be set if the authenticator's matcher is running on the chip. Mutually
@@ -833,12 +777,48 @@ public class Extensions {
          *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#matcher-protection-types">FIDO
          *     Registry of Predefined Values §3.3 Matcher Protection Types</a>
          */
-        MATCHER_PROTECTION_ON_CHIP((short) 0x0004);
+        public static final MatcherProtectionType MATCHER_PROTECTION_ON_CHIP =
+            new MatcherProtectionType((short) 0x0004, "ON_CHIP");
 
-        private final short value;
+        @JsonValue public final short value;
 
-        MatcherProtectionType(short value) {
+        @EqualsAndHashCode.Exclude private final transient String name;
+
+        private MatcherProtectionType(short value, String name) {
           this.value = value;
+          this.name = name;
+        }
+
+        /**
+         * @return An array containing all predefined values of {@link MatcherProtectionType} known
+         *     by this implementation.
+         */
+        public static MatcherProtectionType[] values() {
+          return new MatcherProtectionType[] {
+            MATCHER_PROTECTION_SOFTWARE, MATCHER_PROTECTION_TEE, MATCHER_PROTECTION_ON_CHIP
+          };
+        }
+
+        /**
+         * @return If <code>value</code> is the same as that of any of the constants in {@link
+         *     MatcherProtectionType}, returns that constant instance. Otherwise returns a new
+         *     instance containing <code>value</code>.
+         */
+        @JsonCreator
+        public static MatcherProtectionType of(short value) {
+          return Stream.of(values())
+              .filter(v -> v.value == value)
+              .findAny()
+              .orElseGet(() -> new MatcherProtectionType(value, null));
+        }
+
+        @Override
+        public String toString() {
+          if (name == null) {
+            return String.format("%s(%04x)", MatcherProtectionType.class.getSimpleName(), value);
+          } else {
+            return name;
+          }
         }
       }
     }
@@ -850,10 +830,9 @@ public class Extensions {
                 .map(
                     uvmEntry ->
                         new UvmEntry(
-                            new UvmEntry.UserVerificationMethodFlags(
-                                uvmEntry.get(0).AsInt32Value()),
-                            new UvmEntry.KeyProtectionTypeFlags(uvmEntry.get(1).AsInt16()),
-                            new UvmEntry.MatcherProtectionTypeFlags(uvmEntry.get(2).AsInt16())))
+                            UvmEntry.UserVerificationMethod.of(uvmEntry.get(0).AsInt32Value()),
+                            UvmEntry.KeyProtectionType.of(uvmEntry.get(1).AsInt16()),
+                            UvmEntry.MatcherProtectionType.of(uvmEntry.get(2).AsInt16())))
                 .collect(Collectors.toList()));
       } else {
         return Optional.empty();
