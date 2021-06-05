@@ -106,18 +106,6 @@ public class CollectedClientData {
     } catch (NullPointerException e) {
       throw new IllegalArgumentException("Missing field: \"type\"");
     }
-
-    final JsonNode authenticatorExtensions = clientData.get("authenticatorExtensions");
-    if (authenticatorExtensions != null && !authenticatorExtensions.isObject()) {
-      throw new IllegalArgumentException(
-          "Field \"authenticatorExtensions\" must be an object if present.");
-    }
-
-    final JsonNode clientExtensions = clientData.get("clientExtensions");
-    if (clientExtensions != null && !clientExtensions.isObject()) {
-      throw new IllegalArgumentException(
-          "Field \"clientExtensions\" must be an object if present.");
-    }
   }
 
   /**
