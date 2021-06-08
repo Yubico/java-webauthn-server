@@ -354,7 +354,6 @@ object RegistrationTestData {
       ),
       rpId =
         RelyingPartyIdentity.builder().id("demo3.yubico.test").name("").build(),
-      origin = Some("https://demo3.yubico.test:8443"),
       userId = UserIdentity
         .builder()
         .name("foo")
@@ -460,7 +459,6 @@ case class RegistrationTestData(
     clientExtensionResults: ClientRegistrationExtensionOutputs =
       ClientRegistrationExtensionOutputs.builder().build(),
     privateKey: Option[ByteArray] = None,
-    origin: Option[String] = None,
     overrideRequest: Option[PublicKeyCredentialCreationOptions] = None,
     requestedExtensions: RegistrationExtensionInputs =
       RegistrationExtensionInputs.builder().build(),
