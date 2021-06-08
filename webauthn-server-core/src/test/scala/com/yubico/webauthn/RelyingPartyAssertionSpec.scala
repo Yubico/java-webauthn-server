@@ -48,7 +48,6 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Helpers
-import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
@@ -1946,19 +1945,19 @@ class RelyingPartyAssertionSpec
     }
 
     describe("The default RelyingParty settings") {
-      val testDataBase = RealExamples.YubiKey5Nfc
+      val testDataBase = RegistrationTestData.Packed.BasicAttestationEdDsa
       val rp = RelyingParty
         .builder()
-        .identity(testDataBase.rp)
+        .identity(testDataBase.rpId)
         .credentialRepository(
           Helpers.CredentialRepository.withUser(
-            testDataBase.user,
+            testDataBase.userId,
             RegisteredCredential
               .builder()
-              .credentialId(testDataBase.attestation.credential.getId)
-              .userHandle(testDataBase.user.getId)
+              .credentialId(testDataBase.response.getId)
+              .userHandle(testDataBase.userId.getId)
               .publicKeyCose(
-                testDataBase.attestation.credential.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+                testDataBase.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
               )
               .build(),
           )
@@ -1971,12 +1970,9 @@ class RelyingPartyAssertionSpec
             FinishAssertionOptions
               .builder()
               .request(
-                AssertionRequest
-                  .builder()
+                testDataBase.assertion.get.request.toBuilder
                   .publicKeyCredentialRequestOptions(
-                    PublicKeyCredentialRequestOptions
-                      .builder()
-                      .challenge(testDataBase.assertion.challenge)
+                    testDataBase.assertion.get.request.getPublicKeyCredentialRequestOptions.toBuilder
                       .extensions(
                         AssertionExtensionInputs
                           .builder()
@@ -1988,11 +1984,10 @@ class RelyingPartyAssertionSpec
                       )
                       .build()
                   )
-                  .username(testDataBase.user.getName)
                   .build()
               )
               .response(
-                testDataBase.assertion.credential.toBuilder
+                testDataBase.assertion.get.response.toBuilder
                   .clientExtensionResults(
                     ClientAssertionExtensionOutputs
                       .builder()
@@ -2020,12 +2015,9 @@ class RelyingPartyAssertionSpec
             FinishAssertionOptions
               .builder()
               .request(
-                AssertionRequest
-                  .builder()
+                testDataBase.assertion.get.request.toBuilder
                   .publicKeyCredentialRequestOptions(
-                    PublicKeyCredentialRequestOptions
-                      .builder()
-                      .challenge(testDataBase.assertion.challenge)
+                    testDataBase.assertion.get.request.getPublicKeyCredentialRequestOptions.toBuilder
                       .extensions(
                         AssertionExtensionInputs
                           .builder()
@@ -2034,11 +2026,10 @@ class RelyingPartyAssertionSpec
                       )
                       .build()
                   )
-                  .username(testDataBase.user.getName)
                   .build()
               )
               .response(
-                testDataBase.assertion.credential.toBuilder
+                testDataBase.assertion.get.response.toBuilder
                   .clientExtensionResults(
                     ClientAssertionExtensionOutputs
                       .builder()
