@@ -511,6 +511,7 @@ object TestAuthenticator {
   def createAssertionFromTestData(
       testData: RegistrationTestData,
       request: PublicKeyCredentialRequestOptions,
+      authenticatorExtensions: Option[JsonNode] = None,
       origin: String = Defaults.origin,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -521,7 +522,7 @@ object TestAuthenticator {
   ] = {
     createAssertion(
       alg = testData.alg,
-      authenticatorExtensions = None,
+      authenticatorExtensions = authenticatorExtensions,
       challenge = request.getChallenge,
       clientData = None,
       clientExtensions = ClientAssertionExtensionOutputs.builder().build(),
@@ -576,22 +577,18 @@ object TestAuthenticator {
           },
         )
 
-        json.set(
-          "clientExtensions",
-          JacksonCodecs
-            .json()
-            .readTree(JacksonCodecs.json().writeValueAsString(clientExtensions)),
-        )
-        authenticatorExtensions foreach { extensions =>
-          json.set("authenticatorExtensions", extensions)
-        }
-
         json
       })
     val clientDataJsonBytes = toBytes(clientDataJson)
 
     val authDataBytes: ByteArray =
-      makeAuthDataBytes(signatureCount = signatureCount, rpId = Defaults.rpId)
+      makeAuthDataBytes(
+        signatureCount = signatureCount,
+        rpId = Defaults.rpId,
+        extensionsCborBytes = authenticatorExtensions map (ext =>
+          new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(ext))
+        ),
+      )
 
     val response = AuthenticatorAssertionResponse
       .builder()
