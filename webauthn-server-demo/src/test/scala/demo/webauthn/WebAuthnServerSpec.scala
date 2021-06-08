@@ -101,8 +101,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
         val responseJson =
           s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
 
-        val request = server.finishRegistration(responseJson)
-        val json = jsonMapper.writeValueAsString(request.right.get)
+        val response = server.finishRegistration(responseJson)
+        val json = jsonMapper.writeValueAsString(response.right.get)
 
         json should not be null
       }
@@ -156,8 +156,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
           s"""{"id":"${credentialId.getBase64Url}","response":${authenticatorAssertionResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
         val responseJson =
           s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
-        val request = server.finishAuthentication(responseJson)
-        val json = jsonMapper.writeValueAsString(request.right.get)
+        val response = server.finishAuthentication(responseJson)
+        val json = jsonMapper.writeValueAsString(response.right.get)
 
         json should not be null
       }
