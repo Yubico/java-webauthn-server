@@ -32,8 +32,10 @@ import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.WebAuthnTestCodecs
+import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.extension.appid.AppId
@@ -44,6 +46,7 @@ import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.security.KeyPair
 import java.security.interfaces.ECPublicKey
@@ -53,7 +56,10 @@ import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters._
 
 @RunWith(classOf[JUnitRunner])
-class WebAuthnServerSpec extends FunSpec with Matchers {
+class WebAuthnServerSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
   private val jsonMapper = JacksonCodecs.json()
   private val username = "foo-user"
@@ -289,6 +295,33 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
       }
     }
 
+    it("stores and returns transport hints.") {
+      forAll { transports: Set[AuthenticatorTransport] =>
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+          .copy(transports = transports)
+        val requestId = ByteArray.fromBase64Url("request1")
+        val server = newServerWithRegistrationRequest(
+          testData,
+          origins = Set("https://localhost").asJava,
+        )
+        val publicKeyCredentialJson =
+          JacksonCodecs.json().writeValueAsString(testData.response)
+        val responseJson =
+          s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
+        val registrationResponse = server.finishRegistration(responseJson)
+        registrationResponse.isRight should be(true)
+
+        val assertionRequest =
+          server.startAuthentication(Optional.of(testData.userId.getName))
+
+        val creds =
+          assertionRequest.right.get.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
+        creds should have size 1
+        creds.head.getTransports.asScala should equal(
+          Some(transports.asJava)
+        )
+      }
+    }
   }
 
   private def newServer = new WebAuthnServer
@@ -335,6 +368,7 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
             )
             .build()
         )
+        .transports(testData.response.getResponse.getTransports)
         .build(),
     )
 
@@ -342,7 +376,8 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
   }
 
   private def newServerWithRegistrationRequest(
-      testData: RegistrationTestData
+      testData: RegistrationTestData,
+      origins: java.util.Set[String] = origins,
   ) = {
     val registrationRequests: Cache[ByteArray, RegistrationRequest] = newCache()
 
