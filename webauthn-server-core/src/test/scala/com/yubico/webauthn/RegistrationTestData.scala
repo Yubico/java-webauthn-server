@@ -38,6 +38,7 @@ import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
@@ -214,6 +215,7 @@ object RegistrationTestData {
         BinaryUtil.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020e50fe8ab67d1e773463decf62cfe9a9d5928ece4fd98a013b80478301bb8e29ea5225820d06403b07cf09311ca10b2478979deaaad9c65751e749c503fe9fb935686fcae03260102215820bfa61c3ae256f6a887d2ae9b2075b5246896ba9f44a2a6874ab746acfe7db9e3200163666d74686669646f2d7532666761747453746d74bf63783563815901eb308201e73082018ca00302010202020539300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303930363137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200040bd659232377a4f910fdcfccaec55511d00beacbdf417f49c9de938137f98df03971b3553bc11a2bd4ef5089ed290d15cc84e005443c794b13dc5e230916c591a32530233021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f300a06082a8648ce3d04030203490030460221008546464190caa7a603cd5c8dd60f30a23a9d227ca69603c1421c179092d8e4a1022100891b766c83b9def81518e354db14068d0ade9c8651927b347f4a63454b12add36373696758473045022100c88c93d88194e183f5522ec471a77f8a78d82fa7f99292f8d5f0c20cec6277d702203e289df8dd0568d9bd0b7d294fd30afcf3b264f5fb63f3163b46bb725c8fb31fffff")
       ),
       clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"},"clientExtensions":{}}""",
+      transports = Set(AuthenticatorTransport.USB),
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(attestationMaker =
@@ -470,6 +472,7 @@ case class RegistrationTestData(
       .displayName("Test user")
       .id(new ByteArray(Array(42, 13, 37)))
       .build(),
+    transports: Set[AuthenticatorTransport] = Set.empty,
 ) {
   validate()
 
@@ -635,6 +638,7 @@ case class RegistrationTestData(
           .builder()
           .attestationObject(attestationObject)
           .clientDataJSON(clientDataJsonBytes)
+          .transports(transports.asJava)
           .build()
       )
       .clientExtensionResults(clientExtensionResults)
