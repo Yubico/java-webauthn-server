@@ -3033,9 +3033,7 @@ class RelyingPartyRegistrationSpec
                     .credentialRepository(
                       Helpers.CredentialRepository.empty
                     )
-                  testData.origin.foreach({ o =>
-                    builder.origins(Set(o).asJava)
-                  })
+                  builder.origins(Set(testData.clientData.getOrigin).asJava)
                   builder.build()
                 }
 
