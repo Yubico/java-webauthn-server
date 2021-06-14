@@ -58,7 +58,12 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
    * A unique identifier for the Relying Party, which sets the <a
    * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>.
    *
+   * <p>This defines the domains where users' credentials are valid. See <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for details
+   * and examples.
+   *
    * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
    */
   @NonNull private final String id;
 
@@ -93,12 +98,28 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
     public static class MandatoryStages {
       private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
 
+      /**
+       * A unique identifier for the Relying Party, which sets the <a
+       * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>.
+       *
+       * <p>This defines the domains where users' credentials are valid. See <a
+       * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for
+       * details and examples.
+       *
+       * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
+       */
       public Step2 id(String id) {
         builder.id(id);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * The human-palatable name of the Relaying Party.
+         *
+         * <p>For example: "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+         */
         public RelyingPartyIdentityBuilder name(String name) {
           return builder.name(name);
         }
