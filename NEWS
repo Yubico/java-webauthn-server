@@ -33,6 +33,11 @@ New features:
     and in agreement with each other for backwards compatibility with older
     browsers.
 
+Fixes:
+
+* Added missing JavaDoc for `id` and `name` methods of initial
+  `RelyingPartyIdentityBuilder` stages.
+
 
 == Version 1.10.1 ==
 
