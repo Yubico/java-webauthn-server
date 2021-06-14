@@ -283,6 +283,42 @@ class RelyingPartyStartOperationSpec
         result.getExtensions.getUvm should be(true)
       }
     }
+
+    it("respects the requireResidentKey setting.") {
+      val rp = relyingParty()
+
+      val pkccoFalse = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .requireResidentKey(false)
+              .build()
+          )
+          .build()
+      )
+      val pkccoTrue = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .requireResidentKey(true)
+              .build()
+          )
+          .build()
+      )
+
+      pkccoFalse.getAuthenticatorSelection.get.isRequireResidentKey should be(
+        false
+      )
+      pkccoTrue.getAuthenticatorSelection.get.isRequireResidentKey should be(
+        true
+      )
+    }
   }
 
   describe("RelyingParty.startAssertion") {
