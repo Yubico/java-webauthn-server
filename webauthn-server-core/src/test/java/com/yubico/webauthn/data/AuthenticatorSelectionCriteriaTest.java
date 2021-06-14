@@ -11,6 +11,7 @@ public class AuthenticatorSelectionCriteriaTest {
         .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
         .authenticatorAttachment(Optional.of(AuthenticatorAttachment.CROSS_PLATFORM))
         .requireResidentKey(false)
+        .residentKey(ResidentKeyRequirement.REQUIRED)
         .userVerification(UserVerificationRequirement.PREFERRED)
         .build();
   }
