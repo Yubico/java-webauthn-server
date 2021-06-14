@@ -35,6 +35,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.ResidentKeyRequirement
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -317,6 +318,67 @@ class RelyingPartyStartOperationSpec
       )
       pkccoTrue.getAuthenticatorSelection.get.isRequireResidentKey should be(
         true
+      )
+    }
+
+    it("sets requireResidentKey to agree with residentKey.") {
+      val rp = relyingParty()
+
+      val pkccoDiscouraged = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .residentKey(ResidentKeyRequirement.DISCOURAGED)
+              .build()
+          )
+          .build()
+      )
+      val pkccoPreferred = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .residentKey(ResidentKeyRequirement.PREFERRED)
+              .build()
+          )
+          .build()
+      )
+      val pkccoRequired = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .residentKey(ResidentKeyRequirement.REQUIRED)
+              .build()
+          )
+          .build()
+      )
+
+      pkccoDiscouraged.getAuthenticatorSelection.get.isRequireResidentKey should be(
+        false
+      )
+      pkccoPreferred.getAuthenticatorSelection.get.isRequireResidentKey should be(
+        false
+      )
+      pkccoRequired.getAuthenticatorSelection.get.isRequireResidentKey should be(
+        true
+      )
+
+      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey should equal(
+        ResidentKeyRequirement.DISCOURAGED
+      )
+      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey should equal(
+        ResidentKeyRequirement.PREFERRED
+      )
+      pkccoRequired.getAuthenticatorSelection.get.getResidentKey should equal(
+        ResidentKeyRequirement.REQUIRED
       )
     }
   }

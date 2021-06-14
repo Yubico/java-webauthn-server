@@ -50,12 +50,21 @@ public class AuthenticatorSelectionCriteria {
   private final AuthenticatorAttachment authenticatorAttachment;
 
   /**
-   * Describes the Relying Party's requirements regarding resident credentials. If set to <code>true
-   * </code>, the authenticator MUST create a <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
-   * public key credential source</a> when creating a public key credential.
+   * Specifies the extent to which the Relying Party desires to create a client-side discoverable
+   * credential. For historical reasons the naming retains the deprecated “resident” terminology.
+   *
+   * <p>The default is {@link ResidentKeyRequirement#DISCOURAGED}.
+   *
+   * @see ResidentKeyRequirement
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
+   *     Resident Key Requirement Enumeration (enum ResidentKeyRequirement)</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
+   *     discoverable Credential</a>
    */
-  @Builder.Default private final boolean requireResidentKey = false;
+  @Builder.Default
+  private final ResidentKeyRequirement residentKey = ResidentKeyRequirement.DISCOURAGED;
 
   /**
    * Describes the Relying Party's requirements regarding <a
@@ -75,14 +84,45 @@ public class AuthenticatorSelectionCriteria {
     return Optional.ofNullable(authenticatorAttachment);
   }
 
+  /**
+   * This member is retained for backwards compatibility with WebAuthn Level 1 and, for historical
+   * reasons, its naming retains the deprecated “resident” terminology for discoverable credentials.
+   * Relying Parties SHOULD set it to true if, and only if, residentKey is set to required.
+   *
+   * @return <code>true</code> if and only if {@link #getResidentKey()} is {@link
+   *     ResidentKeyRequirement#REQUIRED}.
+   * @see #getResidentKey()
+   * @deprecated Use {@link #getResidentKey()} instead.
+   */
+  @Deprecated
+  public boolean isRequireResidentKey() {
+    return residentKey == ResidentKeyRequirement.REQUIRED;
+  }
+
   @JsonCreator
   private AuthenticatorSelectionCriteria(
       @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
-      @JsonProperty("requireResidentKey") boolean requireResidentKey,
+      @JsonProperty("requireResidentKey") Boolean requireResidentKey,
+      @JsonProperty("residentKey") ResidentKeyRequirement residentKey,
       @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification) {
     this.authenticatorAttachment = authenticatorAttachment;
-    this.requireResidentKey = requireResidentKey;
+
+    if (residentKey == null && requireResidentKey != null) {
+      this.residentKey =
+          requireResidentKey ? ResidentKeyRequirement.REQUIRED : ResidentKeyRequirement.DISCOURAGED;
+    } else {
+      this.residentKey = residentKey;
+    }
+
     this.userVerification = userVerification;
+  }
+
+  /** For use by the builder. */
+  private AuthenticatorSelectionCriteria(
+      AuthenticatorAttachment authenticatorAttachment,
+      ResidentKeyRequirement residentKey,
+      UserVerificationRequirement userVerification) {
+    this(authenticatorAttachment, null, residentKey, userVerification);
   }
 
   public static class AuthenticatorSelectionCriteriaBuilder {
@@ -107,6 +147,28 @@ public class AuthenticatorSelectionCriteria {
         AuthenticatorAttachment authenticatorAttachment) {
       this.authenticatorAttachment = authenticatorAttachment;
       return this;
+    }
+
+    /**
+     * This member is retained for backwards compatibility with WebAuthn Level 1 and, for historical
+     * reasons, its naming retains the deprecated “resident” terminology for discoverable
+     * credentials.
+     *
+     * <p><code>requireResidentKey(true)</code> is an alias of <code>residentKey(REQUIRED)
+     * </code>.
+     *
+     * <p><code>requireResidentKey(false)</code> is an alias of <code>residentKey(DISCOURAGED)
+     * </code>.
+     *
+     * @deprecated Use {@link #residentKey(ResidentKeyRequirement) residentKey} instead.
+     * @see #residentKey(ResidentKeyRequirement)
+     */
+    @Deprecated
+    public AuthenticatorSelectionCriteriaBuilder requireResidentKey(boolean requireResidentKey) {
+      return residentKey(
+          requireResidentKey
+              ? ResidentKeyRequirement.REQUIRED
+              : ResidentKeyRequirement.DISCOURAGED);
     }
   }
 }
