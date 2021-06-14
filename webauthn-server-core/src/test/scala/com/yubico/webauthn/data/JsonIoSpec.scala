@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.exc.ValueInstantiationException
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
@@ -367,6 +368,50 @@ class JsonIoSpec
           ClientRegistrationExtensionOutputs,
         ]]() {}
       )
+    }
+  }
+
+  describe("The class PublicKeyCredentialCreationOptions") {
+    it("""has a toCredentialCreateJson() method which returns a JSON object with the PublicKeyCredentialCreationOptions set as a top-level "publicKey" property.""") {
+      forAll { pkcco: PublicKeyCredentialCreationOptions =>
+        println(pkcco)
+        val jsonValue =
+          JacksonCodecs.json.readTree(pkcco.toCredentialsCreateJson)
+        jsonValue.get("publicKey") should not be null
+        JacksonCodecs.json.treeToValue(
+          jsonValue.get("publicKey"),
+          classOf[PublicKeyCredentialCreationOptions],
+        ) should equal(pkcco)
+      }
+    }
+  }
+
+  describe("The class PublicKeyCredentialRequestOptions") {
+    it("""has a toCredentialGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
+      forAll { pkcro: PublicKeyCredentialRequestOptions =>
+        println(pkcro)
+        val jsonValue = JacksonCodecs.json.readTree(pkcro.toCredentialsGetJson)
+        jsonValue.get("publicKey") should not be null
+        JacksonCodecs.json.treeToValue(
+          jsonValue.get("publicKey"),
+          classOf[PublicKeyCredentialRequestOptions],
+        ) should equal(pkcro)
+      }
+    }
+  }
+
+  describe("The class AssertionRequest") {
+    it("""has a toCredentialGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
+      forAll { req: AssertionRequest =>
+        println(req)
+
+        val jsonValue = JacksonCodecs.json.readTree(req.toCredentialsGetJson)
+        jsonValue.get("publicKey") should not be null
+        JacksonCodecs.json.treeToValue(
+          jsonValue.get("publicKey"),
+          classOf[PublicKeyCredentialRequestOptions],
+        ) should equal(req.getPublicKeyCredentialRequestOptions)
+      }
     }
   }
 

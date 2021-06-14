@@ -26,7 +26,11 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.JacksonCodecs;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -139,6 +143,23 @@ public class PublicKeyCredentialCreationOptions {
     this.attestation = attestation == null ? AttestationConveyancePreference.NONE : attestation;
     this.extensions =
         extensions == null ? RegistrationExtensionInputs.builder().build() : extensions;
+  }
+
+  /**
+   * Serialize this {@link PublicKeyCredentialCreationOptions} value to JSON suitable for sending to
+   * the client and passing as an argument to <code>navigator.credentials.create()</code>, after
+   * decoding binary options from Base64Url strings.
+   *
+   * @return a JSON value suitable for sending to the client and passing as an argument to <code>
+   *     navigator.credentials.create()</code>, after decoding binary options from Base64Url
+   *     strings.
+   * @throws JsonProcessingException if JSON serialization fails.
+   */
+  public String toCredentialsCreateJson() throws JsonProcessingException {
+    ObjectMapper json = JacksonCodecs.json();
+    ObjectNode result = json.createObjectNode();
+    result.set("publicKey", json.valueToTree(this));
+    return json.writeValueAsString(result);
   }
 
   public Optional<Long> getTimeout() {

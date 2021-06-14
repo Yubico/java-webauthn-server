@@ -26,6 +26,7 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;
 import lombok.Builder;
@@ -75,6 +76,23 @@ public class AssertionRequest {
    */
   public Optional<String> getUsername() {
     return Optional.ofNullable(username);
+  }
+
+  /**
+   * Serialize this {@link AssertionRequest} value to JSON suitable for sending to the client and
+   * passing as an argument to <code>navigator.credentials.get()</code>, after decoding binary
+   * options from Base64Url strings.
+   *
+   * <p>This is an alias of <code>getPublicKeyCredentialRequestOptions().toCredentialsGetJson()
+   * </code>.
+   *
+   * @see PublicKeyCredentialRequestOptions#toCredentialsGetJson()
+   * @return a JSON value suitable for sending to the client and passing as an argument to <code>
+   *     navigator.credentials.get()</code>, after decoding binary options from Base64Url strings.
+   * @throws JsonProcessingException if JSON serialization fails.
+   */
+  public String toCredentialsGetJson() throws JsonProcessingException {
+    return publicKeyCredentialRequestOptions.toCredentialsGetJson();
   }
 
   public static AssertionRequestBuilder.MandatoryStages builder() {

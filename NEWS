@@ -32,6 +32,10 @@ New features:
     sets both the `requireResidentKey` and `residentKey` options simultaneously
     and in agreement with each other for backwards compatibility with older
     browsers.
+* Added methods `PublicKeyCredentialCreationOptions.toCredentialCreateJson()`,
+  `PublicKeyCredentialRequestOptions.toCredentialGetJson()` and
+  `AssertionRequest.toCredentialGetJson()` for serializing to JSON without
+  having to use Jackson directly.
 
 Fixes:
 
