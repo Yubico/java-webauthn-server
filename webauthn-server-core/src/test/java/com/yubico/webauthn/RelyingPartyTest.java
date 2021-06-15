@@ -8,9 +8,13 @@ import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -18,9 +22,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class RelyingPartyTest {
+
+  private List<Provider> providersBefore;
+
+  @Before
+  public void setUp() {
+    providersBefore = Stream.of(Security.getProviders()).collect(Collectors.toList());
+  }
+
+  @After
+  public void tearDown() {
+    for (Provider prov : Security.getProviders()) {
+      Security.removeProvider(prov.getName());
+    }
+    providersBefore.forEach(Security::addProvider);
+  }
 
   @Test(expected = NullPointerException.class)
   public void itHasTheseBuilderMethods() throws InvalidAppIdException {
@@ -56,35 +79,7 @@ public class RelyingPartyTest {
     RelyingParty rp =
         RelyingParty.builder()
             .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
-            .credentialRepository(
-                new CredentialRepository() {
-                  @Override
-                  public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(
-                      String username) {
-                    return null;
-                  }
-
-                  @Override
-                  public Optional<ByteArray> getUserHandleForUsername(String username) {
-                    return Optional.empty();
-                  }
-
-                  @Override
-                  public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
-                    return Optional.empty();
-                  }
-
-                  @Override
-                  public Optional<RegisteredCredential> lookup(
-                      ByteArray credentialId, ByteArray userHandle) {
-                    return Optional.empty();
-                  }
-
-                  @Override
-                  public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
-                    return null;
-                  }
-                })
+            .credentialRepository(unimplementedCredentialRepository())
             .origins(origins)
             .build();
 
@@ -99,5 +94,61 @@ public class RelyingPartyTest {
     } catch (UnsupportedOperationException e) {
       assertEquals(0, rp.getOrigins().size());
     }
+  }
+
+  @Test(expected = NoSuchAlgorithmException.class)
+  public void defaultSettingsThrowIfSomeAlgorithmNotAvailable() {
+    for (Provider prov : Security.getProviders()) {
+      if (prov.getName().contains("EC")) {
+        Security.removeProvider(prov.getName());
+      }
+    }
+    RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+        .credentialRepository(unimplementedCredentialRepository())
+        .build();
+  }
+
+  @Test(expected = NoSuchAlgorithmException.class)
+  public void throwsIfAlgorithmNotAvailable() {
+    for (Provider prov : Security.getProviders()) {
+      if (prov.getName().contains("EC")) {
+        Security.removeProvider(prov.getName());
+      }
+    }
+    RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+        .credentialRepository(unimplementedCredentialRepository())
+        .preferredPubkeyParams(Collections.singletonList(PublicKeyCredentialParameters.ES256))
+        .build();
+  }
+
+  private static CredentialRepository unimplementedCredentialRepository() {
+    return new CredentialRepository() {
+      @Override
+      public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
+        return null;
+      }
+
+      @Override
+      public Optional<ByteArray> getUserHandleForUsername(String username) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle) {
+        return Optional.empty();
+      }
+
+      @Override
+      public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
+        return null;
+      }
+    };
   }
 }
