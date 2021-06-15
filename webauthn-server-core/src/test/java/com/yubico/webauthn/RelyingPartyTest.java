@@ -45,7 +45,6 @@ public class RelyingPartyTest {
         .metadataService(metadataService)
         .metadataService(Optional.of(metadataService))
         .preferredPubkeyParams(Collections.emptyList())
-        .allowUnrequestedExtensions(true)
         .allowUntrustedAttestation(true)
         .validateSignatureCounter(true);
   }

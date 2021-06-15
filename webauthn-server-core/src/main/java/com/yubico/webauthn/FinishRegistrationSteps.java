@@ -355,21 +355,7 @@ final class FinishRegistrationSteps {
     private final List<String> prevWarnings;
 
     @Override
-    public void validate() {
-      if (!allowUnrequestedExtensions) {
-        ExtensionsValidation.validate(request.getExtensions(), response);
-      }
-    }
-
-    @Override
-    public List<String> getWarnings() {
-      try {
-        ExtensionsValidation.validate(request.getExtensions(), response);
-        return Collections.emptyList();
-      } catch (Exception e) {
-        return Collections.singletonList(e.getMessage());
-      }
-    }
+    public void validate() {}
 
     @Override
     public Step13 nextStep() {

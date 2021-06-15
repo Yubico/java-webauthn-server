@@ -1,3 +1,11 @@
+== Version 2.0.0 (unreleased) ==
+
+Breaking changes:
+
+* `RelyingParty` parameter `allowUnrequestedExtensions` removed. The library
+  will now always accept unrequested extensions.
+
+
 == Version 1.12.4 (unreleased) ==
 
 Deprecated features:

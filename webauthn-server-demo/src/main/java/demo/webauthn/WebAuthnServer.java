@@ -164,7 +164,6 @@ public class WebAuthnServer {
             .metadataService(Optional.of(metadataService))
             .allowOriginPort(false)
             .allowOriginSubdomain(false)
-            .allowUnrequestedExtensions(true)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
             .appId(appId)

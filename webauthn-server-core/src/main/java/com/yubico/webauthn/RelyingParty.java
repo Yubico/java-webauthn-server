@@ -311,23 +311,6 @@ public class RelyingParty {
   @Builder.Default private final boolean allowOriginSubdomain = false;
 
   /**
-   * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration}
-   * and {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will accept responses
-   * containing extension outputs for which there was no extension input.
-   *
-   * <p>The default is <code>false</code>.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
-   *     Extensions</a>
-   * @deprecated The <code>false</code> setting (default) is not compatible with WebAuthn Level 2
-   *     since authenticators are now always allowed to add unsolicited extensions. The next major
-   *     version release will remove this option and always behave as if the option had been set to
-   *     <code>
-   *     true</code>.
-   */
-  @Deprecated @Builder.Default private final boolean allowUnrequestedExtensions = false;
-
-  /**
    * If <code>false</code>, {@link #finishRegistration(FinishRegistrationOptions)
    * finishRegistration} will only allow registrations where the attestation signature can be linked
    * to a trusted attestation root. This excludes self attestation and none attestation.
@@ -360,7 +343,6 @@ public class RelyingParty {
       List<PublicKeyCredentialParameters> preferredPubkeyParams,
       boolean allowOriginPort,
       boolean allowOriginSubdomain,
-      boolean allowUnrequestedExtensions,
       boolean allowUntrustedAttestation,
       boolean validateSignatureCounter) {
     this.identity = identity;
@@ -386,7 +368,6 @@ public class RelyingParty {
     this.preferredPubkeyParams = preferredPubkeyParams;
     this.allowOriginPort = allowOriginPort;
     this.allowOriginSubdomain = allowOriginSubdomain;
-    this.allowUnrequestedExtensions = allowUnrequestedExtensions;
     this.allowUntrustedAttestation = allowUntrustedAttestation;
     this.validateSignatureCounter = validateSignatureCounter;
   }
@@ -456,7 +437,6 @@ public class RelyingParty {
         .rpId(identity.getId())
         .allowOriginPort(allowOriginPort)
         .allowOriginSubdomain(allowOriginSubdomain)
-        .allowUnrequestedExtensions(allowUnrequestedExtensions)
         .allowUntrustedAttestation(allowUntrustedAttestation)
         .metadataService(metadataService)
         .build();
@@ -533,7 +513,6 @@ public class RelyingParty {
         .credentialRepository(credentialRepository)
         .allowOriginPort(allowOriginPort)
         .allowOriginSubdomain(allowOriginSubdomain)
-        .allowUnrequestedExtensions(allowUnrequestedExtensions)
         .validateSignatureCounter(validateSignatureCounter)
         .build();
   }

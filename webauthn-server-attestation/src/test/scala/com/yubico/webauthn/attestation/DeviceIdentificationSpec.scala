@@ -73,7 +73,6 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           .identity(testData.rp)
           .credentialRepository(Helpers.CredentialRepository.empty)
           .metadataService(new StandardMetadataService())
-          .allowUnrequestedExtensions(true)
           .build()
 
         val result = rp.finishRegistration(

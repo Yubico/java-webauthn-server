@@ -494,23 +494,7 @@ final class FinishAssertionSteps {
     private final List<String> prevWarnings;
 
     @Override
-    public void validate() {
-      if (!allowUnrequestedExtensions) {
-        ExtensionsValidation.validate(
-            request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
-      }
-    }
-
-    @Override
-    public List<String> getWarnings() {
-      try {
-        ExtensionsValidation.validate(
-            request.getPublicKeyCredentialRequestOptions().getExtensions(), response);
-        return Collections.emptyList();
-      } catch (Exception e) {
-        return CollectionUtil.immutableList(Collections.singletonList(e.getMessage()));
-      }
-    }
+    public void validate() {}
 
     @Override
     public Step15 nextStep() {
