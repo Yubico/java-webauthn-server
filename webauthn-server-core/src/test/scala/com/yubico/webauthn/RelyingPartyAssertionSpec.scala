@@ -35,6 +35,7 @@ import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
@@ -44,6 +45,7 @@ import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.ReexportHelpers
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -55,6 +57,7 @@ import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -422,8 +425,100 @@ class RelyingPartyAssertionSpec
 
       describe("§7.2. Verifying an authentication assertion: When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
 
-        describe("1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.") {
-          it("Fails if returned credential ID is a requested one.") {
+        describe("1. Let options be a new PublicKeyCredentialRequestOptions structure configured to the Relying Party's needs for the ceremony.") {
+          it("If options.allowCredentials is present, the transports member of each item SHOULD be set to the value returned by credential.response.getTransports() when the corresponding credential was registered.") {
+            forAll(
+              Gen.nonEmptyContainerOf[Set, AuthenticatorTransport](
+                arbitrary[AuthenticatorTransport]
+              ),
+              arbitrary[PublicKeyCredentialDescriptor],
+              arbitrary[PublicKeyCredentialDescriptor],
+              arbitrary[PublicKeyCredentialDescriptor],
+            ) {
+              (
+                  cred1Transports: Set[AuthenticatorTransport],
+                  cred1: PublicKeyCredentialDescriptor,
+                  cred2: PublicKeyCredentialDescriptor,
+                  cred3: PublicKeyCredentialDescriptor,
+              ) =>
+                val rp = RelyingParty
+                  .builder()
+                  .identity(Defaults.rpId)
+                  .credentialRepository(new CredentialRepository {
+                    override def getCredentialIdsForUsername(
+                        username: String
+                    ): java.util.Set[PublicKeyCredentialDescriptor] =
+                      Set(
+                        cred1.toBuilder
+                          .transports(cred1Transports.asJava)
+                          .build(),
+                        cred2.toBuilder
+                          .transports(
+                            Optional.of(
+                              Set.empty[AuthenticatorTransport].asJava
+                            )
+                          )
+                          .build(),
+                        cred3.toBuilder
+                          .transports(
+                            Optional
+                              .empty[java.util.Set[AuthenticatorTransport]]
+                          )
+                          .build(),
+                      ).asJava
+                    override def getUserHandleForUsername(
+                        username: String
+                    ): Optional[ByteArray] = ???
+                    override def getUsernameForUserHandle(
+                        userHandleBase64: ByteArray
+                    ): Optional[String] = ???
+                    override def lookup(
+                        credentialId: ByteArray,
+                        userHandle: ByteArray,
+                    ): Optional[RegisteredCredential] = ???
+                    override def lookupAll(
+                        credentialId: ByteArray
+                    ): java.util.Set[RegisteredCredential] = ???
+                  })
+                  .preferredPubkeyParams(
+                    List(PublicKeyCredentialParameters.ES256).asJava
+                  )
+                  .build()
+
+                val result = rp.startAssertion(
+                  StartAssertionOptions
+                    .builder()
+                    .username(Defaults.username)
+                    .build()
+                )
+
+                val requestCreds =
+                  result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
+                requestCreds.head.getTransports.asScala should equal(
+                  Some(cred1Transports.asJava)
+                )
+                requestCreds(1).getTransports.asScala should equal(
+                  Some(Set.empty.asJava)
+                )
+                requestCreds(2).getTransports.asScala should equal(None)
+            }
+          }
+        }
+
+        describe("2. Call navigator.credentials.get() and pass options as the publicKey option. Let credential be the result of the successfully resolved promise. If the promise is rejected, abort the ceremony with a user-visible error, or otherwise guide the user experience as might be determinable from the context available in the rejected promise. For information on different error contexts and the circumstances leading to them, see § 6.3.3 The authenticatorGetAssertion Operation.") {
+          it("Nothing to test: applicable only to client side.") {}
+        }
+
+        describe("3. Let response be credential.response. If response is not an instance of AuthenticatorAssertionResponse, abort the ceremony with a user-visible error.") {
+          it("Nothing to test.") {}
+        }
+
+        describe("4. Let clientExtensionResults be the result of calling credential.getClientExtensionResults().") {
+          it("Nothing to test.") {}
+        }
+
+        describe("5. If options.allowCredentials is not empty, verify that credential.id identifies one of the public key credentials listed in options.allowCredentials.") {
+          it("Fails if returned credential ID is not a requested one.") {
             val steps = finishAssertion(
               allowCredentials = Some(
                 List(
@@ -464,7 +559,7 @@ class RelyingPartyAssertionSpec
             step.tryNext shouldBe a[Success[_]]
           }
 
-          it("Succeeds if returned no credential IDs were requested.") {
+          it("Succeeds if no credential IDs were requested.") {
             val steps = finishAssertion(
               allowCredentials = None,
               credentialId = new ByteArray(Array(0, 1, 2, 3)),
@@ -476,7 +571,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("2. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id:") {
+        describe("6. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id:") {
           object owner {
             val username = "owner"
             val userHandle = new ByteArray(Array(4, 5, 6, 7))
@@ -515,7 +610,7 @@ class RelyingPartyAssertionSpec
               ).asJava
           })
 
-          describe("If the user was identified before the authentication ceremony was initiated, verify that the identified user is the owner of credentialSource. If credential.response.userHandle is present, verify that this value identifies the same user as was previously identified.") {
+          describe("If the user was identified before the authentication ceremony was initiated, e.g., via a username or cookie, verify that the identified user is the owner of credentialSource. If response.userHandle is present, let userHandle be its value. Verify that userHandle also maps to the same user.") {
             it(
               "Fails if credential ID is not owned by the given user handle."
             ) {
@@ -546,7 +641,7 @@ class RelyingPartyAssertionSpec
             }
           }
 
-          describe("If the user was not identified before the authentication ceremony was initiated, verify that credential.response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
+          describe("If the user was not identified before the authentication ceremony was initiated, verify that response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
             it(
               "Fails if credential ID is not owned by the given user handle."
             ) {
@@ -578,7 +673,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("3. Using credential’s id attribute (or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.") {
+        describe("7. Using credential.id (or credential.rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key and let credentialPublicKey be that credential public key.") {
           it("Fails if the credential ID is unknown.") {
             val steps = finishAssertion(
               credentialRepository = Some(Helpers.CredentialRepository.empty)
@@ -617,7 +712,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("4. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.") {
+        describe("8. Let cData, authData and sig denote the value of response’s clientDataJSON, authenticatorData, and signature respectively.") {
           it("Succeeds if all three are present.") {
             val steps = finishAssertion()
             val step: FinishAssertionSteps#Step4 =
@@ -649,11 +744,11 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("5. Let JSONtext be the result of running UTF-8 decode on the value of cData.") {
+        describe("9. Let JSONtext be the result of running UTF-8 decode on the value of cData.") {
           it("Nothing to test.") {}
         }
 
-        describe("6. Let C, the client data claimed as used for the signature, be the result of running an implementation-specific JSON parser on JSONtext.") {
+        describe("10. Let C, the client data claimed as used for the signature, be the result of running an implementation-specific JSON parser on JSONtext.") {
           it("Fails if cData is not valid JSON.") {
             an[IOException] should be thrownBy new CollectedClientData(
               new ByteArray("{".getBytes(Charset.forName("UTF-8")))
@@ -681,7 +776,7 @@ class RelyingPartyAssertionSpec
         }
 
         describe(
-          "7. Verify that the value of C.type is the string webauthn.get."
+          "11. Verify that the value of C.type is the string webauthn.get."
         ) {
           it("The default test case succeeds.") {
             val steps = finishAssertion()
@@ -721,7 +816,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        it("8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.") {
+        it("12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.") {
           val steps =
             finishAssertion(challenge = new ByteArray(Array.fill(16)(0)))
           val step: FinishAssertionSteps#Step8 =
@@ -732,7 +827,7 @@ class RelyingPartyAssertionSpec
           step.tryNext shouldBe a[Failure[_]]
         }
 
-        describe("9. Verify that the value of C.origin matches the Relying Party's origin.") {
+        describe("13. Verify that the value of C.origin matches the Relying Party's origin.") {
           def checkAccepted(
               origin: String,
               origins: Option[Set[String]] = None,
@@ -947,7 +1042,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.") {
+        describe("14. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.") {
           it("Verification succeeds if neither side uses token binding ID.") {
             val steps = finishAssertion()
             val step: FinishAssertionSteps#Step10 =
@@ -1105,7 +1200,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("11. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+        describe("15. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
           it("Fails if RP ID is different.") {
             val steps = finishAssertion(
               rpId = Defaults.rpId.toBuilder.id("root.evil").build(),
@@ -1214,7 +1309,7 @@ class RelyingPartyAssertionSpec
             (checkFailsWith(stepsToStep), checkSucceedsWith(stepsToStep))
           }
 
-          describe("12. Verify that the User Present bit of the flags in authData is set.") {
+          describe("16. Verify that the User Present bit of the flags in authData is set.") {
             val flagOn: ByteArray = new ByteArray(
               Defaults.authenticatorData.getBytes.toVector
                 .updated(
@@ -1263,7 +1358,7 @@ class RelyingPartyAssertionSpec
             }
           }
 
-          describe("13. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.") {
+          describe("17. If user verification is required for this assertion, verify that the User Verified bit of the flags in authData is set.") {
             val flagOn: ByteArray = new ByteArray(
               Defaults.authenticatorData.getBytes.toVector
                 .updated(
@@ -1313,144 +1408,89 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("14. Verify that the values of the") {
+        describe("18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
+          it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+            forAll(Extensions.unrequestedClientAssertionExtensions) {
+              case (extensionInputs, clientExtensionOutputs, _) =>
+                val steps = finishAssertion(
+                  requestedExtensions = extensionInputs,
+                  clientExtensionResults = clientExtensionOutputs,
+                )
+                val step: FinishAssertionSteps#Step14 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-          describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-            it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-
-              forAll(Extensions.unrequestedClientAssertionExtensions) {
-                case (extensionInputs, clientExtensionOutputs, _) =>
-                  val steps = finishAssertion(
-                    requestedExtensions = extensionInputs,
-                    clientExtensionResults = clientExtensionOutputs,
-                  )
-                  val step: FinishAssertionSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                  step.validations shouldBe a[Failure[_]]
-                  step.validations.failed.get shouldBe an[
-                    IllegalArgumentException
-                  ]
-                  step.tryNext shouldBe a[Failure[_]]
-              }
-            }
-
-            it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
-              forAll(Extensions.unrequestedClientAssertionExtensions) {
-                case (extensionInputs, clientExtensionOutputs, _) =>
-                  val steps = finishAssertion(
-                    allowUnrequestedExtensions = true,
-                    requestedExtensions = extensionInputs,
-                    clientExtensionResults = clientExtensionOutputs,
-                  )
-                  val step: FinishAssertionSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                  step.validations shouldBe a[Success[_]]
-                  step.tryNext shouldBe a[Success[_]]
-              }
-            }
-
-            it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
-              forAll(Extensions.subsetAssertionExtensions) {
-                case (extensionInputs, clientExtensionOutputs, _) =>
-                  val steps = finishAssertion(
-                    requestedExtensions = extensionInputs,
-                    clientExtensionResults = clientExtensionOutputs,
-                  )
-                  val step: FinishAssertionSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                  step.validations shouldBe a[Success[_]]
-                  step.tryNext shouldBe a[Success[_]]
-              }
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
             }
           }
 
-          describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-            it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
-              forAll(Extensions.unrequestedAuthenticatorAssertionExtensions) {
-                case (
-                      extensionInputs: AssertionExtensionInputs,
-                      _,
-                      authenticatorExtensionOutputs: CBORObject,
-                    ) =>
-                  val steps = finishAssertion(
-                    requestedExtensions = extensionInputs,
-                    authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                      extensionsCborBytes = Some(
-                        new ByteArray(
-                          authenticatorExtensionOutputs.EncodeToBytes()
-                        )
-                      )
-                    ),
-                  )
-                  val step: FinishAssertionSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+          it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
+            forAll(Extensions.subsetAssertionExtensions) {
+              case (extensionInputs, clientExtensionOutputs, _) =>
+                val steps = finishAssertion(
+                  requestedExtensions = extensionInputs,
+                  clientExtensionResults = clientExtensionOutputs,
+                )
+                val step: FinishAssertionSteps#Step14 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-                  step.validations shouldBe a[Failure[_]]
-                  step.validations.failed.get shouldBe an[
-                    IllegalArgumentException
-                  ]
-                  step.tryNext shouldBe a[Failure[_]]
-              }
-            }
-
-            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
-              forAll(Extensions.unrequestedAuthenticatorAssertionExtensions) {
-                case (
-                      extensionInputs: AssertionExtensionInputs,
-                      _,
-                      authenticatorExtensionOutputs: CBORObject,
-                    ) =>
-                  val steps = finishAssertion(
-                    allowUnrequestedExtensions = true,
-                    requestedExtensions = extensionInputs,
-                    authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                      extensionsCborBytes = Some(
-                        new ByteArray(
-                          authenticatorExtensionOutputs.EncodeToBytes()
-                        )
-                      )
-                    ),
-                  )
-                  val step: FinishAssertionSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                  step.validations shouldBe a[Success[_]]
-                  step.tryNext shouldBe a[Success[_]]
-              }
-            }
-
-            it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
-              forAll(Extensions.subsetAssertionExtensions) {
-                case (
-                      extensionInputs: AssertionExtensionInputs,
-                      _,
-                      authenticatorExtensionOutputs: CBORObject,
-                    ) =>
-                  val steps = finishAssertion(
-                    requestedExtensions = extensionInputs,
-                    authenticatorData = TestAuthenticator.makeAuthDataBytes(
-                      extensionsCborBytes = Some(
-                        new ByteArray(
-                          authenticatorExtensionOutputs.EncodeToBytes()
-                        )
-                      )
-                    ),
-                  )
-                  val step: FinishAssertionSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                  step.validations shouldBe a[Success[_]]
-                  step.tryNext shouldBe a[Success[_]]
-              }
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
             }
           }
 
+          it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
+            forAll(Extensions.unrequestedAuthenticatorAssertionExtensions) {
+              case (
+                    extensionInputs: AssertionExtensionInputs,
+                    _,
+                    authenticatorExtensionOutputs: CBORObject,
+                  ) =>
+                val steps = finishAssertion(
+                  requestedExtensions = extensionInputs,
+                  authenticatorData = TestAuthenticator.makeAuthDataBytes(
+                    extensionsCborBytes = Some(
+                      new ByteArray(
+                        authenticatorExtensionOutputs.EncodeToBytes()
+                      )
+                    )
+                  ),
+                )
+                val step: FinishAssertionSteps#Step14 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+            }
+          }
+
+          it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
+            forAll(Extensions.subsetAssertionExtensions) {
+              case (
+                    extensionInputs: AssertionExtensionInputs,
+                    _,
+                    authenticatorExtensionOutputs: CBORObject,
+                  ) =>
+                val steps = finishAssertion(
+                  requestedExtensions = extensionInputs,
+                  authenticatorData = TestAuthenticator.makeAuthDataBytes(
+                    extensionsCborBytes = Some(
+                      new ByteArray(
+                        authenticatorExtensionOutputs.EncodeToBytes()
+                      )
+                    )
+                  ),
+                )
+                val step: FinishAssertionSteps#Step14 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+            }
+          }
         }
 
-        it("15. Let hash be the result of computing a hash over the cData using SHA-256.") {
+        it("19. Let hash be the result of computing a hash over the cData using SHA-256.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Step15 =
             steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1466,7 +1506,7 @@ class RelyingPartyAssertionSpec
           )
         }
 
-        describe("16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of authData and hash.") {
+        describe("20. Using credentialPublicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.") {
           it("The default test case succeeds.") {
             val steps = finishAssertion()
             val step: FinishAssertionSteps#Step16 =
@@ -1550,8 +1590,8 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        describe("17. If the signature counter value authData.signCount is nonzero or the value stored in conjunction with credential’s id attribute is nonzero, then run the following sub-step:") {
-          describe("If the signature counter value authData.signCount is") {
+        describe("21. Let storedSignCount be the stored signature counter value associated with credential.id. If authData.signCount is nonzero or storedSignCount is nonzero, then run the following sub-step:") {
+          describe("If authData.signCount is") {
             def credentialRepository(signatureCount: Long) =
               Helpers.CredentialRepository.withUser(
                 Defaults.user,
@@ -1616,10 +1656,12 @@ class RelyingPartyAssertionSpec
               }
             }
 
-            describe("greater than the signature counter value stored in conjunction with credential’s id attribute.") {
+            describe("greater than storedSignCount:") {
               val cr = credentialRepository(1336)
 
-              describe("Update the stored signature counter value, associated with credential’s id attribute, to be the value of authData.signCount.") {
+              describe(
+                "Update storedSignCount to be the value of authData.signCount."
+              ) {
                 it("An increasing signature counter always succeeds.") {
                   val steps = finishAssertion(
                     credentialRepository = Some(cr),
@@ -1636,10 +1678,10 @@ class RelyingPartyAssertionSpec
               }
             }
 
-            describe("less than or equal to the signature counter value stored in conjunction with credential’s id attribute.") {
+            describe("less than or equal to storedSignCount:") {
               val cr = credentialRepository(1337)
 
-              describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates the stored signature counter value in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
+              describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates storedSignCount in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
                 it("If signature counter validation is disabled, a nonincreasing signature counter succeeds.") {
                   val steps = finishAssertion(
                     credentialRepository = Some(cr),
@@ -1686,7 +1728,7 @@ class RelyingPartyAssertionSpec
           }
         }
 
-        it("18. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
+        it("22. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Finished =
             steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1698,9 +1740,7 @@ class RelyingPartyAssertionSpec
           step.result.get.getCredentialId should equal(Defaults.credentialId)
           step.result.get.getUserHandle should equal(Defaults.userHandle)
         }
-
       }
-
     }
 
     describe("RelyingParty supports authenticating") {
