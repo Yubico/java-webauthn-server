@@ -24,9 +24,7 @@
 
 package com.yubico.webauthn
 
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
@@ -59,20 +57,17 @@ class RelyingPartyCeremoniesSpec
     val registrationRp =
       modRp(newRp(testData, Helpers.CredentialRepository.empty))
 
+    val registrationRequest = registrationRp
+      .startRegistration(
+        StartRegistrationOptions.builder().user(testData.user).build()
+      )
+      .toBuilder
+      .challenge(testData.attestation.challenge)
+      .build()
     val registrationResult = registrationRp.finishRegistration(
       FinishRegistrationOptions
         .builder()
-        .request(
-          PublicKeyCredentialCreationOptions
-            .builder()
-            .rp(testData.rp)
-            .user(testData.user)
-            .challenge(testData.attestation.challenge)
-            .pubKeyCredParams(
-              List(PublicKeyCredentialParameters.ES256).asJava
-            )
-            .build()
-        )
+        .request(registrationRequest)
         .response(testData.attestation.credential)
         .build()
     );
