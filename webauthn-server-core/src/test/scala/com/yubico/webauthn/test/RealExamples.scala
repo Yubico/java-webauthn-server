@@ -486,4 +486,33 @@ object RealExamples {
     ),
   )
 
+  val YubikeyBio_5_5_4 = Example(
+    RelyingPartyIdentity
+      .builder()
+      .id("demo.yubico.com")
+      .name("YubicoDemo")
+      .build(),
+    UserIdentity
+      .builder()
+      .name("Yubico demo user")
+      .displayName("Yubico demo user")
+      .id(ByteArray.fromBase64("n5iF3+LH/w9yfgIgEWdFL99YAD8PMpG41PEPzzV1RSc="))
+      .build(),
+    AttestationExample(
+      base64ToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoicnJIQmg3Q01yZElYTE0zMFBkOFZ1Ulg3TV9xVXl5VEpCWDRUN2xONUVRRSIsIm9yaWdpbiI6Imh0dHBzOi8vZGVtby55dWJpY28uY29tIiwiY3Jvc3NPcmlnaW4iOmZhbHNlfQ=="),
+      ByteArray.fromBase64("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEYwRAIgGSqwfT67zXQVsgBU/TvN1MGbZkR5KEyzzMMbS9cJQJsCIDZJ90wxLjNnpzNZ+Ns64cmgwixb0CJcXdfVM35EBgm0Y3g1Y4FZAt0wggLZMIIBwaADAgECAgkAtcaOPpfL6PYwDQYJKoZIhvcNAQELBQAwLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwIBcNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBaMG8xCzAJBgNVBAYTAlNFMRIwEAYDVQQKDAlZdWJpY28gQUIxIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0ZXN0YXRpb24xKDAmBgNVBAMMH1l1YmljbyBVMkYgRUUgU2VyaWFsIDEwNDk1NDQzNzMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQXmY7aJqXBb5wsBbCAeJFdFa3Fzz8VU1qdJxUCgPf2MNcoMnikaKg0yp/bakKjCNIqmsb75RhUzS5UQHwVOAe0o4GBMH8wEwYKKwYBBAGCxAoNAQQFBAMFBQQwIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjkwEwYLKwYBBAGC5RwCAQEEBAMCBSAwIQYLKwYBBAGC5RwBAQQEEgQQ2FItn1dbSGaIqbqZ+gLzWzAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQB9yNliBCNlTGBrhYTTqHJm73KjMszL24buZcvifix+GRYk7D8I0/BQ20mQ/CITqqGTr5cvxjIKVw/2ed+326hITlhaWiwwEnwuI5afqwd72ObWczklHNvoV+uWtM9YVfk9H7VZqtQTMb3m8O+UWmkCGxLdqTprgTUSF/Tmk6KPyF1S6es6RJvk9vxyJ0T/EFkr9yAPlDzqtc9hEAUEPP5xpzEWRYon6T12AUW6wQwlkiA8q4gFIQfTGks1JX6ob/1nTvigO3EYB4wP3EIAJ+0HkpprKKDl4mRv/7b/BPuANq4jMr/9YkYs8XrmuUHdF0PwRzYPN4KtovuG0YdFA0ObaGF1dGhEYXRhWMTEbO+CrRtUZHdZHQCLCHWew+bS7LTzlHS/6mlpkl0Dt0UAAAAB2FItn1dbSGaIqbqZ+gLzWwBAvPVBBCgvthNO8DNbim45zueAndDzuMAQDBXL/bVsH9uXfKkrza7ya2DM/xka1hYW+K2d97qNRJmoAeetc5haaKUBAgMmIAEhWCDqr+a3QuoQk4VqspgOfHlkS2Rk+NpsHL5Rs4rbxE2DQiJYICjaw5BRuZKz5CPZRjiDJFOq51wbOrUggICGmC88+ZXq"),
+    ),
+    AssertionExample(
+      id =
+        ByteArray.fromBase64Url("vPVBBCgvthNO8DNbim45zueAndDzuMAQDBXL_bVsH9uXfKkrza7ya2DM_xka1hYW-K2d97qNRJmoAeetc5haaA"),
+      clientData =
+        base64ToString("eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiOVVHcG1JOXdkM004dF9yUGFZMVRyWXd1LVVranRUdHV1N2RGcHlyNGtDOCIsIm9yaWdpbiI6Imh0dHBzOi8vZGVtby55dWJpY28uY29tIiwiY3Jvc3NPcmlnaW4iOmZhbHNlfQ=="),
+      authDataBytes = ByteArray.fromBase64(
+        "xGzvgq0bVGR3WR0Aiwh1nsPm0uy085R0v+ppaZJdA7cFAAAABA=="
+      ),
+      sig =
+        ByteArray.fromBase64("MEUCIGM9xK+AHlLTv3mJLagZuNlLijI86T2SzkyAy3NidembAiEA6Y3I5GPYnRoHKil4R8yCSHUFZdgc59GO1KfsoHYhA3o="),
+    ),
+  )
+
 }
