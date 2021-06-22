@@ -75,7 +75,7 @@ In addition to the main `webauthn-server-core` module, there are also:
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
   and annotate responses with additional authenticator metadata
 - Reproducible builds: release signatures match fresh builds from source. See
-  [Building](#Building) below.
+  link:#Building[Building] below.
 
 
 === Non-features
