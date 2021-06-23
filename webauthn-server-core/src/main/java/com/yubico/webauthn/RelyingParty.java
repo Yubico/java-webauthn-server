@@ -50,13 +50,17 @@ import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.Signature;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -333,6 +337,7 @@ public class RelyingParty {
    */
   @Builder.Default private final boolean validateSignatureCounter = true;
 
+  @Builder
   private RelyingParty(
       @NonNull RelyingPartyIdentity identity,
       Set<String> origins,
@@ -365,7 +370,7 @@ public class RelyingParty {
     this.appId = appId;
     this.attestationConveyancePreference = attestationConveyancePreference;
     this.metadataService = metadataService;
-    this.preferredPubkeyParams = preferredPubkeyParams;
+    this.preferredPubkeyParams = filterAvailableAlgorithms(preferredPubkeyParams);
     this.allowOriginPort = allowOriginPort;
     this.allowOriginSubdomain = allowOriginSubdomain;
     this.allowUntrustedAttestation = allowUntrustedAttestation;
@@ -376,6 +381,66 @@ public class RelyingParty {
     byte[] bytes = new byte[32];
     random.nextBytes(bytes);
     return new ByteArray(bytes);
+  }
+
+  /**
+   * Filter <code>pubKeyCredParams</code> to only contain algorithms with a {@link KeyFactory} and a
+   * {@link Signature} available, and log a warning for every unsupported algorithm.
+   *
+   * @return a new {@link List} containing only the algorithms supported in the current JCA context.
+   */
+  private static List<PublicKeyCredentialParameters> filterAvailableAlgorithms(
+      List<PublicKeyCredentialParameters> pubKeyCredParams) {
+    return Collections.unmodifiableList(
+        pubKeyCredParams.stream()
+            .filter(
+                param -> {
+                  try {
+                    switch (param.getAlg()) {
+                      case EdDSA:
+                        KeyFactory.getInstance("EdDSA");
+                        break;
+
+                      case ES256:
+                        KeyFactory.getInstance("EC");
+                        break;
+
+                      case RS256:
+                      case RS1:
+                        KeyFactory.getInstance("RSA");
+                        break;
+
+                      default:
+                        log.warn(
+                            "Unknown algorithm: {}. Please file a bug report.", param.getAlg());
+                    }
+                  } catch (NoSuchAlgorithmException e) {
+                    log.warn(
+                        "Unsupported algorithm in RelyingParty.preferredPubkeyParams: {}. No KeyFactory available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
+                        param.getAlg());
+                    return false;
+                  }
+
+                  final String signatureAlgName;
+                  try {
+                    signatureAlgName = WebAuthnCodecs.getJavaAlgorithmName(param.getAlg());
+                  } catch (IllegalArgumentException e) {
+                    log.warn("Unknown algorithm: {}. Please file a bug report.", param.getAlg());
+                    return false;
+                  }
+
+                  try {
+                    Signature.getInstance(signatureAlgName);
+                  } catch (NoSuchAlgorithmException e) {
+                    log.warn(
+                        "Unsupported algorithm in RelyingParty.preferredPubkeyParams: {}. No Signature available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
+                        param.getAlg());
+                    return false;
+                  }
+
+                  return true;
+                })
+            .collect(Collectors.toList()));
   }
 
   public PublicKeyCredentialCreationOptions startRegistration(

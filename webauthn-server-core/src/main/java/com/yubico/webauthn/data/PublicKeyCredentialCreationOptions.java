@@ -33,13 +33,19 @@ import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.webauthn.FinishRegistrationOptions;
 import com.yubico.webauthn.RelyingParty;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Parameters for a call to <code>navigator.credentials.create()</code>.
@@ -48,6 +54,7 @@ import lombok.Value;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialcreationoptions">§5.4.
  *     Options for Credential Creation (dictionary PublicKeyCredentialCreationOptions)</a>
  */
+@Slf4j
 @Value
 @Builder(toBuilder = true)
 public class PublicKeyCredentialCreationOptions {
@@ -120,6 +127,7 @@ public class PublicKeyCredentialCreationOptions {
    */
   @NonNull private final RegistrationExtensionInputs extensions;
 
+  @Builder
   @JsonCreator
   private PublicKeyCredentialCreationOptions(
       @NonNull @JsonProperty("rp") RelyingPartyIdentity rp,
@@ -135,7 +143,7 @@ public class PublicKeyCredentialCreationOptions {
     this.rp = rp;
     this.user = user;
     this.challenge = challenge;
-    this.pubKeyCredParams = CollectionUtil.immutableList(pubKeyCredParams);
+    this.pubKeyCredParams = filterAvailableAlgorithms(pubKeyCredParams);
     this.timeout = timeout;
     this.excludeCredentials =
         excludeCredentials == null
@@ -350,5 +358,74 @@ public class PublicKeyCredentialCreationOptions {
       this.authenticatorSelection = authenticatorSelection;
       return this;
     }
+  }
+
+  /*
+   * Essentially a copy of RelyingParty.filterAvailableAlgorithms(List) because that method and WebAuthnCodecs are not visible here.
+   */
+  private static List<PublicKeyCredentialParameters> filterAvailableAlgorithms(
+      List<PublicKeyCredentialParameters> pubKeyCredParams) {
+    return Collections.unmodifiableList(
+        pubKeyCredParams.stream()
+            .filter(
+                param -> {
+                  try {
+                    switch (param.getAlg()) {
+                      case EdDSA:
+                        KeyFactory.getInstance("EdDSA");
+                        break;
+
+                      case ES256:
+                        KeyFactory.getInstance("EC");
+                        break;
+
+                      case RS256:
+                      case RS1:
+                        KeyFactory.getInstance("RSA");
+                        break;
+
+                      default:
+                        log.warn(
+                            "Unknown algorithm: {}. Please file a bug report.", param.getAlg());
+                    }
+                  } catch (NoSuchAlgorithmException e) {
+                    log.warn(
+                        "Unsupported algorithm in PublicKeyCredentialCreationOptions.pubKeyCredParams: {}. No KeyFactory available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
+                        param.getAlg());
+                    return false;
+                  }
+
+                  try {
+                    switch (param.getAlg()) {
+                      case EdDSA:
+                        Signature.getInstance("EDDSA");
+                        break;
+
+                      case ES256:
+                        Signature.getInstance("SHA256withECDSA");
+                        break;
+
+                      case RS256:
+                        Signature.getInstance("SHA256withRSA");
+                        break;
+
+                      case RS1:
+                        Signature.getInstance("SHA1withRSA");
+                        break;
+
+                      default:
+                        log.warn(
+                            "Unknown algorithm: {}. Please file a bug report.", param.getAlg());
+                    }
+                  } catch (NoSuchAlgorithmException e) {
+                    log.warn(
+                        "Unsupported algorithm in PublicKeyCredentialCreationOptions.pubKeyCredParams: {}. No Signature available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
+                        param.getAlg());
+                    return false;
+                  }
+
+                  return true;
+                })
+            .collect(Collectors.toList()));
   }
 }
