@@ -16,8 +16,6 @@ dependencies {
     // Runtime-only internal dependency of webauthn-server-core-minimal
     testImplementation("com.augustcellars.cose:cose-java:[1.0.0,2)")
 
-    testRuntimeOnly("ch.qos.logback:logback-classic:[1.2.3,2)")
-
     // Transitive dependencies from coreTestOutput
     testImplementation("org.scala-lang:scala-library:[2.13.1,3)")
 }

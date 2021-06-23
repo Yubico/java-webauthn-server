@@ -37,11 +37,13 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
+import java.security.Security
 import java.util.Collections
 import scala.jdk.CollectionConverters._
 
@@ -59,6 +61,8 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
       )
     )
   }
+
+  Security.addProvider(new BouncyCastleProvider())
 
   describe("A RelyingParty with the default StandardMetadataService") {
 

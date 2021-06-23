@@ -74,6 +74,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.io.IOException
 import java.nio.charset.Charset
+import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
@@ -2922,17 +2923,6 @@ class RelyingPartyRegistrationSpec
       }
 
       describe("generate pubKeyCredParams which") {
-        val rp = RelyingParty
-          .builder()
-          .identity(
-            RelyingPartyIdentity
-              .builder()
-              .id("localhost")
-              .name("Test RP")
-              .build()
-          )
-          .credentialRepository(Helpers.CredentialRepository.empty)
-          .build()
         val pkcco = rp.startRegistration(
           StartRegistrationOptions
             .builder()
@@ -2959,13 +2949,50 @@ class RelyingPartyRegistrationSpec
             )
           }
 
-          it("EdDSA.") {
-            pubKeyCredParams should contain(
-              PublicKeyCredentialParameters.EdDSA
+          it("EdDSA, when available.") {
+            // The RelyingParty constructor call needs to be here inside the `it` call in order to have the right JCA provider environment
+            val rp = RelyingParty
+              .builder()
+              .identity(
+                RelyingPartyIdentity
+                  .builder()
+                  .id("localhost")
+                  .name("Test party")
+                  .build()
+              )
+              .credentialRepository(Helpers.CredentialRepository.empty)
+              .build()
+
+            val pkcco = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(
+                  UserIdentity
+                    .builder()
+                    .name("foo")
+                    .displayName("Foo")
+                    .id(ByteArray.fromHex("aabbccdd"))
+                    .build()
+                )
+                .build()
             )
-            pubKeyCredParams map (_.getAlg) should contain(
-              COSEAlgorithmIdentifier.EdDSA
-            )
+            val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+            if (Try(KeyFactory.getInstance("EdDSA")).isSuccess) {
+              pubKeyCredParams should contain(
+                PublicKeyCredentialParameters.EdDSA
+              )
+              pubKeyCredParams map (_.getAlg) should contain(
+                COSEAlgorithmIdentifier.EdDSA
+              )
+            } else {
+              pubKeyCredParams should not contain (
+                PublicKeyCredentialParameters.EdDSA
+              )
+              pubKeyCredParams map (_.getAlg) should not contain (
+                COSEAlgorithmIdentifier.EdDSA
+              )
+            }
           }
 
           it("RS256.") {
