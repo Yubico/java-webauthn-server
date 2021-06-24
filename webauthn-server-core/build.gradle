@@ -21,11 +21,6 @@ dependencies {
     project(':yubico-util'),
   )
 
-  compileOnly(
-    platform(rootProject),
-    'org.bouncycastle:bcprov-jdk15on',
-  )
-
   implementation(
     'com.augustcellars.cose:cose-java',
     'com.google.guava:guava',

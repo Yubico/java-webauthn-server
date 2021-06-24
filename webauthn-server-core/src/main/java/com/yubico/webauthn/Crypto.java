@@ -35,9 +35,6 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
@@ -46,7 +43,6 @@ import java.security.spec.ECParameterSpec;
 import java.security.spec.EllipticCurve;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 @UtilityClass
 @Slf4j
@@ -64,47 +60,6 @@ final class Crypto {
               "115792089210356248762697446949407573530086143415290314195533631308867097853948", 10),
           new BigInteger(
               "41058363725152142129326129780047268409114441015993725554835256314039467401291", 10));
-
-  /*
-   * TODO: Delete this in the next major version release
-   */
-  private static class BouncyCastleLoader {
-    private static Provider getProvider() {
-      return new BouncyCastleProvider();
-    }
-  }
-
-  /*
-   * TODO: Delete this in the next major version release
-   */
-  public static KeyFactory getKeyFactory(String algorithm) throws NoSuchAlgorithmException {
-    try {
-      return KeyFactory.getInstance(algorithm);
-    } catch (NoSuchAlgorithmException e) {
-      log.debug("Caught {}. Attempting fallback to BouncyCastle...", e.toString());
-      try {
-        return KeyFactory.getInstance(algorithm, BouncyCastleLoader.getProvider());
-      } catch (NoSuchAlgorithmException | NoClassDefFoundError e2) {
-        throw e;
-      }
-    }
-  }
-
-  /*
-   * TODO: Delete this in the next major version release
-   */
-  public static Signature getSignature(String algorithm) throws NoSuchAlgorithmException {
-    try {
-      return Signature.getInstance(algorithm);
-    } catch (NoSuchAlgorithmException e) {
-      log.debug("Caught {}. Attempting fallback to BouncyCastle...", e.toString());
-      try {
-        return Signature.getInstance(algorithm, BouncyCastleLoader.getProvider());
-      } catch (NoSuchAlgorithmException | NoClassDefFoundError e2) {
-        throw e;
-      }
-    }
-  }
 
   static boolean isP256(ECParameterSpec params) {
     return P256.equals(params.getCurve());
