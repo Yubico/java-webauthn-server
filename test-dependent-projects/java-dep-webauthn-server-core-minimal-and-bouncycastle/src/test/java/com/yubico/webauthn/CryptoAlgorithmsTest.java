@@ -1,6 +1,7 @@
 package com.yubico.webauthn;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import COSE.CoseException;
 import com.yubico.webauthn.data.AttestationObject;
@@ -14,6 +15,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,8 +29,8 @@ public class CryptoAlgorithmsTest {
   public void setUp() {
     providersBefore = Stream.of(Security.getProviders()).collect(Collectors.toList());
 
-    // The RelyingParty constructor has the possible side-effect of loading the BouncyCastle
-    // provider
+    Security.addProvider(new BouncyCastleProvider());
+
     RelyingParty.builder()
         .identity(RelyingPartyIdentity.builder().id("foo").name("foo").build())
         .credentialRepository(Mockito.mock(CredentialRepository.class))
@@ -69,5 +71,21 @@ public class CryptoAlgorithmsTest {
                 .get()
                 .getCredentialPublicKey());
     assertEquals(key.getAlgorithm(), "EC");
+  }
+
+  @Test
+  public void importEddsa()
+      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+    PublicKey key =
+        WebAuthnCodecs.importCosePublicKey(
+            new AttestationObject(
+                    RegistrationTestData.Packed$.MODULE$
+                        .BasicAttestationEdDsa()
+                        .attestationObject())
+                .getAuthenticatorData()
+                .getAttestedCredentialData()
+                .get()
+                .getCredentialPublicKey());
+    assertTrue("EdDSA".equals(key.getAlgorithm()) || "Ed25519".equals(key.getAlgorithm()));
   }
 }

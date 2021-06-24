@@ -7,6 +7,7 @@ import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
@@ -14,12 +15,15 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Test that the BouncyCastle provider is not loaded by default when depending on the <code>
- * webauthn-server-core-minimal</code> package.
+ * Test that the BouncyCastle provider is not loaded by default.
  *
  * <p>Motivation: https://github.com/Yubico/java-webauthn-server/issues/97
  */
 public class BouncyCastleProviderPresenceTest {
+
+  private static boolean isNamedBouncyCastle(Provider prov) {
+    return prov.getName().equals("BC") || prov.getClass().getCanonicalName().contains("bouncy");
+  }
 
   @Test(expected = ClassNotFoundException.class)
   public void bouncyCastleProviderIsNotInClasspath() throws ClassNotFoundException {
@@ -30,13 +34,11 @@ public class BouncyCastleProviderPresenceTest {
   public void bouncyCastleProviderIsNotLoadedByDefault() {
     assertTrue(
         Arrays.stream(Security.getProviders())
-            .noneMatch(prov -> prov.getName().toLowerCase().contains("bouncy")));
+            .noneMatch(BouncyCastleProviderPresenceTest::isNamedBouncyCastle));
   }
 
   @Test
   public void bouncyCastleProviderIsNotLoadedAfterInstantiatingRelyingParty() {
-    // The RelyingParty constructor has the possible side-effect of loading the BouncyCastle
-    // provider
     RelyingParty.builder()
         .identity(RelyingPartyIdentity.builder().id("foo").name("foo").build())
         .credentialRepository(Mockito.mock(CredentialRepository.class))
@@ -44,15 +46,12 @@ public class BouncyCastleProviderPresenceTest {
 
     assertTrue(
         Arrays.stream(Security.getProviders())
-            .noneMatch(
-                prov ->
-                    prov.getName().equals("BC")
-                        || prov.getClass().getCanonicalName().contains("bouncy")));
+            .noneMatch(BouncyCastleProviderPresenceTest::isNamedBouncyCastle));
   }
 
   @Test
   public void bouncyCastleProviderIsNotLoadedAfterAttemptingToLoadEddsaKey()
-      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+      throws IOException, CoseException, InvalidKeySpecException {
     try {
       WebAuthnCodecs.importCosePublicKey(
           new AttestationObject(
@@ -67,9 +66,6 @@ public class BouncyCastleProviderPresenceTest {
 
     assertTrue(
         Arrays.stream(Security.getProviders())
-            .noneMatch(
-                prov ->
-                    prov.getName().equals("BC")
-                        || prov.getClass().getCanonicalName().contains("bouncy")));
+            .noneMatch(BouncyCastleProviderPresenceTest::isNamedBouncyCastle));
   }
 }

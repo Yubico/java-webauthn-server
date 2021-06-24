@@ -7,8 +7,6 @@ val coreTestsOutput = project(":webauthn-server-core-minimal").extensions.getByT
 dependencies {
     implementation(project(":webauthn-server-core"))
 
-    testCompileOnly("org.bouncycastle:bcprov-jdk15on:[1.62,2)")
-
     testImplementation(coreTestsOutput)
     testImplementation("junit:junit:4.12")
     testImplementation("org.mockito:mockito-core:[2.27.0,3)")

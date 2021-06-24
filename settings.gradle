@@ -8,7 +8,7 @@ include ':yubico-util-scala'
 
 include ':test-dependent-projects:java-dep-webauthn-server-attestation'
 include ':test-dependent-projects:java-dep-webauthn-server-core'
-include ':test-dependent-projects:java-dep-webauthn-server-core-minimal'
+include ':test-dependent-projects:java-dep-webauthn-server-core-minimal-and-bouncycastle'
 include ':test-dependent-projects:java-dep-yubico-util'
 
 project(':webauthn-server-core').name = 'webauthn-server-core-minimal'
