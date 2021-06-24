@@ -13,7 +13,7 @@ dependencies {
 
   implementation(
     project(':webauthn-server-attestation'),
-    project(':webauthn-server-core-minimal'),
+    project(':webauthn-server-core'),
     project(':yubico-util'),
 
     'com.google.guava:guava',
@@ -33,7 +33,7 @@ dependencies {
   )
 
   testImplementation(
-    project(':webauthn-server-core-minimal').sourceSets.test.output,
+    project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 
     'junit:junit',

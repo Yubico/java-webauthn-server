@@ -13,13 +13,13 @@ project.ext.publishMe = true
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-evaluationDependsOn(':webauthn-server-core-minimal')
+evaluationDependsOn(':webauthn-server-core')
 
 dependencies {
   api(platform(rootProject))
 
   api(
-    project(':webauthn-server-core-minimal'),
+    project(':webauthn-server-core'),
   )
 
   implementation(
@@ -31,7 +31,7 @@ dependencies {
   )
 
   testImplementation(
-    project(':webauthn-server-core-minimal').sourceSets.test.output,
+    project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
     'junit:junit',
     'org.mockito:mockito-core',

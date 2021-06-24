@@ -2,10 +2,10 @@ plugins {
     `java-library`
 }
 
-val coreTestsOutput = project(":webauthn-server-core-minimal").extensions.getByType(SourceSetContainer::class).test.get().output
+val coreTestsOutput = project(":webauthn-server-core").extensions.getByType(SourceSetContainer::class).test.get().output
 
 dependencies {
-    implementation(project(":webauthn-server-core-minimal"))
+    implementation(project(":webauthn-server-core"))
     implementation("org.bouncycastle:bcprov-jdk15on:[1.62,2)")
 
     testImplementation(coreTestsOutput)
