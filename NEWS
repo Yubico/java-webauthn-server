@@ -1,6 +1,6 @@
 == Version 1.10.0 (unreleased) ==
 
-webauthn-server-attestatiton:
+webauthn-server-attestation:
 
 * Added attestation metadata for YubiKey Bio.
 
