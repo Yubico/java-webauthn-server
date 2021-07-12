@@ -1,3 +1,10 @@
+== Version 1.10.0 ==
+
+webauthn-server-attestatiton:
+
+* Added attestation metadata for YubiKey Bio.
+
+
 == Version 1.9.1 ==
 
 * Added missing `<dependencyManagement>` declaration to
