@@ -169,6 +169,14 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           Set(USB, LIGHTNING),
         )
       }
+
+      it("a YubiKey Bio.") {
+        check(
+          "YubiKey Bio",
+          RealExamples.YubikeyBio_5_5_4,
+          Set(USB),
+        )
+      }
     }
 
     describe("fails to identify") {
@@ -291,6 +299,14 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
           "YubiKey 5Ci FIPS",
           RealExamples.Yubikey5ciFips,
           Set(USB, LIGHTNING),
+        )
+      }
+
+      it("a YubiKey Bio.") {
+        check(
+          "YubiKey Bio",
+          RealExamples.YubikeyBio_5_5_4,
+          Set(USB),
         )
       }
     }

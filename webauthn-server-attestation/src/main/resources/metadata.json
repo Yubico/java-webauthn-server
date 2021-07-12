@@ -1,6 +1,6 @@
 {
   "identifier": "2fb54029-7613-4f1d-94f1-fb876c14a6fe",
-  "version": 15,
+  "version": 16,
   "vendorInfo": {
     "url": "https://yubico.com",
     "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
@@ -298,6 +298,24 @@
             "value": {
               "type": "hex",
               "value": "8520342148f943559bc88a53846e5083"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "deviceId": "1.3.6.1.4.1.41482.1.9",
+      "displayName": "YubiKey Bio",
+      "transports": 4,
+      "selectors": [
+        {
+          "type": "x509Extension",
+          "parameters": {
+            "key": "1.3.6.1.4.1.45724.1.1.4",
+            "value": {
+              "type": "hex",
+              "value": "d8522d9f575b486688a9ba99fa02f35b"
             }
           }
         }
