@@ -102,7 +102,6 @@ class RelyingPartyRegistrationSpec
       allowUnrequestedExtensions: Boolean = false,
       allowUntrustedAttestation: Boolean = false,
       callerTokenBindingId: Option[ByteArray] = None,
-      credentialId: Option[ByteArray] = None,
       credentialRepository: CredentialRepository =
         Helpers.CredentialRepository.unimplemented,
       metadataService: Option[MetadataService] = None,
@@ -1165,10 +1164,7 @@ class RelyingPartyRegistrationSpec
               val testData = RegistrationTestData.FidoU2f.BasicAttestation
                 .editAuthenticatorData { flipByte(index, _) }
 
-              val steps = finishRegistration(
-                testData = testData,
-                credentialId = Some(new ByteArray(Array.fill(16)(0))),
-              )
+              val steps = finishRegistration(testData = testData)
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
@@ -1214,10 +1210,7 @@ class RelyingPartyRegistrationSpec
                     ) ++ evilPublicKey.getBytes
                   )
                 }
-              val steps = finishRegistration(
-                testData = testData,
-                credentialId = Some(new ByteArray(Array.fill(16)(0))),
-              )
+              val steps = finishRegistration(testData = testData)
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
@@ -1259,8 +1252,7 @@ class RelyingPartyRegistrationSpec
                       credential.getResponse.getClientDataJSON.getBytes,
                       "UTF-8",
                     ),
-                  ),
-                  credentialId = Some(credential.getId),
+                  )
                 )
                 val step: FinishRegistrationSteps#Step14 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1311,8 +1303,7 @@ class RelyingPartyRegistrationSpec
                       credential.getResponse.getClientDataJSON.getBytes,
                       "UTF-8",
                     ),
-                  ),
-                  credentialId = Some(credential.getId),
+                  )
                 )
                 val step: FinishRegistrationSteps#Step14 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -1998,14 +1989,6 @@ class RelyingPartyRegistrationSpec
                     IllegalArgumentException
                   ]
 
-                  val goodCert: X509Certificate = TestAuthenticator
-                    .generateAttestationCertificate(
-                      name = new X500Name(
-                        "O=Yubico, C=SE, OU=Authenticator Attestation"
-                      ),
-                      extensions = Nil,
-                    )
-                    ._1
                   val goodResult = Try(
                     verifier.verifyX5cRequirements(badCert, testDataBase.aaguid)
                   )

@@ -42,7 +42,6 @@ import com.yubico.webauthn.extension.appid.AppId
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
-import demo.webauthn.data.RegistrationResponse
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -93,12 +92,6 @@ class WebAuthnServerSpec extends FunSpec with Matchers {
 
         val server = newServerWithRegistrationRequest(
           RegistrationTestData.FidoU2f.BasicAttestation
-        )
-
-        val response = new RegistrationResponse(
-          requestId,
-          RegistrationTestData.FidoU2f.BasicAttestation.response,
-          Optional.empty(),
         )
 
         val authenticationAttestationResponseJson =

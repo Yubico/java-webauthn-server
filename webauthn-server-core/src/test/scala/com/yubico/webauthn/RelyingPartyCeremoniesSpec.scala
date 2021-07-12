@@ -24,9 +24,7 @@
 
 package com.yubico.webauthn
 
-import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
-import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
@@ -53,81 +51,83 @@ class RelyingPartyCeremoniesSpec
       .credentialRepository(credentialRepo)
       .build()
 
+  private def createCheck(
+      modRp: RelyingParty => RelyingParty = identity
+  )(testData: RealExamples.Example): Unit = {
+    val registrationRp =
+      modRp(newRp(testData, Helpers.CredentialRepository.empty))
+
+    val registrationRequest = registrationRp
+      .startRegistration(
+        StartRegistrationOptions.builder().user(testData.user).build()
+      )
+      .toBuilder
+      .challenge(testData.attestation.challenge)
+      .build()
+    val registrationResult = registrationRp.finishRegistration(
+      FinishRegistrationOptions
+        .builder()
+        .request(registrationRequest)
+        .response(testData.attestation.credential)
+        .build()
+    );
+
+    registrationResult.getKeyId.getId should equal(
+      testData.attestation.credential.getId
+    )
+    registrationResult.isAttestationTrusted should be(false)
+    registrationResult.getAttestationMetadata.isPresent should be(false)
+
+    val assertionRp = newRp(
+      testData,
+      Helpers.CredentialRepository.withUser(
+        testData.user,
+        Helpers.toRegisteredCredential(testData.user, registrationResult),
+      ),
+    ).toBuilder
+      .allowUnrequestedExtensions(true)
+      .build()
+
+    val assertionResult = assertionRp.finishAssertion(
+      FinishAssertionOptions
+        .builder()
+        .request(
+          AssertionRequest
+            .builder()
+            .publicKeyCredentialRequestOptions(
+              PublicKeyCredentialRequestOptions
+                .builder()
+                .challenge(testData.assertion.challenge)
+                .allowCredentials(
+                  List(
+                    PublicKeyCredentialDescriptor
+                      .builder()
+                      .id(testData.assertion.id)
+                      .build()
+                  ).asJava
+                )
+                .build()
+            )
+            .username(testData.user.getName)
+            .build()
+        )
+        .response(testData.assertion.credential)
+        .build()
+    )
+
+    assertionResult.isSuccess should be(true)
+    assertionResult.getCredentialId should equal(testData.assertion.id)
+    assertionResult.getUserHandle should equal(testData.user.getId)
+    assertionResult.getUsername should equal(testData.user.getName)
+    assertionResult.getSignatureCount should be >= testData.attestation.authenticatorData.getSignatureCounter
+    assertionResult.isSignatureCounterValid should be(true)
+  }
+
   testWithEachProvider { it =>
     describe("The default RelyingParty settings") {
+      val check = createCheck()(_)
 
       describe("can register and then authenticate") {
-        def check(testData: RealExamples.Example): Unit = {
-          val registrationRp =
-            newRp(testData, Helpers.CredentialRepository.empty)
-
-          val registrationResult = registrationRp.finishRegistration(
-            FinishRegistrationOptions
-              .builder()
-              .request(
-                PublicKeyCredentialCreationOptions
-                  .builder()
-                  .rp(testData.rp)
-                  .user(testData.user)
-                  .challenge(testData.attestation.challenge)
-                  .pubKeyCredParams(
-                    List(PublicKeyCredentialParameters.ES256).asJava
-                  )
-                  .build()
-              )
-              .response(testData.attestation.credential)
-              .build()
-          );
-
-          registrationResult.getKeyId.getId should equal(
-            testData.attestation.credential.getId
-          )
-          registrationResult.isAttestationTrusted should be(false)
-          registrationResult.getAttestationMetadata.isPresent should be(false)
-
-          val assertionRp = newRp(
-            testData,
-            Helpers.CredentialRepository.withUser(
-              testData.user,
-              Helpers.toRegisteredCredential(testData.user, registrationResult),
-            ),
-          )
-
-          val assertionResult = assertionRp.finishAssertion(
-            FinishAssertionOptions
-              .builder()
-              .request(
-                AssertionRequest
-                  .builder()
-                  .publicKeyCredentialRequestOptions(
-                    PublicKeyCredentialRequestOptions
-                      .builder()
-                      .challenge(testData.assertion.challenge)
-                      .allowCredentials(
-                        List(
-                          PublicKeyCredentialDescriptor
-                            .builder()
-                            .id(testData.assertion.id)
-                            .build()
-                        ).asJava
-                      )
-                      .build()
-                  )
-                  .username(testData.user.getName)
-                  .build()
-              )
-              .response(testData.assertion.credential)
-              .build()
-          )
-
-          assertionResult.isSuccess should be(true)
-          assertionResult.getCredentialId should equal(testData.assertion.id)
-          assertionResult.getUserHandle should equal(testData.user.getId)
-          assertionResult.getUsername should equal(testData.user.getName)
-          assertionResult.getSignatureCount should be >= testData.attestation.authenticatorData.getSignatureCounter
-          assertionResult.isSignatureCounterValid should be(true)
-        }
-
         it("a YubiKey NEO.") {
           check(RealExamples.YubiKeyNeo)
         }
@@ -160,6 +160,37 @@ class RelyingPartyCeremoniesSpec
         }
         it("a Security Key NFC by Yubico.") {
           check(RealExamples.SecurityKeyNfc)
+        }
+
+        ignore("a YubiKey 5 NFC FIPS.") { // TODO Un-ignore when allowUnrequestedExtensions default changes to true
+          check(RealExamples.YubikeyFips5Nfc)
+        }
+
+        it("a YubiKey 5Ci FIPS.") {
+          check(RealExamples.Yubikey5ciFips)
+        }
+        it("a YubiKey Bio.") {
+          check(RealExamples.YubikeyBio_5_5_4)
+        }
+
+        it("an Apple iOS device.") {
+          check(RealExamples.AppleAttestationIos)
+        }
+        it("an Apple MacOS device.") {
+          check(RealExamples.AppleAttestationMacos)
+        }
+      }
+    }
+
+    describe("The default RelyingParty settings, but with allowUnrequestedExtensions(true)") {
+
+      describe("can register and then authenticate") {
+        val check = createCheck(rp =>
+          rp.toBuilder.allowUnrequestedExtensions(true).build()
+        )(_)
+
+        it("a YubiKey 5 NFC FIPS.") { // TODO Delete when allowUnrequestedExtensions default changes to true
+          check(RealExamples.YubikeyFips5Nfc)
         }
       }
     }

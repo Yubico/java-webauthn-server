@@ -4,7 +4,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.12.5'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.14.1'
     classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.8'
   }
 }
@@ -100,8 +100,7 @@ subprojects {
 
   repositories {
     mavenLocal()
-
-    maven { url "https://repo.maven.apache.org/maven2" }
+    mavenCentral()
   }
 
   spotless {
@@ -220,7 +219,7 @@ subprojects { project ->
     }
   }
 
-  if (publishEnabled && project.hasProperty('publishMe') && project.publishMe) {
+  if (project.hasProperty('publishMe') && project.publishMe) {
 
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
@@ -267,56 +266,59 @@ subprojects { project ->
       }
     }
 
-    signing {
-      useGpgCmd()
-      sign publishing.publications.jars
+    if (publishEnabled) {
+      signing {
+        useGpgCmd()
+        sign publishing.publications.jars
+      }
     }
   }
+
 }
 
 // The root project has no sources, but the dependency platform also needs to be published as an artifact
 // See https://docs.gradle.org/current/userguide/java_platform_plugin.html
 // See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
-if (publishEnabled) {
-  apply plugin: 'maven-publish'
-  apply plugin: 'signing'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
-  publishing {
-    publications {
-      jars(MavenPublication) {
-        from components.javaPlatform
+publishing {
+  publications {
+    jars(MavenPublication) {
+      from components.javaPlatform
 
-        pom {
-          name = project.name
-          description = project.description
-          url = 'https://developers.yubico.com/java-webauthn-server/'
+      pom {
+        name = project.name
+        description = project.description
+        url = 'https://developers.yubico.com/java-webauthn-server/'
 
-          developers {
-            developer {
-              id = 'emil'
-              name = 'Emil Lundberg'
-              email = 'emil@yubico.com'
-            }
+        developers {
+          developer {
+            id = 'emil'
+            name = 'Emil Lundberg'
+            email = 'emil@yubico.com'
           }
+        }
 
-          licenses {
-            license {
-              name = 'BSD-license'
-              comments = 'Revised 2-clause BSD license'
-            }
+        licenses {
+          license {
+            name = 'BSD-license'
+            comments = 'Revised 2-clause BSD license'
           }
+        }
 
-          scm {
-            url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-            connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-            developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-            tag = 'HEAD'
-          }
+        scm {
+          url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+          connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
+          developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
+          tag = 'HEAD'
         }
       }
     }
   }
+}
 
+if (publishEnabled) {
   signing {
     useGpgCmd()
     sign publishing.publications.jars

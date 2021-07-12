@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -49,8 +48,6 @@ import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyUserIdentificationSpec extends FunSpec with Matchers {
-
-  private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
   private object Defaults {
 

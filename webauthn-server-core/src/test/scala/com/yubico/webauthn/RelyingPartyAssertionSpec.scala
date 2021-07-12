@@ -121,18 +121,18 @@ class RelyingPartyAssertionSpec
 
   }
 
-  private def getUserHandleIfDefault(
+  private def getUserHandleIfDefaultUsername(
       username: String,
-      userHandle: ByteArray = Defaults.userHandle,
+      userHandle: ByteArray,
   ): Optional[ByteArray] =
     if (username == Defaults.username)
       Some(userHandle).asJava
     else
       ???
 
-  private def getUsernameIfDefault(
+  private def getUsernameIfDefaultUserHandle(
       userHandle: ByteArray,
-      username: String = Defaults.username,
+      username: String,
   ): Optional[String] =
     if (userHandle == Defaults.userHandle)
       Some(username).asJava
@@ -242,10 +242,16 @@ class RelyingPartyAssertionSpec
           override def getCredentialIdsForUsername(username: String) = ???
           override def getUserHandleForUsername(username: String)
               : Optional[ByteArray] =
-            getUserHandleIfDefault(username, userHandle = userHandleForUser)
+            getUserHandleIfDefaultUsername(
+              username,
+              userHandle = userHandleForUser,
+            )
           override def getUsernameForUserHandle(userHandle: ByteArray)
               : Optional[String] =
-            getUsernameIfDefault(userHandle, username = usernameForUser)
+            getUsernameIfDefaultUserHandle(
+              userHandle,
+              username = usernameForUser,
+            )
         }
       )
       .preferredPubkeyParams(Nil.asJava)

@@ -157,7 +157,6 @@ object Generators {
   def fidoU2fAttestationObject: Gen[ByteArray] =
     for {
       authData <- authenticatorDataBytes
-      alg <- arbitrary[COSEAlgorithmIdentifier]
       sig <- arbitrary[ByteArray]
       x5c <- arbitrary[List[ByteArray]]
       attStmt =
@@ -506,7 +505,6 @@ object Generators {
       name <- arbitrary[String]
       icon <- arbitrary[Optional[URL]]
       id <- arbitrary[ByteArray]
-      name <- arbitrary[String]
     } yield UserIdentity
       .builder()
       .name(name)
