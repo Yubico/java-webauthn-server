@@ -94,22 +94,53 @@ link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-
 for in-depth API documentation.
 
 
-== Quick start
+== Getting started
 
-Implement the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
-interface with your database access logic. See
+Using this library comes in two parts: the server side and the client side.
+The server side involves:
+
+ 1. Implement the `CredentialRepository` interface with your database access logic.
+ 2. Instantiate the `RelyingParty` class.
+ 3. Use the `RelyingParty.startRegistration(...)` and `RelyingParty.fininshRegistration(...)` methods to perform registration ceremonies.
+ 4. Use the `RelyingParty.startAssertion(...)` and `RelyingParty.fininshAssertion(...)` methods to perform authentication ceremonies.
+ 5. Use the outputs of `finishRegistration` and `finishAssertion` to update your database, initiate sessions, etc.
+
+The client side involves:
+
+ 1. Call `navigator.credentials.create()` or `.get()`,
+    passing the result from `RelyingParty.startRegistration(...)` or `.startAssertion(...)` as the argument.
+ 2. Encode the result of the successfully resolved promise and return it to the server.
+    For this you'll need some way to encode `Uint8Array` values;
+    this guide will assume use of link:https://github.com/beatgammit/base64-js[base64-js].
+    However the built-in parser methods for
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
+    expect URL-safe Base64 encoding, so the below examples will include this as an additional step.
+
+Example code is given below.
+For more detailed example usage, see
+link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
+
+
+=== 1. Implement a `CredentialRepository`
+
+The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`] interface
+abstracts your database in a database-agnostic way.
+The concrete implementation will be different for every project, but you can use
 link:https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
-for an example.
+as a simple example.
 
-Instantiate the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
-class:
+=== 2. Instantiate a `RelyingParty`
+
+The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`] class
+is the main entry point to the library.
+You can instantiate it using its builder methods,
+passing in your `CredentialRepository` implementation (called `MyCredentialRepository` here) as an argument:
 
 [source,java]
 ----------
 RelyingPartyIdentity rpIdentity = RelyingPartyIdentity.builder()
-    .id("example.com")
+    .id("example.com")  // Set this to a parent domain that covers all subdomains
+                        // where users' credentials should be valid
     .name("Example Application")
     .build();
 
@@ -119,16 +150,26 @@ RelyingParty rp = RelyingParty.builder()
     .build();
 ----------
 
+=== 3. Registration
 
-=== Registration
+A registration ceremony consists of 5 main steps:
 
-Initiate a registration ceremony:
+ 1. Generate registration parameters using `RelyingParty.startRegistration(...)`.
+ 2. Send registration parameters to the client and call `navigator.credentials.create()`.
+ 3. With `cred` as the result of the successfully resolved promise,
+    call `cred.getClientExtensionResults()` and `cred.response.getTransports()`
+    and return their results along with `cred` to the server.
+ 4. Validate the response using `RelyingParty.finishRegistration(...)`.
+ 5. Update your database using the `finishRegistration` output.
+
+First, generate registration parameters and send them to the client:
 
 [source,java]
 ----------
 Optional<UserIdentity> findExistingUser(String username) { /* ... */ }
 
-PublicKeyCredentialCreationOptions request = rp.startRegistration(StartRegistrationOptions.builder()
+PublicKeyCredentialCreationOptions request = rp.startRegistration(
+  StartRegistrationOptions.builder()
     .user(
         findExistingUser("alice")
             .orElseGet(() -> {
@@ -142,49 +183,64 @@ PublicKeyCredentialCreationOptions request = rp.startRegistration(StartRegistrat
             })
     )
     .build());
+
+String credentialCreateJson = request.toCredentialCreateJson();
+return credentialCreateJson;  // Send to client
 ----------
 
-Serialize `request` to JSON and send it to the client:
+You'll need to keep this `PublicKeyCredentialCreationOptions` object in temporary storage
+so you can also pass it into `finishRegistration(...)` later.
+
+Now call the WebAuthn API on the client side:
+
+[source,javascript]
+----------
+function uint8arrayToBase64url(bytes) {
+  return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+const credentialCreateJson =
+  fetch(/* ... */)                  // Make the call that returns the credentialCreateJson above
+  .then(credentialCreateJson =>     // Call WebAuthn ceremony
+    navigator.credentials.create(credentialCreateJson))
+  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
+    type: publicKeyCredential.type,
+    id: publicKeyCredential.id,
+    response: {
+      attestationObject: uint8arrayToBase64url(response.response.attestationObject),
+      clientDataJSON: uint8arrayToBase64url(response.response.clientDataJSON),
+      transports: response.response.getTransports() || [],
+    },
+
+    // Warning: Client extension results could also contain binary data that needs encoding
+    clientExtensionResults: response.getClientExtensionResults(),
+  }))
+  .then(encodedResult =>
+    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+----------
+
+Validate the response on the server side:
 
 [source,java]
 ----------
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-ObjectMapper jsonMapper = new ObjectMapper()
-    .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-    .setSerializationInclusion(Include.NON_ABSENT)
-    .registerModule(new Jdk8Module());
-
-String json = jsonMapper.writeValueAsString(request);
-return json;
-----------
-
-Get the response from the client:
-
-[source,java]
-----------
-String responseJson = /* ... */;
+String publicKeyCredentialJson = /* ... */;     // encodedResult from client
 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
-    PublicKeyCredential.parseRegistrationResponseJson(responseJson);
-----------
+    PublicKeyCredential.parseRegistrationResponseJson(publicKeyCredentialJson);
 
-Validate the response:
-
-[source,java]
-----------
 try {
     RegistrationResult result = rp.finishRegistration(FinishRegistrationOptions.builder()
-        .request(request)
+        .request(request)  // The PublicKeyCredentialCreationOptions from startRegistration above
         .response(pkc)
         .build());
 } catch (RegistrationFailedException e) { /* ... */ }
 ----------
 
-Update your database:
+Finally, if the previous step was successful, store the new credential in your database.
+Here's an example of things you'll likely want to store:
 
 [source,java]
 ----------
-storeCredential(
+storeCredential(             // Some database access method of your own design
   "alice",                   // Username or other appropriate user identifier
   result.getKeyId(),         // Credential ID for allowCredentials
   result.getPublicKeyCose(), // Public key for verifying authentication signatures
@@ -192,37 +248,76 @@ storeCredential(
   result.getTransports(),    // Transport hints to put in allowCredentials along with ID
   result.signatureCount(),   // Initial signature counter value
   pkc.getResponse().getAttestationObject(), // Store attestation object for future reference
-  pkc.getResponse().getClientDataJSON(),    // Store client data for re-verifying signature if needed
+  pkc.getResponse().getClientDataJSON()     // Store client data for re-verifying signature if needed
 );
 ----------
 
 
 === Authentication
 
-Initiate an authentication ceremony:
+Like registration ceremonies, an authentication ceremony consists of 5 main steps:
 
+ 1. Generate authentication parameters using `RelyingParty.startAssertion(...)`.
+ 2. Send authentication parameters to the client, call `navigator.credentials.get()` and return the response.
+ 3. With `cred` as the result of the successfully resolved promise,
+    call `cred.getClientExtensionResults()` and return the result along with `cred` to the server.
+ 4. Validate the response using `RelyingParty.finishAssertion(...)`.
+ 5. Update your database using the `finishAssertion` output, and act upon the result (for example, grant login access).
+
+First, generate authentication parameters and send them to the client:
 
 [source,java]
 ----------
 AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
-    .username(Optional.of("alice"))
+    .username(Optional.of("alice"))  // Omit for username-less login
     .build());
-String json = jsonMapper.writeValueAsString(request);
-return json;
+String credentialGetJson = request.toCredentialGetJson();
+return credentialGetJson;  // Send to client
 ----------
 
-Validate the response:
+Again, you'll need to keep this `PublicKeyCredentialRequestOptions` object in temporary storage
+so you can also pass it into `finishAssertion(...)` later.
+
+Now call the WebAuthn API on the client side:
+
+[source,javascript]
+----------
+function uint8arrayToBase64url(bytes) {
+  return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+const credentialGetJson =
+  fetch(/* ... */)                  // Make the call that returns the credentialGetJson above
+  .then(credentialGetJson =>        // Call WebAuthn ceremony
+    navigator.credentials.get(credentialGetJson))
+  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
+    type: publicKeyCredential.type,
+    id: publicKeyCredential.id,
+    response: {
+      authenticatorData: uint8arrayToBase64url(response.response.authenticatorData),
+      clientDataJSON: uint8arrayToBase64url(response.response.clientDataJSON),
+      signature: uint8arrayToBase64url(response.response.signature),
+      userHandle: response.response.userHandle && uint8arrayToBase64url(response.response.userHandle),
+    },
+
+    // Warning: Client extension results could also contain binary data that needs encoding
+    clientExtensionResults: response.getClientExtensionResults(),
+  }))
+  .then(encodedResult =>
+    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+----------
+
+Validate the response on the server side:
 
 [source,java]
 ----------
-String responseJson = /* ... */;
-
+String publicKeyCredentialJson = /* ... */;  // encodedResult from client
 PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
-    PublicKeyCredential.parseAssertionResponseJson(responseJson);
+    PublicKeyCredential.parseAssertionResponseJson(publicKeyCredentialJson);
 
 try {
     AssertionResult result = rp.finishAssertion(FinishAssertionOptions.builder()
-        .request(request)
+        .request(request)  // The PublicKeyCredentialRequestOptions from startAssertion above
         .response(pkc)
         .build());
 
@@ -233,8 +328,20 @@ try {
 throw new RuntimeException("Authentication failed");
 ----------
 
-For more detailed example usage, see
-link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
+Finally, if the previous step was successful, update your database using the `AssertionResult`.
+Most importantly, you should update the signature counter. That might look something like this:
+
+[source,java]
+----------
+updateCredential(              // Some database access method of your own design
+  "alice",                     // Username or other appropriate user identifier
+  result.getCredentialId(),    // Credential ID of the credential used
+  result.signatureCount(),     // New signature counter value
+  Clock.systemUTC().instant()  // Time of last use (now)
+);
+----------
+
+Then do whatever else you need - for example, initiate a user session.
 
 
 == Architecture
