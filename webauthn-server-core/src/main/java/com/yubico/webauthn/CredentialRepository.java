@@ -43,12 +43,18 @@ public interface CredentialRepository {
   /**
    * Get the user handle corresponding to the given username - the inverse of {@link
    * #getUsernameForUserHandle(ByteArray)}.
+   *
+   * <p>Used to look up the user handle based on the username, for authentication ceremonies where
+   * the username is already given.
    */
   Optional<ByteArray> getUserHandleForUsername(String username);
 
   /**
    * Get the username corresponding to the given user handle - the inverse of {@link
    * #getUserHandleForUsername(String)}.
+   *
+   * <p>Used to look up the username based on the user handle, for username-less authentication
+   * ceremonies.
    */
   Optional<String> getUsernameForUserHandle(ByteArray userHandle);
 
