@@ -1,6 +1,6 @@
 {
   "identifier": "2fb54029-7613-4f1d-94f1-fb876c14a6fe",
-  "version": 16,
+  "version": 17,
   "vendorInfo": {
     "url": "https://yubico.com",
     "imageUrl": "https://developers.yubico.com/U2F/Images/yubico.png",
@@ -306,7 +306,7 @@
 
     {
       "deviceId": "1.3.6.1.4.1.41482.1.9",
-      "displayName": "YubiKey Bio",
+      "displayName": "YubiKey Bio - FIDO Edition",
       "transports": 4,
       "selectors": [
         {

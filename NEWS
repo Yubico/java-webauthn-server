@@ -1,3 +1,10 @@
+== Version 1.10.1 (unreleased) ==
+
+webauthn-server-attestation:
+
+* Fixed name of YubiKey Bio - FIDO edition in attestation metadata.
+
+
 == Version 1.10.0 ==
 
 webauthn-server-attestation:
