@@ -28,6 +28,9 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBOREncodeOptions
 import com.upokecenter.cbor.CBORObject
+import com.yubico.fido.metadata.Generators.keyProtectionType
+import com.yubico.fido.metadata.Generators.matcherProtectionType
+import com.yubico.fido.metadata.Generators.userVerificationMethod
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
@@ -849,15 +852,6 @@ object Generators {
             Array(encodeUvmEntry(entry1)) ++ (entry23.map(encodeUvmEntry))
           )
         }
-
-      def userVerificationMethod: Gen[UvmEntry.UserVerificationMethod] =
-        Gen.oneOf(UvmEntry.UserVerificationMethod.values)
-
-      def keyProtectionType: Gen[UvmEntry.KeyProtectionType] =
-        Gen.oneOf(UvmEntry.KeyProtectionType.values)
-
-      def matcherProtectionType: Gen[UvmEntry.MatcherProtectionType] =
-        Gen.oneOf(UvmEntry.MatcherProtectionType.values)
     }
   }
 
