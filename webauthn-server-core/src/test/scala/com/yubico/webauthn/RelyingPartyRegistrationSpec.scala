@@ -59,6 +59,7 @@ import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.exception.RegistrationFailedException
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
@@ -126,7 +127,7 @@ class RelyingPartyRegistrationSpec
         .build(),
       testData: RegistrationTestData,
   ): FinishRegistrationSteps = {
-    val builder = RelyingParty
+    var builder = RelyingParty
       .builder()
       .identity(rp)
       .credentialRepository(credentialRepository)
@@ -135,7 +136,8 @@ class RelyingPartyRegistrationSpec
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUnrequestedExtensions(allowUnrequestedExtensions)
       .allowUntrustedAttestation(allowUntrustedAttestation)
-      .metadataService(metadataService.asJava)
+
+    metadataService.foreach { mds => builder = builder.metadataService(mds) }
 
     origins.map(_.asJava).foreach(builder.origins _)
 
@@ -3459,4 +3461,49 @@ class RelyingPartyRegistrationSpec
     }
 
   }
+
+  describe("RelyingParty.finishRegistration") {
+    it("throws RegistrationFailedException in case of errors.") {
+
+      val rp = RelyingParty
+        .builder()
+        .identity(
+          RelyingPartyIdentity
+            .builder()
+            .id("localhost")
+            .name("Test party")
+            .build()
+        )
+        .credentialRepository(Helpers.CredentialRepository.empty)
+        .build()
+
+      val pkcco = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(
+            UserIdentity
+              .builder()
+              .name("test")
+              .displayName("Test Testsson")
+              .id(new ByteArray(Array()))
+              .build()
+          )
+          .build()
+      )
+
+      val result = Try(
+        rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(pkcco)
+            .response(RegistrationTestData.NoneAttestation.Default.response)
+            .build()
+        )
+      )
+      result shouldBe a[Failure[_]]
+      result.failed.get shouldBe a[RegistrationFailedException]
+      result.failed.get.getMessage should include("Incorrect challenge")
+    }
+  }
+
 }

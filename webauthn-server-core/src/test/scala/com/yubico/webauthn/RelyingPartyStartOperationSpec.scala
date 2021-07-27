@@ -26,6 +26,7 @@ package com.yubico.webauthn
 
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AssertionExtensionInputs
+import com.yubico.webauthn.data.AttestationConveyancePreference
 import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
@@ -80,16 +81,22 @@ class RelyingPartyStartOperationSpec
 
   def relyingParty(
       appId: Option[AppId] = None,
+      attestationConveyancePreference: Option[AttestationConveyancePreference] =
+        None,
       credentials: Set[PublicKeyCredentialDescriptor] = Set.empty,
-  ): RelyingParty =
-    RelyingParty
+  ): RelyingParty = {
+    var builder = RelyingParty
       .builder()
       .identity(rpId)
       .credentialRepository(credRepo(credentials))
       .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
       .origins(Set.empty.asJava)
-      .appId(appId.asJava)
-      .build()
+    appId.foreach { appid => builder = builder.appId(appid) }
+    attestationConveyancePreference.foreach { acp =>
+      builder = builder.attestationConveyancePreference(acp)
+    }
+    builder.build()
+  }
 
   val rpId = RelyingPartyIdentity
     .builder()
@@ -152,6 +159,21 @@ class RelyingPartyStartOperationSpec
           .build()
       )
       pkcco.getAuthenticatorSelection.asScala should equal(Some(authnrSel))
+    }
+
+    it("uses the RelyingParty setting for attestationConveyancePreference.") {
+      forAll { acp: Option[AttestationConveyancePreference] =>
+        val pkcco =
+          relyingParty(attestationConveyancePreference = acp).startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .build()
+          )
+        pkcco.getAttestation should equal(
+          acp getOrElse AttestationConveyancePreference.NONE
+        )
+      }
     }
 
     it("allows setting the timeout to empty.") {
