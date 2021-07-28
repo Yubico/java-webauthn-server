@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import java.io.IOException;
 import lombok.NonNull;
@@ -104,11 +103,9 @@ public class AttestationObject {
     final JsonNode decoded = JacksonCodecs.cbor().readTree(bytes.getBytes());
     final ByteArray authDataBytes;
 
-    ExceptionUtil.assure(
-        decoded != null, "Failed to parse attestation object from bytes: %s", bytes.getBase64Url());
-
     if (!decoded.isObject()) {
-      throw new IllegalArgumentException("Attestation object must be a JSON object.");
+      throw new IllegalArgumentException(
+          String.format("Attestation object must be a CBOR map, was: %s", decoded.getNodeType()));
     }
 
     final JsonNode authData = decoded.get("authData");
