@@ -187,22 +187,26 @@ public class AuthenticatorData {
     final CBORObject credentialPublicKey = CBORObject.Read(indefiniteLengthBytes);
     final CBORObject extensions;
 
-    if (flags.ED && indefiniteLengthBytes.available() > 0) {
-      try {
-        extensions = CBORObject.Read(indefiniteLengthBytes);
-      } catch (CBORException e) {
-        throw new IllegalArgumentException("Failed to parse extension data", e);
+    if (indefiniteLengthBytes.available() > 0) {
+      if (flags.ED) {
+        try {
+          extensions = CBORObject.Read(indefiniteLengthBytes);
+        } catch (CBORException e) {
+          throw new IllegalArgumentException("Failed to parse extension data", e);
+        }
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Flags indicate no extension data, but %d bytes remain after attested credential data.",
+                indefiniteLengthBytes.available()));
       }
-    } else if (indefiniteLengthBytes.available() > 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Flags indicate no extension data, but %d bytes remain after attested credential data.",
-              indefiniteLengthBytes.available()));
-    } else if (flags.ED) {
-      throw new IllegalArgumentException(
-          "Flags indicate there should be extension data, but no bytes remain after attested credential data.");
     } else {
-      extensions = null;
+      if (flags.ED) {
+        throw new IllegalArgumentException(
+            "Flags indicate there should be extension data, but no bytes remain after attested credential data.");
+      } else {
+        extensions = null;
+      }
     }
 
     return new VariableLengthParseResult(
