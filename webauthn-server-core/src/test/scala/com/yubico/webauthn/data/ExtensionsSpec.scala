@@ -101,7 +101,7 @@ class ExtensionsSpec
     it("omits credProps from JSON serialization when false.") {
       forAll(
         Generators.Extensions
-          .registrationExtensionInputs(credPropsGen = Gen.const(None))
+          .registrationExtensionInputs(credPropsGen = Gen.const(Some(false)))
       ) { inpt: RegistrationExtensionInputs =>
         val json = JacksonCodecs.json().valueToTree[ObjectNode](inpt)
         json.has(Extensions.CredentialProperties.EXTENSION_ID) should be(false)
@@ -111,7 +111,7 @@ class ExtensionsSpec
     it("omits uvm from JSON serialization when false.") {
       forAll(
         Generators.Extensions
-          .registrationExtensionInputs(uvmGen = Gen.const(None))
+          .registrationExtensionInputs(uvmGen = Gen.const(Some(false)))
       ) { input: RegistrationExtensionInputs =>
         val json = JacksonCodecs.json().valueToTree[ObjectNode](input)
         json.has(Extensions.Uvm.EXTENSION_ID) should be(false)
