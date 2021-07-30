@@ -286,12 +286,12 @@ object Generators {
       : Arbitrary[AuthenticatorSelectionCriteria] = Arbitrary(
     for {
       authenticatorAttachment <- arbitrary[Optional[AuthenticatorAttachment]]
-      requireResidentKey <- arbitrary[Boolean]
+      residentKey <- arbitrary[ResidentKeyRequirement]
       userVerification <- arbitrary[UserVerificationRequirement]
     } yield AuthenticatorSelectionCriteria
       .builder()
       .authenticatorAttachment(authenticatorAttachment)
-      .requireResidentKey(requireResidentKey)
+      .residentKey(residentKey)
       .userVerification(userVerification)
       .build()
   )
