@@ -59,7 +59,7 @@ public class BinaryUtil {
   /**
    * Read one byte as an unsigned 8-bit integer.
    *
-   * <p>Result is of type Short because Java don't have unsigned types.
+   * <p>Result is of type <code>short</code> because Java doesn't have unsigned types.
    *
    * @return A value between 0 and 255, inclusive.
    */
@@ -71,7 +71,7 @@ public class BinaryUtil {
   /**
    * Read 2 bytes as a big endian unsigned 16-bit integer.
    *
-   * <p>Result is of type Int because Java don't have unsigned types.
+   * <p>Result is of type <code>int</code> because Java doesn't have unsigned types.
    *
    * @return A value between 0 and 2^16- 1, inclusive.
    */
@@ -89,7 +89,7 @@ public class BinaryUtil {
   /**
    * Read 4 bytes as a big endian unsigned 32-bit integer.
    *
-   * <p>Result is of type Long because Java don't have unsigned types.
+   * <p>Result is of type <code>long</code> because Java doesn't have unsigned types.
    *
    * @return A value between 0 and 2^32 - 1, inclusive.
    */
