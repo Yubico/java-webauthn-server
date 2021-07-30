@@ -307,8 +307,8 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(
     arbitrary[Array[Byte]].map(new ByteArray(_))
   )
-  def byteArray(size: Int): Gen[ByteArray] =
-    Gen.listOfN(size, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
+  def byteArray(maxSize: Int): Gen[ByteArray] =
+    Gen.listOfN(maxSize, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
   def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
     for {
