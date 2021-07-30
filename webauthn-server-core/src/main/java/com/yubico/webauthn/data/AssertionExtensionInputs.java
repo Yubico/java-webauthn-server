@@ -25,6 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
@@ -48,6 +49,7 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AssertionExtensionInputs implements ExtensionInputs {
 
   /**
@@ -232,6 +234,14 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     return Optional.ofNullable(largeBlob);
   }
 
+  /** For JSON serialization, to omit false and null values. */
+  @JsonProperty("largeBlob")
+  private Extensions.LargeBlob.LargeBlobAuthenticationInput getLargeBlobJson() {
+    return largeBlob != null && (largeBlob.getRead() || largeBlob.getWrite().isPresent())
+        ? largeBlob
+        : null;
+  }
+
   /**
    * @return <code>true</code> if the User Verification Method Extension (<code>uvm</code>) is
    *     enabled, <code>false</code> otherwise.
@@ -241,5 +251,11 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    */
   public boolean getUvm() {
     return uvm;
+  }
+
+  /** For JSON serialization, to omit false values. */
+  @JsonProperty("uvm")
+  private Boolean getUvmJson() {
+    return uvm ? true : null;
   }
 }

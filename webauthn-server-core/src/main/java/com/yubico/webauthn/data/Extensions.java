@@ -212,7 +212,7 @@ public class Extensions {
        *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
-      @JsonProperty private final Boolean read;
+      @JsonProperty private final boolean read;
 
       /**
        * An opaque byte string that the Relying Party wishes to store with the existing credential.
@@ -224,13 +224,15 @@ public class Extensions {
        */
       @JsonProperty private final ByteArray write;
 
-      private LargeBlobAuthenticationInput(final Boolean read, final ByteArray write) {
+      @JsonCreator
+      private LargeBlobAuthenticationInput(
+          @JsonProperty("read") final Boolean read, @JsonProperty("write") final ByteArray write) {
         if (read != null && read && write != null) {
           throw new IllegalArgumentException(
               "Parameters \"read\" and \"write\" of largeBlob extension must not both be present.");
         }
 
-        this.read = read != null && read ? true : null;
+        this.read = read != null && read;
         this.write = write;
       }
 
@@ -260,6 +262,29 @@ public class Extensions {
        */
       public static LargeBlobAuthenticationInput write(@NonNull final ByteArray write) {
         return new LargeBlobAuthenticationInput(false, write);
+      }
+
+      /**
+       * @return <code>true</code> if the <code>read</code> property is set to <code>true</code>,
+       *     <code>false</code> otherwise.
+       * @see #read()
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
+       *     Large blob storage extension (largeBlob)</a>
+       */
+      public boolean getRead() {
+        return read;
+      }
+
+      /**
+       * @return The value of the <code>write</code> property if configured, empty otherwise.
+       * @see #write(ByteArray)
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
+       *     Large blob storage extension (largeBlob)</a>
+       */
+      public Optional<ByteArray> getWrite() {
+        return Optional.ofNullable(write);
       }
     }
 
