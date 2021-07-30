@@ -25,8 +25,11 @@
 package com.yubico.webauthn.data;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.yubico.webauthn.data.exception.Base64UrlException;
+import com.yubico.webauthn.data.exception.HexException;
 import org.junit.Test;
 
 public class ByteArrayTest {
@@ -57,6 +60,12 @@ public class ByteArrayTest {
   }
 
   @Test
+  public void isEmptyTest() throws HexException {
+    assertTrue(ByteArray.fromHex("").isEmpty());
+    assertFalse(ByteArray.fromHex("00").isEmpty());
+  }
+
+  @Test
   public void codecMimeTest() {
     String base64 = "ab+/+/==";
     String base64WithoutPadding = "ab+/+/";
@@ -77,5 +86,25 @@ public class ByteArrayTest {
   @Test(expected = Base64UrlException.class)
   public void decodeBadPaddingTest() throws Base64UrlException {
     ByteArray.fromBase64Url("A===");
+  }
+
+  @Test(expected = HexException.class)
+  public void decodeBadHexTest() throws HexException {
+    ByteArray.fromHex("0g");
+  }
+
+  @Test(expected = HexException.class)
+  public void decodeBadHexLengthTest() throws HexException {
+    ByteArray.fromHex("0");
+  }
+
+  @Test
+  public void sortTest() throws HexException {
+    assertTrue(ByteArray.fromHex("").compareTo(ByteArray.fromHex("")) == 0);
+    assertTrue(ByteArray.fromHex("").compareTo(ByteArray.fromHex("00")) < 0);
+    assertTrue(ByteArray.fromHex("00").compareTo(ByteArray.fromHex("")) > 0);
+    assertTrue(ByteArray.fromHex("11").compareTo(ByteArray.fromHex("0000")) < 0);
+    assertTrue(ByteArray.fromHex("1111").compareTo(ByteArray.fromHex("0000")) > 0);
+    assertTrue(ByteArray.fromHex("0011").compareTo(ByteArray.fromHex("0000")) > 0);
   }
 }
