@@ -25,24 +25,71 @@
 package com.yubico.webauthn.data
 
 import com.upokecenter.cbor.CBORObject
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.WebAuthnTestCodecs
+import com.yubico.webauthn.data.Generators.byteArray
 import org.junit.runner.RunWith
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.security.interfaces.ECPublicKey
 import scala.util.Failure
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class AuthenticatorDataSpec extends FunSpec with Matchers {
+class AuthenticatorDataSpec
+    extends FunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
 
   def jsonToCbor(json: String): ByteArray =
     new ByteArray(CBORObject.FromJSONString(json).EncodeToBytes)
 
   describe("AuthenticatorData") {
+
+    it("must be at least 37 bytes.") {
+      forAll(byteArray(36)) { authData =>
+        an[IllegalArgumentException] shouldBe thrownBy {
+          new AuthenticatorData(authData)
+        }
+      }
+    }
+
+    it("with attested credential data must be at least 55 bytes.") {
+      forAll(byteArray(37, 54)) { bytes =>
+        val authData = new ByteArray(
+          bytes.getBytes.updated(32, (bytes.getBytes.apply(32) | 0x40).toByte)
+        )
+        val result = Try(new AuthenticatorData(authData))
+        result shouldBe a[Failure[_]]
+        result.failed.get.getMessage should include(
+          "Attested credential data must contain at least"
+        )
+      }
+    }
+
+    it("with attested credential data must be at least long enough to accommodate the credential ID.") {
+      forAll(for {
+        prefix <- Gen.infiniteLazyList(arbitrary[Byte]).map(_.take(53).toArray)
+        credIdLen <- Gen.chooseNum(1, 2048)
+        credId <- Gen.listOfN(credIdLen - 1, arbitrary[Byte])
+      } yield (prefix, credIdLen, credId)) {
+        case (prefix, credIdLen, credId) =>
+          val bytes = prefix ++ BinaryUtil.encodeUint16(credIdLen) ++ credId
+          val authData =
+            new ByteArray(bytes.updated(32, (bytes(32) | 0x40).toByte))
+          val result = Try(new AuthenticatorData(authData))
+          result shouldBe a[Failure[_]]
+          result.failed.get.getMessage should include(
+            "Expected credential ID of length"
+          )
+      }
+    }
 
     def generateTests(
         authDataHex: String,

@@ -310,6 +310,12 @@ object Generators {
   def byteArray(maxSize: Int): Gen[ByteArray] =
     Gen.listOfN(maxSize, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
+  def byteArray(minSize: Int, maxSize: Int): Gen[ByteArray] =
+    for {
+      nums <- Gen.infiniteLazyList(arbitrary[Byte]).map(_.take(minSize))
+      len <- Gen.chooseNum(minSize, maxSize)
+    } yield new ByteArray(nums.take(len).toArray)
+
   def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
     for {
       byteIndex: Int <- Gen.choose(0, bytes.size() - 1)
