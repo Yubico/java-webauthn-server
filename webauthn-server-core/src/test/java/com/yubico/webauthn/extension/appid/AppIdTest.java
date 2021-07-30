@@ -70,6 +70,7 @@ public class AppIdTest {
   @Test
   public void badSyntax() {
     assertFalse(isValid("https://bad[syntax]"));
+    assertFalse(isValid("https//bad"));
   }
 
   @Test
