@@ -354,10 +354,11 @@ object Generators {
       } yield {
         val b = RegistrationExtensionInputs.builder()
         appidExclude.foreach({ i => b.appidExclude(i) })
-        credProps.foreach({ _ => b.credProps() })
+        if (credProps.contains(true)) { b.credProps() }
         largeBlob.foreach({ i => b.largeBlob(i) })
-        uvm.foreach({ _ => b.uvm() })
-        b.build()
+        if (uvm.contains(true)) { b.uvm() }
+        val result = b.build()
+        result
       }
 
     def registrationExtensionInputsJson(
@@ -443,7 +444,7 @@ object Generators {
         val b = AssertionExtensionInputs.builder()
         appid.foreach({ i => b.appid(i) })
         largeBlob.foreach({ i => b.largeBlob(i) })
-        uvm.foreach({ _ => b.uvm() })
+        if (uvm.contains(true)) { b.uvm() }
         b.build()
       }
 
