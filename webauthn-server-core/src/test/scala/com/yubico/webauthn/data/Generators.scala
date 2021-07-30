@@ -429,7 +429,7 @@ object Generators {
         : Gen[CBORObject] =
       JacksonGenerators.cborValue(genJson = JacksonGenerators.objectNode())
 
-    private def assertionExtensionInputs(
+    def assertionExtensionInputs(
         appidGen: Gen[Option[AppId]] = Gen.option(arbitrary[AppId]),
         largeBlobGen: Gen[
           Option[com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput]
