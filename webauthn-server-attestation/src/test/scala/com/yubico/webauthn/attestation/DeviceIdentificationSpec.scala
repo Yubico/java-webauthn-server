@@ -172,7 +172,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
 
       it("a YubiKey Bio.") {
         check(
-          "YubiKey Bio",
+          "YubiKey Bio - FIDO Edition",
           RealExamples.YubikeyBio_5_5_4,
           Set(USB),
         )
@@ -304,7 +304,7 @@ class DeviceIdentificationSpec extends FunSpec with Matchers {
 
       it("a YubiKey Bio.") {
         check(
-          "YubiKey Bio",
+          "YubiKey Bio - FIDO Edition",
           RealExamples.YubikeyBio_5_5_4,
           Set(USB),
         )
