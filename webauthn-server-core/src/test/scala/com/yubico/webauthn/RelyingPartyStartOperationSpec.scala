@@ -365,8 +365,67 @@ class RelyingPartyStartOperationSpec
       pkccoFalse.getAuthenticatorSelection.get.isRequireResidentKey should be(
         false
       )
+      pkccoFalse.getAuthenticatorSelection.get.getResidentKey should be(
+        ResidentKeyRequirement.DISCOURAGED
+      )
       pkccoTrue.getAuthenticatorSelection.get.isRequireResidentKey should be(
         true
+      )
+      pkccoTrue.getAuthenticatorSelection.get.getResidentKey should be(
+        ResidentKeyRequirement.REQUIRED
+      )
+    }
+
+    it("respects the authenticatorAttachment parameter.") {
+      val rp = relyingParty()
+
+      val pkcco = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
+              .build()
+          )
+          .build()
+      )
+      val pkccoWith = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .authenticatorAttachment(
+                Optional.of(AuthenticatorAttachment.PLATFORM)
+              )
+              .build()
+          )
+          .build()
+      )
+      val pkccoWithout = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .authenticatorAttachment(Optional.empty[AuthenticatorAttachment])
+              .build()
+          )
+          .build()
+      )
+
+      pkcco.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
+        Some(AuthenticatorAttachment.CROSS_PLATFORM)
+      )
+      pkccoWith.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
+        Some(AuthenticatorAttachment.PLATFORM)
+      )
+      pkccoWithout.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
+        None
       )
     }
 

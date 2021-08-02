@@ -63,8 +63,7 @@ public class AuthenticatorSelectionCriteria {
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
    *     discoverable Credential</a>
    */
-  @Builder.Default
-  private final ResidentKeyRequirement residentKey = ResidentKeyRequirement.DISCOURAGED;
+  private final ResidentKeyRequirement residentKey;
 
   /**
    * Describes the Relying Party's requirements regarding <a
@@ -72,8 +71,7 @@ public class AuthenticatorSelectionCriteria {
    * for the <code>navigator.credentials.create()</code> operation. Eligible authenticators are
    * filtered to only those capable of satisfying this requirement.
    */
-  @NonNull @Builder.Default
-  private UserVerificationRequirement userVerification = UserVerificationRequirement.PREFERRED;
+  private UserVerificationRequirement userVerification;
 
   /**
    * If present, eligible authenticators are filtered to only authenticators attached with the
@@ -104,17 +102,18 @@ public class AuthenticatorSelectionCriteria {
       @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
       @JsonProperty("requireResidentKey") Boolean requireResidentKey,
       @JsonProperty("residentKey") ResidentKeyRequirement residentKey,
-      @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification) {
+      @JsonProperty("userVerification") UserVerificationRequirement userVerification) {
     this.authenticatorAttachment = authenticatorAttachment;
 
     if (residentKey == null && requireResidentKey != null) {
       this.residentKey =
           requireResidentKey ? ResidentKeyRequirement.REQUIRED : ResidentKeyRequirement.DISCOURAGED;
     } else {
-      this.residentKey = residentKey;
+      this.residentKey = residentKey == null ? ResidentKeyRequirement.DISCOURAGED : residentKey;
     }
 
-    this.userVerification = userVerification;
+    this.userVerification =
+        userVerification == null ? UserVerificationRequirement.PREFERRED : userVerification;
   }
 
   /** For use by the builder. */
