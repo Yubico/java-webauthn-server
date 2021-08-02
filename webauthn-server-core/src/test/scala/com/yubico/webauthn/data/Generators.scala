@@ -395,7 +395,7 @@ object Generators {
         largeBlob <- largeBlobGen
       } yield {
         val b = ClientRegistrationExtensionOutputs.builder()
-        appidExclude.foreach(b.appidExclude)
+        appidExclude.foreach(appidExclude => b.appidExclude(appidExclude))
         credProps.foreach(b.credProps)
         largeBlob.foreach(b.largeBlob)
         b.build()
@@ -551,7 +551,7 @@ object Generators {
       for { extensionId <- extensionIds } {
         extensionId match {
           case "appidExclude" =>
-            resultBuilder.appidExclude(clientOutputs.getAppidExclude)
+            resultBuilder.appidExclude(clientOutputs.getAppidExclude.get)
           case "credProps" =>
             resultBuilder.credProps(clientOutputs.getCredProps orElse null)
           case "largeBlob" =>

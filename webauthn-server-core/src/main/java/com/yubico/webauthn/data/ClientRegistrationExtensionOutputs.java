@@ -54,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ClientRegistrationExtensionOutputs implements ClientExtensionOutputs {
 
-  private final boolean appidExclude;
+  private final Boolean appidExclude;
 
   private final Extensions.CredentialProperties.CredentialPropertiesOutput credProps;
 
@@ -62,7 +62,7 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
 
   @JsonCreator
   private ClientRegistrationExtensionOutputs(
-      @JsonProperty("appidExclude") boolean appidExclude,
+      @JsonProperty("appidExclude") Boolean appidExclude,
       @JsonProperty("credProps")
           Extensions.CredentialProperties.CredentialPropertiesOutput credProps,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob) {
@@ -75,7 +75,7 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
   @EqualsAndHashCode.Include
   public Set<String> getExtensionIds() {
     HashSet<String> ids = new HashSet<>();
-    if (appidExclude) {
+    if (appidExclude != null) {
       ids.add(Extensions.AppidExclude.EXTENSION_ID);
     }
     if (credProps != null) {
@@ -87,14 +87,8 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
     return ids;
   }
 
-  public boolean getAppidExclude() {
-    return appidExclude;
-  }
-
-  /** For JSON serialization, to omit false values. */
-  @JsonProperty("appidExclude")
-  private Boolean getAppidExcludeJson() {
-    return appidExclude ? true : null;
+  public Optional<Boolean> getAppidExclude() {
+    return Optional.ofNullable(appidExclude);
   }
 
   /**

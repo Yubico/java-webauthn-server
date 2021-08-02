@@ -284,16 +284,19 @@ class ExtensionsSpec
       }
     }
 
-    it("omits appidExclude from JSON serialization when false.") {
+    it("preserves appidExclude in JSON serialization.") {
       forAll(
         Generators.Extensions
           .clientRegistrationExtensionOutputs(appidExcludeGen =
-            Gen.option(false)
+            Gen.some(arbitrary[Boolean])
           )
       ) { input: ClientRegistrationExtensionOutputs =>
         val json = JacksonCodecs.json().valueToTree[ObjectNode](input)
         println(json)
-        json.has(Extensions.AppidExclude.EXTENSION_ID) should be(false)
+        json.has(Extensions.AppidExclude.EXTENSION_ID) should be(true)
+        json.get("appidExclude").booleanValue should equal(
+          input.getAppidExclude.get
+        )
       }
     }
 
