@@ -161,6 +161,33 @@ class RelyingPartyStartOperationSpec
       pkcco.getAuthenticatorSelection.asScala should equal(Some(authnrSel))
     }
 
+    it("allows setting authenticatorSelection with an Optional value.") {
+      val authnrSel = AuthenticatorSelectionCriteria
+        .builder()
+        .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
+        .requireResidentKey(true)
+        .build()
+
+      val pkccoWith = relyingParty().startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(Optional.of(authnrSel))
+          .build()
+      )
+      val pkccoWithout = relyingParty().startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            Optional.empty[AuthenticatorSelectionCriteria]
+          )
+          .build()
+      )
+      pkccoWith.getAuthenticatorSelection.asScala should equal(Some(authnrSel))
+      pkccoWithout.getAuthenticatorSelection.asScala should equal(None)
+    }
+
     it("uses the RelyingParty setting for attestationConveyancePreference.") {
       forAll { acp: Option[AttestationConveyancePreference] =>
         val pkcco =
