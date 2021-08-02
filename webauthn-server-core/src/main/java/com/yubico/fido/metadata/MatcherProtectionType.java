@@ -96,7 +96,7 @@ public class MatcherProtectionType {
     if (name == null) {
       return String.format("%s(%04x)", MatcherProtectionType.class.getSimpleName(), value);
     } else {
-      return name;
+      return "MATCHER_PROTECTION_" + name;
     }
   }
 }

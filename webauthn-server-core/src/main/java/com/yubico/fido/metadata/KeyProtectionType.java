@@ -138,7 +138,7 @@ public class KeyProtectionType {
     if (name == null) {
       return String.format("%s(%04x)", KeyProtectionType.class.getSimpleName(), value);
     } else {
-      return name;
+      return "KEY_PROTECTION_" + name;
     }
   }
 }

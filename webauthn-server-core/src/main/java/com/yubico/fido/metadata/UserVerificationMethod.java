@@ -213,7 +213,7 @@ public class UserVerificationMethod {
     if (name == null) {
       return String.format("%s(%04x)", UserVerificationMethod.class.getSimpleName(), value);
     } else {
-      return name;
+      return "USER_VERIFY_" + name;
     }
   }
 }
