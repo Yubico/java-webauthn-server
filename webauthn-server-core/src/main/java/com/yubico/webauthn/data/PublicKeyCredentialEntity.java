@@ -91,6 +91,10 @@ public interface PublicKeyCredentialEntity {
    * icon member's value. Authenticators MAY ignore an icon member's value if its length is greater
    * than 128 bytes. The URL's scheme MAY be "data" to avoid fetches of the URL, at the cost of
    * needing more storage.
+   *
+   * @deprecated The <code>icon</code> field has been removed from WebAuthn Level 2. This method
+   *     will be removed in the next major version of this library.
    */
-  Optional<URL> getIcon();
+  @Deprecated
+  Optional<URL> getIcon(); // TODO v2.0: delete this
 }

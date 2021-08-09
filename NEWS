@@ -5,6 +5,9 @@ Deprecated features:
 * `AuthenticatorSelectionCriteria` methods
   `builder().requireResidentKey(boolean)` and `isRequireResidentKey()`
   deprecated in favor of a new option, see below.
+* The `icon` field in `RelyingPartyIdentity` and `UserIdentity`, and its
+  associated methods, are now deprecated. The corresponding property was removed
+  in WebAuthn Level 2.
 
 Deprecated features will be removed in the next major version release.
 

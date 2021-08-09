@@ -111,8 +111,11 @@ public class UserIdentity implements PublicKeyCredentialEntity {
    * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s
    * value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches
    * of the URL, at the cost of needing more storage.
+   *
+   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This field
+   *     will be removed in the next major version of the library.
    */
-  private final URL icon;
+  @Deprecated private final URL icon; // TODO v2.0: delete this
 
   @JsonCreator
   private UserIdentity(
@@ -163,7 +166,11 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
      * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
      * avoid fetches of the URL, at the cost of needing more storage.
+     *
+     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
+     *     method will be removed in the next major version of the library.
      */
+    @Deprecated
     public UserIdentityBuilder icon(@NonNull Optional<URL> icon) {
       return this.icon(icon.orElse(null));
     }
@@ -176,13 +183,22 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
      * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
      * avoid fetches of the URL, at the cost of needing more storage.
+     *
+     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
+     *     method will be removed in the next major version of the library.
      */
+    @Deprecated
     public UserIdentityBuilder icon(URL icon) {
       this.icon = icon;
       return this;
     }
   }
 
+  /**
+   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This method
+   *     will be removed in the next major version of the library.
+   */
+  @Deprecated
   @Override
   public Optional<URL> getIcon() {
     return Optional.ofNullable(icon);
