@@ -8,10 +8,6 @@ plugins {
 
 description = 'WebAuthn demo'
 
-configurations {
-  forJdk10
-}
-
 dependencies {
   implementation(platform(rootProject))
 
@@ -30,14 +26,7 @@ dependencies {
     'org.slf4j:slf4j-api',
   )
 
-  forJdk10(
-    'javax.activation:activation',
-    'javax.xml.bind:jaxb-api',
-  )
-
   runtimeOnly(
-    configurations.forJdk10,
-
     'ch.qos.logback:logback-classic',
     'org.glassfish.jersey.containers:jersey-container-servlet',
     'org.glassfish.jersey.inject:jersey-hk2',
