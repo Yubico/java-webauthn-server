@@ -40,7 +40,7 @@ if (publishEnabled) {
 }
 
 wrapper {
-  gradleVersion = '6.8'
+  gradleVersion = '7.2'
 }
 
 dependencies {
