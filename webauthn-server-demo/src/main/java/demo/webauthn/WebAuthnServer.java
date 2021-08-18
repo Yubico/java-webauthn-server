@@ -94,6 +94,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -707,7 +708,7 @@ public class WebAuthnServer {
             .publicKeyCose(result.getPublicKeyCose())
             .signatureCount(result.getSignatureCount())
             .build(),
-        result.getTransports(),
+        result.getKeyId().getTransports().orElseGet(TreeSet::new),
         result.getAttestationMetadata());
   }
 

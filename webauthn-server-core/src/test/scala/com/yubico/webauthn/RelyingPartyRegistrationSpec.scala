@@ -2751,8 +2751,10 @@ class RelyingPartyRegistrationSpec
 
           describe("It is RECOMMENDED to also:") {
             it("Associate the credentialId with the transport hints returned by calling credential.response.getTransports(). This value SHOULD NOT be modified before or after storing it. It is RECOMMENDED to use this value to populate the transports of the allowCredentials option in future get() calls to help the client know how to find a suitable authenticator.") {
-              result.getTransports should equal(
-                testData.response.getResponse.getTransports
+              result.getKeyId.getTransports.asScala should equal(
+                Some(
+                  testData.response.getResponse.getTransports
+                )
               )
             }
           }
@@ -3412,12 +3414,14 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getTransports.asScala should equal(
-            Set(AuthenticatorTransport.USB, AuthenticatorTransport.NFC)
+          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+            Some(Set(AuthenticatorTransport.USB, AuthenticatorTransport.NFC))
           )
         }
 
-        it("returns empty when transport hints are not available.") {
+        it(
+          "returns present but empty when transport hints are not available."
+        ) {
           val result = rp.finishRegistration(
             FinishRegistrationOptions
               .builder()
@@ -3434,10 +3438,12 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getTransports.asScala should equal(Set.empty)
+          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+            Some(Set.empty)
+          )
         }
 
-        it("returns empty when transport hints are empty.") {
+        it("returns present but empty when transport hints are empty.") {
           val result = rp.finishRegistration(
             FinishRegistrationOptions
               .builder()
@@ -3455,7 +3461,9 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getTransports.asScala should equal(Set.empty)
+          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+            Some(Set.empty)
+          )
         }
       }
     }

@@ -30,17 +30,13 @@ import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
-import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.SortedSet;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -52,9 +48,13 @@ public class RegistrationResult {
 
   /**
    * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a>
+   * and <a
+   * href="https://www.w3.org/TR/webauthn-2/#dom-publickeycredentialdescriptor-transports">transports</a>
    * of the created credential.
    *
    * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
+   * @see <a href="https://www.w3.org/TR/webauthn-2/#dictionary-credential-descriptor">5.8.3.
+   *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
    * @see PublicKeyCredential#getId()
    */
   @NonNull private final PublicKeyCredentialDescriptor keyId;
@@ -116,17 +116,6 @@ public class RegistrationResult {
    */
   private final Attestation attestationMetadata;
 
-  /**
-   * The transports returned with the created credential.
-   *
-   * <p>This is used in {@link RelyingParty#startAssertion(StartAssertionOptions)} to set the {@link
-   * PublicKeyCredentialDescriptor#getTransports() transports} members of {@link
-   * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials}.
-   *
-   * @see PublicKeyCredentialDescriptor#getTransports()
-   */
-  @NonNull private final SortedSet<AuthenticatorTransport> transports;
-
   private final ClientRegistrationExtensionOutputs clientExtensionOutputs;
 
   private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
@@ -140,7 +129,6 @@ public class RegistrationResult {
       @JsonProperty("signatureCount") Long signatureCount,
       @NonNull @JsonProperty("warnings") List<String> warnings,
       @JsonProperty("attestationMetadata") Attestation attestationMetadata,
-      @JsonProperty("transports") Set<AuthenticatorTransport> transports,
       @JsonProperty("clientExtensionOutputs")
           ClientRegistrationExtensionOutputs clientExtensionOutputs,
       @JsonProperty("authenticatorExtensionOutputs")
@@ -150,10 +138,6 @@ public class RegistrationResult {
     this.attestationType = attestationType;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount == null ? 0 : signatureCount;
-    this.transports =
-        transports == null
-            ? Collections.emptySortedSet()
-            : CollectionUtil.immutableSortedSet(transports);
     this.warnings = CollectionUtil.immutableList(warnings);
     this.attestationMetadata = attestationMetadata;
     this.clientExtensionOutputs =

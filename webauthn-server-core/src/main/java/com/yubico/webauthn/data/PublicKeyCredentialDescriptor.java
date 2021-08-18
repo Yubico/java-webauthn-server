@@ -62,8 +62,8 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
    * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the
    * public key credential the caller is referring to.
    *
-   * <p>This SHOULD be set to the unmodified value returned from {@link
-   * RegistrationResult#getTransports()} when the credential was registered.
+   * <p>This SHOULD be stored along with the {@link #getId() id} and used unmodified whenever
+   * creating a {@link PublicKeyCredentialDescriptor} for this credential.
    */
   private final SortedSet<AuthenticatorTransport> transports;
 
@@ -125,7 +125,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
      * the public key credential the caller is referring to.
      *
      * <p>This SHOULD be set to the unmodified value returned from {@link
-     * RegistrationResult#getTransports()} when the credential was registered.
+     * RegistrationResult#getKeyId()}.{@link #getTransports()} when the credential was registered.
      */
     public PublicKeyCredentialDescriptorBuilder transports(
         @NonNull Optional<Set<AuthenticatorTransport>> transports) {
@@ -137,7 +137,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
      * the public key credential the caller is referring to.
      *
      * <p>This SHOULD be set to the unmodified value returned from {@link
-     * RegistrationResult#getTransports()} when the credential was registered.
+     * RegistrationResult#getKeyId()}.{@link #getTransports()} when the credential was registered.
      */
     public PublicKeyCredentialDescriptorBuilder transports(Set<AuthenticatorTransport> transports) {
       this.transports = transports;

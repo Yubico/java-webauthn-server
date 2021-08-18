@@ -759,7 +759,6 @@ final class FinishRegistrationSteps {
                           response.getResponse().getParsedAuthenticatorData())
                       .orElse(null))
               .attestationMetadata(attestationMetadata)
-              .transports(response.getResponse().getTransports())
               .warnings(allWarnings())
               .build());
     }
@@ -768,6 +767,7 @@ final class FinishRegistrationSteps {
       return PublicKeyCredentialDescriptor.builder()
           .id(response.getId())
           .type(response.getType())
+          .transports(response.getResponse().getTransports())
           .build();
     }
   }
