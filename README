@@ -332,6 +332,7 @@ Use the included
 https://docs.gradle.org/current/userguide/gradle_wrapper.html[Gradle wrapper] to
 build the `.jar` artifact:
 
+[source,shell]
 ----------
 $ ./gradlew :webauthn-server-core:jar
 ----------
@@ -345,7 +346,8 @@ Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds 
 tagged commits should therefore be verifiable by signatures from Maven Central
 and GitHub releases:
 
-```
+[source,shell]
+----------
 $ git checkout 1.4.0-RC2
 $ ./gradlew :webauthn-server-core:jar
 
@@ -354,7 +356,7 @@ $ gpg --verify webauthn-server-core-1.4.0-RC2.jar.asc webauthn-server-core/build
 
 $ wget https://github.com/Yubico/java-webauthn-server/releases/download/1.4.0-RC2/webauthn-server-core-1.4.0-RC2.jar.asc
 $ gpg --verify webauthn-server-core-1.4.0-RC2.jar.asc webauthn-server-core/build/libs/webauthn-server-core-1.4.0-RC2.jar
-```
+----------
 
 Note that building with a different JDK may produce a different artifact. To
 ensure binary reproducibility, please build with the same JDK as specified in
@@ -369,6 +371,7 @@ Developers site].
 
 To run the tests:
 
+[source,shell]
 ----------
 $ ./gradlew check
 ----------
@@ -376,6 +379,7 @@ $ ./gradlew check
 To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
 minutes):
 
+[source,shell]
 ----------
 $ ./gradlew pitest
 ----------
