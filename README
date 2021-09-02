@@ -155,9 +155,11 @@ RelyingParty rp = RelyingParty.builder()
 A registration ceremony consists of 5 main steps:
 
  1. Generate registration parameters using `RelyingParty.startRegistration(...)`.
- 2. Send registration parameters to the client and call `navigator.credentials.create()`.
+ 2. Send registration parameters to the client and call
+    https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[`navigator.credentials.create()`].
  3. With `cred` as the result of the successfully resolved promise,
-    call `cred.getClientExtensionResults()` and `cred.response.getTransports()`
+    call https://www.w3.org/TR/webauthn-2/#ref-for-dom-publickeycredential-getclientextensionresults[`cred.getClientExtensionResults()`]
+    and https://www.w3.org/TR/webauthn-2/#ref-for-dom-authenticatorattestationresponse-gettransports[`cred.response.getTransports()`]
     and return their results along with `cred` to the server.
  4. Validate the response using `RelyingParty.finishRegistration(...)`.
  5. Update your database using the `finishRegistration` output.
@@ -230,6 +232,7 @@ PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensio
 try {
     RegistrationResult result = rp.finishRegistration(FinishRegistrationOptions.builder()
         .request(request)  // The PublicKeyCredentialCreationOptions from startRegistration above
+                           // NOTE: Must be stored in server memory or otherwise protected against tampering
         .response(pkc)
         .build());
 } catch (RegistrationFailedException e) { /* ... */ }
@@ -242,7 +245,7 @@ Here's an example of things you'll likely want to store:
 ----------
 storeCredential(             // Some database access method of your own design
   "alice",                   // Username or other appropriate user identifier
-  result.getKeyId(),         // Credential ID for allowCredentials
+  result.getKeyId(),         // Credential ID and transports for allowCredentials
   result.getPublicKeyCose(), // Public key for verifying authentication signatures
   result.isDiscoverable(),   // Can this key be used for username-less auth?
   result.getTransports(),    // Transport hints to put in allowCredentials along with ID
@@ -258,9 +261,12 @@ storeCredential(             // Some database access method of your own design
 Like registration ceremonies, an authentication ceremony consists of 5 main steps:
 
  1. Generate authentication parameters using `RelyingParty.startAssertion(...)`.
- 2. Send authentication parameters to the client, call `navigator.credentials.get()` and return the response.
- 3. With `cred` as the result of the successfully resolved promise,
-    call `cred.getClientExtensionResults()` and return the result along with `cred` to the server.
+ 2. Send authentication parameters to the client, call
+    https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/get[`navigator.credentials.get()`]
+    and return the response.
+ 3. With `cred` as the result of the successfully resolved promise, call
+    https://www.w3.org/TR/webauthn-2/#ref-for-dom-publickeycredential-getclientextensionresults[`cred.getClientExtensionResults()`]
+    and return the result along with `cred` to the server.
  4. Validate the response using `RelyingParty.finishAssertion(...)`.
  5. Update your database using the `finishAssertion` output, and act upon the result (for example, grant login access).
 
@@ -269,7 +275,7 @@ First, generate authentication parameters and send them to the client:
 [source,java]
 ----------
 AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
-    .username(Optional.of("alice"))  // Omit for username-less login
+    .username("alice")  // Omit for username-less login
     .build());
 String credentialGetJson = request.toCredentialGetJson();
 return credentialGetJson;  // Send to client
