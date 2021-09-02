@@ -126,15 +126,21 @@ Initiate a registration ceremony:
 
 [source,java]
 ----------
-byte[] userHandle = new byte[64];
-random.nextBytes(userHandle);
+Optional<UserIdentity> findExistingUser(String username) { /* ... */ }
 
 PublicKeyCredentialCreationOptions request = rp.startRegistration(StartRegistrationOptions.builder()
-    .user(UserIdentity.builder()
-        .name("alice")
-        .displayName("Alice Hypothetical")
-        .id(new ByteArray(userHandle))
-        .build())
+    .user(
+        findExistingUser("alice")
+            .orElseGet(() -> {
+                byte[] userHandle = new byte[64];
+                random.nextBytes(userHandle);
+                return UserIdentity.builder()
+                    .name("alice")
+                    .displayName("Alice Hypothetical")
+                    .id(new ByteArray(userHandle))
+                    .build();
+            })
+    )
     .build());
 ----------
 
