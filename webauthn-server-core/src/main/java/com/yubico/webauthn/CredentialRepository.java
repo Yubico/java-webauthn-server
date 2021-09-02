@@ -37,7 +37,12 @@ import java.util.Set;
  */
 public interface CredentialRepository {
 
-  /** Get the credential IDs of all credentials registered to the user with the given username. */
+  /**
+   * Get the credential IDs of all credentials registered to the user with the given username.
+   *
+   * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
+   * returns a value suitable for inclusion in this set.
+   */
   Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
 
   /**
