@@ -75,7 +75,7 @@ In addition to the main `webauthn-server-core` module, there are also:
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
   and annotate responses with additional authenticator metadata
 - Reproducible builds: release signatures match fresh builds from source. See
-  link:#Building[Building] below.
+  link:#reproducible-builds[Reproducible builds] below.
 
 
 === Non-features
@@ -535,6 +535,24 @@ version is derived from the most recent Git tag. Builds done on a tagged commit
 will have a plain `x.y.z` version number, while a build on any other commit will
 result in a version number containing the abbreviated commit hash.
 
+
+To run the tests:
+
+[source,shell]
+----------
+$ ./gradlew check
+----------
+
+To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
+minutes):
+
+[source,shell]
+----------
+$ ./gradlew pitest
+----------
+
+
+=== Reproducible builds
 Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds from
 tagged commits should therefore be verifiable by signatures from Maven Central
 and GitHub releases:
@@ -560,19 +578,3 @@ built artifacts.
 Official Yubico software signing keys are listed on the
 https://developers.yubico.com/Software_Projects/Software_Signing.html[Yubico
 Developers site].
-
-
-To run the tests:
-
-[source,shell]
-----------
-$ ./gradlew check
-----------
-
-To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
-minutes):
-
-[source,shell]
-----------
-$ ./gradlew pitest
-----------
