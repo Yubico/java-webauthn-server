@@ -67,6 +67,11 @@ public class StartAssertionOptions {
    * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
    * authentication operation.
    *
+   * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+   * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was performed
+   * in this authentication ceremony.
+   *
    * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
    */
   private final UserVerificationRequirement userVerification;
@@ -102,6 +107,11 @@ public class StartAssertionOptions {
   /**
    * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
    * authentication operation.
+   *
+   * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+   * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was performed
+   * in this authentication ceremony.
    *
    * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
    */
@@ -165,6 +175,11 @@ public class StartAssertionOptions {
      * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
      * authentication operation.
      *
+     * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+     * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+     * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was
+     * performed in this authentication ceremony.
+     *
      * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */
     public StartAssertionOptionsBuilder userVerification(
@@ -176,6 +191,11 @@ public class StartAssertionOptions {
     /**
      * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
      * authentication operation.
+     *
+     * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+     * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+     * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was
+     * performed in this authentication ceremony.
      *
      * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */
