@@ -197,13 +197,35 @@ Now call the WebAuthn API on the client side:
 
 [source,javascript]
 ----------
+function base64urlToUint8array(base64Bytes) {
+  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
+  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
+}
 function uint8arrayToBase64url(bytes) {
   return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 fetch(/* ... */)                    // Make the call that returns the credentialCreateJson above
-  .then(credentialCreateJson =>     // Call WebAuthn ceremony
-    navigator.credentials.create(credentialCreateJson))
+  .then(credentialCreateJson => ({  // Decode byte arrays from base64url
+    publicKey: {
+      ...credentialCreateJson.publicKey,
+
+      challenge: base64urlToUint8Array(credentialCreateJson.publicKey.challenge),
+      user: {
+        ...credentialCreateJson.publicKey.user,
+        id: base64urlToUint8Array(credentialCreateJson.publicKey.user.id),
+      },
+      excludeCredentials: credentialCreateJson.publicKey.excludeCredentials.map(credential => ({
+        ...credential,
+        id: base64urlToUint8Array(credential.id),
+      })),
+
+      // Warning: Extension inputs could also contain binary data that needs encoding
+      extensions: credentialCreateJson.publicKey.extensions,
+    },
+  }))
+  .then(credentialCreateOptions =>  // Call WebAuthn ceremony
+    navigator.credentials.create(credentialCreateOptions))
   .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
     type: publicKeyCredential.type,
     id: publicKeyCredential.id,
@@ -287,13 +309,32 @@ Now call the WebAuthn API on the client side:
 
 [source,javascript]
 ----------
+function base64urlToUint8array(base64Bytes) {
+  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
+  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
+}
 function uint8arrayToBase64url(bytes) {
   return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
 fetch(/* ... */)                    // Make the call that returns the credentialGetJson above
-  .then(credentialGetJson =>        // Call WebAuthn ceremony
-    navigator.credentials.get(credentialGetJson))
+  .then(credentialGetJson => ({     // Decode byte arrays from base64url
+    publicKey: {
+      ...credentialGetJson.publicKey,
+      allowCredentials: credentialGetJson.publicKey.allowCredentials
+        && credentialGetJson.publicKey.allowCredentials.map(credential => ({
+          ...credential,
+          id: base64urlToUint8Array(credential.id),
+        })),
+
+      challenge: base64urlToUint8Array(credentialGetJson.publicKey.challenge),
+
+      // Warning: Extension inputs could also contain binary data that needs encoding
+      extensions: credentialGetJson.publicKey.extensions,
+    },
+  }))
+  .then(credentialGetOptions =>        // Call WebAuthn ceremony
+    navigator.credentials.get(credentialGetOptions))
   .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
     type: publicKeyCredential.type,
     id: publicKeyCredential.id,
