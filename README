@@ -201,8 +201,7 @@ function uint8arrayToBase64url(bytes) {
   return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
-const credentialCreateJson =
-  fetch(/* ... */)                  // Make the call that returns the credentialCreateJson above
+fetch(/* ... */)                    // Make the call that returns the credentialCreateJson above
   .then(credentialCreateJson =>     // Call WebAuthn ceremony
     navigator.credentials.create(credentialCreateJson))
   .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
@@ -292,8 +291,7 @@ function uint8arrayToBase64url(bytes) {
   return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
-const credentialGetJson =
-  fetch(/* ... */)                  // Make the call that returns the credentialGetJson above
+fetch(/* ... */)                    // Make the call that returns the credentialGetJson above
   .then(credentialGetJson =>        // Call WebAuthn ceremony
     navigator.credentials.get(credentialGetJson))
   .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
