@@ -40,7 +40,7 @@ import lombok.Value;
  * the attributes that are returned to the caller when a new credential is created, or a new
  * assertion is requested.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#iface-pkcredential">§5.1.
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#iface-pkcredential">§5.1.
  *     PublicKeyCredential Interface</a>
  */
 @Value
@@ -160,7 +160,7 @@ public class PublicKeyCredential<
    * <dl>
    *   <dt>resp:
    *   <dd>The <a
-   *       href="https://www.w3.org/TR/webauthn-1/#iface-pkcredential">PublicKeyCredential</a>
+   *       href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#iface-pkcredential">PublicKeyCredential</a>
    *       object returned from a registration ceremony.
    *   <dt>id:
    *   <dd>The string value of <code>resp.id</code>
@@ -211,7 +211,7 @@ public class PublicKeyCredential<
    * <dl>
    *   <dt>resp:
    *   <dd>The <a
-   *       href="https://www.w3.org/TR/webauthn-1/#iface-pkcredential">PublicKeyCredential</a>
+   *       href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#iface-pkcredential">PublicKeyCredential</a>
    *       object returned from an authentication ceremony.
    *   <dt>id:
    *   <dd>The string value of <code>resp.id</code>

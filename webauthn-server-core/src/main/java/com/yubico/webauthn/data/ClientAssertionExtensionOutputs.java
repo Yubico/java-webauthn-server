@@ -36,15 +36,15 @@ import lombok.Value;
 
 /**
  * Contains <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
- * outputs</a> from a <code>navigator.credentials.get()</code> operation.
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+ * extension outputs</a> from a <code>navigator.credentials.get()</code> operation.
  *
  * <p>Note that there is no guarantee that any extension input present in {@link
  * AssertionExtensionInputs} will have a corresponding output present here.
  *
  * <p>The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
  *     Extensions</a>
  */
 @Value
@@ -57,7 +57,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    * <p>This value should be ignored because its behaviour is underspecified, see: <a
    * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   private final Boolean appid;
@@ -91,7 +91,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    * <p>This value should be ignored because its behaviour is underspecified, see: <a
    * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   public Optional<Boolean> getAppid() {
@@ -110,7 +110,8 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
      * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
@@ -132,7 +133,8 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
      * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public ClientAssertionExtensionOutputsBuilder appid(boolean appid) {

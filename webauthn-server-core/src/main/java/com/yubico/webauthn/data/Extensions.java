@@ -72,10 +72,10 @@ public class Extensions {
        * credential or a server-side credential.
        *
        * @see <a
-       *     href="https://www.w3.org/TR/2020/WD-webauthn-2-20200730/#dom-credentialpropertiesoutput-rk">§10.4.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-credentialpropertiesoutput-rk">§10.4.
        *     Credential Properties Extension (credProps)</a>
        * @see <a
-       *     href="https://www.w3.org/TR/2020/WD-webauthn-2-20200730/#client-side-discoverable-credential">Client-side
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
        *     discoverable Credential</a>
        * @see <a
        *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
@@ -91,7 +91,7 @@ public class Extensions {
    * Definitions for the Large blob storage extension (<code>largeBlob</code>).
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
    *     Large blob storage extension (largeBlob)</a>
    */
   public static class LargeBlob {
@@ -102,7 +102,7 @@ public class Extensions {
      * registration ceremonies.
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     @Value
@@ -139,7 +139,7 @@ public class Extensions {
        * @see #REQUIRED
        * @see #PREFERRED
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       @Value
@@ -156,7 +156,7 @@ public class Extensions {
          * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
          *
          * @see <a
-         *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+         *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
          *     Large blob storage extension (largeBlob)</a>
          */
         public static final LargeBlobSupport REQUIRED = new LargeBlobSupport("required");
@@ -171,7 +171,7 @@ public class Extensions {
          * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
          *
          * @see <a
-         *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+         *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
          *     Large blob storage extension (largeBlob)</a>
          */
         public static final LargeBlobSupport PREFERRED = new LargeBlobSupport("preferred");
@@ -198,7 +198,7 @@ public class Extensions {
      * authentication ceremonies.
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     @Value
@@ -209,7 +209,7 @@ public class Extensions {
        *
        * @see #read()
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargeblobinputs-read">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       @JsonProperty private final boolean read;
@@ -219,7 +219,7 @@ public class Extensions {
        *
        * @see #write(ByteArray)
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-write">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargeblobinputs-write">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       @JsonProperty private final ByteArray write;
@@ -243,7 +243,7 @@ public class Extensions {
        * <p>Mutually exclusive with {@link #write(ByteArray)}.
        *
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargeblobinputs-read">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       public static LargeBlobAuthenticationInput read() {
@@ -257,7 +257,7 @@ public class Extensions {
        * <p>Mutually exclusive with {@link #read()}.
        *
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-write">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargeblobinputs-write">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       public static LargeBlobAuthenticationInput write(@NonNull final ByteArray write) {
@@ -269,7 +269,7 @@ public class Extensions {
        *     <code>false</code> otherwise.
        * @see #read()
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargeblobinputs-read">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       public boolean getRead() {
@@ -280,7 +280,7 @@ public class Extensions {
        * @return The value of the <code>write</code> property if configured, empty otherwise.
        * @see #write(ByteArray)
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargeblobinputs-read">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargeblobinputs-read">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       public Optional<ByteArray> getWrite() {
@@ -293,7 +293,7 @@ public class Extensions {
      * registration ceremonies.
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     @Value
@@ -302,7 +302,7 @@ public class Extensions {
        * <code>true</code> if, and only if, the created credential supports storing large blobs.
        *
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargebloboutputs-supported">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargebloboutputs-supported">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        * @see LargeBlobRegistrationInput#getSupport()
        */
@@ -319,7 +319,7 @@ public class Extensions {
      * authentication ceremonies.
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     @Value
@@ -340,7 +340,7 @@ public class Extensions {
        * was <code>true</code>.
        *
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargebloboutputs-blob">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargebloboutputs-blob">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       public Optional<ByteArray> getBlob() {
@@ -357,7 +357,7 @@ public class Extensions {
        *     <code>true</code> if and only if the value of {@link
        *     LargeBlobAuthenticationInput#getWrite()} was successfully stored by the authenticator.
        * @see <a
-       *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#dom-authenticationextensionslargebloboutputs-written">§10.5.
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargebloboutputs-written">§10.5.
        *     Large blob storage extension (largeBlob)</a>
        */
       public Optional<Boolean> getWritten() {

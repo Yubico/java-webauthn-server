@@ -45,7 +45,7 @@ import lombok.Value;
  * characteristics of the credential during registration.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorattestationresponse">§5.2.1.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticatorattestationresponse">§5.2.1.
  *     Information About Public Key Credential (interface AuthenticatorAttestationResponse) </a>
  */
 @Value
@@ -60,11 +60,11 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
    * information that the Relying Party's server requires to validate the attestation statement, as
    * well as to decode and validate the authenticator data along with the JSON-serialized client
    * data. For more details, see <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4 Attestation</a>,
-   * <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#generating-an-attestation-object">§6.4.4
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4
+   * Attestation</a>, <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-generating-an-attestation-object">§6.4.4
    * Generating an Attestation Object</a>, and <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#fig-attStructs">Figure 5</a>.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#fig-attStructs">Figure 5</a>.
    */
   @NonNull private final ByteArray attestationObject;
 

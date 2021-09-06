@@ -36,7 +36,8 @@ import lombok.Value;
  * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding
  * protocol</a> used when communicating with the Relying Party.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-tokenbinding">dictionary
+ * @see <a
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-tokenbinding">dictionary
  *     TokenBinding</a>
  */
 @Value

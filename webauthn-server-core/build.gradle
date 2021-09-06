@@ -54,13 +54,13 @@ jar {
   manifest {
     attributes([
       'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
-      'Specification-Version': 'Level 2 Proposed Recommendation 2021-02-25',
+      'Specification-Version': 'Level 2 Proposed Recommendation 2021-04-08',
       'Specification-Vendor': 'World Wide Web Consortium',
 
-      'Specification-Url': 'https://www.w3.org/TR/2021/PR-webauthn-2-20210225/',
+      'Specification-Url': 'https://www.w3.org/TR/2021/REC-webauthn-2-20210408/',
       'Specification-Url-Latest': 'https://www.w3.org/TR/webauthn-2/',
-      'Specification-W3c-Status': 'proposed-recommendation',
-      'Specification-Release-Date': '2021-02-25',
+      'Specification-W3c-Status': 'recommendation',
+      'Specification-Release-Date': '2021-04-08',
 
       'Implementation-Id': 'java-webauthn-server',
       'Implementation-Title': 'Yubico Web Authentication server library',

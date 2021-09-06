@@ -44,7 +44,7 @@ import lombok.Value;
  * PublicKeyCredential} object returned by the latter methods.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialdescriptor">§5.10.3.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialdescriptor">§5.10.3.
  *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
  */
 @Value

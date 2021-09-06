@@ -70,10 +70,10 @@
  * parameter is a {@link com.yubico.webauthn.data.UserIdentity} describing the user for which to
  * create a credential. One noteworthy part of {@link com.yubico.webauthn.data.UserIdentity} is the
  * {@link com.yubico.webauthn.data.UserIdentity#getId() id} field, containing the <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> for the user.
- * This should be a stable, unique identifier for the user - equivalent to a username, in most
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a> for the
+ * user. This should be a stable, unique identifier for the user - equivalent to a username, in most
  * cases. However, due to <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-user-handle-privacy">privacy
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy">privacy
  * considerations</a> it is recommended to set the user handle to a random byte array rather than,
  * say, the username encoded in UTF-8.
  *
@@ -133,7 +133,7 @@
  * not set, then the {@link
  * com.yubico.webauthn.data.PublicKeyCredentialRequestOptions#getAllowCredentials()
  * allowCredentials} parameter will not be set. This which means the user must use a <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
  * credential</a> to authenticate; also known as "first-factor authentication". This use case has
  * both advantages and disadvantages; see the Web Authentication specification for an extended
  * discussion of this.

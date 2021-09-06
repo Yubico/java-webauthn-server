@@ -43,7 +43,7 @@ import lombok.Value;
  * private key, and optionally evidence of user consent to a specific transaction.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorassertionresponse">§5.2.2.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticatorassertionresponse">§5.2.2.
  *     Web Authentication Assertion (interface AuthenticatorAssertionResponse) </a>
  */
 @Value
@@ -59,7 +59,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
   /**
    * The raw signature returned from the authenticator. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
    * authenticatorGetAssertion Operation</a>.
    */
   @NonNull private final ByteArray signature;
@@ -67,7 +67,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
   /**
    * The user handle returned from the authenticator, or empty if the authenticator did not return a
    * user handle. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
    * authenticatorGetAssertion Operation</a>.
    */
   private final ByteArray userHandle;
@@ -94,7 +94,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
   /**
    * The user handle returned from the authenticator, or empty if the authenticator did not return a
    * user handle. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
    * authenticatorGetAssertion Operation</a>.
    */
   public Optional<ByteArray> getUserHandle() {
@@ -134,7 +134,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     /**
      * The user handle returned from the authenticator, or empty if the authenticator did not return
      * a user handle. See <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
      * authenticatorGetAssertion Operation</a>.
      */
     public AuthenticatorAssertionResponseBuilder userHandle(
@@ -145,7 +145,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     /**
      * The user handle returned from the authenticator, or empty if the authenticator did not return
      * a user handle. See <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
      * authenticatorGetAssertion Operation</a>.
      */
     public AuthenticatorAssertionResponseBuilder userHandle(ByteArray userHandle) {

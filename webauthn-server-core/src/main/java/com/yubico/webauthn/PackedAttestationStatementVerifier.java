@@ -324,7 +324,7 @@ final class PackedAttestationStatementVerifier
 
   /**
    * Parses an AAGUID into bytes. Refer to <a
-   * href="https://www.w3.org/TR/webauthn/#sctn-packed-attestation-cert-requirements">Packed
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-packed-attestation-cert-requirements">Packed
    * Attestation Statement Certificate Requirements</a> on the W3C web site for details of the ASN.1
    * structure that this method parses.
    *

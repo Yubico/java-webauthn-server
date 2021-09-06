@@ -48,19 +48,20 @@ public class AssertionResult {
   private final boolean success;
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a>
-   * of the credential used for the assertion.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> of the credential used for the assertion.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
    * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
    */
   @NonNull private final ByteArray credentialId;
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> of
-   * the authenticated user.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
+   * of the authenticated user.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">User Handle</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
    * @see UserIdentity#getId()
    * @see #getUsername()
    */
@@ -74,7 +75,7 @@ public class AssertionResult {
   @NonNull private final String username;
 
   /**
-   * The new <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#signcount">signature
+   * The new <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
    * count</a> of the credential used for the assertion.
    *
    * <p>You should update this value in your database.
@@ -95,7 +96,8 @@ public class AssertionResult {
    *       zero.
    * </ul>
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">§6.1.
    *     Authenticator Data</a>
    * @see AuthenticatorData#getSignatureCounter()
    * @see RegisteredCredential#getSignatureCount()

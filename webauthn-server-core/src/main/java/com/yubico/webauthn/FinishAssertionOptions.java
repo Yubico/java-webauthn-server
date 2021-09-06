@@ -45,7 +45,7 @@ public class FinishAssertionOptions {
    * The client's response to the {@link #getRequest() request}.
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#getAssertion">navigator.credentials.get()</a>
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-getAssertion">navigator.credentials.get()</a>
    */
   @NonNull
   private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>

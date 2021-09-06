@@ -37,7 +37,7 @@ import lombok.Value;
  * Used to supply additional Relying Party attributes when creating a new credential.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrpentity">§5.4.2.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialrpentity">§5.4.2.
  *     Relying Party Parameters for Credential Generation (dictionary PublicKeyCredentialRpEntity)
  *     </a>
  */
@@ -56,13 +56,13 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
 
   /**
    * A unique identifier for the Relying Party, which sets the <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>.
    *
    * <p>This defines the domains where users' credentials are valid. See <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for details
    * and examples.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
    */
   @NonNull private final String id;
@@ -103,13 +103,13 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
 
       /**
        * A unique identifier for the Relying Party, which sets the <a
-       * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>.
+       * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>.
        *
        * <p>This defines the domains where users' credentials are valid. See <a
        * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for
        * details and examples.
        *
-       * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>
        * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
        */
       public Step2 id(String id) {

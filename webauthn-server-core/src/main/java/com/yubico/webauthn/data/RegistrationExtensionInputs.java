@@ -36,13 +36,14 @@ import lombok.Builder;
 import lombok.Value;
 
 /**
- * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-input">client
+ * Contains <a
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-input">client
  * extension inputs</a> to a <code>navigator.credentials.create()</code> operation. All members are
  * optional.
  *
  * <p>The authenticator extension inputs are derived from these client extension inputs.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
  *     Extensions</a>
  */
 @Value
@@ -54,7 +55,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    * Enable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-appid-exclude-extension">§10.2.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
    *     FIDO AppID Exclusion Extension (appidExclude)</a>
    * @param appidExclude the <code>appidExclude</code> extension input.
    */
@@ -81,7 +82,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    *     configured, empty otherwise.
    * @see RegistrationExtensionInputsBuilder#appidExclude(AppId)
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-appid-exclude-extension">§10.2.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
    *     FIDO AppID Exclusion Extension (appidExclude)</a>
    */
   public Optional<AppId> getAppidExclude() {
@@ -93,7 +94,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    *     enabled, <code>false</code> otherwise.
    * @see RegistrationExtensionInputsBuilder#credProps()
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-authenticator-credential-properties-extension">§10.4.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
    *     Credential Properties Extension (credProps)</a>
    */
   public boolean getCredProps() {
@@ -114,7 +115,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    * @see
    *     RegistrationExtensionInputsBuilder#largeBlob(Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport)
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
    *     Large blob storage extension (largeBlob)</a>
    */
   public Optional<Extensions.LargeBlob.LargeBlobRegistrationInput> getLargeBlob() {
@@ -125,7 +126,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    * @return <code>true</code> if the User Verification Method Extension (<code>uvm</code>) is
    *     enabled, <code>false</code> otherwise.
    * @see RegistrationExtensionInputsBuilder#uvm()
-   * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-uvm-extension">§10.3.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
    *     User Verification Method Extension (uvm)</a>
    */
   public boolean getUvm() {
@@ -140,7 +141,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
 
   /**
    * @return The extension identifiers of all extensions configured.
-   * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-extension-id">§9.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extension-id">§9.1.
    *     Extension Identifiers</a>
    */
   @Override
@@ -166,7 +167,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      * Enable or disable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-appid-exclude-extension">§10.2.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
     public RegistrationExtensionInputsBuilder appidExclude(Optional<AppId> appidExclude) {
@@ -178,7 +179,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      * Enable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-appid-exclude-extension">§10.2.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
     public RegistrationExtensionInputsBuilder appidExclude(AppId appidExclude) {
@@ -190,7 +191,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      * Enable the Credential Properties (<code>credProps</code>) Extension.
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-authenticator-credential-properties-extension">§10.4.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
      *     Credential Properties Extension (credProps)</a>
      */
     public RegistrationExtensionInputsBuilder credProps() {
@@ -215,7 +216,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      *     extension input.
      * @see #largeBlob(Extensions.LargeBlob.LargeBlobRegistrationInput)
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     public RegistrationExtensionInputsBuilder largeBlob(
@@ -229,7 +230,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      *
      * @see #largeBlob(Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport)
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     public RegistrationExtensionInputsBuilder largeBlob(
@@ -241,7 +242,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     /**
      * Enable the User Verification Method Extension (<code>uvm</code>).
      *
-     * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-uvm-extension">§10.3.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
      *     User Verification Method Extension (uvm)</a>
      */
     public RegistrationExtensionInputsBuilder uvm() {

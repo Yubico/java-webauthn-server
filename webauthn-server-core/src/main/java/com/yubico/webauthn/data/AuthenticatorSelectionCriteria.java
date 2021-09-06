@@ -35,7 +35,7 @@ import lombok.Value;
  * This class may be used to specify requirements regarding authenticator attributes.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-authenticatorselectioncriteria">§5.4.4.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticatorselectioncriteria">§5.4.4.
  *     Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria) </a>
  */
 @Value
@@ -44,7 +44,7 @@ public class AuthenticatorSelectionCriteria {
 
   /**
    * If present, eligible authenticators are filtered to only authenticators attached with the
-   * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+   * specified <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-attachment">§5.4.5
    * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
    */
   private final AuthenticatorAttachment authenticatorAttachment;
@@ -67,15 +67,15 @@ public class AuthenticatorSelectionCriteria {
 
   /**
    * Describes the Relying Party's requirements regarding <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user verification</a>
-   * for the <code>navigator.credentials.create()</code> operation. Eligible authenticators are
-   * filtered to only those capable of satisfying this requirement.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+   * verification</a> for the <code>navigator.credentials.create()</code> operation. Eligible
+   * authenticators are filtered to only those capable of satisfying this requirement.
    */
   private UserVerificationRequirement userVerification;
 
   /**
    * If present, eligible authenticators are filtered to only authenticators attached with the
-   * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+   * specified <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-attachment">§5.4.5
    * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
    */
   public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
@@ -129,7 +129,8 @@ public class AuthenticatorSelectionCriteria {
 
     /**
      * If present, eligible authenticators are filtered to only authenticators attached with the
-     * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+     * specified <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-attachment">§5.4.5
      * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
      */
     public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(
@@ -139,7 +140,8 @@ public class AuthenticatorSelectionCriteria {
 
     /**
      * If present, eligible authenticators are filtered to only authenticators attached with the
-     * specified <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attachment">§5.4.5
+     * specified <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-attachment">§5.4.5
      * Authenticator Attachment Enumeration (enum AuthenticatorAttachment)</a>.
      */
     public AuthenticatorSelectionCriteriaBuilder authenticatorAttachment(

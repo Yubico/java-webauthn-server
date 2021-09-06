@@ -32,7 +32,7 @@ import java.util.Optional;
  * associated with or scoped to, respectively.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialentity">§5.4.1.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialentity">§5.4.1.
  *     Public Key Entity Description (dictionary PublicKeyCredentialEntity) </a>
  */
 public interface PublicKeyCredentialEntity {

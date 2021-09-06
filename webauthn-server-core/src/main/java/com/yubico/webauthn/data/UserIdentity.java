@@ -37,7 +37,7 @@ import lombok.Value;
  * Describes a user account, with which public key credentials can be associated.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialuserentity">§5.4.3.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialuserentity">§5.4.3.
  *     User Account Parameters for Credential Generation (dictionary PublicKeyCredentialUserEntity)
  *     </a>
  */
@@ -85,13 +85,13 @@ public class UserIdentity implements PublicKeyCredentialEntity {
   @NonNull private final String displayName;
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> for
-   * the account, specified by the Relying Party.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
+   * for the account, specified by the Relying Party.
    *
    * <p>A user handle is an opaque byte sequence with a maximum size of 64 bytes. User handles are
    * not meant to be displayed to users. The user handle SHOULD NOT contain personally identifying
    * information about the user, such as a username or e-mail address; see <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-user-handle-privacy">§14.9 User
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy">§14.9 User
    * Handle Contents</a> for details.
    *
    * <p>To ensure secure operation, authentication and authorization decisions MUST be made on the

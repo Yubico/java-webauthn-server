@@ -46,7 +46,7 @@ public class StartAssertionOptions {
    * <p>The default is empty (absent).
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
    *     credential</a>
    */
   private final String username;
@@ -69,8 +69,8 @@ public class StartAssertionOptions {
    *
    * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
    * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
-   * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was performed
-   * in this authentication ceremony.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408#user-verification">user
+   * verification</a>was performed in this authentication ceremony.
    *
    * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
    */
@@ -97,7 +97,7 @@ public class StartAssertionOptions {
    * <p>The default is empty (absent).
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
    *     credential</a>
    */
   public Optional<String> getUsername() {
@@ -110,8 +110,8 @@ public class StartAssertionOptions {
    *
    * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
    * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
-   * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was performed
-   * in this authentication ceremony.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408#user-verification">user
+   * verification</a>was performed in this authentication ceremony.
    *
    * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
    */
@@ -147,7 +147,7 @@ public class StartAssertionOptions {
      * <p>The default is empty (absent).
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
      *     credential</a>
      */
     public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
@@ -164,7 +164,7 @@ public class StartAssertionOptions {
      * <p>The default is empty (absent).
      *
      * @see <a
-     *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
      *     credential</a>
      */
     public StartAssertionOptionsBuilder username(@NonNull String username) {
@@ -177,8 +177,8 @@ public class StartAssertionOptions {
      *
      * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
      * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
-     * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was
-     * performed in this authentication ceremony.
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+     * verification</a>was performed in this authentication ceremony.
      *
      * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */
@@ -194,8 +194,8 @@ public class StartAssertionOptions {
      *
      * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
      * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
-     * href="https://www.w3.org/TR/webauthn-2/#user-verification">user verification</a> was
-     * performed in this authentication ceremony.
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+     * verification</a>was performed in this authentication ceremony.
      *
      * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */

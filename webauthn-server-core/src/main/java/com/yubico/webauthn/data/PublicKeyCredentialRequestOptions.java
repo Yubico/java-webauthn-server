@@ -44,7 +44,7 @@ import lombok.Value;
  * <p>Its `challenge` member must be present, while its other members are optional.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrequestoptions">§5.5.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialrequestoptions">§5.5.
  *     Options for Assertion Generation (dictionary PublicKeyCredentialRequestOptions) </a>
  */
 @Value
@@ -54,7 +54,7 @@ public class PublicKeyCredentialRequestOptions {
   /**
    * A challenge that the selected authenticator signs, along with other data, when producing an
    * authentication assertion. See the <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-cryptographic-challenges">§13.1
    * Cryptographic Challenges</a> security consideration.
    */
   @NonNull private final ByteArray challenge;
@@ -82,8 +82,8 @@ public class PublicKeyCredentialRequestOptions {
 
   /**
    * Describes the Relying Party's requirements regarding <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user verification</a>
-   * for the <code>navigator.credentials.get()</code> operation.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+   * verification</a> for the <code>navigator.credentials.get()</code> operation.
    *
    * <p>Eligible authenticators are filtered to only those capable of satisfying this requirement.
    */

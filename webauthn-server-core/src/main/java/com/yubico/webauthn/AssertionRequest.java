@@ -51,7 +51,7 @@ public class AssertionRequest {
    * The username of the user to authenticate, if the user has already been identified.
    *
    * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
    * credential</a>, and identification of the user has been deferred until the response is
    * received.
    */
@@ -70,7 +70,7 @@ public class AssertionRequest {
    * The username of the user to authenticate, if the user has already been identified.
    *
    * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
    * credential</a>, and identification of the user has been deferred until the response is
    * received.
    */
@@ -120,7 +120,7 @@ public class AssertionRequest {
      * The username of the user to authenticate, if the user has already been identified.
      *
      * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
      * credential</a>, and identification of the user has been deferred until the response is
      * received.
      */
@@ -132,7 +132,7 @@ public class AssertionRequest {
      * The username of the user to authenticate, if the user has already been identified.
      *
      * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
      * credential</a>, and identification of the user has been deferred until the response is
      * received.
      */

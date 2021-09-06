@@ -37,15 +37,15 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Contains <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
- * outputs</a> from a <code>navigator.credentials.create()</code> operation.
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+ * extension outputs</a> from a <code>navigator.credentials.create()</code> operation.
  *
  * <p>Note that there is no guarantee that any extension input present in {@link
  * AssertionExtensionInputs} will have a corresponding output present here.
  *
  * <p>The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
  *     Extensions</a>
  */
 @Value
@@ -111,7 +111,7 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
    *
    * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
    *     Large blob storage extension (largeBlob)</a>
    */
   public Optional<Extensions.LargeBlob.LargeBlobRegistrationOutput> getLargeBlob() {

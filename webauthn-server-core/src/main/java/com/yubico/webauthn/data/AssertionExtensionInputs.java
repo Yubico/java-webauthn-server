@@ -38,13 +38,14 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * Contains <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-input">client
+ * Contains <a
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-input">client
  * extension inputs</a> to a <code>navigator.credentials.get()</code> operation. All members are
  * optional.
  *
  * <p>The authenticator extension inputs are derived from these client extension inputs.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
  *     Extensions</a>
  */
 @Value
@@ -69,7 +70,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
    * given when constructing the {@link RelyingParty} instance.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   private final AppId appid;
@@ -90,7 +91,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
 
   /**
    * @return The extension identifiers of all extensions configured.
-   * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-extension-id">§9.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extension-id">§9.1.
    *     Extension Identifiers</a>
    */
   @Override
@@ -126,7 +127,8 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
      * given when constructing the {@link RelyingParty} instance.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public AssertionExtensionInputsBuilder appid(@NonNull Optional<AppId> appid) {
@@ -150,7 +152,8 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
      * given when constructing the {@link RelyingParty} instance.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public AssertionExtensionInputsBuilder appid(AppId appid) {
@@ -168,7 +171,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#read()
      * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#write(ByteArray)
      * @see <a
-     *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
      */
     public AssertionExtensionInputsBuilder largeBlob(
@@ -180,7 +183,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     /**
      * Enable the User Verification Method Extension (<code>uvm</code>).
      *
-     * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-uvm-extension">§10.3.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
      *     User Verification Method Extension (uvm)</a>
      */
     public AssertionExtensionInputsBuilder uvm() {
@@ -212,7 +215,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
    * given when constructing the {@link RelyingParty} instance.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   public Optional<AppId> getAppid() {
@@ -227,7 +230,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#read()
    * @see Extensions.LargeBlob.LargeBlobAuthenticationInput#write(ByteArray)
    * @see <a
-   *     href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-large-blob-extension">§10.5.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
    *     Large blob storage extension (largeBlob)</a>
    */
   public Optional<Extensions.LargeBlob.LargeBlobAuthenticationInput> getLargeBlob() {
@@ -246,7 +249,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    * @return <code>true</code> if the User Verification Method Extension (<code>uvm</code>) is
    *     enabled, <code>false</code> otherwise.
    * @see AssertionExtensionInputsBuilder#uvm()
-   * @see <a href="https://www.w3.org/TR/2021/PR-webauthn-2-20210225/#sctn-uvm-extension">§10.3.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
    *     User Verification Method Extension (uvm)</a>
    */
   public boolean getUvm() {

@@ -52,7 +52,7 @@ import lombok.Value;
  * that mechanism.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatortransport">§5.10.4.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-authenticatortransport">§5.10.4.
  *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)

@@ -47,13 +47,15 @@ import lombok.Value;
 public class RegistrationResult {
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a>
-   * and <a
-   * href="https://www.w3.org/TR/webauthn-2/#dom-publickeycredentialdescriptor-transports">transports</a>
-   * of the created credential.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> and <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>of
+   * the created credential.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
-   * @see <a href="https://www.w3.org/TR/webauthn-2/#dictionary-credential-descriptor">5.8.3.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-credential-descriptor">5.8.3.
    *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
    * @see PublicKeyCredential#getId()
    */
@@ -69,12 +71,13 @@ public class RegistrationResult {
 
   /**
    * The attestation type <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
    * Attestation Types</a> that was used for the created credential.
    *
    * <p>You can ignore this if authenticator attestation is not relevant to your application.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
    *     Attestation Types</a>
    */
   @NonNull private final AttestationType attestationType;
@@ -110,7 +113,7 @@ public class RegistrationResult {
    * com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional) metadataService}
    * in {@link RelyingParty}.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
    */
