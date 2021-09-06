@@ -9,7 +9,7 @@ image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["C
 
 Server-side https://www.w3.org/TR/webauthn/[Web Authentication] library for
 Java. Provides implementations of the
-https://www.w3.org/TR/webauthn/#rp-operations[Relying Party operations] required
+https://www.w3.org/TR/webauthn/#sctn-rp-operations[Relying Party operations] required
 for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
@@ -68,7 +68,7 @@ In addition to the main `webauthn-server-core` module, there are also:
 - Generates request objects suitable as parameters to
   `navigator.credentials.create()` and `.get()`
 - Performs all necessary
-  https://www.w3.org/TR/webauthn/#rp-operations[validation logic] on the
+  https://www.w3.org/TR/webauthn/#sctn-rp-operations[validation logic] on the
   response from the client
 - No mutable state or side effects - everything (except builders) is thread safe
 - Optionally integrates with a "metadata service" to verify

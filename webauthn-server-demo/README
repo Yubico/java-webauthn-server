@@ -58,7 +58,7 @@ would be specific to a particular Relying Party (RP) would go in this layer.
   class.
 +
 This layer implements the Web Authentication
-https://www.w3.org/TR/webauthn/#rp-operations[Relying Party Operations], and
+https://www.w3.org/TR/webauthn/#sctn-rp-operations[Relying Party Operations], and
 takes care of all RP-agnostic parts of the Web Authentication logic: generating
 challenges and verifying all aspects of the responses. It is mostly stateless,
 and exposes integration points for storage of challenges and credentials. Some
