@@ -220,9 +220,6 @@ subprojects { project ->
 
   if (project.hasProperty('publishMe') && project.publishMe) {
 
-    apply plugin: 'maven-publish'
-    apply plugin: 'signing'
-
     if (getGitCommit() == null) {
       throw new RuntimeException("Failed to get git commit ID");
     }

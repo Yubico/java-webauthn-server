@@ -1,6 +1,8 @@
 plugins {
   id 'java-library'
   id 'scala'
+  id 'maven-publish'
+  id 'signing'
   id 'info.solidsoft.pitest'
   id 'io.github.cosmicsilence.scalafix'
 }
