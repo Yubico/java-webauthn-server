@@ -89,8 +89,8 @@ subprojects {
   apply plugin: LombokPlugin
 
   lombok {
-    version '1.18.18'
-    sha256 = '601ec46206e0f9cac2c0583b3350e79f095419c395e991c761640f929038e9cc'
+    version '1.18.20'
+    sha256 = 'ce947be6c2fbe759fbbe8ef3b42b6825f814c98c8853f1013f2d9630cedf74b0'
   }
   tasks.withType(AbstractCompile) {
     if (tasks.findByName('verifyLombok')) {
