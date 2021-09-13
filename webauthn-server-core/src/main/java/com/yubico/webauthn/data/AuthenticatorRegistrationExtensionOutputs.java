@@ -128,6 +128,15 @@ public final class AuthenticatorRegistrationExtensionOutputs
     return ids;
   }
 
+  /**
+   * @return The <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   *     extension output</a> for the <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">User
+   *     Verification Method (<code>uvm</code>) extension</a>, if any.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
+   *     User Verification Method extension (uvm)</a>
+   */
   public Optional<List<Extensions.Uvm.UvmEntry>> getUvm() {
     return Optional.ofNullable(uvm);
   }
