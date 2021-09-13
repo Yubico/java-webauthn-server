@@ -27,6 +27,7 @@ package com.yubico.webauthn;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;
 import lombok.Builder;
@@ -79,14 +80,19 @@ public class AssertionRequest {
   }
 
   /**
-   * Serialize this {@link AssertionRequest} value to JSON suitable for sending to the client and
-   * passing as an argument to <code>navigator.credentials.get()</code>, after decoding binary
-   * options from Base64Url strings.
+   * Serialize this {@link AssertionRequest} value to JSON suitable for sending to the client.
    *
    * <p>This is an alias of <code>getPublicKeyCredentialRequestOptions().toCredentialsGetJson()
    * </code>.
    *
-   * @see PublicKeyCredentialRequestOptions#toCredentialsGetJson()
+   * <p>Any {@link ByteArray} values in this data structure will be {@link ByteArray#getBase64Url()
+   * Base64Url} encoded. Those values MUST be decoded into <code>BufferSource</code> values (such as
+   * <code>Uint8Array</code>) on the client side before calling <code>navigator.credentials.get()
+   * </code>.
+   *
+   * <p>After decoding binary values, the resulting JavaScript object is suitable for passing as an
+   * argument to <code>navigator.credentials.get()</code>.
+   *
    * @return a JSON value suitable for sending to the client and passing as an argument to <code>
    *     navigator.credentials.get()</code>, after decoding binary options from Base64Url strings.
    * @throws JsonProcessingException if JSON serialization fails.

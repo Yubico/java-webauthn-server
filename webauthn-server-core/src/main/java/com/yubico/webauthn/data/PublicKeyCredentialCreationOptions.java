@@ -147,8 +147,15 @@ public class PublicKeyCredentialCreationOptions {
 
   /**
    * Serialize this {@link PublicKeyCredentialCreationOptions} value to JSON suitable for sending to
-   * the client and passing as an argument to <code>navigator.credentials.create()</code>, after
-   * decoding binary options from Base64Url strings.
+   * the client.
+   *
+   * <p>Any {@link ByteArray} values in this data structure will be {@link ByteArray#getBase64Url()
+   * Base64Url} encoded. Those values MUST be decoded into <code>BufferSource</code> values (such as
+   * <code>Uint8Array</code>) on the client side before calling <code>navigator.credentials.create()
+   * </code>.
+   *
+   * <p>After decoding binary values, the resulting JavaScript object is suitable for passing as an
+   * argument to <code>navigator.credentials.create()</code>.
    *
    * @return a JSON value suitable for sending to the client and passing as an argument to <code>
    *     navigator.credentials.create()</code>, after decoding binary options from Base64Url
