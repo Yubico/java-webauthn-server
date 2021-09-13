@@ -85,7 +85,6 @@ public class AuthenticatorSelectionCriteria {
   /**
    * This member is retained for backwards compatibility with WebAuthn Level 1 and, for historical
    * reasons, its naming retains the deprecated “resident” terminology for discoverable credentials.
-   * Relying Parties SHOULD set it to true if, and only if, residentKey is set to required.
    *
    * @return <code>true</code> if and only if {@link #getResidentKey()} is {@link
    *     ResidentKeyRequirement#REQUIRED}.
