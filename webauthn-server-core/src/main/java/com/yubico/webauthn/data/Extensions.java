@@ -31,7 +31,7 @@ public class Extensions {
    *     FIDO AppID Extension (appid)</a>
    */
   public static class Appid {
-    public static final String EXTENSION_ID = "appid";
+    static final String EXTENSION_ID = "appid";
   }
 
   /**
@@ -42,7 +42,7 @@ public class Extensions {
    *     FIDO AppID Exclusion Extension (appidExclude)</a>
    */
   public static class AppidExclude {
-    public static final String EXTENSION_ID = "appidExclude";
+    static final String EXTENSION_ID = "appidExclude";
   }
 
   /**
@@ -53,7 +53,7 @@ public class Extensions {
    *     Credential Properties Extension (credProps)</a>
    */
   public static class CredentialProperties {
-    public static final String EXTENSION_ID = "credProps";
+    static final String EXTENSION_ID = "credProps";
 
     /**
      * Extension outputs for the Credential Properties Extension (<code>credProps</code>).
@@ -109,7 +109,7 @@ public class Extensions {
    *     Large blob storage extension (largeBlob)</a>
    */
   public static class LargeBlob {
-    public static final String EXTENSION_ID = "largeBlob";
+    static final String EXTENSION_ID = "largeBlob";
 
     /**
      * Extension inputs for the Large blob storage extension (<code>largeBlob</code>) in
