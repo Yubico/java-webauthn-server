@@ -73,7 +73,7 @@ public final class AuthenticatorAssertionExtensionOutputs implements Authenticat
     return authData.getExtensions().flatMap(AuthenticatorAssertionExtensionOutputs::fromCbor);
   }
 
-  public static Optional<AuthenticatorAssertionExtensionOutputs> fromCbor(CBORObject cbor) {
+  static Optional<AuthenticatorAssertionExtensionOutputs> fromCbor(CBORObject cbor) {
     AuthenticatorAssertionExtensionOutputs.AuthenticatorAssertionExtensionOutputsBuilder b =
         builder();
 

@@ -74,7 +74,7 @@ public final class AuthenticatorRegistrationExtensionOutputs
     return authData.getExtensions().flatMap(AuthenticatorRegistrationExtensionOutputs::fromCbor);
   }
 
-  public static Optional<AuthenticatorRegistrationExtensionOutputs> fromCbor(CBORObject cbor) {
+  static Optional<AuthenticatorRegistrationExtensionOutputs> fromCbor(CBORObject cbor) {
     AuthenticatorRegistrationExtensionOutputsBuilder b = builder();
 
     Extensions.Uvm.parseAuthenticatorExtensionOutput(cbor).ifPresent(b::uvm);
