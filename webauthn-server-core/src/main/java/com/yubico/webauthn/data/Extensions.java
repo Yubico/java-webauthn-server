@@ -353,6 +353,10 @@ public class Extensions {
        * PublicKeyCredential#getId()}. Only valid if {@link LargeBlobAuthenticationInput#getRead()}
        * was <code>true</code>.
        *
+       * @return A present {@link Optional} if {@link LargeBlobAuthenticationInput#getRead()} was
+       *     <code>true</code> and the blob content was successfully read. Otherwise (if {@link
+       *     LargeBlobAuthenticationInput#getRead()} was <code>false</code> or the content failed to
+       *     be read) an empty {@link Optional}.
        * @see <a
        *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargebloboutputs-blob">§10.5.
        *     Large blob storage extension (largeBlob)</a>
