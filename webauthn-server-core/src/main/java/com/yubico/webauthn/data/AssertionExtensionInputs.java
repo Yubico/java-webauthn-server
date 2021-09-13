@@ -53,26 +53,6 @@ import lombok.Value;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AssertionExtensionInputs implements ExtensionInputs {
 
-  /**
-   * The input to the FIDO AppID Extension (<code>appid</code>).
-   *
-   * <p>This extension allows WebAuthn Relying Parties that have previously registered a credential
-   * using the legacy FIDO JavaScript APIs to request an assertion. The FIDO APIs use an alternative
-   * identifier for Relying Parties called an <a
-   * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-appid-and-facets-v2.0-id-20180227.html">AppID</a>,
-   * and any credentials created using those APIs will be scoped to that identifier. Without this
-   * extension, they would need to be re-registered in order to be scoped to an RP ID.
-   *
-   * <p>This extension does not allow FIDO-compatible credentials to be created. Thus, credentials
-   * created with WebAuthn are not backwards compatible with the FIDO JavaScript APIs.
-   *
-   * <p>{@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input
-   * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
-   * given when constructing the {@link RelyingParty} instance.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
-   *     FIDO AppID Extension (appid)</a>
-   */
   private final AppId appid;
 
   private final Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob;

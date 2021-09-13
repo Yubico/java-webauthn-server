@@ -51,14 +51,6 @@ import lombok.Value;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class RegistrationExtensionInputs implements ExtensionInputs {
 
-  /**
-   * Enable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
-   *
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
-   *     FIDO AppID Exclusion Extension (appidExclude)</a>
-   * @param appidExclude the <code>appidExclude</code> extension input.
-   */
   private final AppId appidExclude;
 
   private final boolean credProps;
