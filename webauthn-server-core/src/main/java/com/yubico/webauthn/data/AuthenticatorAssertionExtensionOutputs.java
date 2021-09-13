@@ -68,6 +68,36 @@ public final class AuthenticatorAssertionExtensionOutputs implements Authenticat
     this.uvm = uvm == null ? null : CollectionUtil.immutableList(uvm);
   }
 
+  /**
+   * Parse <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authentication-extension">authentication</a>
+   * <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   * extension outputs</a> from the given authenticator data.
+   *
+   * <p>If the <code>authData</code> does not contain authenticator extension outputs, this returns
+   * an empty {@link Optional}.
+   *
+   * <p>Otherwise, this returns a present {@link Optional} containing an {@link
+   * AuthenticatorAssertionExtensionOutputs} value with all validly-formatted <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authentication-extension">authentication</a>
+   * <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">extension
+   * outputs</a> supported by this library. This silently ignores <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#registration-extension">registration</a>
+   * extension outputs, malformed extension outputs, and unsupported extensions. The raw set of
+   * extension outputs can instead be obtained via {@link AuthenticatorData#getExtensions()}.
+   *
+   * <p>Note that a present {@link AuthenticatorAssertionExtensionOutputs} may contain zero
+   * extension outputs.
+   *
+   * @param authData the <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-data">authenticator
+   *     data</a> to parse extension outputs from
+   * @return an empty {@link Optional} if the <code>authData</code> does not contain authenticator
+   *     extension outputs. Otherwise a present {@link Optional} containing parsed extension output
+   *     values.
+   */
   public static Optional<AuthenticatorAssertionExtensionOutputs> fromAuthenticatorData(
       AuthenticatorData authData) {
     return authData.getExtensions().flatMap(AuthenticatorAssertionExtensionOutputs::fromCbor);
