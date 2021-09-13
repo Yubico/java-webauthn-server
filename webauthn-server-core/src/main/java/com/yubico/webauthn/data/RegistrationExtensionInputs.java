@@ -27,6 +27,8 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.util.Collections;
 import java.util.HashSet;
@@ -158,6 +160,10 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     /**
      * Enable or disable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
      *
+     * <p>You usually do not need to call this method explicitly; if {@link RelyingParty#getAppId()}
+     * is present, then {@link RelyingParty#startRegistration(StartRegistrationOptions)} will enable
+     * this extension automatically.
+     *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>
@@ -169,6 +175,10 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
 
     /**
      * Enable the FIDO AppID Exclusion Extension (<code>appidExclude</code>).
+     *
+     * <p>You usually do not need to call this method explicitly; if {@link RelyingParty#getAppId()}
+     * is present, then {@link RelyingParty#startRegistration(StartRegistrationOptions)} will enable
+     * this extension automatically.
      *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.

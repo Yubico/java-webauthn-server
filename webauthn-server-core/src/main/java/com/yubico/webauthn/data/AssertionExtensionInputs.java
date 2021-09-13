@@ -93,6 +93,10 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     /**
      * The input to the FIDO AppID Extension (<code>appid</code>).
      *
+     * <p>You usually do not need to call this method explicitly; if {@link RelyingParty#getAppId()}
+     * is present, then {@link RelyingParty#startAssertion(StartAssertionOptions)} will enable this
+     * extension automatically.
+     *
      * <p>This extension allows WebAuthn Relying Parties that have previously registered a
      * credential using the legacy FIDO JavaScript APIs to request an assertion. The FIDO APIs use
      * an alternative identifier for Relying Parties called an <a
@@ -102,10 +106,6 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      *
      * <p>This extension does not allow FIDO-compatible credentials to be created. Thus, credentials
      * created with WebAuthn are not backwards compatible with the FIDO JavaScript APIs.
-     *
-     * <p>{@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input
-     * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
-     * given when constructing the {@link RelyingParty} instance.
      *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
@@ -118,6 +118,10 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     /**
      * The input to the FIDO AppID Extension (<code>appid</code>).
      *
+     * <p>You usually do not need to call this method explicitly; if {@link RelyingParty#getAppId()}
+     * is present, then {@link RelyingParty#startAssertion(StartAssertionOptions)} will enable this
+     * extension automatically.
+     *
      * <p>This extension allows WebAuthn Relying Parties that have previously registered a
      * credential using the legacy FIDO JavaScript APIs to request an assertion. The FIDO APIs use
      * an alternative identifier for Relying Parties called an <a
@@ -127,10 +131,6 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      *
      * <p>This extension does not allow FIDO-compatible credentials to be created. Thus, credentials
      * created with WebAuthn are not backwards compatible with the FIDO JavaScript APIs.
-     *
-     * <p>{@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input
-     * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
-     * given when constructing the {@link RelyingParty} instance.
      *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
@@ -190,10 +190,6 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    *
    * <p>This extension does not allow FIDO-compatible credentials to be created. Thus, credentials
    * created with WebAuthn are not backwards compatible with the FIDO JavaScript APIs.
-   *
-   * <p>{@link RelyingParty#startAssertion(StartAssertionOptions)} sets this extension input
-   * automatically if the {@link RelyingParty.RelyingPartyBuilder#appId(Optional)} parameter is
-   * given when constructing the {@link RelyingParty} instance.
    *
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
