@@ -98,6 +98,16 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     return Optional.ofNullable(appid);
   }
 
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">Large blob
+   * storage (<code>largeBlob</code>) extension</a>, if any.
+   *
+   * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
+   *     blob storage extension (largeBlob)</a>
+   */
   public Optional<Extensions.LargeBlob.LargeBlobAuthenticationOutput> getLargeBlob() {
     return Optional.ofNullable(largeBlob);
   }

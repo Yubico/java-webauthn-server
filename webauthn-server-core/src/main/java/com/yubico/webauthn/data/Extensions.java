@@ -19,14 +19,28 @@ import lombok.Value;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
+/** Definitions for WebAuthn extensions. */
 @Slf4j
 @UtilityClass
 public class Extensions {
 
+  /**
+   * Definitions for the FIDO AppID Extension (<code>appid</code>).
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
+   *     FIDO AppID Extension (appid)</a>
+   */
   public static class Appid {
     public static final String EXTENSION_ID = "appid";
   }
 
+  /**
+   * Definitions for the 10.2. FIDO AppID Exclusion Extension (<code>appidExclude</code>).
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">10.2.
+   *     FIDO AppID Exclusion Extension (appidExclude)</a>
+   */
   public static class AppidExclude {
     public static final String EXTENSION_ID = "appidExclude";
   }
@@ -373,8 +387,19 @@ public class Extensions {
    *     User Verification Method Extension (uvm)</a>
    */
   public static class Uvm {
-    public static final String EXTENSION_ID = "uvm";
+    static final String EXTENSION_ID = "uvm";
 
+    /**
+     * A <code>uvmEntry</code> as defined in <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3. User
+     * Verification Method Extension (uvm)</a>.
+     *
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
+     *     User Verification Method Extension (uvm)</a>
+     * @see UserVerificationMethod
+     * @see KeyProtectionType
+     * @see MatcherProtectionType
+     */
     @Value
     public static class UvmEntry {
       private final UserVerificationMethod userVerificationMethod;

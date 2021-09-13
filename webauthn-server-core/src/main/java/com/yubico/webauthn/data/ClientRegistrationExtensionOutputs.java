@@ -87,6 +87,18 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
     return ids;
   }
 
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">FIDO
+   * AppID Exclusion (<code>appidExclude</code>) Extension</a>, if any.
+   *
+   * <p>This value is generally not useful, as it only communicates whether the client supports the
+   * extension.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.FIDO
+   *     AppID Exclusion Extension (appidExclude)</a>
+   */
   public Optional<Boolean> getAppidExclude() {
     return Optional.ofNullable(appidExclude);
   }
