@@ -52,7 +52,7 @@ import lombok.Value;
 public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
   /**
-   * The output from the FIDO AppID Extension (<code>appid</code>).
+   * The extension output for the FIDO AppID Extension (<code>appid</code>), if any.
    *
    * <p>This value should be ignored because its behaviour is underspecified, see: <a
    * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
@@ -86,7 +86,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
   }
 
   /**
-   * The output from the FIDO AppID Extension (<code>appid</code>).
+   * The extension output for the FIDO AppID Extension (<code>appid</code>), if any.
    *
    * <p>This value should be ignored because its behaviour is underspecified, see: <a
    * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
@@ -115,7 +115,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
   public static class ClientAssertionExtensionOutputsBuilder {
 
     /**
-     * The output from the FIDO AppID Extension (<code>appid</code>).
+     * The extension output for the FIDO AppID Extension (<code>appid</code>).
      *
      * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
@@ -138,7 +138,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     }
 
     /**
-     * The output from the FIDO AppID Extension (<code>appid</code>).
+     * The extension output for the FIDO AppID Extension (<code>appid</code>).
      *
      * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
