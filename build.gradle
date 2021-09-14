@@ -111,7 +111,6 @@ subprojects {
       scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
     }
   }
-  tasks.check.dependsOn spotlessCheck
 }
 
 allprojects {
