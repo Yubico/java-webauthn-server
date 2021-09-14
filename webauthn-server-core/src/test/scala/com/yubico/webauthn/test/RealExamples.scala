@@ -1,6 +1,9 @@
 package com.yubico.webauthn.test
 
 import com.yubico.internal.util.JacksonCodecs
+import com.yubico.webauthn.AssertionRequest
+import com.yubico.webauthn.AssertionTestData
+import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.WebAuthnTestCodecs
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -11,6 +14,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 
@@ -96,6 +100,30 @@ object RealExamples {
           .get("x5c")
           .get(0)
           .binaryValue()
+      )
+
+    def asRegistrationTestData: RegistrationTestData =
+      RegistrationTestData(
+        alg = WebAuthnTestCodecs.getCoseAlgId(
+          attestation.attestationObject.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+        ),
+        attestationObject = attestation.attestationObjectBytes,
+        clientDataJson = attestation.clientData,
+        privateKey = None,
+        assertion = Some(
+          AssertionTestData(
+            request = AssertionRequest
+              .builder()
+              .publicKeyCredentialRequestOptions(
+                PublicKeyCredentialRequestOptions
+                  .builder()
+                  .challenge(assertion.collectedClientData.getChallenge)
+                  .build()
+              )
+              .build(),
+            response = assertion.credential,
+          )
+        ),
       )
   }
 
