@@ -2378,8 +2378,17 @@ class RelyingPartyRegistrationSpec
             step.tryNext shouldBe a[Success[_]]
           }
 
-          ignore("The apple statement format is supported.") {
-            fail("Not yet implemented.")
+          it("The apple statement format is supported.") {
+            val steps = finishRegistration(
+              testData =
+                RealExamples.AppleAttestationIos.asRegistrationTestData,
+              rp = RealExamples.AppleAttestationIos.rp,
+            )
+            val step: FinishRegistrationSteps#Step14 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a[Success[_]]
+            step.tryNext shouldBe a[Success[_]]
           }
 
           it("Unknown attestation statement formats are identified as such.") {
