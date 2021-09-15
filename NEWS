@@ -25,12 +25,12 @@ New features:
 * Added support for the `appidExclude`, `credProps`, `largeBlob` and `uvm`
   extensions.
 * Added support for the new `authenticatorSelectionCriteria.residentKey` option:
-  * Added method
+ ** Added method
     `AuthenticatorSelectionCriteria.builder().residentKey(ResidentKeyRequirement)`.
-  * Added method `AuthenticatorSelection.getResidentKey()`.
-  * Methods `builder().requireResidentKey(boolean)` and `isRequireResidentKey()`
+ ** Added method `AuthenticatorSelection.getResidentKey()`.
+ ** Methods `builder().requireResidentKey(boolean)` and `isRequireResidentKey()`
     deprecated in favor of the above two new methods.
-  * The builder methods `requireResidentKey(boolean)` and
+ ** The builder methods `requireResidentKey(boolean)` and
     `residentKey(ResidentKeyRequirement)` both control one shared setting, which
     sets both the `requireResidentKey` and `residentKey` options simultaneously
     and in agreement with each other for backwards compatibility with older
