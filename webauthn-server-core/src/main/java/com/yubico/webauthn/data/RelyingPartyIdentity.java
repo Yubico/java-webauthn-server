@@ -37,7 +37,7 @@ import lombok.Value;
  * Used to supply additional Relying Party attributes when creating a new credential.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrpentity">§5.4.2.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialrpentity">§5.4.2.
  *     Relying Party Parameters for Credential Generation (dictionary PublicKeyCredentialRpEntity)
  *     </a>
  */
@@ -56,9 +56,14 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
 
   /**
    * A unique identifier for the Relying Party, which sets the <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a>
+   * <p>This defines the domains where users' credentials are valid. See <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for details
+   * and examples.
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
    */
   @NonNull private final String id;
 
@@ -70,8 +75,11 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
    * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s
    * value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches
    * of the URL, at the cost of needing more storage.
+   *
+   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This field
+   *     will be removed in the next major version of the library.
    */
-  private final URL icon;
+  @Deprecated private final URL icon; // TODO v2.0: delete this
 
   @JsonCreator
   private RelyingPartyIdentity(
@@ -93,12 +101,28 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
     public static class MandatoryStages {
       private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
 
+      /**
+       * A unique identifier for the Relying Party, which sets the <a
+       * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>.
+       *
+       * <p>This defines the domains where users' credentials are valid. See <a
+       * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for
+       * details and examples.
+       *
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
+       */
       public Step2 id(String id) {
         builder.id(id);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * The human-palatable name of the Relaying Party.
+         *
+         * <p>For example: "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+         */
         public RelyingPartyIdentityBuilder name(String name) {
           return builder.name(name);
         }
@@ -113,7 +137,11 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
      * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
      * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
      * avoid fetches of the URL, at the cost of needing more storage.
+     *
+     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
+     *     method will be removed in the next major version of the library.
      */
+    @Deprecated
     public RelyingPartyIdentityBuilder icon(@NonNull Optional<URL> icon) {
       return this.icon(icon.orElse(null));
     }
@@ -126,13 +154,22 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
      * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
      * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
      * avoid fetches of the URL, at the cost of needing more storage.
+     *
+     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
+     *     method will be removed in the next major version of the library.
      */
+    @Deprecated
     public RelyingPartyIdentityBuilder icon(URL icon) {
       this.icon = icon;
       return this;
     }
   }
 
+  /**
+   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This method
+   *     will be removed in the next major version of the library.
+   */
+  @Deprecated
   @Override
   public Optional<URL> getIcon() {
     return Optional.ofNullable(icon);

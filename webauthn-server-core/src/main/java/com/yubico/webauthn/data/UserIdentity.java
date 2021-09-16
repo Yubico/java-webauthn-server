@@ -37,7 +37,7 @@ import lombok.Value;
  * Describes a user account, with which public key credentials can be associated.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialuserentity">§5.4.3.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialuserentity">§5.4.3.
  *     User Account Parameters for Credential Generation (dictionary PublicKeyCredentialUserEntity)
  *     </a>
  */
@@ -85,13 +85,13 @@ public class UserIdentity implements PublicKeyCredentialEntity {
   @NonNull private final String displayName;
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> for
-   * the account, specified by the Relying Party.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
+   * for the account, specified by the Relying Party.
    *
    * <p>A user handle is an opaque byte sequence with a maximum size of 64 bytes. User handles are
    * not meant to be displayed to users. The user handle SHOULD NOT contain personally identifying
    * information about the user, such as a username or e-mail address; see <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-user-handle-privacy">§14.9 User
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy">§14.9 User
    * Handle Contents</a> for details.
    *
    * <p>To ensure secure operation, authentication and authorization decisions MUST be made on the
@@ -111,8 +111,11 @@ public class UserIdentity implements PublicKeyCredentialEntity {
    * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s
    * value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches
    * of the URL, at the cost of needing more storage.
+   *
+   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This field
+   *     will be removed in the next major version of the library.
    */
-  private final URL icon;
+  @Deprecated private final URL icon; // TODO v2.0: delete this
 
   @JsonCreator
   private UserIdentity(
@@ -163,7 +166,11 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
      * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
      * avoid fetches of the URL, at the cost of needing more storage.
+     *
+     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
+     *     method will be removed in the next major version of the library.
      */
+    @Deprecated
     public UserIdentityBuilder icon(@NonNull Optional<URL> icon) {
       return this.icon(icon.orElse(null));
     }
@@ -176,13 +183,22 @@ public class UserIdentity implements PublicKeyCredentialEntity {
      * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
      * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
      * avoid fetches of the URL, at the cost of needing more storage.
+     *
+     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
+     *     method will be removed in the next major version of the library.
      */
+    @Deprecated
     public UserIdentityBuilder icon(URL icon) {
       this.icon = icon;
       return this;
     }
   }
 
+  /**
+   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This method
+   *     will be removed in the next major version of the library.
+   */
+  @Deprecated
   @Override
   public Optional<URL> getIcon() {
     return Optional.ofNullable(icon);

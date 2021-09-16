@@ -48,20 +48,21 @@ import lombok.Value;
 public final class RegisteredCredential {
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a>
-   * of the credential.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> of the credential.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
    * @see RegistrationResult#getKeyId()
    * @see PublicKeyCredentialDescriptor#getId()
    */
   @NonNull private final ByteArray credentialId;
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">user handle</a> of
-   * the user the credential is registered to.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
+   * of the user the credential is registered to.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-handle">User Handle</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
    * @see UserIdentity#getId()
    */
   @NonNull private final ByteArray userHandle;
@@ -79,13 +80,14 @@ public final class RegisteredCredential {
   @NonNull private final ByteArray publicKeyCose;
 
   /**
-   * The stored <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#signcount">signature
+   * The stored <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
    * count</a> of the credential.
    *
    * <p>This is used to validate the {@link AuthenticatorData#getSignatureCounter() signature
    * counter} in authentication assertions.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">§6.1.
    *     Authenticator Data</a>
    * @see AuthenticatorData#getSignatureCounter()
    * @see AssertionResult#getSignatureCount()

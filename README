@@ -75,7 +75,7 @@ In addition to the main `webauthn-server-core` module, there are also:
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
   and annotate responses with additional authenticator metadata
 - Reproducible builds: release signatures match fresh builds from source. See
-  link:#Building[Building] below.
+  link:#reproducible-builds[Reproducible builds] below.
 
 
 === Non-features
@@ -94,22 +94,53 @@ link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-
 for in-depth API documentation.
 
 
-== Quick start
+== Getting started
 
-Implement the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
-interface with your database access logic. See
+Using this library comes in two parts: the server side and the client side.
+The server side involves:
+
+ 1. Implement the `CredentialRepository` interface with your database access logic.
+ 2. Instantiate the `RelyingParty` class.
+ 3. Use the `RelyingParty.startRegistration(...)` and `RelyingParty.fininshRegistration(...)` methods to perform registration ceremonies.
+ 4. Use the `RelyingParty.startAssertion(...)` and `RelyingParty.fininshAssertion(...)` methods to perform authentication ceremonies.
+ 5. Use the outputs of `finishRegistration` and `finishAssertion` to update your database, initiate sessions, etc.
+
+The client side involves:
+
+ 1. Call `navigator.credentials.create()` or `.get()`,
+    passing the result from `RelyingParty.startRegistration(...)` or `.startAssertion(...)` as the argument.
+ 2. Encode the result of the successfully resolved promise and return it to the server.
+    For this you'll need some way to encode `Uint8Array` values;
+    this guide will assume use of link:https://github.com/beatgammit/base64-js[base64-js].
+    However the built-in parser methods for
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
+    expect URL-safe Base64 encoding, so the below examples will include this as an additional step.
+
+Example code is given below.
+For more detailed example usage, see
+link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
+
+
+=== 1. Implement a `CredentialRepository`
+
+The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`] interface
+abstracts your database in a database-agnostic way.
+The concrete implementation will be different for every project, but you can use
 link:https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
-for an example.
+as a simple example.
 
-Instantiate the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
-class:
+=== 2. Instantiate a `RelyingParty`
+
+The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`] class
+is the main entry point to the library.
+You can instantiate it using its builder methods,
+passing in your `CredentialRepository` implementation (called `MyCredentialRepository` here) as an argument:
 
 [source,java]
 ----------
 RelyingPartyIdentity rpIdentity = RelyingPartyIdentity.builder()
-    .id("example.com")
+    .id("example.com")  // Set this to a parent domain that covers all subdomains
+                        // where users' credentials should be valid
     .name("Example Application")
     .build();
 
@@ -119,16 +150,28 @@ RelyingParty rp = RelyingParty.builder()
     .build();
 ----------
 
+=== 3. Registration
 
-=== Registration
+A registration ceremony consists of 5 main steps:
 
-Initiate a registration ceremony:
+ 1. Generate registration parameters using `RelyingParty.startRegistration(...)`.
+ 2. Send registration parameters to the client and call
+    https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[`navigator.credentials.create()`].
+ 3. With `cred` as the result of the successfully resolved promise,
+    call https://www.w3.org/TR/webauthn-2/#ref-for-dom-publickeycredential-getclientextensionresults[`cred.getClientExtensionResults()`]
+    and https://www.w3.org/TR/webauthn-2/#ref-for-dom-authenticatorattestationresponse-gettransports[`cred.response.getTransports()`]
+    and return their results along with `cred` to the server.
+ 4. Validate the response using `RelyingParty.finishRegistration(...)`.
+ 5. Update your database using the `finishRegistration` output.
+
+First, generate registration parameters and send them to the client:
 
 [source,java]
 ----------
 Optional<UserIdentity> findExistingUser(String username) { /* ... */ }
 
-PublicKeyCredentialCreationOptions request = rp.startRegistration(StartRegistrationOptions.builder()
+PublicKeyCredentialCreationOptions request = rp.startRegistration(
+  StartRegistrationOptions.builder()
     .user(
         findExistingUser("alice")
             .orElseGet(() -> {
@@ -142,78 +185,184 @@ PublicKeyCredentialCreationOptions request = rp.startRegistration(StartRegistrat
             })
     )
     .build());
+
+String credentialCreateJson = request.toCredentialCreateJson();
+return credentialCreateJson;  // Send to client
 ----------
 
-Serialize `request` to JSON and send it to the client:
+You'll need to keep this `PublicKeyCredentialCreationOptions` object in temporary storage
+so you can also pass it into `finishRegistration(...)` later.
+
+Now call the WebAuthn API on the client side:
+
+[source,javascript]
+----------
+function base64urlToUint8array(base64Bytes) {
+  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
+  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
+}
+function uint8arrayToBase64url(bytes) {
+  return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+fetch(/* ... */)                    // Make the call that returns the credentialCreateJson above
+  .then(credentialCreateJson => ({  // Decode byte arrays from base64url
+    publicKey: {
+      ...credentialCreateJson.publicKey,
+
+      challenge: base64urlToUint8Array(credentialCreateJson.publicKey.challenge),
+      user: {
+        ...credentialCreateJson.publicKey.user,
+        id: base64urlToUint8Array(credentialCreateJson.publicKey.user.id),
+      },
+      excludeCredentials: credentialCreateJson.publicKey.excludeCredentials.map(credential => ({
+        ...credential,
+        id: base64urlToUint8Array(credential.id),
+      })),
+
+      // Warning: Extension inputs could also contain binary data that needs encoding
+      extensions: credentialCreateJson.publicKey.extensions,
+    },
+  }))
+  .then(credentialCreateOptions =>  // Call WebAuthn ceremony
+    navigator.credentials.create(credentialCreateOptions))
+  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
+    type: publicKeyCredential.type,
+    id: publicKeyCredential.id,
+    response: {
+      attestationObject: uint8arrayToBase64url(response.response.attestationObject),
+      clientDataJSON: uint8arrayToBase64url(response.response.clientDataJSON),
+      transports: response.response.getTransports() || [],
+    },
+
+    // Warning: Client extension results could also contain binary data that needs encoding
+    clientExtensionResults: response.getClientExtensionResults(),
+  }))
+  .then(encodedResult =>
+    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+----------
+
+Validate the response on the server side:
 
 [source,java]
 ----------
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-ObjectMapper jsonMapper = new ObjectMapper()
-    .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-    .setSerializationInclusion(Include.NON_ABSENT)
-    .registerModule(new Jdk8Module());
-
-String json = jsonMapper.writeValueAsString(request);
-return json;
-----------
-
-Get the response from the client:
-
-[source,java]
-----------
-String responseJson = /* ... */;
+String publicKeyCredentialJson = /* ... */;     // encodedResult from client
 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
-    PublicKeyCredential.parseRegistrationResponseJson(responseJson);
-----------
+    PublicKeyCredential.parseRegistrationResponseJson(publicKeyCredentialJson);
 
-Validate the response:
-
-[source,java]
-----------
 try {
     RegistrationResult result = rp.finishRegistration(FinishRegistrationOptions.builder()
-        .request(request)
+        .request(request)  // The PublicKeyCredentialCreationOptions from startRegistration above
+                           // NOTE: Must be stored in server memory or otherwise protected against tampering
         .response(pkc)
         .build());
 } catch (RegistrationFailedException e) { /* ... */ }
 ----------
 
-Update your database:
+Finally, if the previous step was successful, store the new credential in your database.
+Here's an example of things you'll likely want to store:
 
 [source,java]
 ----------
-storeCredential("alice", result.getKeyId(), result.getPublicKeyCose());
+storeCredential(             // Some database access method of your own design
+  "alice",                   // Username or other appropriate user identifier
+  result.getKeyId(),         // Credential ID and transports for allowCredentials
+  result.getPublicKeyCose(), // Public key for verifying authentication signatures
+  result.isDiscoverable(),   // Can this key be used for username-less auth?
+  result.getTransports(),    // Transport hints to put in allowCredentials along with ID
+  result.signatureCount(),   // Initial signature counter value
+  pkc.getResponse().getAttestationObject(), // Store attestation object for future reference
+  pkc.getResponse().getClientDataJSON()     // Store client data for re-verifying signature if needed
+);
 ----------
 
 
 === Authentication
 
-Initiate an authentication ceremony:
+Like registration ceremonies, an authentication ceremony consists of 5 main steps:
 
+ 1. Generate authentication parameters using `RelyingParty.startAssertion(...)`.
+ 2. Send authentication parameters to the client, call
+    https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/get[`navigator.credentials.get()`]
+    and return the response.
+ 3. With `cred` as the result of the successfully resolved promise, call
+    https://www.w3.org/TR/webauthn-2/#ref-for-dom-publickeycredential-getclientextensionresults[`cred.getClientExtensionResults()`]
+    and return the result along with `cred` to the server.
+ 4. Validate the response using `RelyingParty.finishAssertion(...)`.
+ 5. Update your database using the `finishAssertion` output, and act upon the result (for example, grant login access).
+
+First, generate authentication parameters and send them to the client:
 
 [source,java]
 ----------
 AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
-    .username(Optional.of("alice"))
+    .username("alice")
     .build());
-String json = jsonMapper.writeValueAsString(request);
-return json;
+String credentialGetJson = request.toCredentialGetJson();
+return credentialGetJson;  // Send to client
 ----------
 
-Validate the response:
+Again, you'll need to keep this `PublicKeyCredentialRequestOptions` object in temporary storage
+so you can also pass it into `finishAssertion(...)` later.
+
+Now call the WebAuthn API on the client side:
+
+[source,javascript]
+----------
+function base64urlToUint8array(base64Bytes) {
+  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
+  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
+}
+function uint8arrayToBase64url(bytes) {
+  return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+fetch(/* ... */)                    // Make the call that returns the credentialGetJson above
+  .then(credentialGetJson => ({     // Decode byte arrays from base64url
+    publicKey: {
+      ...credentialGetJson.publicKey,
+      allowCredentials: credentialGetJson.publicKey.allowCredentials
+        && credentialGetJson.publicKey.allowCredentials.map(credential => ({
+          ...credential,
+          id: base64urlToUint8Array(credential.id),
+        })),
+
+      challenge: base64urlToUint8Array(credentialGetJson.publicKey.challenge),
+
+      // Warning: Extension inputs could also contain binary data that needs encoding
+      extensions: credentialGetJson.publicKey.extensions,
+    },
+  }))
+  .then(credentialGetOptions =>        // Call WebAuthn ceremony
+    navigator.credentials.get(credentialGetOptions))
+  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
+    type: publicKeyCredential.type,
+    id: publicKeyCredential.id,
+    response: {
+      authenticatorData: uint8arrayToBase64url(response.response.authenticatorData),
+      clientDataJSON: uint8arrayToBase64url(response.response.clientDataJSON),
+      signature: uint8arrayToBase64url(response.response.signature),
+      userHandle: response.response.userHandle && uint8arrayToBase64url(response.response.userHandle),
+    },
+
+    // Warning: Client extension results could also contain binary data that needs encoding
+    clientExtensionResults: response.getClientExtensionResults(),
+  }))
+  .then(encodedResult =>
+    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+----------
+
+Validate the response on the server side:
 
 [source,java]
 ----------
-String responseJson = /* ... */;
-
+String publicKeyCredentialJson = /* ... */;  // encodedResult from client
 PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
-    PublicKeyCredential.parseAssertionResponseJson(responseJson);
+    PublicKeyCredential.parseAssertionResponseJson(publicKeyCredentialJson);
 
 try {
     AssertionResult result = rp.finishAssertion(FinishAssertionOptions.builder()
-        .request(request)
+        .request(request)  // The PublicKeyCredentialRequestOptions from startAssertion above
         .response(pkc)
         .build());
 
@@ -224,8 +373,85 @@ try {
 throw new RuntimeException("Authentication failed");
 ----------
 
-For more detailed example usage, see
-link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
+Finally, if the previous step was successful, update your database using the `AssertionResult`.
+Most importantly, you should update the signature counter. That might look something like this:
+
+[source,java]
+----------
+updateCredential(              // Some database access method of your own design
+  "alice",                     // Username or other appropriate user identifier
+  result.getCredentialId(),    // Credential ID of the credential used
+  result.signatureCount(),     // New signature counter value
+  Clock.systemUTC().instant()  // Time of last use (now)
+);
+----------
+
+Then do whatever else you need - for example, initiate a user session.
+
+
+=== Passwordless, username-less authentication
+
+WebAuthn supports passwordless multi-factor authentication via on-authenticator
+https://www.w3.org/TR/webauthn-2/#user-verification[user verification],
+and username-less authentication via
+https://www.w3.org/TR/webauthn-2/#discoverable-credential[discoverable credentials]
+(sometimes the term "passwordless" is used to mean the combination of both, but
+here the two are treated separately).
+
+Discoverable credentials must be enabled at registration time by setting the
+link:https://www.w3.org/TR/webauthn-2/#dom-publickeycredentialcreationoptions-authenticatorselection[`authenticatorSelection`].link:https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-residentkey[`residentKey`]
+option:
+
+[source,java]
+----------
+PublicKeyCredentialCreationOptions request = rp.startRegistration(
+  StartRegistrationOptions.builder()
+    .user(/* ... */)
+    .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
+        .residentKey(ResidentKeyRequirement.REQUIRED)
+        .build())
+    .build());
+----------
+
+The username can then be omitted when starting an authentication ceremony:
+
+[source,java]
+----------
+AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder().build());
+----------
+
+Some authenticators might enable this feature even if not required, and setting
+the `residentKey` option to `ResidentKeyRequirement.PREFERRED` will enable it if the
+authenticator supports it. The
+https://www.w3.org/TR/webauthn-2/#sctn-authenticator-credential-properties-extension[`credProps` extension]
+can be used to determine whether the created credential is discoverable, and is enabled by default.
+
+User verification can be enforced independently per authentication ceremony:
+
+[source,java]
+----------
+AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
+    .username("alice")
+    .userVerification(UserVerificationRequirement.REQUIRED)
+    .build());
+----------
+
+Then `RelyingParty.finishAssertion(...)` will enforce that user verification was
+performed. However, there is no guarantee that the user's authenticator will
+support this unless the user has some credential created with the
+link:https://www.w3.org/TR/webauthn-2/#dom-publickeycredentialcreationoptions-authenticatorselection[`authenticatorSelection`].link:https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-userverification[`userVerification`]
+option set:
+
+[source,java]
+----------
+PublicKeyCredentialCreationOptions request = rp.startRegistration(
+  StartRegistrationOptions.builder()
+    .user(/* ... */)
+    .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
+        .userVerification(UserVerificationRequirement.REQUIRED)
+        .build())
+    .build());
+----------
 
 
 == Architecture
@@ -348,6 +574,24 @@ version is derived from the most recent Git tag. Builds done on a tagged commit
 will have a plain `x.y.z` version number, while a build on any other commit will
 result in a version number containing the abbreviated commit hash.
 
+
+To run the tests:
+
+[source,shell]
+----------
+$ ./gradlew check
+----------
+
+To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
+minutes):
+
+[source,shell]
+----------
+$ ./gradlew pitest
+----------
+
+
+=== Reproducible builds
 Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds from
 tagged commits should therefore be verifiable by signatures from Maven Central
 and GitHub releases:
@@ -373,19 +617,3 @@ built artifacts.
 Official Yubico software signing keys are listed on the
 https://developers.yubico.com/Software_Projects/Software_Signing.html[Yubico
 Developers site].
-
-
-To run the tests:
-
-[source,shell]
-----------
-$ ./gradlew check
-----------
-
-To run the http://pitest.org/[PIT mutation tests] (this may take upwards of 30
-minutes):
-
-[source,shell]
-----------
-$ ./gradlew pitest
-----------

@@ -41,11 +41,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Slf4j
 public class InMemoryRegistrationStorage implements RegistrationStorage, CredentialRepository {
 
   private final Cache<String, Set<CredentialRegistration>> storage =
@@ -70,6 +68,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
             registration ->
                 PublicKeyCredentialDescriptor.builder()
                     .id(registration.getCredential().getCredentialId())
+                    .transports(registration.getTransports())
                     .build())
         .collect(Collectors.toSet());
   }
@@ -121,7 +120,11 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
 
     Set<CredentialRegistration> regs = storage.getIfPresent(result.getUsername());
     regs.remove(registration);
-    regs.add(registration.withSignatureCount(result.getSignatureCount()));
+    regs.add(
+        registration.withCredential(
+            registration.getCredential().toBuilder()
+                .signatureCount(result.getSignatureCount())
+                .build()));
   }
 
   @Override
@@ -174,7 +177,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                     .credentialId(registration.getCredential().getCredentialId())
                     .userHandle(registration.getUserIdentity().getId())
                     .publicKeyCose(registration.getCredential().getPublicKeyCose())
-                    .signatureCount(registration.getSignatureCount())
+                    .signatureCount(registration.getCredential().getSignatureCount())
                     .build()));
   }
 
@@ -190,7 +193,7 @@ public class InMemoryRegistrationStorage implements RegistrationStorage, Credent
                         .credentialId(reg.getCredential().getCredentialId())
                         .userHandle(reg.getUserIdentity().getId())
                         .publicKeyCose(reg.getCredential().getPublicKeyCose())
-                        .signatureCount(reg.getSignatureCount())
+                        .signatureCount(reg.getCredential().getSignatureCount())
                         .build())
             .collect(Collectors.toSet()));
   }

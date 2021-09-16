@@ -59,7 +59,7 @@ public class BinaryUtil {
   /**
    * Read one byte as an unsigned 8-bit integer.
    *
-   * <p>Result is of type Short because Java don't have unsigned types.
+   * <p>Result is of type <code>short</code> because Java doesn't have unsigned types.
    *
    * @return A value between 0 and 255, inclusive.
    */
@@ -71,7 +71,7 @@ public class BinaryUtil {
   /**
    * Read 2 bytes as a big endian unsigned 16-bit integer.
    *
-   * <p>Result is of type Int because Java don't have unsigned types.
+   * <p>Result is of type <code>int</code> because Java doesn't have unsigned types.
    *
    * @return A value between 0 and 2^16- 1, inclusive.
    */
@@ -89,7 +89,7 @@ public class BinaryUtil {
   /**
    * Read 4 bytes as a big endian unsigned 32-bit integer.
    *
-   * <p>Result is of type Long because Java don't have unsigned types.
+   * <p>Result is of type <code>long</code> because Java doesn't have unsigned types.
    *
    * @return A value between 0 and 2^32 - 1, inclusive.
    */
@@ -106,12 +106,24 @@ public class BinaryUtil {
 
   public static byte[] encodeUint16(int value) {
     ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
-    ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^15=65536, was: %d", value);
+    ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^16=65536, was: %d", value);
 
     ByteBuffer b = ByteBuffer.allocate(4);
     b.order(ByteOrder.BIG_ENDIAN);
     b.putInt(value);
     b.rewind();
     return Arrays.copyOfRange(b.array(), 2, 4);
+  }
+
+  public static byte[] encodeUint32(long value) {
+    ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
+    ExceptionUtil.assure(
+        value < 4294967296L, "Argument must be smaller than 2^32=4294967296, was: %d", value);
+
+    ByteBuffer b = ByteBuffer.allocate(8);
+    b.order(ByteOrder.BIG_ENDIAN);
+    b.putLong(value);
+    b.rewind();
+    return Arrays.copyOfRange(b.array(), 4, 8);
   }
 }

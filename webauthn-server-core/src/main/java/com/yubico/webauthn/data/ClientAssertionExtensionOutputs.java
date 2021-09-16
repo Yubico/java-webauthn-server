@@ -30,20 +30,21 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
 
 /**
  * Contains <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
- * outputs</a> from a <code>navigator.credentials.get()</code> operation.
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+ * extension outputs</a> from a <code>navigator.credentials.get()</code> operation.
  *
  * <p>Note that there is no guarantee that any extension input present in {@link
  * AssertionExtensionInputs} will have a corresponding output present here.
  *
  * <p>The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
  *     Extensions</a>
  */
 @Value
@@ -51,53 +52,76 @@ import lombok.Value;
 public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
   /**
-   * The output from the FIDO AppID Extension (<code>appid</code>).
+   * The extension output for the FIDO AppID Extension (<code>appid</code>), if any.
    *
    * <p>This value should be ignored because its behaviour is underspecified, see: <a
    * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   private final Boolean appid;
 
+  private final Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob;
+
   @JsonCreator
-  private ClientAssertionExtensionOutputs(@JsonProperty("appid") Boolean appid) {
+  private ClientAssertionExtensionOutputs(
+      @JsonProperty("appid") Boolean appid,
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob) {
     this.appid = appid;
+    this.largeBlob = largeBlob;
   }
 
   @Override
+  @EqualsAndHashCode.Include
   public Set<String> getExtensionIds() {
-    Set<String> ids = new HashSet<>();
-
-    getAppid().ifPresent((id) -> ids.add("appid"));
-
+    HashSet<String> ids = new HashSet<>();
+    if (appid != null) {
+      ids.add(Extensions.Appid.EXTENSION_ID);
+    }
+    if (largeBlob != null) {
+      ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
     return ids;
   }
 
   /**
-   * The output from the FIDO AppID Extension (<code>appid</code>).
+   * The extension output for the FIDO AppID Extension (<code>appid</code>), if any.
    *
    * <p>This value should be ignored because its behaviour is underspecified, see: <a
    * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   public Optional<Boolean> getAppid() {
     return Optional.ofNullable(appid);
   }
 
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">Large blob
+   * storage (<code>largeBlob</code>) extension</a>, if any.
+   *
+   * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
+   *     blob storage extension (largeBlob)</a>
+   */
+  public Optional<Extensions.LargeBlob.LargeBlobAuthenticationOutput> getLargeBlob() {
+    return Optional.ofNullable(largeBlob);
+  }
+
   public static class ClientAssertionExtensionOutputsBuilder {
-    private Boolean appid = null;
 
     /**
-     * The output from the FIDO AppID Extension (<code>appid</code>).
+     * The extension output for the FIDO AppID Extension (<code>appid</code>).
      *
      * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public ClientAssertionExtensionOutputsBuilder appid(@NonNull Optional<Boolean> appid) {
@@ -114,12 +138,13 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     }
 
     /**
-     * The output from the FIDO AppID Extension (<code>appid</code>).
+     * The extension output for the FIDO AppID Extension (<code>appid</code>).
      *
      * <p>This value should be ignored because its behaviour is underspecified, see: <a
      * href="https://github.com/w3c/webauthn/issues/1034">https://github.com/w3c/webauthn/issues/1034</a>.
      *
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public ClientAssertionExtensionOutputsBuilder appid(boolean appid) {

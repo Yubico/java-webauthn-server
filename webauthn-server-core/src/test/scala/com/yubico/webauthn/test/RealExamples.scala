@@ -1,6 +1,9 @@
 package com.yubico.webauthn.test
 
 import com.yubico.internal.util.JacksonCodecs
+import com.yubico.webauthn.AssertionRequest
+import com.yubico.webauthn.AssertionTestData
+import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.WebAuthnTestCodecs
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -11,6 +14,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 
@@ -37,6 +41,7 @@ object RealExamples {
   case class AttestationExample(
       clientData: String,
       attestationObjectBytes: ByteArray,
+      clientExtensionResultsJson: String = "{}",
   ) extends HasClientData {
     def attestationObject: AttestationObject =
       new AttestationObject(attestationObjectBytes)
@@ -53,7 +58,7 @@ object RealExamples {
           "clientDataJSON": "${clientDataJSON.getBase64Url}",
           "attestationObject": "${attestationObjectBytes.getBase64Url}"
         },
-        "clientExtensionResults": {}
+        "clientExtensionResults": ${clientExtensionResultsJson}
       }""")
   }
 
@@ -63,6 +68,7 @@ object RealExamples {
       clientData: String,
       authDataBytes: ByteArray,
       sig: ByteArray,
+      clientExtensionResultsJson: String = "{}",
   ) extends HasClientData {
     def authenticatorData: AuthenticatorData =
       new AuthenticatorData(authDataBytes)
@@ -78,7 +84,7 @@ object RealExamples {
           "authenticatorData": "${authDataBytes.getBase64Url}",
           "signature": "${sig.getBase64Url}"
         },
-        "clientExtensionResults": {}
+        "clientExtensionResults": ${clientExtensionResultsJson}
       }""")
   }
 
@@ -94,6 +100,30 @@ object RealExamples {
           .get("x5c")
           .get(0)
           .binaryValue()
+      )
+
+    def asRegistrationTestData: RegistrationTestData =
+      RegistrationTestData(
+        alg = WebAuthnTestCodecs.getCoseAlgId(
+          attestation.attestationObject.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+        ),
+        attestationObject = attestation.attestationObjectBytes,
+        clientDataJson = attestation.clientData,
+        privateKey = None,
+        assertion = Some(
+          AssertionTestData(
+            request = AssertionRequest
+              .builder()
+              .publicKeyCredentialRequestOptions(
+                PublicKeyCredentialRequestOptions
+                  .builder()
+                  .challenge(assertion.collectedClientData.getChallenge)
+                  .build()
+              )
+              .build(),
+            response = assertion.credential,
+          )
+        ),
       )
   }
 
@@ -512,6 +542,109 @@ object RealExamples {
       ),
       sig =
         ByteArray.fromBase64("MEUCIGM9xK+AHlLTv3mJLagZuNlLijI86T2SzkyAy3NidembAiEA6Y3I5GPYnRoHKil4R8yCSHUFZdgc59GO1KfsoHYhA3o="),
+    ),
+  )
+
+  val YubikeyBio_5_5_5 = Example(
+    RelyingPartyIdentity
+      .builder()
+      .id("demo.yubico.com")
+      .name("YubicoDemo")
+      .build(),
+    UserIdentity
+      .builder()
+      .name("Yubico demo user")
+      .displayName("Yubico demo user")
+      .id(ByteArray.fromBase64("vATtCjg/L2+3DSWW/qY6KtUxmkzV7ZfXgoIT9kmeSUk="))
+      .build(),
+    AttestationExample(
+      base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiNFVQRC0wYkJpb0tmVjNXRFZRUDVGZyIsIm9yaWdpbiI6Imh0dHBzOi8vZGVtby55dWJpY28uY29tIiwiY3Jvc3NPcmlnaW4iOmZhbHNlLCJvdGhlcl9rZXlzX2Nhbl9iZV9hZGRlZF9oZXJlIjoiZG8gbm90IGNvbXBhcmUgY2xpZW50RGF0YUpTT04gYWdhaW5zdCBhIHRlbXBsYXRlLiBTZWUgaHR0cHM6Ly9nb28uZ2wveWFiUGV4In0="),
+      ByteArray.fromBase64("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEgwRgIhALYxNNPzOaTC7MbbvP5J/E5LIqRpCVq2EnAzw9GnZAYyAiEAmRFEEjahZ3hKiYeAERihkZG3VakKMHs/dvQHN5qtikJjeDVjgVkC3DCCAtgwggHAoAMCAQICCQCxoTUeHREkCDANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbjELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEnMCUGA1UEAwweWXViaWNvIFUyRiBFRSBTZXJpYWwgNTA2ODMxMjgxMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE5GAqSUnnESzgip5QSiwjXE9P/d5a4B87EB/2eTZZsG+n3Vfuhw7wTxdIl25WbFo/w7P8b6IcnvUXSK3cEXobYqOBgTB/MBMGCisGAQQBgsQKDQEEBQQDBQUFMCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS45MBMGCysGAQQBguUcAgEBBAQDAgUgMCEGCysGAQQBguUcAQEEBBIEENhSLZ9XW0hmiKm6mfoC81swDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQsFAAOCAQEAKS2rlRz6RxEXSXMFqmtO9BYs0XlLVSK8tkXtEbWCDYrq0tPHlmj6KSZtiN3ApTGpL4+TwprQkqdjCfyjzB7zhyTg5+6XNawDsTK1ffNfvT1xY2dvmj0D+bftA8I9KMVSOTtORKjbAqsyrmrvoTws3X6h/LPuC29Giwc54e3dYQFeEtdrmblLZmJfhF78L0ZdbJNcgOK1ZZdDxglfZ6yD/WoCL0Rnve/Wnss//50RLNw4KMgX+MLP2aGlZjoCWbR4fLPQz0uG7S5NKdzWWdU7ScMYsG+K4s5I+bU8sDj8WIfAQ1iQibC62yxuPcVvGtsiNd+hVWgvS7xsL/YwtvncTWhhdXRoRGF0YVjExGzvgq0bVGR3WR0Aiwh1nsPm0uy085R0v+ppaZJdA7dFAAAAA9hSLZ9XW0hmiKm6mfoC81sAQL+vEPt35mA9WSpQo6I8Asxtm03+E3+RjpFYV1q0xei8HKXpJmWMkfkPccpWKZP0pqjUt8tP6Fi7nDY32d2ywnmlAQIDJiABIVggYBMva++1OGaFbYJ3lAPWB4gRFP3960V1p9HqU846nLgiWCAo7Yy9ttW/torJq5/a/MZ0klVCepSrxIkjw2NE528Y1w=="),
+    ),
+    AssertionExample(
+      id =
+        ByteArray.fromBase64Url("v68Q-3fmYD1ZKlCjojwCzG2bTf4Tf5GOkVhXWrTF6LwcpekmZYyR-Q9xylYpk_SmqNS3y0_oWLucNjfZ3bLCeQ"),
+      clientData =
+        base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoicm1hVXh6aUJhcHdsM1VhYjYzdmJBUSIsIm9yaWdpbiI6Imh0dHBzOi8vZGVtby55dWJpY28uY29tIiwiY3Jvc3NPcmlnaW4iOmZhbHNlfQ=="),
+      authDataBytes = ByteArray.fromBase64(
+        "xGzvgq0bVGR3WR0Aiwh1nsPm0uy085R0v+ppaZJdA7cFAAAABw=="
+      ),
+      sig =
+        ByteArray.fromBase64("MEUCIEhKvwf685swe2Gm0UrbcbYtB/6mg2/i2SXq9IsO/knxAiEA2CpfycB1/mcdDcCxP2Pp6zfFanVuwFhRBsy9NJmjxbg="),
+    ),
+  )
+
+  val CredPropsEmpty = AttestationExample(
+    base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiYlZjNWxvY3dnV0ZvdlJ6M2RzWGkzcFc1cHgxZ3pGOFFIaFJmLU90REhuVSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2UsIm90aGVyX2tleXNfY2FuX2JlX2FkZGVkX2hlcmUiOiJkbyBub3QgY29tcGFyZSBjbGllbnREYXRhSlNPTiBhZ2FpbnN0IGEgdGVtcGxhdGUuIFNlZSBodHRwczovL2dvby5nbC95YWJQZXgifQ"),
+    ByteArray.fromBase64Url("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEcwRQIgCTFl9y9YBafBiKkOnj59Cgypvz9hhPwpdsiFAmE8utcCIQC8bsfMEcI5-Di3Xj9CIWZ1PAGMjvxEiD1L2csJcgjoBmN4NWOBWQLwMIIC7DCCAdSgAwIBAgIJAN1TJeaFJ6cVMA0GCSqGSIb3DQEBCwUAMC4xLDAqBgNVBAMTI1l1YmljbyBVMkYgUm9vdCBDQSBTZXJpYWwgNDU3MjAwNjMxMCAXDTE0MDgwMTAwMDAwMFoYDzIwNTAwOTA0MDAwMDAwWjBvMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMSgwJgYDVQQDDB9ZdWJpY28gVTJGIEVFIFNlcmlhbCAxNzEzNzIyMzMzMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDeoY3vFmcuLvf1SL2oqIV5WaVs9VGyB4GPmtxdHY84v_-R2wtLKvAfjIH9eTIq3-Ev3-UQLipTY0Bb9Xn9Sp3KOBlDCBkTATBgorBgEEAYLECg0BBAUEAwUEAjAQBgkrBgEEAYLECgwEAwIBBDAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuNzATBgsrBgEEAYLlHAIBAQQEAwIEMDAhBgsrBgEEAYLlHAEBBAQSBBDB-aC8HdJASrJ_jikEekP9MAwGA1UdEwEB_wQCMAAwDQYJKoZIhvcNAQELBQADggEBAGl5dmZIe5GOHFOAvVUaWFWyet89UCHWKmLBTXXfuoPwYqatxGhVqIeiV4nAuFF127294SzJcMgzycToui5_g8OUonTvs9xWF9yH23fXjGcBWoGErlF7DqkycOz2NtjPhGwEfBnE--0_KRc_IN6bu7u_XPXNwNmCLcg0reERI23NO_ZftcWebjRBCwY3p6l0ahalKmrgqOi7bhU1AjbHmiEvJgeBcpZphS87eikierMO5PmwvdbV3okNseEoaeoHDDQ7Av6RwCtKCXwYupRs6sULgUwo0fz2znURA-zSuTzK4iZ_hmQvRVJtQBPtfpwBEmNEdwwZ1A-VxfspsYzA7AVoYXV0aERhdGFYxEmWDeWIDoxodDQXD2R2YFuP5K65ooYyx5lc87qDHZdjQQAAAATB-aC8HdJASrJ_jikEekP9AEAJSmR-h-HuKqKK2uvaDSjTQrjbfukR_-71-SoVyEFkfLEc09nidnTryBiqZGARKeDhwvtog3_c3f8C3REXcI4spQECAyYgASFYIDUR5e5GusKylrCRkKq1U3jnp-fJ_l_CeykL_-5tj4juIlgg72ksmbxNptIfwrG1hiwbViIoWIphEt2819hHdziqSsc"),
+    clientExtensionResultsJson = """{"credProps":{}}""",
+  )
+
+  val CredPropsRkTrue = AttestationExample(
+    base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiWFltUW9lWlMtWVNTSjdYN2JJSUxTbzBSTDExbV9Kd01PNXFRZmNUQU1xayIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2UsIm90aGVyX2tleXNfY2FuX2JlX2FkZGVkX2hlcmUiOiJkbyBub3QgY29tcGFyZSBjbGllbnREYXRhSlNPTiBhZ2FpbnN0IGEgdGVtcGxhdGUuIFNlZSBodHRwczovL2dvby5nbC95YWJQZXgifQ"),
+    ByteArray.fromBase64Url("o2NmbXRmcGFja2VkZ2F0dFN0bXSjY2FsZyZjc2lnWEgwRgIhAPw2vAQV-2EGVlL4RXzh_Z2iLr7JXCnBpm8prPEeu3KjAiEA8WhW4GPZUiWpTX9p4EK5QE-ZE7G20_sraQ6_APG9-OBjeDVjgVkC8DCCAuwwggHUoAMCAQICCQDdUyXmhSenFTANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbzELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEoMCYGA1UEAwwfWXViaWNvIFUyRiBFRSBTZXJpYWwgMTcxMzcyMjMzMzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABA3qGN7xZnLi739Ui9qKiFeVmlbPVRsgeBj5rcXR2POL__kdsLSyrwH4yB_XkyKt_hL9_lEC4qU2NAW_V5_UqdyjgZQwgZEwEwYKKwYBBAGCxAoNAQQFBAMFBAIwEAYJKwYBBAGCxAoMBAMCAQQwIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjcwEwYLKwYBBAGC5RwCAQEEBAMCBDAwIQYLKwYBBAGC5RwBAQQEEgQQwfmgvB3SQEqyf44pBHpD_TAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBpeXZmSHuRjhxTgL1VGlhVsnrfPVAh1ipiwU1137qD8GKmrcRoVaiHoleJwLhRddu9veEsyXDIM8nE6Louf4PDlKJ077PcVhfch9t314xnAVqBhK5Rew6pMnDs9jbYz4RsBHwZxPvtPykXPyDem7u7v1z1zcDZgi3INK3hESNtzTv2X7XFnm40QQsGN6epdGoWpSpq4Kjou24VNQI2x5ohLyYHgXKWaYUvO3opInqzDuT5sL3W1d6JDbHhKGnqBww0OwL-kcArSgl8GLqUbOrFC4FMKNH89s51EQPs0rk8yuImf4ZkL0VSbUAT7X6cARJjRHcMGdQPlcX7KbGMwOwFaGF1dGhEYXRhWMJJlg3liA6MaHQ0Fw9kdmBbj-SuuaKGMseZXPO6gx2XY8UAAAABwfmgvB3SQEqyf44pBHpD_QAw0nM1d52DYdt7cv_6mdvhsFl12msHv6Pt-izLFuncSmRGSaCsAWizk70SqdKPuXyPpQECAyYgASFYINJzNXedg2Hbe3L_-pnZU8KE6ZmMGizk0KqHq5AA8YogIlgg9tCtr3schMR0jJUREKjqOW4cMxTzotkYvBI3iTwj62qha2NyZWRQcm90ZWN0Ag"),
+    clientExtensionResultsJson = """{"credProps":{"rk":true}}""",
+  )
+
+  val LargeBlobWrite = Example(
+    RelyingPartyIdentity.builder().id("localhost").name("").build(),
+    UserIdentity
+      .builder()
+      .name("asdfa")
+      .displayName("asdfa")
+      .id(
+        ByteArray.fromBase64Url("-MR-ER2Nujmv3fWNlpb1mwcisVh6D962ZAxGz4W7XUQ")
+      )
+      .build(),
+    AttestationExample(
+      base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiUkpkSmt3UF9JejcyRHF3Y2xha0JYR3FuX2NqZy1ObEtQVDFOSEFvMDR2RSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      ByteArray.fromBase64Url("o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjCSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2PFAAAABAAAAAAAAAAAAAAAAAAAAAAAMC22Bw33qBCfiLRvJaun4zVZ4YOpIG3mxo2FhH99macgoYmxr-ICVNThjNJzkEGORqUBAgMmIAEhWCAttgcN96gQn4i0byWrpUb-jQhSjE9J49n5D_krK_f8byJYIFxGgNN7UDpueNRz_FgXoO7Pg5qIFA-LT9y3S7_JdPjboWtjcmVkUHJvdGVjdAI"),
+      clientExtensionResultsJson = """{"largeBlob":{"supported":true}}""",
+    ),
+    AssertionExample(
+      id = ByteArray.fromBase64Url(
+        "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G"
+      ),
+      clientData =
+        base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiWUZVZGY5SFI3UVY5a216R1ZicU5sVk1Ja2x5QXJEY2lISVM0TFdsQWhtUSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      authDataBytes = ByteArray.fromBase64Url(
+        "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAACA"
+      ),
+      sig =
+        ByteArray.fromBase64Url("MEQCIAgTCWKcpQ-kLkKc18UJlwRWx2WYmRWMxvndHXHgWmzzAiAC-my1SfSnO0fr4iRYxMkbw1k7e6HxrFY22nJ7e3Z3jw"),
+      clientExtensionResultsJson =
+        """{"appid":false,"largeBlob":{"written":true}}""",
+    ),
+  )
+
+  val LargeBlobRead = Example(
+    RelyingPartyIdentity.builder().id("localhost").name("").build(),
+    UserIdentity
+      .builder()
+      .name("asdfa")
+      .displayName("asdfa")
+      .id(
+        ByteArray.fromBase64Url("-MR-ER2Nujmv3fWNlpb1mwcisVh6D962ZAxGz4W7XUQ")
+      )
+      .build(),
+    AttestationExample(
+      base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiUkpkSmt3UF9JejcyRHF3Y2xha0JYR3FuX2NqZy1ObEtQVDFOSEFvMDR2RSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      ByteArray.fromBase64Url("o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVjCSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2PFAAAABAAAAAAAAAAAAAAAAAAAAAAAMC22Bw33qBCfiLRvJaun4zVZ4YOpIG3mxo2FhH99macgoYmxr-ICVNThjNJzkEGORqUBAgMmIAEhWCAttgcN96gQn4i0byWrpUb-jQhSjE9J49n5D_krK_f8byJYIFxGgNN7UDpueNRz_FgXoO7Pg5qIFA-LT9y3S7_JdPjboWtjcmVkUHJvdGVjdAI"),
+      clientExtensionResultsJson = """{"largeBlob":{"supported":true}}""",
+    ),
+    AssertionExample(
+      id = ByteArray.fromBase64Url(
+        "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G"
+      ),
+      clientData =
+        base64UrlToString("eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiSjNlNjRnZThBamtOSl81aE5jaUo5NldrT3VQZzYycnJHTDc2d3AzTHRCQSIsIm9yaWdpbiI6Imh0dHBzOi8vbG9jYWxob3N0Ojg0NDMiLCJjcm9zc09yaWdpbiI6ZmFsc2V9"),
+      authDataBytes = ByteArray.fromBase64Url(
+        "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAADQ"
+      ),
+      sig =
+        ByteArray.fromBase64Url("MEYCIQCJMxhKIBAvno05cjt7IeFrWLwPtWeDGS_yH9fOX-DQXAIhAIzU7uC4DM6oO_A0JNm90LUr0l158aacA4XH5auxqSqB"),
+      clientExtensionResultsJson =
+        """{"appid":false,"largeBlob":{"blob":"SGVsbG8sIFdvcmxkIQ"}}""",
     ),
   )
 

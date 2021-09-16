@@ -29,7 +29,6 @@ import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -122,11 +121,9 @@ public class Config {
   private static RelyingPartyIdentity computeRpIdentity() throws MalformedURLException {
     final String name = System.getenv("YUBICO_WEBAUTHN_RP_NAME");
     final String id = System.getenv("YUBICO_WEBAUTHN_RP_ID");
-    final String icon = System.getenv("YUBICO_WEBAUTHN_RP_ICON");
 
     logger.debug("RP name: {}", name);
     logger.debug("RP ID: {}", id);
-    logger.debug("RP icon: {}", icon);
 
     RelyingPartyIdentity.RelyingPartyIdentityBuilder resultBuilder = DEFAULT_RP_ID.toBuilder();
 
@@ -140,17 +137,6 @@ public class Config {
       logger.debug("RP ID not given - using default.");
     } else {
       resultBuilder.id(id);
-    }
-
-    if (icon == null) {
-      logger.debug("RP icon not given - using none.");
-    } else {
-      try {
-        resultBuilder.icon(Optional.of(new URL(icon)));
-      } catch (MalformedURLException e) {
-        logger.error("Invalid icon URL: {}", icon, e);
-        throw e;
-      }
     }
 
     final RelyingPartyIdentity result = resultBuilder.build();

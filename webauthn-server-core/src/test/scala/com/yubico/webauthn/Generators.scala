@@ -4,7 +4,11 @@ import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
 import com.yubico.webauthn.data.AttestationType
+import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs
+import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import org.scalacheck.Arbitrary
@@ -16,6 +20,9 @@ object Generators {
 
   implicit val arbitraryAssertionResult: Arbitrary[AssertionResult] = Arbitrary(
     for {
+      authenticatorExtensionOutputs <-
+        arbitrary[Option[AuthenticatorAssertionExtensionOutputs]]
+      clientExtensionOutputs <- arbitrary[ClientAssertionExtensionOutputs]
       credentialId <- arbitrary[ByteArray]
       signatureCount <- arbitrary[Long]
       signatureCounterValid <- arbitrary[Boolean]
@@ -31,6 +38,8 @@ object Generators {
       .username(username)
       .signatureCount(signatureCount)
       .signatureCounterValid(signatureCounterValid)
+      .clientExtensionOutputs(clientExtensionOutputs)
+      .assertionExtensionOutputs(authenticatorExtensionOutputs.orNull)
       .warnings(warnings)
       .build()
   )
@@ -41,8 +50,12 @@ object Generators {
         attestationMetadata <- arbitrary[Optional[Attestation]]
         attestationTrusted <- arbitrary[Boolean]
         attestationType <- arbitrary[AttestationType]
+        authenticatorExtensionOutputs <-
+          arbitrary[Option[AuthenticatorRegistrationExtensionOutputs]]
+        clientExtensionOutputs <- arbitrary[ClientRegistrationExtensionOutputs]
         keyId <- arbitrary[PublicKeyCredentialDescriptor]
         publicKeyCose <- arbitrary[ByteArray]
+        signatureCount <- arbitrary[Long]
         warnings <- arbitrary[java.util.List[String]]
       } yield RegistrationResult
         .builder()
@@ -50,6 +63,9 @@ object Generators {
         .attestationTrusted(attestationTrusted)
         .attestationType(attestationType)
         .publicKeyCose(publicKeyCose)
+        .signatureCount(signatureCount)
+        .clientExtensionOutputs(clientExtensionOutputs)
+        .authenticatorExtensionOutputs(authenticatorExtensionOutputs.orNull)
         .attestationMetadata(attestationMetadata)
         .warnings(warnings)
         .build()

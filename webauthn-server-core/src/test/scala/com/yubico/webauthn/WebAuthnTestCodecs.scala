@@ -12,8 +12,7 @@ import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
 
-/**
-  * Re-exports from [[WebAuthnCodecs]] and [[Crypto]] so tests can use it
+/** Re-exports from [[WebAuthnCodecs]] and [[Crypto]] so tests can use it
   */
 object WebAuthnTestCodecs {
 

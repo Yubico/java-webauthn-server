@@ -44,7 +44,7 @@ public class CollectionUtil {
    *
    * @return A shallow copy of <code>s</code> which cannot be modified
    */
-  public static <T> SortedSet<T> immutableSortedSet(SortedSet<T> s) {
+  public static <T> SortedSet<T> immutableSortedSet(Set<T> s) {
     return Collections.unmodifiableSortedSet(new TreeSet<>(s));
   }
 }

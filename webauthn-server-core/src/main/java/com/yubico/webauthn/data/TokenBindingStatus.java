@@ -37,7 +37,8 @@ import lombok.NonNull;
  * Indicators of whether a {@link TokenBindingInfo}'s {@link TokenBindingInfo#getId() id} member is
  * present and, if not, whether the client supports token binding.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-tokenbindingstatus">enum
+ * @see <a
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-tokenbindingstatus">enum
  *     TokenBindingStatus</a>
  * @see TokenBindingInfo
  */

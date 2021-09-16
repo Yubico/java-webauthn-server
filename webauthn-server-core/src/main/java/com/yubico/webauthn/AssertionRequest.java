@@ -26,6 +26,8 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import java.util.Optional;
 import lombok.Builder;
@@ -50,7 +52,7 @@ public class AssertionRequest {
    * The username of the user to authenticate, if the user has already been identified.
    *
    * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
    * credential</a>, and identification of the user has been deferred until the response is
    * received.
    */
@@ -69,12 +71,34 @@ public class AssertionRequest {
    * The username of the user to authenticate, if the user has already been identified.
    *
    * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
    * credential</a>, and identification of the user has been deferred until the response is
    * received.
    */
   public Optional<String> getUsername() {
     return Optional.ofNullable(username);
+  }
+
+  /**
+   * Serialize this {@link AssertionRequest} value to JSON suitable for sending to the client.
+   *
+   * <p>This is an alias of <code>getPublicKeyCredentialRequestOptions().toCredentialsGetJson()
+   * </code>.
+   *
+   * <p>Any {@link ByteArray} values in this data structure will be {@link ByteArray#getBase64Url()
+   * Base64Url} encoded. Those values MUST be decoded into <code>BufferSource</code> values (such as
+   * <code>Uint8Array</code>) on the client side before calling <code>navigator.credentials.get()
+   * </code>.
+   *
+   * <p>After decoding binary values, the resulting JavaScript object is suitable for passing as an
+   * argument to <code>navigator.credentials.get()</code>.
+   *
+   * @return a JSON value suitable for sending to the client and passing as an argument to <code>
+   *     navigator.credentials.get()</code>, after decoding binary options from Base64Url strings.
+   * @throws JsonProcessingException if JSON serialization fails.
+   */
+  public String toCredentialsGetJson() throws JsonProcessingException {
+    return publicKeyCredentialRequestOptions.toCredentialsGetJson();
   }
 
   public static AssertionRequestBuilder.MandatoryStages builder() {
@@ -102,7 +126,7 @@ public class AssertionRequest {
      * The username of the user to authenticate, if the user has already been identified.
      *
      * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
      * credential</a>, and identification of the user has been deferred until the response is
      * received.
      */
@@ -114,7 +138,7 @@ public class AssertionRequest {
      * The username of the user to authenticate, if the user has already been identified.
      *
      * <p>If this is absent, this indicates that this is a request for an assertion by a <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">client-side-resident
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
      * credential</a>, and identification of the user has been deferred until the response is
      * received.
      */

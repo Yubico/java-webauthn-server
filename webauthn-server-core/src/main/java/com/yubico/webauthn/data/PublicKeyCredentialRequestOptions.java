@@ -26,7 +26,11 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.JacksonCodecs;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -40,7 +44,7 @@ import lombok.Value;
  * <p>Its `challenge` member must be present, while its other members are optional.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialrequestoptions">§5.5.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialrequestoptions">§5.5.
  *     Options for Assertion Generation (dictionary PublicKeyCredentialRequestOptions) </a>
  */
 @Value
@@ -50,7 +54,7 @@ public class PublicKeyCredentialRequestOptions {
   /**
    * A challenge that the selected authenticator signs, along with other data, when producing an
    * authentication assertion. See the <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-cryptographic-challenges">§13.1
    * Cryptographic Challenges</a> security consideration.
    */
   @NonNull private final ByteArray challenge;
@@ -78,8 +82,8 @@ public class PublicKeyCredentialRequestOptions {
 
   /**
    * Describes the Relying Party's requirements regarding <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#user-verification">user verification</a>
-   * for the <code>navigator.credentials.get()</code> operation.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+   * verification</a> for the <code>navigator.credentials.get()</code> operation.
    *
    * <p>Eligible authenticators are filtered to only those capable of satisfying this requirement.
    */
@@ -119,6 +123,29 @@ public class PublicKeyCredentialRequestOptions {
 
   public Optional<List<PublicKeyCredentialDescriptor>> getAllowCredentials() {
     return Optional.ofNullable(allowCredentials);
+  }
+
+  /**
+   * Serialize this {@link PublicKeyCredentialRequestOptions} value to JSON suitable for sending to
+   * the client.
+   *
+   * <p>Any {@link ByteArray} values in this data structure will be {@link ByteArray#getBase64Url()
+   * Base64Url} encoded. Those values MUST be decoded into <code>BufferSource</code> values (such as
+   * <code>Uint8Array</code>) on the client side before calling <code>navigator.credentials.get()
+   * </code>.
+   *
+   * <p>After decoding binary values, the resulting JavaScript object is suitable for passing as an
+   * argument to <code>navigator.credentials.get()</code>.
+   *
+   * @return a JSON value suitable for sending to the client and passing as an argument to <code>
+   *     navigator.credentials.get()</code>, after decoding binary options from Base64Url strings.
+   * @throws JsonProcessingException if JSON serialization fails.
+   */
+  public String toCredentialsGetJson() throws JsonProcessingException {
+    ObjectMapper json = JacksonCodecs.json();
+    ObjectNode result = json.createObjectNode();
+    result.set("publicKey", json.valueToTree(this));
+    return json.writeValueAsString(result);
   }
 
   public static PublicKeyCredentialRequestOptionsBuilder.MandatoryStages builder() {

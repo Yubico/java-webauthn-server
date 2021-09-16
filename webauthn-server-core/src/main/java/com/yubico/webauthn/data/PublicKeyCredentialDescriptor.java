@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ComparableUtil;
+import com.yubico.webauthn.RegistrationResult;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -43,7 +44,7 @@ import lombok.Value;
  * PublicKeyCredential} object returned by the latter methods.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialdescriptor">§5.10.3.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialdescriptor">§5.10.3.
  *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
  */
 @Value
@@ -60,6 +61,9 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
   /**
    * An OPTIONAL hint as to how the client might communicate with the managing authenticator of the
    * public key credential the caller is referring to.
+   *
+   * <p>This SHOULD be stored along with the {@link #getId() id} and used unmodified whenever
+   * creating a {@link PublicKeyCredentialDescriptor} for this credential.
    */
   private final SortedSet<AuthenticatorTransport> transports;
 
@@ -119,6 +123,9 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     /**
      * An OPTIONAL hint as to how the client might communicate with the managing authenticator of
      * the public key credential the caller is referring to.
+     *
+     * <p>This SHOULD be set to the unmodified value returned from {@link
+     * RegistrationResult#getKeyId()}.{@link #getTransports()} when the credential was registered.
      */
     public PublicKeyCredentialDescriptorBuilder transports(
         @NonNull Optional<Set<AuthenticatorTransport>> transports) {
@@ -128,6 +135,9 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     /**
      * An OPTIONAL hint as to how the client might communicate with the managing authenticator of
      * the public key credential the caller is referring to.
+     *
+     * <p>This SHOULD be set to the unmodified value returned from {@link
+     * RegistrationResult#getKeyId()}.{@link #getTransports()} when the credential was registered.
      */
     public PublicKeyCredentialDescriptorBuilder transports(Set<AuthenticatorTransport> transports) {
       this.transports = transports;

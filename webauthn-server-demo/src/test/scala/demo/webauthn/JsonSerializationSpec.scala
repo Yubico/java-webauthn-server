@@ -40,7 +40,7 @@ class JsonSerializationSpec extends FunSpec with Matchers {
 
   val testData = RegistrationTestData.FidoU2f.BasicAttestation
   val authenticationAttestationResponseJson =
-    s"""{"attestationObject":"${testData.response.getResponse.getAttestationObject.getBase64Url}","clientDataJSON":"${testData.response.getResponse.getClientDataJSON.getBase64Url}"}"""
+    s"""{"attestationObject":"${testData.response.getResponse.getAttestationObject.getBase64Url}","clientDataJSON":"${testData.response.getResponse.getClientDataJSON.getBase64Url}","transports":["usb"]}"""
   val publicKeyCredentialJson =
     s"""{"id":"${testData.response.getId.getBase64Url}","response":${authenticationAttestationResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
   val registrationResponseJson =

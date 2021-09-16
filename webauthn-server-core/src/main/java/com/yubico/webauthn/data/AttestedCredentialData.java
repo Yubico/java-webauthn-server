@@ -36,7 +36,7 @@ import lombok.Value;
  * data segments of that byte array.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-attested-credential-data">6.4.1.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attested-credential-data">6.4.1.
  *     Attested Credential Data</a>
  */
 @Value
@@ -54,7 +54,8 @@ public class AttestedCredentialData {
    * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>.
    */
   @NonNull
-  // TODO: verify requirements https://www.w3.org/TR/webauthn/#sec-attestation-data
+  // TODO: verify requirements
+  // https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attested-credential-data
   private final ByteArray credentialPublicKey;
 
   @JsonCreator

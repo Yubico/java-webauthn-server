@@ -30,14 +30,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Authenticators respond to Relying Party requests by returning an object derived from the {@link
  * AuthenticatorResponse} interface.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorresponse">§5.2.
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticatorresponse">§5.2.
  *     Authenticator Responses (interface AuthenticatorResponse) </a>
  */
 public interface AuthenticatorResponse {
 
   /**
    * The authenticator data returned by the authenticator. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">§6.1
    * Authenticator Data</a>.
    */
   ByteArray getAuthenticatorData();
@@ -50,11 +50,11 @@ public interface AuthenticatorResponse {
 
   /**
    * The JSON-serialized client data (see <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-client-data">§5.10.1 Client Data
-   * Used in WebAuthn Signatures</a> (dictionary {@link CollectedClientData})) passed to the
-   * authenticator by the client in the call to either <code>navigator.credentials.create()</code>
-   * or <code>navigator.credentials.get()</code>. The exact JSON serialization MUST be preserved, as
-   * the hash of the serialized client data has been computed over it.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-client-data">§5.10.1
+   * Client Data Used in WebAuthn Signatures</a> (dictionary {@link CollectedClientData})) passed to
+   * the authenticator by the client in the call to either <code>navigator.credentials.create()
+   * </code> or <code>navigator.credentials.get()</code>. The exact JSON serialization MUST be
+   * preserved, as the hash of the serialized client data has been computed over it.
    */
   ByteArray getClientDataJSON();
 

@@ -152,8 +152,3 @@ correct environment.
     https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP name]
     the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
     Authentication demo'`
-
-  - `YUBICO_WEBAUTHN_RP_ICON`: An optional URL to an
-    https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-icon[icon] to
-    represent this Relying Party. Example:
-    `YUBICO_WEBAUTHN_RP_ICON='https://www.yubico.com/wp-content/uploads/2014/09/favicon.ico'`

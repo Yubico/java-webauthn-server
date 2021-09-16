@@ -29,7 +29,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
@@ -45,10 +47,16 @@ import lombok.Value;
 public class RegistrationResult {
 
   /**
-   * The <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">credential ID</a>
-   * of the created credential.
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> and <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>of
+   * the created credential.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#credential-id">Credential ID</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-credential-descriptor">5.8.3.
+   *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
    * @see PublicKeyCredential#getId()
    */
   @NonNull private final PublicKeyCredentialDescriptor keyId;
@@ -63,12 +71,13 @@ public class RegistrationResult {
 
   /**
    * The attestation type <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
    * Attestation Types</a> that was used for the created credential.
    *
    * <p>You can ignore this if authenticator attestation is not relevant to your application.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
    *     Attestation Types</a>
    */
   @NonNull private final AttestationType attestationType;
@@ -83,6 +92,16 @@ public class RegistrationResult {
    */
   @NonNull private final ByteArray publicKeyCose;
 
+  /**
+   * The signature count returned with the created credential.
+   *
+   * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
+   * validity of future signature counter values.
+   *
+   * @see RegisteredCredential#getSignatureCount() ()
+   */
+  private final long signatureCount;
+
   /** Zero or more human-readable messages about non-critical issues. */
   @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
 
@@ -94,11 +113,15 @@ public class RegistrationResult {
    * com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional) metadataService}
    * in {@link RelyingParty}.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
    */
   private final Attestation attestationMetadata;
+
+  private final ClientRegistrationExtensionOutputs clientExtensionOutputs;
+
+  private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
 
   @JsonCreator
   private RegistrationResult(
@@ -106,18 +129,86 @@ public class RegistrationResult {
       @JsonProperty("attestationTrusted") boolean attestationTrusted,
       @NonNull @JsonProperty("attestationType") AttestationType attestationType,
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+      @JsonProperty("signatureCount") Long signatureCount,
       @NonNull @JsonProperty("warnings") List<String> warnings,
-      @JsonProperty("attestationMetadata") Attestation attestationMetadata) {
+      @JsonProperty("attestationMetadata") Attestation attestationMetadata,
+      @JsonProperty("clientExtensionOutputs")
+          ClientRegistrationExtensionOutputs clientExtensionOutputs,
+      @JsonProperty("authenticatorExtensionOutputs")
+          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
     this.keyId = keyId;
     this.attestationTrusted = attestationTrusted;
     this.attestationType = attestationType;
     this.publicKeyCose = publicKeyCose;
+    this.signatureCount = signatureCount == null ? 0 : signatureCount;
     this.warnings = CollectionUtil.immutableList(warnings);
     this.attestationMetadata = attestationMetadata;
+    this.clientExtensionOutputs =
+        clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
+            ? null
+            : clientExtensionOutputs;
+    this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
   }
 
   public Optional<Attestation> getAttestationMetadata() {
     return Optional.ofNullable(attestationMetadata);
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-client-extension-processing">§9.4.
+   *     Client Extension Processing</a>
+   * @see ClientRegistrationExtensionOutputs
+   * @see #getAuthenticatorExtensionOutputs() ()
+   */
+  public Optional<ClientRegistrationExtensionOutputs> getClientExtensionOutputs() {
+    return Optional.ofNullable(clientExtensionOutputs);
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-extension-processing">§9.5.
+   *     Authenticator Extension Processing</a>
+   * @see AuthenticatorRegistrationExtensionOutputs
+   * @see #getClientExtensionOutputs()
+   */
+  public Optional<AuthenticatorRegistrationExtensionOutputs> getAuthenticatorExtensionOutputs() {
+    return Optional.ofNullable(authenticatorExtensionOutputs);
+  }
+
+  /**
+   * Try to determine whether the created credential is a <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">discoverable
+   * credential</a>, using the output from the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
+   * <code>credProps</code></a> extension.
+   *
+   * @return A present <code>true</code> if the created credential is discoverable. A present <code>
+   *     false</code> if the created credential is not discoverable. An empty value if it is not
+   *     known whether the created credential is discoverable.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-credentialpropertiesoutput-rk">§10.4.
+   *     Credential Properties Extension (credProps), "rk" output</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">Discoverable
+   *     Credential</a>
+   */
+  public Optional<Boolean> isDiscoverable() {
+    return getClientExtensionOutputs()
+        .flatMap(outputs -> outputs.getCredProps())
+        .flatMap(credProps -> credProps.getRk());
   }
 
   static RegistrationResultBuilder.MandatoryStages builder() {
@@ -148,8 +239,30 @@ public class RegistrationResult {
       }
 
       class Step4 {
-        RegistrationResultBuilder publicKeyCose(ByteArray publicKeyCose) {
-          return builder.publicKeyCose(publicKeyCose);
+        Step5 publicKeyCose(ByteArray publicKeyCose) {
+          builder.publicKeyCose(publicKeyCose);
+          return new Step5();
+        }
+      }
+
+      class Step5 {
+        Step6 signatureCount(long signatureCount) {
+          builder.signatureCount(signatureCount);
+          return new Step6();
+        }
+      }
+
+      class Step6 {
+        Step7 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
+          builder.clientExtensionOutputs(clientExtensionOutputs);
+          return new Step7();
+        }
+      }
+
+      class Step7 {
+        RegistrationResultBuilder authenticatorExtensionOutputs(
+            AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
+          return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
         }
       }
     }

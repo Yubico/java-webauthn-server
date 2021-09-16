@@ -24,33 +24,109 @@
 
 package com.yubico.webauthn.data;
 
-import java.util.Collections;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Contains <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-extension-output">client extension
- * outputs</a> from a <code>navigator.credentials.create()</code> operation.
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+ * extension outputs</a> from a <code>navigator.credentials.create()</code> operation.
  *
  * <p>Note that there is no guarantee that any extension input present in {@link
  * AssertionExtensionInputs} will have a corresponding output present here.
  *
  * <p>The authenticator extension outputs are contained in the {@link AuthenticatorData} structure.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
  *     Extensions</a>
  */
 @Value
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
+@Slf4j
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ClientRegistrationExtensionOutputs implements ClientExtensionOutputs {
 
+  private final Boolean appidExclude;
+
+  private final Extensions.CredentialProperties.CredentialPropertiesOutput credProps;
+
+  private final Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob;
+
+  @JsonCreator
+  private ClientRegistrationExtensionOutputs(
+      @JsonProperty("appidExclude") Boolean appidExclude,
+      @JsonProperty("credProps")
+          Extensions.CredentialProperties.CredentialPropertiesOutput credProps,
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob) {
+    this.appidExclude = appidExclude;
+    this.credProps = credProps;
+    this.largeBlob = largeBlob;
+  }
+
   @Override
+  @EqualsAndHashCode.Include
   public Set<String> getExtensionIds() {
-    return Collections.emptySet();
+    HashSet<String> ids = new HashSet<>();
+    if (appidExclude != null) {
+      ids.add(Extensions.AppidExclude.EXTENSION_ID);
+    }
+    if (credProps != null) {
+      ids.add(Extensions.CredentialProperties.EXTENSION_ID);
+    }
+    if (largeBlob != null) {
+      ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    return ids;
+  }
+
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">FIDO
+   * AppID Exclusion (<code>appidExclude</code>) Extension</a>, if any.
+   *
+   * <p>This value is generally not useful, as it only communicates whether the client supports the
+   * extension.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.FIDO
+   *     AppID Exclusion Extension (appidExclude)</a>
+   */
+  public Optional<Boolean> getAppidExclude() {
+    return Optional.ofNullable(appidExclude);
+  }
+
+  /**
+   * The extension output for the Credential Properties Extension (<code>credProps</code>), if any.
+   *
+   * <p>This value MAY be present but have all members empty if the extension was successfully
+   * processed but no credential properties could be determined.
+   *
+   * @see com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
+   *     Credential Properties Extension (credProps)</a>
+   */
+  public Optional<Extensions.CredentialProperties.CredentialPropertiesOutput> getCredProps() {
+    return Optional.ofNullable(credProps);
+  }
+
+  /**
+   * The extension output for the Large blob storage extension (<code>largeBlob</code>), if any.
+   *
+   * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
+   *     blob storage extension (largeBlob)</a>
+   */
+  public Optional<Extensions.LargeBlob.LargeBlobRegistrationOutput> getLargeBlob() {
+    return Optional.ofNullable(largeBlob);
   }
 }

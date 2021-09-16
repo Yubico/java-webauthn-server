@@ -150,7 +150,7 @@ public class RelyingParty {
    * <p>By default, this is not set.
    *
    * @see AssertionExtensionInputs#getAppid()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
    */
   @NonNull private final Optional<AppId> appId;
@@ -169,7 +169,7 @@ public class RelyingParty {
    * <p>By default, this is not set.
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference;
@@ -182,7 +182,7 @@ public class RelyingParty {
    * <p>By default, this is not set.
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @NonNull private final Optional<MetadataService> metadataService;
@@ -203,7 +203,7 @@ public class RelyingParty {
    * </ol>
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @Builder.Default @NonNull
@@ -306,7 +306,7 @@ public class RelyingParty {
    *
    * <p>The default is <code>false</code>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
    *     Extensions</a>
    */
   @Builder.Default private final boolean allowUnrequestedExtensions = false;
@@ -393,7 +393,11 @@ public class RelyingParty {
                 credentialRepository.getCredentialIdsForUsername(
                     startRegistrationOptions.getUser().getName()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
-            .extensions(startRegistrationOptions.getExtensions())
+            .extensions(
+                startRegistrationOptions.getExtensions().toBuilder()
+                    .appidExclude(appId)
+                    .credProps()
+                    .build())
             .timeout(startRegistrationOptions.getTimeout());
     attestationConveyancePreference.ifPresent(builder::attestation);
     return builder.build();
@@ -557,7 +561,8 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see AssertionExtensionInputs#getAppid()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public RelyingPartyBuilder appId(@NonNull Optional<AppId> appId) {
@@ -577,7 +582,8 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see AssertionExtensionInputs#getAppid()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
      */
     public RelyingPartyBuilder appId(@NonNull AppId appId) {
@@ -598,7 +604,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder attestationConveyancePreference(
@@ -621,7 +627,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder attestationConveyancePreference(
@@ -637,7 +643,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder metadataService(@NonNull Optional<MetadataService> metadataService) {
@@ -653,7 +659,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder metadataService(@NonNull MetadataService metadataService) {
