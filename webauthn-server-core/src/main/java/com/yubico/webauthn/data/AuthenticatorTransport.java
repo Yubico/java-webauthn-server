@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.yubico.webauthn.attestation.Transport;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
@@ -55,13 +53,11 @@ import lombok.Value;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-authenticatortransport">§5.10.4.
  *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
  */
-@JsonSerialize(using = JsonStringSerializer.class)
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class AuthenticatorTransport
-    implements Comparable<AuthenticatorTransport>, JsonStringSerializable {
+public class AuthenticatorTransport implements Comparable<AuthenticatorTransport> {
 
-  @NonNull private final String id;
+  @JsonValue @NonNull private final String id;
 
   /** Indicates the respective authenticator can be contacted over removable USB. */
   public static final AuthenticatorTransport USB = new AuthenticatorTransport("usb");
@@ -149,13 +145,6 @@ public class AuthenticatorTransport
       default:
         throw new IllegalArgumentException("Unknown transport: " + transport);
     }
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getId()} instead. */
-  public String toJsonString() {
-    return id;
   }
 
   @Override

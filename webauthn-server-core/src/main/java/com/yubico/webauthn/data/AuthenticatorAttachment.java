@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -52,9 +50,8 @@ import lombok.NonNull;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-authenticatorattachment">§5.4.5.
  *     Authenticator Attachment Enumeration (enum AuthenticatorAttachment) </a>
  */
-@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum AuthenticatorAttachment implements JsonStringSerializable {
+public enum AuthenticatorAttachment {
 
   /**
    * Indicates <a
@@ -74,7 +71,7 @@ public enum AuthenticatorAttachment implements JsonStringSerializable {
    */
   PLATFORM("platform");
 
-  @Getter @NonNull private final String value;
+  @JsonValue @Getter @NonNull private final String value;
 
   private static Optional<AuthenticatorAttachment> fromString(@NonNull String value) {
     return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
@@ -89,12 +86,5 @@ public enum AuthenticatorAttachment implements JsonStringSerializable {
                     String.format(
                         "Unknown %s value: %s",
                         AuthenticatorAttachment.class.getSimpleName(), value)));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getValue()} instead. */
-  public String toJsonString() {
-    return value;
   }
 }

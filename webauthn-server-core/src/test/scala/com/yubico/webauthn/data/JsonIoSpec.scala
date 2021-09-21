@@ -372,7 +372,7 @@ class JsonIoSpec
         forAll(
           a.arbitrary,
           Gen.oneOf(
-            arbitrary[AuthenticatorAttachment].map(_.toJsonString),
+            arbitrary[AuthenticatorAttachment].map(_.getValue),
             arbitrary[String],
           ),
         ) { (value: P, authenticatorAttachment: String) =>

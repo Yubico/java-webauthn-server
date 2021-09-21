@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -47,12 +45,11 @@ import lombok.NonNull;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-publickeycredentialtype">§5.10.2.
  *     Credential Type Enumeration (enum PublicKeyCredentialType)</a>
  */
-@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum PublicKeyCredentialType implements JsonStringSerializable {
+public enum PublicKeyCredentialType {
   PUBLIC_KEY("public-key");
 
-  @Getter @NonNull private final String id;
+  @JsonValue @Getter @NonNull private final String id;
 
   private static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
     return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
@@ -67,12 +64,5 @@ public enum PublicKeyCredentialType implements JsonStringSerializable {
                     String.format(
                         "Unknown %s value: %s",
                         PublicKeyCredentialType.class.getSimpleName(), id)));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getId()} instead. */
-  public String toJsonString() {
-    return id;
   }
 }

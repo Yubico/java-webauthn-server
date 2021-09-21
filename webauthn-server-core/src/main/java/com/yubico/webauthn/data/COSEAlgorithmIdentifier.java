@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonLongSerializable;
-import com.yubico.internal.util.json.JsonLongSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.Getter;
@@ -41,14 +39,13 @@ import lombok.Getter;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#typedefdef-cosealgorithmidentifier">§5.10.5.
  *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
  */
-@JsonSerialize(using = JsonLongSerializer.class)
-public enum COSEAlgorithmIdentifier implements JsonLongSerializable {
+public enum COSEAlgorithmIdentifier {
   EdDSA(-8),
   ES256(-7),
   RS256(-257),
   RS1(-65535);
 
-  @Getter private final long id;
+  @JsonValue @Getter private final long id;
 
   COSEAlgorithmIdentifier(long id) {
     this.id = id;
@@ -63,12 +60,5 @@ public enum COSEAlgorithmIdentifier implements JsonLongSerializable {
     return fromId(id)
         .orElseThrow(
             () -> new IllegalArgumentException("Unknown COSE algorithm identifier: " + id));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getId()} instead. */
-  public long toJsonNumber() {
-    return id;
   }
 }

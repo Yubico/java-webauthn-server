@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -45,9 +43,8 @@ import lombok.NonNull;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
  *     discoverable Credential</a>
  */
-@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum ResidentKeyRequirement implements JsonStringSerializable {
+public enum ResidentKeyRequirement {
 
   /**
    * The client and authenticator will try to create a server-side credential if possible, and a
@@ -97,7 +94,7 @@ public enum ResidentKeyRequirement implements JsonStringSerializable {
    */
   REQUIRED("required");
 
-  @Getter @NonNull private final String value;
+  @JsonValue @Getter @NonNull private final String value;
 
   private static Optional<ResidentKeyRequirement> fromString(@NonNull String value) {
     return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
@@ -112,12 +109,5 @@ public enum ResidentKeyRequirement implements JsonStringSerializable {
                     String.format(
                         "Unknown %s value: %s",
                         ResidentKeyRequirement.class.getSimpleName(), value)));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getValue()} instead. */
-  public String toJsonString() {
-    return value;
   }
 }

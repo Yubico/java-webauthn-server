@@ -49,7 +49,7 @@ class AuthenticatorAttestationResponseSpec extends FunSpec with Matchers {
           "challenge":"${challenge.getBase64Url}",
           "clientExtensions":{"foo":"${fooExtension}"},
           "origin":"${origin}",
-          "tokenBinding":{"status":"${tokenBindingStatus.toJsonString}","id":"${tokenBindingId.getBase64Url}"},
+          "tokenBinding":{"status":"${tokenBindingStatus.getValue}","id":"${tokenBindingId.getBase64Url}"},
           "type":"webauthn.get"
         }""".getBytes("UTF-8"))
 

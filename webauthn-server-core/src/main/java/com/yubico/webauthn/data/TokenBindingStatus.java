@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -44,8 +42,7 @@ import lombok.NonNull;
  * @see TokenBindingInfo
  */
 @AllArgsConstructor
-@JsonSerialize(using = JsonStringSerializer.class)
-public enum TokenBindingStatus implements JsonStringSerializable {
+public enum TokenBindingStatus {
 
   /**
    * Indicates token binding was used when communicating with the Relying Party. In this case, the
@@ -59,7 +56,7 @@ public enum TokenBindingStatus implements JsonStringSerializable {
    */
   SUPPORTED("supported");
 
-  @Getter @NonNull private final String value;
+  @JsonValue @Getter @NonNull private final String value;
 
   private static Optional<TokenBindingStatus> fromString(@NonNull String value) {
     return Arrays.stream(values()).filter(v -> v.value.equals(value)).findAny();
@@ -79,12 +76,5 @@ public enum TokenBindingStatus implements JsonStringSerializable {
                 new IllegalArgumentException(
                     String.format(
                         "Unknown %s value: %s", TokenBindingStatus.class.getSimpleName(), value)));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getValue()} instead. */
-  public String toJsonString() {
-    return value;
   }
 }
