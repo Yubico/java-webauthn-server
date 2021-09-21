@@ -7,6 +7,7 @@ Deprecated features:
   are now always allowed to add unsolicited extensions. The next major version
   release will remove this option and always behave as if the option had been
   set to `true`.
+* Enum value `AttestationType.ECDAA`. ECDAA was removed in WebAuthn Level 2.
 
 
 == Version 1.12.3 (unreleased) ==
