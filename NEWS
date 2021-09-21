@@ -1,3 +1,14 @@
+== Version 1.12.4 (unreleased) ==
+
+Deprecated features:
+
+* Option `RelyingParty.allowUnrequestedExtensions` deprecated. The `false`
+  setting (default) is not compatible with WebAuthn Level 2 since authenticators
+  are now always allowed to add unsolicited extensions. The next major version
+  release will remove this option and always behave as if the option had been
+  set to `true`.
+
+
 == Version 1.12.3 (unreleased) ==
 
 Fixes:
