@@ -435,11 +435,7 @@ final class FinishRegistrationSteps {
               return AttestationType.BASIC;
             case "tpm":
               // TODO delete this once tpm attestation verification is implemented
-              if (attestation.getAttestationStatement().has("x5c")) {
-                return AttestationType.ATTESTATION_CA;
-              } else {
-                return AttestationType.ECDAA;
-              }
+              return AttestationType.ATTESTATION_CA;
             default:
               return AttestationType.UNKNOWN;
           }

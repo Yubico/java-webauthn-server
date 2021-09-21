@@ -11,6 +11,7 @@ Breaking changes:
   configured for algorithms with no JCA provider available, in which case the
   dependent project may need to add additional dependencies and configure JCA
   providers externally.
+* Enum value `AttestationType.ECDAA` removed without replacement.
 
 
 == Version 1.12.4 (unreleased) ==

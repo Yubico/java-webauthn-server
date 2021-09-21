@@ -63,8 +63,6 @@ final class PackedAttestationStatementVerifier
   public AttestationType getAttestationType(AttestationObject attestation) {
     if (attestation.getAttestationStatement().hasNonNull("x5c")) {
       return AttestationType.BASIC;
-    } else if (attestation.getAttestationStatement().hasNonNull("ecdaaKeyId")) {
-      return AttestationType.ECDAA;
     } else {
       return AttestationType.SELF_ATTESTATION;
     }
@@ -81,17 +79,9 @@ final class PackedAttestationStatementVerifier
 
     if (attestationObject.getAttestationStatement().has("x5c")) {
       return verifyX5cSignature(attestationObject, clientDataJsonHash);
-    } else if (attestationObject.getAttestationStatement().has("ecdaaKeyId")) {
-      return verifyEcdaaSignature(attestationObject, clientDataJsonHash);
     } else {
       return verifySelfAttestationSignature(attestationObject, clientDataJsonHash);
     }
-  }
-
-  private boolean verifyEcdaaSignature(
-      AttestationObject attestationObject, ByteArray clientDataJsonHash) {
-    throw new UnsupportedOperationException(
-        "ECDAA signature verification is not (yet) implemented.");
   }
 
   private boolean verifySelfAttestationSignature(
