@@ -43,7 +43,7 @@ import lombok.NonNull;
  *       navigator.credentials.create()</code> to create a credential, and
  *   <li>to inform the client of the Relying Party's best belief about how to locate the managing
  *       authenticators of the credentials listed in {@link
- *       PublicKeyCredentialRequestOptions#allowCredentials} when calling <code>
+ *       PublicKeyCredentialRequestOptions#getAllowCredentials()} when calling <code>
  *       navigator.credentials.get()</code>.
  * </ul>
  *
