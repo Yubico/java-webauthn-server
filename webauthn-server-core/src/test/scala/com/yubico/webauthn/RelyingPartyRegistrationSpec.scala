@@ -182,6 +182,11 @@ class RelyingPartyRegistrationSpec
             val testData =
               RegistrationTestData.Packed.BasicAttestationEdDsa.assertion.get
             "frob.response(testData.response)" shouldNot compile
+            frob
+              .response(
+                RegistrationTestData.Packed.BasicAttestationEdDsa.response
+              )
+              .build() should not be null
           }
         }
 
@@ -239,7 +244,7 @@ class RelyingPartyRegistrationSpec
                   Some(RegistrationTestData.FidoU2f.BasicAttestation.request),
               )
             )
-            val step: FinishRegistrationSteps#Step2 = steps.begin.next
+            val step: FinishRegistrationSteps#Step6 = steps.begin
 
             step.validations shouldBe a[Success[_]]
             step.clientData should not be null
@@ -252,7 +257,7 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(testData =
               RegistrationTestData.FidoU2f.BasicAttestation
             )
-            val step: FinishRegistrationSteps#Step3 = steps.begin.next.next
+            val step: FinishRegistrationSteps#Step7 = steps.begin.next
 
             step.validations shouldBe a[Success[_]]
           }
@@ -262,7 +267,7 @@ class RelyingPartyRegistrationSpec
               testData = RegistrationTestData.FidoU2f.BasicAttestation
                 .editClientData("type", typeString)
             )
-            val step: FinishRegistrationSteps#Step3 = steps.begin.next.next
+            val step: FinishRegistrationSteps#Step7 = steps.begin.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -296,7 +301,7 @@ class RelyingPartyRegistrationSpec
               )
             )
           )
-          val step: FinishRegistrationSteps#Step4 = steps.begin.next.next.next
+          val step: FinishRegistrationSteps#Step8 = steps.begin.next.next
 
           step.validations shouldBe a[Failure[_]]
           step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -318,8 +323,7 @@ class RelyingPartyRegistrationSpec
               allowOriginPort = allowOriginPort,
               allowOriginSubdomain = allowOriginSubdomain,
             )
-            val step: FinishRegistrationSteps#Step5 =
-              steps.begin.next.next.next.next
+            val step: FinishRegistrationSteps#Step9 = steps.begin.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -338,8 +342,7 @@ class RelyingPartyRegistrationSpec
               allowOriginPort = allowOriginPort,
               allowOriginSubdomain = allowOriginSubdomain,
             )
-            val step: FinishRegistrationSteps#Step5 =
-              steps.begin.next.next.next.next
+            val step: FinishRegistrationSteps#Step9 = steps.begin.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -525,8 +528,8 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(testData =
               RegistrationTestData.FidoU2f.BasicAttestation
             )
-            val step: FinishRegistrationSteps#Step6 =
-              steps.begin.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step10 =
+              steps.begin.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -537,8 +540,8 @@ class RelyingPartyRegistrationSpec
               RegistrationTestData.FidoU2f.BasicAttestation
                 .editClientData(_.without[ObjectNode]("tokenBinding"))
             )
-            val step: FinishRegistrationSteps#Step6 =
-              steps.begin.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step10 =
+              steps.begin.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -552,8 +555,8 @@ class RelyingPartyRegistrationSpec
                   toJson(Map("status" -> "supported")),
                 )
             )
-            val step: FinishRegistrationSteps#Step6 =
-              steps.begin.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step10 =
+              steps.begin.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -566,8 +569,8 @@ class RelyingPartyRegistrationSpec
               testData = RegistrationTestData.FidoU2f.BasicAttestation
                 .editClientData(_.without[ObjectNode]("tokenBinding")),
             )
-            val step: FinishRegistrationSteps#Step6 =
-              steps.begin.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step10 =
+              steps.begin.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -580,8 +583,8 @@ class RelyingPartyRegistrationSpec
               testData = RegistrationTestData.FidoU2f.BasicAttestation
                 .editClientData(_.without[ObjectNode]("tokenBinding")),
             )
-            val step: FinishRegistrationSteps#Step6 =
-              steps.begin.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step10 =
+              steps.begin.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -596,8 +599,8 @@ class RelyingPartyRegistrationSpec
                   toJson(Map("status" -> "present", "id" -> "YELLOWSUBMARINE")),
                 ),
             )
-            val step: FinishRegistrationSteps#Step6 =
-              steps.begin.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step10 =
+              steps.begin.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -617,8 +620,8 @@ class RelyingPartyRegistrationSpec
                     ),
                   ),
               )
-              val step: FinishRegistrationSteps#Step6 =
-                steps.begin.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step10 =
+                steps.begin.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -634,8 +637,8 @@ class RelyingPartyRegistrationSpec
                     toJson(Map("status" -> "present")),
                   ),
               )
-              val step: FinishRegistrationSteps#Step6 =
-                steps.begin.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step10 =
+                steps.begin.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -649,8 +652,8 @@ class RelyingPartyRegistrationSpec
                 testData = RegistrationTestData.FidoU2f.BasicAttestation
                   .editClientData(_.without[ObjectNode]("tokenBinding")),
               )
-              val step: FinishRegistrationSteps#Step6 =
-                steps.begin.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step10 =
+                steps.begin.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -667,8 +670,8 @@ class RelyingPartyRegistrationSpec
                     toJson(Map("status" -> "supported")),
                   ),
               )
-              val step: FinishRegistrationSteps#Step6 =
-                steps.begin.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step10 =
+                steps.begin.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -687,8 +690,8 @@ class RelyingPartyRegistrationSpec
                     ),
                   ),
               )
-              val step: FinishRegistrationSteps#Step6 =
-                steps.begin.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step10 =
+                steps.begin.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -701,8 +704,8 @@ class RelyingPartyRegistrationSpec
           val steps = finishRegistration(testData =
             RegistrationTestData.FidoU2f.BasicAttestation
           )
-          val step: FinishRegistrationSteps#Step7 =
-            steps.begin.next.next.next.next.next.next
+          val step: FinishRegistrationSteps#Step11 =
+            steps.begin.next.next.next.next.next
           val digest = MessageDigest.getInstance("SHA-256")
 
           step.validations shouldBe a[Success[_]]
@@ -720,8 +723,8 @@ class RelyingPartyRegistrationSpec
           val steps = finishRegistration(testData =
             RegistrationTestData.FidoU2f.BasicAttestation
           )
-          val step: FinishRegistrationSteps#Step8 =
-            steps.begin.next.next.next.next.next.next.next
+          val step: FinishRegistrationSteps#Step12 =
+            steps.begin.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
           step.tryNext shouldBe a[Success[_]]
@@ -740,8 +743,8 @@ class RelyingPartyRegistrationSpec
                   )
                 }
             )
-            val step: FinishRegistrationSteps#Step9 =
-              steps.begin.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step13 =
+              steps.begin.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -752,8 +755,8 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(testData =
               RegistrationTestData.FidoU2f.BasicAttestation
             )
-            val step: FinishRegistrationSteps#Step9 =
-              steps.begin.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step13 =
+              steps.begin.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -837,9 +840,9 @@ class RelyingPartyRegistrationSpec
 
           describe("14. Verify that the User Present bit of the flags in authData is set.") {
             val (checkFails, checkSucceeds) = checks[
-              FinishRegistrationSteps#Step11,
-              FinishRegistrationSteps#Step10,
-            ](_.begin.next.next.next.next.next.next.next.next.next)
+              FinishRegistrationSteps#Step15,
+              FinishRegistrationSteps#Step14,
+            ](_.begin.next.next.next.next.next.next.next.next)
 
             it("Fails if UV is discouraged and flag is not set.") {
               checkFails(UserVerificationRequirement.DISCOURAGED, upOff)
@@ -874,9 +877,9 @@ class RelyingPartyRegistrationSpec
 
           describe("15. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
             val (checkFails, checkSucceeds) = checks[
-              FinishRegistrationSteps#Step12,
-              FinishRegistrationSteps#Step11,
-            ](_.begin.next.next.next.next.next.next.next.next.next.next)
+              FinishRegistrationSteps#Step16,
+              FinishRegistrationSteps#Step15,
+            ](_.begin.next.next.next.next.next.next.next.next.next)
 
             it("Succeeds if UV is discouraged and flag is not set.") {
               checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOff)
@@ -953,11 +956,10 @@ class RelyingPartyRegistrationSpec
                     clientExtensionResults = clientExtensionOutputs,
                   )
                 )
-                val step: FinishRegistrationSteps#Step12 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next
+                val stepAfter: Try[FinishRegistrationSteps#Step18] =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.tryNext
 
-                step.validations shouldBe a[Success[_]]
-                step.tryNext shouldBe a[Success[_]]
+                stepAfter shouldBe a[Success[_]]
             }
           }
 
@@ -970,11 +972,10 @@ class RelyingPartyRegistrationSpec
                     clientExtensionResults = clientExtensionOutputs,
                   )
                 )
-                val step: FinishRegistrationSteps#Step12 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next
+                val stepAfter: Try[FinishRegistrationSteps#Step18] =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.tryNext
 
-                step.validations shouldBe a[Success[_]]
-                step.tryNext shouldBe a[Success[_]]
+                stepAfter shouldBe a[Success[_]]
             }
           }
 
@@ -999,11 +1000,10 @@ class RelyingPartyRegistrationSpec
                       )
                     )
                 )
-                val step: FinishRegistrationSteps#Step12 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next
+                val stepAfter: Try[FinishRegistrationSteps#Step18] =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.tryNext
 
-                step.validations shouldBe a[Success[_]]
-                step.tryNext shouldBe a[Success[_]]
+                stepAfter shouldBe a[Success[_]]
             }
           }
 
@@ -1030,11 +1030,10 @@ class RelyingPartyRegistrationSpec
                       )
                     )
                 )
-                val step: FinishRegistrationSteps#Step12 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next
+                val stepAfter: Try[FinishRegistrationSteps#Step18] =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.tryNext
 
-                step.validations shouldBe a[Success[_]]
-                step.tryNext shouldBe a[Success[_]]
+                stepAfter shouldBe a[Success[_]]
             }
           }
         }
@@ -1050,8 +1049,8 @@ class RelyingPartyRegistrationSpec
           def checkUnknown(format: String): Unit = {
             it(s"""Returns no known attestation statement verifier if fmt is "${format}".""") {
               val steps = setup(format)
-              val step: FinishRegistrationSteps#Step13 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step18 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -1063,8 +1062,8 @@ class RelyingPartyRegistrationSpec
           def checkKnown(format: String): Unit = {
             it(s"""Returns a known attestation statement verifier if fmt is "${format}".""") {
               val steps = setup(format)
-              val step: FinishRegistrationSteps#Step13 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step18 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -1106,8 +1105,8 @@ class RelyingPartyRegistrationSpec
                 testData = testData,
                 allowUntrustedAttestation = true,
               )
-              val step: FinishRegistrationSteps#Step14 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get.getCause shouldBe a[
@@ -1122,8 +1121,8 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.FidoU2f.BasicAttestation
               )
-              val step: FinishRegistrationSteps#Step14 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.attestationType should equal(AttestationType.BASIC)
@@ -1134,8 +1133,8 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.FidoU2f.SelfAttestation
               )
-              val step: FinishRegistrationSteps#Step14 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.attestationType should equal(
@@ -1149,7 +1148,7 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.FidoU2f.BasicAttestation
               )
-              val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+              val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                 Crypto.sha256(
                   new ByteArray(
                     testData.clientDataJsonBytes.getBytes.updated(
@@ -1175,7 +1174,7 @@ class RelyingPartyRegistrationSpec
                 }
 
               val steps = finishRegistration(testData = testData)
-              val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+              val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
@@ -1221,7 +1220,7 @@ class RelyingPartyRegistrationSpec
                   )
                 }
               val steps = finishRegistration(testData = testData)
-              val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+              val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
@@ -1264,8 +1263,8 @@ class RelyingPartyRegistrationSpec
                     ),
                   )
                 )
-                val step: FinishRegistrationSteps#Step14 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step19 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                 val standaloneVerification = Try {
                   new FidoU2fAttestationStatementVerifier()
@@ -1315,8 +1314,8 @@ class RelyingPartyRegistrationSpec
                     ),
                   )
                 )
-                val step: FinishRegistrationSteps#Step14 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step19 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                 val standaloneVerification = Try {
                   new FidoU2fAttestationStatementVerifier()
@@ -1373,7 +1372,7 @@ class RelyingPartyRegistrationSpec
                   }
 
                 val steps = finishRegistration(testData = testData)
-                val step: FinishRegistrationSteps#Step14 = new steps.Step14(
+                val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                   Crypto.sha256(testData.clientDataJsonBytes),
                   new AttestationObject(testData.attestationObject),
                   Some(new NoneAttestationStatementVerifier).asJava,
@@ -1390,8 +1389,8 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.NoneAttestation.Default
               )
-              val step: FinishRegistrationSteps#Step14 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.attestationType should equal(AttestationType.NONE)
@@ -1410,8 +1409,8 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.Packed.BasicAttestation
               )
-              val step: FinishRegistrationSteps#Step14 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.getAttestationStatementVerifier.get shouldBe a[
                 PackedAttestationStatementVerifier
@@ -1467,8 +1466,8 @@ class RelyingPartyRegistrationSpec
                   val steps = finishRegistration(testData =
                     RegistrationTestData.Packed.BasicAttestation
                   )
-                  val step: FinishRegistrationSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  val step: FinishRegistrationSteps#Step19 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -1612,8 +1611,8 @@ class RelyingPartyRegistrationSpec
                 it("5. If successful, return implementation-specific values representing attestation type Basic, AttCA or uncertainty, and attestation trust path x5c.") {
                   val testData = RegistrationTestData.Packed.BasicAttestation
                   val steps = finishRegistration(testData = testData)
-                  val step: FinishRegistrationSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  val step: FinishRegistrationSteps#Step19 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -1635,8 +1634,8 @@ class RelyingPartyRegistrationSpec
 
                 it("The attestation type is identified as SelfAttestation.") {
                   val steps = finishRegistration(testData = testDataBase)
-                  val step: FinishRegistrationSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  val step: FinishRegistrationSteps#Step19 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -1823,8 +1822,8 @@ class RelyingPartyRegistrationSpec
                 it("3. If successful, return implementation-specific values representing attestation type Self and an empty attestation trust path.") {
                   val testData = RegistrationTestData.Packed.SelfAttestation
                   val steps = finishRegistration(testData = testData)
-                  val step: FinishRegistrationSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  val step: FinishRegistrationSteps#Step19 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -2032,8 +2031,8 @@ class RelyingPartyRegistrationSpec
           ignore("The tpm statement format is supported.") {
             val steps =
               finishRegistration(testData = RegistrationTestData.Tpm.PrivacyCa)
-            val step: FinishRegistrationSteps#Step14 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step19 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -2043,8 +2042,8 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(testData =
               RegistrationTestData.AndroidKey.BasicAttestation
             )
-            val step: FinishRegistrationSteps#Step14 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step19 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -2061,8 +2060,8 @@ class RelyingPartyRegistrationSpec
                 allowUntrustedAttestation = false,
                 rp = defaultTestData.rpId,
               )
-              val step: FinishRegistrationSteps#Step14 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.getAttestationStatementVerifier.get shouldBe an[
                 AndroidSafetynetAttestationStatementVerifier
@@ -2198,8 +2197,8 @@ class RelyingPartyRegistrationSpec
                     testData = testDataContainer.RealExample,
                     rp = testDataContainer.RealExample.rpId,
                   )
-                  val step: FinishRegistrationSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  val step: FinishRegistrationSteps#Step19 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -2212,8 +2211,8 @@ class RelyingPartyRegistrationSpec
                   val steps = finishRegistration(testData =
                     testDataContainer.BasicAttestation
                   )
-                  val step: FinishRegistrationSteps#Step14 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  val step: FinishRegistrationSteps#Step19 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -2234,8 +2233,8 @@ class RelyingPartyRegistrationSpec
                 .name("")
                 .build(),
             )
-            val step: FinishRegistrationSteps#Step14 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step19 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -2247,8 +2246,8 @@ class RelyingPartyRegistrationSpec
                 RealExamples.AppleAttestationIos.asRegistrationTestData,
               rp = RealExamples.AppleAttestationIos.rp,
             )
-            val step: FinishRegistrationSteps#Step14 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step19 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -2259,13 +2258,28 @@ class RelyingPartyRegistrationSpec
               RegistrationTestData.FidoU2f.BasicAttestation
                 .setAttestationStatementFormat("urgel")
             )
-            val step: FinishRegistrationSteps#Step14 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step19 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
             step.attestationType should be(AttestationType.UNKNOWN)
             step.attestationTrustPath.asScala shouldBe empty
+          }
+
+          it("(Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
+            val steps = finishRegistration(testData =
+              RegistrationTestData.FidoU2f.BasicAttestation
+                .editClientData("foo", "bar")
+            )
+            val step14: FinishRegistrationSteps#Step19 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step14.validations shouldBe a[Failure[_]]
+            Try(step14.next) shouldBe a[Failure[_]]
+
+            Try(steps.run) shouldBe a[Failure[_]]
+            Try(steps.run).failed.get shouldBe an[IllegalArgumentException]
           }
         }
 
@@ -2279,8 +2293,8 @@ class RelyingPartyRegistrationSpec
                 metadataService = Some(metadataService),
                 rp = RegistrationTestData.AndroidSafetynet.RealExample.rpId,
               )
-              val step: FinishRegistrationSteps#Step15 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step20 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.trustResolver.get should not be null
@@ -2294,8 +2308,8 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.FidoU2f.SelfAttestation
               )
-              val step: FinishRegistrationSteps#Step15 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step20 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.trustResolver.asScala shouldBe empty
@@ -2308,8 +2322,8 @@ class RelyingPartyRegistrationSpec
                 testData = RegistrationTestData.FidoU2f.BasicAttestation,
                 metadataService = Some(metadataService),
               )
-              val step: FinishRegistrationSteps#Step15 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step20 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.trustResolver.get should not be null
@@ -2323,8 +2337,8 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(testData =
                 RegistrationTestData.NoneAttestation.Default
               )
-              val step: FinishRegistrationSteps#Step15 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step20 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.trustResolver.asScala shouldBe empty
@@ -2338,8 +2352,8 @@ class RelyingPartyRegistrationSpec
                 RegistrationTestData.FidoU2f.BasicAttestation
                   .setAttestationStatementFormat("urgel")
               )
-              val step: FinishRegistrationSteps#Step15 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishRegistrationSteps#Step20 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
               step.trustResolver.asScala shouldBe empty
@@ -2357,8 +2371,8 @@ class RelyingPartyRegistrationSpec
                   testData = RegistrationTestData.NoneAttestation.Default,
                   allowUntrustedAttestation = false,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
                 step.validations.failed.get shouldBe an[
@@ -2373,8 +2387,8 @@ class RelyingPartyRegistrationSpec
                   testData = RegistrationTestData.NoneAttestation.Default,
                   allowUntrustedAttestation = true,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.attestationTrusted should be(false)
@@ -2393,8 +2407,8 @@ class RelyingPartyRegistrationSpec
                   testData = testData,
                   allowUntrustedAttestation = false,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
                 step.validations.failed.get shouldBe an[
@@ -2409,8 +2423,8 @@ class RelyingPartyRegistrationSpec
                   testData = testData,
                   allowUntrustedAttestation = true,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.attestationTrusted should be(false)
@@ -2427,8 +2441,8 @@ class RelyingPartyRegistrationSpec
                   testData = RegistrationTestData.FidoU2f.SelfAttestation,
                   allowUntrustedAttestation = false,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
                 step.validations.failed.get shouldBe an[
@@ -2443,8 +2457,8 @@ class RelyingPartyRegistrationSpec
                   testData = RegistrationTestData.FidoU2f.SelfAttestation,
                   allowUntrustedAttestation = true,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.attestationTrusted should be(false)
@@ -2464,8 +2478,8 @@ class RelyingPartyRegistrationSpec
                   metadataService = Some(metadataService),
                   rp = testData.rpId,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
                 step.attestationTrusted should be(false)
@@ -2482,8 +2496,8 @@ class RelyingPartyRegistrationSpec
                   metadataService = Some(metadataService),
                   rp = testData.rpId,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.attestationTrusted should be(false)
@@ -2508,8 +2522,8 @@ class RelyingPartyRegistrationSpec
                   metadataService = Some(metadataService),
                   rp = testData.rpId,
                 )
-                val step: FinishRegistrationSteps#Step16 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.attestationTrusted should be(true)
@@ -2572,8 +2586,8 @@ class RelyingPartyRegistrationSpec
               testData = testData,
               credentialRepository = credentialRepository,
             )
-            val step: FinishRegistrationSteps#Step17 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step22 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -2586,8 +2600,8 @@ class RelyingPartyRegistrationSpec
               testData = testData,
               credentialRepository = Helpers.CredentialRepository.empty,
             )
-            val step: FinishRegistrationSteps#Step17 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            val step: FinishRegistrationSteps#Step22 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -2694,25 +2708,6 @@ class RelyingPartyRegistrationSpec
           testUntrusted(RegistrationTestData.FidoU2f.BasicAttestation)
           testUntrusted(RegistrationTestData.NoneAttestation.Default)
           testUntrusted(RegistrationTestData.Tpm.PrivacyCa)
-        }
-
-        it("(Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
-          val steps = finishRegistration(testData =
-            RegistrationTestData.FidoU2f.BasicAttestation
-              .editClientData("foo", "bar")
-          )
-          val step14: FinishRegistrationSteps#Step14 =
-            steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-          val step15: Try[FinishRegistrationSteps#Step15] = Try(step14.next)
-
-          step14.validations shouldBe a[Failure[_]]
-          Try(step14.next) shouldBe a[Failure[_]]
-
-          step15 shouldBe a[Failure[_]]
-          step15.failed.get shouldBe an[IllegalArgumentException]
-
-          Try(steps.run) shouldBe a[Failure[_]]
-          Try(steps.run).failed.get shouldBe an[IllegalArgumentException]
         }
       }
     }
