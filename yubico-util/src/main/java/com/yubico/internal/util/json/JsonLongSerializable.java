@@ -24,7 +24,11 @@
 
 package com.yubico.internal.util.json;
 
+@Deprecated
+/** @deprecated This will be removed in the next major version. */
 public interface JsonLongSerializable {
 
+  @Deprecated
+  /** @deprecated This will be removed in the next major version. */
   long toJsonNumber();
 }

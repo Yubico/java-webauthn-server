@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -77,25 +78,27 @@ public enum AttestationConveyancePreference implements JsonStringSerializable {
    */
   DIRECT("direct");
 
-  @NonNull private final String id;
+  @Getter @NonNull private final String value;
 
-  private static Optional<AttestationConveyancePreference> fromString(@NonNull String id) {
-    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  private static Optional<AttestationConveyancePreference> fromString(@NonNull String value) {
+    return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
   }
 
   @JsonCreator
-  private static AttestationConveyancePreference fromJsonString(@NonNull String id) {
-    return fromString(id)
+  private static AttestationConveyancePreference fromJsonString(@NonNull String value) {
+    return fromString(value)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
                         "Unknown %s value: %s",
-                        AttestationConveyancePreference.class.getSimpleName(), id)));
+                        AttestationConveyancePreference.class.getSimpleName(), value)));
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getValue()} instead. */
   public String toJsonString() {
-    return id;
+    return value;
   }
 }

@@ -31,6 +31,7 @@ import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -58,24 +59,26 @@ public enum TokenBindingStatus implements JsonStringSerializable {
    */
   SUPPORTED("supported");
 
-  @NonNull private final String id;
+  @Getter @NonNull private final String value;
 
   private static Optional<TokenBindingStatus> fromString(@NonNull String value) {
-    return Arrays.stream(values()).filter(v -> v.id.equals(value)).findAny();
+    return Arrays.stream(values()).filter(v -> v.value.equals(value)).findAny();
   }
 
   @JsonCreator
-  public static TokenBindingStatus fromJsonString(@NonNull String id) {
-    return fromString(id)
+  public static TokenBindingStatus fromJsonString(@NonNull String value) {
+    return fromString(value)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Unknown %s value: %s", TokenBindingStatus.class.getSimpleName(), id)));
+                        "Unknown %s value: %s", TokenBindingStatus.class.getSimpleName(), value)));
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getValue()} instead. */
   public String toJsonString() {
-    return id;
+    return value;
   }
 }

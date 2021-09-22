@@ -66,6 +66,8 @@ public enum COSEAlgorithmIdentifier implements JsonLongSerializable {
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getId()} instead. */
   public long toJsonNumber() {
     return id;
   }

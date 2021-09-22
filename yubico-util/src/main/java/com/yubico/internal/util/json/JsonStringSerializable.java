@@ -24,7 +24,11 @@
 
 package com.yubico.internal.util.json;
 
+@Deprecated
+/** @deprecated This will be removed in the next major version. */
 public interface JsonStringSerializable {
 
+  @Deprecated
+  /** @deprecated This will be removed in the next major version. */
   String toJsonString();
 }

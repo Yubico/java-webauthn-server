@@ -29,6 +29,8 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
+@Deprecated
+/** @deprecated This will be removed in the next major version. */
 public class JsonStringSerializer<T extends JsonStringSerializable> extends JsonSerializer<T> {
 
   @Override

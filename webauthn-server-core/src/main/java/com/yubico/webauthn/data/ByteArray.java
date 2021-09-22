@@ -133,8 +133,9 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
     return BinaryUtil.toHex(bytes);
   }
 
-  /** Used by JSON serializer. */
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getBase64Url()} instead. */
   public String toJsonString() {
     return base64url;
   }
