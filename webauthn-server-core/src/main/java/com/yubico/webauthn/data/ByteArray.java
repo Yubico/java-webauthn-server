@@ -51,21 +51,21 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
 
   @NonNull private final byte[] bytes;
 
-  @NonNull private final String base64;
+  @NonNull private final String base64url;
 
   /** Create a new instance by copying the contents of <code>bytes</code>. */
   public ByteArray(@NonNull byte[] bytes) {
     this.bytes = BinaryUtil.copy(bytes);
-    this.base64 = BASE64URL_ENCODER.encodeToString(this.bytes);
+    this.base64url = BASE64URL_ENCODER.encodeToString(this.bytes);
   }
 
-  private ByteArray(String base64) throws Base64UrlException {
+  private ByteArray(String base64url) throws Base64UrlException {
     try {
-      this.bytes = BASE64URL_DECODER.decode(base64);
+      this.bytes = BASE64URL_DECODER.decode(base64url);
     } catch (IllegalArgumentException e) {
-      throw new Base64UrlException("Invalid Base64Url encoding: " + base64, e);
+      throw new Base64UrlException("Invalid Base64Url encoding: " + base64url, e);
     }
-    this.base64 = base64;
+    this.base64url = base64url;
   }
 
   /** Create a new instance by decoding <code>base64</code> as classic Base64 data. */
@@ -74,13 +74,13 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
   }
 
   /**
-   * Create a new instance by decoding <code>base64</code> as Base64Url data.
+   * Create a new instance by decoding <code>base64url</code> as Base64Url data.
    *
-   * @throws Base64UrlException if <code>base64</code> is not valid Base64Url data.
+   * @throws Base64UrlException if <code>base64url</code> is not valid Base64Url data.
    */
   @JsonCreator
-  public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
-    return new ByteArray(base64.split("=")[0]);
+  public static ByteArray fromBase64Url(@NonNull final String base64url) throws Base64UrlException {
+    return new ByteArray(base64url.split("=")[0]);
   }
 
   /**
@@ -124,7 +124,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
 
   /** @return the content bytes encoded as Base64Url data, without padding. */
   public String getBase64Url() {
-    return base64;
+    return base64url;
   }
 
   /** @return the content bytes encoded as hexadecimal data. */
@@ -136,7 +136,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
   /** Used by JSON serializer. */
   @Override
   public String toJsonString() {
-    return base64;
+    return base64url;
   }
 
   @Override
