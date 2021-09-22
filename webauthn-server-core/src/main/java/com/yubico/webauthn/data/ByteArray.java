@@ -80,7 +80,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
    */
   @JsonCreator
   public static ByteArray fromBase64Url(@NonNull final String base64) throws Base64UrlException {
-    return new ByteArray(base64);
+    return new ByteArray(base64.split("=")[0]);
   }
 
   /**
@@ -122,7 +122,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
     return BASE64_ENCODER.encodeToString(bytes);
   }
 
-  /** @return the content bytes encoded as Base64Url data. */
+  /** @return the content bytes encoded as Base64Url data, without padding. */
   public String getBase64Url() {
     return base64;
   }
