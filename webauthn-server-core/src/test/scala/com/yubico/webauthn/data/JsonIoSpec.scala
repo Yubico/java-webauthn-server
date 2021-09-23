@@ -372,7 +372,7 @@ class JsonIoSpec
   }
 
   describe("The class PublicKeyCredentialCreationOptions") {
-    it("""has a toCredentialCreateJson() method which returns a JSON object with the PublicKeyCredentialCreationOptions set as a top-level "publicKey" property.""") {
+    it("""has a toCredentialsCreateJson() method which returns a JSON object with the PublicKeyCredentialCreationOptions set as a top-level "publicKey" property.""") {
       forAll { pkcco: PublicKeyCredentialCreationOptions =>
         println(pkcco)
         val jsonValue =
@@ -387,7 +387,7 @@ class JsonIoSpec
   }
 
   describe("The class PublicKeyCredentialRequestOptions") {
-    it("""has a toCredentialGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
+    it("""has a toCredentialsGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
       forAll { pkcro: PublicKeyCredentialRequestOptions =>
         println(pkcro)
         val jsonValue = JacksonCodecs.json.readTree(pkcro.toCredentialsGetJson)
@@ -401,7 +401,7 @@ class JsonIoSpec
   }
 
   describe("The class AssertionRequest") {
-    it("""has a toCredentialGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
+    it("""has a toCredentialsGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
       forAll { req: AssertionRequest =>
         println(req)
 
