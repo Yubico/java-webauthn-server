@@ -27,7 +27,7 @@ New features:
 * Added support for the new `authenticatorSelectionCriteria.residentKey` option:
  ** Added method
     `AuthenticatorSelectionCriteria.builder().residentKey(ResidentKeyRequirement)`.
- ** Added method `AuthenticatorSelection.getResidentKey()`.
+ ** Added method `AuthenticatorSelectionCriteria.getResidentKey()`.
  ** Methods `builder().requireResidentKey(boolean)` and `isRequireResidentKey()`
     deprecated in favor of the above two new methods.
  ** The builder methods `requireResidentKey(boolean)` and
