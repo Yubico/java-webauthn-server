@@ -236,7 +236,9 @@ fetch(/* ... */)                    // Make the call that returns the credential
     response: {
       attestationObject: uint8arrayToBase64url(publicKeyCredential.response.attestationObject),
       clientDataJSON: uint8arrayToBase64url(publicKeyCredential.response.clientDataJSON),
-      transports: publicKeyCredential.response.getTransports() || [],
+
+      // Attempt to read transports, but recover gracefully if not supported by the browser
+      transports: publicKeyCredential.response.getTransports && publicKeyCredential.response.getTransports() || [],
     },
 
     // Warning: Client extension results could also contain binary data that needs encoding
