@@ -112,12 +112,24 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
       private final AuthenticatorAssertionResponseBuilder builder =
           new AuthenticatorAssertionResponseBuilder();
 
+      /**
+       * {@link AuthenticatorAssertionResponseBuilder#authenticatorData(ByteArray)
+       * authenticatorData} is a required parameter.
+       *
+       * @see AuthenticatorAssertionResponseBuilder#authenticatorData(ByteArray)
+       */
       public Step2 authenticatorData(ByteArray authenticatorData) {
         builder.authenticatorData(authenticatorData);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link AuthenticatorAssertionResponseBuilder#clientDataJSON(ByteArray) clientDataJSON} is
+         * a required parameter.
+         *
+         * @see AuthenticatorAssertionResponseBuilder#clientDataJSON(ByteArray)
+         */
         public Step3 clientDataJSON(ByteArray clientDataJSON) {
           builder.clientDataJSON(clientDataJSON);
           return new Step3();
@@ -125,6 +137,12 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
       }
 
       public class Step3 {
+        /**
+         * {@link AuthenticatorAssertionResponseBuilder#signature(ByteArray) signature} is a
+         * required parameter.
+         *
+         * @see AuthenticatorAssertionResponseBuilder#signature(ByteArray)
+         */
         public AuthenticatorAssertionResponseBuilder signature(ByteArray signature) {
           return builder.signature(signature);
         }

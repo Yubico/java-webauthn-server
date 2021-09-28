@@ -48,6 +48,7 @@ Fixes:
 
 * Added missing JavaDoc for `id` and `name` methods of initial
   `RelyingPartyIdentityBuilder` stages.
+* Added and improved JavaDoc for required builder methods.
 
 
 == Version 1.10.1 ==

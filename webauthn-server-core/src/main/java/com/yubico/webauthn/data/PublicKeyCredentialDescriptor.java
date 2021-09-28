@@ -115,6 +115,11 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
       private PublicKeyCredentialDescriptorBuilder builder =
           new PublicKeyCredentialDescriptorBuilder();
 
+      /**
+       * {@link PublicKeyCredentialDescriptorBuilder#id(ByteArray) id} is a required parameter.
+       *
+       * @see PublicKeyCredentialDescriptorBuilder#id(ByteArray)
+       */
       public PublicKeyCredentialDescriptorBuilder id(ByteArray id) {
         return builder.id(id);
       }

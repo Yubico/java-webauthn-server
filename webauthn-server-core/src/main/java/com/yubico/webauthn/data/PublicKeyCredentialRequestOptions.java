@@ -161,6 +161,12 @@ public class PublicKeyCredentialRequestOptions {
       private PublicKeyCredentialRequestOptionsBuilder builder =
           new PublicKeyCredentialRequestOptionsBuilder();
 
+      /**
+       * {@link PublicKeyCredentialRequestOptionsBuilder#challenge(ByteArray) challenge} is a
+       * required parameter.
+       *
+       * @see PublicKeyCredentialRequestOptionsBuilder#challenge(ByteArray)
+       */
       public PublicKeyCredentialRequestOptionsBuilder challenge(ByteArray challenge) {
         return builder.challenge(challenge);
       }

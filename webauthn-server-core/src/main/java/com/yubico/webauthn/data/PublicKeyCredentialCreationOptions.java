@@ -233,30 +233,50 @@ public class PublicKeyCredentialCreationOptions {
       private PublicKeyCredentialCreationOptionsBuilder builder =
           new PublicKeyCredentialCreationOptionsBuilder();
 
-      /** @see PublicKeyCredentialCreationOptions#getRp() */
+      /**
+       * {@link PublicKeyCredentialCreationOptionsBuilder#rp(RelyingPartyIdentity) rp} is a required
+       * parameter.
+       *
+       * @see PublicKeyCredentialCreationOptionsBuilder#rp(RelyingPartyIdentity)
+       */
       public Step2 rp(RelyingPartyIdentity rp) {
         builder.rp(rp);
         return new Step2();
       }
 
-      /** @see PublicKeyCredentialCreationOptions#getUser() */
       public class Step2 {
+        /**
+         * {@link PublicKeyCredentialCreationOptionsBuilder#user(UserIdentity) user} is a required
+         * parameter.
+         *
+         * @see PublicKeyCredentialCreationOptionsBuilder#user(UserIdentity)
+         */
         public Step3 user(UserIdentity user) {
           builder.user(user);
           return new Step3();
         }
       }
 
-      /** @see PublicKeyCredentialCreationOptions#getChallenge() */
       public class Step3 {
+        /**
+         * {@link PublicKeyCredentialCreationOptionsBuilder#challenge(ByteArray) challenge} is a
+         * required parameter.
+         *
+         * @see PublicKeyCredentialCreationOptionsBuilder#challenge(ByteArray)
+         */
         public Step4 challenge(ByteArray challenge) {
           builder.challenge(challenge);
           return new Step4();
         }
       }
 
-      /** @see PublicKeyCredentialCreationOptions#getPubKeyCredParams() */
       public class Step4 {
+        /**
+         * {@link PublicKeyCredentialCreationOptionsBuilder#pubKeyCredParams(List) pubKeyCredParams}
+         * is a required parameter.
+         *
+         * @see PublicKeyCredentialCreationOptionsBuilder#pubKeyCredParams(List)
+         */
         public PublicKeyCredentialCreationOptionsBuilder pubKeyCredParams(
             List<PublicKeyCredentialParameters> pubKeyCredParams) {
           return builder.pubKeyCredParams(pubKeyCredParams);

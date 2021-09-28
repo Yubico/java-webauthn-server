@@ -95,6 +95,12 @@ public class PublicKeyCredentialParameters {
       private PublicKeyCredentialParametersBuilder builder =
           new PublicKeyCredentialParametersBuilder();
 
+      /**
+       * {@link PublicKeyCredentialParametersBuilder#alg(COSEAlgorithmIdentifier) alg} is a required
+       * parameter.
+       *
+       * @see PublicKeyCredentialParametersBuilder#alg(COSEAlgorithmIdentifier)
+       */
       public PublicKeyCredentialParametersBuilder alg(COSEAlgorithmIdentifier alg) {
         return builder.alg(alg);
       }

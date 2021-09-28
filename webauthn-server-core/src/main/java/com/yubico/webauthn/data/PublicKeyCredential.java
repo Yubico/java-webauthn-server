@@ -120,12 +120,23 @@ public class PublicKeyCredential<
     public class MandatoryStages {
       private final PublicKeyCredentialBuilder<A, B> builder;
 
+      /**
+       * {@link PublicKeyCredentialBuilder#id(ByteArray) id} is a required parameter.
+       *
+       * @see PublicKeyCredentialBuilder#id(ByteArray)
+       */
       public Step2 id(ByteArray id) {
         builder.id(id);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link PublicKeyCredentialBuilder#response(AuthenticatorResponse) response} is a required
+         * parameter.
+         *
+         * @see PublicKeyCredentialBuilder#response(AuthenticatorResponse)
+         */
         public Step3 response(A response) {
           builder.response(response);
           return new Step3();
@@ -133,6 +144,12 @@ public class PublicKeyCredential<
       }
 
       public class Step3 {
+        /**
+         * {@link PublicKeyCredentialBuilder#clientExtensionResults(ClientExtensionOutputs)
+         * clientExtensionResults} is a required parameter.
+         *
+         * @see PublicKeyCredentialBuilder#clientExtensionResults(ClientExtensionOutputs)
+         */
         public PublicKeyCredentialBuilder<A, B> clientExtensionResults(B clientExtensionResults) {
           return builder.clientExtensionResults(clientExtensionResults);
         }

@@ -139,12 +139,22 @@ public class UserIdentity implements PublicKeyCredentialEntity {
     public static class MandatoryStages {
       private UserIdentityBuilder builder = new UserIdentityBuilder();
 
+      /**
+       * {@link UserIdentityBuilder#name(String) name} is a required parameter.
+       *
+       * @see UserIdentityBuilder#name(String)
+       */
       public Step2 name(String name) {
         builder.name(name);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link UserIdentityBuilder#displayName(String) displayName} is a required parameter.
+         *
+         * @see UserIdentityBuilder#displayName(String)
+         */
         public Step3 displayName(String displayName) {
           builder.displayName(displayName);
           return new Step3();
@@ -152,6 +162,11 @@ public class UserIdentity implements PublicKeyCredentialEntity {
       }
 
       public class Step3 {
+        /**
+         * {@link UserIdentityBuilder#id(ByteArray) id} is a required parameter.
+         *
+         * @see UserIdentityBuilder#id(ByteArray)
+         */
         public UserIdentityBuilder id(ByteArray id) {
           return builder.id(id);
         }

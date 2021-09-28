@@ -79,12 +79,24 @@ public class FinishAssertionOptions {
     public static class MandatoryStages {
       private final FinishAssertionOptionsBuilder builder = new FinishAssertionOptionsBuilder();
 
+      /**
+       * {@link FinishAssertionOptionsBuilder#request(AssertionRequest) request} is a required
+       * parameter.
+       *
+       * @see FinishAssertionOptionsBuilder#request(AssertionRequest)
+       */
       public Step2 request(AssertionRequest request) {
         builder.request(request);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link FinishAssertionOptionsBuilder#response(PublicKeyCredential) response} is a
+         * required parameter.
+         *
+         * @see FinishAssertionOptionsBuilder#response(PublicKeyCredential)
+         */
         public FinishAssertionOptionsBuilder response(
             PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
                 response) {

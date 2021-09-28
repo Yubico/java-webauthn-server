@@ -95,6 +95,11 @@ public class StartRegistrationOptions {
     public static class MandatoryStages {
       private final StartRegistrationOptionsBuilder builder = new StartRegistrationOptionsBuilder();
 
+      /**
+       * {@link StartRegistrationOptionsBuilder#user(UserIdentity) user} is a required parameter.
+       *
+       * @see StartRegistrationOptionsBuilder#user(UserIdentity)
+       */
       public StartRegistrationOptionsBuilder user(UserIdentity user) {
         return builder.user(user);
       }

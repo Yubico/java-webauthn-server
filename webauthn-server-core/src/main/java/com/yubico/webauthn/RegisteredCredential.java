@@ -114,12 +114,24 @@ public final class RegisteredCredential {
     public static class MandatoryStages {
       private RegisteredCredentialBuilder builder = new RegisteredCredentialBuilder();
 
+      /**
+       * {@link RegisteredCredentialBuilder#credentialId(ByteArray) credentialId} is a required
+       * parameter.
+       *
+       * @see RegisteredCredentialBuilder#credentialId(ByteArray)
+       */
       public Step2 credentialId(ByteArray credentialId) {
         builder.credentialId(credentialId);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link RegisteredCredentialBuilder#userHandle(ByteArray) userHandle} is a required
+         * parameter.
+         *
+         * @see RegisteredCredentialBuilder#userHandle(ByteArray)
+         */
         public Step3 userHandle(ByteArray userHandle) {
           builder.userHandle(userHandle);
           return new Step3();
@@ -127,6 +139,12 @@ public final class RegisteredCredential {
       }
 
       public class Step3 {
+        /**
+         * {@link RegisteredCredentialBuilder#publicKeyCose(ByteArray) publicKeyCose} is a required
+         * parameter.
+         *
+         * @see RegisteredCredentialBuilder#publicKeyCose(ByteArray)
+         */
         public RegisteredCredentialBuilder publicKeyCose(ByteArray publicKeyCose) {
           return builder.publicKeyCose(publicKeyCose);
         }

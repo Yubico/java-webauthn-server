@@ -148,6 +148,9 @@ public class AssertionRequest {
        * {@link
        * AssertionRequestBuilder#publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions)
        * publicKeyCredentialRequestOptions} is a required parameter.
+       *
+       * @see
+       *     AssertionRequestBuilder#publicKeyCredentialRequestOptions(PublicKeyCredentialRequestOptions)
        */
       public AssertionRequestBuilder publicKeyCredentialRequestOptions(
           PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions) {

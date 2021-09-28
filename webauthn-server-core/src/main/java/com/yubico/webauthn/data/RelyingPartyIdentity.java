@@ -109,6 +109,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
        * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a> for
        * details and examples.
        *
+       * @see RelyingPartyIdentityBuilder#id(String)
        * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a>
        * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#scope">RP ID: scope</a>
        */
@@ -122,6 +123,8 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
          * The human-palatable name of the Relaying Party.
          *
          * <p>For example: "ACME Corporation", "Wonderful Widgets, Inc." or "ОАО Примертех".
+         *
+         * @see RelyingPartyIdentityBuilder#name(String)
          */
         public RelyingPartyIdentityBuilder name(String name) {
           return builder.name(name);

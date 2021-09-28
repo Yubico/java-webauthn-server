@@ -122,12 +122,24 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
       private final AuthenticatorAttestationResponseBuilder builder =
           new AuthenticatorAttestationResponseBuilder();
 
+      /**
+       * {@link AuthenticatorAttestationResponseBuilder#attestationObject(ByteArray)
+       * attestationObject} is a required parameter.
+       *
+       * @see AuthenticatorAttestationResponseBuilder#attestationObject(ByteArray)
+       */
       public Step2 attestationObject(ByteArray attestationObject) {
         builder.attestationObject(attestationObject);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link AuthenticatorAttestationResponseBuilder#clientDataJSON(ByteArray) clientDataJSON}
+         * is a required parameter.
+         *
+         * @see AuthenticatorAttestationResponseBuilder#clientDataJSON(ByteArray)
+         */
         public AuthenticatorAttestationResponseBuilder clientDataJSON(ByteArray clientDataJSON) {
           return builder.clientDataJSON(clientDataJSON);
         }

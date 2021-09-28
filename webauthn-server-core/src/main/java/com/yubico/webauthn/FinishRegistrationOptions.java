@@ -82,12 +82,24 @@ public class FinishRegistrationOptions {
       private final FinishRegistrationOptionsBuilder builder =
           new FinishRegistrationOptionsBuilder();
 
+      /**
+       * {@link FinishRegistrationOptionsBuilder#request(PublicKeyCredentialCreationOptions)
+       * request} is a required parameter.
+       *
+       * @see FinishRegistrationOptionsBuilder#request(PublicKeyCredentialCreationOptions)
+       */
       public Step2 request(PublicKeyCredentialCreationOptions request) {
         builder.request(request);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link FinishRegistrationOptionsBuilder#response(PublicKeyCredential) response} is a
+         * required parameter.
+         *
+         * @see FinishRegistrationOptionsBuilder#response(PublicKeyCredential)
+         */
         public FinishRegistrationOptionsBuilder response(
             PublicKeyCredential<
                     AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
