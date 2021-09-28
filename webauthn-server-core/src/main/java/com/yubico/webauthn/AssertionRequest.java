@@ -101,6 +101,14 @@ public class AssertionRequest {
     return publicKeyCredentialRequestOptions.toCredentialsGetJson();
   }
 
+  public String toJson() throws JsonProcessingException {
+    return "";
+  }
+
+  public static AssertionRequest fromJson(String json) throws JsonProcessingException {
+    return null;
+  }
+
   public static AssertionRequestBuilder.MandatoryStages builder() {
     return new AssertionRequestBuilder.MandatoryStages();
   }

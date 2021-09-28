@@ -384,6 +384,38 @@ class JsonIoSpec
         ) should equal(pkcco)
       }
     }
+
+    describe("has a toJson() method and a fromJson(String) factory method") {
+      it("which behave like a Jackson ObjectMapper.") {
+        forAll { req: PublicKeyCredentialCreationOptions =>
+          println(req)
+          val json1 = req.toJson
+          val json2 = JacksonCodecs.json.writeValueAsString(req)
+          json1 should equal(json2)
+
+          val parsed1 = PublicKeyCredentialCreationOptions.fromJson(json1)
+          val parsed2 = JacksonCodecs.json.readValue(
+            json2,
+            classOf[PublicKeyCredentialCreationOptions],
+          )
+          parsed1 should equal(parsed2)
+        }
+      }
+
+      it("which are stable over multiple serialization round-trips.") {
+        forAll { req: PublicKeyCredentialCreationOptions =>
+          println(req)
+          val encoded = req.toJson
+          val decoded = PublicKeyCredentialCreationOptions.fromJson(encoded)
+          val reencoded = decoded.toJson
+          val redecoded = PublicKeyCredentialCreationOptions.fromJson(reencoded)
+
+          decoded should equal(req)
+          redecoded should equal(req)
+          encoded should equal(reencoded)
+        }
+      }
+    }
   }
 
   describe("The class PublicKeyCredentialRequestOptions") {
@@ -411,6 +443,36 @@ class JsonIoSpec
           jsonValue.get("publicKey"),
           classOf[PublicKeyCredentialRequestOptions],
         ) should equal(req.getPublicKeyCredentialRequestOptions)
+      }
+    }
+
+    describe("has a toJson() method and a fromJson(String) factory method") {
+      it("which behave like a Jackson ObjectMapper.") {
+        forAll { req: AssertionRequest =>
+          println(req)
+          val json1 = req.toJson
+          val json2 = JacksonCodecs.json.writeValueAsString(req)
+
+          val parsed1 = AssertionRequest.fromJson(json1)
+          val parsed2 =
+            JacksonCodecs.json.readValue(json2, classOf[AssertionRequest])
+          json1 should equal(json2)
+          parsed1 should equal(parsed2)
+        }
+      }
+
+      it("which are stable over multiple serialization round-trips.") {
+        forAll { req: AssertionRequest =>
+          println(req)
+          val encoded = req.toJson
+          val decoded = AssertionRequest.fromJson(encoded)
+          val reencoded = decoded.toJson
+          val redecoded = AssertionRequest.fromJson(reencoded)
+
+          decoded should equal(req)
+          redecoded should equal(req)
+          encoded should equal(reencoded)
+        }
       }
     }
   }

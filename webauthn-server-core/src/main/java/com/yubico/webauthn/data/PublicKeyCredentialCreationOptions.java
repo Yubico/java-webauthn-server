@@ -169,6 +169,14 @@ public class PublicKeyCredentialCreationOptions {
     return json.writeValueAsString(result);
   }
 
+  public String toJson() throws JsonProcessingException {
+    return "";
+  }
+
+  public static PublicKeyCredentialCreationOptions fromJson(String json) throws JsonProcessingException {
+    return null;
+  }
+
   public Optional<Long> getTimeout() {
     return Optional.ofNullable(timeout);
   }
