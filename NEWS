@@ -39,6 +39,10 @@ New features:
   `PublicKeyCredentialRequestOptions.toCredentialsGetJson()` and
   `AssertionRequest.toCredentialsGetJson()` for serializing to JSON without
   having to use Jackson directly.
+* Added methods `PublicKeyCredentialCreationOptions.toJson()` and
+  `.fromJson(String)` suitable for encoding to and decoding from JSON.
+* Added methods `AssertionRequest.toJson()` and `.fromJson(String)` suitable for
+  encoding to and decoding from JSON.
 
 Fixes:
 
