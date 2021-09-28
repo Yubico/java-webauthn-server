@@ -202,7 +202,11 @@ function base64urlToUint8array(base64Bytes) {
   return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
 }
 function uint8arrayToBase64url(bytes) {
-  return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  if (bytes instanceof Uint8Array) {
+    return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  } else {
+    return uint8arrayToBase64url(new Uint8Array(bytes));
+  }
 }
 
 fetch(/* ... */)                    // Make the call that returns the credentialCreateJson above
@@ -314,7 +318,11 @@ function base64urlToUint8array(base64Bytes) {
   return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
 }
 function uint8arrayToBase64url(bytes) {
-  return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  if (bytes instanceof Uint8Array) {
+    return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  } else {
+    return uint8arrayToBase64url(new Uint8Array(bytes));
+  }
 }
 
 fetch(/* ... */)                    // Make the call that returns the credentialGetJson above
