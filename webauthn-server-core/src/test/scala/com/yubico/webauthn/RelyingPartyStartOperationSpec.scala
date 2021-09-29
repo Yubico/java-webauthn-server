@@ -25,6 +25,7 @@
 package com.yubico.webauthn
 
 import com.yubico.internal.util.scala.JavaConverters._
+import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationConveyancePreference
 import com.yubico.webauthn.data.AuthenticatorAttachment
@@ -58,7 +59,8 @@ class RelyingPartyStartOperationSpec
     with ScalaCheckDrivenPropertyChecks {
 
   def credRepo(
-      credentials: Set[PublicKeyCredentialDescriptor]
+      credentials: Set[PublicKeyCredentialDescriptor],
+      userId: UserIdentity,
   ): CredentialRepository =
     new CredentialRepository {
       override def getCredentialIdsForUsername(
@@ -68,8 +70,10 @@ class RelyingPartyStartOperationSpec
           username: String
       ): Optional[ByteArray] = ???
       override def getUsernameForUserHandle(
-          userHandleBase64: ByteArray
-      ): Optional[String] = ???
+          userHandle: ByteArray
+      ): Optional[String] =
+        if (userHandle == userId.getId) Some(userId.getName).asJava
+        else None.asJava
       override def lookup(
           credentialId: ByteArray,
           userHandle: ByteArray,
@@ -84,11 +88,12 @@ class RelyingPartyStartOperationSpec
       attestationConveyancePreference: Option[AttestationConveyancePreference] =
         None,
       credentials: Set[PublicKeyCredentialDescriptor] = Set.empty,
+      userId: UserIdentity,
   ): RelyingParty = {
     var builder = RelyingParty
       .builder()
       .identity(rpId)
-      .credentialRepository(credRepo(credentials))
+      .credentialRepository(credRepo(credentials, userId))
       .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
       .origins(Set.empty.asJava)
     appId.foreach { appid => builder = builder.appId(appid) }
@@ -115,7 +120,7 @@ class RelyingPartyStartOperationSpec
 
     it("sets excludeCredentials automatically.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
-        val rp = relyingParty(credentials = credentials)
+        val rp = relyingParty(credentials = credentials, userId = userId)
         val result = rp.startRegistration(
           StartRegistrationOptions
             .builder()
@@ -130,7 +135,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("sets challenge randomly.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       val request1 = rp.startRegistration(
         StartRegistrationOptions.builder().user(userId).build()
@@ -151,7 +156,7 @@ class RelyingPartyStartOperationSpec
         .requireResidentKey(true)
         .build()
 
-      val pkcco = relyingParty().startRegistration(
+      val pkcco = relyingParty(userId = userId).startRegistration(
         StartRegistrationOptions
           .builder()
           .user(userId)
@@ -168,14 +173,14 @@ class RelyingPartyStartOperationSpec
         .requireResidentKey(true)
         .build()
 
-      val pkccoWith = relyingParty().startRegistration(
+      val pkccoWith = relyingParty(userId = userId).startRegistration(
         StartRegistrationOptions
           .builder()
           .user(userId)
           .authenticatorSelection(Optional.of(authnrSel))
           .build()
       )
-      val pkccoWithout = relyingParty().startRegistration(
+      val pkccoWithout = relyingParty(userId = userId).startRegistration(
         StartRegistrationOptions
           .builder()
           .user(userId)
@@ -191,12 +196,13 @@ class RelyingPartyStartOperationSpec
     it("uses the RelyingParty setting for attestationConveyancePreference.") {
       forAll { acp: Option[AttestationConveyancePreference] =>
         val pkcco =
-          relyingParty(attestationConveyancePreference = acp).startRegistration(
-            StartRegistrationOptions
-              .builder()
-              .user(userId)
-              .build()
-          )
+          relyingParty(attestationConveyancePreference = acp, userId = userId)
+            .startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .build()
+            )
         pkcco.getAttestation should equal(
           acp getOrElse AttestationConveyancePreference.NONE
         )
@@ -204,7 +210,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("allows setting the timeout to empty.") {
-      val pkcco = relyingParty().startRegistration(
+      val pkcco = relyingParty(userId = userId).startRegistration(
         StartRegistrationOptions
           .builder()
           .user(userId)
@@ -215,7 +221,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("allows setting the timeout to a positive value.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       forAll(Gen.posNum[Long]) { timeout: Long =>
         val pkcco = rp.startRegistration(
@@ -266,7 +272,7 @@ class RelyingPartyStartOperationSpec
       "sets the appidExclude extension if the RP instance is given an AppId."
     ) {
       forAll { appId: AppId =>
-        val rp = relyingParty(appId = Some(appId))
+        val rp = relyingParty(appId = Some(appId), userId = userId)
         val result = rp.startRegistration(
           StartRegistrationOptions
             .builder()
@@ -279,7 +285,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("does not set the appidExclude extension if the RP instance is not given an AppId.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
       val result = rp.startRegistration(
         StartRegistrationOptions
           .builder()
@@ -295,7 +301,7 @@ class RelyingPartyStartOperationSpec
         println(extensions.getExtensionIds)
         println(extensions)
 
-        val rp = relyingParty()
+        val rp = relyingParty(userId = userId)
         val result = rp.startRegistration(
           StartRegistrationOptions
             .builder()
@@ -309,7 +315,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("by default does not set the uvm extension.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
       val result = rp.startRegistration(
         StartRegistrationOptions
           .builder()
@@ -321,7 +327,7 @@ class RelyingPartyStartOperationSpec
 
     it("sets the uvm extension if enabled in StartRegistrationOptions.") {
       forAll { extensions: RegistrationExtensionInputs =>
-        val rp = relyingParty()
+        val rp = relyingParty(userId = userId)
         val result = rp.startRegistration(
           StartRegistrationOptions
             .builder()
@@ -335,7 +341,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("respects the requireResidentKey setting.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       val pkccoFalse = rp.startRegistration(
         StartRegistrationOptions
@@ -377,7 +383,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("respects the authenticatorAttachment parameter.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       val pkcco = rp.startRegistration(
         StartRegistrationOptions
@@ -430,7 +436,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("sets requireResidentKey to agree with residentKey.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       val pkccoDiscouraged = rp.startRegistration(
         StartRegistrationOptions
@@ -493,9 +499,9 @@ class RelyingPartyStartOperationSpec
 
   describe("RelyingParty.startAssertion") {
 
-    it("sets allowCredentials to empty if not given a username.") {
+    it("sets allowCredentials to empty if not given a username nor a user handle.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
-        val rp = relyingParty(credentials = credentials)
+        val rp = relyingParty(credentials = credentials, userId = userId)
         val result = rp.startAssertion(StartAssertionOptions.builder().build())
 
         result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala shouldBe empty
@@ -504,11 +510,26 @@ class RelyingPartyStartOperationSpec
 
     it("sets allowCredentials automatically if given a username.") {
       forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
-        val rp = relyingParty(credentials = credentials)
+        val rp = relyingParty(credentials = credentials, userId = userId)
         val result = rp.startAssertion(
           StartAssertionOptions
             .builder()
             .username(userId.getName)
+            .build()
+        )
+
+        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala
+          .map(_.asScala.toSet) should equal(Some(credentials))
+      }
+    }
+
+    it("sets allowCredentials automatically if given a user handle.") {
+      forAll { credentials: Set[PublicKeyCredentialDescriptor] =>
+        val rp = relyingParty(credentials = credentials, userId = userId)
+        val result = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .userHandle(userId.getId)
             .build()
         )
 
@@ -532,8 +553,8 @@ class RelyingPartyStartOperationSpec
             cred2: PublicKeyCredentialDescriptor,
             cred3: PublicKeyCredentialDescriptor,
         ) =>
-          val rp = relyingParty(credentials =
-            Set(
+          val rp = relyingParty(
+            credentials = Set(
               cred1.toBuilder.transports(cred1Transports.asJava).build(),
               cred2.toBuilder
                 .transports(
@@ -545,7 +566,8 @@ class RelyingPartyStartOperationSpec
                   Optional.empty[java.util.Set[AuthenticatorTransport]]
                 )
                 .build(),
-            )
+            ),
+            userId = userId,
           )
           val result = rp.startAssertion(
             StartAssertionOptions
@@ -567,7 +589,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("sets challenge randomly.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       val request1 = rp.startAssertion(StartAssertionOptions.builder().build())
       val request2 = rp.startAssertion(StartAssertionOptions.builder().build())
@@ -579,7 +601,7 @@ class RelyingPartyStartOperationSpec
 
     it("sets the appid extension if the RP instance is given an AppId.") {
       forAll { appId: AppId =>
-        val rp = relyingParty(appId = Some(appId))
+        val rp = relyingParty(appId = Some(appId), userId = userId)
         val result = rp.startAssertion(
           StartAssertionOptions
             .builder()
@@ -594,7 +616,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("does not set the appid extension if the RP instance is not given an AppId.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
       val result = rp.startAssertion(
         StartAssertionOptions
           .builder()
@@ -608,7 +630,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("allows setting the timeout to empty.") {
-      val req = relyingParty().startAssertion(
+      val req = relyingParty(userId = userId).startAssertion(
         StartAssertionOptions
           .builder()
           .timeout(Optional.empty[java.lang.Long])
@@ -618,7 +640,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("allows setting the timeout to a positive value.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
 
       forAll(Gen.posNum[Long]) { timeout: Long =>
         val req = rp.startAssertion(
@@ -663,7 +685,7 @@ class RelyingPartyStartOperationSpec
     }
 
     it("by default does not set the uvm extension.") {
-      val rp = relyingParty()
+      val rp = relyingParty(userId = userId)
       val result = rp.startAssertion(
         StartAssertionOptions
           .builder()
@@ -676,7 +698,7 @@ class RelyingPartyStartOperationSpec
 
     it("sets the uvm extension if enabled in StartRegistrationOptions.") {
       forAll { extensions: AssertionExtensionInputs =>
-        val rp = relyingParty()
+        val rp = relyingParty(userId = userId)
         val result = rp.startAssertion(
           StartAssertionOptions
             .builder()
@@ -687,6 +709,97 @@ class RelyingPartyStartOperationSpec
         result.getPublicKeyCredentialRequestOptions.getExtensions.getUvm should be(
           true
         )
+      }
+    }
+  }
+
+  describe("StartAssertionOptions") {
+
+    it("resets username when userHandle is set.") {
+      forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
+        val result = sao.toBuilder.userHandle(userHandle).build()
+        result.getUsername.asScala shouldBe empty
+      }
+
+      forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
+        val result = sao.toBuilder.userHandle(Some(userHandle).asJava).build()
+        result.getUsername.asScala shouldBe empty
+      }
+    }
+
+    it("resets userHandle when username is set.") {
+      forAll { (sao: StartAssertionOptions, username: String) =>
+        val result = sao.toBuilder.username(username).build()
+        result.getUserHandle.asScala shouldBe empty
+      }
+
+      forAll { (sao: StartAssertionOptions, username: String) =>
+        val result = sao.toBuilder.username(Some(username).asJava).build()
+        result.getUserHandle.asScala shouldBe empty
+      }
+    }
+
+    it("does not reset username when userHandle is set to empty.") {
+      forAll { (sao: StartAssertionOptions, username: String) =>
+        val result = sao.toBuilder
+          .username(username)
+          .userHandle(Optional.empty[ByteArray])
+          .build()
+        result.getUsername.asScala should equal(Some(username))
+      }
+
+      forAll { (sao: StartAssertionOptions, username: String) =>
+        val result = sao.toBuilder
+          .username(username)
+          .userHandle(null: ByteArray)
+          .build()
+        result.getUsername.asScala should equal(Some(username))
+      }
+    }
+
+    it("does not reset userHandle when username is set to empty.") {
+      forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
+        val result = sao.toBuilder
+          .userHandle(userHandle)
+          .username(Optional.empty[String])
+          .build()
+        result.getUserHandle.asScala should equal(Some(userHandle))
+      }
+
+      forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
+        val result = sao.toBuilder
+          .userHandle(userHandle)
+          .username(null: String)
+          .build()
+        result.getUserHandle.asScala should equal(Some(userHandle))
+      }
+    }
+
+    it("allows unsetting username.") {
+      forAll { (sao: StartAssertionOptions, username: String) =>
+        val preresult = sao.toBuilder.username(username).build()
+        preresult.getUsername.asScala should equal(Some(username))
+
+        val result1 =
+          preresult.toBuilder.username(Optional.empty[String]).build()
+        result1.getUsername.asScala shouldBe empty
+
+        val result2 = preresult.toBuilder.username(null: String).build()
+        result2.getUsername.asScala shouldBe empty
+      }
+    }
+
+    it("allows unsetting userHandle.") {
+      forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
+        val preresult = sao.toBuilder.userHandle(userHandle).build()
+        preresult.getUserHandle.asScala should equal(Some(userHandle))
+
+        val result1 =
+          preresult.toBuilder.userHandle(Optional.empty[ByteArray]).build()
+        result1.getUserHandle.asScala shouldBe empty
+
+        val result2 = preresult.toBuilder.userHandle(null: ByteArray).build()
+        result2.getUserHandle.asScala shouldBe empty
       }
     }
   }

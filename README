@@ -302,7 +302,7 @@ First, generate authentication parameters and send them to the client:
 [source,java]
 ----------
 AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
-    .username("alice")
+    .username("alice")     // Or .userHandle(ByteArray) if preferred
     .build());
 String credentialGetJson = request.toCredentialsGetJson();
 return credentialGetJson;  // Send to client

@@ -3,6 +3,7 @@ package com.yubico.webauthn
 import com.yubico.scalacheck.gen.JavaGenerators._
 import com.yubico.webauthn.attestation.Attestation
 import com.yubico.webauthn.attestation.Generators._
+import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs
@@ -11,8 +12,10 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.UserVerificationRequirement
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 
 import java.util.Optional
 
@@ -86,5 +89,25 @@ object Generators {
         .signatureCount(signatureCount)
         .build()
     )
+
+  implicit val arbitraryStartAssertionOptions
+      : Arbitrary[StartAssertionOptions] = Arbitrary(
+    for {
+      extensions <- arbitrary[Option[AssertionExtensionInputs]]
+      timeout <- Gen.option(Gen.posNum[Long])
+      usernameOrUserHandle <- arbitrary[Option[Either[String, ByteArray]]]
+      userVerification <- arbitrary[Option[UserVerificationRequirement]]
+    } yield {
+      val b = StartAssertionOptions.builder()
+      extensions.foreach(b.extensions)
+      timeout.foreach(b.timeout)
+      usernameOrUserHandle.foreach {
+        case Left(username)    => b.username(username)
+        case Right(userHandle) => b.userHandle(userHandle)
+      }
+      userVerification.foreach(b.userVerification)
+      b.build()
+    }
+  )
 
 }

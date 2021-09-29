@@ -43,6 +43,10 @@ New features:
   `.fromJson(String)` suitable for encoding to and decoding from JSON.
 * Added methods `AssertionRequest.toJson()` and `.fromJson(String)` suitable for
   encoding to and decoding from JSON.
+* Added methods `StartAssertionOptions.builder().userHandle(ByteArray)` and
+  `.userHandle(Optional<ByteArray>)` as alternatives to `.username(String)` and
+  `.username(Optional<String>)`. The `userHandle` methods fill the same function
+  as, and are mutually exclusive with, the `username` methods.
 
 Fixes:
 

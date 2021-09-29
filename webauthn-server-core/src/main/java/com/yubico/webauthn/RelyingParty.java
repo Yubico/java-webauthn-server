@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -449,8 +450,12 @@ public class RelyingParty {
             .challenge(generateChallenge())
             .rpId(identity.getId())
             .allowCredentials(
-                startAssertionOptions
-                    .getUsername()
+                OptionalUtil.orElseOptional(
+                        startAssertionOptions.getUsername(),
+                        () ->
+                            startAssertionOptions
+                                .getUserHandle()
+                                .flatMap(credentialRepository::getUsernameForUserHandle))
                     .map(
                         un ->
                             new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un))))
