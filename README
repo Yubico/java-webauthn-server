@@ -86,7 +86,7 @@ In addition to the main `webauthn-server-core` module, there are also:
 === Non-features
 
 This library has no concept of accounts, sessions, permissions or identity
-federation, and it's not an authentication framework; it only deals with
+federation, and it is not an authentication framework; it only deals with
 executing the WebAuthn authentication mechanism. Sessions, account management
 and other higher level concepts can make use of this authentication mechanism,
 but the authentication mechanism alone does not make a security system.
@@ -115,7 +115,7 @@ The client side involves:
  1. Call `navigator.credentials.create()` or `.get()`,
     passing the result from `RelyingParty.startRegistration(...)` or `.startAssertion(...)` as the argument.
  2. Encode the result of the successfully resolved promise and return it to the server.
-    For this you'll need some way to encode `Uint8Array` values;
+    For this you need some way to encode `Uint8Array` values;
     this guide will assume use of link:https://github.com/beatgammit/base64-js[base64-js].
     However the built-in parser methods for
     link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
@@ -195,7 +195,7 @@ String credentialCreateJson = request.toCredentialsCreateJson();
 return credentialCreateJson;  // Send to client
 ----------
 
-You'll need to keep this `PublicKeyCredentialCreationOptions` object in temporary storage
+You need to keep this `PublicKeyCredentialCreationOptions` object in temporary storage
 so you can also pass it into `finishRegistration(...)` later.
 
 Now call the WebAuthn API on the client side:
@@ -271,7 +271,7 @@ try {
 ----------
 
 Finally, if the previous step was successful, store the new credential in your database.
-Here's an example of things you'll likely want to store:
+Here is an example of things you will likely want to store:
 
 [source,java]
 ----------
@@ -313,7 +313,7 @@ String credentialGetJson = request.toCredentialsGetJson();
 return credentialGetJson;  // Send to client
 ----------
 
-Again, you'll need to keep this `PublicKeyCredentialRequestOptions` object in temporary storage
+Again, you need to keep this `PublicKeyCredentialRequestOptions` object in temporary storage
 so you can also pass it into `finishAssertion(...)` later.
 
 Now call the WebAuthn API on the client side:
