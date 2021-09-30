@@ -62,6 +62,11 @@ In addition to the main `webauthn-server-core` module, there are also:
   you may have to add your own JCA providers to support some signature algorithms.
   In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms.
 
+- `webauthn-server-core-minimal`: Alternative distribution of `webauthn-server-core`,
+  not dependant on BouncyCastle.
+  Using it mean you may have to  you may have to add your own JCA providers to support some signature algorithms.
+  In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms.
+
 
 == Features
 
