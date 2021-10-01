@@ -1,5 +1,7 @@
 plugins {
   id 'java-library'
+  id 'maven-publish'
+  id 'signing'
 }
 
 description = 'Yubico WebAuthn server core API'

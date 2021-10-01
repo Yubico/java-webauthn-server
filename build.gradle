@@ -12,7 +12,7 @@ plugins {
   id 'java-platform'
   id 'com.github.kt3k.coveralls' version '2.12.0'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
-  id 'io.franzbecker.gradle-lombok' version '4.0.0'
+  id 'io.franzbecker.gradle-lombok' version '5.0.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
@@ -40,7 +40,7 @@ if (publishEnabled) {
 }
 
 wrapper {
-  gradleVersion = '6.8'
+  gradleVersion = '7.2'
 }
 
 dependencies {
@@ -89,8 +89,8 @@ subprojects {
   apply plugin: LombokPlugin
 
   lombok {
-    version '1.18.18'
-    sha256 = '601ec46206e0f9cac2c0583b3350e79f095419c395e991c761640f929038e9cc'
+    version '1.18.20'
+    sha256 = 'ce947be6c2fbe759fbbe8ef3b42b6825f814c98c8853f1013f2d9630cedf74b0'
   }
   tasks.withType(AbstractCompile) {
     if (tasks.findByName('verifyLombok')) {
@@ -219,9 +219,6 @@ subprojects { project ->
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
-
-    apply plugin: 'maven-publish'
-    apply plugin: 'signing'
 
     if (getGitCommit() == null) {
       throw new RuntimeException("Failed to get git commit ID");
