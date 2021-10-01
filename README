@@ -283,7 +283,7 @@ storeCredential(             // Some database access method of your own design
 ----------
 
 
-=== Authentication
+=== 4. Authentication
 
 Like registration ceremonies, an authentication ceremony consists of 5 main steps:
 
@@ -399,7 +399,7 @@ updateCredential(              // Some database access method of your own design
 Then do whatever else you need - for example, initiate a user session.
 
 
-=== Passwordless, username-less authentication
+=== 5. Passwordless, username-less authentication
 
 WebAuthn supports passwordless multi-factor authentication via on-authenticator
 https://www.w3.org/TR/webauthn-2/#user-verification[user verification],
