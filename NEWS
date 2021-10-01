@@ -22,6 +22,13 @@ Changes:
 
 New features:
 
+* `RegistrationResult.keyId()` now includes `transports` if any were included in
+  the `AuthenticatorAttestatationResponse`. To get transports passed through,
+  call `PublicKeyCredential.response.getTransports()` on the client side after
+  successful registration, and add the result as the property
+  `response.transports` in the JSON passed into
+  `PublicKeyCredential.parseRegistrationResponseJson`. See the project README
+  for an example.
 * Added support for the `appidExclude`, `credProps`, `largeBlob` and `uvm`
   extensions.
 * Added support for the new `authenticatorSelectionCriteria.residentKey` option:
