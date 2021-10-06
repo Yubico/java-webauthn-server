@@ -42,7 +42,8 @@ public class StartRegistrationOptions {
   @NonNull private final UserIdentity user;
 
   /**
-   * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+   * Constraints on what kind of authenticator the user is allowed to use to create the credential,
+   * and on features that authenticator must or should support.
    */
   private final AuthenticatorSelectionCriteria authenticatorSelection;
 
@@ -64,7 +65,8 @@ public class StartRegistrationOptions {
   private final Long timeout;
 
   /**
-   * Constraints on what kind of authenticator the user is allowed to use to create the credential.
+   * Constraints on what kind of authenticator the user is allowed to use to create the credential,
+   * and on features that authenticator must or should support.
    */
   public Optional<AuthenticatorSelectionCriteria> getAuthenticatorSelection() {
     return Optional.ofNullable(authenticatorSelection);
@@ -107,7 +109,7 @@ public class StartRegistrationOptions {
 
     /**
      * Constraints on what kind of authenticator the user is allowed to use to create the
-     * credential.
+     * credential, and on features that authenticator must or should support.
      */
     public StartRegistrationOptionsBuilder authenticatorSelection(
         @NonNull Optional<AuthenticatorSelectionCriteria> authenticatorSelection) {
@@ -116,7 +118,7 @@ public class StartRegistrationOptions {
 
     /**
      * Constraints on what kind of authenticator the user is allowed to use to create the
-     * credential.
+     * credential, and on features that authenticator must or should support.
      */
     public StartRegistrationOptionsBuilder authenticatorSelection(
         AuthenticatorSelectionCriteria authenticatorSelection) {

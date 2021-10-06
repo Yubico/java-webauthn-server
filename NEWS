@@ -64,6 +64,10 @@ Fixes:
   base64url encoded.
 * Javadoc for `TokenBindingStatus.PRESENT` incorrectly referenced its own
   (private) `id` member instead of `TokenBindingInfo.id`.
+* Improved JavaDoc for `StartRegistrationOptions.authenticatorSelection`
+* Improved JavaDoc for `RelyingParty.appid`
+* Make the `RelyingParty.validateSignatureCounter` JavaDoc also cover the
+  success case where stored and received signature count are both zero.
 
 
 == Version 1.10.1 ==
