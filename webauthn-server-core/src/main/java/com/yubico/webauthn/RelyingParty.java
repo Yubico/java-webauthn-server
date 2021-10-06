@@ -42,6 +42,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCred
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
+import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
@@ -140,8 +141,7 @@ public class RelyingParty {
   @NonNull private final CredentialRepository credentialRepository;
 
   /**
-   * The extension input to set for the <code>appid</code> extension when initiating authentication
-   * operations.
+   * The extension input to set for the <code>appid</code> and <code>appidExclude</code> extensions.
    *
    * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
    * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
@@ -154,13 +154,19 @@ public class RelyingParty {
    * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
    * automatically set the <code>appid</code> extension input, and {@link
    * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic to
-   * also accept this AppID as an alternative to the RP ID.
+   * also accept this AppID as an alternative to the RP ID. Likewise, {@link
+   * #startRegistration(StartRegistrationOptions)} startRegistration} will automatically set the
+   * <code>appidExclude</code> extension input.
    *
    * <p>By default, this is not set.
    *
    * @see AssertionExtensionInputs#getAppid()
+   * @see RegistrationExtensionInputs#getAppidExclude()
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
+   *     FIDO AppID Exclusion Extension (appidExclude)</a>
    */
   @NonNull private final Optional<AppId> appId;
 
@@ -563,8 +569,8 @@ public class RelyingParty {
     }
 
     /**
-     * The extension input to set for the <code>appid</code> extension when initiating
-     * authentication operations.
+     * The extension input to set for the <code>appid</code> and <code>appidExclude</code>
+     * extensions.
      *
      * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
      * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
@@ -577,14 +583,20 @@ public class RelyingParty {
      * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
      * automatically set the <code>appid</code> extension input, and {@link
      * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic
-     * to also accept this AppID as an alternative to the RP ID.
+     * to also accept this AppID as an alternative to the RP ID. Likewise, {@link
+     * #startRegistration(StartRegistrationOptions)} startRegistration} will automatically set the
+     * <code>appidExclude</code> extension input.
      *
      * <p>By default, this is not set.
      *
      * @see AssertionExtensionInputs#getAppid()
+     * @see RegistrationExtensionInputs#getAppidExclude()
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
+     *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
     public RelyingPartyBuilder appId(@NonNull Optional<AppId> appId) {
       this.appId = appId;
@@ -592,8 +604,8 @@ public class RelyingParty {
     }
 
     /**
-     * The extension input to set for the <code>appid</code> extension when initiating
-     * authentication operations.
+     * The extension input to set for the <code>appid</code> and <code>appidExclude</code>
+     * extensions.
      *
      * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
      * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
@@ -606,14 +618,20 @@ public class RelyingParty {
      * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
      * automatically set the <code>appid</code> extension input, and {@link
      * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic
-     * to also accept this AppID as an alternative to the RP ID.
+     * to also accept this AppID as an alternative to the RP ID. Likewise, {@link
+     * #startRegistration(StartRegistrationOptions)} startRegistration} will automatically set the
+     * <code>appidExclude</code> extension input.
      *
      * <p>By default, this is not set.
      *
      * @see AssertionExtensionInputs#getAppid()
+     * @see RegistrationExtensionInputs#getAppidExclude()
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
+     *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
     public RelyingPartyBuilder appId(@NonNull AppId appId) {
       return this.appId(Optional.of(appId));
