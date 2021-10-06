@@ -189,7 +189,7 @@ String credentialCreateJson = request.toCredentialsCreateJson();
 return credentialCreateJson;  // Send to client
 ----------
 
-You need to keep this `PublicKeyCredentialCreationOptions` object in temporary storage
+You will need to keep this `PublicKeyCredentialCreationOptions` object in temporary storage
 so you can also pass it into `finishRegistration(...)` later.
 
 Now call the WebAuthn API on the client side:
@@ -307,7 +307,7 @@ String credentialGetJson = request.toCredentialsGetJson();
 return credentialGetJson;  // Send to client
 ----------
 
-Again, you need to keep this `PublicKeyCredentialRequestOptions` object in temporary storage
+Again, you will need to keep this `PublicKeyCredentialRequestOptions` object in temporary storage
 so you can also pass it into `finishAssertion(...)` later.
 
 Now call the WebAuthn API on the client side:
