@@ -4,6 +4,8 @@ Breaking changes:
 
 * `RelyingParty` parameter `allowUnrequestedExtensions` removed. The library
   will now always accept unrequested extensions.
+* Class `ClientAssertionExtensionOutputs` now silently ignores unknown
+  extensions instead of rejecting them.
 * `webauthn-server-core-minimal` module deleted.
 * `webauthn-server-core` no longer depends on BouncyCastle and will no longer
   attempt to automatically fall back to it. Therefore, EdDSA keys are no longer
