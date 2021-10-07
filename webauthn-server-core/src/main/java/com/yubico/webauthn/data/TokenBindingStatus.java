@@ -48,7 +48,7 @@ public enum TokenBindingStatus implements JsonStringSerializable {
 
   /**
    * Indicates token binding was used when communicating with the Relying Party. In this case, the
-   * {@link TokenBindingStatus#id} member MUST be present.
+   * {@link TokenBindingInfo#getId()} member MUST be present.
    */
   PRESENT("present"),
 

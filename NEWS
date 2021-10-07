@@ -60,6 +60,10 @@ Fixes:
 * Added missing JavaDoc for `id` and `name` methods of initial
   `RelyingPartyIdentityBuilder` stages.
 * Added and improved JavaDoc for required builder methods.
+* Javadoc for `TokenBindingInfo.id` incorrectly stated that the value is
+  base64url encoded.
+* Javadoc for `TokenBindingStatus.PRESENT` incorrectly referenced its own
+  (private) `id` member instead of `TokenBindingInfo.id`.
 
 
 == Version 1.10.1 ==

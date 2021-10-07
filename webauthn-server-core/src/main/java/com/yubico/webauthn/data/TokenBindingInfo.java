@@ -46,8 +46,8 @@ public class TokenBindingInfo {
   @NonNull private final TokenBindingStatus status;
 
   /**
-   * This member MUST be present if {@link #status} is present, and MUST be a base64url encoding of
-   * the Token Binding ID that was used when communicating with the Relying Party.
+   * This member MUST be present if {@link #status} is {@link TokenBindingStatus#PRESENT PRESENT},
+   * and MUST be the Token Binding ID that was used when communicating with the Relying Party.
    */
   private final ByteArray id;
 
