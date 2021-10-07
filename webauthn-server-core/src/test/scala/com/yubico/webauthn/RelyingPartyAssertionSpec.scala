@@ -730,8 +730,21 @@ class RelyingPartyAssertionSpec
 
         describe("7. Using credential.id (or credential.rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key and let credentialPublicKey be that credential public key.") {
           it("Fails if the credential ID is unknown.") {
-            val steps = finishAssertion(credentialRepository =
-              Some(Helpers.CredentialRepository.empty)
+            val steps = finishAssertion(
+              credentialRepository = Some(
+                Helpers.CredentialRepository.withUser(
+                  Defaults.user,
+                  RegisteredCredential
+                    .builder()
+                    .credentialId(
+                      Defaults.credentialId.concat(ByteArray.fromHex("00"))
+                    )
+                    .userHandle(Defaults.userHandle)
+                    .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
+                    .signatureCount(0)
+                    .build(),
+                )
+              )
             )
             val step: steps.Step7 = new steps.Step7(
               Defaults.username,
