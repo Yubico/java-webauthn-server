@@ -812,6 +812,10 @@ class RelyingPartyAssertionSpec
               }
             }
           }
+
+          it("""The string "webauthn.create" fails.""") {
+            assertFails("webauthn.create")
+          }
         }
 
         it("12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.") {

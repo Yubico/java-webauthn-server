@@ -280,6 +280,10 @@ class RelyingPartyRegistrationSpec
               }
             }
           }
+
+          it("""The string "webauthn.get" fails.""") {
+            assertFails("webauthn.get")
+          }
         }
 
         it("8. Verify that the value of C.challenge equals the base64url encoding of options.challenge.") {
