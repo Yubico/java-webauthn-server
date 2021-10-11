@@ -8,6 +8,8 @@ Deprecated features:
   release will remove this option and always behave as if the option had been
   set to `true`.
 * Enum value `AttestationType.ECDAA`. ECDAA was removed in WebAuthn Level 2.
+* Function `TokenBindingStatus.fromJsonString(String)` deprecated. It should not
+  have been part of the public API to begin with.
 
 
 == Version 1.12.3 (unreleased) ==

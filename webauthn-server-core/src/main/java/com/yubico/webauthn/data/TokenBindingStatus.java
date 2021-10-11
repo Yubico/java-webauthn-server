@@ -66,6 +66,12 @@ public enum TokenBindingStatus implements JsonStringSerializable {
   }
 
   @JsonCreator
+  @Deprecated
+  /**
+   * @deprecated Use <code>
+   *     {@link CollectedClientData#getTokenBinding()}.{@link TokenBindingInfo#getStatus() getStatus()}
+   *     </code> instead.
+   */
   public static TokenBindingStatus fromJsonString(@NonNull String value) {
     return fromString(value)
         .orElseThrow(
