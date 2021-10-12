@@ -3013,17 +3013,6 @@ class RelyingPartyRegistrationSpec
       }
 
       describe("expose the credProps extension output as RegistrationResult.isDiscoverable()") {
-        val rp = RelyingParty
-          .builder()
-          .identity(
-            RelyingPartyIdentity
-              .builder()
-              .id("localhost")
-              .name("Test RP")
-              .build()
-          )
-          .credentialRepository(Helpers.CredentialRepository.empty)
-          .build()
         val testDataBase = RegistrationTestData.Packed.BasicAttestation
         val testData = testDataBase.copy(requestedExtensions =
           testDataBase.request.getExtensions.toBuilder.credProps().build()
@@ -3089,18 +3078,6 @@ class RelyingPartyRegistrationSpec
       }
 
       describe("support the largeBlob extension") {
-        val rp = RelyingParty
-          .builder()
-          .identity(
-            RelyingPartyIdentity
-              .builder()
-              .id("localhost")
-              .name("Test RP")
-              .build()
-          )
-          .credentialRepository(Helpers.CredentialRepository.empty)
-          .build()
-
         it("being enabled at registration time.") {
           val testData = RegistrationTestData.Packed.BasicAttestation
           val result = rp.finishRegistration(
@@ -3138,18 +3115,6 @@ class RelyingPartyRegistrationSpec
       }
 
       describe("support the uvm extension") {
-        val rp = RelyingParty
-          .builder()
-          .identity(
-            RelyingPartyIdentity
-              .builder()
-              .id("localhost")
-              .name("Test RP")
-              .build()
-          )
-          .credentialRepository(Helpers.CredentialRepository.empty)
-          .build()
-
         it("at registration time.") {
 
           // Example from spec: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension
