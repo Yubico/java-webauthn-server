@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.upokecenter.cbor.CBORObject;
 import java.io.IOException;
 
@@ -23,7 +24,8 @@ public class JacksonCodecs {
         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
         .setSerializationInclusion(Include.NON_ABSENT)
         .setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
-        .registerModule(new Jdk8Module());
+        .registerModule(new Jdk8Module())
+        .registerModule(new JavaTimeModule());
   }
 
   public static CBORObject deepCopy(CBORObject a) {
