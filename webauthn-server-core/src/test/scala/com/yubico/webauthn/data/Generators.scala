@@ -845,9 +845,9 @@ object Generators {
 
       def encodeUvmEntry(entry: UvmEntry): Array[Int] =
         Array(
-          entry.getUserVerificationMethod.value,
-          entry.getKeyProtectionType.value,
-          entry.getMatcherProtectionType.value,
+          entry.getUserVerificationMethod.getValue,
+          entry.getKeyProtectionType.getValue,
+          entry.getMatcherProtectionType.getValue,
         )
 
       def authenticatorOutput: Gen[CBORObject] =

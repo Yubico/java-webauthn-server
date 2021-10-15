@@ -3,21 +3,25 @@ package com.yubico.fido.metadata;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.stream.Stream;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 /**
- * Enum-like collection of known <code>USER_VERIFY</code> values.
+ * The USER_VERIFY constants are flags in a bitfield represented as a 32 bit long integer. They
+ * describe the methods and capabilities of a FIDO authenticator for locally verifying a user. The
+ * operational details of these methods are opaque to the server. These constants are used in the
+ * authoritative metadata for FIDO authenticators, reported and queried through the UAF Discovery
+ * APIs, and used to form authenticator policies in UAF protocol messages. Each constant has a
+ * case-sensitive string representation (in quotes), which is used in the authoritative metadata for
+ * FIDO authenticators.
  *
- * <p>Constants in this class behave like enum constants. Use {@link #of(int)} to parse raw <code>
- * int</code> values.
- *
- * @see #of(int)
+ * @see #fromValue(int)
+ * @see #fromName(String)
  * @see <a
- *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+ *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
  *     Registry of Predefined Values §3.1 User Verification Methods</a>
  */
-@EqualsAndHashCode
-public class UserVerificationMethod {
+@Getter
+public enum UserVerificationMethod {
 
   /**
    * This flag MUST be set if the authenticator is able to confirm user presence in any fashion. If
@@ -29,11 +33,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_PRESENCE =
-      new UserVerificationMethod(0x00000001, "PRESENCE");
+  USER_VERIFY_PRESENCE_INTERNAL(0x00000001, "presence_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses any type of measurement of a fingerprint for
@@ -42,11 +45,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_FINGERPRINT =
-      new UserVerificationMethod(0x00000002, "FINGERPRINT");
+  USER_VERIFY_FINGERPRINT_INTERNAL(0x00000002, "fingerprint_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses a local-only passcode (i.e. a passcode not
@@ -55,11 +57,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_PASSCODE =
-      new UserVerificationMethod(0x00000004, "PASSCODE");
+  USER_VERIFY_PASSCODE_INTERNAL(0x00000004, "passcode_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses a voiceprint (also known as speaker
@@ -68,11 +69,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_VOICEPRINT =
-      new UserVerificationMethod(0x00000008, "VOICEPRINT");
+  USER_VERIFY_VOICEPRINT_INTERNAL(0x00000008, "voiceprint_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses any manner of face recognition to verify the
@@ -81,11 +81,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_FACEPRINT =
-      new UserVerificationMethod(0x00000010, "FACEPRINT");
+  USER_VERIFY_FACEPRINT_INTERNAL(0x00000010, "faceprint_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses any form of location sensor or measurement for
@@ -94,11 +93,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_LOCATION =
-      new UserVerificationMethod(0x00000020, "LOCATION");
+  USER_VERIFY_LOCATION_INTERNAL(0x00000020, "location_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses any form of eye biometrics for user
@@ -107,11 +105,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_EYEPRINT =
-      new UserVerificationMethod(0x00000040, "EYEPRINT");
+  USER_VERIFY_EYEPRINT_INTERNAL(0x00000040, "eyeprint_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses a drawn pattern for user verification.
@@ -119,11 +116,10 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_PATTERN =
-      new UserVerificationMethod(0x00000080, "PATTERN");
+  USER_VERIFY_PATTERN_INTERNAL(0x00000080, "pattern_internal"),
 
   /**
    * This flag MUST be set if the authenticator uses any measurement of a full hand (including
@@ -132,11 +128,35 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_HANDPRINT =
-      new UserVerificationMethod(0x00000100, "HANDPRINT");
+  USER_VERIFY_HANDPRINT_INTERNAL(0x00000100, "handprint_internal"),
+
+  /**
+   * This flag MUST be set if the authenticator uses a local-only passcode (i.e. a passcode not
+   * known by the server) for user verification that might be gathered outside the authenticator
+   * boundary.
+   *
+   * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
+   *
+   * @see <a
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
+   *     Registry of Predefined Values §3.1 User Verification Methods</a>
+   */
+  USER_VERIFY_PASSCODE_EXTERNAL(0x00000800, "passcode_external"),
+
+  /**
+   * This flag MUST be set if the authenticator uses a drawn pattern for user verification that
+   * might be gathered outside the authenticator boundary.
+   *
+   * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
+   *
+   * @see <a
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
+   *     Registry of Predefined Values §3.1 User Verification Methods</a>
+   */
+  USER_VERIFY_PATTERN_EXTERNAL(0x00001000, "pattern_external"),
 
   /**
    * This flag MUST be set if the authenticator will respond without any user interaction (e.g.
@@ -145,75 +165,62 @@ public class UserVerificationMethod {
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_NONE =
-      new UserVerificationMethod(0x00000200, "NONE");
+  USER_VERIFY_NONE(0x00000200, "none"),
 
   /**
-   * If an authenticator sets multiple flags for user verification types, it MAY also set this flag
-   * to indicate that all verification methods will be enforced (e.g. faceprint AND voiceprint). If
-   * flags for multiple user verification methods are set and this flag is not set, verification
-   * with only one is necessary (e.g. fingerprint OR passcode).
+   * If an authenticator sets multiple flags for the "_INTERNAL" and/or "_EXTERNAL" user
+   * verification types, it MAY also set this flag to indicate that all verification methods with
+   * respective flags set will be enforced (e.g. faceprint AND voiceprint). If flags for multiple
+   * user verification methods are set and this flag is not set, verification with only one is
+   * necessary (e.g. fingerprint OR passcode).
    *
    * <p>NOTE: The above requirements apply to authenticators; this library DOES NOT enforce them.
    *
    * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#user-verification-methods">FIDO
+   *     href="https://fidoalliance.org/specs/common-specs/fido-registry-v2.1-ps-20191217.html#user-verification-methods">FIDO
    *     Registry of Predefined Values §3.1 User Verification Methods</a>
    */
-  public static final UserVerificationMethod USER_VERIFY_ALL =
-      new UserVerificationMethod(0x00000400, "ALL");
+  USER_VERIFY_ALL(0x00000400, "all");
 
-  @JsonValue public final int value;
+  private final int value;
 
-  @EqualsAndHashCode.Exclude private final transient String name;
+  @JsonValue private final String name;
 
-  private UserVerificationMethod(int value, String name) {
+  UserVerificationMethod(int value, String name) {
     this.value = value;
     this.name = name;
   }
 
   /**
-   * @return An array containing all predefined values of {@link UserVerificationMethod} known by
-   *     this implementation.
+   * @return If <code>value</code> matches any {@link UserVerificationMethod} constant, returns that
+   *     constant instance. Otherwise throws {@link IllegalArgumentException}.
    */
-  public static UserVerificationMethod[] values() {
-    return new UserVerificationMethod[] {
-      USER_VERIFY_PRESENCE,
-      USER_VERIFY_FINGERPRINT,
-      USER_VERIFY_PASSCODE,
-      USER_VERIFY_VOICEPRINT,
-      USER_VERIFY_FACEPRINT,
-      USER_VERIFY_LOCATION,
-      USER_VERIFY_EYEPRINT,
-      USER_VERIFY_PATTERN,
-      USER_VERIFY_HANDPRINT,
-      USER_VERIFY_NONE,
-      USER_VERIFY_ALL
-    };
-  }
-
-  /**
-   * @return If <code>value</code> is the same as that of any of the constants in {@link
-   *     UserVerificationMethod}, returns that constant instance. Otherwise returns a new instance
-   *     containing <code>value</code>.
-   */
-  @JsonCreator
-  public static UserVerificationMethod of(int value) {
+  public static UserVerificationMethod fromValue(int value) {
     return Stream.of(values())
         .filter(v -> v.value == value)
         .findAny()
-        .orElseGet(() -> new UserVerificationMethod(value, null));
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format(
+                        "Unknown %s value: 0x%04x", UserVerificationMethod.class, value)));
   }
 
-  @Override
-  public String toString() {
-    if (name == null) {
-      return String.format("%s(%04x)", UserVerificationMethod.class.getSimpleName(), value);
-    } else {
-      return "USER_VERIFY_" + name;
-    }
+  /**
+   * @return If <code>name</code> matches any {@link UserVerificationMethod} constant, returns that
+   *     constant instance. Otherwise throws {@link IllegalArgumentException}.
+   */
+  @JsonCreator
+  public static UserVerificationMethod fromName(String name) {
+    return Stream.of(values())
+        .filter(v -> v.name.equals(name))
+        .findAny()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Unknown %s name: %s", UserVerificationMethod.class, name)));
   }
 }

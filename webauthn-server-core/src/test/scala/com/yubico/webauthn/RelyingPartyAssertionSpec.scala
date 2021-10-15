@@ -2109,12 +2109,12 @@ class RelyingPartyAssertionSpec
             Some(
               List(
                 new UvmEntry(
-                  UserVerificationMethod.USER_VERIFY_FINGERPRINT,
+                  UserVerificationMethod.USER_VERIFY_FINGERPRINT_INTERNAL,
                   KeyProtectionType.KEY_PROTECTION_TEE,
                   MatcherProtectionType.MATCHER_PROTECTION_TEE,
                 ),
                 new UvmEntry(
-                  UserVerificationMethod.USER_VERIFY_PASSCODE,
+                  UserVerificationMethod.USER_VERIFY_PASSCODE_INTERNAL,
                   KeyProtectionType.KEY_PROTECTION_SOFTWARE,
                   MatcherProtectionType.MATCHER_PROTECTION_SOFTWARE,
                 ),

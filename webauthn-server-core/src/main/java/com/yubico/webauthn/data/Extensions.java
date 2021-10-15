@@ -427,9 +427,9 @@ public class Extensions {
                 .map(
                     uvmEntry ->
                         new UvmEntry(
-                            UserVerificationMethod.of(uvmEntry.get(0).AsInt32Value()),
-                            KeyProtectionType.of(uvmEntry.get(1).AsInt16()),
-                            MatcherProtectionType.of(uvmEntry.get(2).AsInt16())))
+                            UserVerificationMethod.fromValue(uvmEntry.get(0).AsInt32Value()),
+                            KeyProtectionType.fromValue(uvmEntry.get(1).AsInt16()),
+                            MatcherProtectionType.fromValue(uvmEntry.get(2).AsInt16())))
                 .collect(Collectors.toList()));
       } else {
         return Optional.empty();
