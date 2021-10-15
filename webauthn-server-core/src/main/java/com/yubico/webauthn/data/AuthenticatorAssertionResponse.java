@@ -37,10 +37,10 @@ import lombok.Value;
 /**
  * Represents an authenticator's response to a client’s request for generation of a new
  * authentication assertion given the WebAuthn Relying Party's {@linkplain
- * PublicKeyCredentialRequestOptions#challenge challenge} and OPTIONAL {@linkplain
- * PublicKeyCredentialRequestOptions#allowCredentials list of credentials} it is aware of. This
- * response contains a cryptographic {@linkplain #signature} proving possession of the credential
- * private key, and optionally evidence of user consent to a specific transaction.
+ * PublicKeyCredentialRequestOptions#getChallenge()} challenge} and OPTIONAL {@linkplain
+ * PublicKeyCredentialRequestOptions#getAllowCredentials()} list of credentials} it is aware of.
+ * This response contains a cryptographic {@linkplain #signature} proving possession of the
+ * credential private key, and optionally evidence of user consent to a specific transaction.
  *
  * @see <a
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticatorassertionresponse">§5.2.2.
