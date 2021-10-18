@@ -26,6 +26,9 @@ package com.yubico.internal.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -88,5 +91,30 @@ public class CertificateParser {
                   .generateCertificate(new ByteArrayInputStream(encoded));
     }
     return cert;
+  }
+
+  /**
+   * Compute a Subject Key Identifier as defined as method (1) in RFC 5280 section 4.2.1.2.
+   *
+   * @throws NoSuchAlgorithmException if the SHA-1 hash algorithm is not available.
+   * @see <a href="https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.2">Internet X.509
+   *     Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile,
+   *     section 4.2.1.2. Subject Key Identifier</a>
+   */
+  public static byte[] computeSubjectKeyIdentifier(final Certificate cert)
+      throws NoSuchAlgorithmException {
+    final byte[] spki = cert.getPublicKey().getEncoded();
+
+    // SubjectPublicKeyInfo  ::=  SEQUENCE  {
+    //     algorithm            AlgorithmIdentifier,
+    //     subjectPublicKey     BIT STRING  }
+    final byte algLength = spki[2 + 1];
+
+    // BIT STRING begins with one octet specifying number of unused bits at end;
+    // this is not included in the content to hash for a Subject Key Identifier.
+    final int spkBitsStart = 2 + 2 + 2 + algLength + 1;
+
+    return MessageDigest.getInstance("SHA-1")
+        .digest(Arrays.copyOfRange(spki, spkBitsStart, spki.length));
   }
 }
