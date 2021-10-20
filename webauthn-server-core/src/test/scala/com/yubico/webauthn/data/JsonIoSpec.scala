@@ -24,15 +24,11 @@
 
 package com.yubico.webauthn.data
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.AssertionResult
@@ -60,12 +56,7 @@ class JsonIoSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
-  def json: ObjectMapper =
-    new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .setSerializationInclusion(Include.NON_ABSENT)
-      .registerModule(new Jdk8Module())
+  def json: ObjectMapper = JacksonCodecs.json()
 
   describe("The class") {
 

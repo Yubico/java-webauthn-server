@@ -33,6 +33,7 @@ dependencies {
   testImplementation(
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
     'junit:junit',
     'org.mockito:mockito-core',
     'org.scala-lang:scala-library',
