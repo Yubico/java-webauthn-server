@@ -23,8 +23,8 @@ dependencies {
 
   implementation(
     'com.augustcellars.cose:cose-java',
-    'com.google.guava:guava',
     'com.fasterxml.jackson.core:jackson-databind',
+    'com.google.guava:guava',
     'com.upokecenter:cbor',
     'org.apache.httpcomponents:httpclient',
     'org.slf4j:slf4j-api',
