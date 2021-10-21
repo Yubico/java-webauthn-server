@@ -330,7 +330,7 @@ class WebAuthnServerSpec
       testData: RegistrationTestData,
       origins: java.util.Set[String] = origins,
   ) = {
-    val userStorage: RegistrationStorage = makeUserStorage(testData)
+    val userStorage: InMemoryRegistrationStorage = makeUserStorage(testData)
 
     new WebAuthnServer(
       userStorage,

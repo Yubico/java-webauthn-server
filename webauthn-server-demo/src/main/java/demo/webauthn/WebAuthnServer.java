@@ -113,7 +113,7 @@ public class WebAuthnServer {
 
   private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
   private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
-  private final RegistrationStorage userStorage;
+  private final InMemoryRegistrationStorage userStorage;
   private final SessionManager sessions = new SessionManager();
 
   private final TrustResolver trustResolver =
@@ -144,7 +144,7 @@ public class WebAuthnServer {
   }
 
   public WebAuthnServer(
-      RegistrationStorage userStorage,
+      InMemoryRegistrationStorage userStorage,
       Cache<ByteArray, RegistrationRequest> registerRequestStorage,
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
