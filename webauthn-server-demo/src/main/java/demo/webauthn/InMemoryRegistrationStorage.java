@@ -49,7 +49,7 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
   private final Cache<String, Set<CredentialRegistration>> storage =
       CacheBuilder.newBuilder().maximumSize(1000).expireAfterAccess(1, TimeUnit.DAYS).build();
 
-  private Logger logger = LoggerFactory.getLogger(InMemoryRegistrationStorage.class);
+  private static final Logger logger = LoggerFactory.getLogger(InMemoryRegistrationStorage.class);
 
   ////////////////////////////////////////////////////////////////////////////////
   // The following methods are required by the CredentialRepository interface.
