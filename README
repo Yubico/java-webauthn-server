@@ -387,10 +387,10 @@ Most importantly, you should update the signature counter. That might look somet
 [source,java]
 ----------
 updateCredential(              // Some database access method of your own design
-  "alice",                     // Username or other appropriate user identifier
-  result.getCredentialId(),    // Credential ID of the credential used
-  result.signatureCount(),     // New signature counter value
-  Clock.systemUTC().instant()  // Time of last use (now)
+  "alice",                     // Query by username or other appropriate user identifier
+  result.getCredentialId(),    // Query by credential ID of the credential used
+  result.signatureCount(),     // Set new signature counter value
+  Clock.systemUTC().instant()  // Set time of last use (now)
 );
 ----------
 
