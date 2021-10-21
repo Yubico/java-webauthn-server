@@ -94,15 +94,14 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
         credentialId,
         userHandle,
         registrationMaybe);
-    return registrationMaybe.flatMap(
+    return registrationMaybe.map(
         registration ->
-            Optional.of(
-                RegisteredCredential.builder()
-                    .credentialId(registration.getCredential().getCredentialId())
-                    .userHandle(registration.getUserIdentity().getId())
-                    .publicKeyCose(registration.getCredential().getPublicKeyCose())
-                    .signatureCount(registration.getCredential().getSignatureCount())
-                    .build()));
+            RegisteredCredential.builder()
+                .credentialId(registration.getCredential().getCredentialId())
+                .userHandle(registration.getUserIdentity().getId())
+                .publicKeyCose(registration.getCredential().getPublicKeyCose())
+                .signatureCount(registration.getCredential().getSignatureCount())
+                .build());
   }
 
   @Override
