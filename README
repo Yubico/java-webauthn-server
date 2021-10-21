@@ -274,7 +274,6 @@ storeCredential(             // Some database access method of your own design
   result.getKeyId(),         // Credential ID and transports for allowCredentials
   result.getPublicKeyCose(), // Public key for verifying authentication signatures
   result.isDiscoverable(),   // Can this key be used for username-less auth?
-  result.getTransports(),    // Transport hints to put in allowCredentials along with ID
   result.signatureCount(),   // Initial signature counter value
   pkc.getResponse().getAttestationObject(), // Store attestation object for future reference
   pkc.getResponse().getClientDataJSON()     // Store client data for re-verifying signature if needed
