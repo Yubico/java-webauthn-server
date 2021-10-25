@@ -147,10 +147,6 @@ public class RelyingParty {
    * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
    * needed for new registrations, even of U2F authenticators.
    *
-   * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
-   * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
-   * needed for new registrations, even of U2F authenticators.
-   *
    * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
    * automatically set the <code>appid</code> extension input, and {@link
    * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic to
@@ -576,10 +572,6 @@ public class RelyingParty {
      * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
      * needed for new registrations, even of U2F authenticators.
      *
-     * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
-     * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
-     * needed for new registrations, even of U2F authenticators.
-     *
      * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
      * automatically set the <code>appid</code> extension input, and {@link
      * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic
@@ -606,10 +598,6 @@ public class RelyingParty {
     /**
      * The extension input to set for the <code>appid</code> and <code>appidExclude</code>
      * extensions.
-     *
-     * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
-     * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
-     * needed for new registrations, even of U2F authenticators.
      *
      * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
      * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
