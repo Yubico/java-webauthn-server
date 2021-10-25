@@ -200,8 +200,22 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
       this.credProps = true;
       return this;
     }
-    /** For compatibility with {@link Builder}(toBuilder = true) */
-    private RegistrationExtensionInputsBuilder credProps(Boolean credProps) {
+
+    /**
+     * Enable or disable the Credential Properties (<code>credProps</code>) Extension.
+     *
+     * <p>A <code>true</code> argument enables the extension. A <code>false</code> argument disables
+     * the extension, and will not be overwritten by {@link
+     * RelyingParty#startRegistration(StartRegistrationOptions)}. A null argument disables the
+     * extension, and will be overwritten by {@link
+     * RelyingParty#startRegistration(StartRegistrationOptions)}.
+     *
+     * @see RelyingParty#startRegistration(StartRegistrationOptions)
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
+     *     Credential Properties Extension (credProps)</a>
+     */
+    public RegistrationExtensionInputsBuilder credProps(Boolean credProps) {
       this.credProps = credProps;
       return this;
     }

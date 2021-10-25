@@ -346,7 +346,7 @@ object Generators {
 
     def registrationExtensionInputs(
         appidExcludeGen: Gen[Option[AppId]] = Gen.option(arbitrary[AppId]),
-        credPropsGen: Gen[Option[Boolean]] = Gen.option(true),
+        credPropsGen: Gen[Option[Boolean]] = Gen.option(arbitrary[Boolean]),
         largeBlobGen: Gen[
           Option[com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput]
         ] = Gen.option(LargeBlob.largeBlobRegistrationInput),
@@ -360,7 +360,7 @@ object Generators {
       } yield {
         val b = RegistrationExtensionInputs.builder()
         appidExclude.foreach({ i => b.appidExclude(i) })
-        if (credProps.contains(true)) { b.credProps() }
+        credProps.foreach({ i => b.credProps(i) })
         largeBlob.foreach({ i => b.largeBlob(i) })
         if (uvm.contains(true)) { b.uvm() }
         val result = b.build()

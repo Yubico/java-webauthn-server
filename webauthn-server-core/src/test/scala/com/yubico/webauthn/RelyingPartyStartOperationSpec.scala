@@ -32,6 +32,7 @@ import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -296,21 +297,84 @@ class RelyingPartyStartOperationSpec
       result.getExtensions.getAppidExclude.asScala should equal(None)
     }
 
-    it("by default always sets the credProps extension.") {
-      forAll { extensions: RegistrationExtensionInputs =>
-        println(extensions.getExtensionIds)
-        println(extensions)
-
-        val rp = relyingParty(userId = userId)
+    it("does not override the appidExclude extension with an empty value if already non-null in StartRegistrationOptions.") {
+      forAll { requestAppId: AppId =>
+        val rp = relyingParty(appId = None, userId = userId)
         val result = rp.startRegistration(
           StartRegistrationOptions
             .builder()
             .user(userId)
-            .extensions(extensions)
+            .extensions(
+              RegistrationExtensionInputs
+                .builder()
+                .appidExclude(requestAppId)
+                .build()
+            )
             .build()
         )
 
-        result.getExtensions.getCredProps should be(true)
+        result.getExtensions.getAppidExclude.asScala should equal(
+          Some(requestAppId)
+        )
+      }
+    }
+
+    it("does not override the appidExclude extension if already non-null in StartRegistrationOptions.") {
+      forAll { (requestAppId: AppId, rpAppId: AppId) =>
+        whenever(requestAppId != rpAppId) {
+          val rp = relyingParty(appId = Some(rpAppId), userId = userId)
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .appidExclude(requestAppId)
+                  .build()
+              )
+              .build()
+          )
+
+          result.getExtensions.getAppidExclude.asScala should equal(
+            Some(requestAppId)
+          )
+        }
+      }
+    }
+
+    it("by default sets the credProps extension.") {
+      forAll(registrationExtensionInputs(credPropsGen = None)) {
+        extensions: RegistrationExtensionInputs =>
+          println(extensions.getExtensionIds)
+          println(extensions)
+
+          val rp = relyingParty(userId = userId)
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(extensions)
+              .build()
+          )
+
+          result.getExtensions.getCredProps should be(true)
+      }
+    }
+
+    it("does not override the credProps extension if explicitly set to false in StartRegistrationOptions.") {
+      forAll(registrationExtensionInputs(credPropsGen = Some(false))) {
+        extensions: RegistrationExtensionInputs =>
+          val rp = relyingParty(userId = userId)
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(extensions)
+              .build()
+          )
+
+          result.getExtensions.getCredProps should be(false)
       }
     }
 
@@ -627,6 +691,52 @@ class RelyingPartyStartOperationSpec
       result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
         None
       )
+    }
+
+    it("does not override the appid extension with an empty value if already non-null in StartAssertionOptions.") {
+      forAll { requestAppId: AppId =>
+        val rp = relyingParty(appId = None, userId = userId)
+        val result = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .username(userId.getName)
+            .extensions(
+              AssertionExtensionInputs
+                .builder()
+                .appid(requestAppId)
+                .build()
+            )
+            .build()
+        )
+
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+          Some(requestAppId)
+        )
+      }
+    }
+
+    it("does not override the appid extension if already non-null in StartAssertionOptions.") {
+      forAll { (requestAppId: AppId, rpAppId: AppId) =>
+        whenever(requestAppId != rpAppId) {
+          val rp = relyingParty(appId = Some(rpAppId), userId = userId)
+          val result = rp.startAssertion(
+            StartAssertionOptions
+              .builder()
+              .username(userId.getName)
+              .extensions(
+                AssertionExtensionInputs
+                  .builder()
+                  .appid(requestAppId)
+                  .build()
+              )
+              .build()
+          )
+
+          result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+            Some(requestAppId)
+          )
+        }
+      }
     }
 
     it("allows setting the timeout to empty.") {
