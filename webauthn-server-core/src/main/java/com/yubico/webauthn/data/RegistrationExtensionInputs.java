@@ -54,21 +54,35 @@ import lombok.Value;
 public final class RegistrationExtensionInputs implements ExtensionInputs {
 
   private final AppId appidExclude;
-
-  private final boolean credProps;
+  private final Boolean credProps;
   private final Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob;
-  private final boolean uvm;
+  private final Boolean uvm;
 
   @JsonCreator
   private RegistrationExtensionInputs(
       @JsonProperty("appidExclude") AppId appidExclude,
-      @JsonProperty("credProps") boolean credProps,
+      @JsonProperty("credProps") Boolean credProps,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
-      @JsonProperty("uvm") boolean uvm) {
+      @JsonProperty("uvm") Boolean uvm) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.largeBlob = largeBlob;
     this.uvm = uvm;
+  }
+
+  /**
+   * Merge <code>other</code> into <code>this</code>. Non-null field values from <code>this</code>
+   * take precedence.
+   *
+   * @return a new {@link RegistrationExtensionInputs} instance with the settings from both <code>
+   *     this</code> and <code>other</code>.
+   */
+  public RegistrationExtensionInputs merge(RegistrationExtensionInputs other) {
+    return new RegistrationExtensionInputs(
+        this.appidExclude != null ? this.appidExclude : other.appidExclude,
+        this.credProps != null ? this.credProps : other.credProps,
+        this.largeBlob != null ? this.largeBlob : other.largeBlob,
+        this.uvm != null ? this.uvm : other.uvm);
   }
 
   /**
@@ -92,13 +106,13 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    *     Credential Properties Extension (credProps)</a>
    */
   public boolean getCredProps() {
-    return credProps;
+    return credProps != null && credProps;
   }
 
   /** For JSON serialization, to omit false values. */
   @JsonProperty("credProps")
   private Boolean getCredPropsJson() {
-    return credProps ? true : null;
+    return getCredProps() ? true : null;
   }
 
   /**
@@ -124,13 +138,13 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    *     User Verification Method Extension (uvm)</a>
    */
   public boolean getUvm() {
-    return uvm;
+    return uvm != null && uvm;
   }
 
   /** For JSON serialization, to omit false values. */
   @JsonProperty("uvm")
   private Boolean getUvmJson() {
-    return uvm ? true : null;
+    return getUvm() ? true : null;
   }
 
   /**
@@ -144,13 +158,13 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     if (appidExclude != null) {
       ids.add(Extensions.AppidExclude.EXTENSION_ID);
     }
-    if (credProps) {
+    if (getCredProps()) {
       ids.add(Extensions.CredentialProperties.EXTENSION_ID);
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
     }
-    if (uvm) {
+    if (getUvm()) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
     }
     return Collections.unmodifiableSet(ids);
@@ -164,6 +178,10 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      * is present, then {@link RelyingParty#startRegistration(StartRegistrationOptions)} will enable
      * this extension automatically.
      *
+     * <p>If this is set to empty, then {@link
+     * RelyingParty#startRegistration(StartRegistrationOptions)} may overwrite it.
+     *
+     * @see RelyingParty#startRegistration(StartRegistrationOptions)
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>
@@ -180,6 +198,10 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      * is present, then {@link RelyingParty#startRegistration(StartRegistrationOptions)} will enable
      * this extension automatically.
      *
+     * <p>If this is set to null, then {@link
+     * RelyingParty#startRegistration(StartRegistrationOptions)} may overwrite it.
+     *
+     * @see RelyingParty#startRegistration(StartRegistrationOptions)
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>

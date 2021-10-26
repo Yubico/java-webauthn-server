@@ -13,6 +13,8 @@ Deprecated features will be removed in the next major version release.
 
 Changes:
 
+* `RelyingParty.startAssertion()` no longer overwrites the `appid` extension
+  input in the `StartAssertionOptions` argument.
 * `RelyingParty.appId` setting now also activates the `appidExclude` extension in
   addition to the `appid` extension.
 * `RelyingParty.startRegistration()` now enables the `credProps` extension by

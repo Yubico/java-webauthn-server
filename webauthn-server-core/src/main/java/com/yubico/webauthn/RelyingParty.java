@@ -405,10 +405,13 @@ public class RelyingParty {
                     startRegistrationOptions.getUser().getName()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(
-                startRegistrationOptions.getExtensions().toBuilder()
-                    .appidExclude(appId)
-                    .credProps()
-                    .build())
+                startRegistrationOptions
+                    .getExtensions()
+                    .merge(
+                        RegistrationExtensionInputs.builder()
+                            .appidExclude(appId)
+                            .credProps()
+                            .build()))
             .timeout(startRegistrationOptions.getTimeout());
     attestationConveyancePreference.ifPresent(builder::attestation);
     return builder.build();
@@ -469,7 +472,10 @@ public class RelyingParty {
                     .map(
                         un ->
                             new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un))))
-            .extensions(startAssertionOptions.getExtensions().toBuilder().appid(appId).build())
+            .extensions(
+                startAssertionOptions
+                    .getExtensions()
+                    .merge(startAssertionOptions.getExtensions().toBuilder().appid(appId).build()))
             .timeout(startAssertionOptions.getTimeout());
 
     startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);

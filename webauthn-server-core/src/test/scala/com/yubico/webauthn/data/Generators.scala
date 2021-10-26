@@ -350,7 +350,7 @@ object Generators {
         largeBlobGen: Gen[
           Option[com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput]
         ] = Gen.option(LargeBlob.largeBlobRegistrationInput),
-        uvmGen: Gen[Option[Boolean]] = Gen.option(true),
+        uvmGen: Gen[Option[Boolean]] = Gen.option(Gen.const(true)),
     ): Gen[RegistrationExtensionInputs] =
       for {
         appidExclude <- appidExcludeGen

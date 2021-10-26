@@ -54,10 +54,8 @@ import lombok.Value;
 public class AssertionExtensionInputs implements ExtensionInputs {
 
   private final AppId appid;
-
   private final Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob;
-
-  private final boolean uvm;
+  private final Boolean uvm;
 
   @JsonCreator
   private AssertionExtensionInputs(
@@ -66,7 +64,21 @@ public class AssertionExtensionInputs implements ExtensionInputs {
       @JsonProperty("uvm") Boolean uvm) {
     this.appid = appid;
     this.largeBlob = largeBlob;
-    this.uvm = uvm != null && uvm;
+    this.uvm = (uvm != null && uvm) ? true : null;
+  }
+
+  /**
+   * Merge <code>other</code> into <code>this</code>. Non-null field values from <code>this</code>
+   * take precedence.
+   *
+   * @return a new {@link AssertionExtensionInputs} instance with the settings from both <code>this
+   *     </code> and <code>other</code>.
+   */
+  public AssertionExtensionInputs merge(AssertionExtensionInputs other) {
+    return new AssertionExtensionInputs(
+        this.appid != null ? this.appid : other.appid,
+        this.largeBlob != null ? this.largeBlob : other.largeBlob,
+        this.uvm != null ? this.uvm : other.uvm);
   }
 
   /**
@@ -83,7 +95,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
     }
-    if (uvm) {
+    if (getUvm()) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
     }
     return ids;
@@ -229,12 +241,12 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    *     User Verification Method Extension (uvm)</a>
    */
   public boolean getUvm() {
-    return uvm;
+    return uvm != null && uvm;
   }
 
   /** For JSON serialization, to omit false values. */
   @JsonProperty("uvm")
   private Boolean getUvmJson() {
-    return uvm ? true : null;
+    return getUvm() ? true : null;
   }
 }
