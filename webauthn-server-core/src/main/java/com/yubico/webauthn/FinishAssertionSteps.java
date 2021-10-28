@@ -55,7 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 final class FinishAssertionSteps {
 
-  private static final String CLIENT_DATA_TYPE = "webauthn.get";
+  private static final String CLIENT_DATA_TYPE = "payment.get";
 
   private final AssertionRequest request;
   private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
