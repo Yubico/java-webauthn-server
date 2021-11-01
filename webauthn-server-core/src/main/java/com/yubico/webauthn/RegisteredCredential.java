@@ -144,6 +144,9 @@ public final class RegisteredCredential {
          * {@link RegisteredCredentialBuilder#publicKeyCose(ByteArray) publicKeyCose} is a required
          * parameter.
          *
+         * <p>The return value of {@link RegistrationResult#getPublicKeyCose()} is a suitable
+         * argument for this method.
+         *
          * <p>Alternatively, the public key can be specified using the {@link
          * #publicKeyEs256Raw(ByteArray)} method if the key is stored in the U2F format (<code>
          * ALG_KEY_ECC_X962_RAW</code> as specified in <a
@@ -186,6 +189,9 @@ public final class RegisteredCredential {
      * The credential public key encoded in COSE_Key format, as defined in Section 7 of <a
      * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>. This method overwrites {@link
      * #publicKeyEs256Raw(ByteArray)}.
+     *
+     * <p>The return value of {@link RegistrationResult#getPublicKeyCose()} is a suitable argument
+     * for this method.
      *
      * <p>This is used to verify the {@link AuthenticatorAssertionResponse#getSignature() signature}
      * in authentication assertions.
