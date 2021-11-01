@@ -110,6 +110,8 @@ object RealExamples {
         attestationObject = attestation.attestationObjectBytes,
         clientDataJson = attestation.clientData,
         privateKey = None,
+        rpId = rp,
+        userId = user,
         assertion = Some(
           AssertionTestData(
             request = AssertionRequest
@@ -120,6 +122,7 @@ object RealExamples {
                   .challenge(assertion.collectedClientData.getChallenge)
                   .build()
               )
+              .username(user.getName)
               .build(),
             response = assertion.credential,
           )
