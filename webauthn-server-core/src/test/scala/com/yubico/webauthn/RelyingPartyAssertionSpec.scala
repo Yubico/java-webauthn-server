@@ -1962,7 +1962,7 @@ class RelyingPartyAssertionSpec
           .builder()
           .credentialId(testData.assertion.get.response.getId)
           .userHandle(testData.userId.getId)
-          .publicKeyCose(u2fPubkey)
+          .publicKeyEs256Raw(u2fPubkey)
           .signatureCount(0)
           .build()
 
@@ -1972,6 +1972,7 @@ class RelyingPartyAssertionSpec
           .userHandle(testData.userId.getId)
           .publicKeyCose(u2fPubkey)
           .signatureCount(0)
+          .publicKeyEs256Raw(u2fPubkey)
           .build()
 
         for { cred <- List(cred1, cred2) } {

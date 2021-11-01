@@ -86,13 +86,13 @@ class WebAuthnCodecsSpec
 
     }
 
-    describe("The rawEcdaKeyToCose method") {
+    describe("The rawEcKeyToCose method") {
 
       it("outputs a value that can be imported by importCoseP256PublicKey") {
         forAll { originalPubkey: ECPublicKey =>
           val rawKey = WebAuthnCodecs.ecPublicKeyToRaw(originalPubkey)
 
-          val coseKey = WebAuthnTestCodecs.rawEcdaKeyToCose(rawKey)
+          val coseKey = WebAuthnCodecs.rawEcKeyToCose(rawKey)
 
           val importedPubkey: ECPublicKey = WebAuthnCodecs
             .importCosePublicKey(coseKey)

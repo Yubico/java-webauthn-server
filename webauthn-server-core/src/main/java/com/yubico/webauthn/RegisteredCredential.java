@@ -30,6 +30,7 @@ import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
 import lombok.Builder;
@@ -143,12 +144,85 @@ public final class RegisteredCredential {
          * {@link RegisteredCredentialBuilder#publicKeyCose(ByteArray) publicKeyCose} is a required
          * parameter.
          *
+         * <p>Alternatively, the public key can be specified using the {@link
+         * #publicKeyEs256Raw(ByteArray)} method if the key is stored in the U2F format (<code>
+         * ALG_KEY_ECC_X962_RAW</code> as specified in <a
+         * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+         * Registry §3.6.2 Public Key Representation Formats</a>). This is mostly useful for public
+         * keys registered via the U2F JavaScript API.
+         *
+         * @see #publicKeyEs256Raw(ByteArray)
          * @see RegisteredCredentialBuilder#publicKeyCose(ByteArray)
+         * @see <a
+         *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+         *     Registry §3.6.2 Public Key Representation Formats</a>
          */
         public RegisteredCredentialBuilder publicKeyCose(ByteArray publicKeyCose) {
           return builder.publicKeyCose(publicKeyCose);
         }
+
+        /**
+         * Specify the credential public key in U2F format.
+         *
+         * <p>An alternative to {@link #publicKeyCose(ByteArray)}, this method expects an {@link
+         * COSEAlgorithmIdentifier#ES256 ES256} public key in <code>ALG_KEY_ECC_X962_RAW</code>
+         * format as specified in <a
+         * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+         * Registry §3.6.2 Public Key Representation Formats</a>.
+         *
+         * <p>This is primarily intended for public keys registered via the U2F JavaScript API. If
+         * your application has only used the <code>navigator.credentials.create()</code> API to
+         * register credentials, you should use {@link #publicKeyCose(ByteArray)} instead.
+         *
+         * @see RegisteredCredentialBuilder#publicKeyCose(ByteArray)
+         */
+        public RegisteredCredentialBuilder publicKeyEs256Raw(ByteArray publicKeyEs256Raw) {
+          return builder.publicKeyCose(WebAuthnCodecs.rawEcKeyToCose(publicKeyEs256Raw));
+        }
       }
+    }
+
+    /**
+     * The credential public key encoded in COSE_Key format, as defined in Section 7 of <a
+     * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>. This method overwrites {@link
+     * #publicKeyEs256Raw(ByteArray)}.
+     *
+     * <p>This is used to verify the {@link AuthenticatorAssertionResponse#getSignature() signature}
+     * in authentication assertions.
+     *
+     * <p>Alternatively, the public key can be specified using the {@link
+     * #publicKeyEs256Raw(ByteArray)} method if the key is stored in the U2F format (<code>
+     * ALG_KEY_ECC_X962_RAW</code> as specified in <a
+     * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+     * Registry §3.6.2 Public Key Representation Formats</a>). This is mostly useful for public keys
+     * registered via the U2F JavaScript API.
+     *
+     * @see AttestedCredentialData#getCredentialPublicKey()
+     * @see RegistrationResult#getPublicKeyCose()
+     */
+    public RegisteredCredentialBuilder publicKeyCose(@NonNull ByteArray publicKeyCose) {
+      this.publicKeyCose = publicKeyCose;
+      return this;
+    }
+
+    /**
+     * Specify the credential public key in U2F format. This method overwrites {@link
+     * #publicKeyCose(ByteArray)}.
+     *
+     * <p>An alternative to {@link #publicKeyCose(ByteArray)}, this method expects an {@link
+     * COSEAlgorithmIdentifier#ES256 ES256} public key in <code>ALG_KEY_ECC_X962_RAW</code> format
+     * as specified in <a
+     * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+     * Registry §3.6.2 Public Key Representation Formats</a>.
+     *
+     * <p>This is primarily intended for public keys registered via the U2F JavaScript API. If your
+     * application has only used the <code>navigator.credentials.create()</code> API to register
+     * credentials, you should use {@link #publicKeyCose(ByteArray)} instead.
+     *
+     * @see RegisteredCredentialBuilder#publicKeyCose(ByteArray)
+     */
+    public RegisteredCredentialBuilder publicKeyEs256Raw(ByteArray publicKeyEs256Raw) {
+      return publicKeyCose(WebAuthnCodecs.rawEcKeyToCose(publicKeyEs256Raw));
     }
   }
 }
