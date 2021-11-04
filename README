@@ -41,7 +41,7 @@ compile 'com.yubico:webauthn-server-core:1.11.0'
 This library uses link:https://semver.org/[semantic versioning].
 The public API consists of all public classes, methods and fields in the `com.yubico.webauthn` package and its subpackages,
 i.e., everything covered by the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/package-summary.html[Javadoc].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/package-summary.html[Javadoc].
 
 Package-private classes and methods are NOT part of the public API.
 The `com.yubico:yubico-util` module is NOT part of the public API.
@@ -53,7 +53,7 @@ Breaking changes to these will NOT be reflected in version numbers.
 In addition to the main `webauthn-server-core` module, there are also:
 
 - `webauthn-server-attestation`: A simple implementation of the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/attestation/MetadataService.html[`MetadataService`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/attestation/MetadataService.html[`MetadataService`]
   interface, which by default comes preloaded with attestation metadata for Yubico devices.
 
 - `webauthn-server-core-minimal`: Alternative distribution of `webauthn-server-core`,
@@ -89,7 +89,7 @@ but the authentication mechanism alone does not make a security system.
 == Documentation
 
 See the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/package-summary.html[Javadoc]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/package-summary.html[Javadoc]
 for in-depth API documentation.
 
 
@@ -112,7 +112,7 @@ The client side involves:
     For this you need some way to encode `Uint8Array` values;
     this guide will assume use of link:https://github.com/beatgammit/base64-js[base64-js].
     However the built-in parser methods for
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
     expect URL-safe Base64 encoding, so the below examples will include this as an additional step.
 
 Example code is given below.
@@ -122,7 +122,7 @@ link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
 
 === 1. Implement a `CredentialRepository`
 
-The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`] interface
+The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`] interface
 abstracts your database in a database-agnostic way.
 The concrete implementation will be different for every project, but you can use
 link:https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
@@ -130,7 +130,7 @@ as a simple example.
 
 === 2. Instantiate a `RelyingParty`
 
-The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`] class
+The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`] class
 is the main entry point to the library.
 You can instantiate it using its builder methods,
 passing in your `CredentialRepository` implementation (called `MyCredentialRepository` here) as an argument:
