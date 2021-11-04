@@ -4,7 +4,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.14.2'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:5.17.1'
     classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.8'
   }
 }
@@ -12,7 +12,7 @@ plugins {
   id 'java-platform'
   id 'com.github.kt3k.coveralls' version '2.12.0'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
-  id 'io.franzbecker.gradle-lombok' version '4.0.0'
+  id 'io.franzbecker.gradle-lombok' version '5.0.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
@@ -40,7 +40,7 @@ if (publishEnabled) {
 }
 
 wrapper {
-  gradleVersion = '6.8'
+  gradleVersion = '7.2'
 }
 
 dependencies {
@@ -59,9 +59,9 @@ dependencies {
     api('org.bouncycastle:bcpkix-jdk15on:[1.62,2)')
     api('org.bouncycastle:bcprov-jdk15on:[1.62,2)')
     api('org.eclipse.jetty:jetty-servlet:[9.4.9.v20180320,10)')
-    api('org.glassfish.jersey.containers:jersey-container-servlet-core:[2.26,3)')
-    api('org.glassfish.jersey.containers:jersey-container-servlet:[2.26,3)')
-    api('org.glassfish.jersey.inject:jersey-hk2:[2.26,3)')
+    api('org.glassfish.jersey.containers:jersey-container-servlet-core:[2.33,3)')
+    api('org.glassfish.jersey.containers:jersey-container-servlet:[2.33,3)')
+    api('org.glassfish.jersey.inject:jersey-hk2:[2.33,3)')
     api('org.mockito:mockito-core:[2.27.0,3)')
     api('org.scalacheck:scalacheck_2.13:[1.14.0,2)')
     api('org.scalatest:scalatest_2.13:[3.0.8,3.1)')
@@ -89,8 +89,8 @@ subprojects {
   apply plugin: LombokPlugin
 
   lombok {
-    version '1.18.18'
-    sha256 = '601ec46206e0f9cac2c0583b3350e79f095419c395e991c761640f929038e9cc'
+    version '1.18.20'
+    sha256 = 'ce947be6c2fbe759fbbe8ef3b42b6825f814c98c8853f1013f2d9630cedf74b0'
   }
   tasks.withType(AbstractCompile) {
     if (tasks.findByName('verifyLombok')) {
@@ -111,7 +111,6 @@ subprojects {
       scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
     }
   }
-  tasks.check.dependsOn spotlessCheck
 }
 
 allprojects {
@@ -220,9 +219,6 @@ subprojects { project ->
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
-
-    apply plugin: 'maven-publish'
-    apply plugin: 'signing'
 
     if (getGitCommit() == null) {
       throw new RuntimeException("Failed to get git commit ID");

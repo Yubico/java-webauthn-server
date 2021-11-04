@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
@@ -41,6 +42,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCred
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
+import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
@@ -139,19 +141,28 @@ public class RelyingParty {
   @NonNull private final CredentialRepository credentialRepository;
 
   /**
-   * The extension input to set for the <code>appid</code> extension when initiating authentication
-   * operations.
+   * The extension input to set for the <code>appid</code> and <code>appidExclude</code> extensions.
+   *
+   * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
+   * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
+   * needed for new registrations, even of U2F authenticators.
    *
    * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
    * automatically set the <code>appid</code> extension input, and {@link
    * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic to
-   * also accept this AppID as an alternative to the RP ID.
+   * also accept this AppID as an alternative to the RP ID. Likewise, {@link
+   * #startRegistration(StartRegistrationOptions)} startRegistration} will automatically set the
+   * <code>appidExclude</code> extension input.
    *
    * <p>By default, this is not set.
    *
    * @see AssertionExtensionInputs#getAppid()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+   * @see RegistrationExtensionInputs#getAppidExclude()
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
    *     FIDO AppID Extension (appid)</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
+   *     FIDO AppID Exclusion Extension (appidExclude)</a>
    */
   @NonNull private final Optional<AppId> appId;
 
@@ -169,7 +180,7 @@ public class RelyingParty {
    * <p>By default, this is not set.
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference;
@@ -182,7 +193,7 @@ public class RelyingParty {
    * <p>By default, this is not set.
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @NonNull private final Optional<MetadataService> metadataService;
@@ -203,7 +214,7 @@ public class RelyingParty {
    * </ol>
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @Builder.Default @NonNull
@@ -306,7 +317,7 @@ public class RelyingParty {
    *
    * <p>The default is <code>false</code>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9. WebAuthn
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
    *     Extensions</a>
    */
   @Builder.Default private final boolean allowUnrequestedExtensions = false;
@@ -326,9 +337,9 @@ public class RelyingParty {
 
   /**
    * If <code>true</code>, {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will
-   * fail if the {@link AuthenticatorData#getSignatureCounter() signature counter value} in the
-   * response is not strictly greater than the {@link RegisteredCredential#getSignatureCount()
-   * stored signature counter value}.
+   * succeed only if the {@link AuthenticatorData#getSignatureCounter() signature counter value} in
+   * the response is strictly greater than the {@link RegisteredCredential#getSignatureCount()
+   * stored signature counter value}, or if both counters are exactly zero.
    *
    * <p>The default is <code>true</code>.
    */
@@ -393,7 +404,14 @@ public class RelyingParty {
                 credentialRepository.getCredentialIdsForUsername(
                     startRegistrationOptions.getUser().getName()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
-            .extensions(startRegistrationOptions.getExtensions())
+            .extensions(
+                startRegistrationOptions
+                    .getExtensions()
+                    .merge(
+                        RegistrationExtensionInputs.builder()
+                            .appidExclude(appId)
+                            .credProps()
+                            .build()))
             .timeout(startRegistrationOptions.getTimeout());
     attestationConveyancePreference.ifPresent(builder::attestation);
     return builder.build();
@@ -445,12 +463,19 @@ public class RelyingParty {
             .challenge(generateChallenge())
             .rpId(identity.getId())
             .allowCredentials(
-                startAssertionOptions
-                    .getUsername()
+                OptionalUtil.orElseOptional(
+                        startAssertionOptions.getUsername(),
+                        () ->
+                            startAssertionOptions
+                                .getUserHandle()
+                                .flatMap(credentialRepository::getUsernameForUserHandle))
                     .map(
                         un ->
                             new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un))))
-            .extensions(startAssertionOptions.getExtensions().toBuilder().appid(appId).build())
+            .extensions(
+                startAssertionOptions
+                    .getExtensions()
+                    .merge(startAssertionOptions.getExtensions().toBuilder().appid(appId).build()))
             .timeout(startAssertionOptions.getTimeout());
 
     startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);
@@ -546,19 +571,30 @@ public class RelyingParty {
     }
 
     /**
-     * The extension input to set for the <code>appid</code> extension when initiating
-     * authentication operations.
+     * The extension input to set for the <code>appid</code> and <code>appidExclude</code>
+     * extensions.
+     *
+     * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
+     * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
+     * needed for new registrations, even of U2F authenticators.
      *
      * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
      * automatically set the <code>appid</code> extension input, and {@link
      * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic
-     * to also accept this AppID as an alternative to the RP ID.
+     * to also accept this AppID as an alternative to the RP ID. Likewise, {@link
+     * #startRegistration(StartRegistrationOptions)} startRegistration} will automatically set the
+     * <code>appidExclude</code> extension input.
      *
      * <p>By default, this is not set.
      *
      * @see AssertionExtensionInputs#getAppid()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see RegistrationExtensionInputs#getAppidExclude()
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
+     *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
     public RelyingPartyBuilder appId(@NonNull Optional<AppId> appId) {
       this.appId = appId;
@@ -566,19 +602,30 @@ public class RelyingParty {
     }
 
     /**
-     * The extension input to set for the <code>appid</code> extension when initiating
-     * authentication operations.
+     * The extension input to set for the <code>appid</code> and <code>appidExclude</code>
+     * extensions.
+     *
+     * <p>You do not need this extension if you have not previously supported U2F. Its purpose is to
+     * make already-registered U2F credentials forward-compatible with the WebAuthn API. It is not
+     * needed for new registrations, even of U2F authenticators.
      *
      * <p>If this member is set, {@link #startAssertion(StartAssertionOptions) startAssertion} will
      * automatically set the <code>appid</code> extension input, and {@link
      * #finishAssertion(FinishAssertionOptions) finishAssertion} will adjust its verification logic
-     * to also accept this AppID as an alternative to the RP ID.
+     * to also accept this AppID as an alternative to the RP ID. Likewise, {@link
+     * #startRegistration(StartRegistrationOptions)} startRegistration} will automatically set the
+     * <code>appidExclude</code> extension input.
      *
      * <p>By default, this is not set.
      *
      * @see AssertionExtensionInputs#getAppid()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-appid-extension">§10.1.
+     * @see RegistrationExtensionInputs#getAppidExclude()
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-extension">§10.1.
      *     FIDO AppID Extension (appid)</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
+     *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
     public RelyingPartyBuilder appId(@NonNull AppId appId) {
       return this.appId(Optional.of(appId));
@@ -598,7 +645,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder attestationConveyancePreference(
@@ -621,7 +668,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder attestationConveyancePreference(
@@ -637,7 +684,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder metadataService(@NonNull Optional<MetadataService> metadataService) {
@@ -653,7 +700,7 @@ public class RelyingParty {
      * <p>By default, this is not set.
      *
      * @see PublicKeyCredentialCreationOptions#getAttestation()
-     * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
     public RelyingPartyBuilder metadataService(@NonNull MetadataService metadataService) {

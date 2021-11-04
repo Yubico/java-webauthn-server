@@ -35,6 +35,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.io.Closeables;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
@@ -60,6 +61,7 @@ import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
+import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -91,9 +93,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -108,7 +113,7 @@ public class WebAuthnServer {
 
   private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
   private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
-  private final RegistrationStorage userStorage;
+  private final InMemoryRegistrationStorage userStorage;
   private final SessionManager sessions = new SessionManager();
 
   private final TrustResolver trustResolver =
@@ -139,7 +144,7 @@ public class WebAuthnServer {
   }
 
   public WebAuthnServer(
-      RegistrationStorage userStorage,
+      InMemoryRegistrationStorage userStorage,
       Cache<ByteArray, RegistrationRequest> registerRequestStorage,
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
@@ -219,7 +224,7 @@ public class WebAuthnServer {
 
   public Either<String, RegistrationRequest> startRegistration(
       @NonNull String username,
-      Optional<String> displayName,
+      @NonNull String displayName,
       Optional<String> credentialNickname,
       boolean requireResidentKey,
       Optional<ByteArray> sessionToken)
@@ -242,7 +247,7 @@ public class WebAuthnServer {
               () ->
                   UserIdentity.builder()
                       .name(username)
-                      .displayName(displayName.get())
+                      .displayName(displayName)
                       .id(generateRandom(32))
                       .build());
 
@@ -418,7 +423,6 @@ public class WebAuthnServer {
                 addRegistration(
                     request.getPublicKeyCredentialCreationOptions().getUser(),
                     request.getCredentialNickname(),
-                    response,
                     registration),
                 registration.isAttestationTrusted(),
                 sessions.createSession(
@@ -694,30 +698,17 @@ public class WebAuthnServer {
   }
 
   private CredentialRegistration addRegistration(
-      UserIdentity userIdentity,
-      Optional<String> nickname,
-      RegistrationResponse response,
-      RegistrationResult result) {
+      UserIdentity userIdentity, Optional<String> nickname, RegistrationResult result) {
     return addRegistration(
         userIdentity,
         nickname,
-        response
-            .getCredential()
-            .getResponse()
-            .getAttestation()
-            .getAuthenticatorData()
-            .getSignatureCounter(),
         RegisteredCredential.builder()
             .credentialId(result.getKeyId().getId())
             .userHandle(userIdentity.getId())
             .publicKeyCose(result.getPublicKeyCose())
-            .signatureCount(
-                response
-                    .getCredential()
-                    .getResponse()
-                    .getParsedAuthenticatorData()
-                    .getSignatureCounter())
+            .signatureCount(result.getSignatureCount())
             .build(),
+        result.getKeyId().getTransports().orElseGet(TreeSet::new),
         result.getAttestationMetadata());
   }
 
@@ -729,21 +720,30 @@ public class WebAuthnServer {
     return addRegistration(
         userIdentity,
         nickname,
-        signatureCount,
         RegisteredCredential.builder()
             .credentialId(result.getKeyId().getId())
             .userHandle(userIdentity.getId())
             .publicKeyCose(result.getPublicKeyCose())
             .signatureCount(signatureCount)
             .build(),
+        result
+            .getAttestationMetadata()
+            .flatMap(Attestation::getTransports)
+            .map(
+                transports ->
+                    CollectionUtil.immutableSortedSet(
+                        transports.stream()
+                            .map(AuthenticatorTransport::fromU2fTransport)
+                            .collect(Collectors.toSet())))
+            .orElse(Collections.emptySortedSet()),
         result.getAttestationMetadata());
   }
 
   private CredentialRegistration addRegistration(
       UserIdentity userIdentity,
       Optional<String> nickname,
-      long signatureCount,
       RegisteredCredential credential,
+      SortedSet<AuthenticatorTransport> transports,
       Optional<Attestation> attestationMetadata) {
     CredentialRegistration reg =
         CredentialRegistration.builder()
@@ -751,7 +751,7 @@ public class WebAuthnServer {
             .credentialNickname(nickname)
             .registrationTime(clock.instant())
             .credential(credential)
-            .signatureCount(signatureCount)
+            .transports(transports)
             .attestationMetadata(attestationMetadata)
             .build();
 

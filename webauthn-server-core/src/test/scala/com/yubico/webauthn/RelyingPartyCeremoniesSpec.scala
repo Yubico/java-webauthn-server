@@ -171,6 +171,7 @@ class RelyingPartyCeremoniesSpec
         }
         it("a YubiKey Bio.") {
           check(RealExamples.YubikeyBio_5_5_4)
+          check(RealExamples.YubikeyBio_5_5_5)
         }
 
         it("an Apple iOS device.") {

@@ -1,6 +1,8 @@
 plugins {
   id 'java-library'
   id 'scala'
+  id 'maven-publish'
+  id 'signing'
   id 'info.solidsoft.pitest'
   id 'io.github.cosmicsilence.scalafix'
 }
@@ -54,13 +56,13 @@ jar {
   manifest {
     attributes([
       'Specification-Title': 'Web Authentication: An API for accessing Public Key Credentials',
-      'Specification-Version': 'Level 1 Recommendation 2019-03-04',
+      'Specification-Version': 'Level 2 Proposed Recommendation 2021-04-08',
       'Specification-Vendor': 'World Wide Web Consortium',
 
-      'Specification-Url': 'https://www.w3.org/TR/2019/REC-webauthn-1-20190304/',
-      'Specification-Url-Latest': 'https://www.w3.org/TR/webauthn/',
+      'Specification-Url': 'https://www.w3.org/TR/2021/REC-webauthn-2-20210408/',
+      'Specification-Url-Latest': 'https://www.w3.org/TR/webauthn-2/',
       'Specification-W3c-Status': 'recommendation',
-      'Specification-Release-Date': '2019-03-04',
+      'Specification-Release-Date': '2021-04-08',
 
       'Implementation-Id': 'java-webauthn-server',
       'Implementation-Title': 'Yubico Web Authentication server library',

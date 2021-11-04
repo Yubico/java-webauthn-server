@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import java.io.IOException;
 import lombok.NonNull;
@@ -44,14 +43,14 @@ import lombok.Value;
  * certificate or similar data providing provenance information for the attestation public key,
  * enabling the Relying Party to make a trust decision. However, if an attestation key pair is not
  * available, then the authenticator MUST perform <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#self-attestation">self attestation</a> of
- * the credential public key with the corresponding credential private key. All this information is
- * returned by authenticators any time a new public key credential is generated, in the overall form
- * of an attestation object. The relationship of the attestation object with authenticator data
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#self-attestation">self attestation</a>
+ * of the credential public key with the corresponding credential private key. All this information
+ * is returned by authenticators any time a new public key credential is generated, in the overall
+ * form of an attestation object. The relationship of the attestation object with authenticator data
  * (containing attested credential data) and the attestation statement is illustrated in <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#fig-attStructs">figure 5</a>.
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#fig-attStructs">figure 5</a>.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
  *     Attestation</a>
  */
 @Value
@@ -61,7 +60,7 @@ public class AttestationObject {
   /**
    * The original raw byte array that this object is decoded from.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
   @NonNull private final ByteArray bytes;
@@ -75,7 +74,8 @@ public class AttestationObject {
   /**
    * The attestation statement format identifier of this attestation object.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#defined-attestation-formats">§8.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-defined-attestation-formats">§8.
    *     Defined Attestation Statement Formats</a>
    *     <p>Users of this library should not need to access this value directly.
    */
@@ -104,11 +104,9 @@ public class AttestationObject {
     final JsonNode decoded = JacksonCodecs.cbor().readTree(bytes.getBytes());
     final ByteArray authDataBytes;
 
-    ExceptionUtil.assure(
-        decoded != null, "Failed to parse attestation object from bytes: %s", bytes.getBase64Url());
-
     if (!decoded.isObject()) {
-      throw new IllegalArgumentException("Attestation object must be a JSON object.");
+      throw new IllegalArgumentException(
+          String.format("Attestation object must be a CBOR map, was: %s", decoded.getNodeType()));
     }
 
     final JsonNode authData = decoded.get("authData");

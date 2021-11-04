@@ -1,0 +1,25 @@
+# This name is shown in the status badge in the README
+name: code-formatting
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: JDK ${{matrix.java}}
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [11]
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v1
+
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+
+    - name: Check code formatting
+      run: ./gradlew spotlessCheck

@@ -38,7 +38,7 @@ import lombok.Getter;
  * "RS256".
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#typedefdef-cosealgorithmidentifier">§5.10.5.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#typedefdef-cosealgorithmidentifier">§5.10.5.
  *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
  */
 @JsonSerialize(using = JsonLongSerializer.class)

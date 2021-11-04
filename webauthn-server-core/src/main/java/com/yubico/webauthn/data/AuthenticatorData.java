@@ -54,7 +54,7 @@ import lombok.Value;
  * cases, the Relying Party receives the authenticator data in the same format, and uses its
  * knowledge of the authenticator to make trust decisions.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1.
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">§6.1.
  *     Authenticator Data</a>
  */
 @Value
@@ -65,7 +65,8 @@ public class AuthenticatorData {
    * The original raw byte array that this object is decoded from. This is a byte array of 37 bytes
    * or more.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-authenticator-data">§6.1.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">§6.1.
    *     Authenticator Data</a>
    */
   @NonNull private final ByteArray bytes;
@@ -187,22 +188,26 @@ public class AuthenticatorData {
     final CBORObject credentialPublicKey = CBORObject.Read(indefiniteLengthBytes);
     final CBORObject extensions;
 
-    if (flags.ED && indefiniteLengthBytes.available() > 0) {
-      try {
-        extensions = CBORObject.Read(indefiniteLengthBytes);
-      } catch (CBORException e) {
-        throw new IllegalArgumentException("Failed to parse extension data", e);
+    if (indefiniteLengthBytes.available() > 0) {
+      if (flags.ED) {
+        try {
+          extensions = CBORObject.Read(indefiniteLengthBytes);
+        } catch (CBORException e) {
+          throw new IllegalArgumentException("Failed to parse extension data", e);
+        }
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Flags indicate no extension data, but %d bytes remain after attested credential data.",
+                indefiniteLengthBytes.available()));
       }
-    } else if (indefiniteLengthBytes.available() > 0) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Flags indicate no extension data, but %d bytes remain after attested credential data.",
-              indefiniteLengthBytes.available()));
-    } else if (flags.ED) {
-      throw new IllegalArgumentException(
-          "Flags indicate there should be extension data, but no bytes remain after attested credential data.");
     } else {
-      extensions = null;
+      if (flags.ED) {
+        throw new IllegalArgumentException(
+            "Flags indicate there should be extension data, but no bytes remain after attested credential data.");
+      } else {
+        extensions = null;
+      }
     }
 
     return new VariableLengthParseResult(

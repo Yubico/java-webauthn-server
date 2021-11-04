@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 15]
+        java: [8, 11, 16]
 
     steps:
     - name: Check out code
@@ -22,7 +22,7 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Run tests
-      run: ./gradlew cleanTest check
+      run: ./gradlew cleanTest test
 
     - name: Archive HTML test report
       if: ${{ always() }}

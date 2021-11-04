@@ -46,7 +46,7 @@ public class FinishRegistrationOptions {
    * The client's response to the {@link #getRequest() request}.
    *
    * <p><a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#createCredential">navigator.credentials.create()</a>
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-createCredential">navigator.credentials.create()</a>
    */
   @NonNull
   private final PublicKeyCredential<
@@ -82,12 +82,24 @@ public class FinishRegistrationOptions {
       private final FinishRegistrationOptionsBuilder builder =
           new FinishRegistrationOptionsBuilder();
 
+      /**
+       * {@link FinishRegistrationOptionsBuilder#request(PublicKeyCredentialCreationOptions)
+       * request} is a required parameter.
+       *
+       * @see FinishRegistrationOptionsBuilder#request(PublicKeyCredentialCreationOptions)
+       */
       public Step2 request(PublicKeyCredentialCreationOptions request) {
         builder.request(request);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link FinishRegistrationOptionsBuilder#response(PublicKeyCredential) response} is a
+         * required parameter.
+         *
+         * @see FinishRegistrationOptionsBuilder#response(PublicKeyCredential)
+         */
         public FinishRegistrationOptionsBuilder response(
             PublicKeyCredential<
                     AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>

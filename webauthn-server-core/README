@@ -13,16 +13,21 @@ it.
 
 == Unimplemented features
 
-* https://www.w3.org/TR/webauthn/#ecdaa[ECDAA] attestation type
 * Attestation statement formats:
- ** https://www.w3.org/TR/webauthn/#tpm-attestation[`tpm`]
- ** https://www.w3.org/TR/webauthn/#android-key-attestation[`android-key`]
+ ** https://www.w3.org/TR/webauthn/#sctn-tpm-attestation[`tpm`]
+ ** https://www.w3.org/TR/webauthn/#sctn-android-key-attestation[`android-key`]
+
+
+== Won't-implement features
+
+These features were removed in WebAuthn Level 2, and we do not plan to implement them.
+
+* link:https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#ecdaa[ECDAA] attestation type
 * Extensions:
- ** https://www.w3.org/TR/webauthn/#sctn-simple-txauth-extension[`txAuthSimple`]
- ** https://www.w3.org/TR/webauthn/#sctn-generic-txauth-extension[`txAuthGeneric`]
- ** https://www.w3.org/TR/webauthn/#sctn-authenticator-selection-extension[`authnSel`]
- ** https://www.w3.org/TR/webauthn/#sctn-supported-extensions-extension[`exts`]
- ** https://www.w3.org/TR/webauthn/#sctn-uvi-extension[`uvi`]
- ** https://www.w3.org/TR/webauthn/#sctn-location-extension[`loc`]
- ** https://www.w3.org/TR/webauthn/#sctn-uvm-extension[`uvm`]
- ** https://www.w3.org/TR/webauthn/#sctn-authenticator-biometric-criteria-extension[`biometricPerfBounds`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-simple-txauth-extension[`txAuthSimple`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-generic-txauth-extension[`txAuthGeneric`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-authenticator-selection-extension[`authnSel`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-supported-extensions-extension[`exts`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-uvi-extension[`uvi`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-location-extension[`loc`]
+ ** https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#sctn-authenticator-biometric-criteria-extension[`biometricPerfBounds`]

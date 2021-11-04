@@ -28,6 +28,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
+import com.yubico.fido.metadata.KeyProtectionType
+import com.yubico.fido.metadata.MatcherProtectionType
+import com.yubico.fido.metadata.UserVerificationMethod
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
@@ -37,16 +40,26 @@ import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
+import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
+import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.ReexportHelpers
+import com.yubico.webauthn.data.ReexportHelpers.newCredentialPropertiesOutput
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
+import com.yubico.webauthn.exception.RegistrationFailedException
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
@@ -114,7 +127,7 @@ class RelyingPartyRegistrationSpec
         .build(),
       testData: RegistrationTestData,
   ): FinishRegistrationSteps = {
-    val builder = RelyingParty
+    var builder = RelyingParty
       .builder()
       .identity(rp)
       .credentialRepository(credentialRepository)
@@ -123,7 +136,8 @@ class RelyingPartyRegistrationSpec
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUnrequestedExtensions(allowUnrequestedExtensions)
       .allowUntrustedAttestation(allowUntrustedAttestation)
-      .metadataService(metadataService.asJava)
+
+    metadataService.foreach { mds => builder = builder.metadataService(mds) }
 
     origins.map(_.asJava).foreach(builder.origins _)
 
@@ -150,13 +164,60 @@ class RelyingPartyRegistrationSpec
   testWithEachProvider { it =>
     describe("§7.1. Registering a new credential") {
 
-      describe("When registering a new credential, represented by an AuthenticatorAttestationResponse structure response and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of a registration ceremony, a Relying Party MUST proceed as follows:") {
+      describe("In order to perform a registration ceremony, the Relying Party MUST proceed as follows:") {
 
-        describe("1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.") {
-          it("Nothing to test.") {}
+        describe("1. Let options be a new PublicKeyCredentialCreationOptions structure configured to the Relying Party's needs for the ceremony.") {
+          it("Nothing to test: applicable only to client side.") {}
         }
 
-        describe("2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.") {
+        describe("2. Call navigator.credentials.create() and pass options as the publicKey option. Let credential be the result of the successfully resolved promise. If the promise is rejected, abort the ceremony with a user-visible error, or otherwise guide the user experience as might be determinable from the context available in the rejected promise. For example if the promise is rejected with an error code equivalent to \"InvalidStateError\", the user might be instructed to use a different authenticator. For information on different error contexts and the circumstances leading to them, see §6.3.2 The authenticatorMakeCredential Operation.") {
+          it("Nothing to test: applicable only to client side.") {}
+        }
+
+        describe("3. Let response be credential.response.") {
+          it("If response is not an instance of AuthenticatorAttestationResponse, abort the ceremony with a user-visible error.") {
+            val frob = FinishRegistrationOptions
+              .builder()
+              .request(
+                RegistrationTestData.Packed.BasicAttestationEdDsa.request
+              )
+            val testData =
+              RegistrationTestData.Packed.BasicAttestationEdDsa.assertion.get
+            "frob.response(testData.response)" shouldNot compile
+          }
+        }
+
+        describe("4. Let clientExtensionResults be the result of calling credential.getClientExtensionResults().") {
+          it(
+            "The PublicKeyCredential class has a clientExtensionResults field"
+          ) {
+            val pkc = PublicKeyCredential.parseRegistrationResponseJson("""{
+                "type": "public-key",
+                "id": "",
+                "response": {
+                  "attestationObject": "o2NmbXRmcGFja2VkaGF1dGhEYXRhWQFXAU4Ai_91hLmkf2mxjxj_SJrA3qTIOjr6tw1rluqSp_5FAAAAAG1Eupv27C5JuTAMj-kgy3MAEApbxn7DR_LpWJ6yjXeHxIGkAQMDOQEAIFkBAPm_XOU-DioXdG6YXFo5gpHPNxJDimlbnXCro2D_hvzBsxoY4oEzNyRDgK_PoDedZ4tJyk12_I8qJ8g5HqbpT6YUekYegcP4ugL1Omr31gGqTwsF45fIITcSWXcoJbqPnwotbaM98Hu15mSIT8NeXDce0MVNYJ6PULRm6xiiWXHk1cxwrHd9xPCjww6CjRKDc06hP--noBbToW3xx43eh7kGlisWPeU1naIMe7CZAjIMhNlu_uxQssaPAhEXNzDENpK99ieUg290Ym4YNAGbWdW4irkeTt7h_yC-ARrJUu4ygwwGaqCTl9QIMrwZGuiQD11LC0uKraIA2YHaGa2UGKshQwEAAWdhdHRTdG10o2NhbGcmY3NpZ1hHMEUCIQDLKMt6O4aKJkl71VhyIcuI6lqyFTHMDuCO5Y4Jdq2_xQIgPm2_1GF0ivkR816opfVQMWq0s-Hx0uJjcX5l5tm9ZgFjeDVjgVkCwTCCAr0wggGloAMCAQICBCrnYmMwDQYJKoZIhvcNAQELBQAwLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290IENBIFNlcmlhbCA0NTcyMDA2MzEwIBcNMTQwODAxMDAwMDAwWhgPMjA1MDA5MDQwMDAwMDBaMG4xCzAJBgNVBAYTAlNFMRIwEAYDVQQKDAlZdWJpY28gQUIxIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0ZXN0YXRpb24xJzAlBgNVBAMMHll1YmljbyBVMkYgRUUgU2VyaWFsIDcxOTgwNzA3NTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABCoDhl5gQ9meEf8QqiVUV4S_Ca-Oax47MhcpIW9VEhqM2RDTmd3HaL3-SnvH49q8YubSRp_1Z1uP-okMynSGnj-jbDBqMCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS4xMBMGCysGAQQBguUcAgEBBAQDAgQwMCEGCysGAQQBguUcAQEEBBIEEG1Eupv27C5JuTAMj-kgy3MwDAYDVR0TAQH_BAIwADANBgkqhkiG9w0BAQsFAAOCAQEAclfQPNzD4RVphJDW-A75W1MHI3PZ5kcyYysR3Nx3iuxr1ZJtB-F7nFQweI3jL05HtFh2_4xVIgKb6Th4eVcjMecncBaCinEbOcdP1sEli9Hk2eVm1XB5A0faUjXAPw_-QLFCjgXG6ReZ5HVUcWkB7riLsFeJNYitiKrTDXFPLy-sNtVNutcQnFsCerDKuM81TvEAigkIbKCGlq8M_NvBg5j83wIxbCYiyV7mIr3RwApHieShzLdJo1S6XydgQjC-_64G5r8C-8AVvNFR3zXXCpio5C3KRIj88HEEIYjf6h1fdLfqeIsq-cUUqbq5T-c4nNoZUZCysTB9v5EY4akp-A",
+                  "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5jcmVhdGUiLA0KCSJjaGFsbGVuZ2UiIDogImxaMllKbUZ2YWkteGhYMElteG9fQlk1SkpVdmREa3JXd1ZGZllmcHQtNmciLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9"
+                },
+                "clientExtensionResults": {
+                  "appidExclude": true,
+                  "org.example.foo": "bar"
+                }
+              }""")
+            pkc.getClientExtensionResults.getExtensionIds should contain(
+              "appidExclude"
+            )
+          }
+        }
+
+        describe("5. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.") {
+          it("Fails if clientDataJSON is not valid UTF-8.") {
+            an[IOException] should be thrownBy new CollectedClientData(
+              new ByteArray(Array(-128))
+            )
+          }
+        }
+
+        describe("6. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.") {
 
           it("Fails if clientDataJson is not valid JSON.") {
             an[IOException] should be thrownBy new CollectedClientData(
@@ -188,7 +249,7 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        describe("3. Verify that the value of C.type is webauthn.create.") {
+        describe("7. Verify that the value of C.type is webauthn.create.") {
           it("The default test case succeeds.") {
             val steps = finishRegistration(testData =
               RegistrationTestData.FidoU2f.BasicAttestation
@@ -223,7 +284,7 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        it("4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.") {
+        it("8. Verify that the value of C.challenge equals the base64url encoding of options.challenge.") {
           val steps = finishRegistration(
             testData = RegistrationTestData.FidoU2f.BasicAttestation.copy(
               overrideRequest = Some(
@@ -240,7 +301,7 @@ class RelyingPartyRegistrationSpec
           step.tryNext shouldBe a[Failure[_]]
         }
 
-        describe("5. Verify that the value of C.origin matches the Relying Party's origin.") {
+        describe("9. Verify that the value of C.origin matches the Relying Party's origin.") {
 
           def checkAccepted(
               origin: String,
@@ -457,7 +518,7 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        describe("6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.") {
+        describe("10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.") {
           it("Verification succeeds if neither side uses token binding ID.") {
             val steps = finishRegistration(testData =
               RegistrationTestData.FidoU2f.BasicAttestation
@@ -523,6 +584,7 @@ class RelyingPartyRegistrationSpec
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
           }
+
           it("Verification fails if client data specifies token binding ID but RP does not.") {
             val steps = finishRegistration(
               callerTokenBindingId = None,
@@ -631,10 +693,9 @@ class RelyingPartyRegistrationSpec
               step.tryNext shouldBe a[Failure[_]]
             }
           }
-
         }
 
-        it("7. Compute the hash of response.clientDataJSON using SHA-256.") {
+        it("11. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.") {
           val steps = finishRegistration(testData =
             RegistrationTestData.FidoU2f.BasicAttestation
           )
@@ -653,7 +714,7 @@ class RelyingPartyRegistrationSpec
           )
         }
 
-        it("8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
+        it("12. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.") {
           val steps = finishRegistration(testData =
             RegistrationTestData.FidoU2f.BasicAttestation
           )
@@ -667,7 +728,7 @@ class RelyingPartyRegistrationSpec
           step.attestation.getAttestationStatement should not be null
         }
 
-        describe("9. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+        describe("13. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
           it("Fails if RP ID is different.") {
             val steps = finishRegistration(
               testData = RegistrationTestData.FidoU2f.BasicAttestation
@@ -705,6 +766,7 @@ class RelyingPartyRegistrationSpec
               authData.getBytes
                 .updated(32, (authData.getBytes()(32) | 0x01).toByte)
             )
+
           def upOff(authData: ByteArray): ByteArray =
             new ByteArray(
               authData.getBytes
@@ -716,6 +778,7 @@ class RelyingPartyRegistrationSpec
               authData.getBytes
                 .updated(32, (authData.getBytes()(32) | 0x04).toByte)
             )
+
           def uvOff(authData: ByteArray): ByteArray =
             new ByteArray(
               authData.getBytes
@@ -747,6 +810,7 @@ class RelyingPartyRegistrationSpec
               )
               chk(stepsToStep(steps))
             }
+
             def checkFailsWith(
                 stepsToStep: FinishRegistrationSteps => Step
             ): (UserVerificationRequirement, ByteArray => ByteArray) => Unit =
@@ -757,6 +821,7 @@ class RelyingPartyRegistrationSpec
                 ]
                 step.tryNext shouldBe a[Failure[_]]
               }
+
             def checkSucceedsWith(
                 stepsToStep: FinishRegistrationSteps => Step
             ): (UserVerificationRequirement, ByteArray => ByteArray) => Unit =
@@ -768,7 +833,7 @@ class RelyingPartyRegistrationSpec
             (checkFailsWith(stepsToStep), checkSucceedsWith(stepsToStep))
           }
 
-          describe("10. Verify that the User Present bit of the flags in authData is set.") {
+          describe("14. Verify that the User Present bit of the flags in authData is set.") {
             val (checkFails, checkSucceeds) = checks[
               FinishRegistrationSteps#Step11,
               FinishRegistrationSteps#Step10,
@@ -805,7 +870,7 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          describe("11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
+          describe("15. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
             val (checkFails, checkSucceeds) = checks[
               FinishRegistrationSteps#Step12,
               FinishRegistrationSteps#Step11,
@@ -837,64 +902,57 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        describe("12. Verify that the values of the") {
+        describe("16. Verify that the \"alg\" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.") {
+          it("An ES256 key succeeds if ES256 was a requested algorithm.") {
+            val testData = RegistrationTestData.FidoU2f.BasicAttestation
+            val result = finishRegistration(
+              testData = testData,
+              credentialRepository = Helpers.CredentialRepository.empty,
+              allowUntrustedAttestation = true,
+            ).run
 
-          describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given as the extensions option in the create() call. In particular, any extension identifier values in the clientExtensionResults MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-            ignore("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
-              forAll(anyRegistrationExtensions) {
-                case (extensionInputs, clientExtensionOutputs) =>
-                  whenever(
-                    clientExtensionOutputs.getExtensionIds.asScala.exists(id =>
-                      !extensionInputs.getExtensionIds.contains(id)
-                    )
-                  ) {
-                    val steps = finishRegistration(
-                      testData =
-                        RegistrationTestData.Packed.BasicAttestation.copy(
-                          requestedExtensions = extensionInputs,
-                          clientExtensionResults = clientExtensionOutputs,
-                        )
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
+            result should not be null
+            result.getPublicKeyCose should not be null
+          }
 
-                    step.validations shouldBe a[Failure[_]]
-                    step.validations.failed.get shouldBe an[
-                      IllegalArgumentException
-                    ]
-                    step.tryNext shouldBe a[Failure[_]]
-                  }
-              }
-            }
+          it("An ES256 key fails if only RSA and EdDSA are allowed.") {
+            val testData = RegistrationTestData.FidoU2f.BasicAttestation
+            val result = Try(
+              finishRegistration(
+                testData = testData.copy(
+                  overrideRequest = Some(
+                    testData.request.toBuilder
+                      .pubKeyCredParams(
+                        List(
+                          PublicKeyCredentialParameters.EdDSA,
+                          PublicKeyCredentialParameters.RS256,
+                        ).asJava
+                      )
+                      .build()
+                  )
+                ),
+                credentialRepository = Helpers.CredentialRepository.empty,
+                allowUntrustedAttestation = true,
+              ).run
+            )
 
-            ignore("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
-              forAll(anyRegistrationExtensions) {
-                case (extensionInputs, clientExtensionOutputs) =>
-                  whenever(
-                    clientExtensionOutputs.getExtensionIds.asScala.exists(id =>
-                      !extensionInputs.getExtensionIds.contains(id)
-                    )
-                  ) {
-                    val steps = finishRegistration(
-                      allowUnrequestedExtensions = true,
-                      testData =
-                        RegistrationTestData.Packed.BasicAttestation.copy(
-                          requestedExtensions = extensionInputs,
-                          clientExtensionResults = clientExtensionOutputs,
-                        ),
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
+            result shouldBe a[Failure[_]]
+            result.failed.get shouldBe an[IllegalArgumentException]
+          }
+        }
 
-                    step.validations shouldBe a[Success[_]]
-                    step.tryNext shouldBe a[Success[_]]
-                  }
-              }
-            }
+        describe("17. Verify that the values of the") {
 
+          describe("client extension outputs in clientExtensionResults are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
             it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
-              forAll(subsetRegistrationExtensions) {
-                case (extensionInputs, clientExtensionOutputs) =>
+              forAll(Extensions.subsetRegistrationExtensions) {
+                case (extensionInputs, clientExtensionOutputs, _) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    clientExtensionOutputs.getExtensionIds,
+                    clientExtensionOutputs,
+                  )
+
                   val steps = finishRegistration(
                     testData =
                       RegistrationTestData.Packed.BasicAttestation.copy(
@@ -909,101 +967,83 @@ class RelyingPartyRegistrationSpec
                   step.tryNext shouldBe a[Success[_]]
               }
             }
+
+            it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(Extensions.unrequestedClientRegistrationExtensions) {
+                case (extensionInputs, clientExtensionOutputs, _) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    clientExtensionOutputs.getExtensionIds,
+                    clientExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    allowUnrequestedExtensions = true,
+                    testData =
+                      RegistrationTestData.Packed.BasicAttestation.copy(
+                        requestedExtensions = extensionInputs,
+                        clientExtensionResults = clientExtensionOutputs,
+                      ),
+                  )
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Success[_]]
+                  step.tryNext shouldBe a[Success[_]]
+              }
+            }
+
+            it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+              forAll(Extensions.unrequestedClientRegistrationExtensions) {
+                case (extensionInputs, clientExtensionOutputs, _) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    clientExtensionOutputs.getExtensionIds,
+                    clientExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    testData =
+                      RegistrationTestData.Packed.BasicAttestation.copy(
+                        requestedExtensions = extensionInputs,
+                        clientExtensionResults = clientExtensionOutputs,
+                      )
+                  )
+
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.validations.failed.get shouldBe an[
+                    IllegalArgumentException
+                  ]
+                  step.tryNext shouldBe a[Failure[_]]
+              }
+            }
+
+            ignore("TODO v2.0: Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
+              fail("TODO")
+            }
+
+            ignore("TODO v2.0: Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party and the Relying Party has opted out of allowing unrequested extensions.") {
+              fail("TODO")
+            }
           }
 
-          describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the create() call. In particular, any extension identifier values in the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
-            it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
-              forAll(anyAuthenticatorExtensions[RegistrationExtensionInputs]) {
-                case (
-                      extensionInputs: RegistrationExtensionInputs,
-                      authenticatorExtensionOutputs: ObjectNode,
-                    ) =>
-                  whenever(
-                    authenticatorExtensionOutputs
-                      .fieldNames()
-                      .asScala
-                      .exists(id =>
-                        !extensionInputs.getExtensionIds.contains(id)
-                      )
-                  ) {
-                    val steps = finishRegistration(
-                      testData = RegistrationTestData.Packed.BasicAttestation
-                        .copy(
-                          requestedExtensions = extensionInputs
-                        )
-                        .editAuthenticatorData(authData =>
-                          new ByteArray(
-                            authData.getBytes.updated(
-                              32,
-                              (authData.getBytes()(32) | 0x80).toByte,
-                            ) ++
-                              JacksonCodecs.cbor.writeValueAsBytes(
-                                authenticatorExtensionOutputs
-                              )
-                          )
-                        )
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
-
-                    step.validations shouldBe a[Failure[_]]
-                    step.validations.failed.get shouldBe an[
-                      IllegalArgumentException
-                    ]
-                    step.tryNext shouldBe a[Failure[_]]
-                  }
-              }
-            }
-
-            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
-              forAll(anyAuthenticatorExtensions[RegistrationExtensionInputs]) {
-                case (
-                      extensionInputs: RegistrationExtensionInputs,
-                      authenticatorExtensionOutputs: ObjectNode,
-                    ) =>
-                  whenever(
-                    authenticatorExtensionOutputs
-                      .fieldNames()
-                      .asScala
-                      .exists(id =>
-                        !extensionInputs.getExtensionIds.contains(id)
-                      )
-                  ) {
-                    val steps = finishRegistration(
-                      allowUnrequestedExtensions = true,
-                      testData = RegistrationTestData.Packed.BasicAttestation
-                        .copy(
-                          requestedExtensions = extensionInputs
-                        )
-                        .editAuthenticatorData(authData =>
-                          new ByteArray(
-                            authData.getBytes.updated(
-                              32,
-                              (authData.getBytes()(32) | 0x80).toByte,
-                            ) ++
-                              JacksonCodecs.cbor.writeValueAsBytes(
-                                authenticatorExtensionOutputs
-                              )
-                          )
-                        ),
-                    )
-                    val step: FinishRegistrationSteps#Step12 =
-                      steps.begin.next.next.next.next.next.next.next.next.next.next.next
-
-                    step.validations shouldBe a[Success[_]]
-                    step.tryNext shouldBe a[Success[_]]
-                  }
-              }
-            }
-
+          describe("authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
             it("Succeeds if authenticator extensions is a subset of the extensions requested by the Relying Party.") {
-              forAll(
-                subsetAuthenticatorExtensions[RegistrationExtensionInputs]
-              ) {
+              forAll(Extensions.subsetRegistrationExtensions) {
                 case (
                       extensionInputs: RegistrationExtensionInputs,
-                      authenticatorExtensionOutputs: ObjectNode,
+                      _,
+                      authenticatorExtensionOutputs: CBORObject,
                     ) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    authenticatorExtensionOutputs.getKeys,
+                    authenticatorExtensionOutputs,
+                  )
+
                   val steps = finishRegistration(
                     testData = RegistrationTestData.Packed.BasicAttestation
                       .copy(
@@ -1014,9 +1054,7 @@ class RelyingPartyRegistrationSpec
                           authData.getBytes.updated(
                             32,
                             (authData.getBytes()(32) | 0x80).toByte,
-                          ) ++
-                            JacksonCodecs.cbor
-                              .writeValueAsBytes(authenticatorExtensionOutputs)
+                          ) ++ authenticatorExtensionOutputs.EncodeToBytes()
                         )
                       )
                   )
@@ -1025,13 +1063,120 @@ class RelyingPartyRegistrationSpec
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
+
+                  println(
+                    AuthenticatorRegistrationExtensionOutputs
+                      .fromAuthenticatorData(
+                        step.getAttestation.getAuthenticatorData
+                      )
+                  )
               }
+            }
+
+            it("Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
+              forAll(
+                Extensions.unrequestedAuthenticatorRegistrationExtensions
+              ) {
+                case (
+                      extensionInputs: RegistrationExtensionInputs,
+                      _,
+                      authenticatorExtensionOutputs: CBORObject,
+                    ) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    authenticatorExtensionOutputs.getKeys,
+                    authenticatorExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    allowUnrequestedExtensions = true,
+                    testData = RegistrationTestData.Packed.BasicAttestation
+                      .copy(
+                        requestedExtensions = extensionInputs
+                      )
+                      .editAuthenticatorData(authData =>
+                        new ByteArray(
+                          authData.getBytes.updated(
+                            32,
+                            (authData.getBytes()(32) | 0x80).toByte,
+                          ) ++ authenticatorExtensionOutputs.EncodeToBytes()
+                        )
+                      ),
+                  )
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Success[_]]
+                  step.tryNext shouldBe a[Success[_]]
+
+                  println(
+                    AuthenticatorRegistrationExtensionOutputs
+                      .fromAuthenticatorData(
+                        step.getAttestation.getAuthenticatorData
+                      )
+                  )
+              }
+            }
+
+            it("Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
+              forAll(
+                Extensions.unrequestedAuthenticatorRegistrationExtensions
+              ) {
+                case (
+                      extensionInputs: RegistrationExtensionInputs,
+                      _,
+                      authenticatorExtensionOutputs: CBORObject,
+                    ) =>
+                  println(extensionInputs.getExtensionIds, extensionInputs)
+                  println(
+                    authenticatorExtensionOutputs.getKeys,
+                    authenticatorExtensionOutputs,
+                  )
+
+                  val steps = finishRegistration(
+                    testData = RegistrationTestData.Packed.BasicAttestation
+                      .copy(
+                        requestedExtensions = extensionInputs
+                      )
+                      .editAuthenticatorData(authData =>
+                        new ByteArray(
+                          authData.getBytes.updated(
+                            32,
+                            (authData.getBytes()(32) | 0x80).toByte,
+                          ) ++ authenticatorExtensionOutputs.EncodeToBytes()
+                        )
+                      )
+                  )
+                  val step: FinishRegistrationSteps#Step12 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.validations.failed.get shouldBe an[
+                    IllegalArgumentException
+                  ]
+                  step.tryNext shouldBe a[Failure[_]]
+
+                  println(
+                    AuthenticatorRegistrationExtensionOutputs
+                      .fromAuthenticatorData(
+                        step.getAttestation.getAuthenticatorData
+                      )
+                  )
+              }
+            }
+
+            ignore("TODO v2.0: Succeeds if authenticator extensions is not a subset of the extensions requested by the Relying Party.") {
+              fail("TODO")
+            }
+
+            ignore("TODO v2.0: Fails if authenticator extensions is not a subset of the extensions requested by the Relying Party and the Relying Party has opted out of allowing unrequested extensions.") {
+              fail("TODO")
             }
           }
 
         }
 
-        describe("13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name [WebAuthn-Registries].") {
+        describe("18. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA \"WebAuthn Attestation Statement Format Identifiers\" registry established by RFC8809.") {
           def setup(format: String): FinishRegistrationSteps = {
             finishRegistration(
               testData = RegistrationTestData.FidoU2f.BasicAttestation
@@ -1078,7 +1223,7 @@ class RelyingPartyRegistrationSpec
           checkUnknown("bleurgh")
         }
 
-        describe("14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 7.") {
+        describe("19. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and hash.") {
 
           describe("If allowUntrustedAttestation is set,") {
             it("a fido-u2f attestation is still rejected if invalid.") {
@@ -1162,7 +1307,9 @@ class RelyingPartyRegistrationSpec
 
             def checkByteFlipFails(index: Int): Unit = {
               val testData = RegistrationTestData.FidoU2f.BasicAttestation
-                .editAuthenticatorData { flipByte(index, _) }
+                .editAuthenticatorData {
+                  flipByte(index, _)
+                }
 
               val steps = finishRegistration(testData = testData)
               val step: FinishRegistrationSteps#Step14 = new steps.Step14(
@@ -1452,7 +1599,7 @@ class RelyingPartyRegistrationSpec
                 }
               }
 
-              describe("2. If x5c is present, this indicates that the attestation type is not ECDAA. In this case:") {
+              describe("2. If x5c is present:") {
                 it("The attestation type is identified as Basic.") {
                   val steps = finishRegistration(testData =
                     RegistrationTestData.Packed.BasicAttestation
@@ -1513,7 +1660,7 @@ class RelyingPartyRegistrationSpec
                   }
                 }
 
-                describe("2. Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate Requirements.") {
+                describe("2. Verify that attestnCert meets the requirements in § 8.2.1 Packed Attestation Statement Certificate Requirements.") {
                   it("Fails for an attestation signature with an invalid country code.") {
                     val authenticator = TestAuthenticator
                     val alg = COSEAlgorithmIdentifier.ES256
@@ -1618,17 +1765,9 @@ class RelyingPartyRegistrationSpec
                 }
               }
 
-              describe("3. If ecdaaKeyId is present, then the attestation type is ECDAA. In this case:") {
-                ignore("1. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId (see [FIDOEcdaaAlgorithm]).") {
-                  fail("Test not implemented.")
-                }
-
-                ignore("2. If successful, return implementation-specific values representing attestation type ECDAA and attestation trust path ecdaaKeyId.") {
-                  fail("Test not implemented.")
-                }
-              }
-
-              describe("4. If neither x5c nor ecdaaKeyId is present, self attestation is in use.") {
+              describe(
+                "3. If x5c is not present, self attestation is in use."
+              ) {
                 val testDataBase = RegistrationTestData.Packed.SelfAttestation
 
                 it("The attestation type is identified as SelfAttestation.") {
@@ -1693,6 +1832,7 @@ class RelyingPartyRegistrationSpec
                         .concat(reencodedKey)
                         .getBytes
                     }
+
                     def modifyAttobjPubkeyAlg(attObjBytes: ByteArray)
                         : ByteArray = {
                       val attObj =
@@ -2136,7 +2276,7 @@ class RelyingPartyRegistrationSpec
                 }
               }
 
-              describe("2. Verify that response is a valid SafetyNet response of version ver.") {
+              describe("2. Verify that response is a valid SafetyNet response of version ver by following the steps indicated by the SafetyNet online documentation. As of this writing, there is only one format of the SafetyNet response and ver is reserved for future use.") {
                 it("Fails if there's a difference in the signature.") {
                   val testData = defaultTestData
                     .updateAttestationObject(
@@ -2170,7 +2310,7 @@ class RelyingPartyRegistrationSpec
                 }
               }
 
-              describe("3. Verify that the nonce in the response is identical to the Base64 encoding of the SHA-256 hash of the concatenation of authenticatorData and clientDataHash.") {
+              describe("3. Verify that the nonce attribute in the payload of response is identical to the Base64 encoding of the SHA-256 hash of the concatenation of authenticatorData and clientDataHash.") {
                 it(
                   "Fails if an additional property is added to the client data."
                 ) {
@@ -2179,21 +2319,17 @@ class RelyingPartyRegistrationSpec
                 }
               }
 
-              describe(
-                "4. Let attestationCert be the attestation certificate."
-              ) {
-                it("Nothing to test.") {}
+              describe("4. Verify that the SafetyNet response actually came from the SafetyNet service by following the steps in the SafetyNet online documentation.") {
+                it("Verify that attestationCert is issued to the hostname \"attest.android.com\".") {
+                  checkFails(testDataContainer.WrongHostname)
+                }
+
+                it("Verify that the ctsProfileMatch attribute in the payload of response is true.") {
+                  checkFails(testDataContainer.FalseCtsProfileMatch)
+                }
               }
 
-              it("5. Verify that attestationCert is issued to the hostname \"attest.android.com\" (see SafetyNet online documentation).") {
-                checkFails(testDataContainer.WrongHostname)
-              }
-
-              it("6. Verify that the ctsProfileMatch attribute in the payload of response is true.") {
-                checkFails(testDataContainer.FalseCtsProfileMatch)
-              }
-
-              describe("7. If successful, return implementation-specific values representing attestation type Basic and attestation trust path attestationCert.") {
+              describe("5. If successful, return implementation-specific values representing attestation type Basic and attestation trust path x5c.") {
                 it("The real example succeeds.") {
                   val steps = finishRegistration(
                     testData = testDataContainer.RealExample,
@@ -2242,6 +2378,19 @@ class RelyingPartyRegistrationSpec
             step.tryNext shouldBe a[Success[_]]
           }
 
+          it("The apple statement format is supported.") {
+            val steps = finishRegistration(
+              testData =
+                RealExamples.AppleAttestationIos.asRegistrationTestData,
+              rp = RealExamples.AppleAttestationIos.rp,
+            )
+            val step: FinishRegistrationSteps#Step14 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a[Success[_]]
+            step.tryNext shouldBe a[Success[_]]
+          }
+
           it("Unknown attestation statement formats are identified as such.") {
             val steps = finishRegistration(testData =
               RegistrationTestData.FidoU2f.BasicAttestation
@@ -2257,7 +2406,7 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        describe("15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
+        describe("20. If validation is successful, obtain a list of acceptable trust anchors (i.e. attestation root certificates) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
 
           describe("For the android-safetynet statement format") {
             it("a trust resolver is returned.") {
@@ -2336,9 +2485,9 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        describe("16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:") {
+        describe("21. Assess the attestation trustworthiness using the outputs of the verification procedure in step 19, as follows:") {
 
-          describe("If none attestation was used, check if no attestation is acceptable under Relying Party policy.") {
+          describe("If no attestation was provided, verify that None attestation is acceptable under Relying Party policy.") {
             describe("The default test case") {
               it("is rejected if untrusted attestation is not allowed.") {
                 val steps = finishRegistration(
@@ -2371,7 +2520,7 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          describe("If an unknown attestation statement format was used, check if no attestation is acceptable under Relying Party policy.") {
+          describe("(Not in spec:) If an unknown attestation statement format was used, check if no attestation is acceptable under Relying Party policy.") {
             val testData = RegistrationTestData.FidoU2f.BasicAttestation
               .setAttestationStatementFormat("urgel")
 
@@ -2407,7 +2556,7 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          describe("If self attestation was used, check if self attestation is acceptable under Relying Party policy.") {
+          describe("If self attestation was used, verify that self attestation is acceptable under Relying Party policy.") {
 
             describe("The default test case, with self attestation,") {
               it("is rejected if untrusted attestation is not allowed.") {
@@ -2441,11 +2590,7 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          ignore("If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 15.") {
-            fail("Not implemented.")
-          }
-
-          describe("Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.") {
+          describe("Otherwise, use the X.509 certificates returned as the attestation trust path from the verification procedure to verify that the attestation public key either correctly chains up to an acceptable root certificate, or is itself an acceptable certificate (i.e., it and the root certificate obtained in Step 20 may be the same).") {
 
             def generateTests(testData: RegistrationTestData): Unit = {
               it("is rejected if untrusted attestation is not allowed and the metadata service does not trust it.") {
@@ -2540,7 +2685,7 @@ class RelyingPartyRegistrationSpec
 
         }
 
-        describe("17. Check that the credentialId is not yet registered to any other user. If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.") {
+        describe("22. Check that the credentialId is not yet registered to any other user. If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.") {
 
           val testData = RegistrationTestData.FidoU2f.SelfAttestation
 
@@ -2586,24 +2731,45 @@ class RelyingPartyRegistrationSpec
           }
         }
 
-        describe("18. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in the options.user passed to create(), by associating it with the credentialId and credentialPublicKey in the attestedCredentialData in authData, as appropriate for the Relying Party's system.") {
-          it("A test case with trusted basic attestation succeeds.") {
-            val testData = RegistrationTestData.FidoU2f.BasicAttestation
-            val steps = finishRegistration(
-              testData = testData,
-              metadataService = Some(
-                new TestMetadataService(
-                  Some(Attestation.builder().trusted(true).build())
-                )
-              ),
-              credentialRepository = Helpers.CredentialRepository.empty,
+        describe("23. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in options.user:") {
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation
+          val steps = finishRegistration(
+            testData = testData,
+            metadataService = Some(
+              new TestMetadataService(
+                Some(Attestation.builder().trusted(true).build())
+              )
+            ),
+            credentialRepository = Helpers.CredentialRepository.empty,
+          )
+          val result = steps.run()
+          result.isAttestationTrusted should be(true)
+
+          it("Associate the user’s account with the credentialId and credentialPublicKey in authData.attestedCredentialData, as appropriate for the Relying Party's system.") {
+            result.getKeyId.getId should be(testData.response.getId)
+            result.getPublicKeyCose should be(
+              testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
             )
-            steps.run.getKeyId.getId should be(testData.response.getId)
-            steps.run.isAttestationTrusted should be(true)
+          }
+
+          it("Associate the credentialId with a new stored signature counter value initialized to the value of authData.signCount.") {
+            result.getSignatureCount should be(
+              testData.response.getResponse.getAttestation.getAuthenticatorData.getSignatureCounter
+            )
+          }
+
+          describe("It is RECOMMENDED to also:") {
+            it("Associate the credentialId with the transport hints returned by calling credential.response.getTransports(). This value SHOULD NOT be modified before or after storing it. It is RECOMMENDED to use this value to populate the transports of the allowCredentials option in future get() calls to help the client know how to find a suitable authenticator.") {
+              result.getKeyId.getTransports.asScala should equal(
+                Some(
+                  testData.response.getResponse.getTransports
+                )
+              )
+            }
           }
         }
 
-        describe("19. If the attestation statement attStmt successfully verified but is not trustworthy per step 16 above, the Relying Party SHOULD fail the registration ceremony.") {
+        describe("24. If the attestation statement attStmt successfully verified but is not trustworthy per step 21 above, the Relying Party SHOULD fail the registration ceremony.") {
           it("The test case with self attestation succeeds, but reports attestation is not trusted.") {
             val testData = RegistrationTestData.FidoU2f.SelfAttestation
             val steps = finishRegistration(
@@ -2642,10 +2808,6 @@ class RelyingPartyRegistrationSpec
               result shouldBe a[Failure[_]]
               result.failed.get shouldBe an[IllegalArgumentException]
             }
-          }
-
-          describe("NOTE: However, if permitted by policy, the Relying Party MAY register the credential ID and credential public key but treat the credential as one with self attestation (see §6.4.3 Attestation Types). If doing so, the Relying Party is asserting there is no cryptographic proof that the public key credential has been generated by a particular authenticator model. See [FIDOSecRef] and [UAFProtocol] for a more detailed discussion.") {
-            it("Nothing to test.") {}
           }
 
           def testUntrusted(testData: RegistrationTestData): Unit = {
@@ -2689,360 +2851,676 @@ class RelyingPartyRegistrationSpec
           Try(steps.run) shouldBe a[Failure[_]]
           Try(steps.run).failed.get shouldBe an[IllegalArgumentException]
         }
-
-        describe("The default RelyingParty settings") {
-
-          val rp = RelyingParty
-            .builder()
-            .identity(
-              RelyingPartyIdentity
-                .builder()
-                .id("localhost")
-                .name("Test party")
-                .build()
-            )
-            .credentialRepository(Helpers.CredentialRepository.empty)
-            .build()
-
-          val request = rp
-            .startRegistration(
-              StartRegistrationOptions
-                .builder()
-                .user(
-                  UserIdentity
-                    .builder()
-                    .name("test")
-                    .displayName("Test Testsson")
-                    .id(new ByteArray(Array()))
-                    .build()
-                )
-                .build()
-            )
-            .toBuilder()
-            .challenge(
-              RegistrationTestData.NoneAttestation.Default.clientData.getChallenge
-            )
-            .build()
-
-          it("accept registrations with no attestation.") {
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(RegistrationTestData.NoneAttestation.Default.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getAttestationType should be(AttestationType.NONE)
-            result.getKeyId.getId should equal(
-              RegistrationTestData.NoneAttestation.Default.response.getId
-            )
-          }
-
-          it(
-            "accept registrations with unknown attestation statement format."
-          ) {
-            val testData = RegistrationTestData.FidoU2f.BasicAttestation
-              .setAttestationStatementFormat("urgel")
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(testData.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getAttestationType should be(AttestationType.UNKNOWN)
-            result.getKeyId.getId should equal(testData.response.getId)
-          }
-
-          it("accept android-key attestations but report they're untrusted.") {
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(
-                  RegistrationTestData.AndroidKey.BasicAttestation.response
-                )
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getKeyId.getId should equal(
-              RegistrationTestData.AndroidKey.BasicAttestation.response.getId
-            )
-          }
-
-          it("accept TPM attestations but report they're untrusted.") {
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(request)
-                .response(RegistrationTestData.Tpm.PrivacyCa.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getKeyId.getId should equal(
-              RegistrationTestData.Tpm.PrivacyCa.response.getId
-            )
-          }
-
-          describe("accept apple attestations but report they're untrusted:") {
-            it("iOS") {
-              val result = rp
-                .toBuilder()
-                .identity(RealExamples.AppleAttestationIos.rp)
-                .origins(
-                  Set(
-                    RealExamples.AppleAttestationIos.attestation.collectedClientData.getOrigin
-                  ).asJava
-                )
-                .build()
-                .finishRegistration(
-                  FinishRegistrationOptions
-                    .builder()
-                    .request(
-                      request
-                        .toBuilder()
-                        .challenge(
-                          RealExamples.AppleAttestationIos.attestation.collectedClientData.getChallenge
-                        )
-                        .build()
-                    )
-                    .response(
-                      RealExamples.AppleAttestationIos.attestation.credential
-                    )
-                    .build()
-                )
-
-              result.isAttestationTrusted should be(false)
-              RealExamples.AppleAttestationIos.attestation.credential.getResponse.getAttestation.getFormat should be(
-                "apple"
-              )
-              result.getAttestationType should be(
-                AttestationType.ANONYMIZATION_CA
-              )
-              result.getKeyId.getId should equal(
-                RealExamples.AppleAttestationIos.attestation.credential.getId
-              )
-            }
-
-            it("MacOS") {
-              val result = rp
-                .toBuilder()
-                .identity(RealExamples.AppleAttestationMacos.rp)
-                .origins(
-                  Set(
-                    RealExamples.AppleAttestationMacos.attestation.collectedClientData.getOrigin
-                  ).asJava
-                )
-                .build()
-                .finishRegistration(
-                  FinishRegistrationOptions
-                    .builder()
-                    .request(
-                      request
-                        .toBuilder()
-                        .challenge(
-                          RealExamples.AppleAttestationMacos.attestation.collectedClientData.getChallenge
-                        )
-                        .build()
-                    )
-                    .response(
-                      RealExamples.AppleAttestationMacos.attestation.credential
-                    )
-                    .build()
-                )
-
-              result.isAttestationTrusted should be(false)
-              RealExamples.AppleAttestationMacos.attestation.credential.getResponse.getAttestation.getFormat should be(
-                "apple"
-              )
-              result.getAttestationType should be(
-                AttestationType.ANONYMIZATION_CA
-              )
-              result.getKeyId.getId should equal(
-                RealExamples.AppleAttestationMacos.attestation.credential.getId
-              )
-            }
-          }
-
-          describe("accept all test examples in the validExamples list.") {
-            RegistrationTestData.defaultSettingsValidExamples.zipWithIndex
-              .foreach {
-                case (testData, i) =>
-                  it(s"Succeeds for example index ${i}.") {
-                    val rp = {
-                      val builder = RelyingParty
-                        .builder()
-                        .identity(testData.rpId)
-                        .credentialRepository(
-                          Helpers.CredentialRepository.empty
-                        )
-                      testData.origin.foreach({ o =>
-                        builder.origins(Set(o).asJava)
-                      })
-                      builder.build()
-                    }
-
-                    val result = rp.finishRegistration(
-                      FinishRegistrationOptions
-                        .builder()
-                        .request(testData.request)
-                        .response(testData.response)
-                        .build()
-                    )
-
-                    result.getKeyId.getId should equal(testData.response.getId)
-                  }
-              }
-          }
-
-          describe("generate pubKeyCredParams which") {
-            val rp = RelyingParty
-              .builder()
-              .identity(
-                RelyingPartyIdentity
-                  .builder()
-                  .id("localhost")
-                  .name("Test RP")
-                  .build()
-              )
-              .credentialRepository(Helpers.CredentialRepository.empty)
-              .build()
-            val pkcco = rp.startRegistration(
-              StartRegistrationOptions
-                .builder()
-                .user(
-                  UserIdentity
-                    .builder()
-                    .name("foo")
-                    .displayName("Foo")
-                    .id(ByteArray.fromHex("aabbccdd"))
-                    .build()
-                )
-                .build()
-            )
-
-            val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
-
-            describe("include") {
-              it("ES256.") {
-                pubKeyCredParams should contain(
-                  PublicKeyCredentialParameters.ES256
-                )
-                pubKeyCredParams map (_.getAlg) should contain(
-                  COSEAlgorithmIdentifier.ES256
-                )
-              }
-
-              it("EdDSA.") {
-                pubKeyCredParams should contain(
-                  PublicKeyCredentialParameters.EdDSA
-                )
-                pubKeyCredParams map (_.getAlg) should contain(
-                  COSEAlgorithmIdentifier.EdDSA
-                )
-              }
-
-              it("RS256.") {
-                pubKeyCredParams should contain(
-                  PublicKeyCredentialParameters.RS256
-                )
-                pubKeyCredParams map (_.getAlg) should contain(
-                  COSEAlgorithmIdentifier.RS256
-                )
-              }
-            }
-
-            describe("do not include") {
-              it("RS1.") {
-                pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
-                pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
-              }
-            }
-          }
-        }
-
-        describe("RelyingParty supports registering") {
-          it("a real packed attestation with an RSA key.") {
-            val rp = RelyingParty
-              .builder()
-              .identity(
-                RelyingPartyIdentity
-                  .builder()
-                  .id("demo3.yubico.test")
-                  .name("Yubico WebAuthn demo")
-                  .build()
-              )
-              .credentialRepository(Helpers.CredentialRepository.empty)
-              .origins(Set("https://demo3.yubico.test:8443").asJava)
-              .build()
-
-            val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
-            val result = rp.finishRegistration(
-              FinishRegistrationOptions
-                .builder()
-                .request(testData.request)
-                .response(testData.response)
-                .build()
-            )
-
-            result.isAttestationTrusted should be(false)
-            result.getKeyId.getId should equal(testData.response.getId)
-          }
-        }
-
       }
-
     }
 
-    describe("Additions in L2-WD02 editor's draft:") {
+    describe("The default RelyingParty settings") {
 
-      describe("Verify that the \"alg\" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.") {
-        it("An ES256 key succeeds if ES256 was a requested algorithm.") {
-          val testData = RegistrationTestData.FidoU2f.BasicAttestation
-          val result = finishRegistration(
-            testData = testData,
-            credentialRepository = Helpers.CredentialRepository.empty,
-            allowUntrustedAttestation = true,
-          ).run
+      val rp = RelyingParty
+        .builder()
+        .identity(
+          RelyingPartyIdentity
+            .builder()
+            .id("localhost")
+            .name("Test party")
+            .build()
+        )
+        .credentialRepository(Helpers.CredentialRepository.empty)
+        .build()
 
-          result should not be null
-          result.getPublicKeyCose should not be null
-        }
+      val request = rp
+        .startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(
+              UserIdentity
+                .builder()
+                .name("test")
+                .displayName("Test Testsson")
+                .id(new ByteArray(Array()))
+                .build()
+            )
+            .build()
+        )
+        .toBuilder()
+        .challenge(
+          RegistrationTestData.NoneAttestation.Default.clientData.getChallenge
+        )
+        .build()
 
-        it("An ES256 key fails if only RSA and EdDSA are allowed.") {
-          val testData = RegistrationTestData.FidoU2f.BasicAttestation
-          val result = Try(
-            finishRegistration(
-              testData = testData.copy(
-                overrideRequest = Some(
-                  testData.request.toBuilder
-                    .pubKeyCredParams(
-                      List(
-                        PublicKeyCredentialParameters.EdDSA,
-                        PublicKeyCredentialParameters.RS256,
-                      ).asJava
+      it("accept registrations with no attestation.") {
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(RegistrationTestData.NoneAttestation.Default.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationType should be(AttestationType.NONE)
+        result.getKeyId.getId should equal(
+          RegistrationTestData.NoneAttestation.Default.response.getId
+        )
+      }
+
+      it(
+        "accept registrations with unknown attestation statement format."
+      ) {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+          .setAttestationStatementFormat("urgel")
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getAttestationType should be(AttestationType.UNKNOWN)
+        result.getKeyId.getId should equal(testData.response.getId)
+      }
+
+      it("accept android-key attestations but report they're untrusted.") {
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(
+              RegistrationTestData.AndroidKey.BasicAttestation.response
+            )
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getKeyId.getId should equal(
+          RegistrationTestData.AndroidKey.BasicAttestation.response.getId
+        )
+      }
+
+      it("accept TPM attestations but report they're untrusted.") {
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(request)
+            .response(RegistrationTestData.Tpm.PrivacyCa.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getKeyId.getId should equal(
+          RegistrationTestData.Tpm.PrivacyCa.response.getId
+        )
+      }
+
+      describe("accept apple attestations but report they're untrusted:") {
+        it("iOS") {
+          val result = rp
+            .toBuilder()
+            .identity(RealExamples.AppleAttestationIos.rp)
+            .origins(
+              Set(
+                RealExamples.AppleAttestationIos.attestation.collectedClientData.getOrigin
+              ).asJava
+            )
+            .build()
+            .finishRegistration(
+              FinishRegistrationOptions
+                .builder()
+                .request(
+                  request
+                    .toBuilder()
+                    .challenge(
+                      RealExamples.AppleAttestationIos.attestation.collectedClientData.getChallenge
                     )
                     .build()
                 )
-              ),
-              credentialRepository = Helpers.CredentialRepository.empty,
-              allowUntrustedAttestation = true,
-            ).run
+                .response(
+                  RealExamples.AppleAttestationIos.attestation.credential
+                )
+                .build()
+            )
+
+          result.isAttestationTrusted should be(false)
+          RealExamples.AppleAttestationIos.attestation.credential.getResponse.getAttestation.getFormat should be(
+            "apple"
+          )
+          result.getAttestationType should be(
+            AttestationType.ANONYMIZATION_CA
+          )
+          result.getKeyId.getId should equal(
+            RealExamples.AppleAttestationIos.attestation.credential.getId
+          )
+        }
+
+        it("MacOS") {
+          val result = rp
+            .toBuilder()
+            .identity(RealExamples.AppleAttestationMacos.rp)
+            .origins(
+              Set(
+                RealExamples.AppleAttestationMacos.attestation.collectedClientData.getOrigin
+              ).asJava
+            )
+            .build()
+            .finishRegistration(
+              FinishRegistrationOptions
+                .builder()
+                .request(
+                  request
+                    .toBuilder()
+                    .challenge(
+                      RealExamples.AppleAttestationMacos.attestation.collectedClientData.getChallenge
+                    )
+                    .build()
+                )
+                .response(
+                  RealExamples.AppleAttestationMacos.attestation.credential
+                )
+                .build()
+            )
+
+          result.isAttestationTrusted should be(false)
+          RealExamples.AppleAttestationMacos.attestation.credential.getResponse.getAttestation.getFormat should be(
+            "apple"
+          )
+          result.getAttestationType should be(
+            AttestationType.ANONYMIZATION_CA
+          )
+          result.getKeyId.getId should equal(
+            RealExamples.AppleAttestationMacos.attestation.credential.getId
+          )
+        }
+      }
+
+      describe("accept all test examples in the validExamples list.") {
+        RegistrationTestData.defaultSettingsValidExamples.zipWithIndex
+          .foreach {
+            case (testData, i) =>
+              it(s"Succeeds for example index ${i}.") {
+                val rp = {
+                  val builder = RelyingParty
+                    .builder()
+                    .identity(testData.rpId)
+                    .credentialRepository(
+                      Helpers.CredentialRepository.empty
+                    )
+                  builder.origins(Set(testData.clientData.getOrigin).asJava)
+                  builder.build()
+                }
+
+                val result = rp.finishRegistration(
+                  FinishRegistrationOptions
+                    .builder()
+                    .request(testData.request)
+                    .response(testData.response)
+                    .build()
+                )
+
+                result.getKeyId.getId should equal(testData.response.getId)
+              }
+          }
+      }
+
+      describe("generate pubKeyCredParams which") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+        val pkcco = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(
+              UserIdentity
+                .builder()
+                .name("foo")
+                .displayName("Foo")
+                .id(ByteArray.fromHex("aabbccdd"))
+                .build()
+            )
+            .build()
+        )
+
+        val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+        describe("include") {
+          it("ES256.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.ES256
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.ES256
+            )
+          }
+
+          it("EdDSA.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.EdDSA
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.EdDSA
+            )
+          }
+
+          it("RS256.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.RS256
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.RS256
+            )
+          }
+        }
+
+        describe("do not include") {
+          it("RS1.") {
+            pubKeyCredParams should not contain PublicKeyCredentialParameters.RS1
+            pubKeyCredParams map (_.getAlg) should not contain COSEAlgorithmIdentifier.RS1
+          }
+        }
+      }
+
+      describe("expose the credProps extension output as RegistrationResult.isDiscoverable()") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+        val testDataBase = RegistrationTestData.Packed.BasicAttestation
+        val testData = testDataBase.copy(requestedExtensions =
+          testDataBase.request.getExtensions.toBuilder.credProps().build()
+        )
+
+        it("when set to true.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .credProps(
+                        newCredentialPropertiesOutput(true)
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
           )
 
-          result shouldBe a[Failure[_]]
-          result.failed.get shouldBe an[IllegalArgumentException]
+          result.isDiscoverable.asScala should equal(Some(true))
+        }
+
+        it("when set to false.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .credProps(
+                        newCredentialPropertiesOutput(false)
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.isDiscoverable.asScala should equal(Some(false))
+        }
+
+        it("when not available.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(testData.response)
+              .build()
+          )
+
+          result.isDiscoverable.asScala should equal(None)
         }
       }
 
+      describe("support the largeBlob extension") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+
+        it("being enabled at registration time.") {
+          val testData = RegistrationTestData.Packed.BasicAttestation
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(
+                testData.request.toBuilder
+                  .extensions(
+                    RegistrationExtensionInputs
+                      .builder()
+                      .largeBlob(LargeBlobSupport.REQUIRED)
+                      .build()
+                  )
+                  .build()
+              )
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .largeBlob(
+                        ReexportHelpers.newLargeBlobRegistrationOutput(true)
+                      )
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.getClientExtensionOutputs.get.getLargeBlob.get.isSupported should be(
+            true
+          )
+        }
+      }
+
+      describe("support the uvm extension") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Test RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+
+        it("at registration time.") {
+
+          // Example from spec: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension
+          // A1                     -- extension: CBOR map of one element
+          //     63                 -- Key 1: CBOR text string of 3 bytes
+          //         75 76 6d       -- "uvm" [=UTF-8 encoded=] string
+          //     82                 -- Value 1: CBOR array of length 2 indicating two factor usage
+          //         83              -- Item 1: CBOR array of length 3
+          //             02           -- Subitem 1: CBOR integer for User Verification Method Fingerprint
+          //             04           -- Subitem 2: CBOR short for Key Protection Type TEE
+          //             02           -- Subitem 3: CBOR short for Matcher Protection Type TEE
+          //         83              -- Item 2: CBOR array of length 3
+          //             04           -- Subitem 1: CBOR integer for User Verification Method Passcode
+          //             01           -- Subitem 2: CBOR short for Key Protection Type Software
+          //             01           -- Subitem 3: CBOR short for Matcher Protection Type Software
+          val uvmCborExample = ByteArray.fromHex("A16375766d828302040283040101")
+
+          val challenge = TestAuthenticator.Defaults.challenge
+          val (cred, _) = TestAuthenticator.createUnattestedCredential(
+            authenticatorExtensions =
+              Some(JacksonCodecs.cbor().readTree(uvmCborExample.getBytes)),
+            challenge = challenge,
+          )
+
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(
+                PublicKeyCredentialCreationOptions
+                  .builder()
+                  .rp(
+                    RelyingPartyIdentity
+                      .builder()
+                      .id(TestAuthenticator.Defaults.rpId)
+                      .name("Test RP")
+                      .build()
+                  )
+                  .user(
+                    UserIdentity
+                      .builder()
+                      .name("foo")
+                      .displayName("Foo User")
+                      .id(ByteArray.fromHex("00010203"))
+                      .build()
+                  )
+                  .challenge(challenge)
+                  .pubKeyCredParams(
+                    List(PublicKeyCredentialParameters.ES256).asJava
+                  )
+                  .extensions(
+                    RegistrationExtensionInputs
+                      .builder()
+                      .uvm()
+                      .build()
+                  )
+                  .build()
+              )
+              .response(cred)
+              .build()
+          )
+
+          result.getAuthenticatorExtensionOutputs.get.getUvm.asScala should equal(
+            Some(
+              List(
+                new UvmEntry(
+                  UserVerificationMethod.USER_VERIFY_FINGERPRINT_INTERNAL,
+                  KeyProtectionType.KEY_PROTECTION_TEE,
+                  MatcherProtectionType.MATCHER_PROTECTION_TEE,
+                ),
+                new UvmEntry(
+                  UserVerificationMethod.USER_VERIFY_PASSCODE_INTERNAL,
+                  KeyProtectionType.KEY_PROTECTION_SOFTWARE,
+                  MatcherProtectionType.MATCHER_PROTECTION_SOFTWARE,
+                ),
+              ).asJava
+            )
+          )
+        }
+      }
     }
 
+    describe("RelyingParty supports registering") {
+      it("a real packed attestation with an RSA key.") {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("demo3.yubico.test")
+              .name("Yubico WebAuthn demo")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .origins(Set("https://demo3.yubico.test:8443").asJava)
+          .build()
+
+        val testData = RegistrationTestData.Packed.BasicAttestationRsaReal
+        val result = rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isAttestationTrusted should be(false)
+        result.getKeyId.getId should equal(testData.response.getId)
+      }
+    }
+
+    describe("The RegistrationResult") {
+      describe("exposes getTransports() which") {
+
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("example.com")
+              .name("Example RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .allowUnrequestedExtensions(true)
+          .build()
+        val user = UserIdentity.builder
+          .name("foo")
+          .displayName("Foo User")
+          .id(new ByteArray(Array(0, 1, 2, 3)))
+          .build()
+
+        val request = PublicKeyCredentialCreationOptions
+          .builder()
+          .rp(rp.getIdentity)
+          .user(user)
+          .challenge(ByteArray.fromBase64Url("Y2hhbGxlbmdl"))
+          .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
+          .build()
+
+        it("contains the returned transports when available.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(PublicKeyCredential.parseRegistrationResponseJson("""{
+                "type": "public-key",
+                "id": "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G",
+                "response": {
+                  "clientDataJSON": "eyJ0eXBlIjogIndlYmF1dGhuLmNyZWF0ZSIsICJjbGllbnRFeHRlbnNpb25zIjoge30sICJjaGFsbGVuZ2UiOiAiWTJoaGJHeGxibWRsIiwgIm9yaWdpbiI6ICJodHRwczovL2V4YW1wbGUuY29tIn0",
+                  "attestationObject": "o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEcwRQIhAJKRPuYlfW8dZZlsJrJiwA-BvAyOvIe1TScv5qlek1SQAiAnglgs-nRjA7kpc61PewQ4VULjdlzLmReI7-MJT1TLrGN4NWOBWQLBMIICvTCCAaWgAwIBAgIEMAIspTANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbjELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEnMCUGA1UEAwweWXViaWNvIFUyRiBFRSBTZXJpYWwgODA1NDQ4ODY5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE-66HSEytO3plXno3zPhH1k-zFwWxESIdrTbQp4HSEuzFum1Mwpy8itoOosBQksnIrefLHkTRNUtV8jIrFKAvbaNsMGowIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjEwEwYLKwYBBAGC5RwCAQEEBAMCBDAwIQYLKwYBBAGC5RwBAQQEEgQQbUS6m_bsLkm5MAyP6SDLczAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBlZXnJy-X3fJfNdlIdIQlFpO5-A5uM41jJ2XgdRag_8rSxXCz98t_jyoWth5FQF9As96Ags3p-Lyaqb1bpEc9RfmkxiiqwDzDI56Sj4HKlANF2tddm-ew29H9yaNbpU5y6aleCeH2rR4t1cFgcBRAV84IndIH0cYASRnyrFbHjI80vlPNR0z4j-_W9vYEWBpLeS_wrdKPVW7C7wyuc4bobauCyhElBPZUwblR_Ll0iovmfazD17VLCBMA4p_SVVTwSXpKyZjMiCotj8mDhQ1ymhvCepkK82EwnrBMJIzCi_joxAXqxLPMs6yJrz_hFUkZaloa1ZS6f7aGAmAKhRNO2aGF1dGhEYXRhWMSjeab27q-5pV43jBGANOJ1Hmgvq58tMKsT0hJVhs4ZR0EAAAAAAAAAAAAAAAAAAAAAAAAAAABAJT086Ym5LhLsK6MRwYRSdjVn9jVYVtwiGwgq_bDPpVuI3aaOW7UQfqGWdos-kVwHnQccbDRnQDvQmCDqy6QdSaUBAgMmIAEhWCCRGd2Bo0vIj-suQxM-cOCXovv1Ag6azqHn8PE31Fcu4iJYIOiLha_PR9JwOhCw4SC2Xq7cOackGAMsq4UUJ_IRCCcq",
+                  "transports": ["nfc", "usb"]
+                },
+                "clientExtensionResults": {}
+              }"""))
+              .build()
+          )
+
+          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+            Some(Set(AuthenticatorTransport.USB, AuthenticatorTransport.NFC))
+          )
+        }
+
+        it(
+          "returns present but empty when transport hints are not available."
+        ) {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(PublicKeyCredential.parseRegistrationResponseJson("""{
+                "type": "public-key",
+                "id": "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G",
+                "response": {
+                  "clientDataJSON": "eyJ0eXBlIjogIndlYmF1dGhuLmNyZWF0ZSIsICJjbGllbnRFeHRlbnNpb25zIjoge30sICJjaGFsbGVuZ2UiOiAiWTJoaGJHeGxibWRsIiwgIm9yaWdpbiI6ICJodHRwczovL2V4YW1wbGUuY29tIn0",
+                  "attestationObject": "o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEcwRQIhAJKRPuYlfW8dZZlsJrJiwA-BvAyOvIe1TScv5qlek1SQAiAnglgs-nRjA7kpc61PewQ4VULjdlzLmReI7-MJT1TLrGN4NWOBWQLBMIICvTCCAaWgAwIBAgIEMAIspTANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbjELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEnMCUGA1UEAwweWXViaWNvIFUyRiBFRSBTZXJpYWwgODA1NDQ4ODY5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE-66HSEytO3plXno3zPhH1k-zFwWxESIdrTbQp4HSEuzFum1Mwpy8itoOosBQksnIrefLHkTRNUtV8jIrFKAvbaNsMGowIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjEwEwYLKwYBBAGC5RwCAQEEBAMCBDAwIQYLKwYBBAGC5RwBAQQEEgQQbUS6m_bsLkm5MAyP6SDLczAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBlZXnJy-X3fJfNdlIdIQlFpO5-A5uM41jJ2XgdRag_8rSxXCz98t_jyoWth5FQF9As96Ags3p-Lyaqb1bpEc9RfmkxiiqwDzDI56Sj4HKlANF2tddm-ew29H9yaNbpU5y6aleCeH2rR4t1cFgcBRAV84IndIH0cYASRnyrFbHjI80vlPNR0z4j-_W9vYEWBpLeS_wrdKPVW7C7wyuc4bobauCyhElBPZUwblR_Ll0iovmfazD17VLCBMA4p_SVVTwSXpKyZjMiCotj8mDhQ1ymhvCepkK82EwnrBMJIzCi_joxAXqxLPMs6yJrz_hFUkZaloa1ZS6f7aGAmAKhRNO2aGF1dGhEYXRhWMSjeab27q-5pV43jBGANOJ1Hmgvq58tMKsT0hJVhs4ZR0EAAAAAAAAAAAAAAAAAAAAAAAAAAABAJT086Ym5LhLsK6MRwYRSdjVn9jVYVtwiGwgq_bDPpVuI3aaOW7UQfqGWdos-kVwHnQccbDRnQDvQmCDqy6QdSaUBAgMmIAEhWCCRGd2Bo0vIj-suQxM-cOCXovv1Ag6azqHn8PE31Fcu4iJYIOiLha_PR9JwOhCw4SC2Xq7cOackGAMsq4UUJ_IRCCcq"
+                },
+                "clientExtensionResults": {}
+              }"""))
+              .build()
+          )
+
+          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+            Some(Set.empty)
+          )
+        }
+
+        it("returns present but empty when transport hints are empty.") {
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(PublicKeyCredential.parseRegistrationResponseJson("""{
+                "type": "public-key",
+                "id": "LbYHDfeoEJ-ItG8lq6fjNVnhg6kgbebGjYWEf32ZpyChibGv4gJU1OGM0nOQQY5G",
+                "response": {
+                  "clientDataJSON": "eyJ0eXBlIjogIndlYmF1dGhuLmNyZWF0ZSIsICJjbGllbnRFeHRlbnNpb25zIjoge30sICJjaGFsbGVuZ2UiOiAiWTJoaGJHeGxibWRsIiwgIm9yaWdpbiI6ICJodHRwczovL2V4YW1wbGUuY29tIn0",
+                  "attestationObject": "o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEcwRQIhAJKRPuYlfW8dZZlsJrJiwA-BvAyOvIe1TScv5qlek1SQAiAnglgs-nRjA7kpc61PewQ4VULjdlzLmReI7-MJT1TLrGN4NWOBWQLBMIICvTCCAaWgAwIBAgIEMAIspTANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbjELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEnMCUGA1UEAwweWXViaWNvIFUyRiBFRSBTZXJpYWwgODA1NDQ4ODY5MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE-66HSEytO3plXno3zPhH1k-zFwWxESIdrTbQp4HSEuzFum1Mwpy8itoOosBQksnIrefLHkTRNUtV8jIrFKAvbaNsMGowIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjEwEwYLKwYBBAGC5RwCAQEEBAMCBDAwIQYLKwYBBAGC5RwBAQQEEgQQbUS6m_bsLkm5MAyP6SDLczAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBlZXnJy-X3fJfNdlIdIQlFpO5-A5uM41jJ2XgdRag_8rSxXCz98t_jyoWth5FQF9As96Ags3p-Lyaqb1bpEc9RfmkxiiqwDzDI56Sj4HKlANF2tddm-ew29H9yaNbpU5y6aleCeH2rR4t1cFgcBRAV84IndIH0cYASRnyrFbHjI80vlPNR0z4j-_W9vYEWBpLeS_wrdKPVW7C7wyuc4bobauCyhElBPZUwblR_Ll0iovmfazD17VLCBMA4p_SVVTwSXpKyZjMiCotj8mDhQ1ymhvCepkK82EwnrBMJIzCi_joxAXqxLPMs6yJrz_hFUkZaloa1ZS6f7aGAmAKhRNO2aGF1dGhEYXRhWMSjeab27q-5pV43jBGANOJ1Hmgvq58tMKsT0hJVhs4ZR0EAAAAAAAAAAAAAAAAAAAAAAAAAAABAJT086Ym5LhLsK6MRwYRSdjVn9jVYVtwiGwgq_bDPpVuI3aaOW7UQfqGWdos-kVwHnQccbDRnQDvQmCDqy6QdSaUBAgMmIAEhWCCRGd2Bo0vIj-suQxM-cOCXovv1Ag6azqHn8PE31Fcu4iJYIOiLha_PR9JwOhCw4SC2Xq7cOackGAMsq4UUJ_IRCCcq",
+                  "transports": []
+                },
+                "clientExtensionResults": {}
+              }"""))
+              .build()
+          )
+
+          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+            Some(Set.empty)
+          )
+        }
+      }
+    }
+
+  }
+
+  describe("RelyingParty.finishRegistration") {
+    it("throws RegistrationFailedException in case of errors.") {
+
+      val rp = RelyingParty
+        .builder()
+        .identity(
+          RelyingPartyIdentity
+            .builder()
+            .id("localhost")
+            .name("Test party")
+            .build()
+        )
+        .credentialRepository(Helpers.CredentialRepository.empty)
+        .build()
+
+      val pkcco = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(
+            UserIdentity
+              .builder()
+              .name("test")
+              .displayName("Test Testsson")
+              .id(new ByteArray(Array()))
+              .build()
+          )
+          .build()
+      )
+
+      val result = Try(
+        rp.finishRegistration(
+          FinishRegistrationOptions
+            .builder()
+            .request(pkcco)
+            .response(RegistrationTestData.NoneAttestation.Default.response)
+            .build()
+        )
+      )
+      result shouldBe a[Failure[_]]
+      result.failed.get shouldBe a[RegistrationFailedException]
+      result.failed.get.getMessage should include("Incorrect challenge")
+    }
   }
 
 }

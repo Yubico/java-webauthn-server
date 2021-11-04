@@ -27,8 +27,12 @@ package com.yubico.webauthn.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.SortedSet;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -41,7 +45,7 @@ import lombok.Value;
  * characteristics of the credential during registration.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorattestationresponse">§5.2.1.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticatorattestationresponse">§5.2.1.
  *     Information About Public Key Credential (interface AuthenticatorAttestationResponse) </a>
  */
 @Value
@@ -56,17 +60,26 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
    * information that the Relying Party's server requires to validate the attestation statement, as
    * well as to decode and validate the authenticator data along with the JSON-serialized client
    * data. For more details, see <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation">§6.4 Attestation</a>,
-   * <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#generating-an-attestation-object">§6.4.4
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4
+   * Attestation</a>, <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-generating-an-attestation-object">§6.4.4
    * Generating an Attestation Object</a>, and <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#fig-attStructs">Figure 5</a>.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#fig-attStructs">Figure 5</a>.
    */
   @NonNull private final ByteArray attestationObject;
 
   @NonNull
   @Getter(onMethod = @__({@Override}))
   private final ByteArray clientDataJSON;
+
+  /**
+   * The return value from the <code>AuthenticatorAttestationResponse.getTransports()</code> method.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatorattestationresponse-gettransports">§5.2.1.
+   *     Information About Public Key Credential (interface AuthenticatorAttestationResponse)</a>
+   */
+  private final SortedSet<AuthenticatorTransport> transports;
 
   /** The {@link #attestationObject} parsed as a domain object. */
   @NonNull @JsonIgnore private final transient AttestationObject attestation;
@@ -86,10 +99,15 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
   @JsonCreator
   private AuthenticatorAttestationResponse(
       @NonNull @JsonProperty("attestationObject") ByteArray attestationObject,
-      @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON)
+      @NonNull @JsonProperty("clientDataJSON") ByteArray clientDataJSON,
+      @JsonProperty("transports") Set<AuthenticatorTransport> transports)
       throws IOException, Base64UrlException {
     this.attestationObject = attestationObject;
     this.clientDataJSON = clientDataJSON;
+    this.transports =
+        transports == null
+            ? Collections.emptySortedSet()
+            : CollectionUtil.immutableSortedSet(transports);
 
     attestation = new AttestationObject(attestationObject);
     this.clientData = new CollectedClientData(clientDataJSON);
@@ -104,12 +122,24 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
       private final AuthenticatorAttestationResponseBuilder builder =
           new AuthenticatorAttestationResponseBuilder();
 
+      /**
+       * {@link AuthenticatorAttestationResponseBuilder#attestationObject(ByteArray)
+       * attestationObject} is a required parameter.
+       *
+       * @see AuthenticatorAttestationResponseBuilder#attestationObject(ByteArray)
+       */
       public Step2 attestationObject(ByteArray attestationObject) {
         builder.attestationObject(attestationObject);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link AuthenticatorAttestationResponseBuilder#clientDataJSON(ByteArray) clientDataJSON}
+         * is a required parameter.
+         *
+         * @see AuthenticatorAttestationResponseBuilder#clientDataJSON(ByteArray)
+         */
         public AuthenticatorAttestationResponseBuilder clientDataJSON(ByteArray clientDataJSON) {
           return builder.clientDataJSON(clientDataJSON);
         }

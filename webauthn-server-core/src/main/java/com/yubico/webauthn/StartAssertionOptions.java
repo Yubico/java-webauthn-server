@@ -25,6 +25,7 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.AssertionExtensionInputs;
+import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.util.Optional;
@@ -37,19 +38,9 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class StartAssertionOptions {
 
-  /**
-   * The username of the user to authenticate, if the user has already been identified.
-   *
-   * <p>If this is absent, that implies a first-factor authentication operation - meaning
-   * identification of the user is deferred until after receiving the response from the client.
-   *
-   * <p>The default is empty (absent).
-   *
-   * @see <a
-   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
-   *     credential</a>
-   */
   private final String username;
+
+  private final ByteArray userHandle;
 
   /**
    * Extension inputs for this authentication operation.
@@ -66,6 +57,11 @@ public class StartAssertionOptions {
   /**
    * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
    * authentication operation.
+   *
+   * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408#user-verification">user
+   * verification</a>was performed in this authentication ceremony.
    *
    * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
    */
@@ -86,13 +82,21 @@ public class StartAssertionOptions {
   /**
    * The username of the user to authenticate, if the user has already been identified.
    *
-   * <p>If this is absent, that implies a first-factor authentication operation - meaning
-   * identification of the user is deferred until after receiving the response from the client.
+   * <p>Mutually exclusive with {@link #getUserHandle()}.
+   *
+   * <p>If this or {@link #getUserHandle()} is present, then {@link
+   * RelyingParty#startAssertion(StartAssertionOptions)} will set {@link
+   * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
+   * credentials.
+   *
+   * <p>If this and {@link #getUserHandle()} are both absent, that implies a first-factor
+   * authentication operation - meaning identification of the user is deferred until after receiving
+   * the response from the client.
    *
    * <p>The default is empty (absent).
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
    *     credential</a>
    */
   public Optional<String> getUsername() {
@@ -100,8 +104,39 @@ public class StartAssertionOptions {
   }
 
   /**
+   * The user handle of the user to authenticate, if the user has already been identified.
+   *
+   * <p>Mutually exclusive with {@link #getUsername()}.
+   *
+   * <p>If this or {@link #getUsername()} is present, then {@link
+   * RelyingParty#startAssertion(StartAssertionOptions)} will set {@link
+   * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
+   * credentials.
+   *
+   * <p>If this and {@link #getUsername()} are both absent, that implies a first-factor
+   * authentication operation - meaning identification of the user is deferred until after receiving
+   * the response from the client.
+   *
+   * <p>The default is empty (absent).
+   *
+   * @see #getUsername()
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+   *     credential</a>
+   */
+  public Optional<ByteArray> getUserHandle() {
+    return Optional.ofNullable(userHandle);
+  }
+
+  /**
    * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
    * authentication operation.
+   *
+   * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408#user-verification">user
+   * verification</a>was performed in this authentication ceremony.
    *
    * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
    */
@@ -125,45 +160,140 @@ public class StartAssertionOptions {
 
   public static class StartAssertionOptionsBuilder {
     private String username = null;
+    private ByteArray userHandle = null;
     private UserVerificationRequirement userVerification = null;
     private Long timeout = null;
 
     /**
      * The username of the user to authenticate, if the user has already been identified.
      *
-     * <p>If this is absent, that implies a first-factor authentication operation - meaning
-     * identification of the user is deferred until after receiving the response from the client.
+     * <p>Mutually exclusive with {@link #userHandle(Optional)}. Setting this to a present value
+     * will set {@link #userHandle(Optional)} to empty.
+     *
+     * <p>If this or {@link #userHandle(Optional)} is present, then {@link
+     * RelyingParty#startAssertion(StartAssertionOptions)} will set {@link
+     * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
+     * credentials.
+     *
+     * <p>If this and {@link #getUserHandle()} are both absent, that implies a first-factor
+     * authentication operation - meaning identification of the user is deferred until after
+     * receiving the response from the client.
      *
      * <p>The default is empty (absent).
      *
+     * @see #username(String)
+     * @see #userHandle(Optional)
+     * @see #userHandle(ByteArray)
      * @see <a
-     *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
      *     credential</a>
      */
     public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
       this.username = username.orElse(null);
+      if (username.isPresent()) {
+        this.userHandle = null;
+      }
       return this;
     }
 
     /**
      * The username of the user to authenticate, if the user has already been identified.
      *
-     * <p>If this is absent, that implies a first-factor authentication operation - meaning
-     * identification of the user is deferred until after receiving the response from the client.
+     * <p>Mutually exclusive with {@link #userHandle(Optional)}. Setting this to a non-null value
+     * will set {@link #userHandle(Optional)} to empty.
+     *
+     * <p>If this or {@link #userHandle(Optional)} is present, then {@link
+     * RelyingParty#startAssertion(StartAssertionOptions)} will set {@link
+     * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
+     * credentials.
+     *
+     * <p>If this and {@link #getUserHandle()} are both absent, that implies a first-factor
+     * authentication operation - meaning identification of the user is deferred until after
+     * receiving the response from the client.
      *
      * <p>The default is empty (absent).
      *
+     * @see #username(Optional)
+     * @see #userHandle(Optional)
+     * @see #userHandle(ByteArray)
      * @see <a
-     *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#client-side-resident-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
      *     credential</a>
      */
-    public StartAssertionOptionsBuilder username(@NonNull String username) {
-      return this.username(Optional.of(username));
+    public StartAssertionOptionsBuilder username(String username) {
+      return this.username(Optional.ofNullable(username));
+    }
+
+    /**
+     * The user handle of the user to authenticate, if the user has already been identified.
+     *
+     * <p>Mutually exclusive with {@link #username(Optional)}. Setting this to a present value will
+     * set {@link #username(Optional)} to empty.
+     *
+     * <p>If this or {@link #username(Optional)} is present, then {@link
+     * RelyingParty#startAssertion(StartAssertionOptions)} will set {@link
+     * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
+     * credentials.
+     *
+     * <p>If this and {@link #getUsername()} are both absent, that implies a first-factor
+     * authentication operation - meaning identification of the user is deferred until after
+     * receiving the response from the client.
+     *
+     * <p>The default is empty (absent).
+     *
+     * @see #username(String)
+     * @see #username(Optional)
+     * @see #userHandle(ByteArray)
+     * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User
+     *     Handle</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+     *     credential</a>
+     */
+    public StartAssertionOptionsBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
+      this.userHandle = userHandle.orElse(null);
+      if (userHandle.isPresent()) {
+        this.username = null;
+      }
+      return this;
+    }
+
+    /**
+     * The user handle of the user to authenticate, if the user has already been identified.
+     *
+     * <p>Mutually exclusive with {@link #username(Optional)}. Setting this to a non-null value will
+     * set {@link #username(Optional)} to empty.
+     *
+     * <p>If this or {@link #username(Optional)} is present, then {@link
+     * RelyingParty#startAssertion(StartAssertionOptions)} will set {@link
+     * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
+     * credentials.
+     *
+     * <p>If this and {@link #getUsername()} are both absent, that implies a first-factor
+     * authentication operation - meaning identification of the user is deferred until after
+     * receiving the response from the client.
+     *
+     * <p>The default is empty (absent).
+     *
+     * @see #username(String)
+     * @see #username(Optional)
+     * @see #userHandle(Optional)
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+     *     credential</a>
+     */
+    public StartAssertionOptionsBuilder userHandle(ByteArray userHandle) {
+      return this.userHandle(Optional.ofNullable(userHandle));
     }
 
     /**
      * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
      * authentication operation.
+     *
+     * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+     * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+     * verification</a>was performed in this authentication ceremony.
      *
      * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */
@@ -177,11 +307,16 @@ public class StartAssertionOptions {
      * The value for {@link PublicKeyCredentialRequestOptions#getUserVerification()} for this
      * authentication operation.
      *
+     * <p>If set to {@link UserVerificationRequirement#REQUIRED}, then {@link
+     * RelyingParty#finishAssertion(FinishAssertionOptions)} will enforce that <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+     * verification</a>was performed in this authentication ceremony.
+     *
      * <p>The default is {@link UserVerificationRequirement#PREFERRED}.
      */
     public StartAssertionOptionsBuilder userVerification(
-        @NonNull UserVerificationRequirement userVerification) {
-      return this.userVerification(Optional.of(userVerification));
+        UserVerificationRequirement userVerification) {
+      return this.userVerification(Optional.ofNullable(userVerification));
     }
 
     /**
@@ -214,6 +349,14 @@ public class StartAssertionOptions {
      */
     public StartAssertionOptionsBuilder timeout(long timeout) {
       return this.timeout(Optional.of(timeout));
+    }
+
+    /*
+     * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
+     * Consider reverting this workaround if Lombok fixes that issue.
+     */
+    private StartAssertionOptionsBuilder timeout(Long timeout) {
+      return this.timeout(Optional.ofNullable(timeout));
     }
   }
 }

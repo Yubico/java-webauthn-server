@@ -35,7 +35,7 @@ import lombok.NonNull;
 
 /**
  * This enumeration’s values describe authenticators' <a
- * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticator-attachment-modality">attachment
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-attachment-modality">attachment
  * modalities</a>. Relying Parties use this for two purposes:
  *
  * <ul>
@@ -43,12 +43,12 @@ import lombok.NonNull;
  *       navigator.credentials.create()</code> to create a credential, and
  *   <li>to inform the client of the Relying Party's best belief about how to locate the managing
  *       authenticators of the credentials listed in {@link
- *       PublicKeyCredentialRequestOptions#allowCredentials} when calling <code>
+ *       PublicKeyCredentialRequestOptions#getAllowCredentials()} when calling <code>
  *       navigator.credentials.get()</code>.
  * </ul>
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#enumdef-authenticatorattachment">§5.4.5.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-authenticatorattachment">§5.4.5.
  *     Authenticator Attachment Enumeration (enum AuthenticatorAttachment) </a>
  */
 @JsonSerialize(using = JsonStringSerializer.class)
@@ -57,7 +57,7 @@ public enum AuthenticatorAttachment implements JsonStringSerializable {
 
   /**
    * Indicates <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cross-platform-attachment">cross-platform
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#cross-platform-attachment">cross-platform
    * attachment</a>.
    *
    * <p>Authenticators of this class are removable from, and can "roam" among, client platforms.
@@ -66,7 +66,7 @@ public enum AuthenticatorAttachment implements JsonStringSerializable {
 
   /**
    * Indicates <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#platform-attachment">platform
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#platform-attachment">platform
    * attachment</a>.
    *
    * <p>Usually, authenticators of this class are not removable from the platform.

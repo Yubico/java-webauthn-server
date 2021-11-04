@@ -37,13 +37,13 @@ import lombok.Value;
 /**
  * Represents an authenticator's response to a client’s request for generation of a new
  * authentication assertion given the WebAuthn Relying Party's {@linkplain
- * PublicKeyCredentialRequestOptions#challenge challenge} and OPTIONAL {@linkplain
- * PublicKeyCredentialRequestOptions#allowCredentials list of credentials} it is aware of. This
- * response contains a cryptographic {@linkplain #signature} proving possession of the credential
- * private key, and optionally evidence of user consent to a specific transaction.
+ * PublicKeyCredentialRequestOptions#getChallenge()} challenge} and OPTIONAL {@linkplain
+ * PublicKeyCredentialRequestOptions#getAllowCredentials()} list of credentials} it is aware of.
+ * This response contains a cryptographic {@linkplain #signature} proving possession of the
+ * credential private key, and optionally evidence of user consent to a specific transaction.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#authenticatorassertionresponse">§5.2.2.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticatorassertionresponse">§5.2.2.
  *     Web Authentication Assertion (interface AuthenticatorAssertionResponse) </a>
  */
 @Value
@@ -59,7 +59,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
 
   /**
    * The raw signature returned from the authenticator. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
    * authenticatorGetAssertion Operation</a>.
    */
   @NonNull private final ByteArray signature;
@@ -67,7 +67,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
   /**
    * The user handle returned from the authenticator, or empty if the authenticator did not return a
    * user handle. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
    * authenticatorGetAssertion Operation</a>.
    */
   private final ByteArray userHandle;
@@ -94,7 +94,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
   /**
    * The user handle returned from the authenticator, or empty if the authenticator did not return a
    * user handle. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
    * authenticatorGetAssertion Operation</a>.
    */
   public Optional<ByteArray> getUserHandle() {
@@ -112,12 +112,24 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
       private final AuthenticatorAssertionResponseBuilder builder =
           new AuthenticatorAssertionResponseBuilder();
 
+      /**
+       * {@link AuthenticatorAssertionResponseBuilder#authenticatorData(ByteArray)
+       * authenticatorData} is a required parameter.
+       *
+       * @see AuthenticatorAssertionResponseBuilder#authenticatorData(ByteArray)
+       */
       public Step2 authenticatorData(ByteArray authenticatorData) {
         builder.authenticatorData(authenticatorData);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link AuthenticatorAssertionResponseBuilder#clientDataJSON(ByteArray) clientDataJSON} is
+         * a required parameter.
+         *
+         * @see AuthenticatorAssertionResponseBuilder#clientDataJSON(ByteArray)
+         */
         public Step3 clientDataJSON(ByteArray clientDataJSON) {
           builder.clientDataJSON(clientDataJSON);
           return new Step3();
@@ -125,6 +137,12 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
       }
 
       public class Step3 {
+        /**
+         * {@link AuthenticatorAssertionResponseBuilder#signature(ByteArray) signature} is a
+         * required parameter.
+         *
+         * @see AuthenticatorAssertionResponseBuilder#signature(ByteArray)
+         */
         public AuthenticatorAssertionResponseBuilder signature(ByteArray signature) {
           return builder.signature(signature);
         }
@@ -134,7 +152,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     /**
      * The user handle returned from the authenticator, or empty if the authenticator did not return
      * a user handle. See <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
      * authenticatorGetAssertion Operation</a>.
      */
     public AuthenticatorAssertionResponseBuilder userHandle(
@@ -145,7 +163,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
     /**
      * The user handle returned from the authenticator, or empty if the authenticator did not return
      * a user handle. See <a
-     * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#op-get-assertion">§6.3.3 The
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-op-get-assertion">§6.3.3 The
      * authenticatorGetAssertion Operation</a>.
      */
     public AuthenticatorAssertionResponseBuilder userHandle(ByteArray userHandle) {

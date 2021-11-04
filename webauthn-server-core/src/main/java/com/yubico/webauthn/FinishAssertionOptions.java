@@ -45,7 +45,7 @@ public class FinishAssertionOptions {
    * The client's response to the {@link #getRequest() request}.
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#getAssertion">navigator.credentials.get()</a>
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-getAssertion">navigator.credentials.get()</a>
    */
   @NonNull
   private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
@@ -79,12 +79,24 @@ public class FinishAssertionOptions {
     public static class MandatoryStages {
       private final FinishAssertionOptionsBuilder builder = new FinishAssertionOptionsBuilder();
 
+      /**
+       * {@link FinishAssertionOptionsBuilder#request(AssertionRequest) request} is a required
+       * parameter.
+       *
+       * @see FinishAssertionOptionsBuilder#request(AssertionRequest)
+       */
       public Step2 request(AssertionRequest request) {
         builder.request(request);
         return new Step2();
       }
 
       public class Step2 {
+        /**
+         * {@link FinishAssertionOptionsBuilder#response(PublicKeyCredential) response} is a
+         * required parameter.
+         *
+         * @see FinishAssertionOptionsBuilder#response(PublicKeyCredential)
+         */
         public FinishAssertionOptionsBuilder response(
             PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
                 response) {

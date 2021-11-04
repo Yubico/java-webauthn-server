@@ -32,7 +32,7 @@ import java.util.Optional;
  * associated with or scoped to, respectively.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialentity">§5.4.1.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialentity">§5.4.1.
  *     Public Key Entity Description (dictionary PublicKeyCredentialEntity) </a>
  */
 public interface PublicKeyCredentialEntity {
@@ -91,6 +91,10 @@ public interface PublicKeyCredentialEntity {
    * icon member's value. Authenticators MAY ignore an icon member's value if its length is greater
    * than 128 bytes. The URL's scheme MAY be "data" to avoid fetches of the URL, at the cost of
    * needing more storage.
+   *
+   * @deprecated The <code>icon</code> field has been removed from WebAuthn Level 2. This method
+   *     will be removed in the next major version of this library.
    */
-  Optional<URL> getIcon();
+  @Deprecated
+  Optional<URL> getIcon(); // TODO v2.0: delete this
 }

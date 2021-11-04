@@ -26,7 +26,13 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.JacksonCodecs;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RelyingParty;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -39,7 +45,7 @@ import lombok.Value;
  * Parameters for a call to <code>navigator.credentials.create()</code>.
  *
  * @see <a
- *     href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-publickeycredentialcreationoptions">§5.4.
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialcreationoptions">§5.4.
  *     Options for Credential Creation (dictionary PublicKeyCredentialCreationOptions)</a>
  */
 @Value
@@ -50,9 +56,9 @@ public class PublicKeyCredentialCreationOptions {
    * Contains data about the Relying Party responsible for the request.
    *
    * <p>Its value's {@link RelyingPartyIdentity#getId() id} member specifies the <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#rp-id">RP ID</a> the credential should
-   * be scoped to. If omitted, its value will be set by the client. See {@link RelyingPartyIdentity}
-   * for further details.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#rp-id">RP ID</a> the credential
+   * should be scoped to. If omitted, its value will be set by the client. See {@link
+   * RelyingPartyIdentity} for further details.
    */
   @NonNull private final RelyingPartyIdentity rp;
 
@@ -62,7 +68,7 @@ public class PublicKeyCredentialCreationOptions {
   /**
    * A challenge intended to be used for generating the newly created credential’s attestation
    * object. See the <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#cryptographic-challenges">§13.1
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-cryptographic-challenges">§13.1
    * Cryptographic Challenges</a> security consideration.
    */
   @NonNull private final ByteArray challenge;
@@ -107,8 +113,8 @@ public class PublicKeyCredentialCreationOptions {
    * <p>For example, the caller may request that only authenticators with certain capabilities be
    * used to create the credential, or that particular information be returned in the attestation
    * object. Some extensions are defined in <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#extensions">§9 WebAuthn Extensions</a>;
-   * consult the IANA "WebAuthn Extension Identifier" registry established by <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9 WebAuthn
+   * Extensions</a>; consult the IANA "WebAuthn Extension Identifier" registry established by <a
    * href="https://tools.ietf.org/html/draft-hodges-webauthn-registries">[WebAuthn-Registries]</a>
    * for an up-to-date list of registered WebAuthn Extensions.
    */
@@ -141,6 +147,67 @@ public class PublicKeyCredentialCreationOptions {
         extensions == null ? RegistrationExtensionInputs.builder().build() : extensions;
   }
 
+  /**
+   * Serialize this {@link PublicKeyCredentialCreationOptions} value to JSON suitable for sending to
+   * the client.
+   *
+   * <p>Any {@link ByteArray} values in this data structure will be {@link ByteArray#getBase64Url()
+   * Base64Url} encoded. Those values MUST be decoded into <code>BufferSource</code> values (such as
+   * <code>Uint8Array</code>) on the client side before calling <code>navigator.credentials.create()
+   * </code>.
+   *
+   * <p>After decoding binary values, the resulting JavaScript object is suitable for passing as an
+   * argument to <code>navigator.credentials.create()</code>.
+   *
+   * @return a JSON value suitable for sending to the client and passing as an argument to <code>
+   *     navigator.credentials.create()</code>, after decoding binary options from Base64Url
+   *     strings.
+   * @throws JsonProcessingException if JSON serialization fails.
+   */
+  public String toCredentialsCreateJson() throws JsonProcessingException {
+    ObjectMapper json = JacksonCodecs.json();
+    ObjectNode result = json.createObjectNode();
+    result.set("publicKey", json.valueToTree(this));
+    return json.writeValueAsString(result);
+  }
+
+  /**
+   * Encode this {@link PublicKeyCredentialCreationOptions} to JSON. The inverse of {@link
+   * #fromJson(String)}.
+   *
+   * <p>This method is suitable for encoding the {@link PublicKeyCredentialCreationOptions} for
+   * temporary storage so that it can later be passed as an argument to {@link
+   * RelyingParty#finishRegistration(FinishRegistrationOptions)}. The {@link #fromJson(String)}
+   * factory function is guaranteed to restore an identical {@link
+   * PublicKeyCredentialCreationOptions} instance.
+   *
+   * <p>Note that encoding might not be needed if you can simply keep the {@link
+   * PublicKeyCredentialCreationOptions} instance in server memory.
+   *
+   * @return this {@link PublicKeyCredentialCreationOptions} encoded to JSON.
+   * @throws JsonProcessingException
+   */
+  public String toJson() throws JsonProcessingException {
+    return JacksonCodecs.json().writeValueAsString(this);
+  }
+
+  /**
+   * Decode an {@link PublicKeyCredentialCreationOptions} from JSON. The inverse of {@link
+   * #toJson()}.
+   *
+   * <p>If the JSON was generated by the {@link #toJson()} method, then {@link #fromJson(String)} in
+   * the same library version guarantees to restore an identical {@link
+   * PublicKeyCredentialCreationOptions} instance. This is not guaranteed between different library
+   * versions.
+   *
+   * @return a {@link PublicKeyCredentialCreationOptions} decoded from the input JSON.
+   * @throws JsonProcessingException
+   */
+  public static PublicKeyCredentialCreationOptions fromJson(String json)
+      throws JsonProcessingException {
+    return JacksonCodecs.json().readValue(json, PublicKeyCredentialCreationOptions.class);
+  }
+
   public Optional<Long> getTimeout() {
     return Optional.ofNullable(timeout);
   }
@@ -166,30 +233,50 @@ public class PublicKeyCredentialCreationOptions {
       private PublicKeyCredentialCreationOptionsBuilder builder =
           new PublicKeyCredentialCreationOptionsBuilder();
 
-      /** @see PublicKeyCredentialCreationOptions#getRp() */
+      /**
+       * {@link PublicKeyCredentialCreationOptionsBuilder#rp(RelyingPartyIdentity) rp} is a required
+       * parameter.
+       *
+       * @see PublicKeyCredentialCreationOptionsBuilder#rp(RelyingPartyIdentity)
+       */
       public Step2 rp(RelyingPartyIdentity rp) {
         builder.rp(rp);
         return new Step2();
       }
 
-      /** @see PublicKeyCredentialCreationOptions#getUser() */
       public class Step2 {
+        /**
+         * {@link PublicKeyCredentialCreationOptionsBuilder#user(UserIdentity) user} is a required
+         * parameter.
+         *
+         * @see PublicKeyCredentialCreationOptionsBuilder#user(UserIdentity)
+         */
         public Step3 user(UserIdentity user) {
           builder.user(user);
           return new Step3();
         }
       }
 
-      /** @see PublicKeyCredentialCreationOptions#getChallenge() */
       public class Step3 {
+        /**
+         * {@link PublicKeyCredentialCreationOptionsBuilder#challenge(ByteArray) challenge} is a
+         * required parameter.
+         *
+         * @see PublicKeyCredentialCreationOptionsBuilder#challenge(ByteArray)
+         */
         public Step4 challenge(ByteArray challenge) {
           builder.challenge(challenge);
           return new Step4();
         }
       }
 
-      /** @see PublicKeyCredentialCreationOptions#getPubKeyCredParams() */
       public class Step4 {
+        /**
+         * {@link PublicKeyCredentialCreationOptionsBuilder#pubKeyCredParams(List) pubKeyCredParams}
+         * is a required parameter.
+         *
+         * @see PublicKeyCredentialCreationOptionsBuilder#pubKeyCredParams(List)
+         */
         public PublicKeyCredentialCreationOptionsBuilder pubKeyCredParams(
             List<PublicKeyCredentialParameters> pubKeyCredParams) {
           return builder.pubKeyCredParams(pubKeyCredParams);

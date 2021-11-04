@@ -32,7 +32,7 @@ import lombok.ToString;
 /**
  * The flags bit field of an authenticator data structure, decoded as a high-level object.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#flags">Table 1</a>
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#flags">Table 1</a>
  */
 @ToString
 @EqualsAndHashCode

@@ -112,6 +112,11 @@ public class Attestation implements Serializable {
     public static class MandatoryStages {
       private final AttestationBuilder builder = new AttestationBuilder();
 
+      /**
+       * {@link AttestationBuilder#trusted(boolean) trusted} is a required parameter.
+       *
+       * @see AttestationBuilder#trusted(boolean)
+       */
       public AttestationBuilder trusted(boolean trusted) {
         return builder.trusted(trusted);
       }

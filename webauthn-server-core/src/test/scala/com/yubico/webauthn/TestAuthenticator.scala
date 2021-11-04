@@ -412,16 +412,6 @@ object TestAuthenticator {
           },
         )
 
-        json.set(
-          "clientExtensions",
-          JacksonCodecs
-            .json()
-            .readTree(JacksonCodecs.json().writeValueAsString(clientExtensions)),
-        )
-        authenticatorExtensions foreach { extensions =>
-          json.set("authenticatorExtensions", extensions)
-        }
-
         json
       })
     val clientDataJsonBytes = toBytes(clientDataJson)
@@ -442,6 +432,9 @@ object TestAuthenticator {
           aaguid = aaguid,
           publicKeyCose = publicKeyCose,
         )
+      ),
+      extensionsCborBytes = authenticatorExtensions map (ext =>
+        new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(ext))
       ),
     )
 
@@ -503,18 +496,26 @@ object TestAuthenticator {
     )
   }
 
-  def createUnattestedCredential(): (
+  def createUnattestedCredential(
+      authenticatorExtensions: Option[JsonNode] = None,
+      challenge: ByteArray = Defaults.challenge,
+  ): (
       PublicKeyCredential[
         AuthenticatorAttestationResponse,
         ClientRegistrationExtensionOutputs,
       ],
       KeyPair,
   ) =
-    createCredential(attestationMaker = AttestationMaker.none())
+    createCredential(
+      attestationMaker = AttestationMaker.none(),
+      authenticatorExtensions = authenticatorExtensions,
+      challenge = challenge,
+    )
 
   def createAssertionFromTestData(
       testData: RegistrationTestData,
       request: PublicKeyCredentialRequestOptions,
+      authenticatorExtensions: Option[JsonNode] = None,
       origin: String = Defaults.origin,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
@@ -525,7 +526,7 @@ object TestAuthenticator {
   ] = {
     createAssertion(
       alg = testData.alg,
-      authenticatorExtensions = None,
+      authenticatorExtensions = authenticatorExtensions,
       challenge = request.getChallenge,
       clientData = None,
       clientExtensions = ClientAssertionExtensionOutputs.builder().build(),
@@ -548,6 +549,7 @@ object TestAuthenticator {
       credentialId: ByteArray = Defaults.credentialId,
       credentialKey: KeyPair = Defaults.credentialKey,
       origin: String = Defaults.origin,
+      signatureCount: Option[Int] = None,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
       userHandle: Option[ByteArray] = None,
@@ -579,21 +581,18 @@ object TestAuthenticator {
           },
         )
 
-        json.set(
-          "clientExtensions",
-          JacksonCodecs
-            .json()
-            .readTree(JacksonCodecs.json().writeValueAsString(clientExtensions)),
-        )
-        authenticatorExtensions foreach { extensions =>
-          json.set("authenticatorExtensions", extensions)
-        }
-
         json
       })
     val clientDataJsonBytes = toBytes(clientDataJson)
 
-    val authDataBytes: ByteArray = makeAuthDataBytes(rpId = Defaults.rpId)
+    val authDataBytes: ByteArray =
+      makeAuthDataBytes(
+        signatureCount = signatureCount,
+        rpId = Defaults.rpId,
+        extensionsCborBytes = authenticatorExtensions map (ext =>
+          new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(ext))
+        ),
+      )
 
     val response = AuthenticatorAssertionResponse
       .builder()
@@ -845,7 +844,7 @@ object TestAuthenticator {
 
   def makeAuthDataBytes(
       rpId: String = Defaults.rpId,
-      counterBytes: ByteArray = ByteArray.fromHex("00000539"),
+      signatureCount: Option[Int] = None,
       attestedCredentialDataBytes: Option[ByteArray] = None,
       extensionsCborBytes: Option[ByteArray] = None,
   ): ByteArray =
@@ -857,7 +856,9 @@ object TestAuthenticator {
                    else 0x00) | (if (extensionsCborBytes.isDefined) 0x80
                                  else 0x00)).toByte
         )
-        ++ counterBytes.getBytes.toVector
+        ++ BinaryUtil
+          .encodeUint32(signatureCount.getOrElse(1337).toLong)
+          .toVector
         ++ (attestedCredentialDataBytes map {
           _.getBytes.toVector
         } getOrElse Nil)

@@ -28,7 +28,7 @@ package com.yubico.webauthn.data;
  * Web Authentication supports several attestation types, defining the semantics of attestation
  * statements and their underlying trust models.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+ * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
  *     Attestation Types</a>
  */
 public enum AttestationType {
@@ -36,10 +36,10 @@ public enum AttestationType {
    * In the case of basic attestation, the authenticator’s attestation key pair is specific to an
    * authenticator model. Thus, authenticators of the same model often share the same attestation
    * key pair. See <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sec-attestation-privacy">§14.4
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-privacy">§14.4
    * Attestation Privacy</a> for further information.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#basic-attestation">Basic
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#basic-attestation">Basic
    *     Attestation</a>
    */
   BASIC,
@@ -50,7 +50,7 @@ public enum AttestationType {
    * create the attestation signature. Authenticators without meaningful protection measures for an
    * attestation private key typically use this attestation type.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#self-attestation">Self
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#self-attestation">Self
    *     Attestation</a>
    */
   SELF_ATTESTATION,
@@ -73,7 +73,7 @@ public enum AttestationType {
    * are, in general, distinguishable only with externally provided knowledge regarding the contents
    * of the attestation certificates conveyed in the attestation statement.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#attestation-ca">Attestation
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-ca">Attestation
    *     CA</a>
    */
   ATTESTATION_CA,
@@ -105,25 +105,25 @@ public enum AttestationType {
    * single DAA-Issuer. These DAA credentials are used along with blinding to sign the attested
    * credential data. The concept of blinding avoids the DAA credentials being misused as global
    * correlation handle. WebAuthn supports DAA using elliptic curve cryptography and bilinear
-   * pairings, called ECDAA. See the <a
-   * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
+   * pairings, called ECDAA. See the <a href=
+   * "https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
    * ECDAA Algorithm</a> for details.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#ecdaa">Elliptic Curve based
+   * @see <a href= "https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#ecdaa">Elliptic Curve based
    *     Direct Anonymous Attestation (ECDAA)</a>
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
+   * @see <a href=
+   *     "https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
    *     ECDAA Algorithm</a>
    */
   ECDAA,
 
   /**
    * In this case, no attestation information is available. See also <a
-   * href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None Attestation
-   * Statement Format</a>.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-none-attestation">§8.7 None
+   * Attestation Statement Format</a>.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#none-attestation">§8.7 None
-   *     Attestation Statement Format</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-none-attestation">§8.7
+   *     None Attestation Statement Format</a>
    */
   NONE,
 
@@ -133,10 +133,11 @@ public enum AttestationType {
    * <p>For example, the attestation statement might be using a new attestation statement format not
    * yet supported by the library.
    *
-   * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#sctn-attestation-types">§6.4.3.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
    *     Attestation Types</a>
    * @see <a
-   *     href="https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#defined-attestation-formats">§8.
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-defined-attestation-formats">§8.
    *     Defined Attestation Statement Formats</a>
    */
   UNKNOWN

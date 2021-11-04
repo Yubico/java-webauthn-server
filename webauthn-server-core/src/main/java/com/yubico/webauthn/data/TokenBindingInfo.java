@@ -36,7 +36,8 @@ import lombok.Value;
  * Information about the state of the <a href="https://tools.ietf.org/html/rfc8471">Token Binding
  * protocol</a> used when communicating with the Relying Party.
  *
- * @see <a href="https://www.w3.org/TR/2019/PR-webauthn-20190117/#dictdef-tokenbinding">dictionary
+ * @see <a
+ *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-tokenbinding">dictionary
  *     TokenBinding</a>
  */
 @Value
@@ -45,8 +46,8 @@ public class TokenBindingInfo {
   @NonNull private final TokenBindingStatus status;
 
   /**
-   * This member MUST be present if {@link #status} is present, and MUST be a base64url encoding of
-   * the Token Binding ID that was used when communicating with the Relying Party.
+   * This member MUST be present if {@link #status} is {@link TokenBindingStatus#PRESENT PRESENT},
+   * and MUST be the Token Binding ID that was used when communicating with the Relying Party.
    */
   private final ByteArray id;
 
