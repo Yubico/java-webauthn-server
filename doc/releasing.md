@@ -34,7 +34,19 @@ Release candidate versions
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
- 7. Push to GitHub:
+ 7. Push to GitHub.
+
+    If the pre-release makes significant changes to the project README, such
+    that the README does not accurately reflect the latest non-pre-release
+    version, push the changes on a separate release branch:
+
+    ```
+    $ git checkout -b release-1.4.0
+    $ git push origin release-1.4.0 1.4.0-RC1
+    ```
+
+    If the README still accurately reflects the latest non-pre-release version,
+    you can simply push to master instead:
 
     ```
     $ git push origin master 1.4.0-RC1
