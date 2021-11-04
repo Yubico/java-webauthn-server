@@ -5,6 +5,7 @@ New features:
 * New method `RegisteredCredential.builder().publicKeyEs256Raw(ByteArray)`. This
   is a mutually exclusive alternative to `.publicKeyCose(ByteArray)`, for easier
   backwards-compatibility with U2F-formatted (Raw ANSI X9.62) public keys.
+* "Migrating from U2F" section added to project README
 
 
 == Version 1.11.0 ==
