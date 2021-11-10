@@ -27,6 +27,7 @@ package com.yubico.webauthn;
 import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.data.AttestationObject;
@@ -34,7 +35,6 @@ import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -282,7 +282,6 @@ final class PackedAttestationStatementVerifier
     }
 
     final String ouValue = "Authenticator Attestation";
-    final String idFidoGenCeAaguid = "1.3.6.1.4.1.45724.1.1.4";
     final Set<String> countries =
         CollectionUtil.immutableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
 
@@ -301,53 +300,17 @@ final class PackedAttestationStatementVerifier
         ouValue,
         getDnField("OU", cert));
 
-    Optional.ofNullable(cert.getExtensionValue(idFidoGenCeAaguid))
-        .map(ext -> new ByteArray(parseAaguid(ext)))
+    CertificateParser.parseFidoAaguidExtension(cert)
         .ifPresent(
-            (ByteArray value) -> {
+            extensionAaguid -> {
               ExceptionUtil.assure(
-                  value.equals(aaguid),
-                  "X.509 extension %s (id-fido-gen-ce-aaguid) is present but does not match the authenticator AAGUID.",
-                  idFidoGenCeAaguid);
-
-              ExceptionUtil.assure(
-                  !cert.getCriticalExtensionOIDs().contains(idFidoGenCeAaguid),
-                  "X.509 extension %s (id-fido-gen-ce-aaguid) must not be marked critical.",
-                  idFidoGenCeAaguid);
+                  Arrays.equals(aaguid.getBytes(), extensionAaguid),
+                  "X.509 extension \"id-fido-gen-ce-aaguid\" is present but does not match the authenticator AAGUID.");
             });
 
     ExceptionUtil.assure(
         cert.getBasicConstraints() == -1, "Attestation certificate must not be a CA certificate.");
 
     return true;
-  }
-
-  /**
-   * Parses an AAGUID into bytes. Refer to <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-packed-attestation-cert-requirements">Packed
-   * Attestation Statement Certificate Requirements</a> on the W3C web site for details of the ASN.1
-   * structure that this method parses.
-   *
-   * @param bytes the bytes making up value of the extension
-   * @return the bytes of the AAGUID
-   */
-  private static byte[] parseAaguid(byte[] bytes) {
-
-    if (bytes != null && bytes.length == 20) {
-      ByteBuffer buffer = ByteBuffer.wrap(bytes);
-
-      if (buffer.get() == (byte) 0x04
-          && buffer.get() == (byte) 0x12
-          && buffer.get() == (byte) 0x04
-          && buffer.get() == (byte) 0x10) {
-        byte[] aaguidBytes = new byte[16];
-        buffer.get(aaguidBytes);
-
-        return aaguidBytes;
-      }
-    }
-
-    throw new IllegalArgumentException(
-        "X.509 extension 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) is not valid.");
   }
 }
