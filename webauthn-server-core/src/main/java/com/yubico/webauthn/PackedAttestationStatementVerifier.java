@@ -331,7 +331,7 @@ final class PackedAttestationStatementVerifier
    * @param bytes the bytes making up value of the extension
    * @return the bytes of the AAGUID
    */
-  private byte[] parseAaguid(byte[] bytes) {
+  private static byte[] parseAaguid(byte[] bytes) {
 
     if (bytes != null && bytes.length == 20) {
       ByteBuffer buffer = ByteBuffer.wrap(bytes);
