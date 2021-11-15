@@ -588,7 +588,7 @@ final class FinishRegistrationSteps {
         case ANONYMIZATION_CA:
         case ATTESTATION_CA:
         case BASIC:
-          return attestationMetadata().filter(Attestation::isTrusted).isPresent();
+          return attestationMetadata().map(Attestation::isTrusted).orElse(false);
         default:
           throw new UnsupportedOperationException(
               "Attestation type not implemented: " + attestationType);
