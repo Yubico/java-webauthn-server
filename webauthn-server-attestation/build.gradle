@@ -15,6 +15,18 @@ targetCompatibility = 1.8
 
 evaluationDependsOn(':webauthn-server-core')
 
+sourceSets {
+  integrationTest {
+    compileClasspath += sourceSets.main.output
+    runtimeClasspath += sourceSets.main.output
+  }
+}
+
+configurations {
+  integrationTestImplementation.extendsFrom testImplementation
+  integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 dependencies {
   api(platform(rootProject))
 
@@ -35,6 +47,7 @@ dependencies {
     project(':yubico-util-scala'),
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
     'junit:junit',
+    'org.bouncycastle:bcpkix-jdk15on',
     'org.mockito:mockito-core',
     'org.scala-lang:scala-library',
     'org.scalacheck:scalacheck_2.13',
@@ -47,13 +60,17 @@ dependencies {
       strictly '[1.7.25,1.8-a)' // Pre-1.8 version required by slf4j-test
     }
   }
-
-  testRuntimeOnly(
-    // Transitive dependency from :webauthn-server-core:test
-    'org.bouncycastle:bcpkix-jdk15on',
-  )
 }
 
+tasks.register('integrationTest', Test) {
+  description = 'Runs integration tests.'
+  group = 'verification'
+
+  testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  classpath = sourceSets.integrationTest.runtimeClasspath
+  shouldRunAfter test
+  check.dependsOn it
+}
 
 jar {
   manifest {

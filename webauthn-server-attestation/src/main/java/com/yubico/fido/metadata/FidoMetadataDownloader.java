@@ -1,0 +1,846 @@
+// Copyright (c) 2015-2021, Yubico AB
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+package com.yubico.fido.metadata;
+
+import com.fasterxml.jackson.core.Base64Variants;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yubico.internal.util.BinaryUtil;
+import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.JacksonCodecs;
+import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.exception.Base64UrlException;
+import com.yubico.webauthn.data.exception.HexException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
+import java.security.cert.X509Certificate;
+import java.time.Clock;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Utility for downloading, caching and verifying Fido Metadata Service BLOBs and associated
+ * certificates.
+ *
+ * <p>Use the {@link #builder() builder} to configure settings, then use the {@link #loadBlob()}
+ * method to load the metadata BLOB.
+ */
+@Slf4j
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public final class FidoMetadataDownloader {
+
+  @NonNull private final Set<String> expectedLegalHeaders;
+  private final X509Certificate trustRootCertificate;
+  private final URL trustRootUrl;
+  private final Set<ByteArray> trustRootSha256;
+  private final File trustRootCacheFile;
+  private final Supplier<Optional<ByteArray>> trustRootCacheSupplier;
+  private final Consumer<ByteArray> trustRootCacheConsumer;
+  private final String blobJwt;
+  private final URL blobUrl;
+  private final File blobCacheFile;
+  private final Supplier<Optional<ByteArray>> blobCacheSupplier;
+  private final Consumer<ByteArray> blobCacheConsumer;
+  @NonNull private final Clock clock;
+
+  /**
+   * Begin configuring a {@link FidoMetadataDownloader} instance. See the {@link
+   * FidoMetadataDownloaderBuilder.Step1 Step1} type.
+   *
+   * @see FidoMetadataDownloaderBuilder.Step1
+   */
+  public static FidoMetadataDownloaderBuilder.Step1 builder() {
+    return new FidoMetadataDownloaderBuilder.Step1();
+  }
+
+  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+  public static class FidoMetadataDownloaderBuilder {
+    @NonNull private final Set<String> expectedLegalHeaders;
+    private final X509Certificate trustRootCertificate;
+    private final URL trustRootUrl;
+    private final Set<ByteArray> trustRootSha256;
+    private final File trustRootCacheFile;
+    private final Supplier<Optional<ByteArray>> trustRootCacheSupplier;
+    private final Consumer<ByteArray> trustRootCacheConsumer;
+    private final String blobJwt;
+    private final URL blobUrl;
+    private final File blobCacheFile;
+    private final Supplier<Optional<ByteArray>> blobCacheSupplier;
+    private final Consumer<ByteArray> blobCacheConsumer;
+
+    @NonNull private Clock clock = Clock.systemUTC();
+
+    public FidoMetadataDownloader build() {
+      return new FidoMetadataDownloader(
+          expectedLegalHeaders,
+          trustRootCertificate,
+          trustRootUrl,
+          trustRootSha256,
+          trustRootCacheFile,
+          trustRootCacheSupplier,
+          trustRootCacheConsumer,
+          blobJwt,
+          blobUrl,
+          blobCacheFile,
+          blobCacheSupplier,
+          blobCacheConsumer,
+          clock);
+    }
+
+    /**
+     * Step 1: Set the legal header to expect from the FIDO Metadata Service.
+     *
+     * <p>By using the FIDO Metadata Service, you will be subject to its terms of service. This step
+     * serves two purposes:
+     *
+     * <ol>
+     *   <li>To remind you and any code reviewers that you need to read those terms of service
+     *       before using this feature.
+     *   <li>To help you detect if the legal header changes, so you can take appropriate action.
+     * </ol>
+     *
+     * <p>See {@link Step1#expectLegalHeader(String...)}.
+     *
+     * @see Step1#expectLegalHeader(String...)
+     */
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Step1 {
+
+      /**
+       * Set legal headers expected in the metadata BLOB.
+       *
+       * <p>By using the FIDO Metadata Service, you will be subject to its terms of service. This
+       * builder step serves two purposes:
+       *
+       * <ol>
+       *   <li>To remind you and any code reviewers that you need to read those terms of service
+       *       before using this feature.
+       *   <li>To help you detect if the legal header changes, so you can take appropriate action.
+       * </ol>
+       *
+       * <p>If the legal header in the downloaded BLOB does not equal any of the <code>
+       * expectedLegalHeaders</code>, an {@link UnexpectedLegalHeader} exception will be thrown in
+       * the finalizing builder step.
+       *
+       * <p>Note that this library makes no guarantee that a change to the FIDO Metadata Service
+       * terms of service will also cause a change to the legal header in the BLOB.
+       *
+       * <p>At the time of this library release, the current legal header is <code>
+       * "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/"
+       * </code>.
+       *
+       * @param expectedLegalHeaders the set of BLOB legal headers you expect in the metadata BLOB
+       *     payload.
+       */
+      public Step2 expectLegalHeader(@NonNull String... expectedLegalHeaders) {
+        return new Step2(Stream.of(expectedLegalHeaders).collect(Collectors.toSet()));
+      }
+    }
+
+    /**
+     * Step 2: Configure how to retrieve the FIDO Metadata Service trust root certificate when
+     * necessary.
+     *
+     * <p>This step offers three mutually exclusive options:
+     *
+     * <ol>
+     *   <li>Use the default download URL and certificate hash. This is the main intended use case.
+     *       See {@link #useDefaultTrustRoot()}.
+     *   <li>Use a custom download URL and certificate hash. This is for future-proofing in case the
+     *       trust root certificate changes and there is no new release of this library. See {@link
+     *       #downloadTrustRoot(URL, Set)}.
+     *   <li>Use a pre-retrieved trust root certificate. It is up to you to perform any integrity
+     *       checks and cache it as desired. See {@link #useTrustRoot(X509Certificate)}.
+     * </ol>
+     */
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Step2 {
+
+      @NonNull private final Set<String> expectedLegalHeaders;
+
+      /**
+       * Download the trust root certificate from a hard-coded URL and verify it against a
+       * hard-coded SHA-256 hash.
+       *
+       * <p>This is an alias of:
+       *
+       * <pre>
+       * downloadTrustRoot(
+       *   new URL("https://secure.globalsign.com/cacert/root-r3.crt"),
+       *   Collections.singleton(ByteArray.fromHex("cbb522d7b7f127ad6a0113865bdf1cd4102e7d0759af635a7cf4720dc963c53b"))
+       * )
+       * </pre>
+       *
+       * This is the current FIDO Metadata Service trust root certificate at the time of this
+       * library release.
+       *
+       * @see #downloadTrustRoot(URL, Set)
+       */
+      public Step3 useDefaultTrustRoot() {
+        try {
+          return downloadTrustRoot(
+              new URL("https://secure.globalsign.com/cacert/root-r3.crt"),
+              Collections.singleton(
+                  ByteArray.fromHex(
+                      "cbb522d7b7f127ad6a0113865bdf1cd4102e7d0759af635a7cf4720dc963c53b")));
+        } catch (MalformedURLException e) {
+          throw new RuntimeException(
+              "Bad hard-coded trust root certificate URL. Please file a bug report.", e);
+        } catch (HexException e) {
+          throw new RuntimeException(
+              "Bad hard-coded trust root certificate hash. Please file a bug report.", e);
+        }
+      }
+
+      /**
+       * Download the trust root certificate from the given HTTPS <code>url</code> and verify its
+       * SHA-256 hash against <code>acceptedCertSha256</code>.
+       *
+       * <p>The certificate will be downloaded if it does not exist in the cache, or if the cached
+       * certificate is not currently valid.
+       *
+       * <p>If the cert is downloaded, it is also written to the cache {@link File} or {@link
+       * Consumer} configured in the previous step.
+       *
+       * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
+       * @param acceptedCertSha256 a set of SHA-256 hashes to verify the downloaded certificate
+       *     against. The downloaded certificate MUST match at least one of these hashes.
+       */
+      public Step3 downloadTrustRoot(@NonNull URL url, @NonNull Set<ByteArray> acceptedCertSha256) {
+        return new Step3(this, null, url, acceptedCertSha256);
+      }
+
+      /**
+       * Use the given trust root certificate. It is the caller's responsibility to perform any
+       * integrity checks and/or caching logic.
+       *
+       * @param trustRootCertificate the certificate to use as the FIDO Metadata Service trust root.
+       */
+      public Step4 useTrustRoot(@NonNull X509Certificate trustRootCertificate) {
+        return new Step4(new Step3(this, trustRootCertificate, null, null), null, null, null);
+      }
+    }
+
+    /**
+     * Step 3: Configure how to cache the trust root certificate.
+     *
+     * <p>This step offers two mutually exclusive options:
+     *
+     * <ol>
+     *   <li>Cache the trust root certificate in a {@link File}. See {@link
+     *       Step3#useTrustRootCacheFile(File)}.
+     *   <li>Cache the trust root certificate using a {@link Supplier} to read the cache and a
+     *       {@link Consumer} to write the cache. See {@link Step3#useTrustRootCache(Supplier,
+     *       Consumer)}.
+     * </ol>
+     */
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Step3 {
+      @NonNull private final Step2 step2;
+      private final X509Certificate trustRootCertificate;
+      private final URL trustRootUrl;
+      private final Set<ByteArray> trustRootSha256;
+
+      /**
+       * Cache the trust root certificate in the file <code>cacheFile</code>.
+       *
+       * <p>If <code>cacheFile</code> exists, is a normal file, is readable, matches one of the
+       * SHA-256 hashes configured in the previous step, and contains a currently valid X.509
+       * certificate, then it will be used as the trust root for the FIDO Metadata Service blob.
+       *
+       * <p>Otherwise, the trust root certificate will be downloaded and written to this file.
+       */
+      public Step4 useTrustRootCacheFile(@NonNull File cacheFile) {
+        return new Step4(this, cacheFile, null, null);
+      }
+
+      /**
+       * Cache the trust root certificate using a {@link Supplier} to read the cache, and using a
+       * {@link Consumer} to write the cache.
+       *
+       * <p>If <code>getCachedTrustRootCert</code> returns non-empty, the value matches one of the
+       * SHA-256 hashes configured in the previous step, and is a currently valid X.509 certificate,
+       * then it will be used as the trust root for the FIDO Metadata Service blob.
+       *
+       * <p>Otherwise, the trust root certificate will be downloaded and written to <code>
+       * writeCachedTrustRootCert</code>.
+       *
+       * @param getCachedTrustRootCert a {@link Supplier} that fetches the cached trust root
+       *     certificate if it exists. The returned value, if any, should be the trust root
+       *     certificate in X.509 DER format.
+       * @param writeCachedTrustRootCert a {@link Consumer} that accepts the trust root certificate
+       *     in X.509 DER format and writes it to the cache.
+       */
+      public Step4 useTrustRootCache(
+          @NonNull Supplier<Optional<ByteArray>> getCachedTrustRootCert,
+          @NonNull Consumer<ByteArray> writeCachedTrustRootCert) {
+        return new Step4(this, null, getCachedTrustRootCert, writeCachedTrustRootCert);
+      }
+    }
+
+    /**
+     * Step 4: Configure how to fetch the FIDO Metadata Service metadata BLOB.
+     *
+     * <p>This step offers three mutually exclusive options:
+     *
+     * <ol>
+     *   <li>Use the default download URL. This is the main intended use case. See {@link
+     *       #useDefaultBlob()}.
+     *   <li>Use a custom download URL. This is for future-proofing in case the BLOB download URL
+     *       changes and there is no new release of this library. See {@link #downloadBlob(URL)}.
+     *   <li>Use a pre-retrieved BLOB. The signature will still be verified, but it is up to you to
+     *       renew it when appropriate and perform any caching as desired. See {@link
+     *       #useBlob(String)}.
+     * </ol>
+     */
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Step4 {
+      @NonNull private final Step3 step3;
+      private final File trustRootCacheFile;
+      private final Supplier<Optional<ByteArray>> trustRootCacheSupplier;
+      private final Consumer<ByteArray> trustRootCacheConsumer;
+
+      /**
+       * Download the metadata BLOB from a hard-coded URL.
+       *
+       * <p>This is an alias of <code>downloadBlob(new URL("https://mds.fidoalliance.org/"))</code>.
+       *
+       * <p>This is the current FIDO Metadata Service BLOB download URL at the time of this library
+       * release.
+       *
+       * @see #downloadBlob(URL)
+       */
+      public Step5 useDefaultBlob() {
+        try {
+          return downloadBlob(new URL("https://mds.fidoalliance.org/"));
+        } catch (MalformedURLException e) {
+          throw new RuntimeException(
+              "Bad hard-coded trust root certificate URL. Please file a bug report.", e);
+        }
+      }
+
+      /**
+       * Download the metadata BLOB from the given HTTPS <code>url</code>.
+       *
+       * <p>The BLOB will be downloaded if it does not exist in the cache, or if the <code>
+       * nextUpdate</code> property of the cached BLOB is the current date or earlier.
+       *
+       * <p>If the BLOB is downloaded, it is also written to the cache {@link File} or {@link
+       * Consumer} configured in the previous step.
+       *
+       * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
+       */
+      public Step5 downloadBlob(@NonNull URL url) {
+        return new Step5(this, null, url);
+      }
+
+      /**
+       * Use the given metadata BLOB; never download it.
+       *
+       * <p>The blob signature and trust chain will still be verified, but it is the caller's
+       * responsibility to renew the metadata BLOB according to the <a
+       * href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob-object-processing-rules">FIDO
+       * Metadata Service specification</a>.
+       *
+       * @param blobJwt the Metadata BLOB in JWT format as defined in <a
+       *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob">FIDO
+       *     Metadata Service §3.1.7. Metadata BLOB</a>. The byte array should not be
+       *     Base64-decoded.
+       * @see <a
+       *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob">FIDO
+       *     Metadata Service §3.1.7. Metadata BLOB</a>
+       * @see <a
+       *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob-object-processing-rules">FIDO
+       *     Metadata Service §3.2. Metadata BLOB object processing rules</a>
+       */
+      public FidoMetadataDownloaderBuilder useBlob(@NonNull String blobJwt) {
+        return finishRequiredSteps(new Step5(this, blobJwt, null), null, null, null);
+      }
+    }
+
+    /**
+     * Step 5: Configure how to cache the metadata BLOB.
+     *
+     * <p>This step offers two mutually exclusive options:
+     *
+     * <ol>
+     *   <li>Cache the metadata BLOB in a {@link File}. See {@link Step5#useBlobCacheFile(File)}.
+     *   <li>Cache the metadata BLOB using a {@link Supplier} to read the cache and a {@link
+     *       Consumer} to write the cache. See {@link Step5#useBlobCache(Supplier, Consumer)}.
+     * </ol>
+     */
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class Step5 {
+      @NonNull private final Step4 step4;
+      private final String blobJwt;
+      private final URL blobUrl;
+
+      /**
+       * Cache metadata BLOB in the file <code>cacheFile</code>.
+       *
+       * <p>If <code>cacheFile</code> exists, is a normal file, is readable, and is not out of date,
+       * then it will be used as the FIDO Metadata Service BLOB.
+       *
+       * <p>Otherwise, the metadata BLOB will be downloaded and written to this file.
+       *
+       * @param cacheFile a {@link File} which may or may not exist. If it exists, it should contain
+       *     the metadata BLOB in JWS compact serialization format <a
+       *     href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">[RFC7515]</a>.
+       */
+      public FidoMetadataDownloaderBuilder useBlobCacheFile(@NonNull File cacheFile) {
+        return finishRequiredSteps(this, cacheFile, null, null);
+      }
+
+      /**
+       * Cache the metadata BLOB using a {@link Supplier} to read the cache, and using a {@link
+       * Consumer} to write the cache.
+       *
+       * <p>If <code>getCachedBlob</code> returns non-empty and the content is not out of date, then
+       * it will be used as the FIDO Metadata Service BLOB.
+       *
+       * <p>Otherwise, the metadata BLOB will be downloaded and written to <code>writeCachedBlob
+       * </code>.
+       *
+       * @param getCachedBlob a {@link Supplier} that fetches the cached metadata BLOB if it exists.
+       *     The returned value, if any, should be in JWS compact serialization format <a
+       *     href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">[RFC7515]</a>.
+       * @param writeCachedBlob a {@link Consumer} that accepts the metadata BLOB in JWS compact
+       *     serialization format <a
+       *     href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">[RFC7515]</a> and
+       *     writes it to the cache.
+       */
+      public FidoMetadataDownloaderBuilder useBlobCache(
+          @NonNull Supplier<Optional<ByteArray>> getCachedBlob,
+          @NonNull Consumer<ByteArray> writeCachedBlob) {
+        return finishRequiredSteps(this, null, getCachedBlob, writeCachedBlob);
+      }
+    }
+
+    private static FidoMetadataDownloaderBuilder finishRequiredSteps(
+        FidoMetadataDownloaderBuilder.Step5 step5,
+        File blobCacheFile,
+        Supplier<Optional<ByteArray>> blobCacheSupplier,
+        Consumer<ByteArray> blobCacheConsumer) {
+      return new FidoMetadataDownloaderBuilder(
+          step5.step4.step3.step2.expectedLegalHeaders,
+          step5.step4.step3.trustRootCertificate,
+          step5.step4.step3.trustRootUrl,
+          step5.step4.step3.trustRootSha256,
+          step5.step4.trustRootCacheFile,
+          step5.step4.trustRootCacheSupplier,
+          step5.step4.trustRootCacheConsumer,
+          step5.blobJwt,
+          step5.blobUrl,
+          blobCacheFile,
+          blobCacheSupplier,
+          blobCacheConsumer);
+    }
+
+    /**
+     * Use <code>clock</code> as the source of the current time for some application-level logic.
+     *
+     * <p>This is primarily intended for testing, and the given clock is only used to check whether
+     * any cached BLOB or trust root certificate needs to be refreshed. In particular, the
+     * certificate path validation will NOT respect this clock and will always use system time.
+     *
+     * <p>The default is {@link Clock#systemUTC()}.
+     *
+     * @param clock a {@link Clock} which the finished {@link FidoMetadataDownloader} will use to
+     *     tell whether any cached BLOB or trust root certificate needs to be refreshed.
+     */
+    public FidoMetadataDownloaderBuilder clock(@NonNull Clock clock) {
+      this.clock = clock;
+      return this;
+    }
+  }
+
+  /**
+   * Load the metadata BLOB from cache, or download a fresh one if necessary.
+   *
+   * <p>On each invocation this will, in order:
+   *
+   * <ol>
+   *   <li>Download the trust root certificate, if necessary: if the cache is empty, the cache fails
+   *       to load, or the cached cert is not valid at the current time (as determined by the {@link
+   *       FidoMetadataDownloaderBuilder#clock(Clock) clock} setting).
+   *   <li>If downloaded, cache the trust root certificate using the configured {@link File} or
+   *       {@link Consumer} (see {@link FidoMetadataDownloaderBuilder.Step3})
+   *   <li>Download the metadata BLOB, if necessary: if the cache is empty, the cache fails to load,
+   *       or the <code>"nextUpdate"</code> property in the cached BLOB is the current date (as
+   *       determined by the {@link FidoMetadataDownloaderBuilder#clock(Clock) clock} setting) or
+   *       earlier.
+   *   <li>Check the <code>"no"</code> property of the downloaded BLOB, if any, and compare it with
+   *       the <code>"no"</code> of the cached BLOB, if any. The one with a greater <code>"no"
+   *       </code> overrides the other, even if its <code>"nextUpdate"</code> is in the past.
+   *   <li>If a BLOB with a newer <code>"no"</code> was downloaded, verify that the value of its
+   *       <code>"legalHeader"</code> appears in the configured {@link
+   *       FidoMetadataDownloaderBuilder.Step1#expectLegalHeader(String...) expectLegalHeader}
+   *       setting. If not, throw an {@link UnexpectedLegalHeader} exception containing the cached
+   *       BLOB, if any, and the downloaded BLOB.
+   *   <li>If a BLOB with a newer <code>"no"</code> was downloaded and had an expected <code>
+   *       "legalHeader"</code>, cache the new BLOB using the configured {@link File} or {@link
+   *       Consumer} (see {@link FidoMetadataDownloaderBuilder.Step5})
+   * </ol>
+   *
+   * No mutable state is maintained between {@link #loadBlob()} calls; each invocation will
+   * reload/rewrite caches, perform downloads and check the <code>"legalHeader"</code> as necessary.
+   * You may therefore reuse a {@link FidoMetadataDownloader} instance and, for example, call {@link
+   * #loadBlob()} periodically to refresh the BLOB when appropriate. Each call will return a new
+   * {@link MetadataBLOBPayload} instance; ones already returned will not be updated by subsequent
+   * {@link #loadBlob()} calls.
+   *
+   * @return the successfully retrieved and validated metadata BLOB.
+   * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact
+   *     serialization.
+   * @throws CertPathValidatorException if the downloaded or explicitly configured BLOB fails
+   *     certificate path validation.
+   * @throws CertificateException if the trust root certificate was downloaded and passed the
+   *     SHA-256 integrity check, but does not contain a currently valid X.509 DER certificate; or
+   *     if the BLOB signing certificate chain fails to parse.
+   * @throws DigestException if the trust root certificate was downloaded but failed the SHA-256
+   *     integrity check.
+   * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
+   *     signature.
+   * @throws IOException if any of the following fails: downloading the trust root certificate,
+   *     downloading the BLOB, reading or writing any cache file (if any), or parsing the BLOB
+   *     contents.
+   * @throws InvalidAlgorithmParameterException if certificate path validation fails.
+   * @throws InvalidKeyException if signature verification fails.
+   * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
+   *     is not available.
+   * @throws SignatureException if signature verification fails.
+   * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
+   *     </code> value not configured in {@link
+   *     FidoMetadataDownloaderBuilder.Step1#expectLegalHeader(String...)
+   *     expectLegalHeader(String...)} but is otherwise valid. The downloaded BLOB will not be
+   *     written to cache in this case.
+   */
+  public MetadataBLOBPayload loadBlob()
+      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
+          CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
+          InvalidKeyException, UnexpectedLegalHeader, DigestException {
+    X509Certificate trustRoot = retrieveTrustRootCert();
+    return retrieveBlob(trustRoot);
+  }
+
+  /**
+   * @throws CertificateException if the trust root certificate was downloaded and passed the
+   *     SHA-256 integrity check, but does not contain a currently valid X.509 DER certificate.
+   * @throws DigestException if the trust root certificate was downloaded but failed the SHA-256
+   *     integrity check.
+   * @throws IOException if the trust root certificate download failed, or if reading or writing the
+   *     cache file (if any) failed.
+   * @throws NoSuchAlgorithmException if the SHA-256 algorithm is not available.
+   */
+  private X509Certificate retrieveTrustRootCert()
+      throws CertificateException, DigestException, IOException, NoSuchAlgorithmException {
+
+    if (trustRootCertificate != null) {
+      return trustRootCertificate;
+
+    } else {
+      final Optional<ByteArray> cachedContents;
+      if (trustRootCacheFile != null) {
+        cachedContents = readCacheFile(trustRootCacheFile);
+      } else {
+        cachedContents = trustRootCacheSupplier.get();
+      }
+
+      X509Certificate cert = null;
+      if (cachedContents.isPresent()) {
+        try {
+          final X509Certificate cachedCert =
+              CertificateParser.parseDer(cachedContents.get().getBytes());
+          cachedCert.checkValidity(Date.from(clock.instant()));
+          cert = cachedCert;
+        } catch (CertificateException e) {
+          // Fall through
+        }
+      }
+
+      if (cert == null) {
+        final ByteArray downloaded = verifyHash(httpGet(trustRootUrl), trustRootSha256);
+        if (downloaded == null) {
+          throw new DigestException(
+              "Downloaded trust root certificate matches none of the acceptable hashes.");
+        }
+
+        cert = CertificateParser.parseDer(downloaded.getBytes());
+        cert.checkValidity(Date.from(clock.instant()));
+
+        if (trustRootCacheFile != null) {
+          new FileOutputStream(trustRootCacheFile).write(downloaded.getBytes());
+        }
+
+        if (trustRootCacheConsumer != null) {
+          trustRootCacheConsumer.accept(downloaded);
+        }
+      }
+
+      return cert;
+    }
+  }
+
+  /**
+   * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact
+   *     serialization.
+   * @throws CertPathValidatorException if the downloaded or explicitly configured BLOB fails
+   *     certificate path validation.
+   * @throws CertificateException if the BLOB signing certificate chain fails to parse.
+   * @throws IOException if any of the following fails: downloading the BLOB, reading or writing the
+   *     cache file (if any), or parsing the BLOB contents.
+   * @throws InvalidAlgorithmParameterException if certificate path validation fails.
+   * @throws InvalidKeyException if signature verification fails.
+   * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
+   *     </code> value not configured in {@link
+   *     FidoMetadataDownloaderBuilder.Step1#expectLegalHeader(String...)
+   *     expectLegalHeader(String...)} but is otherwise valid. The downloaded BLOB will not be
+   *     written to cache in this case.
+   * @throws NoSuchAlgorithmException if signature verification fails.
+   * @throws SignatureException if signature verification fails.
+   * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
+   *     signature.
+   */
+  private MetadataBLOBPayload retrieveBlob(X509Certificate trustRootCertificate)
+      throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
+          InvalidAlgorithmParameterException, InvalidKeyException, UnexpectedLegalHeader,
+          NoSuchAlgorithmException, SignatureException {
+    if (blobJwt != null) {
+      return parseAndVerifyBlob(
+          new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate);
+
+    } else {
+
+      final Optional<ByteArray> cachedContents;
+      if (blobCacheFile != null) {
+        cachedContents = readCacheFile(blobCacheFile);
+      } else {
+        cachedContents = blobCacheSupplier.get();
+      }
+
+      final MetadataBLOBPayload cachedBlob =
+          cachedContents
+              .map(
+                  cached -> {
+                    try {
+                      return parseAndVerifyBlob(cached, trustRootCertificate);
+                    } catch (Exception e) {
+                      return null;
+                    }
+                  })
+              .orElse(null);
+
+      if (cachedBlob != null
+          && cachedBlob
+              .getNextUpdate()
+              .atStartOfDay()
+              .isAfter(clock.instant().atZone(clock.getZone()).toLocalDateTime())) {
+        return cachedBlob;
+
+      } else {
+        final ByteArray downloaded = httpGet(blobUrl);
+        final MetadataBLOBPayload downloadedBlob =
+            parseAndVerifyBlob(downloaded, trustRootCertificate);
+
+        if (cachedBlob == null || downloadedBlob.getNo() > cachedBlob.getNo()) {
+          if (expectedLegalHeaders.contains(downloadedBlob.getLegalHeader())) {
+            if (blobCacheFile != null) {
+              new FileOutputStream(blobCacheFile).write(downloaded.getBytes());
+            }
+
+            if (blobCacheConsumer != null) {
+              blobCacheConsumer.accept(downloaded);
+            }
+
+            return downloadedBlob;
+          } else {
+            throw new UnexpectedLegalHeader(cachedBlob, downloadedBlob);
+          }
+
+        } else {
+          return cachedBlob;
+        }
+      }
+    }
+  }
+
+  private Optional<ByteArray> readCacheFile(File cacheFile) throws IOException {
+    if (cacheFile.exists() && cacheFile.canRead() && cacheFile.isFile()) {
+      try {
+        return Optional.of(readAll(new FileInputStream(cacheFile)));
+      } catch (FileNotFoundException e) {
+        throw new RuntimeException(
+            "This exception should be impossible, please file a bug report.", e);
+      }
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Download an HTTP GET body from the given <code>url</code>.
+   *
+   * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
+   * @return the HTTP GET response body, if it matches any of the accepted hashes.
+   * @throws IllegalArgumentException if <code>url</code> is not an HTTPS URL.
+   * @throws IOException if the download connection fails.
+   */
+  private ByteArray httpGet(URL url) throws IOException {
+    if ("https".equals(url.getProtocol())) {
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod("GET");
+      InputStream is = conn.getInputStream();
+      return readAll(is);
+    } else {
+      throw new IllegalArgumentException("Download URL must be a https URL.");
+    }
+  }
+
+  private static MetadataBLOBPayload parseAndVerifyBlob(
+      ByteArray jwt, X509Certificate trustRootCertificate)
+      throws CertPathValidatorException, InvalidAlgorithmParameterException, CertificateException,
+          IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
+          Base64UrlException {
+    Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
+    final ByteArray header = ByteArray.fromBase64Url(s.next());
+    final ByteArray payload = ByteArray.fromBase64Url(s.next());
+    final ByteArray signature = ByteArray.fromBase64Url(s.next());
+    return verifyBlob(header, payload, signature, trustRootCertificate);
+  }
+
+  private static MetadataBLOBPayload verifyBlob(
+      ByteArray jwtHeader,
+      ByteArray jwtPayload,
+      ByteArray jwtSignature,
+      X509Certificate trustRootCertificate)
+      throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeyException,
+          SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException {
+    final ObjectMapper headerJsonMapper =
+        JacksonCodecs.json()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+            .setBase64Variant(Base64Variants.MIME_NO_LINEFEEDS);
+    final MetadataBLOBHeader header =
+        headerJsonMapper.readValue(jwtHeader.getBytes(), MetadataBLOBHeader.class);
+
+    final List<X509Certificate> certChain;
+    if (header.getX5u().isPresent()) {
+      throw new UnsupportedOperationException("Not implemented: x5u");
+    } else if (header.getX5c().isPresent()) {
+      certChain = header.getX5c().get();
+    } else {
+      throw new IllegalArgumentException(
+          "Metadata BLOB header must contain attribute \"x5c\" or \"x5u\".");
+    }
+
+    final X509Certificate leafCert = certChain.get(0);
+
+    final Signature signature;
+    switch (header.getAlg()) {
+      case "RS256":
+        signature = Signature.getInstance("SHA256withRSA");
+        break;
+
+      case "ES256":
+        signature = Signature.getInstance("SHA256withECDSA");
+        break;
+
+      default:
+        throw new UnsupportedOperationException(
+            "Unimplemented JWT verification algorithm: " + header.getAlg());
+    }
+
+    signature.initVerify(leafCert.getPublicKey());
+    signature.update(
+        (jwtHeader.getBase64Url() + "." + jwtPayload.getBase64Url())
+            .getBytes(StandardCharsets.UTF_8));
+    if (!signature.verify(jwtSignature.getBytes())) {
+      throw new IllegalArgumentException("Bad JWT signature.");
+    }
+
+    final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+    final CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
+    final CertPath blobCertPath = certFactory.generateCertPath(certChain);
+    final PKIXParameters pathParams =
+        new PKIXParameters(Collections.singleton(new TrustAnchor(trustRootCertificate, null)));
+    cpv.validate(blobCertPath, pathParams);
+
+    return JacksonCodecs.json().readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class);
+  }
+
+  private static ByteArray readAll(InputStream is) throws IOException {
+    return new ByteArray(BinaryUtil.readAll(is));
+  }
+
+  /**
+   * @return <code>contents</code> if its SHA-256 hash matches any element of <code>
+   *     acceptedCertSha256</code>, otherwise <code>null</code>.
+   */
+  private static ByteArray verifyHash(ByteArray contents, Set<ByteArray> acceptedCertSha256)
+      throws NoSuchAlgorithmException {
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    final ByteArray hash = new ByteArray(digest.digest(contents.getBytes()));
+    if (acceptedCertSha256.stream().anyMatch(acceptableHash -> acceptableHash.equals(hash))) {
+      return contents;
+    } else {
+      return null;
+    }
+  }
+}

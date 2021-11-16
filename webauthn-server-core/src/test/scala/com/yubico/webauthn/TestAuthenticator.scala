@@ -974,7 +974,7 @@ object TestAuthenticator {
     )
   }
 
-  private def buildCertificate(
+  def buildCertificate(
       publicKey: PublicKey,
       issuerName: X500Name,
       subjectName: X500Name,

@@ -35,6 +35,8 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
@@ -99,5 +101,9 @@ final class Crypto {
 
   public static ByteArray sha256(String str) {
     return sha256(new ByteArray(str.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  public static ByteArray sha1(ByteArray bytes) throws NoSuchAlgorithmException {
+    return new ByteArray(MessageDigest.getInstance("SHA-1").digest(bytes.getBytes()));
   }
 }
