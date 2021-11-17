@@ -4,6 +4,8 @@ Breaking changes:
 
 * Deleted deprecated `icon` field in `RelyingPartyIdentity` and `UserIdentity`,
   and its associated methods.
+* Deleted deprecated `AuthenticatorSelectionCriteria` methods
+  `builder().requireResidentKey(boolean)` and `isRequireResidentKey()`.
 * `RelyingParty` parameter `allowUnrequestedExtensions` removed. The library
   will now always accept unrequested extensions.
 * Class `ClientAssertionExtensionOutputs` now silently ignores unknown

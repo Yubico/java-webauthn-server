@@ -166,7 +166,7 @@ public class Extensions {
          * requirement MAY be ignored.
          *
          * <p>Note: CTAP authenticators only support <code>largeBlob</code> in combination with
-         * {@link AuthenticatorSelectionCriteria#isRequireResidentKey()} set to <code>true</code> in
+         * {@link AuthenticatorSelectionCriteria#getResidentKey()} set to <code>REQUIRED</code> in
          * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
          *
          * @see <a
@@ -181,7 +181,7 @@ public class Extensions {
          * created without large blob support.
          *
          * <p>Note: CTAP authenticators only support <code>largeBlob</code> in combination with
-         * {@link AuthenticatorSelectionCriteria#isRequireResidentKey()} set to <code>true</code> in
+         * {@link AuthenticatorSelectionCriteria#getResidentKey()} set to <code>REQUIRED</code> in
          * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
          *
          * @see <a

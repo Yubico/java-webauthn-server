@@ -38,6 +38,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.ResidentKeyRequirement
 import com.yubico.webauthn.extension.appid.AppId
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
@@ -65,7 +66,7 @@ class WebAuthnServerSpec
   private val username = "foo-user"
   private val displayName = "Foo User"
   private val credentialNickname = Some("My Lovely Credential").asJava
-  private val requireResidentKey = false
+  private val residentKeyRequirement = ResidentKeyRequirement.DISCOURAGED
   private val requestId = ByteArray.fromBase64Url("request1")
   private val rpId =
     RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
@@ -82,7 +83,7 @@ class WebAuthnServerSpec
           username,
           displayName,
           credentialNickname,
-          requireResidentKey,
+          residentKeyRequirement,
           Optional.empty(),
         )
         val json = jsonMapper.writeValueAsString(request.right.get)
@@ -183,7 +184,7 @@ class WebAuthnServerSpec
               username,
               displayName,
               None.asJava,
-              false,
+              ResidentKeyRequirement.DISCOURAGED,
               None.asJava,
             )
             .right

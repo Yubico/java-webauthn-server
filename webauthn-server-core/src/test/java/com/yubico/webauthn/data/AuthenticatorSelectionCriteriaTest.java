@@ -15,7 +15,6 @@ public class AuthenticatorSelectionCriteriaTest {
     AuthenticatorSelectionCriteria.builder()
         .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
         .authenticatorAttachment(Optional.of(AuthenticatorAttachment.CROSS_PLATFORM))
-        .requireResidentKey(false)
         .residentKey(ResidentKeyRequirement.REQUIRED)
         .userVerification(UserVerificationRequirement.PREFERRED)
         .build();
@@ -29,7 +28,6 @@ public class AuthenticatorSelectionCriteriaTest {
             "{\"requireResidentKey\": false, \"residentKey\": \"required\"}",
             AuthenticatorSelectionCriteria.class);
     assertEquals(decoded.getResidentKey(), ResidentKeyRequirement.REQUIRED);
-    assertEquals(decoded.isRequireResidentKey(), true);
   }
 
   @Test
@@ -38,6 +36,5 @@ public class AuthenticatorSelectionCriteriaTest {
     AuthenticatorSelectionCriteria decoded =
         json.readValue("{\"requireResidentKey\": true}", AuthenticatorSelectionCriteria.class);
     assertEquals(decoded.getResidentKey(), ResidentKeyRequirement.REQUIRED);
-    assertEquals(decoded.isRequireResidentKey(), true);
   }
 }

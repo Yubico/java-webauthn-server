@@ -66,6 +66,7 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
@@ -225,7 +226,7 @@ public class WebAuthnServer {
       @NonNull String username,
       @NonNull String displayName,
       Optional<String> credentialNickname,
-      boolean requireResidentKey,
+      ResidentKeyRequirement residentKeyRequirement,
       Optional<ByteArray> sessionToken)
       throws ExecutionException {
     logger.trace(
@@ -260,7 +261,7 @@ public class WebAuthnServer {
                       .user(registrationUserId)
                       .authenticatorSelection(
                           AuthenticatorSelectionCriteria.builder()
-                              .requireResidentKey(requireResidentKey)
+                              .residentKey(residentKeyRequirement)
                               .build())
                       .build()),
               Optional.of(sessions.createSession(registrationUserId.getId())));

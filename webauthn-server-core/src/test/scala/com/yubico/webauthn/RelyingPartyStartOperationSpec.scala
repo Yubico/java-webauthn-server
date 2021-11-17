@@ -154,7 +154,7 @@ class RelyingPartyStartOperationSpec
       val authnrSel = AuthenticatorSelectionCriteria
         .builder()
         .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
-        .requireResidentKey(true)
+        .residentKey(ResidentKeyRequirement.REQUIRED)
         .build()
 
       val pkcco = relyingParty(userId = userId).startRegistration(
@@ -171,7 +171,7 @@ class RelyingPartyStartOperationSpec
       val authnrSel = AuthenticatorSelectionCriteria
         .builder()
         .authenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
-        .requireResidentKey(true)
+        .residentKey(ResidentKeyRequirement.REQUIRED)
         .build()
 
       val pkccoWith = relyingParty(userId = userId).startRegistration(
@@ -401,44 +401,55 @@ class RelyingPartyStartOperationSpec
       }
     }
 
-    it("respects the requireResidentKey setting.") {
+    it("respects the residentKey setting.") {
       val rp = relyingParty(userId = userId)
 
-      val pkccoFalse = rp.startRegistration(
+      val pkccoDiscouraged = rp.startRegistration(
         StartRegistrationOptions
           .builder()
           .user(userId)
           .authenticatorSelection(
             AuthenticatorSelectionCriteria
               .builder()
-              .requireResidentKey(false)
-              .build()
-          )
-          .build()
-      )
-      val pkccoTrue = rp.startRegistration(
-        StartRegistrationOptions
-          .builder()
-          .user(userId)
-          .authenticatorSelection(
-            AuthenticatorSelectionCriteria
-              .builder()
-              .requireResidentKey(true)
+              .residentKey(ResidentKeyRequirement.DISCOURAGED)
               .build()
           )
           .build()
       )
 
-      pkccoFalse.getAuthenticatorSelection.get.isRequireResidentKey should be(
-        false
+      val pkccoPreferred = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .residentKey(ResidentKeyRequirement.PREFERRED)
+              .build()
+          )
+          .build()
       )
-      pkccoFalse.getAuthenticatorSelection.get.getResidentKey should be(
+
+      val pkccoRequired = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria
+              .builder()
+              .residentKey(ResidentKeyRequirement.REQUIRED)
+              .build()
+          )
+          .build()
+      )
+
+      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey should be(
         ResidentKeyRequirement.DISCOURAGED
       )
-      pkccoTrue.getAuthenticatorSelection.get.isRequireResidentKey should be(
-        true
+      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey should be(
+        ResidentKeyRequirement.PREFERRED
       )
-      pkccoTrue.getAuthenticatorSelection.get.getResidentKey should be(
+      pkccoRequired.getAuthenticatorSelection.get.getResidentKey should be(
         ResidentKeyRequirement.REQUIRED
       )
     }
@@ -493,67 +504,6 @@ class RelyingPartyStartOperationSpec
       )
       pkccoWithout.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
         None
-      )
-    }
-
-    it("sets requireResidentKey to agree with residentKey.") {
-      val rp = relyingParty(userId = userId)
-
-      val pkccoDiscouraged = rp.startRegistration(
-        StartRegistrationOptions
-          .builder()
-          .user(userId)
-          .authenticatorSelection(
-            AuthenticatorSelectionCriteria
-              .builder()
-              .residentKey(ResidentKeyRequirement.DISCOURAGED)
-              .build()
-          )
-          .build()
-      )
-      val pkccoPreferred = rp.startRegistration(
-        StartRegistrationOptions
-          .builder()
-          .user(userId)
-          .authenticatorSelection(
-            AuthenticatorSelectionCriteria
-              .builder()
-              .residentKey(ResidentKeyRequirement.PREFERRED)
-              .build()
-          )
-          .build()
-      )
-      val pkccoRequired = rp.startRegistration(
-        StartRegistrationOptions
-          .builder()
-          .user(userId)
-          .authenticatorSelection(
-            AuthenticatorSelectionCriteria
-              .builder()
-              .residentKey(ResidentKeyRequirement.REQUIRED)
-              .build()
-          )
-          .build()
-      )
-
-      pkccoDiscouraged.getAuthenticatorSelection.get.isRequireResidentKey should be(
-        false
-      )
-      pkccoPreferred.getAuthenticatorSelection.get.isRequireResidentKey should be(
-        false
-      )
-      pkccoRequired.getAuthenticatorSelection.get.isRequireResidentKey should be(
-        true
-      )
-
-      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey should equal(
-        ResidentKeyRequirement.DISCOURAGED
-      )
-      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey should equal(
-        ResidentKeyRequirement.PREFERRED
-      )
-      pkccoRequired.getAuthenticatorSelection.get.getResidentKey should equal(
-        ResidentKeyRequirement.REQUIRED
       )
     }
   }

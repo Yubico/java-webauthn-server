@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
@@ -168,7 +169,9 @@ public class WebAuthnRestResource {
             username,
             displayName,
             Optional.ofNullable(credentialNickname),
-            requireResidentKey,
+            requireResidentKey
+                ? ResidentKeyRequirement.REQUIRED
+                : ResidentKeyRequirement.DISCOURAGED,
             Optional.ofNullable(sessionTokenBase64)
                 .map(
                     base64 -> {

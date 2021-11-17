@@ -82,20 +82,6 @@ public class AuthenticatorSelectionCriteria {
     return Optional.ofNullable(authenticatorAttachment);
   }
 
-  /**
-   * This member is retained for backwards compatibility with WebAuthn Level 1 and, for historical
-   * reasons, its naming retains the deprecated “resident” terminology for discoverable credentials.
-   *
-   * @return <code>true</code> if and only if {@link #getResidentKey()} is {@link
-   *     ResidentKeyRequirement#REQUIRED}.
-   * @see #getResidentKey()
-   * @deprecated Use {@link #getResidentKey()} instead.
-   */
-  @Deprecated
-  public boolean isRequireResidentKey() {
-    return residentKey == ResidentKeyRequirement.REQUIRED;
-  }
-
   @JsonCreator
   private AuthenticatorSelectionCriteria(
       @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
@@ -147,28 +133,6 @@ public class AuthenticatorSelectionCriteria {
         AuthenticatorAttachment authenticatorAttachment) {
       this.authenticatorAttachment = authenticatorAttachment;
       return this;
-    }
-
-    /**
-     * This member is retained for backwards compatibility with WebAuthn Level 1 and, for historical
-     * reasons, its naming retains the deprecated “resident” terminology for discoverable
-     * credentials.
-     *
-     * <p><code>requireResidentKey(true)</code> is an alias of <code>residentKey(REQUIRED)
-     * </code>.
-     *
-     * <p><code>requireResidentKey(false)</code> is an alias of <code>residentKey(DISCOURAGED)
-     * </code>.
-     *
-     * @deprecated Use {@link #residentKey(ResidentKeyRequirement) residentKey} instead.
-     * @see #residentKey(ResidentKeyRequirement)
-     */
-    @Deprecated
-    public AuthenticatorSelectionCriteriaBuilder requireResidentKey(boolean requireResidentKey) {
-      return residentKey(
-          requireResidentKey
-              ? ResidentKeyRequirement.REQUIRED
-              : ResidentKeyRequirement.DISCOURAGED);
     }
   }
 }
