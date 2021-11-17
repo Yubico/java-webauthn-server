@@ -1062,14 +1062,12 @@ object Generators {
   implicit val arbitraryRelyingPartyIdentity: Arbitrary[RelyingPartyIdentity] =
     Arbitrary(
       for {
-        icon <- arbitrary[Optional[URL]]
         id <- arbitrary[String]
         name <- arbitrary[String]
       } yield RelyingPartyIdentity
         .builder()
         .id(id)
         .name(name)
-        .icon(icon)
         .build()
     )
 
@@ -1085,14 +1083,12 @@ object Generators {
     for {
       displayName <- arbitrary[String]
       name <- arbitrary[String]
-      icon <- arbitrary[Optional[URL]]
       id <- arbitrary[ByteArray]
     } yield UserIdentity
       .builder()
       .name(name)
       .displayName(displayName)
       .id(id)
-      .icon(icon)
       .build()
   )
 
