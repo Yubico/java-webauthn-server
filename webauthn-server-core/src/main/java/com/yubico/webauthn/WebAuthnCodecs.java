@@ -40,6 +40,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 final class WebAuthnCodecs {
@@ -61,6 +63,28 @@ final class WebAuthnCodecs {
             new byte[] {0x04},
             Bytes.concat(xPadding, Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)),
             Bytes.concat(yPadding, Arrays.copyOfRange(y, Math.max(0, y.length - 32), y.length))));
+  }
+
+  static ByteArray rawEcKeyToCose(ByteArray key) {
+    final byte[] keyBytes = key.getBytes();
+    if (!(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes[0] == 0x04))) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was %d bytes starting with %02x",
+              keyBytes.length, keyBytes[0]));
+    }
+    final int start = (keyBytes.length == 64) ? 0 : 1;
+
+    final Map<Long, Object> coseKey = new HashMap<>();
+    coseKey.put(1L, 2L); // Key type: EC
+
+    coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId());
+    coseKey.put(-1L, 1L); // Curve: P-256
+
+    coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + 32)); // x
+    coseKey.put(-3L, Arrays.copyOfRange(keyBytes, start + 32, start + 64)); // y
+
+    return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
   }
 
   static PublicKey importCosePublicKey(ByteArray key)

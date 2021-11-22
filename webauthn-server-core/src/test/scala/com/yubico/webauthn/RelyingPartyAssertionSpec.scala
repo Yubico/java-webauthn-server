@@ -52,6 +52,7 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.test.Helpers
+import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
@@ -1944,6 +1945,56 @@ class RelyingPartyAssertionSpec
         }
         it("with self attestation.") {
           test(RegistrationTestData.Packed.SelfAttestationRs1)
+        }
+      }
+
+      it("a U2F-formatted public key.") {
+        val testData = RealExamples.YubiKeyNeo.asRegistrationTestData
+        val x = ByteArray.fromHex(
+          "39C94FBBDDC694A925E6F8657C66916CFE84CD0222EDFCF281B21F5CDC347923"
+        )
+        val y = ByteArray.fromHex(
+          "D6B0D2021CFE1724A6FE81E3568C4FFAE339298216A30AFC18C0B975F2E2A891"
+        )
+        val u2fPubkey = ByteArray.fromHex("04").concat(x).concat(y)
+
+        val cred1 = RegisteredCredential
+          .builder()
+          .credentialId(testData.assertion.get.response.getId)
+          .userHandle(testData.userId.getId)
+          .publicKeyEs256Raw(u2fPubkey)
+          .signatureCount(0)
+          .build()
+
+        val cred2 = RegisteredCredential
+          .builder()
+          .credentialId(testData.assertion.get.response.getId)
+          .userHandle(testData.userId.getId)
+          .publicKeyCose(u2fPubkey)
+          .signatureCount(0)
+          .publicKeyEs256Raw(u2fPubkey)
+          .build()
+
+        for { cred <- List(cred1, cred2) } {
+          val rp = RelyingParty
+            .builder()
+            .identity(testData.rpId)
+            .credentialRepository(
+              Helpers.CredentialRepository.withUser(testData.userId, cred)
+            )
+            .build()
+
+          val result = rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(testData.assertion.get.request)
+              .response(testData.assertion.get.response)
+              .build()
+          )
+
+          result.isSuccess should be(true)
+          result.getUserHandle should equal(testData.userId.getId)
+          result.getCredentialId should equal(testData.response.getId)
         }
       }
     }
