@@ -117,9 +117,27 @@ final class FinishAssertionSteps {
 
   @Value
   class Step0 implements Step<Step1> {
+
+    private final Optional<ByteArray> userHandle =
+        response
+            .getResponse()
+            .getUserHandle()
+            .map(Optional::of)
+            .orElseGet(
+                () -> credentialRepository.getUserHandleForUsername(request.getUsername().get()));
+
+    private final Optional<String> username =
+        request
+            .getUsername()
+            .map(Optional::of)
+            .orElseGet(
+                () ->
+                    credentialRepository.getUsernameForUserHandle(
+                        response.getResponse().getUserHandle().get()));
+
     @Override
     public Step1 nextStep() {
-      return new Step1(username().get(), userHandle().get(), allWarnings());
+      return new Step1(username.get(), userHandle.get(), allWarnings());
     }
 
     @Override
@@ -128,12 +146,12 @@ final class FinishAssertionSteps {
           request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
           "At least one of username and user handle must be given; none was.");
       assure(
-          userHandle().isPresent(),
+          userHandle.isPresent(),
           "No user found for username: %s, userHandle: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
       assure(
-          username().isPresent(),
+          username.isPresent(),
           "No user found for username: %s, userHandle: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
@@ -142,25 +160,6 @@ final class FinishAssertionSteps {
     @Override
     public List<String> getPrevWarnings() {
       return Collections.emptyList();
-    }
-
-    private Optional<ByteArray> userHandle() {
-      return response
-          .getResponse()
-          .getUserHandle()
-          .map(Optional::of)
-          .orElseGet(
-              () -> credentialRepository.getUserHandleForUsername(request.getUsername().get()));
-    }
-
-    private Optional<String> username() {
-      return request
-          .getUsername()
-          .map(Optional::of)
-          .orElseGet(
-              () ->
-                  credentialRepository.getUsernameForUserHandle(
-                      response.getResponse().getUserHandle().get()));
     }
   }
 
@@ -196,16 +195,22 @@ final class FinishAssertionSteps {
     private final ByteArray userHandle;
     private final List<String> prevWarnings;
 
+    private final Optional<RegisteredCredential> registration;
+
+    public Step2(String username, ByteArray userHandle, List<String> prevWarnings) {
+      this.username = username;
+      this.userHandle = userHandle;
+      this.prevWarnings = prevWarnings;
+      this.registration = credentialRepository.lookup(response.getId(), userHandle);
+    }
+
     @Override
     public Step3 nextStep() {
-      return new Step3(username, userHandle, allWarnings());
+      return new Step3(username, userHandle, registration, allWarnings());
     }
 
     @Override
     public void validate() {
-      Optional<RegisteredCredential> registration =
-          credentialRepository.lookup(response.getId(), userHandle);
-
       assure(registration.isPresent(), "Unknown credential: %s", response.getId());
 
       assure(
@@ -220,28 +225,21 @@ final class FinishAssertionSteps {
   class Step3 implements Step<Step4> {
     private final String username;
     private final ByteArray userHandle;
+    private final Optional<RegisteredCredential> credential;
     private final List<String> prevWarnings;
 
     @Override
     public Step4 nextStep() {
-      return new Step4(username, userHandle, credential(), allWarnings());
+      return new Step4(username, userHandle, credential.get(), allWarnings());
     }
 
     @Override
     public void validate() {
       assure(
-          maybeCredential().isPresent(),
+          credential.isPresent(),
           "Unknown credential. Credential ID: %s, user handle: %s",
           response.getId(),
           userHandle);
-    }
-
-    private Optional<RegisteredCredential> maybeCredential() {
-      return credentialRepository.lookup(response.getId(), userHandle);
-    }
-
-    public RegisteredCredential credential() {
-      return maybeCredential().get();
     }
   }
 
@@ -581,7 +579,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step17 nextStep() {
-      return new Step17(username, userHandle, allWarnings());
+      return new Step17(username, userHandle, credential, allWarnings());
     }
 
     public ByteArray signedBytes() {
@@ -593,32 +591,39 @@ final class FinishAssertionSteps {
   class Step17 implements Step<Finished> {
     private final String username;
     private final ByteArray userHandle;
+    private final RegisteredCredential credential;
     private final List<String> prevWarnings;
+    private final long storedSignatureCountBefore;
+
+    public Step17(
+        String username,
+        ByteArray userHandle,
+        RegisteredCredential credential,
+        List<String> prevWarnings) {
+      this.username = username;
+      this.userHandle = userHandle;
+      this.credential = credential;
+      this.prevWarnings = prevWarnings;
+      this.storedSignatureCountBefore = credential.getSignatureCount();
+    }
 
     @Override
     public void validate() throws InvalidSignatureCountException {
       if (validateSignatureCounter && !signatureCounterValid()) {
         throw new InvalidSignatureCountException(
-            response.getId(), storedSignatureCountBefore() + 1, assertionSignatureCount());
+            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount());
       }
     }
 
     private boolean signatureCounterValid() {
-      return (assertionSignatureCount() == 0 && storedSignatureCountBefore() == 0)
-          || assertionSignatureCount() > storedSignatureCountBefore();
+      return (assertionSignatureCount() == 0 && storedSignatureCountBefore == 0)
+          || assertionSignatureCount() > storedSignatureCountBefore;
     }
 
     @Override
     public Finished nextStep() {
       return new Finished(
           username, userHandle, assertionSignatureCount(), signatureCounterValid(), allWarnings());
-    }
-
-    private long storedSignatureCountBefore() {
-      return credentialRepository
-          .lookup(response.getId(), userHandle)
-          .map(RegisteredCredential::getSignatureCount)
-          .orElse(0L);
     }
 
     private long assertionSignatureCount() {
