@@ -329,9 +329,98 @@ class RelyingPartyAssertionSpec
 
     }
 
-    describe("§7.2. Verifying an authentication assertion") {
+    describe("RelyingParty.finishAssertion") {
 
-      describe("When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
+      it("does not make redundant calls to CredentialRepository.lookup().") {
+        val registrationTestData =
+          RegistrationTestData.Packed.BasicAttestationEdDsa
+        val testData = registrationTestData.assertion.get
+
+        val credRepo = {
+          val user = registrationTestData.userId
+          val credential = RegisteredCredential
+            .builder()
+            .credentialId(registrationTestData.response.getId)
+            .userHandle(registrationTestData.userId.getId)
+            .publicKeyCose(
+              registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+            )
+            .signatureCount(0)
+            .build()
+
+          new CredentialRepository {
+            var lookupCount = 0
+
+            override def getCredentialIdsForUsername(
+                username: String
+            ): java.util.Set[PublicKeyCredentialDescriptor] =
+              if (username == user.getName)
+                Set(
+                  PublicKeyCredentialDescriptor
+                    .builder()
+                    .id(credential.getCredentialId)
+                    .build()
+                ).asJava
+              else Set.empty.asJava
+
+            override def getUserHandleForUsername(
+                username: String
+            ): Optional[ByteArray] =
+              if (username == user.getName)
+                Some(user.getId).asJava
+              else None.asJava
+
+            override def getUsernameForUserHandle(
+                userHandle: ByteArray
+            ): Optional[String] =
+              if (userHandle == user.getId)
+                Some(user.getName).asJava
+              else None.asJava
+
+            override def lookup(
+                credentialId: ByteArray,
+                userHandle: ByteArray,
+            ): Optional[RegisteredCredential] = {
+              lookupCount += 1
+              if (
+                credentialId == credential.getCredentialId && userHandle == user.getId
+              )
+                Some(credential).asJava
+              else None.asJava
+            }
+
+            override def lookupAll(
+                credentialId: ByteArray
+            ): java.util.Set[RegisteredCredential] =
+              if (credentialId == credential.getCredentialId)
+                Set(credential).asJava
+              else Set.empty.asJava
+          }
+        }
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity.builder().id("localhost").name("Test RP").build()
+          )
+          .credentialRepository(credRepo)
+          .build()
+
+        val result = rp.finishAssertion(
+          FinishAssertionOptions
+            .builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isSuccess should be(true)
+        result.getUserHandle should equal(registrationTestData.userId.getId)
+        result.getCredentialId should equal(registrationTestData.response.getId)
+        result.getCredentialId should equal(testData.response.getId)
+        credRepo.lookupCount should equal(1)
+      }
+
+      describe("§7.2. Verifying an authentication assertion: When verifying a given PublicKeyCredential structure (credential) and an AuthenticationExtensionsClientOutputs structure clientExtensionResults, as part of an authentication ceremony, the Relying Party MUST proceed as follows:") {
 
         describe("1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.") {
           it("Fails if returned credential ID is a requested one.") {
@@ -497,6 +586,7 @@ class RelyingPartyAssertionSpec
             val step: steps.Step3 = new steps.Step3(
               Defaults.username,
               Defaults.userHandle,
+              None.asJava,
               Nil.asJava,
             )
 
@@ -523,9 +613,6 @@ class RelyingPartyAssertionSpec
             val step: FinishAssertionSteps#Step3 = steps.begin.next.next.next
 
             step.validations shouldBe a[Success[_]]
-            step.credential.getPublicKeyCose should equal(
-              getPublicKeyBytes(Defaults.credentialKey)
-            )
             step.tryNext shouldBe a[Success[_]]
           }
         }
