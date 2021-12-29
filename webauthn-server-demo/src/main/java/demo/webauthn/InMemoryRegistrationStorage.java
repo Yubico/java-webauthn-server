@@ -166,7 +166,9 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
     regs.remove(registration);
     regs.add(
         registration.withCredential(
-            registration.getCredential().toBuilder()
+            registration
+                .getCredential()
+                .toBuilder()
                 .signatureCount(result.getSignatureCount())
                 .build()));
   }
