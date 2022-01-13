@@ -110,10 +110,7 @@ The client side involves:
     passing the result from `RelyingParty.startRegistration(...)` or `.startAssertion(...)` as the argument.
  2. Encode the result of the successfully resolved promise and return it to the server.
     For this you need some way to encode `Uint8Array` values;
-    this guide will assume use of link:https://github.com/beatgammit/base64-js[base64-js].
-    However the built-in parser methods for
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
-    expect URL-safe Base64 encoding, so the below examples will include this as an additional step.
+    this guide will use GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library.
 
 Example code is given below.
 For more detailed example usage, see
@@ -163,6 +160,8 @@ A registration ceremony consists of 5 main steps:
  4. Validate the response using `RelyingParty.finishRegistration(...)`.
  5. Update your database using the `finishRegistration` output.
 
+This example uses GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library to do both (2) and (3) in one function call.
+
 First, generate registration parameters and send them to the client:
 
 [source,java]
@@ -196,62 +195,23 @@ Now call the WebAuthn API on the client side:
 
 [source,javascript]
 ----------
-function base64urlToUint8array(base64Bytes) {
-  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
-  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
-}
-function uint8arrayToBase64url(bytes) {
-  if (bytes instanceof Uint8Array) {
-    return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  } else {
-    return uint8arrayToBase64url(new Uint8Array(bytes));
-  }
-}
+import * as webauthnJson from "@github/webauthn-json";
 
-fetch(/* ... */)                    // Make the call that returns the credentialCreateJson above
-  .then(credentialCreateJson => ({  // Decode byte arrays from base64url
-    publicKey: {
-      ...credentialCreateJson.publicKey,
+// Make the call that returns the credentialCreateJson above
+const credentialCreateOptions = await fetch(/* ... */).then(resp => resp.json());
 
-      challenge: base64urlToUint8array(credentialCreateJson.publicKey.challenge),
-      user: {
-        ...credentialCreateJson.publicKey.user,
-        id: base64urlToUint8array(credentialCreateJson.publicKey.user.id),
-      },
-      excludeCredentials: credentialCreateJson.publicKey.excludeCredentials.map(credential => ({
-        ...credential,
-        id: base64urlToUint8array(credential.id),
-      })),
+// Call WebAuthn ceremony using webauthn-json wrapper
+const publicKeyCredential = await webauthnJson.create(credentialCreateOptions);
 
-      // Warning: Extension inputs could also contain binary data that needs encoding
-      extensions: credentialCreateJson.publicKey.extensions,
-    },
-  }))
-  .then(credentialCreateOptions =>  // Call WebAuthn ceremony
-    navigator.credentials.create(credentialCreateOptions))
-  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
-    type: publicKeyCredential.type,
-    id: publicKeyCredential.id,
-    response: {
-      attestationObject: uint8arrayToBase64url(publicKeyCredential.response.attestationObject),
-      clientDataJSON: uint8arrayToBase64url(publicKeyCredential.response.clientDataJSON),
-
-      // Attempt to read transports, but recover gracefully if not supported by the browser
-      transports: publicKeyCredential.response.getTransports && publicKeyCredential.response.getTransports() || [],
-    },
-
-    // Warning: Client extension results could also contain binary data that needs encoding
-    clientExtensionResults: publicKeyCredential.getClientExtensionResults(),
-  }))
-  .then(encodedResult =>
-    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+// Return encoded PublicKeyCredential to server
+fetch(/* ... */, { body: JSON.stringify(publicKeyCredential) });
 ----------
 
 Validate the response on the server side:
 
 [source,java]
 ----------
-String publicKeyCredentialJson = /* ... */;     // encodedResult from client
+String publicKeyCredentialJson = /* ... */;     // publicKeyCredential from client
 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
     PublicKeyCredential.parseRegistrationResponseJson(publicKeyCredentialJson);
 
@@ -295,6 +255,8 @@ Like registration ceremonies, an authentication ceremony consists of 5 main step
  4. Validate the response using `RelyingParty.finishAssertion(...)`.
  5. Update your database using the `finishAssertion` output, and act upon the result (for example, grant login access).
 
+This example uses GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library to do both (2) and (3) in one function call.
+
 First, generate authentication parameters and send them to the client:
 
 [source,java]
@@ -313,58 +275,23 @@ Now call the WebAuthn API on the client side:
 
 [source,javascript]
 ----------
-function base64urlToUint8array(base64Bytes) {
-  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
-  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
-}
-function uint8arrayToBase64url(bytes) {
-  if (bytes instanceof Uint8Array) {
-    return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  } else {
-    return uint8arrayToBase64url(new Uint8Array(bytes));
-  }
-}
+import * as webauthnJson from "@github/webauthn-json";
 
-fetch(/* ... */)                    // Make the call that returns the credentialGetJson above
-  .then(credentialGetJson => ({     // Decode byte arrays from base64url
-    publicKey: {
-      ...credentialGetJson.publicKey,
-      allowCredentials: credentialGetJson.publicKey.allowCredentials
-        && credentialGetJson.publicKey.allowCredentials.map(credential => ({
-          ...credential,
-          id: base64urlToUint8array(credential.id),
-        })),
+// Make the call that returns the credentialGetJson above
+const credentialGetOptions = await fetch(/* ... */).then(resp => resp.json());
 
-      challenge: base64urlToUint8array(credentialGetJson.publicKey.challenge),
+// Call WebAuthn ceremony using webauthn-json wrapper
+const publicKeyCredential = await webauthnJson.get(credentialGetOptions);
 
-      // Warning: Extension inputs could also contain binary data that needs encoding
-      extensions: credentialGetJson.publicKey.extensions,
-    },
-  }))
-  .then(credentialGetOptions =>        // Call WebAuthn ceremony
-    navigator.credentials.get(credentialGetOptions))
-  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
-    type: publicKeyCredential.type,
-    id: publicKeyCredential.id,
-    response: {
-      authenticatorData: uint8arrayToBase64url(publicKeyCredential.response.authenticatorData),
-      clientDataJSON: uint8arrayToBase64url(publicKeyCredential.response.clientDataJSON),
-      signature: uint8arrayToBase64url(publicKeyCredential.response.signature),
-      userHandle: publicKeyCredential.response.userHandle && uint8arrayToBase64url(publicKeyCredential.response.userHandle),
-    },
-
-    // Warning: Client extension results could also contain binary data that needs encoding
-    clientExtensionResults: publicKeyCredential.getClientExtensionResults(),
-  }))
-  .then(encodedResult =>
-    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+// Return encoded PublicKeyCredential to server
+fetch(/* ... */, { body: JSON.stringify(publicKeyCredential) });
 ----------
 
 Validate the response on the server side:
 
 [source,java]
 ----------
-String publicKeyCredentialJson = /* ... */;  // encodedResult from client
+String publicKeyCredentialJson = /* ... */;  // publicKeyCredential from client
 PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
     PublicKeyCredential.parseAssertionResponseJson(publicKeyCredentialJson);
 
