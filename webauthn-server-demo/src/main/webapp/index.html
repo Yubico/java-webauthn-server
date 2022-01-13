@@ -209,10 +209,10 @@ function executeRegisterRequest(request, useU2f) {
   }
 }
 
-function executeU2fRegisterRequest(request) {
+async function executeU2fRegisterRequest(request) {
   const appId = 'https://localhost:8443';
   console.log('appId', appId);
-  return u2fRegister(
+  const result = await u2fRegister(
     appId,
     [{
       version: 'U2F_V2',
@@ -223,28 +223,26 @@ function executeU2fRegisterRequest(request) {
       version: 'U2F_V2',
       keyHandle: cred.id,
     }))
-  )
-    .then(result => {
-      const registrationDataBase64 = result.registrationData;
-      const clientDataBase64 = result.clientData;
-      const registrationDataBytes = base64url.toByteArray(registrationDataBase64);
+  );
 
-      const publicKeyBytes = registrationDataBytes.slice(1, 1 + 65);
-      const L = registrationDataBytes[1 + 65];
-      const keyHandleBytes = registrationDataBytes.slice(1 + 65 + 1, 1 + 65 + 1 + L);
+  const registrationDataBase64 = result.registrationData;
+  const clientDataBase64 = result.clientData;
+  const registrationDataBytes = base64url.toByteArray(registrationDataBase64);
 
-      const attestationCertAndTrailingBytes = registrationDataBytes.slice(1 + 65 + 1 + L);
+  const publicKeyBytes = registrationDataBytes.slice(1, 1 + 65);
+  const L = registrationDataBytes[1 + 65];
+  const keyHandleBytes = registrationDataBytes.slice(1 + 65 + 1, 1 + 65 + 1 + L);
 
-      return {
-        u2fResponse: {
-          keyHandle: base64url.fromByteArray(keyHandleBytes),
-          publicKey: base64url.fromByteArray(publicKeyBytes),
-          attestationCertAndSignature: base64url.fromByteArray(attestationCertAndTrailingBytes),
-          clientDataJSON: clientDataBase64,
-        },
-      };
-    })
-  ;
+  const attestationCertAndTrailingBytes = registrationDataBytes.slice(1 + 65 + 1 + L);
+
+  return {
+    u2fResponse: {
+      keyHandle: base64url.fromByteArray(keyHandleBytes),
+      publicKey: base64url.fromByteArray(publicKeyBytes),
+      attestationCertAndSignature: base64url.fromByteArray(attestationCertAndTrailingBytes),
+      clientDataJSON: clientDataBase64,
+    },
+  };
 }
 
 function u2fRegister(appId, registerRequests, registeredKeys) {
