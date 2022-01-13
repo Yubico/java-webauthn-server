@@ -182,7 +182,7 @@ function getIndexActions() {
   ;
 }
 
-function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey = false) {
+function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey) {
   return fetch(urls.register, {
     body: new URLSearchParams({
       username,
@@ -199,7 +199,7 @@ function getRegisterRequest(urls, username, displayName, credentialNickname, req
   ;
 }
 
-function executeRegisterRequest(request, useU2f = false) {
+function executeRegisterRequest(request, useU2f) {
   console.log('executeRegisterRequest', request);
 
   if (useU2f) {
@@ -361,10 +361,10 @@ function finishCeremony(response) {
     });
 }
 
-function registerResidentKey() {
-  return register(requireResidentKey = true);
+function registerResidentKey(event) {
+  return register(event, true);
 }
-function register(requireResidentKey = false, getRequest = getRegisterRequest) {
+function register(event, requireResidentKey) {
   const username = document.getElementById('username').value;
   const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
@@ -374,7 +374,7 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
 
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRequest(urls, username, displayName, credentialNickname, requireResidentKey),
+    getRequest: urls => getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey),
     statusStrings: {
       init: 'Initiating registration ceremony with server...',
       authenticatorRequest: 'Asking authenticators to create credential...',
@@ -446,13 +446,13 @@ function executeAuthenticateRequest(request) {
   return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
 }
 
-function authenticateWithUsername() {
-  return authenticate(username = document.getElementById('username').value);
+function authenticateWithUsername(event) {
+  return authenticate(event, document.getElementById('username').value);
 }
-function authenticate(username = null, getRequest = getAuthenticateRequest) {
+function authenticate(event, username) {
   return performCeremony({
     getIndexActions,
-    getRequest: urls => getRequest(urls, username),
+    getRequest: urls => getAuthenticateRequest(urls, username),
     statusStrings: {
       init: 'Initiating authentication ceremony with server...',
       authenticatorRequest: 'Asking authenticators to perform assertion...',
