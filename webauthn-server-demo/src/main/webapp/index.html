@@ -55,9 +55,9 @@ input[type="text"] {
   <script src="lib/fetch/fetch-3.0.0.js"></script>
   <script src="lib/base64js/base64js-1.3.0.min.js"></script>
   <script src="js/base64url.js"></script>
-  <script src="js/webauthn.js"></script>
 
-  <script>
+  <script type="module">
+import * as webauthnJson from "./lib/webauthn-json-0.6.1/dist/esm/webauthn-json.js";
 
 let ceremonyState = {};
 let session = {
@@ -205,7 +205,7 @@ function executeRegisterRequest(request, useU2f) {
   if (useU2f) {
     return executeU2fRegisterRequest(request);
   } else {
-    return webauthn.createCredential(request.publicKeyCredentialCreationOptions);
+    return webauthnJson.create({ publicKey: request.publicKeyCredentialCreationOptions });
   }
 }
 
@@ -329,8 +329,7 @@ function performCeremony(params) {
         urls,
         useU2f,
       };
-      return executeRequest(request)
-        .then(webauthn.responseToObject);
+      return executeRequest(request);
     })
     .then(finishCeremony)
   ;
@@ -443,7 +442,7 @@ function getAuthenticateRequest(urls, username) {
 function executeAuthenticateRequest(request) {
   console.log('executeAuthenticateRequest', request);
 
-  return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
+  return webauthnJson.get({ publicKey: request.publicKeyCredentialRequestOptions });
 }
 
 function authenticateWithUsername(event) {
@@ -529,6 +528,15 @@ function usernameChanged(event) {
 
 function init() {
   hideDeviceInfo();
+
+  document.getElementById("username").oninput = usernameChanged;
+  document.getElementById("registerButton").onclick = register;
+  document.getElementById("registerRkButton").onclick = registerResidentKey;
+  document.getElementById("authenticateWithUsernameButton").onclick = authenticateWithUsername;
+  document.getElementById("authenticateButton").onclick = authenticate;
+  document.getElementById("deregisterButton").onclick = deregister;
+  document.getElementById("logoutButton").onclick = logout;
+
   return false;
 }
 
@@ -553,7 +561,7 @@ window.onload = init;
     <form class="horizontal">
       <div class="row">
         <label for="username">Username:</label>
-        <div><input type="text" id="username" onInput="javascript:usernameChanged(event)" /></div>
+        <div><input type="text" id="username" /></div>
       </div>
       <div class="row">
         <label for="displayName">Display name:</label>
@@ -564,12 +572,12 @@ window.onload = init;
         <label for="credentialNickname">Credential nickname:</label>
         <div><input type="text" id="credentialNickname"/></div>
         <div>
-          <button type="button" id="registerButton" onClick="javascript:register()">
+          <button type="button" id="registerButton">
             Register new account
           </button>
         </div>
         <div>
-          <button type="button" id="registerRkButton" onClick="javascript:registerResidentKey()">
+          <button type="button" id="registerRkButton">
             Register new account with resident credential
           </button>
         </div>
@@ -579,12 +587,12 @@ window.onload = init;
         <div></div>
         <div></div>
         <div>
-          <button type="button" onClick="javascript:authenticateWithUsername()">
+          <button type="button" id="authenticateWithUsernameButton">
             Authenticate
           </button>
         </div>
         <div>
-          <button type="button" onClick="javascript:authenticate()">
+          <button type="button" id="authenticateButton">
             Authenticate without username
           </button>
         </div>
@@ -603,7 +611,7 @@ window.onload = init;
         <label for="deregisterCredentialId">Credential ID:</label>
         <div><input type="text" id="deregisterCredentialId"/></div>
         <div>
-          <button type="button" onClick="javascript:deregister()">
+          <button type="button" id="deregisterButton">
             Deregister
           </button>
         </div>
@@ -612,7 +620,7 @@ window.onload = init;
 
 
     <p id="session">Not logged in.</p>
-    <button id="logoutButton" disabled="disabled" onClick="javascript:logout()">Log out</button>
+    <button id="logoutButton" disabled="disabled">Log out</button>
     <p id="status"></p>
     <div id="messages"></div>
 
