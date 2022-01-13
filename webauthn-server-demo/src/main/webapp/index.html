@@ -293,7 +293,7 @@ function submitResponse(url, request, response) {
   ;
 }
 
-function performCeremony(params) {
+async function performCeremony(params) {
   const callbacks = params.callbacks || {}; /* { init, authenticatorRequest, serverRequest } */
   const getIndexActions = params.getIndexActions; /* function(): object */
   const getRequest = params.getRequest; /* function(urls: object): { publicKeyCredentialCreationOptions: object } | { publicKeyCredentialRequestOptions: object } */
@@ -305,34 +305,31 @@ function performCeremony(params) {
   setStatus('Looking up API paths...');
   resetDisplays();
 
-  return getIndexActions()
-    .then(urls => {
-      setStatus(statusStrings.int);
-      if (callbacks.init) {
-        callbacks.init(urls);
-      }
-      return getRequest(urls);
-    })
+  const rootUrls = await getIndexActions();
 
-    .then((params) => {
-      const request = params.request;
-      const urls = params.actions;
-      setStatus(statusStrings.authenticatorRequest);
-      if (callbacks.authenticatorRequest) {
-        callbacks.authenticatorRequest({ request, urls });
-      }
-      showRequest(request);
-      ceremonyState = {
-        callbacks,
-        request,
-        statusStrings,
-        urls,
-        useU2f,
-      };
-      return executeRequest(request);
-    })
-    .then(finishCeremony)
-  ;
+  setStatus(statusStrings.int);
+  if (callbacks.init) {
+    callbacks.init(rootUrls);
+  }
+  const { request, actions: urls } = await getRequest(rootUrls);
+
+  setStatus(statusStrings.authenticatorRequest);
+  if (callbacks.authenticatorRequest) {
+    callbacks.authenticatorRequest({ request, urls });
+  }
+  showRequest(request);
+  ceremonyState = {
+    callbacks,
+    request,
+    statusStrings,
+    urls,
+    useU2f,
+  };
+
+  const webauthnResponse = await executeRequest(request);
+  const serverResponse = await finishCeremony(webauthnResponse);
+
+  return serverResponse;
 }
 
 function finishCeremony(response) {
