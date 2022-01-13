@@ -446,22 +446,25 @@ function executeAuthenticateRequest(request) {
 function authenticateWithUsername(event) {
   return authenticate(event, document.getElementById('username').value);
 }
-function authenticate(event, username) {
-  return performCeremony({
-    getIndexActions,
-    getRequest: urls => getAuthenticateRequest(urls, username),
-    statusStrings: {
-      init: 'Initiating authentication ceremony with server...',
-      authenticatorRequest: 'Asking authenticators to perform assertion...',
-      success: 'Authentication successful!',
-    },
-    executeRequest: executeAuthenticateRequest,
-  }).then(data => {
+async function authenticate(event, username) {
+  try {
+    const data = await performCeremony({
+      getIndexActions,
+      getRequest: urls => getAuthenticateRequest(urls, username),
+      statusStrings: {
+        init: 'Initiating authentication ceremony with server...',
+        authenticatorRequest: 'Asking authenticators to perform assertion...',
+        success: 'Authentication successful!',
+      },
+      executeRequest: executeAuthenticateRequest,
+    });
+
     if (data.registrations) {
       addMessage(`Authenticated as: ${data.registrations[0].username}`);
     }
     return data;
-  }).catch((err) => {
+
+  } catch (err) {
     setStatus('Authentication failed.');
     if (err.name === 'InvalidStateError') {
       addMessage(`This authenticator is not registered for the account "${username}". Please try again with a registered authenticator.`)
@@ -472,7 +475,7 @@ function authenticate(event, username) {
     }
     console.error('Authentication failed', err);
     return rejected(err);
-  });
+  }
 }
 
 function deregister() {
