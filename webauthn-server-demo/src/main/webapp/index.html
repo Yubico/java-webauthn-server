@@ -360,7 +360,7 @@ async function finishCeremony(response) {
 function registerResidentKey(event) {
   return register(event, true);
 }
-function register(event, requireResidentKey) {
+async function register(event, requireResidentKey) {
   const username = document.getElementById('username').value;
   const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
@@ -368,21 +368,22 @@ function register(event, requireResidentKey) {
 
   var request;
 
-  return performCeremony({
-    getIndexActions,
-    getRequest: urls => getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey),
-    statusStrings: {
-      init: 'Initiating registration ceremony with server...',
-      authenticatorRequest: 'Asking authenticators to create credential...',
-      success: 'Registration successful!',
-    },
-    executeRequest: req => {
-      request = req;
-      return executeRegisterRequest(req, useU2f);
-    },
-    useU2f,
-  })
-  .then(data => {
+  try {
+    const data = await performCeremony({
+      getIndexActions,
+      getRequest: urls => getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey),
+      statusStrings: {
+        init: 'Initiating registration ceremony with server...',
+        authenticatorRequest: 'Asking authenticators to create credential...',
+        success: 'Registration successful!',
+      },
+      executeRequest: req => {
+        request = req;
+        return executeRegisterRequest(req, useU2f);
+      },
+      useU2f,
+    });
+
     if (data.registration) {
       const nicknameInfo = {
         nickname: data.registration.credentialNickname,
@@ -401,8 +402,8 @@ function register(event, requireResidentKey) {
         addMessage("Warning: Attestation is not trusted!");
       }
     }
-  })
-  .catch((err) => {
+
+  } catch (err) {
     setStatus('Registration failed.');
     console.error('Registration failed', err);
 
@@ -422,7 +423,7 @@ function register(event, requireResidentKey) {
       addMessages(err.messages);
     }
     return rejected(err);
-  });
+  }
 }
 
 function getAuthenticateRequest(urls, username) {
