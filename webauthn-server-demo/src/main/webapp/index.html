@@ -332,7 +332,7 @@ async function performCeremony(params) {
   return serverResponse;
 }
 
-function finishCeremony(response) {
+async function finishCeremony(response) {
   const callbacks = ceremonyState.callbacks;
   const request = ceremonyState.request;
   const statusStrings = ceremonyState.statusStrings;
@@ -345,16 +345,16 @@ function finishCeremony(response) {
   }
   showAuthenticatorResponse(response);
 
-  return submitResponse(useU2f ? urls.finishU2f : urls.finish, request, response)
-    .then(data => {
-      if (data && data.success) {
-        setStatus(statusStrings.success);
-      } else {
-        setStatus('Error!');
-      }
-      showServerResponse(data);
-      return data;
-    });
+  const data = await submitResponse(useU2f ? urls.finishU2f : urls.finish, request, response);
+
+  if (data && data.success) {
+    setStatus(statusStrings.success);
+  } else {
+    setStatus('Error!');
+  }
+  showServerResponse(data);
+
+  return data;
 }
 
 function registerResidentKey(event) {
