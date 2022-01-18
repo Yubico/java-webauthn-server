@@ -400,13 +400,13 @@ and credentials registered via the U2F API will continue to work with the WebAut
 
 To migrate to using the WebAuthn API, you need to do the following:
 
-* Follow the link:#getting-started[Getting started] guide above to set up WebAuthn support in general.
+ 1. Follow the link:#getting-started[Getting started] guide above to set up WebAuthn support in general.
 +
 Note that unlike a U2F AppID, the WebAuthn link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/RelyingPartyIdentity.RelyingPartyIdentityBuilder.html#id(java.lang.String)[RP ID]
 consists of only the domain name of the AppID.
 WebAuthn does not support link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-appid-and-facets-v1.2-ps-20170411.html[U2F Trusted Facet Lists].
 
-* Set the
+ 2. Set the
   link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#appId(com.yubico.webauthn.extension.appid.AppId)[`appId()`]
   setting on your `RelyingParty` instance.
   The argument to the `appid()` setting should be the same as you used for the `appId` argument to the
@@ -416,36 +416,36 @@ This will enable the link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sc
 and link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension[`appidExclude`]
 extensions and configure the `RelyingParty` to accept the given AppId when verifying authenticator signatures.
 
-* Generate a link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle[user handle] for each existing user
-  and store it in their account,
-  or decide on a method for deriving one deterministically from existing user attributes.
-  For example, if your user records are assigned UUIDs, you can use that UUID as the user handle.
-  You SHOULD NOT use a plain username or e-mail address, or hash of either, as the user handle -
-  for more on this, see the link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy[User Handle Contents]
-  privacy consideration.
+ 3. Generate a link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle[user handle]
+    for each existing user and store it in their account,
+    or decide on a method for deriving one deterministically from existing user attributes.
+    For example, if your user records are assigned UUIDs, you can use that UUID as the user handle.
+    You SHOULD NOT use a plain username or e-mail address, or hash of either, as the user handle -
+    for more on this, see the link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy[User Handle Contents]
+    privacy consideration.
 
-* When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
-  use the U2F key handle as the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#credentialId(com.yubico.webauthn.data.ByteArray)[credential ID].
-  If you store key handles base64 encoded, you should decode them using
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64(java.lang.String)[`ByteArray.fromBase64`]
-  or
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64Url(java.lang.String)[`ByteArray.fromBase64Url`]
-  as appropriate before passing them to the `RegisteredCredential`.
+ 4. When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
+    use the U2F key handle as the
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#credentialId(com.yubico.webauthn.data.ByteArray)[credential ID].
+    If you store key handles base64 encoded, you should decode them using
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64(java.lang.String)[`ByteArray.fromBase64`]
+    or
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64Url(java.lang.String)[`ByteArray.fromBase64Url`]
+    as appropriate before passing them to the `RegisteredCredential`.
 
-* When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
-  use the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyEs256Raw(com.yubico.webauthn.data.ByteArray)[`publicKeyEs256Raw()`]
-  method instead of link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyCose(com.yubico.webauthn.data.ByteArray)[`publicKeyCose()`]
-  to set the credential public key.
+ 5. When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
+    use the
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyEs256Raw(com.yubico.webauthn.data.ByteArray)[`publicKeyEs256Raw()`]
+    method instead of link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyCose(com.yubico.webauthn.data.ByteArray)[`publicKeyCose()`]
+    to set the credential public key.
 
-* Replace calls to the U2F
-  link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`register`]
-  method with calls to `navigator.credentials.create()` as described in link:#getting-started[Getting started].
+ 6. Replace calls to the U2F
+    link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`register`]
+    method with calls to `navigator.credentials.create()` as described in link:#getting-started[Getting started].
 
-* Replace calls to the U2F
-  link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`sign`]
-  method with calls to `navigator.credentials.get()` as described in link:#getting-started[Getting started].
+ 7. Replace calls to the U2F
+    link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`sign`]
+    method with calls to `navigator.credentials.get()` as described in link:#getting-started[Getting started].
 
 Existing U2F credentials should now work with the WebAuthn API.
 
