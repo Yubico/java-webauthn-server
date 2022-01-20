@@ -12,7 +12,8 @@ class CertFromBase64Converter implements Converter<String, X509Certificate> {
   @Override
   public X509Certificate convert(String value) {
     try {
-      return CertificateParser.parseDer(ByteArray.fromBase64(value).getBytes());
+      return CertificateParser.parseDer(
+          ByteArray.fromBase64(value.replaceAll("\\s+", "")).getBytes());
     } catch (CertificateException e) {
       throw new RuntimeException(e);
     }
