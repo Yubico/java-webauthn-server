@@ -70,6 +70,9 @@ tasks.register('integrationTest', Test) {
   classpath = sourceSets.integrationTest.runtimeClasspath
   shouldRunAfter test
   check.dependsOn it
+
+  // Required for processing CRL distribution points extension
+  systemProperty 'com.sun.security.enableCRLDP', 'true'
 }
 
 jar {

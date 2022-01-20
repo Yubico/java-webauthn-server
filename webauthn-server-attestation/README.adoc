@@ -1,0 +1,23 @@
+= webauthn-server-attestation
+
+An optional module which extends link:../[`webauthn-server-core`]
+with trust root sources for verifying
+https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation statements],
+most importantly by interfacing with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
+
+
+== Using the FIDO Metadata Service
+
+The FidoMetadataDownloader class can download and verify metadata BLOBs from the FIDO Metadata Service.
+This process involves certificate path validation,
+for which the `com.sun.security.enableCRLDP` system property needs to be set to the value `true`.
+For example, this can be done on the JVM command line using a `-Dcom.sun.security.enableCRLDP=true` option.
+See the https://docs.oracle.com/javase/9/security/java-pki-programmers-guide.htm#JSSEC-GUID-EB250086-0AC1-4D60-AE2A-FC7461374746[Java PKI Programmers Guide]
+for details.
+
+
+=== Overriding certificate path validation
+
+The FidoMetadataDownloader class uses `CertPathValidator.getInstance("PKIX")` to retrieve a `CertPathValidator` instance.
+If you need to override any aspect of certificate path validation,
+such as CRL retrieval or OCSP, you may provide a custom `CertPathValidator` provider for the `"PKIX"` algorithm.
