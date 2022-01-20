@@ -978,7 +978,7 @@ object TestAuthenticator {
       signingKey: PrivateKey,
       signingAlg: COSEAlgorithmIdentifier,
       isCa: Boolean = false,
-      extensions: Iterable[(String, Boolean, ASN1Primitive)],
+      extensions: Iterable[(String, Boolean, ASN1Primitive)] = None,
   ): X509Certificate = {
     CertificateParser.parseDer({
       val builder = new X509v3CertificateBuilder(
