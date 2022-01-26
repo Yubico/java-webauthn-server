@@ -41,6 +41,8 @@ import java.util.Optional
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsJava
+import scala.util.Success
+import scala.util.Try
 
 @Network
 @RunWith(classOf[JUnitRunner])
@@ -110,6 +112,37 @@ class FidoMetadataDownloaderSpec
       keypair,
       x500Name,
     )
+  }
+
+  private def makeCertChain(
+      caKeypair: KeyPair,
+      caName: X500Name,
+      chainLength: Int,
+      validFrom: Instant = Instant.now(),
+      validTo: Instant = Instant.now().plusSeconds(600),
+      leafName: String =
+        "CN=Yubico java-webauthn-server unit tests blob cert, O=Yubico",
+  ): List[(X509Certificate, KeyPair, X500Name)] = {
+    var certs: List[(X509Certificate, KeyPair, X500Name)] = Nil
+    var currentKeypair = caKeypair
+    var currentName = caName
+
+    for { i <- 1 to chainLength } {
+      val (cert, keypair, name) = makeCert(
+        currentKeypair,
+        currentName,
+        validFrom = validFrom,
+        validTo = validTo,
+        name =
+          if (i == chainLength) leafName else s"CN=Test intermediate CA ${i}",
+        isCa = i != chainLength,
+      )
+      certs = (cert, keypair, name) +: certs
+      currentKeypair = keypair
+      currentName = name
+    }
+
+    certs
   }
 
   private def makeBlob(
@@ -832,8 +865,112 @@ class FidoMetadataDownloaderSpec
       }
     }
 
-    ignore("5. If the x5u attribute is missing, the chain should be retrieved from the x5c attribute. If that attribute is missing as well, Metadata BLOB signing trust anchor is considered the BLOB signing certificate chain.") {
-      fail("Test not implemented.")
+    describe("5. If the x5u attribute is missing, the chain should be retrieved from the x5c attribute. If that attribute is missing as well, Metadata BLOB signing trust anchor is considered the BLOB signing certificate chain.") {
+      it("x5c with one cert is accepted.") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val certChain = List(blobCert)
+        val certChainJson = certChain
+          .map(cert => new ByteArray(cert.getEncoded).getBase64)
+          .mkString("[\"", "\",\"", "\"]")
+        val blobJwt =
+          makeBlob(
+            blobKeypair,
+            s"""{"alg":"ES256","x5c": ${certChainJson}}""",
+            s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+          )
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useTrustRoot(trustRootCert)
+          .useBlob(blobJwt)
+          .useCrls(crls.asJava)
+          .build()
+          .loadBlob
+        blob should not be null
+      }
+
+      it("x5c with three certs requires a CRL for each CA certificate.") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val certChain = makeCertChain(caKeypair, caName, 3)
+        certChain.length should be(3)
+        val certChainJson = certChain
+          .map({
+            case (cert, _, _) => new ByteArray(cert.getEncoded).getBase64
+          })
+          .mkString("[\"", "\",\"", "\"]")
+
+        val blobJwt =
+          makeBlob(
+            certChain.head._2,
+            s"""{"alg":"ES256","x5c": ${certChainJson}}""",
+            s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+          )
+        val crls = (certChain.tail :+ (trustRootCert, caKeypair, caName)).map({
+          case (_, keypair, name) =>
+            TestAuthenticator.buildCrl(
+              name,
+              keypair.getPrivate,
+              "SHA256withECDSA",
+              Instant.now(),
+              Instant.now().plusSeconds(600),
+            )
+        })
+
+        val blob = Try(
+          FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .build()
+            .loadBlob
+        )
+        blob should not be null
+        blob shouldBe a[Success[_]]
+
+        for { i <- certChain.indices } {
+          val splicedCrls = crls.take(i) ++ crls.drop(i + 1)
+          splicedCrls.length should be(crls.length - 1)
+          val thrown = the[CertPathValidatorException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .useCrls(splicedCrls.asJava)
+              .build()
+              .loadBlob
+          }
+          thrown should not be null
+          thrown.getReason should be(
+            CertPathValidatorException.BasicReason.UNDETERMINED_REVOCATION_STATUS
+          )
+        }
+      }
     }
 
     ignore("6. Verify the signature of the Metadata BLOB object using the BLOB signing certificate chain (as determined by the steps above). The FIDO Server SHOULD ignore the file if the signature is invalid. It SHOULD also ignore the file if its number (no) is less or equal to the number of the last Metadata BLOB object cached locally.") {
