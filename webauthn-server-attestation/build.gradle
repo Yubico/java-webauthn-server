@@ -48,6 +48,7 @@ dependencies {
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
     'junit:junit',
     'org.bouncycastle:bcpkix-jdk15on',
+    'org.eclipse.jetty:jetty-server:11.0.7',
     'org.mockito:mockito-core',
     'org.scala-lang:scala-library',
     'org.scalacheck:scalacheck_2.13',

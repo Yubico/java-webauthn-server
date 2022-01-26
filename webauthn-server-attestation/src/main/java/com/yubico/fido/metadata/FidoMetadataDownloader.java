@@ -40,13 +40,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
@@ -75,6 +77,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -110,6 +115,7 @@ public final class FidoMetadataDownloader {
   private final Consumer<ByteArray> blobCacheConsumer;
   private final CertStore certStore;
   @NonNull private final Clock clock;
+  private final KeyStore httpsTrustStore;
 
   /**
    * Begin configuring a {@link FidoMetadataDownloader} instance. See the {@link
@@ -138,6 +144,7 @@ public final class FidoMetadataDownloader {
 
     private CertStore certStore = null;
     @NonNull private Clock clock = Clock.systemUTC();
+    private KeyStore httpsTrustStore = null;
 
     public FidoMetadataDownloader build() {
       return new FidoMetadataDownloader(
@@ -154,7 +161,8 @@ public final class FidoMetadataDownloader {
           blobCacheSupplier,
           blobCacheConsumer,
           certStore,
-          clock);
+          clock,
+          httpsTrustStore);
     }
 
     /**
@@ -554,6 +562,34 @@ public final class FidoMetadataDownloader {
       this.certStore = certStore;
       return this;
     }
+
+    /**
+     * Use the provided {@link X509Certificate}s as trust roots for HTTPS downloads.
+     *
+     * <p>This is primarily useful when setting {@link Step2#downloadTrustRoot(URL, Set)
+     * downloadTrustRoot} and/or {@link Step4#downloadBlob(URL) downloadBlob} to download from
+     * custom servers instead of the defaults.
+     *
+     * <p>If provided, these will be used for downloading
+     *
+     * <ul>
+     *   <li>the trust root certificate for the BLOB signature chain, and
+     *   <li>the metadata BLOB.
+     * </ul>
+     *
+     * If not set, the system default certificate store will be used.
+     */
+    public FidoMetadataDownloaderBuilder trustHttpsCerts(X509Certificate... certificates)
+        throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException {
+      KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      trustStore.load(null);
+      for (X509Certificate cert : certificates) {
+        trustStore.setCertificateEntry(cert.getSubjectDN().getName(), cert);
+      }
+      this.httpsTrustStore = trustStore;
+
+      return this;
+    }
   }
 
   /**
@@ -792,7 +828,22 @@ public final class FidoMetadataDownloader {
    */
   private ByteArray httpGet(URL url) throws IOException {
     if ("https".equals(url.getProtocol())) {
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+      if (httpsTrustStore != null) {
+        try {
+          TrustManagerFactory trustMan =
+              TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+          trustMan.init(httpsTrustStore);
+          SSLContext sslContext = SSLContext.getInstance("TLS");
+          sslContext.init(null, trustMan.getTrustManagers(), null);
+          conn.setSSLSocketFactory(sslContext.getSocketFactory());
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+          // TODO don't do this
+          throw new RuntimeException(e);
+        }
+      }
+
       conn.setRequestMethod("GET");
       InputStream is = conn.getInputStream();
       return readAll(is);
