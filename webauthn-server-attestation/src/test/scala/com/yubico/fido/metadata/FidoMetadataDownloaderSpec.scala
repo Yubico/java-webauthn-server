@@ -25,6 +25,7 @@ import org.scalatestplus.junit.JUnitRunner
 
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.security.DigestException
 import java.security.KeyPair
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -37,7 +38,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.Optional
+import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.jdk.CollectionConverters.SetHasAsJava
 
 @Network
 @RunWith(classOf[JUnitRunner])
@@ -59,13 +62,13 @@ class FidoMetadataDownloaderSpec
   }
 
   private def makeTrustRootCert(
+      distinguishedName: String =
+        "CN=Yubico java-webauthn-server unit tests CA, O=Yubico",
       validFrom: Instant = Instant.now(),
       validTo: Instant = Instant.now().plusSeconds(600),
   ): (X509Certificate, KeyPair, X500Name) = {
     val keypair = TestAuthenticator.generateEcKeypair()
-    val name = new X500Name(
-      "CN=Yubico java-webauthn-server unit tests CA, O=Yubico"
-    )
+    val name = new X500Name(distinguishedName)
     (
       TestAuthenticator.buildCertificate(
         publicKey = keypair.getPublic,
@@ -145,6 +148,11 @@ class FidoMetadataDownloaderSpec
   ): (Server, String, X509Certificate) =
     makeHttpServer(Map(path -> response.getBytes(StandardCharsets.UTF_8)))
   private def makeHttpServer(
+      path: String,
+      response: Array[Byte],
+  ): (Server, String, X509Certificate) =
+    makeHttpServer(Map(path -> response))
+  private def makeHttpServer(
       responses: Map[String, Array[Byte]]
   ): (Server, String, X509Certificate) = {
     val tlsKey = TestAuthenticator.generateEcKeypair()
@@ -203,8 +211,205 @@ class FidoMetadataDownloaderSpec
   }
 
   describe("§3.2. Metadata BLOB object processing rules") {
-    ignore("1. Download and cache the root signing trust anchor from the respective MDS root location e.g. More information can be found at https://fidoalliance.org/metadata/") {
-      fail("Test not implemented.")
+    describe("1. Download and cache the root signing trust anchor from the respective MDS root location e.g. More information can be found at https://fidoalliance.org/metadata/") {
+      it(
+        "The trust root is downloaded and cached if there isn't a cached one."
+      ) {
+        val random = new SecureRandom()
+        val trustRootDistinguishedName =
+          s"CN=Test trust root ${random.nextInt(10000)}"
+        val (trustRootCert, caKeypair, caName) =
+          makeTrustRootCert(distinguishedName = trustRootDistinguishedName)
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val blobJwt =
+          makeBlob(List(blobCert), blobKeypair, LocalDate.now())
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        var writtenCache: Option[ByteArray] = None
+
+        val (server, serverUrl, httpsCert) =
+          makeHttpServer("/trust-root.der", trustRootCert.getEncoded)
+        startServer(server)
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .downloadTrustRoot(
+            new URL(s"${serverUrl}/trust-root.der"),
+            Set(
+              TestAuthenticator.sha256(new ByteArray(trustRootCert.getEncoded))
+            ).asJava,
+          )
+          .useTrustRootCache(
+            () => Optional.empty(),
+            newCache => { writtenCache = Some(newCache) },
+          )
+          .useBlob(blobJwt)
+          .useCrls(crls.asJava)
+          .trustHttpsCerts(httpsCert)
+          .build()
+          .loadBlob
+        blob should not be null
+        blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          trustRootDistinguishedName
+        )
+        writtenCache should equal(Some(new ByteArray(trustRootCert.getEncoded)))
+      }
+
+      it("The trust root is downloaded and cached if there's an expired one in cache.") {
+        val random = new SecureRandom()
+
+        val oldTrustRootDistinguishedName =
+          s"CN=Test trust root ${random.nextInt(10000)}"
+        val newTrustRootDistinguishedName =
+          s"CN=Test trust root ${random.nextInt(10000) + 10000}"
+        val (oldTrustRootCert, _, _) =
+          makeTrustRootCert(
+            distinguishedName = oldTrustRootDistinguishedName,
+            validFrom = Instant.now().minusSeconds(600),
+            validTo = Instant.now().minusSeconds(1),
+          )
+        val (newTrustRootCert, caKeypair, caName) =
+          makeTrustRootCert(distinguishedName = newTrustRootDistinguishedName)
+
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val blobJwt =
+          makeBlob(List(blobCert), blobKeypair, LocalDate.now())
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        var writtenCache: Option[ByteArray] = None
+
+        val (server, serverUrl, httpsCert) =
+          makeHttpServer("/trust-root.der", newTrustRootCert.getEncoded)
+        startServer(server)
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .downloadTrustRoot(
+            new URL(s"${serverUrl}/trust-root.der"),
+            Set(
+              TestAuthenticator.sha256(
+                new ByteArray(newTrustRootCert.getEncoded)
+              )
+            ).asJava,
+          )
+          .useTrustRootCache(
+            () => Optional.of(new ByteArray(oldTrustRootCert.getEncoded)),
+            newCache => { writtenCache = Some(newCache) },
+          )
+          .useBlob(blobJwt)
+          .useCrls(crls.asJava)
+          .trustHttpsCerts(httpsCert)
+          .build()
+          .loadBlob
+        blob should not be null
+        blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          newTrustRootDistinguishedName
+        )
+        writtenCache should equal(
+          Some(new ByteArray(newTrustRootCert.getEncoded))
+        )
+      }
+
+      it("The trust root is not downloaded if there's a valid one in cache.") {
+        val random = new SecureRandom()
+        val trustRootDistinguishedName =
+          s"CN=Test trust root ${random.nextInt(10000)}"
+        val (trustRootCert, caKeypair, caName) =
+          makeTrustRootCert(distinguishedName = trustRootDistinguishedName)
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val blobJwt =
+          makeBlob(List(blobCert), blobKeypair, LocalDate.now())
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        var writtenCache: Option[ByteArray] = None
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useDefaultTrustRoot()
+          .useTrustRootCache(
+            () => Optional.of(new ByteArray(trustRootCert.getEncoded)),
+            newCache => { writtenCache = Some(newCache) },
+          )
+          .useBlob(blobJwt)
+          .useCrls(crls.asJava)
+          .build()
+          .loadBlob
+        blob should not be null
+        blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          trustRootDistinguishedName
+        )
+        writtenCache should equal(None)
+      }
+
+      it("The downloaded trust root cert must match one of the expected SHA256 hashes.") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val blobJwt = makeBlob(List(blobCert), blobKeypair, LocalDate.now())
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val (server, serverUrl, httpsCert) =
+          makeHttpServer("/trust-root.der", trustRootCert.getEncoded)
+        startServer(server)
+
+        def testWithHashes(hashes: Set[ByteArray]): MetadataBLOB = {
+          FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .downloadTrustRoot(
+              new URL(s"${serverUrl}/trust-root.der"),
+              hashes.asJava,
+            )
+            .useTrustRootCache(() => Optional.empty(), _ => {})
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+        }
+
+        val goodHash =
+          TestAuthenticator.sha256(new ByteArray(trustRootCert.getEncoded))
+        val badHash = TestAuthenticator.sha256(goodHash)
+
+        a[DigestException] should be thrownBy { testWithHashes(Set(badHash)) }
+        testWithHashes(Set(goodHash)) should not be null
+        testWithHashes(Set(badHash, goodHash)) should not be null
+      }
     }
 
     describe("2. To validate the digital certificates used in the digital signature, the certificate revocation information MUST be available in the form of CRLs at the respective MDS CRL location e.g. More information can be found at https://fidoalliance.org/metadata/") {

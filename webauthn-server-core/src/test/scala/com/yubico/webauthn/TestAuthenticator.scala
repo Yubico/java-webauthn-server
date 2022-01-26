@@ -116,8 +116,8 @@ object TestAuthenticator {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private def toBytes(s: String): ByteArray = new ByteArray(s.getBytes("UTF-8"))
-  private def sha256(s: String): ByteArray = sha256(toBytes(s))
-  private def sha256(b: ByteArray): ByteArray =
+  def sha256(s: String): ByteArray = sha256(toBytes(s))
+  def sha256(b: ByteArray): ByteArray =
     new ByteArray(MessageDigest.getInstance("SHA-256").digest(b.getBytes))
 
   sealed trait AttestationMaker {
