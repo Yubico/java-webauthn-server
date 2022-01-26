@@ -113,12 +113,30 @@ class FidoMetadataDownloaderSpec
   }
 
   private def makeBlob(
+      blobKeypair: KeyPair,
+      header: String,
+      body: String,
+  ): String = {
+    val blobTbs = new ByteArray(
+      header.getBytes(StandardCharsets.UTF_8)
+    ).getBase64Url + "." + new ByteArray(
+      body.getBytes(StandardCharsets.UTF_8)
+    ).getBase64Url
+    val blobSignature = TestAuthenticator.sign(
+      new ByteArray(blobTbs.getBytes(StandardCharsets.UTF_8)),
+      blobKeypair.getPrivate,
+      COSEAlgorithmIdentifier.ES256,
+    )
+    blobTbs + "." + blobSignature.getBase64Url
+  }
+
+  private def makeBlob(
       certChain: List[X509Certificate],
       blobKeypair: KeyPair,
       nextUpdate: LocalDate,
       legalHeader: String = "Kom ihåg att du aldrig får snyta dig i mattan!",
       no: Int = 1,
-  ) = {
+  ): String = {
     val blobHeader =
       s"""{"alg":"ES256","x5c": [${certChain
         .map(cert => new ByteArray(cert.getEncoded).getBase64)
@@ -129,17 +147,7 @@ class FidoMetadataDownloaderSpec
       "nextUpdate": "${nextUpdate}",
       "entries": []
     }"""
-    val blobTbs = new ByteArray(
-      blobHeader.getBytes(StandardCharsets.UTF_8)
-    ).getBase64Url + "." + new ByteArray(
-      blobBody.getBytes(StandardCharsets.UTF_8)
-    ).getBase64Url
-    val blobSignature = TestAuthenticator.sign(
-      new ByteArray(blobTbs.getBytes(StandardCharsets.UTF_8)),
-      blobKeypair.getPrivate,
-      COSEAlgorithmIdentifier.ES256,
-    )
-    blobTbs + "." + blobSignature.getBase64Url
+    makeBlob(blobKeypair, blobHeader, blobBody)
   }
 
   private def makeHttpServer(
