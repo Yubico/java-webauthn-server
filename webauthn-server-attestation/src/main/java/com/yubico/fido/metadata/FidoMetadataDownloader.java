@@ -626,8 +626,8 @@ public final class FidoMetadataDownloader {
    * invocation will reload/rewrite caches, perform downloads and check the <code>"legalHeader"
    * </code> as necessary. You may therefore reuse a {@link FidoMetadataDownloader} instance and,
    * for example, call <code>loadBlob()</code> periodically to refresh the BLOB when appropriate.
-   * Each call will return a new {@link MetadataBLOBPayload} instance; ones already returned will
-   * not be updated by subsequent <code>loadBlob()</code> calls.
+   * Each call will return a new {@link MetadataBLOB} instance; ones already returned will not be
+   * updated by subsequent <code>loadBlob()</code> calls.
    *
    * @return the successfully retrieved and validated metadata BLOB.
    * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact
@@ -655,7 +655,7 @@ public final class FidoMetadataDownloader {
    *     expectLegalHeader(String...)} but is otherwise valid. The downloaded BLOB will not be
    *     written to cache in this case.
    */
-  public MetadataBLOBPayload loadBlob()
+  public MetadataBLOB loadBlob()
       throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
           CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
           InvalidKeyException, UnexpectedLegalHeader, DigestException {
@@ -741,8 +741,7 @@ public final class FidoMetadataDownloader {
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
    */
-  private MetadataBLOBPayload retrieveBlob(
-      X509Certificate trustRootCertificate, CertStore certStore)
+  private MetadataBLOB retrieveBlob(X509Certificate trustRootCertificate, CertStore certStore)
       throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
           InvalidAlgorithmParameterException, InvalidKeyException, UnexpectedLegalHeader,
           NoSuchAlgorithmException, SignatureException {
@@ -759,7 +758,7 @@ public final class FidoMetadataDownloader {
         cachedContents = blobCacheSupplier.get();
       }
 
-      final MetadataBLOBPayload cachedBlob =
+      final MetadataBLOB cachedBlob =
           cachedContents
               .map(
                   cached -> {
@@ -773,18 +772,21 @@ public final class FidoMetadataDownloader {
 
       if (cachedBlob != null
           && cachedBlob
+              .getPayload()
               .getNextUpdate()
               .atStartOfDay()
-              .isAfter(clock.instant().atZone(clock.getZone()).toLocalDateTime())) {
+              .atZone(clock.getZone())
+              .isAfter(clock.instant().atZone(clock.getZone()))) {
         return cachedBlob;
 
       } else {
         final ByteArray downloaded = httpGet(blobUrl);
-        final MetadataBLOBPayload downloadedBlob =
+        final MetadataBLOB downloadedBlob =
             parseAndVerifyBlob(downloaded, trustRootCertificate, certStore);
 
-        if (cachedBlob == null || downloadedBlob.getNo() > cachedBlob.getNo()) {
-          if (expectedLegalHeaders.contains(downloadedBlob.getLegalHeader())) {
+        if (cachedBlob == null
+            || downloadedBlob.getPayload().getNo() > cachedBlob.getPayload().getNo()) {
+          if (expectedLegalHeaders.contains(downloadedBlob.getPayload().getLegalHeader())) {
             if (blobCacheFile != null) {
               new FileOutputStream(blobCacheFile).write(downloaded.getBytes());
             }
@@ -852,7 +854,7 @@ public final class FidoMetadataDownloader {
     }
   }
 
-  private static MetadataBLOBPayload parseAndVerifyBlob(
+  private static MetadataBLOB parseAndVerifyBlob(
       ByteArray jwt, X509Certificate trustRootCertificate, CertStore certStore)
       throws CertPathValidatorException, InvalidAlgorithmParameterException, CertificateException,
           IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
@@ -864,7 +866,7 @@ public final class FidoMetadataDownloader {
     return verifyBlob(header, payload, signature, trustRootCertificate, certStore);
   }
 
-  private static MetadataBLOBPayload verifyBlob(
+  private static MetadataBLOB verifyBlob(
       ByteArray jwtHeader,
       ByteArray jwtPayload,
       ByteArray jwtSignature,
@@ -924,7 +926,8 @@ public final class FidoMetadataDownloader {
     }
     cpv.validate(blobCertPath, pathParams);
 
-    return JacksonCodecs.json().readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class);
+    return new MetadataBLOB(
+        header, JacksonCodecs.json().readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class));
   }
 
   private static ByteArray readAll(InputStream is) throws IOException {

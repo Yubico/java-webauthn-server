@@ -19,20 +19,21 @@ import lombok.NonNull;
 public class UnexpectedLegalHeader extends Exception {
 
   /** The cached metadata BLOB, if any, which is assumed to have an expected legal header. */
-  private final MetadataBLOBPayload cachedBlob;
+  private final MetadataBLOB cachedBlob;
 
   /**
    * The newly downloaded metadata BLOB, which has an unexpected legal header.
    *
-   * <p>The unexpected legal header can be retrieved via the {@link
-   * MetadataBLOBPayload#getLegalHeader()} method.
+   * <p>The unexpected legal header can be retrieved via the {@link MetadataBLOB#getPayload()
+   * getPayload()}.{@link MetadataBLOBPayload#getLegalHeader() getLegalHeader()} methods.
    *
+   * @see MetadataBLOB#getPayload()
    * @see MetadataBLOBPayload#getLegalHeader()
    */
-  @Getter @NonNull private final MetadataBLOBPayload downloadedBlob;
+  @Getter @NonNull private final MetadataBLOB downloadedBlob;
 
   /** The cached metadata BLOB, if any. */
-  public Optional<MetadataBLOBPayload> getCachedBlob() {
+  public Optional<MetadataBLOB> getCachedBlob() {
     return Optional.ofNullable(cachedBlob);
   }
 }

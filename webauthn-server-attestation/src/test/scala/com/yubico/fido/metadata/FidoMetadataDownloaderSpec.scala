@@ -417,6 +417,7 @@ class FidoMetadataDownloaderSpec
           .trustHttpsCerts(httpsCert)
           .build()
           .loadBlob()
+          .getPayload
         blob should not be null
         blob.getLegalHeader should equal(blobLegalHeader)
         blob.getNo should equal(blobNo)
@@ -475,6 +476,7 @@ class FidoMetadataDownloaderSpec
           .trustHttpsCerts(httpsCert)
           .build()
           .loadBlob()
+          .getPayload
         blob should not be null
         blob.getNo should equal(newBlobNo)
       }
@@ -534,6 +536,7 @@ class FidoMetadataDownloaderSpec
           .trustHttpsCerts(httpsCert)
           .build()
           .loadBlob()
+          .getPayload
         blob should not be null
         blob.getNo should equal(oldBlobNo)
       }
@@ -591,6 +594,7 @@ class FidoMetadataDownloaderSpec
           .trustHttpsCerts(httpsCert)
           .build()
           .loadBlob()
+          .getPayload
         blob should not be null
         blob.getNo should equal(oldBlobNo)
       }

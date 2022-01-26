@@ -49,7 +49,7 @@ class FidoMetadataServiceIntegrationTest
           .build()
           .loadBlob()
       )
-      val fidoMds = blob.map(new FidoMetadataService(_))
+      val fidoMds = blob.map(_.getPayload).map(new FidoMetadataService(_))
 
       val attachmentHintsUsb =
         Set(ATTACHMENT_HINT_EXTERNAL, ATTACHMENT_HINT_WIRED)
