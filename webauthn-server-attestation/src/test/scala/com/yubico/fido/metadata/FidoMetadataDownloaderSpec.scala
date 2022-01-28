@@ -971,6 +971,41 @@ class FidoMetadataDownloaderSpec
           )
         }
       }
+
+      it("Missing x5c means the trust root cert is used as the signer.") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val blobJwt =
+          makeBlob(
+            caKeypair,
+            s"""{"alg":"ES256"}""",
+            s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+          )
+
+        val crls = List(
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useTrustRoot(trustRootCert)
+          .useBlob(blobJwt)
+          .useCrls(crls.asJava)
+          .build()
+          .loadBlob
+        blob should not be null
+      }
     }
 
     ignore("6. Verify the signature of the Metadata BLOB object using the BLOB signing certificate chain (as determined by the steps above). The FIDO Server SHOULD ignore the file if the signature is invalid. It SHOULD also ignore the file if its number (no) is less or equal to the number of the last Metadata BLOB object cached locally.") {

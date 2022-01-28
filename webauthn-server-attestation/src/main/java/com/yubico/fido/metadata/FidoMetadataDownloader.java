@@ -887,8 +887,7 @@ public final class FidoMetadataDownloader {
     } else if (header.getX5c().isPresent()) {
       certChain = header.getX5c().get();
     } else {
-      throw new IllegalArgumentException(
-          "Metadata BLOB header must contain attribute \"x5c\" or \"x5u\".");
+      certChain = Collections.singletonList(trustRootCertificate);
     }
 
     final X509Certificate leafCert = certChain.get(0);
