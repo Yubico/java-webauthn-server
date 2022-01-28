@@ -55,9 +55,9 @@ input[type="text"] {
   <script src="lib/fetch/fetch-3.0.0.js"></script>
   <script src="lib/base64js/base64js-1.3.0.min.js"></script>
   <script src="js/base64url.js"></script>
-  <script src="js/webauthn.js"></script>
 
-  <script>
+  <script type="module">
+import * as webauthnJson from "./lib/webauthn-json-0.6.1/dist/esm/webauthn-json.js";
 
 let ceremonyState = {};
 let session = {
@@ -182,7 +182,7 @@ function getIndexActions() {
   ;
 }
 
-function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey = false) {
+function getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey) {
   return fetch(urls.register, {
     body: new URLSearchParams({
       username,
@@ -199,20 +199,20 @@ function getRegisterRequest(urls, username, displayName, credentialNickname, req
   ;
 }
 
-function executeRegisterRequest(request, useU2f = false) {
+function executeRegisterRequest(request, useU2f) {
   console.log('executeRegisterRequest', request);
 
   if (useU2f) {
     return executeU2fRegisterRequest(request);
   } else {
-    return webauthn.createCredential(request.publicKeyCredentialCreationOptions);
+    return webauthnJson.create({ publicKey: request.publicKeyCredentialCreationOptions });
   }
 }
 
-function executeU2fRegisterRequest(request) {
+async function executeU2fRegisterRequest(request) {
   const appId = 'https://localhost:8443';
   console.log('appId', appId);
-  return u2fRegister(
+  const result = await u2fRegister(
     appId,
     [{
       version: 'U2F_V2',
@@ -223,28 +223,26 @@ function executeU2fRegisterRequest(request) {
       version: 'U2F_V2',
       keyHandle: cred.id,
     }))
-  )
-    .then(result => {
-      const registrationDataBase64 = result.registrationData;
-      const clientDataBase64 = result.clientData;
-      const registrationDataBytes = base64url.toByteArray(registrationDataBase64);
+  );
 
-      const publicKeyBytes = registrationDataBytes.slice(1, 1 + 65);
-      const L = registrationDataBytes[1 + 65];
-      const keyHandleBytes = registrationDataBytes.slice(1 + 65 + 1, 1 + 65 + 1 + L);
+  const registrationDataBase64 = result.registrationData;
+  const clientDataBase64 = result.clientData;
+  const registrationDataBytes = base64url.toByteArray(registrationDataBase64);
 
-      const attestationCertAndTrailingBytes = registrationDataBytes.slice(1 + 65 + 1 + L);
+  const publicKeyBytes = registrationDataBytes.slice(1, 1 + 65);
+  const L = registrationDataBytes[1 + 65];
+  const keyHandleBytes = registrationDataBytes.slice(1 + 65 + 1, 1 + 65 + 1 + L);
 
-      return {
-        u2fResponse: {
-          keyHandle: base64url.fromByteArray(keyHandleBytes),
-          publicKey: base64url.fromByteArray(publicKeyBytes),
-          attestationCertAndSignature: base64url.fromByteArray(attestationCertAndTrailingBytes),
-          clientDataJSON: clientDataBase64,
-        },
-      };
-    })
-  ;
+  const attestationCertAndTrailingBytes = registrationDataBytes.slice(1 + 65 + 1 + L);
+
+  return {
+    u2fResponse: {
+      keyHandle: base64url.fromByteArray(keyHandleBytes),
+      publicKey: base64url.fromByteArray(publicKeyBytes),
+      attestationCertAndSignature: base64url.fromByteArray(attestationCertAndTrailingBytes),
+      clientDataJSON: clientDataBase64,
+    },
+  };
 }
 
 function u2fRegister(appId, registerRequests, registeredKeys) {
@@ -293,7 +291,7 @@ function submitResponse(url, request, response) {
   ;
 }
 
-function performCeremony(params) {
+async function performCeremony(params) {
   const callbacks = params.callbacks || {}; /* { init, authenticatorRequest, serverRequest } */
   const getIndexActions = params.getIndexActions; /* function(): object */
   const getRequest = params.getRequest; /* function(urls: object): { publicKeyCredentialCreationOptions: object } | { publicKeyCredentialRequestOptions: object } */
@@ -305,38 +303,34 @@ function performCeremony(params) {
   setStatus('Looking up API paths...');
   resetDisplays();
 
-  return getIndexActions()
-    .then(urls => {
-      setStatus(statusStrings.int);
-      if (callbacks.init) {
-        callbacks.init(urls);
-      }
-      return getRequest(urls);
-    })
+  const rootUrls = await getIndexActions();
 
-    .then((params) => {
-      const request = params.request;
-      const urls = params.actions;
-      setStatus(statusStrings.authenticatorRequest);
-      if (callbacks.authenticatorRequest) {
-        callbacks.authenticatorRequest({ request, urls });
-      }
-      showRequest(request);
-      ceremonyState = {
-        callbacks,
-        request,
-        statusStrings,
-        urls,
-        useU2f,
-      };
-      return executeRequest(request)
-        .then(webauthn.responseToObject);
-    })
-    .then(finishCeremony)
-  ;
+  setStatus(statusStrings.int);
+  if (callbacks.init) {
+    callbacks.init(rootUrls);
+  }
+  const { request, actions: urls } = await getRequest(rootUrls);
+
+  setStatus(statusStrings.authenticatorRequest);
+  if (callbacks.authenticatorRequest) {
+    callbacks.authenticatorRequest({ request, urls });
+  }
+  showRequest(request);
+  ceremonyState = {
+    callbacks,
+    request,
+    statusStrings,
+    urls,
+    useU2f,
+  };
+
+  const webauthnResponse = await executeRequest(request);
+  const serverResponse = await finishCeremony(webauthnResponse);
+
+  return serverResponse;
 }
 
-function finishCeremony(response) {
+async function finishCeremony(response) {
   const callbacks = ceremonyState.callbacks;
   const request = ceremonyState.request;
   const statusStrings = ceremonyState.statusStrings;
@@ -349,22 +343,22 @@ function finishCeremony(response) {
   }
   showAuthenticatorResponse(response);
 
-  return submitResponse(useU2f ? urls.finishU2f : urls.finish, request, response)
-    .then(data => {
-      if (data && data.success) {
-        setStatus(statusStrings.success);
-      } else {
-        setStatus('Error!');
-      }
-      showServerResponse(data);
-      return data;
-    });
+  const data = await submitResponse(useU2f ? urls.finishU2f : urls.finish, request, response);
+
+  if (data && data.success) {
+    setStatus(statusStrings.success);
+  } else {
+    setStatus('Error!');
+  }
+  showServerResponse(data);
+
+  return data;
 }
 
-function registerResidentKey() {
-  return register(requireResidentKey = true);
+function registerResidentKey(event) {
+  return register(event, true);
 }
-function register(requireResidentKey = false, getRequest = getRegisterRequest) {
+async function register(event, requireResidentKey) {
   const username = document.getElementById('username').value;
   const displayName = document.getElementById('displayName').value;
   const credentialNickname = document.getElementById('credentialNickname').value;
@@ -372,21 +366,22 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
 
   var request;
 
-  return performCeremony({
-    getIndexActions,
-    getRequest: urls => getRequest(urls, username, displayName, credentialNickname, requireResidentKey),
-    statusStrings: {
-      init: 'Initiating registration ceremony with server...',
-      authenticatorRequest: 'Asking authenticators to create credential...',
-      success: 'Registration successful!',
-    },
-    executeRequest: req => {
-      request = req;
-      return executeRegisterRequest(req, useU2f);
-    },
-    useU2f,
-  })
-  .then(data => {
+  try {
+    const data = await performCeremony({
+      getIndexActions,
+      getRequest: urls => getRegisterRequest(urls, username, displayName, credentialNickname, requireResidentKey),
+      statusStrings: {
+        init: 'Initiating registration ceremony with server...',
+        authenticatorRequest: 'Asking authenticators to create credential...',
+        success: 'Registration successful!',
+      },
+      executeRequest: req => {
+        request = req;
+        return executeRegisterRequest(req, useU2f);
+      },
+      useU2f,
+    });
+
     if (data.registration) {
       const nicknameInfo = {
         nickname: data.registration.credentialNickname,
@@ -405,8 +400,8 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
         addMessage("Warning: Attestation is not trusted!");
       }
     }
-  })
-  .catch((err) => {
+
+  } catch (err) {
     setStatus('Registration failed.');
     console.error('Registration failed', err);
 
@@ -426,7 +421,7 @@ function register(requireResidentKey = false, getRequest = getRegisterRequest) {
       addMessages(err.messages);
     }
     return rejected(err);
-  });
+  }
 }
 
 function getAuthenticateRequest(urls, username) {
@@ -443,28 +438,31 @@ function getAuthenticateRequest(urls, username) {
 function executeAuthenticateRequest(request) {
   console.log('executeAuthenticateRequest', request);
 
-  return webauthn.getAssertion(request.publicKeyCredentialRequestOptions);
+  return webauthnJson.get({ publicKey: request.publicKeyCredentialRequestOptions });
 }
 
-function authenticateWithUsername() {
-  return authenticate(username = document.getElementById('username').value);
+function authenticateWithUsername(event) {
+  return authenticate(event, document.getElementById('username').value);
 }
-function authenticate(username = null, getRequest = getAuthenticateRequest) {
-  return performCeremony({
-    getIndexActions,
-    getRequest: urls => getRequest(urls, username),
-    statusStrings: {
-      init: 'Initiating authentication ceremony with server...',
-      authenticatorRequest: 'Asking authenticators to perform assertion...',
-      success: 'Authentication successful!',
-    },
-    executeRequest: executeAuthenticateRequest,
-  }).then(data => {
+async function authenticate(event, username) {
+  try {
+    const data = await performCeremony({
+      getIndexActions,
+      getRequest: urls => getAuthenticateRequest(urls, username),
+      statusStrings: {
+        init: 'Initiating authentication ceremony with server...',
+        authenticatorRequest: 'Asking authenticators to perform assertion...',
+        success: 'Authentication successful!',
+      },
+      executeRequest: executeAuthenticateRequest,
+    });
+
     if (data.registrations) {
       addMessage(`Authenticated as: ${data.registrations[0].username}`);
     }
     return data;
-  }).catch((err) => {
+
+  } catch (err) {
     setStatus('Authentication failed.');
     if (err.name === 'InvalidStateError') {
       addMessage(`This authenticator is not registered for the account "${username}". Please try again with a registered authenticator.`)
@@ -475,7 +473,7 @@ function authenticate(username = null, getRequest = getAuthenticateRequest) {
     }
     console.error('Authentication failed', err);
     return rejected(err);
-  });
+  }
 }
 
 function deregister() {
@@ -529,6 +527,15 @@ function usernameChanged(event) {
 
 function init() {
   hideDeviceInfo();
+
+  document.getElementById("username").oninput = usernameChanged;
+  document.getElementById("registerButton").onclick = register;
+  document.getElementById("registerRkButton").onclick = registerResidentKey;
+  document.getElementById("authenticateWithUsernameButton").onclick = authenticateWithUsername;
+  document.getElementById("authenticateButton").onclick = authenticate;
+  document.getElementById("deregisterButton").onclick = deregister;
+  document.getElementById("logoutButton").onclick = logout;
+
   return false;
 }
 
@@ -553,7 +560,7 @@ window.onload = init;
     <form class="horizontal">
       <div class="row">
         <label for="username">Username:</label>
-        <div><input type="text" id="username" onInput="javascript:usernameChanged(event)" /></div>
+        <div><input type="text" id="username" /></div>
       </div>
       <div class="row">
         <label for="displayName">Display name:</label>
@@ -564,12 +571,12 @@ window.onload = init;
         <label for="credentialNickname">Credential nickname:</label>
         <div><input type="text" id="credentialNickname"/></div>
         <div>
-          <button type="button" id="registerButton" onClick="javascript:register()">
+          <button type="button" id="registerButton">
             Register new account
           </button>
         </div>
         <div>
-          <button type="button" id="registerRkButton" onClick="javascript:registerResidentKey()">
+          <button type="button" id="registerRkButton">
             Register new account with resident credential
           </button>
         </div>
@@ -579,12 +586,12 @@ window.onload = init;
         <div></div>
         <div></div>
         <div>
-          <button type="button" onClick="javascript:authenticateWithUsername()">
+          <button type="button" id="authenticateWithUsernameButton">
             Authenticate
           </button>
         </div>
         <div>
-          <button type="button" onClick="javascript:authenticate()">
+          <button type="button" id="authenticateButton">
             Authenticate without username
           </button>
         </div>
@@ -603,7 +610,7 @@ window.onload = init;
         <label for="deregisterCredentialId">Credential ID:</label>
         <div><input type="text" id="deregisterCredentialId"/></div>
         <div>
-          <button type="button" onClick="javascript:deregister()">
+          <button type="button" id="deregisterButton">
             Deregister
           </button>
         </div>
@@ -612,7 +619,7 @@ window.onload = init;
 
 
     <p id="session">Not logged in.</p>
-    <button id="logoutButton" disabled="disabled" onClick="javascript:logout()">Log out</button>
+    <button id="logoutButton" disabled="disabled">Log out</button>
     <p id="status"></p>
     <div id="messages"></div>
 

@@ -25,7 +25,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.12.1</version>
+  <version>1.12.2</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -33,7 +33,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.12.1'
+compile 'com.yubico:webauthn-server-core:1.12.2'
 ----------
 
 === Semantic versioning
@@ -110,10 +110,7 @@ The client side involves:
     passing the result from `RelyingParty.startRegistration(...)` or `.startAssertion(...)` as the argument.
  2. Encode the result of the successfully resolved promise and return it to the server.
     For this you need some way to encode `Uint8Array` values;
-    this guide will assume use of link:https://github.com/beatgammit/base64-js[base64-js].
-    However the built-in parser methods for
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/PublicKeyCredential.html[`PublicKeyCredential`]
-    expect URL-safe Base64 encoding, so the below examples will include this as an additional step.
+    this guide will use GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library.
 
 Example code is given below.
 For more detailed example usage, see
@@ -163,6 +160,8 @@ A registration ceremony consists of 5 main steps:
  4. Validate the response using `RelyingParty.finishRegistration(...)`.
  5. Update your database using the `finishRegistration` output.
 
+This example uses GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library to do both (2) and (3) in one function call.
+
 First, generate registration parameters and send them to the client:
 
 [source,java]
@@ -196,62 +195,23 @@ Now call the WebAuthn API on the client side:
 
 [source,javascript]
 ----------
-function base64urlToUint8array(base64Bytes) {
-  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
-  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
-}
-function uint8arrayToBase64url(bytes) {
-  if (bytes instanceof Uint8Array) {
-    return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  } else {
-    return uint8arrayToBase64url(new Uint8Array(bytes));
-  }
-}
+import * as webauthnJson from "@github/webauthn-json";
 
-fetch(/* ... */)                    // Make the call that returns the credentialCreateJson above
-  .then(credentialCreateJson => ({  // Decode byte arrays from base64url
-    publicKey: {
-      ...credentialCreateJson.publicKey,
+// Make the call that returns the credentialCreateJson above
+const credentialCreateOptions = await fetch(/* ... */).then(resp => resp.json());
 
-      challenge: base64urlToUint8array(credentialCreateJson.publicKey.challenge),
-      user: {
-        ...credentialCreateJson.publicKey.user,
-        id: base64urlToUint8array(credentialCreateJson.publicKey.user.id),
-      },
-      excludeCredentials: credentialCreateJson.publicKey.excludeCredentials.map(credential => ({
-        ...credential,
-        id: base64urlToUint8array(credential.id),
-      })),
+// Call WebAuthn ceremony using webauthn-json wrapper
+const publicKeyCredential = await webauthnJson.create(credentialCreateOptions);
 
-      // Warning: Extension inputs could also contain binary data that needs encoding
-      extensions: credentialCreateJson.publicKey.extensions,
-    },
-  }))
-  .then(credentialCreateOptions =>  // Call WebAuthn ceremony
-    navigator.credentials.create(credentialCreateOptions))
-  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
-    type: publicKeyCredential.type,
-    id: publicKeyCredential.id,
-    response: {
-      attestationObject: uint8arrayToBase64url(publicKeyCredential.response.attestationObject),
-      clientDataJSON: uint8arrayToBase64url(publicKeyCredential.response.clientDataJSON),
-
-      // Attempt to read transports, but recover gracefully if not supported by the browser
-      transports: publicKeyCredential.response.getTransports && publicKeyCredential.response.getTransports() || [],
-    },
-
-    // Warning: Client extension results could also contain binary data that needs encoding
-    clientExtensionResults: publicKeyCredential.getClientExtensionResults(),
-  }))
-  .then(encodedResult =>
-    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+// Return encoded PublicKeyCredential to server
+fetch(/* ... */, { body: JSON.stringify(publicKeyCredential) });
 ----------
 
 Validate the response on the server side:
 
 [source,java]
 ----------
-String publicKeyCredentialJson = /* ... */;     // encodedResult from client
+String publicKeyCredentialJson = /* ... */;     // publicKeyCredential from client
 PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> pkc =
     PublicKeyCredential.parseRegistrationResponseJson(publicKeyCredentialJson);
 
@@ -295,6 +255,8 @@ Like registration ceremonies, an authentication ceremony consists of 5 main step
  4. Validate the response using `RelyingParty.finishAssertion(...)`.
  5. Update your database using the `finishAssertion` output, and act upon the result (for example, grant login access).
 
+This example uses GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library to do both (2) and (3) in one function call.
+
 First, generate authentication parameters and send them to the client:
 
 [source,java]
@@ -313,58 +275,23 @@ Now call the WebAuthn API on the client side:
 
 [source,javascript]
 ----------
-function base64urlToUint8array(base64Bytes) {
-  const padding = '===='.substring(0, (4 - (base64Bytes.length % 4)) % 4);
-  return base64js.toByteArray((base64Bytes + padding).replace(/\//g, "_").replace(/\+/g, "-"));
-}
-function uint8arrayToBase64url(bytes) {
-  if (bytes instanceof Uint8Array) {
-    return base64js.fromByteArray(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  } else {
-    return uint8arrayToBase64url(new Uint8Array(bytes));
-  }
-}
+import * as webauthnJson from "@github/webauthn-json";
 
-fetch(/* ... */)                    // Make the call that returns the credentialGetJson above
-  .then(credentialGetJson => ({     // Decode byte arrays from base64url
-    publicKey: {
-      ...credentialGetJson.publicKey,
-      allowCredentials: credentialGetJson.publicKey.allowCredentials
-        && credentialGetJson.publicKey.allowCredentials.map(credential => ({
-          ...credential,
-          id: base64urlToUint8array(credential.id),
-        })),
+// Make the call that returns the credentialGetJson above
+const credentialGetOptions = await fetch(/* ... */).then(resp => resp.json());
 
-      challenge: base64urlToUint8array(credentialGetJson.publicKey.challenge),
+// Call WebAuthn ceremony using webauthn-json wrapper
+const publicKeyCredential = await webauthnJson.get(credentialGetOptions);
 
-      // Warning: Extension inputs could also contain binary data that needs encoding
-      extensions: credentialGetJson.publicKey.extensions,
-    },
-  }))
-  .then(credentialGetOptions =>        // Call WebAuthn ceremony
-    navigator.credentials.get(credentialGetOptions))
-  .then(publicKeyCredential => ({   // Encode PublicKeyCredential for transport to server (example)
-    type: publicKeyCredential.type,
-    id: publicKeyCredential.id,
-    response: {
-      authenticatorData: uint8arrayToBase64url(publicKeyCredential.response.authenticatorData),
-      clientDataJSON: uint8arrayToBase64url(publicKeyCredential.response.clientDataJSON),
-      signature: uint8arrayToBase64url(publicKeyCredential.response.signature),
-      userHandle: publicKeyCredential.response.userHandle && uint8arrayToBase64url(publicKeyCredential.response.userHandle),
-    },
-
-    // Warning: Client extension results could also contain binary data that needs encoding
-    clientExtensionResults: publicKeyCredential.getClientExtensionResults(),
-  }))
-  .then(encodedResult =>
-    fetch(/* ... */));              // Return encoded PublicKeyCredential to server
+// Return encoded PublicKeyCredential to server
+fetch(/* ... */, { body: JSON.stringify(publicKeyCredential) });
 ----------
 
 Validate the response on the server side:
 
 [source,java]
 ----------
-String publicKeyCredentialJson = /* ... */;  // encodedResult from client
+String publicKeyCredentialJson = /* ... */;  // publicKeyCredential from client
 PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> pkc =
     PublicKeyCredential.parseAssertionResponseJson(publicKeyCredentialJson);
 
@@ -473,13 +400,13 @@ and credentials registered via the U2F API will continue to work with the WebAut
 
 To migrate to using the WebAuthn API, you need to do the following:
 
-* Follow the link:#getting-started[Getting started] guide above to set up WebAuthn support in general.
+ 1. Follow the link:#getting-started[Getting started] guide above to set up WebAuthn support in general.
 +
 Note that unlike a U2F AppID, the WebAuthn link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/RelyingPartyIdentity.RelyingPartyIdentityBuilder.html#id(java.lang.String)[RP ID]
 consists of only the domain name of the AppID.
 WebAuthn does not support link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-appid-and-facets-v1.2-ps-20170411.html[U2F Trusted Facet Lists].
 
-* Set the
+ 2. Set the
   link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#appId(com.yubico.webauthn.extension.appid.AppId)[`appId()`]
   setting on your `RelyingParty` instance.
   The argument to the `appid()` setting should be the same as you used for the `appId` argument to the
@@ -489,36 +416,36 @@ This will enable the link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sc
 and link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension[`appidExclude`]
 extensions and configure the `RelyingParty` to accept the given AppId when verifying authenticator signatures.
 
-* Generate a link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle[user handle] for each existing user
-  and store it in their account,
-  or decide on a method for deriving one deterministically from existing user attributes.
-  For example, if your user records are assigned UUIDs, you can use that UUID as the user handle.
-  You SHOULD NOT use a plain username or e-mail address, or hash of either, as the user handle -
-  for more on this, see the link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy[User Handle Contents]
-  privacy consideration.
+ 3. Generate a link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle[user handle]
+    for each existing user and store it in their account,
+    or decide on a method for deriving one deterministically from existing user attributes.
+    For example, if your user records are assigned UUIDs, you can use that UUID as the user handle.
+    You SHOULD NOT use a plain username or e-mail address, or hash of either, as the user handle -
+    for more on this, see the link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-user-handle-privacy[User Handle Contents]
+    privacy consideration.
 
-* When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
-  use the U2F key handle as the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#credentialId(com.yubico.webauthn.data.ByteArray)[credential ID].
-  If you store key handles base64 encoded, you should decode them using
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64(java.lang.String)[`ByteArray.fromBase64`]
-  or
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64Url(java.lang.String)[`ByteArray.fromBase64Url`]
-  as appropriate before passing them to the `RegisteredCredential`.
+ 4. When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
+    use the U2F key handle as the
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#credentialId(com.yubico.webauthn.data.ByteArray)[credential ID].
+    If you store key handles base64 encoded, you should decode them using
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64(java.lang.String)[`ByteArray.fromBase64`]
+    or
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/data/ByteArray.html#fromBase64Url(java.lang.String)[`ByteArray.fromBase64Url`]
+    as appropriate before passing them to the `RegisteredCredential`.
 
-* When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
-  use the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyEs256Raw(com.yubico.webauthn.data.ByteArray)[`publicKeyEs256Raw()`]
-  method instead of link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyCose(com.yubico.webauthn.data.ByteArray)[`publicKeyCose()`]
-  to set the credential public key.
+ 5. When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
+    use the
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyEs256Raw(com.yubico.webauthn.data.ByteArray)[`publicKeyEs256Raw()`]
+    method instead of link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyCose(com.yubico.webauthn.data.ByteArray)[`publicKeyCose()`]
+    to set the credential public key.
 
-* Replace calls to the U2F
-  link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`register`]
-  method with calls to `navigator.credentials.create()` as described in link:#getting-started[Getting started].
+ 6. Replace calls to the U2F
+    link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`register`]
+    method with calls to `navigator.credentials.create()` as described in link:#getting-started[Getting started].
 
-* Replace calls to the U2F
-  link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`sign`]
-  method with calls to `navigator.credentials.get()` as described in link:#getting-started[Getting started].
+ 7. Replace calls to the U2F
+    link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[`sign`]
+    method with calls to `navigator.credentials.get()` as described in link:#getting-started[Getting started].
 
 Existing U2F credentials should now work with the WebAuthn API.
 
