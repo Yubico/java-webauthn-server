@@ -1,3 +1,11 @@
+== Version 1.12.2 (unreleased) ==
+
+Fixes:
+
+* `com.upokecenter:cbor` dependency bumped to minimum version 4.5.1 due to a
+  known vulnerability, see: https://github.com/advisories/GHSA-fj2w-wfgv-mwq6
+
+
 == Version 1.12.1 ==
 
 Fixes:
