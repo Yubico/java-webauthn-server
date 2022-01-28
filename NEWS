@@ -4,6 +4,8 @@ Fixes:
 
 * `com.upokecenter:cbor` dependency bumped to minimum version 4.5.1 due to a
   known vulnerability, see: https://github.com/advisories/GHSA-fj2w-wfgv-mwq6
+* Fixed crash in `AuthenticatorData` deserialization with `com.upokecenter:cbor`
+  versions later than 4.0.1
 
 
 == Version 1.12.1 ==

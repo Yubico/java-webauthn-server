@@ -25,6 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -81,9 +82,9 @@ public class AuthenticatorData {
    *
    * @see #flags
    */
-  private final transient AttestedCredentialData attestedCredentialData;
+  @JsonIgnore private final transient AttestedCredentialData attestedCredentialData;
 
-  private final transient CBORObject extensions;
+  @JsonIgnore private final transient CBORObject extensions;
 
   private static final int RP_ID_HASH_INDEX = 0;
   private static final int RP_ID_HASH_END = RP_ID_HASH_INDEX + 32;
