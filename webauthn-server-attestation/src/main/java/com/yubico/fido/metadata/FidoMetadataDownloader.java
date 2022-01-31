@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.security.InvalidAlgorithmParameterException;
@@ -699,7 +700,7 @@ public final class FidoMetadataDownloader {
       }
 
       if (cert == null) {
-        final ByteArray downloaded = verifyHash(httpGet(trustRootUrl), trustRootSha256);
+        final ByteArray downloaded = verifyHash(download(trustRootUrl), trustRootSha256);
         if (downloaded == null) {
           throw new DigestException(
               "Downloaded trust root certificate matches none of the acceptable hashes.");
@@ -780,7 +781,7 @@ public final class FidoMetadataDownloader {
         return cachedBlob;
 
       } else {
-        final ByteArray downloaded = httpGet(blobUrl);
+        final ByteArray downloaded = download(blobUrl);
         final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloaded, trustRootCertificate);
 
         if (cachedBlob == null
@@ -827,29 +828,32 @@ public final class FidoMetadataDownloader {
    * @throws IllegalArgumentException if <code>url</code> is not an HTTPS URL.
    * @throws IOException if the download connection fails.
    */
-  private ByteArray httpGet(URL url) throws IOException {
-    if ("https".equals(url.getProtocol())) {
-      HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+  private ByteArray download(URL url) throws IOException {
+    if ("http".equals(url.getProtocol())) {
+      throw new IllegalArgumentException("HTTP download URL must be a https URL.");
+    } else {
+      URLConnection conn = url.openConnection();
 
-      if (httpsTrustStore != null) {
-        try {
-          TrustManagerFactory trustMan =
-              TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-          trustMan.init(httpsTrustStore);
-          SSLContext sslContext = SSLContext.getInstance("TLS");
-          sslContext.init(null, trustMan.getTrustManagers(), null);
-          conn.setSSLSocketFactory(sslContext.getSocketFactory());
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-          // TODO don't do this
-          throw new RuntimeException(e);
+      if (conn instanceof HttpsURLConnection) {
+        HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
+        if (httpsTrustStore != null) {
+          try {
+            TrustManagerFactory trustMan =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustMan.init(httpsTrustStore);
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustMan.getTrustManagers(), null);
+
+            httpsConn.setSSLSocketFactory(sslContext.getSocketFactory());
+          } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            // TODO don't do this
+            throw new RuntimeException(e);
+          }
         }
+        httpsConn.setRequestMethod("GET");
       }
 
-      conn.setRequestMethod("GET");
-      InputStream is = conn.getInputStream();
-      return readAll(is);
-    } else {
-      throw new IllegalArgumentException("Download URL must be a https URL.");
+      return readAll(conn.getInputStream());
     }
   }
 
