@@ -84,6 +84,8 @@ import scala.util.Try
 
 object TestAuthenticator {
 
+  private val random: SecureRandom = new SecureRandom()
+
   object Defaults {
     val aaguid: ByteArray = new ByteArray(
       Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
@@ -829,7 +831,7 @@ object TestAuthenticator {
     val g: KeyPairGenerator =
       KeyPairGenerator.getInstance("EC", new BouncyCastleProvider())
 
-    g.initialize(ecSpec, new SecureRandom())
+    g.initialize(ecSpec, random)
 
     g.generateKeyPair()
   }
@@ -856,7 +858,7 @@ object TestAuthenticator {
 
   def generateRsaKeypair(): KeyPair = {
     val g: KeyPairGenerator = KeyPairGenerator.getInstance("RSA")
-    g.initialize(2048, new SecureRandom())
+    g.initialize(2048, random)
     g.generateKeyPair()
   }
 
@@ -986,7 +988,7 @@ object TestAuthenticator {
     CertificateParser.parseDer({
       val builder = new X509v3CertificateBuilder(
         issuerName,
-        new BigInteger("1337"),
+        BigInteger.valueOf(random.nextInt(10000)),
         Date.from(validFrom),
         Date.from(validTo),
         subjectName,
