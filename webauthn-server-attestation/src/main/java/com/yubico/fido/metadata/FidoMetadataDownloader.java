@@ -67,6 +67,7 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -884,7 +885,31 @@ public final class FidoMetadataDownloader {
 
     final List<X509Certificate> certChain;
     if (header.getX5u().isPresent()) {
-      throw new UnsupportedOperationException("Not implemented: x5u");
+      final URL x5u = header.getX5u().get();
+      if (blobUrl != null
+          && (!(x5u.getHost().equals(blobUrl.getHost())
+              && x5u.getProtocol().equals(blobUrl.getProtocol())
+              && x5u.getPort() == blobUrl.getPort()))) {
+        throw new IllegalArgumentException(
+            String.format(
+                "x5u in BLOB header must have same origin as the URL the BLOB was downloaded from. Expected origin of: %s ; found: %s",
+                blobUrl, x5u));
+      }
+      certChain =
+          Arrays.stream(
+                  new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
+                      .trim()
+                      .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+"))
+              .map(
+                  pem -> {
+                    try {
+                      return CertificateParser.parsePem(pem);
+                    } catch (CertificateException e) {
+                      // TODO don't do this
+                      throw new RuntimeException(e);
+                    }
+                  })
+              .collect(Collectors.toList());
     } else if (header.getX5c().isPresent()) {
       certChain = header.getX5c().get();
     } else {

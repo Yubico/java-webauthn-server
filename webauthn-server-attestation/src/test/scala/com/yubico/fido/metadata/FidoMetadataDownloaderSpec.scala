@@ -498,33 +498,6 @@ class FidoMetadataDownloaderSpec
         blob should not be null
       }
 
-      it("Verification fails if explicitly given CRLs where a cert in the chain is revoked.") {
-        val crls = List[CRL](
-          TestAuthenticator.buildCrl(
-            caName,
-            caKeypair.getPrivate,
-            "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
-            revoked = Set(blobCert),
-          )
-        )
-
-        val thrown = the[CertPathValidatorException] thrownBy {
-          FidoMetadataDownloader
-            .builder()
-            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
-            .useTrustRoot(trustRootCert)
-            .useBlob(blobJwt)
-            .useCrls(crls.asJava)
-            .build()
-            .loadBlob()
-        }
-        thrown.getReason should equal(
-          BasicReason.REVOKED
-        )
-      }
-
       describe("Intermediate certificates") {
 
         val (intermediateCert, intermediateKeypair, intermediateName) =
@@ -848,20 +821,339 @@ class FidoMetadataDownloaderSpec
 
     describe("4. If the x5u attribute is present in the JWT Header, then:") {
 
-      ignore("1. The FIDO Server MUST verify that the URL specified by the x5u attribute has the same web-origin as the URL used to download the metadata BLOB from. The FIDO Server SHOULD ignore the file if the web-origin differs (in order to prevent loading objects from arbitrary sites).") {
-        fail("Test not implemented.")
+      describe("1. The FIDO Server MUST verify that the URL specified by the x5u attribute has the same web-origin as the URL used to download the metadata BLOB from. The FIDO Server SHOULD ignore the file if the web-origin differs (in order to prevent loading objects from arbitrary sites).") {
+        it("x5u on a different host is rejected.") {
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+
+          val certChain = List(blobCert)
+          val certChainPem = certChain
+            .map(cert => new ByteArray(cert.getEncoded).getBase64)
+            .mkString(
+              "-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----",
+            )
+
+          val blobJwt =
+            makeBlob(
+              blobKeypair,
+              s"""{"alg":"ES256","x5u": "https://localhost:8444/chain.pem"}""",
+              s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+            )
+
+          val (server, _, httpsCert) =
+            makeHttpServer(
+              Map(
+                "/chain.pem" -> certChainPem.getBytes(StandardCharsets.UTF_8),
+                "/blob.jwt" -> blobJwt.getBytes(StandardCharsets.UTF_8),
+              )
+            )
+          startServer(server)
+
+          val crls = List[CRL](
+            TestAuthenticator.buildCrl(
+              caName,
+              caKeypair.getPrivate,
+              "SHA256withECDSA",
+              Instant.now(),
+              Instant.now().plusSeconds(600),
+            )
+          )
+
+          val thrown = the[IllegalArgumentException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .downloadBlob(new URL("https://localhost:8443/blob.jwt"))
+              .useBlobCache(() => Optional.empty(), _ => {})
+              .useCrls(crls.asJava)
+              .trustHttpsCerts(httpsCert)
+              .build()
+              .loadBlob
+          }
+          thrown should not be null
+        }
       }
 
-      ignore("2. The FIDO Server MUST download the certificate (chain) from the URL specified by the x5u attribute [JWS]. The certificate chain MUST be verified to properly chain to the metadata BLOB signing trust anchor according to [RFC5280]. All certificates in the chain MUST be checked for revocation according to [RFC5280].") {
-        fail("Test not implemented.")
+      describe("2. The FIDO Server MUST download the certificate (chain) from the URL specified by the x5u attribute [JWS]. The certificate chain MUST be verified to properly chain to the metadata BLOB signing trust anchor according to [RFC5280]. All certificates in the chain MUST be checked for revocation according to [RFC5280].") {
+        it("x5u with one cert is accepted.") {
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+
+          val certChain = List(blobCert)
+          val certChainPem = certChain
+            .map(cert => new ByteArray(cert.getEncoded).getBase64)
+            .mkString(
+              "-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----",
+            )
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/chain.pem", certChainPem)
+          startServer(server)
+
+          val blobJwt =
+            makeBlob(
+              blobKeypair,
+              s"""{"alg":"ES256","x5u": "${serverUrl}/chain.pem"}""",
+              s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+            )
+          val crls = List[CRL](
+            TestAuthenticator.buildCrl(
+              caName,
+              caKeypair.getPrivate,
+              "SHA256withECDSA",
+              Instant.now(),
+              Instant.now().plusSeconds(600),
+            )
+          )
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+          blob should not be null
+        }
+
+        it("x5u with an unknown trust anchor is rejected.") {
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val (_, untrustedCaKeypair, untrustedCaName) = makeTrustRootCert()
+          val (blobCert, blobKeypair, _) =
+            makeCert(untrustedCaKeypair, untrustedCaName)
+
+          val certChain = List(blobCert)
+          val certChainPem = certChain
+            .map(cert => new ByteArray(cert.getEncoded).getBase64)
+            .mkString(
+              "-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----",
+            )
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/chain.pem", certChainPem)
+          startServer(server)
+
+          val blobJwt =
+            makeBlob(
+              blobKeypair,
+              s"""{"alg":"ES256","x5u": "${serverUrl}/chain.pem"}""",
+              s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+            )
+          val crls = List[CRL](
+            TestAuthenticator.buildCrl(
+              caName,
+              caKeypair.getPrivate,
+              "SHA256withECDSA",
+              Instant.now(),
+              Instant.now().plusSeconds(600),
+            )
+          )
+
+          val thrown = the[CertPathValidatorException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .useCrls(crls.asJava)
+              .trustHttpsCerts(httpsCert)
+              .build()
+              .loadBlob
+          }
+          thrown should not be null
+          thrown.getReason should be(
+            CertPathValidatorException.BasicReason.INVALID_SIGNATURE
+          )
+        }
+
+        it("x5u with three certs requires a CRL for each CA certificate.") {
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val certChain = makeCertChain(caKeypair, caName, 3)
+          certChain.length should be(3)
+          val certChainPem = certChain
+            .map({
+              case (cert, _, _) => new ByteArray(cert.getEncoded).getBase64
+            })
+            .mkString(
+              "-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----",
+            )
+
+          val crls =
+            (certChain.tail :+ (trustRootCert, caKeypair, caName)).map({
+              case (_, keypair, name) =>
+                TestAuthenticator.buildCrl(
+                  name,
+                  keypair.getPrivate,
+                  "SHA256withECDSA",
+                  Instant.now(),
+                  Instant.now().plusSeconds(600),
+                )
+            })
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/chain.pem", certChainPem)
+          startServer(server)
+
+          val blobJwt =
+            makeBlob(
+              certChain.head._2,
+              s"""{"alg":"ES256","x5u": "${serverUrl}/chain.pem"}""",
+              s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+            )
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+          blob should not be null
+
+          for { i <- certChain.indices } {
+            val splicedCrls = crls.take(i) ++ crls.drop(i + 1)
+            splicedCrls.length should be(crls.length - 1)
+            val thrown = the[CertPathValidatorException] thrownBy {
+              FidoMetadataDownloader
+                .builder()
+                .expectLegalHeader(
+                  "Kom ihåg att du aldrig får snyta dig i mattan!"
+                )
+                .useTrustRoot(trustRootCert)
+                .useBlob(blobJwt)
+                .useCrls(splicedCrls.asJava)
+                .trustHttpsCerts(httpsCert)
+                .build()
+                .loadBlob
+            }
+            thrown should not be null
+            thrown.getReason should be(
+              CertPathValidatorException.BasicReason.UNDETERMINED_REVOCATION_STATUS
+            )
+          }
+        }
       }
 
-      ignore("3. The FIDO Server SHOULD ignore the file if the chain cannot be verified or if one of the chain certificates is revoked.") {
-        fail("Test not implemented.")
-      }
+      describe("3. The FIDO Server SHOULD ignore the file if the chain cannot be verified or if one of the chain certificates is revoked.") {
+        it("Verification fails if explicitly given CRLs where a cert in the chain is revoked.") {
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val certChain = makeCertChain(caKeypair, caName, 3)
+          certChain.length should be(3)
+          val certChainPem = certChain
+            .map({
+              case (cert, _, _) => new ByteArray(cert.getEncoded).getBase64
+            })
+            .mkString(
+              "-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n",
+              "\n-----END CERTIFICATE-----",
+            )
 
-      ignore("Note: The requirements for verifying certificate revocation, are only applicable to the MDS BLOB payload certificates. It is up to the server vendors whether to enforce CRL check for the certificates in the individual metadata statements.") {
-        fail("Test not implemented.")
+          val crls =
+            (certChain.tail :+ (trustRootCert, caKeypair, caName)).map({
+              case (_, keypair, name) =>
+                TestAuthenticator.buildCrl(
+                  name,
+                  keypair.getPrivate,
+                  "SHA256withECDSA",
+                  Instant.now(),
+                  Instant.now().plusSeconds(600),
+                )
+            })
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/chain.pem", certChainPem)
+          startServer(server)
+
+          val blobJwt =
+            makeBlob(
+              certChain.head._2,
+              s"""{"alg":"ES256","x5u": "${serverUrl}/chain.pem"}""",
+              s"""{
+              "legalHeader": "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "no": 1,
+              "nextUpdate": "2022-01-19",
+              "entries": []
+            }""",
+            )
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+          blob should not be null
+
+          for { i <- certChain.indices } {
+            val crlsWithRevocation =
+              crls.take(i) ++ crls.drop(i + 1) :+ TestAuthenticator.buildCrl(
+                certChain.lift(i + 1).map(_._3).getOrElse(caName),
+                certChain.lift(i + 1).map(_._2).getOrElse(caKeypair).getPrivate,
+                "SHA256withECDSA",
+                Instant.now(),
+                Instant.now().plusSeconds(600),
+                revoked = Set(certChain(i)._1),
+              )
+            crlsWithRevocation.length should equal(crls.length)
+            val thrown = the[CertPathValidatorException] thrownBy {
+              FidoMetadataDownloader
+                .builder()
+                .expectLegalHeader(
+                  "Kom ihåg att du aldrig får snyta dig i mattan!"
+                )
+                .useTrustRoot(trustRootCert)
+                .useBlob(blobJwt)
+                .useCrls(crlsWithRevocation.asJava)
+                .trustHttpsCerts(httpsCert)
+                .build()
+                .loadBlob
+            }
+            thrown should not be null
+            thrown.getReason should be(BasicReason.REVOKED)
+            thrown.getIndex should equal(i)
+          }
+        }
       }
     }
 
