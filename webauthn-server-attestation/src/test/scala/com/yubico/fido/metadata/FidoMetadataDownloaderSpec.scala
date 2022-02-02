@@ -3,6 +3,7 @@ package com.yubico.fido.metadata
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
@@ -27,6 +28,9 @@ import org.scalatest.Matchers
 import org.scalatest.tags.Network
 import org.scalatestplus.junit.JUnitRunner
 
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.security.DigestException
@@ -1435,8 +1439,180 @@ class FidoMetadataDownloaderSpec
       }
     }
 
-    ignore("7. Write the verified object to a local cache as required.") {
-      fail("Test not implemented.")
+    describe("7. Write the verified object to a local cache as required.") {
+      it("Cache consumer works.") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val blobJwt =
+          makeBlob(List(blobCert), blobKeypair, LocalDate.parse("2022-01-19"))
+        val crls = List(
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val (server, serverUrl, httpsCert) =
+          makeHttpServer("/blob.jwt", blobJwt)
+        startServer(server)
+
+        var writtenCache: Option[ByteArray] = None
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useTrustRoot(trustRootCert)
+          .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+          .useBlobCache(
+            () => Optional.empty(),
+            cacheme => { writtenCache = Some(cacheme) },
+          )
+          .clock(
+            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
+          )
+          .useCrls(crls.asJava)
+          .trustHttpsCerts(httpsCert)
+          .build()
+          .loadBlob
+          .getPayload
+        blob should not be null
+        writtenCache should equal(
+          Some(new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)))
+        )
+      }
+
+      describe("File cache") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val blobJwt =
+          makeBlob(
+            List(blobCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-19"),
+            no = 2,
+          )
+        val oldBlobJwt =
+          makeBlob(
+            List(blobCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-19"),
+            no = 1,
+          )
+        val crls = List(
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        it("is overwritten if it exists.") {
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/blob.jwt", blobJwt)
+          startServer(server)
+
+          val cacheFile = File.createTempFile(
+            s"${getClass.getCanonicalName}_test_cache_",
+            ".tmp",
+          )
+          val f = new FileOutputStream(cacheFile)
+          f.write(oldBlobJwt.getBytes(StandardCharsets.UTF_8))
+          f.close()
+          cacheFile.deleteOnExit()
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+            .useBlobCacheFile(cacheFile)
+            .clock(
+              Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
+            )
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+            .getPayload
+          blob should not be null
+          blob.getNo should be(2)
+          cacheFile.exists() should be(true)
+          BinaryUtil.readAll(new FileInputStream(cacheFile)) should equal(
+            blobJwt.getBytes(StandardCharsets.UTF_8)
+          )
+        }
+
+        it("is created if it does not exist.") {
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/blob.jwt", blobJwt)
+          startServer(server)
+
+          val cacheFile = File.createTempFile(
+            s"${getClass.getCanonicalName}_test_cache_",
+            ".tmp",
+          )
+          cacheFile.delete()
+          cacheFile.deleteOnExit()
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+            .useBlobCacheFile(cacheFile)
+            .clock(
+              Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
+            )
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+            .getPayload
+          blob should not be null
+          blob.getNo should be(2)
+          cacheFile.exists() should be(true)
+          BinaryUtil.readAll(new FileInputStream(cacheFile)) should equal(
+            blobJwt.getBytes(StandardCharsets.UTF_8)
+          )
+        }
+
+        it("is read from.") {
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/blob.jwt", oldBlobJwt)
+          startServer(server)
+
+          val cacheFile = File.createTempFile(
+            s"${getClass.getCanonicalName}_test_cache_",
+            ".tmp",
+          )
+          cacheFile.deleteOnExit()
+          val f = new FileOutputStream(cacheFile)
+          f.write(blobJwt.getBytes(StandardCharsets.UTF_8))
+          f.close()
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+            .useBlobCacheFile(cacheFile)
+            .clock(
+              Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
+            )
+            .useCrls(crls.asJava)
+            .trustHttpsCerts(httpsCert)
+            .build()
+            .loadBlob
+            .getPayload
+          blob should not be null
+          blob.getNo should be(2)
+        }
+      }
     }
 
     describe("8. Iterate through the individual entries (of type MetadataBLOBPayloadEntry). For each entry:") {
