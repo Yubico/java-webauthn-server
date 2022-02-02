@@ -941,6 +941,7 @@ public final class FidoMetadataDownloader {
         (jwtHeader.getBase64Url() + "." + jwtPayload.getBase64Url())
             .getBytes(StandardCharsets.UTF_8));
     if (!signature.verify(jwtSignature.getBytes())) {
+      // TODO use better exception type
       throw new IllegalArgumentException("Bad JWT signature.");
     }
 

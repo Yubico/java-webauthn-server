@@ -1,5 +1,8 @@
 package com.yubico.fido.metadata
 
+import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
@@ -760,63 +763,6 @@ class FidoMetadataDownloaderSpec
         blob.getNo should equal(oldBlobNo)
       }
 
-      it("""A newly downloaded BLOB is disregarded if the cached one has a greater "no".""") {
-        val oldBlobNo = 2
-        val newBlobNo = 1
-
-        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
-        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
-        val oldBlobJwt =
-          makeBlob(
-            List(blobCert),
-            blobKeypair,
-            LocalDate.parse("2022-01-19"),
-            no = oldBlobNo,
-          )
-        val newBlobJwt =
-          makeBlob(
-            List(blobCert),
-            blobKeypair,
-            LocalDate.parse("2022-01-20"),
-            no = newBlobNo,
-          )
-        val crls = List[CRL](
-          TestAuthenticator.buildCrl(
-            caName,
-            caKeypair.getPrivate,
-            "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
-          )
-        )
-
-        val (server, serverUrl, httpsCert) =
-          makeHttpServer("/blob.jwt", newBlobJwt)
-        startServer(server)
-
-        val blob = FidoMetadataDownloader
-          .builder()
-          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
-          .useTrustRoot(trustRootCert)
-          .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
-          .useBlobCache(
-            () =>
-              Optional.of(
-                new ByteArray(oldBlobJwt.getBytes(StandardCharsets.UTF_8))
-              ),
-            _ => {},
-          )
-          .clock(
-            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
-          )
-          .useCrls(crls.asJava)
-          .trustHttpsCerts(httpsCert)
-          .build()
-          .loadBlob()
-          .getPayload
-        blob should not be null
-        blob.getNo should equal(oldBlobNo)
-      }
     }
 
     describe("4. If the x5u attribute is present in the JWT Header, then:") {
@@ -1300,8 +1246,194 @@ class FidoMetadataDownloaderSpec
       }
     }
 
-    ignore("6. Verify the signature of the Metadata BLOB object using the BLOB signing certificate chain (as determined by the steps above). The FIDO Server SHOULD ignore the file if the signature is invalid. It SHOULD also ignore the file if its number (no) is less or equal to the number of the last Metadata BLOB object cached locally.") {
-      fail("Test not implemented.")
+    describe("6. Verify the signature of the Metadata BLOB object using the BLOB signing certificate chain (as determined by the steps above). The FIDO Server SHOULD ignore the file if the signature is invalid. It SHOULD also ignore the file if its number (no) is less or equal to the number of the last Metadata BLOB object cached locally.") {
+      it("Invalid signatures are detected.") {
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+
+        val validBlobJwt =
+          makeBlob(List(blobCert), blobKeypair, LocalDate.parse("2022-01-19"))
+        val crls = List(
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+        val badBlobJwt = validBlobJwt
+          .split(raw"\.")
+          .updated(
+            1, {
+              val json = JacksonCodecs.json()
+              val badBlobBody = json
+                .readTree(
+                  ByteArray
+                    .fromBase64Url(validBlobJwt.split(raw"\.")(1))
+                    .getBytes
+                )
+                .asInstanceOf[ObjectNode]
+              badBlobBody.set("no", new IntNode(7))
+              new ByteArray(
+                json
+                  .writeValueAsString(badBlobBody)
+                  .getBytes(StandardCharsets.UTF_8)
+              ).getBase64
+            },
+          )
+          .mkString(".")
+
+        val thrown = the[IllegalArgumentException] thrownBy {
+          FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(badBlobJwt)
+            .useCrls(crls.asJava)
+            .build()
+            .loadBlob
+        }
+        thrown.getMessage should be(
+          "Bad JWT signature."
+        ) // TODO don't test against message text
+      }
+
+      it("""A newly downloaded BLOB is disregarded if the cached one has a greater "no".""") {
+        val oldBlobNo = 2
+        val newBlobNo = 1
+
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val oldBlobJwt =
+          makeBlob(
+            List(blobCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-19"),
+            no = oldBlobNo,
+          )
+        val newBlobJwt =
+          makeBlob(
+            List(blobCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-20"),
+            no = newBlobNo,
+          )
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val (server, serverUrl, httpsCert) =
+          makeHttpServer("/blob.jwt", newBlobJwt)
+        startServer(server)
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useTrustRoot(trustRootCert)
+          .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+          .useBlobCache(
+            () =>
+              Optional.of(
+                new ByteArray(oldBlobJwt.getBytes(StandardCharsets.UTF_8))
+              ),
+            _ => {},
+          )
+          .clock(
+            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
+          )
+          .useCrls(crls.asJava)
+          .trustHttpsCerts(httpsCert)
+          .build()
+          .loadBlob
+          .getPayload
+        blob should not be null
+        blob.getNo should equal(oldBlobNo)
+      }
+
+      it("A newly downloaded BLOB is disregarded if it has an invalid signature but the cached one has a valid signature.") {
+        val oldBlobNo = 1
+        val newBlobNo = 2
+
+        val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+        val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+        val oldBlobJwt =
+          makeBlob(
+            List(blobCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-19"),
+            no = oldBlobNo,
+          )
+        val newBlobJwt =
+          makeBlob(
+            List(blobCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-20"),
+            no = newBlobNo,
+          )
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val badNewBlobJwt = newBlobJwt
+          .split(raw"\.")
+          .updated(
+            1, {
+              val json = JacksonCodecs.json()
+              val badBlobBody = json
+                .readTree(
+                  ByteArray.fromBase64Url(newBlobJwt.split(raw"\.")(1)).getBytes
+                )
+                .asInstanceOf[ObjectNode]
+              badBlobBody.set("no", new IntNode(7))
+              new ByteArray(
+                json
+                  .writeValueAsString(badBlobBody)
+                  .getBytes(StandardCharsets.UTF_8)
+              ).getBase64
+            },
+          )
+          .mkString(".")
+
+        val (server, serverUrl, httpsCert) =
+          makeHttpServer("/blob.jwt", badNewBlobJwt)
+        startServer(server)
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useTrustRoot(trustRootCert)
+          .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+          .useBlobCache(
+            () =>
+              Optional.of(
+                new ByteArray(oldBlobJwt.getBytes(StandardCharsets.UTF_8))
+              ),
+            _ => {},
+          )
+          .clock(
+            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
+          )
+          .useCrls(crls.asJava)
+          .trustHttpsCerts(httpsCert)
+          .build()
+          .loadBlob
+          .getPayload
+        blob should not be null
+        blob.getNo should equal(oldBlobNo)
+      }
     }
 
     ignore("7. Write the verified object to a local cache as required.") {
