@@ -2,6 +2,7 @@ package com.yubico.fido.metadata
 
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
@@ -1284,7 +1285,7 @@ class FidoMetadataDownloaderSpec
           )
           .mkString(".")
 
-        val thrown = the[IllegalArgumentException] thrownBy {
+        val thrown = the[FidoMetadataDownloaderException] thrownBy {
           FidoMetadataDownloader
             .builder()
             .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
@@ -1294,9 +1295,7 @@ class FidoMetadataDownloaderSpec
             .build()
             .loadBlob
         }
-        thrown.getMessage should be(
-          "Bad JWT signature."
-        ) // TODO don't test against message text
+        thrown.getReason should be(Reason.BAD_SIGNATURE)
       }
 
       it("""A newly downloaded BLOB is disregarded if the cached one has a greater "no".""") {

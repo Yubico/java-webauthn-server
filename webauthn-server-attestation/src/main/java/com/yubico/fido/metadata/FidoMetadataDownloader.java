@@ -27,6 +27,7 @@ package com.yubico.fido.metadata;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.JacksonCodecs;
@@ -680,7 +681,8 @@ public final class FidoMetadataDownloader {
   public MetadataBLOB loadBlob()
       throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
           CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
-          InvalidKeyException, UnexpectedLegalHeader, DigestException {
+          InvalidKeyException, UnexpectedLegalHeader, DigestException,
+          FidoMetadataDownloaderException {
     X509Certificate trustRoot = retrieveTrustRootCert();
     return retrieveBlob(trustRoot);
   }
@@ -766,7 +768,7 @@ public final class FidoMetadataDownloader {
   private MetadataBLOB retrieveBlob(X509Certificate trustRootCertificate)
       throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
           InvalidAlgorithmParameterException, InvalidKeyException, UnexpectedLegalHeader,
-          NoSuchAlgorithmException, SignatureException {
+          NoSuchAlgorithmException, SignatureException, FidoMetadataDownloaderException {
     if (blobJwt != null) {
       return parseAndVerifyBlob(
           new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate);
@@ -803,26 +805,35 @@ public final class FidoMetadataDownloader {
 
       } else {
         final ByteArray downloaded = download(blobUrl);
-        final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloaded, trustRootCertificate);
+        try {
+          final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloaded, trustRootCertificate);
 
-        if (cachedBlob == null
-            || downloadedBlob.getPayload().getNo() > cachedBlob.getPayload().getNo()) {
-          if (expectedLegalHeaders.contains(downloadedBlob.getPayload().getLegalHeader())) {
-            if (blobCacheFile != null) {
-              new FileOutputStream(blobCacheFile).write(downloaded.getBytes());
+          if (cachedBlob == null
+              || downloadedBlob.getPayload().getNo() > cachedBlob.getPayload().getNo()) {
+            if (expectedLegalHeaders.contains(downloadedBlob.getPayload().getLegalHeader())) {
+              if (blobCacheFile != null) {
+                new FileOutputStream(blobCacheFile).write(downloaded.getBytes());
+              }
+
+              if (blobCacheConsumer != null) {
+                blobCacheConsumer.accept(downloaded);
+              }
+
+              return downloadedBlob;
+            } else {
+              throw new UnexpectedLegalHeader(cachedBlob, downloadedBlob);
             }
 
-            if (blobCacheConsumer != null) {
-              blobCacheConsumer.accept(downloaded);
-            }
-
-            return downloadedBlob;
           } else {
-            throw new UnexpectedLegalHeader(cachedBlob, downloadedBlob);
+            return cachedBlob;
           }
-
-        } else {
-          return cachedBlob;
+        } catch (FidoMetadataDownloaderException e) {
+          if (e.getReason() == FidoMetadataDownloaderException.Reason.BAD_SIGNATURE
+              && cachedBlob != null) {
+            return cachedBlob;
+          } else {
+            throw e;
+          }
         }
       }
     }
@@ -870,7 +881,7 @@ public final class FidoMetadataDownloader {
   private MetadataBLOB parseAndVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
       throws CertPathValidatorException, InvalidAlgorithmParameterException, CertificateException,
           IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
-          Base64UrlException {
+          Base64UrlException, FidoMetadataDownloaderException {
     Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
     final ByteArray header = ByteArray.fromBase64Url(s.next());
     final ByteArray payload = ByteArray.fromBase64Url(s.next());
@@ -884,7 +895,8 @@ public final class FidoMetadataDownloader {
       ByteArray jwtSignature,
       X509Certificate trustRootCertificate)
       throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeyException,
-          SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException {
+          SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException,
+          FidoMetadataDownloaderException {
     final ObjectMapper headerJsonMapper =
         JacksonCodecs.json()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
@@ -941,8 +953,7 @@ public final class FidoMetadataDownloader {
         (jwtHeader.getBase64Url() + "." + jwtPayload.getBase64Url())
             .getBytes(StandardCharsets.UTF_8));
     if (!signature.verify(jwtSignature.getBytes())) {
-      // TODO use better exception type
-      throw new IllegalArgumentException("Bad JWT signature.");
+      throw new FidoMetadataDownloaderException(Reason.BAD_SIGNATURE);
     }
 
     final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
