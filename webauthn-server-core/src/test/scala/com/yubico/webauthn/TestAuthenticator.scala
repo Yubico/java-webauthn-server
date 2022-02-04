@@ -632,7 +632,7 @@ object TestAuthenticator {
 
     val jwsHeader = f
       .objectNode()
-      .setAll(
+      .setAll[ObjectNode](
         Map(
           "alg" -> f.textNode("RS256"),
           "x5c" -> f
@@ -650,7 +650,7 @@ object TestAuthenticator {
 
     val jwsPayload = f
       .objectNode()
-      .setAll(
+      .setAll[ObjectNode](
         Map(
           "nonce" -> f.textNode(nonce.getBase64),
           "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
@@ -677,7 +677,7 @@ object TestAuthenticator {
 
     val attStmt = f
       .objectNode()
-      .setAll(
+      .setAll[ObjectNode](
         Map(
           "ver" -> f.textNode("14799021"),
           "response" -> f.binaryNode(
