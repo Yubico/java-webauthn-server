@@ -837,7 +837,9 @@ object TestAuthenticator {
 
   def generateEddsaKeypair(): KeyPair = {
     val alg = "Ed25519"
-    val keyPairGenerator = KeyPairGenerator.getInstance(alg)
+    // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
+    val keyPairGenerator =
+      KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())
     keyPairGenerator.generateKeyPair()
   }
 
