@@ -40,7 +40,6 @@ import com.yubico.webauthn.attestation.MetadataService
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorData
-import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
@@ -947,12 +946,6 @@ class RelyingPartyRegistrationSpec
             it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
               forAll(Extensions.subsetRegistrationExtensions) {
                 case (extensionInputs, clientExtensionOutputs, _) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    clientExtensionOutputs.getExtensionIds,
-                    clientExtensionOutputs,
-                  )
-
                   val steps = finishRegistration(
                     testData =
                       RegistrationTestData.Packed.BasicAttestation.copy(
@@ -971,12 +964,6 @@ class RelyingPartyRegistrationSpec
             it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
               forAll(Extensions.unrequestedClientRegistrationExtensions) {
                 case (extensionInputs, clientExtensionOutputs, _) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    clientExtensionOutputs.getExtensionIds,
-                    clientExtensionOutputs,
-                  )
-
                   val steps = finishRegistration(
                     allowUnrequestedExtensions = true,
                     testData =
@@ -996,12 +983,6 @@ class RelyingPartyRegistrationSpec
             it("Fails if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
               forAll(Extensions.unrequestedClientRegistrationExtensions) {
                 case (extensionInputs, clientExtensionOutputs, _) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    clientExtensionOutputs.getExtensionIds,
-                    clientExtensionOutputs,
-                  )
-
                   val steps = finishRegistration(
                     testData =
                       RegistrationTestData.Packed.BasicAttestation.copy(
@@ -1038,12 +1019,6 @@ class RelyingPartyRegistrationSpec
                       _,
                       authenticatorExtensionOutputs: CBORObject,
                     ) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    authenticatorExtensionOutputs.getKeys,
-                    authenticatorExtensionOutputs,
-                  )
-
                   val steps = finishRegistration(
                     testData = RegistrationTestData.Packed.BasicAttestation
                       .copy(
@@ -1063,13 +1038,6 @@ class RelyingPartyRegistrationSpec
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
-
-                  println(
-                    AuthenticatorRegistrationExtensionOutputs
-                      .fromAuthenticatorData(
-                        step.getAttestation.getAuthenticatorData
-                      )
-                  )
               }
             }
 
@@ -1082,12 +1050,6 @@ class RelyingPartyRegistrationSpec
                       _,
                       authenticatorExtensionOutputs: CBORObject,
                     ) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    authenticatorExtensionOutputs.getKeys,
-                    authenticatorExtensionOutputs,
-                  )
-
                   val steps = finishRegistration(
                     allowUnrequestedExtensions = true,
                     testData = RegistrationTestData.Packed.BasicAttestation
@@ -1108,13 +1070,6 @@ class RelyingPartyRegistrationSpec
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
-
-                  println(
-                    AuthenticatorRegistrationExtensionOutputs
-                      .fromAuthenticatorData(
-                        step.getAttestation.getAuthenticatorData
-                      )
-                  )
               }
             }
 
@@ -1127,12 +1082,6 @@ class RelyingPartyRegistrationSpec
                       _,
                       authenticatorExtensionOutputs: CBORObject,
                     ) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    authenticatorExtensionOutputs.getKeys,
-                    authenticatorExtensionOutputs,
-                  )
-
                   val steps = finishRegistration(
                     testData = RegistrationTestData.Packed.BasicAttestation
                       .copy(
@@ -1155,13 +1104,6 @@ class RelyingPartyRegistrationSpec
                     IllegalArgumentException
                   ]
                   step.tryNext shouldBe a[Failure[_]]
-
-                  println(
-                    AuthenticatorRegistrationExtensionOutputs
-                      .fromAuthenticatorData(
-                        step.getAttestation.getAuthenticatorData
-                      )
-                  )
               }
             }
 

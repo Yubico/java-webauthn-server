@@ -1320,12 +1320,6 @@ class RelyingPartyAssertionSpec
 
               forAll(Extensions.unrequestedClientAssertionExtensions) {
                 case (extensionInputs, clientExtensionOutputs, _) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    clientExtensionOutputs.getExtensionIds,
-                    clientExtensionOutputs,
-                  )
-
                   val steps = finishAssertion(
                     requestedExtensions = extensionInputs,
                     clientExtensionResults = clientExtensionOutputs,
@@ -1344,12 +1338,6 @@ class RelyingPartyAssertionSpec
             it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party, but the Relying Party has enabled allowing unrequested extensions.") {
               forAll(Extensions.unrequestedClientAssertionExtensions) {
                 case (extensionInputs, clientExtensionOutputs, _) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    clientExtensionOutputs.getExtensionIds,
-                    clientExtensionOutputs,
-                  )
-
                   val steps = finishAssertion(
                     allowUnrequestedExtensions = true,
                     requestedExtensions = extensionInputs,
@@ -1366,12 +1354,6 @@ class RelyingPartyAssertionSpec
             it("Succeeds if clientExtensionResults is a subset of the extensions requested by the Relying Party.") {
               forAll(Extensions.subsetAssertionExtensions) {
                 case (extensionInputs, clientExtensionOutputs, _) =>
-                  println(extensionInputs.getExtensionIds, extensionInputs)
-                  println(
-                    clientExtensionOutputs.getExtensionIds,
-                    clientExtensionOutputs,
-                  )
-
                   val steps = finishAssertion(
                     requestedExtensions = extensionInputs,
                     clientExtensionResults = clientExtensionOutputs,
@@ -1393,9 +1375,6 @@ class RelyingPartyAssertionSpec
                       _,
                       authenticatorExtensionOutputs: CBORObject,
                     ) =>
-                  println(extensionInputs)
-                  println(authenticatorExtensionOutputs)
-
                   val steps = finishAssertion(
                     requestedExtensions = extensionInputs,
                     authenticatorData = TestAuthenticator.makeAuthDataBytes(

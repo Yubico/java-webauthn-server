@@ -101,7 +101,6 @@ class OriginMatcherSpec
     it("accepts nothing if no allowed origins are given.") {
       forAll(urlOrArbitraryString, arbitrary[Boolean], arbitrary[Boolean]) {
         (origin, allowPort, allowSubdomain) =>
-          println(origin)
           OriginMatcher.isAllowed(
             origin,
             Set.empty[String].asJava,
@@ -114,7 +113,6 @@ class OriginMatcherSpec
     it("always accepts string equality even for invalid URLs.") {
       forAll(urlOrArbitraryString, arbitrary[Boolean], arbitrary[Boolean]) {
         (origin, allowPort, allowSubdomain) =>
-          println(origin)
           OriginMatcher.isAllowed(
             origin,
             Set(origin).asJava,
@@ -127,7 +125,6 @@ class OriginMatcherSpec
     it("does not accept superdomains.") {
       forAll(superAndSubdomain) {
         case (origin: URL, allowedOrigin: URL) =>
-          println(allowedOrigin, origin)
           OriginMatcher.isAllowed(
             origin.toExternalForm,
             Set(allowedOrigin.toExternalForm).asJava,
@@ -141,7 +138,6 @@ class OriginMatcherSpec
       it("by default.") {
         forAll(superAndSubdomain, arbitrary[Boolean]) { (origins, allowPort) =>
           val (allowedOrigin: URL, origin: URL) = origins
-          println(allowedOrigin, origin)
 
           OriginMatcher.isAllowed(
             origin.toExternalForm,
@@ -156,8 +152,6 @@ class OriginMatcherSpec
         forAll(superAndSubdomain) {
           case (allowedOrigin: URL, origin: URL) =>
             val invalidAllowedOrigin = invalidize(allowedOrigin)
-            println(allowedOrigin, origin, invalidAllowedOrigin)
-
             OriginMatcher.isAllowed(
               origin.toExternalForm,
               Set(invalidAllowedOrigin).asJava,
@@ -171,8 +165,6 @@ class OriginMatcherSpec
         forAll(superAndSubdomain) {
           case (allowedOrigin: URL, origin: URL) =>
             val invalidOrigin = invalidize(origin)
-            println(allowedOrigin, origin, invalidOrigin)
-
             OriginMatcher.isAllowed(
               invalidOrigin,
               Set(allowedOrigin.toExternalForm).asJava,
@@ -185,8 +177,6 @@ class OriginMatcherSpec
       it("unless configured to.") {
         forAll(superAndSubdomain, arbitrary[Boolean]) { (origins, allowPort) =>
           val (allowedOrigin: URL, origin: URL) = origins
-          println(allowedOrigin, origin)
-
           OriginMatcher.isAllowed(
             origin.toExternalForm,
             Set(allowedOrigin.toExternalForm).asJava,
@@ -203,8 +193,6 @@ class OriginMatcherSpec
           (allowedOrigin, port, allowSubdomain) =>
             whenever(port > 0) {
               val origin = replacePort(allowedOrigin, port)
-              println(allowedOrigin, origin)
-
               OriginMatcher.isAllowed(
                 origin.toExternalForm,
                 Set(allowedOrigin.toExternalForm).asJava,
@@ -218,8 +206,6 @@ class OriginMatcherSpec
       it("unless the same port is specified in an allowed origin.") {
         forAll(urlWithPort, arbitrary[Boolean]) {
           (origin: URL, allowSubdomain: Boolean) =>
-            println(origin)
-
             OriginMatcher.isAllowed(
               origin.toExternalForm,
               Set(origin.toExternalForm).asJava,
@@ -242,8 +228,6 @@ class OriginMatcherSpec
               port,
               allowedOrigin.getFile,
             )
-            println(allowedOrigin, origin)
-
             OriginMatcher.isAllowed(
               origin.toExternalForm,
               Set(allowedOrigin.toExternalForm).asJava,
@@ -258,8 +242,6 @@ class OriginMatcherSpec
     it("accepts subdomains and arbitrary ports when configured to.") {
       forAll(superAndSubdomainWithPorts) {
         case (allowedOrigin, origin) =>
-          println(allowedOrigin, origin)
-
           OriginMatcher.isAllowed(
             origin.toExternalForm,
             Set(allowedOrigin.toExternalForm).asJava,
