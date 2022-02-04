@@ -45,7 +45,6 @@ wrapper {
 
 dependencies {
   constraints {
-    api('ch.qos.logback:logback-classic:[1.2.3,2)')
     api('com.augustcellars.cose:cose-java:[1.0.0,2)')
     api('com.fasterxml.jackson.core:jackson-databind:[2.11.0,3)')
     api('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:[2.11.0,3)')

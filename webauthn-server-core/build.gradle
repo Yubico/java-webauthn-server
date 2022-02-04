@@ -46,10 +46,6 @@ dependencies {
     'org.scalacheck:scalacheck_2.13',
     'org.scalatest:scalatest_2.13',
   )
-
-  testRuntimeOnly(
-    'ch.qos.logback:logback-classic',
-  )
 }
 
 jar {
