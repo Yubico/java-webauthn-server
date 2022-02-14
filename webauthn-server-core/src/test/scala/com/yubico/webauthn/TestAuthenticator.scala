@@ -110,6 +110,9 @@ object TestAuthenticator {
     }
 
     val credentialKey: KeyPair = generateEcKeypair()
+
+    val certValidFrom: Instant = Instant.parse("2018-09-06T17:42:00Z")
+    val certValidTo: Instant = certValidFrom.plusSeconds(7 * 24 * 3600)
   }
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
@@ -981,13 +984,15 @@ object TestAuthenticator {
       signingAlg: COSEAlgorithmIdentifier,
       isCa: Boolean = false,
       extensions: Iterable[(String, Boolean, ASN1Primitive)] = None,
+      validFrom: Instant = Defaults.certValidFrom,
+      validTo: Instant = Defaults.certValidTo,
   ): X509Certificate = {
     CertificateParser.parseDer({
       val builder = new X509v3CertificateBuilder(
         issuerName,
         new BigInteger("1337"),
-        Date.from(Instant.parse("2018-09-06T17:42:00Z")),
-        Date.from(Instant.parse("2018-09-06T17:42:00Z")),
+        Date.from(validFrom),
+        Date.from(validTo),
         subjectName,
         SubjectPublicKeyInfo.getInstance(publicKey.getEncoded),
       )
