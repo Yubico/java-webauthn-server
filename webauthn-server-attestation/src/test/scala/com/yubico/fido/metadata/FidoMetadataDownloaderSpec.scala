@@ -71,11 +71,14 @@ class FidoMetadataDownloaderSpec
     server.start()
   }
 
+  val CertValidFrom: Instant = Instant.parse("2022-02-18T12:00:00Z")
+  val CertValidTo: Instant = Instant.parse("2022-03-20T12:00:00Z")
+
   private def makeTrustRootCert(
       distinguishedName: String =
         "CN=Yubico java-webauthn-server unit tests CA, O=Yubico",
-      validFrom: Instant = Instant.now(),
-      validTo: Instant = Instant.now().plusSeconds(600),
+      validFrom: Instant = CertValidFrom,
+      validTo: Instant = CertValidTo,
   ): (X509Certificate, KeyPair, X500Name) = {
     val keypair = TestAuthenticator.generateEcKeypair()
     val name = new X500Name(distinguishedName)
@@ -98,8 +101,8 @@ class FidoMetadataDownloaderSpec
   private def makeCert(
       caKeypair: KeyPair,
       caName: X500Name,
-      validFrom: Instant = Instant.now(),
-      validTo: Instant = Instant.now().plusSeconds(600),
+      validFrom: Instant = CertValidFrom,
+      validTo: Instant = CertValidTo,
       isCa: Boolean = false,
       name: String =
         "CN=Yubico java-webauthn-server unit tests blob cert, O=Yubico",
@@ -126,8 +129,8 @@ class FidoMetadataDownloaderSpec
       caKeypair: KeyPair,
       caName: X500Name,
       chainLength: Int,
-      validFrom: Instant = Instant.now(),
-      validTo: Instant = Instant.now().plusSeconds(600),
+      validFrom: Instant = CertValidFrom,
+      validTo: Instant = CertValidTo,
       leafName: String =
         "CN=Yubico java-webauthn-server unit tests blob cert, O=Yubico",
   ): List[(X509Certificate, KeyPair, X500Name)] = {
@@ -277,8 +280,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -302,6 +305,7 @@ class FidoMetadataDownloaderSpec
             newCache => { writtenCache = Some(newCache) },
           )
           .useBlob(blobJwt)
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -323,8 +327,8 @@ class FidoMetadataDownloaderSpec
         val (oldTrustRootCert, _, _) =
           makeTrustRootCert(
             distinguishedName = oldTrustRootDistinguishedName,
-            validFrom = Instant.now().minusSeconds(600),
-            validTo = Instant.now().minusSeconds(1),
+            validFrom = CertValidFrom.minusSeconds(600),
+            validTo = CertValidFrom.minusSeconds(1),
           )
         val (newTrustRootCert, caKeypair, caName) =
           makeTrustRootCert(distinguishedName = newTrustRootDistinguishedName)
@@ -337,8 +341,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -364,6 +368,7 @@ class FidoMetadataDownloaderSpec
             newCache => { writtenCache = Some(newCache) },
           )
           .useBlob(blobJwt)
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -391,8 +396,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -407,6 +412,7 @@ class FidoMetadataDownloaderSpec
             newCache => { writtenCache = Some(newCache) },
           )
           .useBlob(blobJwt)
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .build()
           .loadBlob
@@ -426,8 +432,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -447,6 +453,7 @@ class FidoMetadataDownloaderSpec
             .useBlob(blobJwt)
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob
         }
@@ -476,6 +483,7 @@ class FidoMetadataDownloaderSpec
             .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
             .useTrustRoot(trustRootCert)
             .useBlob(blobJwt)
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob()
         }
@@ -490,8 +498,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -501,6 +509,7 @@ class FidoMetadataDownloaderSpec
           .useTrustRoot(trustRootCert)
           .useBlob(blobJwt)
           .useCrls(crls.asJava)
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .build()
           .loadBlob()
         blob should not be null
@@ -532,6 +541,7 @@ class FidoMetadataDownloaderSpec
               )
               .useTrustRoot(trustRootCert)
               .useBlob(blobJwt)
+              .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
               .build()
               .loadBlob()
           }
@@ -543,15 +553,15 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
           val intermediateCrl = TestAuthenticator.buildCrl(
             intermediateName,
             intermediateKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
           val crls = List(rootCrl, intermediateCrl)
 
@@ -561,6 +571,7 @@ class FidoMetadataDownloaderSpec
             .useTrustRoot(trustRootCert)
             .useBlob(blobJwt)
             .useCrls(crls.asJava)
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob()
           blob should not be null
@@ -571,15 +582,15 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
           val intermediateCrl = TestAuthenticator.buildCrl(
             intermediateName,
             intermediateKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
             revoked = Set(blobCert),
           )
           val crls = List(rootCrl, intermediateCrl)
@@ -593,6 +604,7 @@ class FidoMetadataDownloaderSpec
               .useTrustRoot(trustRootCert)
               .useBlob(blobJwt)
               .useCrls(crls.asJava)
+              .clock(Clock.fixed(CertValidFrom.plusSeconds(1), ZoneOffset.UTC))
               .build()
               .loadBlob()
           }
@@ -625,8 +637,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -640,6 +652,7 @@ class FidoMetadataDownloaderSpec
           .useTrustRoot(trustRootCert)
           .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
           .useBlobCache(() => Optional.empty(), _ => {})
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -660,14 +673,14 @@ class FidoMetadataDownloaderSpec
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-19"),
+            CertValidFrom.atOffset(ZoneOffset.UTC).toLocalDate,
             no = oldBlobNo,
           )
         val newBlobJwt =
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-20"),
+            CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
             no = newBlobNo,
           )
         val crls = List[CRL](
@@ -675,8 +688,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -696,9 +709,7 @@ class FidoMetadataDownloaderSpec
               ),
             _ => {},
           )
-          .clock(
-            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
-          )
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -720,14 +731,14 @@ class FidoMetadataDownloaderSpec
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-19"),
+            CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
             no = oldBlobNo,
           )
         val newBlobJwt =
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-20"),
+            CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
             no = newBlobNo,
           )
         val crls = List[CRL](
@@ -735,8 +746,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -756,9 +767,7 @@ class FidoMetadataDownloaderSpec
               ),
             _ => {},
           )
-          .clock(
-            Clock.fixed(Instant.parse("2022-01-18T00:00:00Z"), ZoneOffset.UTC)
-          )
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -812,8 +821,8 @@ class FidoMetadataDownloaderSpec
               caName,
               caKeypair.getPrivate,
               "SHA256withECDSA",
-              Instant.now(),
-              Instant.now().plusSeconds(600),
+              CertValidFrom,
+              CertValidTo,
             )
           )
 
@@ -869,8 +878,8 @@ class FidoMetadataDownloaderSpec
               caName,
               caKeypair.getPrivate,
               "SHA256withECDSA",
-              Instant.now(),
-              Instant.now().plusSeconds(600),
+              CertValidFrom,
+              CertValidTo,
             )
           )
 
@@ -881,6 +890,7 @@ class FidoMetadataDownloaderSpec
             .useBlob(blobJwt)
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob
           blob should not be null
@@ -921,8 +931,8 @@ class FidoMetadataDownloaderSpec
               caName,
               caKeypair.getPrivate,
               "SHA256withECDSA",
-              Instant.now(),
-              Instant.now().plusSeconds(600),
+              CertValidFrom,
+              CertValidTo,
             )
           )
 
@@ -936,6 +946,7 @@ class FidoMetadataDownloaderSpec
               .useBlob(blobJwt)
               .useCrls(crls.asJava)
               .trustHttpsCerts(httpsCert)
+              .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
               .build()
               .loadBlob
           }
@@ -966,8 +977,8 @@ class FidoMetadataDownloaderSpec
                   name,
                   keypair.getPrivate,
                   "SHA256withECDSA",
-                  Instant.now(),
-                  Instant.now().plusSeconds(600),
+                  CertValidFrom,
+                  CertValidTo,
                 )
             })
 
@@ -987,6 +998,8 @@ class FidoMetadataDownloaderSpec
             }""",
             )
 
+          val clock = Clock.fixed(CertValidFrom, ZoneOffset.UTC)
+
           val blob = FidoMetadataDownloader
             .builder()
             .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
@@ -994,6 +1007,7 @@ class FidoMetadataDownloaderSpec
             .useBlob(blobJwt)
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
+            .clock(clock)
             .build()
             .loadBlob
           blob should not be null
@@ -1011,6 +1025,7 @@ class FidoMetadataDownloaderSpec
                 .useBlob(blobJwt)
                 .useCrls(splicedCrls.asJava)
                 .trustHttpsCerts(httpsCert)
+                .clock(clock)
                 .build()
                 .loadBlob
             }
@@ -1044,8 +1059,8 @@ class FidoMetadataDownloaderSpec
                   name,
                   keypair.getPrivate,
                   "SHA256withECDSA",
-                  Instant.now(),
-                  Instant.now().plusSeconds(600),
+                  CertValidFrom,
+                  CertValidTo,
                 )
             })
 
@@ -1065,6 +1080,8 @@ class FidoMetadataDownloaderSpec
             }""",
             )
 
+          val clock = Clock.fixed(CertValidFrom.plusSeconds(1), ZoneOffset.UTC)
+
           val blob = FidoMetadataDownloader
             .builder()
             .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
@@ -1072,6 +1089,7 @@ class FidoMetadataDownloaderSpec
             .useBlob(blobJwt)
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
+            .clock(clock)
             .build()
             .loadBlob
           blob should not be null
@@ -1082,8 +1100,8 @@ class FidoMetadataDownloaderSpec
                 certChain.lift(i + 1).map(_._3).getOrElse(caName),
                 certChain.lift(i + 1).map(_._2).getOrElse(caKeypair).getPrivate,
                 "SHA256withECDSA",
-                Instant.now(),
-                Instant.now().plusSeconds(600),
+                CertValidFrom,
+                CertValidTo,
                 revoked = Set(certChain(i)._1),
               )
             crlsWithRevocation.length should equal(crls.length)
@@ -1097,6 +1115,7 @@ class FidoMetadataDownloaderSpec
                 .useBlob(blobJwt)
                 .useCrls(crlsWithRevocation.asJava)
                 .trustHttpsCerts(httpsCert)
+                .clock(clock)
                 .build()
                 .loadBlob
             }
@@ -1132,8 +1151,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -1143,6 +1162,7 @@ class FidoMetadataDownloaderSpec
           .useTrustRoot(trustRootCert)
           .useBlob(blobJwt)
           .useCrls(crls.asJava)
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .build()
           .loadBlob
         blob should not be null
@@ -1175,10 +1195,12 @@ class FidoMetadataDownloaderSpec
               name,
               keypair.getPrivate,
               "SHA256withECDSA",
-              Instant.now(),
-              Instant.now().plusSeconds(600),
+              CertValidFrom,
+              CertValidTo,
             )
         })
+
+        val clock = Clock.fixed(CertValidFrom, ZoneOffset.UTC)
 
         val blob = Try(
           FidoMetadataDownloader
@@ -1187,6 +1209,7 @@ class FidoMetadataDownloaderSpec
             .useTrustRoot(trustRootCert)
             .useBlob(blobJwt)
             .useCrls(crls.asJava)
+            .clock(clock)
             .build()
             .loadBlob
         )
@@ -1205,6 +1228,7 @@ class FidoMetadataDownloaderSpec
               .useTrustRoot(trustRootCert)
               .useBlob(blobJwt)
               .useCrls(splicedCrls.asJava)
+              .clock(clock)
               .build()
               .loadBlob
           }
@@ -1234,8 +1258,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -1245,6 +1269,7 @@ class FidoMetadataDownloaderSpec
           .useTrustRoot(trustRootCert)
           .useBlob(blobJwt)
           .useCrls(crls.asJava)
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .build()
           .loadBlob
         blob should not be null
@@ -1263,8 +1288,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
         val badBlobJwt = validBlobJwt
@@ -1312,14 +1337,14 @@ class FidoMetadataDownloaderSpec
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-19"),
+            CertValidFrom.atOffset(ZoneOffset.UTC).toLocalDate,
             no = oldBlobNo,
           )
         val newBlobJwt =
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-20"),
+            CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
             no = newBlobNo,
           )
         val crls = List[CRL](
@@ -1327,8 +1352,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -1348,9 +1373,7 @@ class FidoMetadataDownloaderSpec
               ),
             _ => {},
           )
-          .clock(
-            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
-          )
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -1370,14 +1393,14 @@ class FidoMetadataDownloaderSpec
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-19"),
+            CertValidFrom.atOffset(ZoneOffset.UTC).toLocalDate,
             no = oldBlobNo,
           )
         val newBlobJwt =
           makeBlob(
             List(blobCert),
             blobKeypair,
-            LocalDate.parse("2022-01-20"),
+            CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
             no = newBlobNo,
           )
         val crls = List[CRL](
@@ -1385,8 +1408,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -1426,9 +1449,7 @@ class FidoMetadataDownloaderSpec
               ),
             _ => {},
           )
-          .clock(
-            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
-          )
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -1450,8 +1471,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -1470,9 +1491,7 @@ class FidoMetadataDownloaderSpec
             () => Optional.empty(),
             cacheme => { writtenCache = Some(cacheme) },
           )
-          .clock(
-            Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
-          )
+          .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
@@ -1506,8 +1525,8 @@ class FidoMetadataDownloaderSpec
             caName,
             caKeypair.getPrivate,
             "SHA256withECDSA",
-            Instant.now(),
-            Instant.now().plusSeconds(600),
+            CertValidFrom,
+            CertValidTo,
           )
         )
 
@@ -1536,6 +1555,7 @@ class FidoMetadataDownloaderSpec
             )
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob
             .getPayload
@@ -1570,6 +1590,7 @@ class FidoMetadataDownloaderSpec
             )
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob
             .getPayload
@@ -1601,9 +1622,7 @@ class FidoMetadataDownloaderSpec
             .useTrustRoot(trustRootCert)
             .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
             .useBlobCacheFile(cacheFile)
-            .clock(
-              Clock.fixed(Instant.parse("2022-01-19T00:00:00Z"), ZoneOffset.UTC)
-            )
+            .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
             .build()

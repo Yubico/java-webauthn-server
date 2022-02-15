@@ -524,14 +524,12 @@ public final class FidoMetadataDownloader {
     /**
      * Use <code>clock</code> as the source of the current time for some application-level logic.
      *
-     * <p>This is primarily intended for testing, and the given clock is only used to check whether
-     * any cached BLOB or trust root certificate needs to be refreshed. In particular, the
-     * certificate path validation will NOT respect this clock and will always use system time.
+     * <p>This is primarily intended for testing.
      *
      * <p>The default is {@link Clock#systemUTC()}.
      *
      * @param clock a {@link Clock} which the finished {@link FidoMetadataDownloader} will use to
-     *     tell whether any cached BLOB or trust root certificate needs to be refreshed.
+     *     tell the time.
      */
     public FidoMetadataDownloaderBuilder clock(@NonNull Clock clock) {
       this.clock = clock;
@@ -963,6 +961,7 @@ public final class FidoMetadataDownloader {
     if (certStore != null) {
       pathParams.addCertStore(certStore);
     }
+    pathParams.setDate(Date.from(clock.instant()));
     cpv.validate(blobCertPath, pathParams);
 
     return new MetadataBLOB(
