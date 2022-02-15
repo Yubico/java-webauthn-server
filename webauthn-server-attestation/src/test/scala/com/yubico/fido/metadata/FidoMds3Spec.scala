@@ -544,4 +544,106 @@ class FidoMds3Spec extends FunSpec with Matchers {
     )
   }
 
+  describe("The Relying party MUST reject the Metadata Statement if the authenticatorVersion has not increased [with an UPDATE_AVAILABLE AuthenticatorStatus].") {
+
+    val aaguid =
+      new AAGUID(ByteArray.fromHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+
+    def makeStatusReportsBlob(
+        statusReports: String,
+        timeOfLastStatusChange: String,
+        authenticatorVersion: Int = 1,
+    ): (String, X509Certificate, java.util.Set[CRL]) =
+      makeBlob(s"""{
+        "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+        "nextUpdate" : "2022-12-01",
+        "no" : 0,
+        "entries": [
+          {
+            "aaguid": "${aaguid.asGuidString}",
+            "metadataStatement": {
+              "authenticatorVersion": ${authenticatorVersion},
+              "attachmentHint" : ["internal"],
+              "attestationRootCertificates" : ["MIIB2DCCAX2gAwIBAgICAaswCgYIKoZIzj0EAwIwajEmMCQGA1UEAwwdWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMgQ0ExDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLtJrr5PYSc4KhmUcwBzgZgNadDnCs/ow2oh2jiKYUqq1A6hFcFf1NPfXLQjP2I4fBI36T6/QR2iY9mbqyP5iVejEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhANWaM2Tf2HPKc+ibCr8G4cxpQVr9Gib47a0CpqagCSCwAiEA3oKlX/ID94FKzgHvD2gyCKQU6RltAOMShVwoljj/5+E="],
+              "attestationTypes" : ["basic_full"],
+              "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+              "description" : "Test authenticator",
+              "keyProtection" : ["software"],
+              "matcherProtection" : ["software"],
+              "protocolFamily" : "u2f",
+              "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+              "schema" : 3,
+              "tcDisplay" : [],
+              "upv" : [{ "major" : 1, "minor" : 1 }],
+              "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+            },
+            "statusReports": ${statusReports},
+            "timeOfLastStatusChange": "${timeOfLastStatusChange}"
+          }
+        ]
+      }""")
+
+    def makeMds(
+        blobTuple: (String, X509Certificate, java.util.Set[CRL])
+    ): FidoMetadataService =
+      FidoMetadataService
+        .builder()
+        .useDownloader(makeDownloader(blobTuple))
+        .build()
+
+    it("A metadata statement with UPDATE_AVAILABLE with authenticatorVersion greater than top-level authenticatorVersion is ignored.") {
+      val mds = makeMds(
+        makeStatusReportsBlob(
+          """[
+          {
+            "status": "UPDATE_AVAILABLE",
+            "effectiveDate": "2022-02-15",
+            "authenticatorVersion": 2
+          }
+        ]""",
+          "2022-02-16",
+          authenticatorVersion = 1,
+        )
+      )
+
+      mds.findEntry(aaguid).toScala should be(None)
+    }
+
+    it("A metadata statement with UPDATE_AVAILABLE with authenticatorVersion equal to top-level authenticatorVersion is accepted.") {
+      val mds = makeMds(
+        makeStatusReportsBlob(
+          """[
+          {
+            "status": "UPDATE_AVAILABLE",
+            "effectiveDate": "2022-02-15",
+            "authenticatorVersion": 2
+          }
+        ]""",
+          "2022-02-16",
+          authenticatorVersion = 2,
+        )
+      )
+
+      mds.findEntry(aaguid).toScala should not be None
+    }
+
+    it("A metadata statement with UPDATE_AVAILABLE with authenticatorVersion less than top-level authenticatorVersion is accepted.") {
+      val mds = makeMds(
+        makeStatusReportsBlob(
+          """[
+          {
+            "status": "UPDATE_AVAILABLE",
+            "effectiveDate": "2022-02-15",
+            "authenticatorVersion": 2
+          }
+        ]""",
+          "2022-02-16",
+          authenticatorVersion = 3,
+        )
+      )
+
+      mds.findEntry(aaguid).toScala should not be None
+    }
+  }
+
 }

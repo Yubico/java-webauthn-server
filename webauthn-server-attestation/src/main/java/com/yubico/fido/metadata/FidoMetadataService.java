@@ -81,8 +81,31 @@ public final class FidoMetadataService implements AttestationTrustSource {
       CertStore certStore) {
     this.filteredEntries =
         Collections.unmodifiableList(
-            blob.getEntries().stream().filter(filter).collect(Collectors.toList()));
+            blob.getEntries().stream()
+                .filter(filter)
+                .filter(FidoMetadataService::ignoreInvalidUpdateAvailableAuthenticatorVersion)
+                .collect(Collectors.toList()));
     this.certStore = certStore;
+  }
+
+  private static boolean ignoreInvalidUpdateAvailableAuthenticatorVersion(
+      MetadataBLOBPayloadEntry metadataBLOBPayloadEntry) {
+    return metadataBLOBPayloadEntry
+        .getMetadataStatement()
+        .map(MetadataStatement::getAuthenticatorVersion)
+        .map(
+            authenticatorVersion ->
+                metadataBLOBPayloadEntry.getStatusReports().stream()
+                    .filter(
+                        statusReport ->
+                            AuthenticatorStatus.UPDATE_AVAILABLE.equals(statusReport.getStatus()))
+                    .noneMatch(
+                        statusReport ->
+                            statusReport
+                                .getAuthenticatorVersion()
+                                .map(av -> av > authenticatorVersion)
+                                .orElse(false)))
+        .orElse(true);
   }
 
   public static FidoMetadataServiceBuilder.Step1 builder() {
