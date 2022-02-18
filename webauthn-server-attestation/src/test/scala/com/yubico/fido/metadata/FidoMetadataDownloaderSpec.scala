@@ -556,6 +556,24 @@ class FidoMetadataDownloaderSpec
             CertValidFrom,
             CertValidTo,
           )
+
+          val thrown2 = the[CertPathValidatorException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
+              .useCrls(List[CRL](rootCrl).asJava)
+              .build()
+              .loadBlob()
+          }
+          thrown2.getReason should equal(
+            BasicReason.UNDETERMINED_REVOCATION_STATUS
+          )
+
           val intermediateCrl = TestAuthenticator.buildCrl(
             intermediateName,
             intermediateKeypair.getPrivate,
@@ -563,14 +581,30 @@ class FidoMetadataDownloaderSpec
             CertValidFrom,
             CertValidTo,
           )
-          val crls = List(rootCrl, intermediateCrl)
+
+          val thrown3 = the[CertPathValidatorException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
+              .useCrls(List[CRL](intermediateCrl).asJava)
+              .build()
+              .loadBlob()
+          }
+          thrown3.getReason should equal(
+            BasicReason.UNDETERMINED_REVOCATION_STATUS
+          )
 
           val blob = FidoMetadataDownloader
             .builder()
             .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
             .useTrustRoot(trustRootCert)
             .useBlob(blobJwt)
-            .useCrls(crls.asJava)
+            .useCrls(List[CRL](rootCrl, intermediateCrl).asJava)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
             .loadBlob()
