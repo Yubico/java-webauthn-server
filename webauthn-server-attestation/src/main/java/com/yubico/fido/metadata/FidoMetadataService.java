@@ -83,7 +83,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
     private final FidoMetadataDownloader downloader;
     private final MetadataBLOBPayload blob;
 
-    private Predicate<MetadataBLOBPayloadEntry> filter = null;
+    private Predicate<MetadataBLOBPayloadEntry> filter = Filters.notRevoked();
 
     public static class Step1 {
       /**
@@ -107,7 +107,10 @@ public final class FidoMetadataService implements AttestationTrustSource {
     /**
      * Set a filter for which metadata entries to include in the data source.
      *
-     * <p>By default, TODO
+     * <p>The default is {@link Filters#notRevoked() Filters.notRevoked()}. Setting a different
+     * filter overrides this default; to preserve the "not revoked" condition in addition to the new
+     * filter, you must explicitly include the condition in the few filter. For example, by using
+     * {@link Filters#allOf(Predicate[]) Filters.allOf(Predicate...)}.
      *
      * @param filter a {@link Predicate} which returns <code>true</code> for metadata entries to
      *     include in the data source.
@@ -154,6 +157,20 @@ public final class FidoMetadataService implements AttestationTrustSource {
     public static Predicate<MetadataBLOBPayloadEntry> allOf(
         Predicate<MetadataBLOBPayloadEntry>... filters) {
       return (entry) -> Stream.of(filters).allMatch(filter -> filter.test(entry));
+    }
+
+    /**
+     * Include any metadata entry whose {@link MetadataBLOBPayloadEntry#getStatusReports()
+     * statusReports} array contains no entry with {@link AuthenticatorStatus#REVOKED REVOKED}
+     * status.
+     *
+     * @see AuthenticatorStatus#REVOKED
+     */
+    public static Predicate<MetadataBLOBPayloadEntry> notRevoked() {
+      return (entry) ->
+          entry.getStatusReports().stream()
+              .noneMatch(
+                  statusReport -> AuthenticatorStatus.REVOKED.equals(statusReport.getStatus()));
     }
   }
 
