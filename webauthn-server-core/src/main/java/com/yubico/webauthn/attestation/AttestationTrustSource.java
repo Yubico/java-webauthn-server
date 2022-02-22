@@ -58,8 +58,12 @@ public interface AttestationTrustSource {
   Set<X509Certificate> findTrustRoots(List<X509Certificate> attestationCertificateChain);
 
   /**
-   * Retrieve a {@link CertStore} containing additional certificates and/or CRLs required for
-   * validating the given certificate chain.
+   * Retrieve a {@link CertStore} containing additional CRLs and/or intermediates certificates
+   * required for validating the given certificate chain.
+   *
+   * <p>Any certificates included in this {@link CertStore} are NOT considered trusted. For adding
+   * trusted attestation roots, see {@link #findTrustRoots(List)} and {@link
+   * #findTrustRoots(ByteArray)}.
    *
    * <p>The default implementation always returns {@link Optional#empty()}. This method is most
    * likely useful for tests, since most real-world certificates will likely include the X.509 CRL
@@ -68,8 +72,10 @@ public interface AttestationTrustSource {
    * @param attestationCertificateChain a certificate chain, where each certificate in the list
    *     should be signed by the subsequent certificate. The trust anchor is typically not included
    *     in this certificate chain.
-   * @return a {@link CertStore} containing any additional certificates and/or CRLs required for
-   *     validating the certificate chain, if applicable.
+   * @return a {@link CertStore} containing any additional CRLs and/or intermediate certificates
+   *     required for validating the certificate chain, if applicable. Implementations MAY reuse the
+   *     same {@link CertStore} instance for multiple calls of this method, even with different
+   *     arguments.
    */
   default Optional<CertStore> getCertStore(List<X509Certificate> attestationCertificateChain) {
     return Optional.empty();

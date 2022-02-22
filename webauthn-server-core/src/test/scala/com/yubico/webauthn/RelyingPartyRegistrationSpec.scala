@@ -2609,6 +2609,89 @@ class RelyingPartyRegistrationSpec
                 step.attestationTrusted should be(true)
                 step.tryNext shouldBe a[Success[_]]
               }
+
+              it("is rejected if the attestation root cert appears in getCertStore but not in findTrustRoots.") {
+                val rootCert = trustedRootCert.getOrElse(
+                  testData.attestationCertChain.last._1
+                )
+                val crl: Option[CRL] =
+                  testData.attestationCertChain.lastOption
+                    .map({
+                      case (cert, key) =>
+                        TestAuthenticator.buildCrl(
+                          JcaX500NameUtil.getSubject(cert),
+                          key,
+                          "SHA256withECDSA",
+                          clock.instant(),
+                          clock.instant().plusSeconds(3600 * 24),
+                        )
+                    })
+                val certStore = CertStore.getInstance(
+                  "Collection",
+                  new CollectionCertStoreParameters(
+                    (List(rootCert) ++ crl).asJava
+                  ),
+                )
+
+                {
+                  // First, check that the attestation is not trusted if the root cert appears only in getCertStore.
+                  val attestationTrustSource = new AttestationTrustSource {
+                    override def findTrustRoots(
+                        aaguid: ByteArray
+                    ): util.Set[X509Certificate] = Collections.emptySet()
+                    override def findTrustRoots(
+                        attestationCertificateChain: util.List[X509Certificate]
+                    ): util.Set[X509Certificate] = Collections.emptySet()
+                    override def getCertStore(
+                        attestationCertificateChain: util.List[X509Certificate]
+                    ): Optional[CertStore] =
+                      Optional.of(certStore)
+                  }
+                  val steps = finishRegistration(
+                    testData = testData,
+                    attestationTrustSource = Some(attestationTrustSource),
+                    rp = testData.rpId,
+                    clock = clock,
+                    enableRevocationChecking = enableRevocationChecking,
+                  )
+                  val step: FinishRegistrationSteps#Step21 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.attestationTrusted should be(false)
+                  step.tryNext shouldBe a[Failure[_]]
+                }
+
+                {
+                  // Since the above assertions would also pass if the cert chain happens to be broken, or CRL resolution fails, etc, make sure that the attestation is indeed trusted if the root cert appears in findTrustRoots.
+                  val attestationTrustSource = new AttestationTrustSource {
+                    override def findTrustRoots(
+                        aaguid: ByteArray
+                    ): util.Set[X509Certificate] =
+                      Collections.singleton(rootCert)
+                    override def findTrustRoots(
+                        attestationCertificateChain: util.List[X509Certificate]
+                    ): util.Set[X509Certificate] =
+                      Collections.singleton(rootCert)
+                    override def getCertStore(
+                        attestationCertificateChain: util.List[X509Certificate]
+                    ): Optional[CertStore] = Optional.of(certStore)
+                  }
+                  val steps = finishRegistration(
+                    testData = testData,
+                    attestationTrustSource = Some(attestationTrustSource),
+                    rp = testData.rpId,
+                    clock = clock,
+                    enableRevocationChecking = enableRevocationChecking,
+                  )
+                  val step: FinishRegistrationSteps#Step21 =
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                  step.validations shouldBe a[Success[_]]
+                  step.attestationTrusted should be(true)
+                  step.tryNext shouldBe a[Success[_]]
+                }
+              }
             }
 
             describe("An android-key basic attestation") {
