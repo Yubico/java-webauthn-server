@@ -37,6 +37,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -73,6 +74,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
 
   @NonNull private final MetadataBLOBPayload blob;
   private final Predicate<MetadataBLOBPayloadEntry> filter;
+  private final CertStore certStore;
 
   public static FidoMetadataServiceBuilder.Step1 builder() {
     return new FidoMetadataServiceBuilder.Step1();
@@ -84,6 +86,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
     private final MetadataBLOBPayload blob;
 
     private Predicate<MetadataBLOBPayloadEntry> filter = Filters.notRevoked();
+    private CertStore certStore = null;
 
     public static class Step1 {
       /**
@@ -120,15 +123,29 @@ public final class FidoMetadataService implements AttestationTrustSource {
       return this;
     }
 
+    /**
+     * Set a {@link CertStore} of additional CRLs and/or intermediate certificates to use while
+     * validating attestation certificate paths.
+     *
+     * <p>This setting is most likely useful for tests.
+     *
+     * @param certStore a {@link CertStore} of additional CRLs and/or intermediate certificates to
+     *     use while validating attestation certificate paths.
+     */
+    public FidoMetadataServiceBuilder certStore(@NonNull CertStore certStore) {
+      this.certStore = certStore;
+      return this;
+    }
+
     public FidoMetadataService build()
         throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
             DigestException, FidoMetadataDownloaderException, CertificateException,
             UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
             InvalidKeyException {
       if (downloader == null && blob != null) {
-        return new FidoMetadataService(blob, filter);
+        return new FidoMetadataService(blob, filter, certStore);
       } else if (downloader != null && blob == null) {
-        return new FidoMetadataService(downloader.loadBlob().getPayload(), filter);
+        return new FidoMetadataService(downloader.loadBlob().getPayload(), filter, certStore);
       } else {
         throw new IllegalStateException(
             "Either downloader or blob must be provided, none was. This should not be possible, please file a bug report.");
@@ -174,7 +191,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
     }
   }
 
-  private Stream<MetadataBLOBPayloadEntry> getFilteredEntries() {
+  Stream<MetadataBLOBPayloadEntry> getFilteredEntries() {
     final Stream<MetadataBLOBPayloadEntry> allEntries = blob.getEntries().stream();
     if (this.filter == null) {
       return allEntries;
@@ -252,5 +269,10 @@ public final class FidoMetadataService implements AttestationTrustSource {
         .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
         .map(MetadataStatement::getAttestationRootCertificates)
         .orElseGet(Collections::emptySet);
+  }
+
+  @Override
+  public Optional<CertStore> getCertStore(List<X509Certificate> attestationCertificateChain) {
+    return Optional.ofNullable(certStore);
   }
 }

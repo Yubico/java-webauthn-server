@@ -1,9 +1,26 @@
 package com.yubico.fido.metadata
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
+import com.yubico.internal.util.JacksonCodecs
+import com.yubico.webauthn.FinishRegistrationOptions
+import com.yubico.webauthn.RegistrationResult
+import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.TestAuthenticator
+import com.yubico.webauthn.TestAuthenticator.AttestationMaker
+import com.yubico.webauthn.TestAuthenticator.AttestationSigner
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
+import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
+import com.yubico.webauthn.test.Helpers
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -14,11 +31,20 @@ import org.scalatestplus.junit.JUnitRunner
 import java.nio.charset.StandardCharsets
 import java.security.KeyPair
 import java.security.cert.CRL
+import java.security.cert.CertStore
+import java.security.cert.CollectionCertStoreParameters
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.Collections
+import java.util.stream.Collectors
+import scala.collection.mutable
+import scala.jdk.CollectionConverters.ListHasAsScala
+import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsJava
+import scala.jdk.CollectionConverters.SetHasAsScala
+import scala.jdk.FunctionConverters.enrichAsJavaPredicate
 import scala.jdk.OptionConverters.RichOptional
 
 @Slow
@@ -83,10 +109,303 @@ class FidoMds3Spec extends FunSpec with Matchers {
     )
   }
 
+  def makeDownloader(
+      blobTuple: (String, X509Certificate, java.util.Set[CRL])
+  ): FidoMetadataDownloader =
+    blobTuple match {
+      case (
+            blobJwt: String,
+            cert: X509Certificate,
+            blobCrls: java.util.Set[CRL],
+          ) =>
+        FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader(
+            "Kom ihåg att du aldrig får snyta dig i mattan!"
+          )
+          .useTrustRoot(cert)
+          .useBlob(blobJwt)
+          .clock(
+            Clock
+              .fixed(
+                Instant.parse("2022-02-22T18:00:00Z"),
+                ZoneOffset.UTC,
+              )
+          )
+          .useCrls(blobCrls)
+          .build()
+    }
+
   describe("§3.2. Metadata BLOB object processing rules") {
     describe("8. Iterate through the individual entries (of type MetadataBLOBPayloadEntry). For each entry:") {
-      ignore("1. Ignore the entry if the AAID, AAGUID or attestationCertificateKeyIdentifiers is not relevant to the relying party (e.g. not acceptable by any policy)") {
-        fail("Test not implemented.")
+      describe("1. Ignore the entry if the AAID, AAGUID or attestationCertificateKeyIdentifiers is not relevant to the relying party (e.g. not acceptable by any policy)") {
+        val jf: JsonNodeFactory = JsonNodeFactory.instance
+
+        val aaidA = new AAID("aaaa#0000")
+        val aaidB = new AAID("bbbb#1111")
+        val aaidC = new AAID("cccc#2222")
+
+        val aaguidA =
+          new AAGUID(ByteArray.fromHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+        val aaguidB =
+          new AAGUID(ByteArray.fromHex("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))
+        val aaguidC =
+          new AAGUID(ByteArray.fromHex("cccccccccccccccccccccccccccccccc"))
+
+        val ackiA = Set("aa")
+        val ackiB = Set("bb")
+        val ackiC = Set("cc")
+
+        def makeEntry(
+            aaid: Option[AAID] = None,
+            aaguid: Option[AAGUID] = None,
+            acki: Option[Set[String]] = None,
+        ): String = {
+          val entry = JacksonCodecs
+            .json()
+            .readTree(s"""{
+             "metadataStatement": {
+               "authenticatorVersion": 1,
+               "attachmentHint" : ["internal"],
+               "attestationRootCertificates": ["MIIB2DCCAX2gAwIBAgICAaswCgYIKoZIzj0EAwIwajEmMCQGA1UEAwwdWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMgQ0ExDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLtJrr5PYSc4KhmUcwBzgZgNadDnCs/ow2oh2jiKYUqq1A6hFcFf1NPfXLQjP2I4fBI36T6/QR2iY9mbqyP5iVejEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhANWaM2Tf2HPKc+ibCr8G4cxpQVr9Gib47a0CpqagCSCwAiEA3oKlX/ID94FKzgHvD2gyCKQU6RltAOMShVwoljj/5+E="],
+               "attestationTypes" : ["basic_full"],
+               "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+               "description" : "Test authenticator",
+               "keyProtection" : ["software"],
+               "matcherProtection" : ["software"],
+               "protocolFamily" : "u2f",
+               "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+               "schema" : 3,
+               "tcDisplay" : [],
+               "upv" : [{ "major" : 1, "minor" : 1 }],
+               "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+             },
+             "statusReports": [],
+             "timeOfLastStatusChange": "2022-02-21"
+           }""")
+            .asInstanceOf[ObjectNode]
+          aaid.foreach(aaid =>
+            entry.set[ObjectNode]("aaid", new TextNode(aaid.getValue))
+          )
+          aaguid.foreach(aaguid =>
+            entry.set[ObjectNode]("aaguid", new TextNode(aaguid.asGuidString))
+          )
+          acki.foreach(acki =>
+            entry.set[ObjectNode](
+              "attestationCertificateKeyIdentifiers",
+              new ArrayNode(
+                jf,
+                acki.toList.map[JsonNode](new TextNode(_)).asJava,
+              ),
+            )
+          )
+          JacksonCodecs.json().writeValueAsString(entry)
+        }
+
+        def makeMds(
+            blobTuple: (String, X509Certificate, java.util.Set[CRL]),
+            attestationCrls: Set[CRL] = Set.empty,
+        )(filter: MetadataBLOBPayloadEntry => Boolean): FidoMetadataService =
+          FidoMetadataService
+            .builder()
+            .useDownloader(makeDownloader(blobTuple))
+            .filter(filter.asJava)
+            .certStore(
+              CertStore.getInstance(
+                "Collection",
+                new CollectionCertStoreParameters(attestationCrls.asJava),
+              )
+            )
+            .build()
+
+        val blobTuple = makeBlob(s"""{
+          "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+          "nextUpdate" : "2022-12-01",
+          "no" : 0,
+          "entries": [
+            ${makeEntry(aaid = Some(aaidA))},
+            ${makeEntry(aaguid = Some(aaguidA))},
+            ${makeEntry(acki = Some(ackiA))},
+
+            ${makeEntry(aaid = Some(aaidB), aaguid = Some(aaguidB))},
+            ${makeEntry(aaguid = Some(aaguidB), acki = Some(ackiB))},
+            ${makeEntry(aaid = Some(aaidB), acki = Some(ackiB))},
+
+            ${makeEntry(
+          aaid = Some(aaidC),
+          aaguid = Some(aaguidC),
+          acki = Some(ackiC),
+        )}
+          ]
+        }""")
+
+        it("Filtering in getFilteredEntries works as expected.") {
+          def count(filter: MetadataBLOBPayloadEntry => Boolean): Long =
+            makeMds(blobTuple)(filter).getFilteredEntries.count
+
+          implicit class MetadataBLOBPayloadEntryWithAbbreviatedAttestationCertificateKeyIdentifiers(
+              entry: MetadataBLOBPayloadEntry
+          ) {
+            def getACKI: mutable.Set[String] =
+              entry.getAttestationCertificateKeyIdentifiers.asScala
+          }
+
+          count(_ => false) should be(0)
+          count(_ => true) should be(7)
+
+          count(_.getAaid.toScala.contains(aaidA)) should be(1)
+          count(_.getAaguid.toScala.contains(aaguidA)) should be(1)
+          count(_.getACKI == ackiA) should be(1)
+
+          count(_.getAaid.toScala.contains(aaidB)) should be(2)
+          count(_.getAaguid.toScala.contains(aaguidB)) should be(2)
+          count(_.getACKI == ackiB) should be(2)
+
+          count(_.getAaid.toScala.contains(aaidC)) should be(1)
+          count(_.getAaguid.toScala.contains(aaguidC)) should be(1)
+          count(_.getACKI == ackiC) should be(1)
+
+          count(entry =>
+            entry.getAaid.toScala.contains(aaidA) || entry.getAaguid.toScala
+              .contains(aaguidA) || entry.getACKI == ackiA
+          ) should be(3)
+          count(entry =>
+            entry.getAaid.toScala.contains(aaidB) || entry.getAaguid.toScala
+              .contains(aaguidB) || entry.getACKI == ackiB
+          ) should be(3)
+          count(entry =>
+            entry.getAaid.toScala.contains(aaidC) || entry.getAaguid.toScala
+              .contains(aaguidC) || entry.getACKI == ackiC
+          ) should be(1)
+
+          count(!_.getAaid.toScala.contains(aaidA)) should be(6)
+          count(!_.getAaguid.toScala.contains(aaguidA)) should be(6)
+          count(_.getACKI != ackiA) should be(6)
+
+          count(!_.getAaid.toScala.contains(aaidB)) should be(5)
+          count(!_.getAaguid.toScala.contains(aaguidB)) should be(5)
+          count(_.getACKI != ackiB) should be(5)
+
+          count(!_.getAaid.toScala.contains(aaidC)) should be(6)
+          count(!_.getAaguid.toScala.contains(aaguidC)) should be(6)
+          count(_.getACKI != ackiC) should be(6)
+
+          makeMds(blobTuple)(
+            _.getAaid.toScala.contains(aaidA)
+          ).getFilteredEntries.findAny.get.getAaid.get should be(aaidA)
+          makeMds(blobTuple)(
+            _.getAaguid.toScala.contains(aaguidB)
+          ).getFilteredEntries.findAny.get.getAaguid.get should be(aaguidB)
+          makeMds(blobTuple)(
+            _.getACKI == ackiC
+          ).getFilteredEntries.findAny.get.getAaguid.get should be(aaguidC)
+        }
+
+        it("Filtering correctly impacts the trust verdict in RelyingParty.finishRegistration.") {
+          val rpIdentity = RelyingPartyIdentity
+            .builder()
+            .id(TestAuthenticator.Defaults.rpId)
+            .name("Test RP")
+            .build()
+          val (pkc, _, attestationChain) =
+            TestAuthenticator.createBasicAttestedCredential(
+              aaguid = aaguidA.asBytes(),
+              attestationMaker = AttestationMaker.packed(
+                AttestationSigner.ca(
+                  COSEAlgorithmIdentifier.ES256,
+                  aaguid = aaguidA.asBytes(),
+                  validFrom = CertValidFrom,
+                  validTo = CertValidTo,
+                )
+              ),
+            )
+          val attestationCrls = attestationChain.tail
+            .map({
+              case (cert, key) =>
+                TestAuthenticator.buildCrl(
+                  JcaX500NameUtil.getSubject(cert),
+                  key,
+                  "SHA256withECDSA",
+                  CertValidFrom,
+                  CertValidTo,
+                )
+            })
+            .toSet
+          val attestationRootBase64 =
+            new ByteArray(attestationChain.last._1.getEncoded).getBase64
+
+          val blobTuple = makeBlob(s"""{
+          "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+          "nextUpdate" : "2022-12-01",
+          "no" : 0,
+          "entries": [{
+             "aaguid": "${aaguidA.asHexString}",
+             "metadataStatement": {
+               "authenticatorVersion": 1,
+               "attachmentHint" : ["internal"],
+               "attestationRootCertificates": ["${attestationRootBase64}"],
+               "attestationTypes" : ["basic_full"],
+               "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+               "description" : "Test authenticator",
+               "keyProtection" : ["software"],
+               "matcherProtection" : ["software"],
+               "protocolFamily" : "u2f",
+               "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+               "schema" : 3,
+               "tcDisplay" : [],
+               "upv" : [{ "major" : 1, "minor" : 1 }],
+               "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+             },
+             "statusReports": [],
+             "timeOfLastStatusChange": "2022-02-21"
+           }]
+         }""")
+
+          val finishRegistrationOptions = FinishRegistrationOptions
+            .builder()
+            .request(
+              PublicKeyCredentialCreationOptions
+                .builder()
+                .rp(rpIdentity)
+                .user(
+                  UserIdentity
+                    .builder()
+                    .name("test")
+                    .displayName("Test user")
+                    .id(ByteArray.fromHex("01020304"))
+                    .build()
+                )
+                .challenge(TestAuthenticator.Defaults.challenge)
+                .pubKeyCredParams(
+                  Collections.singletonList(PublicKeyCredentialParameters.ES256)
+                )
+                .build()
+            )
+            .response(pkc)
+            .build()
+
+          def finishRegistration(
+              filter: MetadataBLOBPayloadEntry => Boolean
+          ): RegistrationResult = {
+            val mds =
+              makeMds(blobTuple, attestationCrls = attestationCrls)(filter)
+            RelyingParty
+              .builder()
+              .identity(rpIdentity)
+              .credentialRepository(Helpers.CredentialRepository.empty)
+              .attestationTrustSource(mds)
+              .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
+              .build()
+              .finishRegistration(finishRegistrationOptions)
+          }
+
+          finishRegistration(
+            _.getAaguid.toScala.contains(aaguidA)
+          ).isAttestationTrusted should be(true)
+          finishRegistration(
+            _.getAaguid.toScala.contains(aaguidB)
+          ).isAttestationTrusted should be(false)
+        }
       }
 
       describe("2.1. Check whether the status report of the authenticator model has changed compared to the cached entry by looking at the fields timeOfLastStatusChange and statusReport.") {
@@ -96,8 +415,74 @@ class FidoMds3Spec extends FunSpec with Matchers {
       describe("2.2. Update the status of the cached entry. It is up to the relying party to specify behavior for authenticators with status reports that indicate a lack of certification, or known security issues. However, the status REVOKED indicates significant security issues related to such authenticators.") {
         it("Nothing to test for caching - cache is implemented on the metadata BLOB as a whole.") {}
 
-        ignore("REVOKED authenticators are untrusted by default") {
-          fail("Test not implemented.")
+        it("REVOKED authenticators are untrusted by default") {
+          val aaguidA =
+            new AAGUID(ByteArray.fromHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+          val aaguidB =
+            new AAGUID(ByteArray.fromHex("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))
+
+          def makeMds(
+              blobTuple: (String, X509Certificate, java.util.Set[CRL])
+          ): FidoMetadataService =
+            FidoMetadataService
+              .builder()
+              .useDownloader(makeDownloader(blobTuple))
+              .build()
+
+          val mds = makeMds(makeBlob(s"""{
+              "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "nextUpdate" : "2022-12-01",
+              "no" : 0,
+              "entries": [
+                {
+                  "aaguid": "${aaguidA.asGuidString()}",
+                  "metadataStatement": {
+                    "authenticatorVersion": 1,
+                    "attachmentHint" : ["internal"],
+                    "attestationRootCertificates": ["MIIB2DCCAX2gAwIBAgICAaswCgYIKoZIzj0EAwIwajEmMCQGA1UEAwwdWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMgQ0ExDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLtJrr5PYSc4KhmUcwBzgZgNadDnCs/ow2oh2jiKYUqq1A6hFcFf1NPfXLQjP2I4fBI36T6/QR2iY9mbqyP5iVejEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhANWaM2Tf2HPKc+ibCr8G4cxpQVr9Gib47a0CpqagCSCwAiEA3oKlX/ID94FKzgHvD2gyCKQU6RltAOMShVwoljj/5+E="],
+                    "attestationTypes" : ["basic_full"],
+                    "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+                    "description" : "Test authenticator",
+                    "keyProtection" : ["software"],
+                    "matcherProtection" : ["software"],
+                     "protocolFamily" : "u2f",
+                    "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+                    "schema" : 3,
+                    "tcDisplay" : [],
+                    "upv" : [{ "major" : 1, "minor" : 1 }],
+                    "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+                  },
+                  "statusReports": [],
+                  "timeOfLastStatusChange": "2022-02-21"
+                },
+                {
+                  "aaguid": "${aaguidB.asGuidString()}",
+                  "metadataStatement": {
+                    "authenticatorVersion": 1,
+                    "attachmentHint" : ["internal"],
+                    "attestationRootCertificates": ["MIIB2DCCAX2gAwIBAgICAaswCgYIKoZIzj0EAwIwajEmMCQGA1UEAwwdWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMgQ0ExDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABLtJrr5PYSc4KhmUcwBzgZgNadDnCs/ow2oh2jiKYUqq1A6hFcFf1NPfXLQjP2I4fBI36T6/QR2iY9mbqyP5iVejEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhANWaM2Tf2HPKc+ibCr8G4cxpQVr9Gib47a0CpqagCSCwAiEA3oKlX/ID94FKzgHvD2gyCKQU6RltAOMShVwoljj/5+E="],
+                    "attestationTypes" : ["basic_full"],
+                    "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+                    "description" : "Test authenticator",
+                    "keyProtection" : ["software"],
+                    "matcherProtection" : ["software"],
+                     "protocolFamily" : "u2f",
+                    "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+                    "schema" : 3,
+                    "tcDisplay" : [],
+                    "upv" : [{ "major" : 1, "minor" : 1 }],
+                    "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+                  },
+                  "statusReports": [{ "status": "REVOKED" }],
+                  "timeOfLastStatusChange": "2022-02-21"
+                }
+              ]
+            }"""))
+
+          mds.getFilteredEntries
+            .map(_.getAaguid.toScala)
+            .collect(Collectors.toList[Option[AAGUID]])
+            .asScala should equal(List(Some(aaguidA)))
         }
       }
 

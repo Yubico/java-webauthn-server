@@ -261,16 +261,32 @@ object TestAuthenticator {
   object AttestationSigner {
     def ca(
         alg: COSEAlgorithmIdentifier,
+        aaguid: ByteArray = Defaults.aaguid,
         certSubject: X500Name = new X500Name(
           "CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"
         ),
+        validFrom: Instant = Defaults.certValidFrom,
+        validTo: Instant = Defaults.certValidTo,
     ): AttestationCert = {
       val (caCert, caKey) =
-        generateAttestationCaCertificate(signingAlg = alg)
+        generateAttestationCaCertificate(
+          signingAlg = alg,
+          validFrom = validFrom,
+          validTo = validTo,
+        )
       val (cert, key) = generateAttestationCertificate(
         alg,
         caCertAndKey = Some((caCert, caKey)),
         name = certSubject,
+        extensions = List(
+          (
+            "1.3.6.1.4.1.45724.1.1.4",
+            false,
+            new DEROctetString(aaguid.getBytes),
+          )
+        ),
+        validFrom = validFrom,
+        validTo = validTo,
       )
       AttestationCert(
         cert,
@@ -927,6 +943,8 @@ object TestAuthenticator {
       ),
       superCa: Option[(X509Certificate, PrivateKey)] = None,
       extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil,
+      validFrom: Instant = Defaults.certValidFrom,
+      validTo: Instant = Defaults.certValidTo,
   ): (X509Certificate, PrivateKey) = {
     val actualKeypair = keypair.getOrElse(generateKeypair(signingAlg))
     (
@@ -939,6 +957,8 @@ object TestAuthenticator {
         signingAlg = signingAlg,
         isCa = true,
         extensions = extensions,
+        validFrom = validFrom,
+        validTo = validTo,
       ),
       actualKeypair.getPrivate,
     )
@@ -958,6 +978,8 @@ object TestAuthenticator {
         )
       ),
       caCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+      validFrom: Instant = Defaults.certValidFrom,
+      validTo: Instant = Defaults.certValidTo,
   ): (X509Certificate, PrivateKey) = {
     val actualKeypair = keypair.getOrElse(generateKeypair(alg))
 
@@ -973,6 +995,8 @@ object TestAuthenticator {
         signingAlg = alg,
         isCa = false,
         extensions = extensions,
+        validFrom = validFrom,
+        validTo = validTo,
       ),
       actualKeypair.getPrivate,
     )

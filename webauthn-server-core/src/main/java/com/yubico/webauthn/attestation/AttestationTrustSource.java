@@ -37,23 +37,33 @@ public interface AttestationTrustSource {
   /**
    * Attempt to look up attestation trust roots for an authenticator AAGUID.
    *
-   * @param aaguid an authenticator AAGUID
-   * @return Attestation metadata, if any is available. If no trusted attestation roots for this
-   *     AAGUID are found, return an empty set. Implementations MAY also return a static set of
-   *     trust anchors regardless of the <code>aaguid</code> argument.
+   * @param aaguid the AAGUID of an authenticator to be assessed for trustworthiness
+   * @return A set of attestation root certificates trusted to attest for this AAGUID, if any are
+   *     available. If no trust roots for this AAGUID are found, or if authenticators with this
+   *     AAGUID are not trusted, return an empty set. Implementations MAY reuse the same result set
+   *     for multiple calls of this method, even with different AAGUID arguments, but MUST return an
+   *     empty set for AAGUIDs that should not be trusted.
    */
   Set<X509Certificate> findTrustRoots(ByteArray aaguid);
 
   /**
    * Attempt to look up attestation trust roots for an attestation certificate chain.
    *
-   * @param attestationCertificateChain a certificate chain, where each certificate in the list
-   *     should be signed by the subsequent certificate. The trust anchor is typically not included
-   *     in this certificate chain.
-   * @return A set of trusted attestation root certificates, if any are available. If the
-   *     certificate chain is empty, or if no trust roots for this certificate chain are found,
-   *     return an empty set. Implementations MAY also return a static set of trust anchors
-   *     regardless of the <code>attestationCertificateChain</code> argument.
+   * <p>Note that it is possible for the same trust root to be used for different certificate
+   * chains. For example, an authenticator vendor may make two different authenticator models, each
+   * with its own attestation leaf certificate but both signed by the same attestation root
+   * certificate. If a Relying Party trusts one of those authenticators models but not the other,
+   * then its implementation of this method MUST return an empty set for the untrusted certificate
+   * chain.
+   *
+   * @param attestationCertificateChain a certificate chain from an authenticator to be assessed for
+   *     trustworthiness. The trust anchor is typically not included in this certificate chain.
+   * @return A set of attestation root certificates trusted to attest for this attestation
+   *     certificate chain, if any are available. If the certificate chain is empty, or if no trust
+   *     roots for this certificate chain are found, or if authenticators with this certificate
+   *     chain are not trusted, return an empty set. Implementations MAY reuse the same result set
+   *     for multiple calls of this method, even with different arguments, but MUST return an empty
+   *     set for certificate chains that should not be trusted.
    */
   Set<X509Certificate> findTrustRoots(List<X509Certificate> attestationCertificateChain);
 
