@@ -45,9 +45,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,19 +62,28 @@ import lombok.extern.slf4j.Slf4j;
  * setting in {@link RelyingParty}.
  *
  * <p>The metadata service may be configured with a {@link
- * FidoMetadataServiceBuilder#filter(Predicate) filter} to select trusted authenticators. Any
- * metadata entry that matches the filter will be considered trusted.
+ * FidoMetadataServiceBuilder#filter(Predicate) filter} to select trusted authenticators. This
+ * filter is executed when the {@link FidoMetadataService} instance is constructed. Any metadata
+ * entry that matches the filter will be considered trusted.
  *
  * <p>Use the {@link #builder() builder} to configure settings, then use the {@link
  * #findEntry(AAGUID)} and/or {@link #findEntry(List)} methods to retrieve metadata entries.
  */
 @Slf4j
-@AllArgsConstructor(access = AccessLevel.PUBLIC)
 public final class FidoMetadataService implements AttestationTrustSource {
 
-  @NonNull private final MetadataBLOBPayload blob;
-  private final Predicate<MetadataBLOBPayloadEntry> filter;
+  private final List<MetadataBLOBPayloadEntry> filteredEntries;
   private final CertStore certStore;
+
+  private FidoMetadataService(
+      @NonNull MetadataBLOBPayload blob,
+      @NonNull Predicate<MetadataBLOBPayloadEntry> filter,
+      CertStore certStore) {
+    this.filteredEntries =
+        Collections.unmodifiableList(
+            blob.getEntries().stream().filter(filter).collect(Collectors.toList()));
+    this.certStore = certStore;
+  }
 
   public static FidoMetadataServiceBuilder.Step1 builder() {
     return new FidoMetadataServiceBuilder.Step1();
@@ -192,12 +201,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
   }
 
   Stream<MetadataBLOBPayloadEntry> getFilteredEntries() {
-    final Stream<MetadataBLOBPayloadEntry> allEntries = blob.getEntries().stream();
-    if (this.filter == null) {
-      return allEntries;
-    } else {
-      return allEntries.filter(this.filter);
-    }
+    return filteredEntries.stream();
   }
 
   public Optional<MetadataBLOBPayloadEntry> findEntry(AAGUID aaguid) {
