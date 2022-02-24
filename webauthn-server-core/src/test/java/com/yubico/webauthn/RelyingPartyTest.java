@@ -58,13 +58,8 @@ public class RelyingPartyTest {
     final AttestationTrustSource attestationTrustSource =
         new AttestationTrustSource() {
           @Override
-          public Set<X509Certificate> findTrustRoots(ByteArray aaguid) {
-            return null;
-          }
-
-          @Override
-          public Set<X509Certificate> findTrustRoots(
-              List<X509Certificate> attestationCertificateChain) {
+          public TrustRootsResult findTrustRoots(
+              List<X509Certificate> attestationCertificateChain, Optional<ByteArray> aaguid) {
             return null;
           }
         };

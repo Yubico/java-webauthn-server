@@ -56,8 +56,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.Date;
 import java.time.Clock;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -71,6 +69,8 @@ import lombok.extern.slf4j.Slf4j;
 final class FinishRegistrationSteps {
 
   private static final String CLIENT_DATA_TYPE = "webauthn.create";
+  private static final ByteArray ZERO_AAGUID =
+      new ByteArray(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
 
   private final PublicKeyCredentialCreationOptions request;
   private final PublicKeyCredential<
@@ -87,7 +87,6 @@ final class FinishRegistrationSteps {
   @Builder.Default private final boolean allowOriginPort = false;
   @Builder.Default private final boolean allowOriginSubdomain = false;
   @Builder.Default private final boolean allowUnrequestedExtensions = false;
-  @Builder.Default private final boolean enableAttestationCertRevocationChecking = true;
 
   public Step6 begin() {
     return new Step6();
@@ -449,7 +448,7 @@ final class FinishRegistrationSteps {
     private final AttestationType attestationType;
     private final Optional<List<X509Certificate>> attestationTrustPath;
 
-    private final Set<X509Certificate> trustRoots;
+    private final Optional<AttestationTrustSource.TrustRootsResult> trustRoots;
 
     public Step20(
         AttestationObject attestation,
@@ -466,26 +465,21 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step21 nextStep() {
-      return new Step21(attestation, attestationType, attestationTrustPath, findTrustRoots());
+      return new Step21(attestation, attestationType, attestationTrustPath, trustRoots);
     }
 
-    private Set<X509Certificate> findTrustRoots() {
-      if (attestationTrustSource.isPresent()) {
-        final Set<X509Certificate> certs = new HashSet<>();
-        certs.addAll(
-            attestationTrustSource
-                .get()
-                .findTrustRoots(
-                    attestation
-                        .getAuthenticatorData()
-                        .getAttestedCredentialData()
-                        .get()
-                        .getAaguid()));
-        certs.addAll(attestationTrustSource.get().findTrustRoots(attestationTrustPath.get()));
-        return certs;
-      } else {
-        return Collections.emptySet();
-      }
+    private Optional<AttestationTrustSource.TrustRootsResult> findTrustRoots() {
+      return attestationTrustSource.map(
+          attestationTrustSource ->
+              attestationTrustSource.findTrustRoots(
+                  attestationTrustPath.get(),
+                  Optional.of(
+                          attestation
+                              .getAuthenticatorData()
+                              .getAttestedCredentialData()
+                              .get()
+                              .getAaguid())
+                      .filter(aaguid -> !aaguid.equals(ZERO_AAGUID))));
     }
   }
 
@@ -494,7 +488,7 @@ final class FinishRegistrationSteps {
     private final AttestationObject attestation;
     private final AttestationType attestationType;
     private final Optional<List<X509Certificate>> attestationTrustPath;
-    private final Set<X509Certificate> trustRoots;
+    private final Optional<AttestationTrustSource.TrustRootsResult> trustRoots;
 
     private final boolean attestationTrusted;
 
@@ -502,7 +496,7 @@ final class FinishRegistrationSteps {
         AttestationObject attestation,
         AttestationType attestationType,
         Optional<List<X509Certificate>> attestationTrustPath,
-        Set<X509Certificate> trustRoots) {
+        Optional<AttestationTrustSource.TrustRootsResult> trustRoots) {
       this.attestation = attestation;
       this.attestationType = attestationType;
       this.attestationTrustPath = attestationTrustPath;
@@ -526,21 +520,7 @@ final class FinishRegistrationSteps {
     public boolean attestationTrusted() {
       if (attestationTrustPath.isPresent() && attestationTrustSource.isPresent()) {
         try {
-          final Set<X509Certificate> trustRoots = new HashSet<>();
-          trustRoots.addAll(
-              attestationTrustSource.get().findTrustRoots(attestationTrustPath.get()));
-          trustRoots.addAll(
-              attestationTrustSource
-                  .get()
-                  .findTrustRoots(
-                      response
-                          .getResponse()
-                          .getParsedAuthenticatorData()
-                          .getAttestedCredentialData()
-                          .get()
-                          .getAaguid()));
-
-          if (trustRoots.isEmpty()) {
+          if (!trustRoots.isPresent() || trustRoots.get().getTrustRoots().isEmpty()) {
             return false;
 
           } else {
@@ -549,15 +529,12 @@ final class FinishRegistrationSteps {
             final CertPath certPath = certFactory.generateCertPath(attestationTrustPath.get());
             final PKIXParameters pathParams =
                 new PKIXParameters(
-                    trustRoots.stream()
+                    trustRoots.get().getTrustRoots().stream()
                         .map(rootCert -> new TrustAnchor(rootCert, null))
                         .collect(Collectors.toSet()));
             pathParams.setDate(Date.from(clock.instant()));
-            pathParams.setRevocationEnabled(enableAttestationCertRevocationChecking);
-            attestationTrustSource
-                .get()
-                .getCertStore(attestationTrustPath.get())
-                .ifPresent(pathParams::addCertStore);
+            pathParams.setRevocationEnabled(trustRoots.get().isEnableRevocationChecking());
+            trustRoots.get().getCertStore().ifPresent(pathParams::addCertStore);
             cpv.validate(certPath, pathParams);
             return true;
           }

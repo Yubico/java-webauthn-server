@@ -41,6 +41,7 @@ import java.security.cert.CertStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -283,23 +284,27 @@ public final class FidoMetadataService implements AttestationTrustSource {
   }
 
   @Override
-  public Set<X509Certificate> findTrustRoots(ByteArray aaguid) {
-    return findEntry(new AAGUID(aaguid))
-        .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
-        .map(MetadataStatement::getAttestationRootCertificates)
-        .orElseGet(Collections::emptySet);
-  }
+  public TrustRootsResult findTrustRoots(
+      List<X509Certificate> attestationCertificateChain, Optional<ByteArray> aaguid) {
+    Set<X509Certificate> trustRoots =
+        new HashSet<>(
+            findEntry(attestationCertificateChain)
+                .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
+                .map(MetadataStatement::getAttestationRootCertificates)
+                .orElseGet(Collections::emptySet));
 
-  @Override
-  public Set<X509Certificate> findTrustRoots(List<X509Certificate> attestationCertificateChain) {
-    return findEntry(attestationCertificateChain)
-        .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
-        .map(MetadataStatement::getAttestationRootCertificates)
-        .orElseGet(Collections::emptySet);
-  }
+    aaguid.ifPresent(
+        aag ->
+            trustRoots.addAll(
+                findEntry(new AAGUID(aag))
+                    .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
+                    .map(MetadataStatement::getAttestationRootCertificates)
+                    .orElseGet(Collections::emptySet)));
 
-  @Override
-  public Optional<CertStore> getCertStore(List<X509Certificate> attestationCertificateChain) {
-    return Optional.ofNullable(certStore);
+    return TrustRootsResult.builder()
+        .trustRoots(trustRoots)
+        .certStore(certStore)
+        .enableRevocationChecking(false)
+        .build();
   }
 }

@@ -38,6 +38,7 @@ import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.attestation.AttestationTrustSource
+import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorData
@@ -128,7 +129,6 @@ class RelyingPartyRegistrationSpec
       callerTokenBindingId: Option[ByteArray] = None,
       credentialRepository: CredentialRepository =
         Helpers.CredentialRepository.unimplemented,
-      enableRevocationChecking: Boolean = true,
       attestationTrustSource: Option[AttestationTrustSource] = None,
       origins: Option[Set[String]] = None,
       preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
@@ -162,42 +162,38 @@ class RelyingPartyRegistrationSpec
         testData.request,
         testData.response,
         callerTokenBindingId.asJava,
-        enableRevocationChecking,
       )
   }
 
   val emptyTrustSource = new AttestationTrustSource {
     override def findTrustRoots(
-        aaguid: ByteArray
-    ): util.Set[X509Certificate] = Collections.emptySet()
-    override def findTrustRoots(
-        attestationCertificateChain: util.List[X509Certificate]
-    ): util.Set[X509Certificate] = Collections.emptySet()
+        attestationCertificateChain: util.List[X509Certificate],
+        aaguid: Optional[ByteArray],
+    ): TrustRootsResult =
+      TrustRootsResult.builder().trustRoots(Collections.emptySet()).build()
   }
   def trustSourceWith(
       trustedCert: X509Certificate,
       crls: Option[Set[CRL]] = None,
-  ): AttestationTrustSource = {
-    new AttestationTrustSource {
-      override def findTrustRoots(
-          aaguid: ByteArray
-      ): util.Set[X509Certificate] = Collections.singleton(trustedCert)
-      override def findTrustRoots(
-          attestationCertificateChain: util.List[X509Certificate]
-      ): util.Set[X509Certificate] = Collections.singleton(trustedCert)
-      override def getCertStore(
-          attestationCertificateChain: util.List[X509Certificate]
-      ): Optional[CertStore] =
-        crls
-          .map(crls =>
-            CertStore.getInstance(
-              "Collection",
-              new CollectionCertStoreParameters(crls.asJava),
+      enableRevocationChecking: Boolean = true,
+  ): AttestationTrustSource =
+    (_: util.List[X509Certificate], _: Optional[ByteArray]) => {
+      TrustRootsResult
+        .builder()
+        .trustRoots(Collections.singleton(trustedCert))
+        .certStore(
+          crls
+            .map(crls =>
+              CertStore.getInstance(
+                "Collection",
+                new CollectionCertStoreParameters(crls.asJava),
+              )
             )
-          )
-          .asJava
+            .orNull
+        )
+        .enableRevocationChecking(enableRevocationChecking)
+        .build()
     }
-  }
 
   testWithEachProvider { it =>
     describe("§7.1. Registering a new credential") {
@@ -2323,34 +2319,35 @@ class RelyingPartyRegistrationSpec
             TestAuthenticator.generateAttestationCertificate()
 
           it("If an attestation trust source is set, it is used to get trust anchors.") {
-            val attestationTrustSource: AttestationTrustSource =
-              new AttestationTrustSource {
-                override def findTrustRoots(
-                    aaguid: ByteArray
-                ): util.Set[X509Certificate] = Set.empty[X509Certificate].asJava
-                override def findTrustRoots(
-                    attestationCertificateChain: util.List[X509Certificate]
-                ): util.Set[X509Certificate] = {
-                  if (
-                    attestationCertificateChain
-                      .get(0)
-                      .equals(
-                        CertificateParser.parseDer(
-                          new AttestationObject(
-                            testData.attestationObject
-                          ).getAttestationStatement
-                            .get("x5c")
-                            .get(0)
-                            .binaryValue()
+            val attestationTrustSource = new AttestationTrustSource {
+              override def findTrustRoots(
+                  attestationCertificateChain: util.List[X509Certificate],
+                  aaguid: Optional[ByteArray],
+              ): TrustRootsResult =
+                TrustRootsResult
+                  .builder()
+                  .trustRoots(
+                    if (
+                      attestationCertificateChain
+                        .get(0)
+                        .equals(
+                          CertificateParser.parseDer(
+                            new AttestationObject(
+                              testData.attestationObject
+                            ).getAttestationStatement
+                              .get("x5c")
+                              .get(0)
+                              .binaryValue()
+                          )
                         )
-                      )
-                  ) {
-                    Set(attestationRootCert).asJava
-                  } else {
-                    Set.empty[X509Certificate].asJava
-                  }
-                }
-              }
+                    ) {
+                      Set(attestationRootCert).asJava
+                    } else {
+                      Set.empty[X509Certificate].asJava
+                    }
+                  )
+                  .build()
+            }
             val steps = finishRegistration(
               testData = testData,
               attestationTrustSource = Some(attestationTrustSource),
@@ -2360,7 +2357,11 @@ class RelyingPartyRegistrationSpec
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
-            step.getTrustRoots.asScala should equal(Set(attestationRootCert))
+            step.getTrustRoots.asScala.map(
+              _.getTrustRoots.asScala
+            ) should equal(
+              Some(Set(attestationRootCert))
+            )
             step.tryNext shouldBe a[Success[_]]
           }
 
@@ -2546,7 +2547,6 @@ class RelyingPartyRegistrationSpec
                   attestationTrustSource = Some(emptyTrustSource),
                   rp = testData.rpId,
                   clock = clock,
-                  enableRevocationChecking = enableRevocationChecking,
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2563,7 +2563,6 @@ class RelyingPartyRegistrationSpec
                   attestationTrustSource = Some(emptyTrustSource),
                   rp = testData.rpId,
                   clock = clock,
-                  enableRevocationChecking = enableRevocationChecking,
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2593,6 +2592,7 @@ class RelyingPartyRegistrationSpec
                                 )
                               )
                           }),
+                        enableRevocationChecking = enableRevocationChecking,
                       )
                     )
                 val steps = finishRegistration(
@@ -2600,7 +2600,6 @@ class RelyingPartyRegistrationSpec
                   attestationTrustSource = attestationTrustSource,
                   rp = testData.rpId,
                   clock = clock,
-                  enableRevocationChecking = enableRevocationChecking,
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2637,22 +2636,21 @@ class RelyingPartyRegistrationSpec
                   // First, check that the attestation is not trusted if the root cert appears only in getCertStore.
                   val attestationTrustSource = new AttestationTrustSource {
                     override def findTrustRoots(
-                        aaguid: ByteArray
-                    ): util.Set[X509Certificate] = Collections.emptySet()
-                    override def findTrustRoots(
-                        attestationCertificateChain: util.List[X509Certificate]
-                    ): util.Set[X509Certificate] = Collections.emptySet()
-                    override def getCertStore(
-                        attestationCertificateChain: util.List[X509Certificate]
-                    ): Optional[CertStore] =
-                      Optional.of(certStore)
+                        attestationCertificateChain: util.List[X509Certificate],
+                        aaguid: Optional[ByteArray],
+                    ): TrustRootsResult =
+                      TrustRootsResult
+                        .builder()
+                        .trustRoots(Collections.emptySet())
+                        .certStore(certStore)
+                        .enableRevocationChecking(enableRevocationChecking)
+                        .build()
                   }
                   val steps = finishRegistration(
                     testData = testData,
                     attestationTrustSource = Some(attestationTrustSource),
                     rp = testData.rpId,
                     clock = clock,
-                    enableRevocationChecking = enableRevocationChecking,
                   )
                   val step: FinishRegistrationSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2666,23 +2664,21 @@ class RelyingPartyRegistrationSpec
                   // Since the above assertions would also pass if the cert chain happens to be broken, or CRL resolution fails, etc, make sure that the attestation is indeed trusted if the root cert appears in findTrustRoots.
                   val attestationTrustSource = new AttestationTrustSource {
                     override def findTrustRoots(
-                        aaguid: ByteArray
-                    ): util.Set[X509Certificate] =
-                      Collections.singleton(rootCert)
-                    override def findTrustRoots(
-                        attestationCertificateChain: util.List[X509Certificate]
-                    ): util.Set[X509Certificate] =
-                      Collections.singleton(rootCert)
-                    override def getCertStore(
-                        attestationCertificateChain: util.List[X509Certificate]
-                    ): Optional[CertStore] = Optional.of(certStore)
+                        attestationCertificateChain: util.List[X509Certificate],
+                        aaguid: Optional[ByteArray],
+                    ): TrustRootsResult =
+                      TrustRootsResult
+                        .builder()
+                        .trustRoots(Collections.singleton(rootCert))
+                        .certStore(certStore)
+                        .enableRevocationChecking(enableRevocationChecking)
+                        .build()
                   }
                   val steps = finishRegistration(
                     testData = testData,
                     attestationTrustSource = Some(attestationTrustSource),
                     rp = testData.rpId,
                     clock = clock,
-                    enableRevocationChecking = enableRevocationChecking,
                   )
                   val step: FinishRegistrationSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next

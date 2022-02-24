@@ -523,35 +523,6 @@ public class RelyingParty {
         .build();
   }
 
-  /**
-   * This method is NOT part of the public API.
-   *
-   * <p>This method is called internally by {@link #finishRegistration(FinishRegistrationOptions)}.
-   * It is a separate method to facilitate testing; users should call {@link
-   * #finishRegistration(FinishRegistrationOptions)} instead of this method.
-   */
-  FinishRegistrationSteps _finishRegistration(
-      PublicKeyCredentialCreationOptions request,
-      PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
-          response,
-      Optional<ByteArray> callerTokenBindingId,
-      boolean enableAttestationCertRevocationChecking) {
-    return FinishRegistrationSteps.builder()
-        .request(request)
-        .response(response)
-        .callerTokenBindingId(callerTokenBindingId)
-        .credentialRepository(credentialRepository)
-        .origins(origins)
-        .rpId(identity.getId())
-        .allowOriginPort(allowOriginPort)
-        .allowOriginSubdomain(allowOriginSubdomain)
-        .allowUntrustedAttestation(allowUntrustedAttestation)
-        .attestationTrustSource(attestationTrustSource)
-        .clock(clock)
-        .enableAttestationCertRevocationChecking(enableAttestationCertRevocationChecking)
-        .build();
-  }
-
   public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
     PublicKeyCredentialRequestOptionsBuilder pkcro =
         PublicKeyCredentialRequestOptions.builder()
