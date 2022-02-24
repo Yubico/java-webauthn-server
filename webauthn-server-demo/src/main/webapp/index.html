@@ -162,9 +162,24 @@ function hideDeviceInfo() {
 }
 function showDeviceInfo(params) {
   document.getElementById("device-info").style = undefined;
-  document.getElementById("device-name").textContent = params.displayName;
-  document.getElementById("device-nickname").textContent = params.nickname;
-  document.getElementById("device-icon").src = params.imageUrl;
+
+  if (params.displayName) {
+    document.getElementById("device-name-row").style = undefined;
+    document.getElementById("device-name").textContent = params.displayName;
+  } else {
+     document.getElementById("device-name-row").style = "display: none";
+  }
+
+  if (params.nickname) {
+    document.getElementById("device-nickname-row").style = undefined;
+    document.getElementById("device-nickname").textContent = params.nickname;
+  } else {
+     document.getElementById("device-nickname-row").style = "display: none";
+  }
+
+  if (params.imageUrl) {
+    document.getElementById("device-icon").src = params.imageUrl;
+  }
 }
 
 function resetDisplays() {
@@ -624,9 +639,13 @@ window.onload = init;
     <div id="messages"></div>
 
     <div id="device-info">
+      <div id="device-name-row" class="row">
+        <b>Device: </b><span id="device-name"></span>
+      </div>
+      <div id="device-nickname-row" class="row">
+        <b>Nickname: </b><span id="device-nickname"></span>
+      </div>
       <img id="device-icon"/>
-      <b>Device: </b><span id="device-name"></span>
-      <b>Nickname: </b><span id="device-nickname"></span>
     </div>
 
     Server response: <pre id="server-response"></pre>
