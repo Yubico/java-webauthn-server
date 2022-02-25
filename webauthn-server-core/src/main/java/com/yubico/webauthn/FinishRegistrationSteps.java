@@ -469,17 +469,19 @@ final class FinishRegistrationSteps {
     }
 
     private Optional<AttestationTrustSource.TrustRootsResult> findTrustRoots() {
-      return attestationTrustSource.map(
+      return attestationTrustSource.flatMap(
           attestationTrustSource ->
-              attestationTrustSource.findTrustRoots(
-                  attestationTrustPath.get(),
-                  Optional.of(
-                          attestation
-                              .getAuthenticatorData()
-                              .getAttestedCredentialData()
-                              .get()
-                              .getAaguid())
-                      .filter(aaguid -> !aaguid.equals(ZERO_AAGUID))));
+              attestationTrustPath.map(
+                  atp ->
+                      attestationTrustSource.findTrustRoots(
+                          atp,
+                          Optional.of(
+                                  attestation
+                                      .getAuthenticatorData()
+                                      .getAttestedCredentialData()
+                                      .get()
+                                      .getAaguid())
+                              .filter(aaguid -> !aaguid.equals(ZERO_AAGUID)))));
     }
   }
 

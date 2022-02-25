@@ -2844,11 +2844,12 @@ class RelyingPartyRegistrationSpec
 
         describe("24. If the attestation statement attStmt successfully verified but is not trustworthy per step 21 above, the Relying Party SHOULD fail the registration ceremony.") {
           it("The test case with self attestation succeeds, but reports attestation is not trusted.") {
-            val testData = RegistrationTestData.FidoU2f.SelfAttestation
+            val testData = RegistrationTestData.Packed.SelfAttestation
             val steps = finishRegistration(
               testData = testData,
               allowUntrustedAttestation = true,
               credentialRepository = Helpers.CredentialRepository.empty,
+              attestationTrustSource = Some(emptyTrustSource),
             )
             steps.run.getKeyId.getId should be(testData.response.getId)
             steps.run.isAttestationTrusted should be(false)
