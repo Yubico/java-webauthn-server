@@ -50,7 +50,10 @@ Breaking changes:
   `CompositeTrustResolver`, `DeviceMatcher`, `ExtensionMatcher`,
   `FingerprintMatcher`, `MetadataObject`, `SimpleAttestationResolver`,
   `SimpleTrustResolver`, `StandardMetadataService` and `TrustResolver` deleted
-  in favour of a new attestation metadata framework.
+  in favour of a new attestation metadata framework. Some of the functionality
+  is retained as the new `YubicoJsonMetadataService` class in the
+  `webauthn-server-demo` subproject in the library sources, but no longer
+  exposed in either library module.
 * Library no longer contains a `/metadata.json` resource.
 
 New features:

@@ -1,6 +1,6 @@
 package demo.webauthn.data;
 
-import com.yubico.fido.metadata.MetadataBLOBPayloadEntry;
+import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
@@ -23,5 +23,5 @@ public class U2fRegistrationResult {
   @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
 
   @NonNull @Builder.Default
-  private final Optional<MetadataBLOBPayloadEntry> attestationMetadata = Optional.empty();
+  private final Optional<Attestation> attestationMetadata = Optional.empty();
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Yubico AB
+// Copyright (c) 2015-2018, Yubico AB
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -22,41 +22,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package demo.webauthn.data;
+package com.yubico.webauthn.attestation;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.webauthn.RegisteredCredential;
-import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.data.AuthenticatorTransport;
-import com.yubico.webauthn.data.UserIdentity;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.SortedSet;
-import lombok.Builder;
-import lombok.Value;
-import lombok.experimental.Wither;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.security.cert.X509Certificate;
 
-@Value
-@Builder
-@Wither
-public class CredentialRegistration {
-
-  UserIdentity userIdentity;
-  Optional<String> credentialNickname;
-  SortedSet<AuthenticatorTransport> transports;
-
-  @JsonIgnore Instant registrationTime;
-  RegisteredCredential credential;
-
-  Optional<Attestation> attestationMetadata;
-
-  @JsonProperty("registrationTime")
-  public String getRegistrationTimestamp() {
-    return registrationTime.toString();
-  }
-
-  public String getUsername() {
-    return userIdentity.getName();
-  }
+public interface DeviceMatcher {
+  boolean matches(X509Certificate attestationCertificate, JsonNode parameters);
 }

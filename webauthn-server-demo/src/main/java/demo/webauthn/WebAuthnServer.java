@@ -34,8 +34,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.fido.metadata.FidoMetadataDownloaderException;
-import com.yubico.fido.metadata.MetadataBLOBPayloadEntry;
-import com.yubico.fido.metadata.MetadataStatement;
 import com.yubico.fido.metadata.UnexpectedLegalHeader;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.ExceptionUtil;
@@ -50,6 +48,8 @@ import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
+import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.attestation.YubicoJsonMetadataService;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
@@ -96,7 +96,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -111,6 +110,8 @@ public class WebAuthnServer {
   private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
   private final InMemoryRegistrationStorage userStorage;
   private final SessionManager sessions = new SessionManager();
+
+  private final YubicoJsonMetadataService metadataService = new YubicoJsonMetadataService();
 
   private final Clock clock = Clock.systemDefaultZone();
   private final ObjectMapper jsonMapper = JacksonCodecs.json();
@@ -137,7 +138,11 @@ public class WebAuthnServer {
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
       Set<String> origins,
-      Optional<AppId> appId) {
+      Optional<AppId> appId)
+      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
+          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
+          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
+          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
     this.userStorage = userStorage;
     this.registerRequestStorage = registerRequestStorage;
     this.assertRequestStorage = assertRequestStorage;
@@ -148,6 +153,7 @@ public class WebAuthnServer {
             .credentialRepository(this.userStorage)
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
+            .attestationTrustSource(metadataService)
             .allowOriginPort(false)
             .allowOriginSubdomain(false)
             .allowUntrustedAttestation(true)
@@ -370,7 +376,23 @@ public class WebAuthnServer {
                 addRegistration(
                     request.getPublicKeyCredentialCreationOptions().getUser(),
                     request.getCredentialNickname(),
-                    registration),
+                    registration,
+                    Optional.ofNullable(
+                            response
+                                .getCredential()
+                                .getResponse()
+                                .getAttestation()
+                                .getAttestationStatement()
+                                .get("x5c"))
+                        .flatMap(
+                            x5c -> {
+                              try {
+                                return metadataService.findMetadata(
+                                    CertificateParser.parseDer(x5c.get(0).binaryValue()));
+                              } catch (CertificateException | IOException e) {
+                                throw new RuntimeException(e);
+                              }
+                            })),
                 registration.isAttestationTrusted(),
                 sessions.createSession(
                     request.getPublicKeyCredentialCreationOptions().getUser().getId())));
@@ -433,15 +455,18 @@ public class WebAuthnServer {
             e);
       }
 
+      Optional<Attestation> attestation = metadataService.findMetadata(attestationCert);
+
       final U2fRegistrationResult result =
           U2fRegistrationResult.builder()
               .keyId(
                   PublicKeyCredentialDescriptor.builder()
                       .id(response.getCredential().getU2fResponse().getKeyHandle())
                       .build())
-              .attestationTrusted(false)
+              .attestationTrusted(attestation.isPresent())
               .publicKeyCose(
                   rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
+              .attestationMetadata(attestation)
               .build();
 
       return Either.right(
@@ -629,7 +654,10 @@ public class WebAuthnServer {
   }
 
   private CredentialRegistration addRegistration(
-      UserIdentity userIdentity, Optional<String> nickname, RegistrationResult result) {
+      UserIdentity userIdentity,
+      Optional<String> nickname,
+      RegistrationResult result,
+      Optional<Attestation> attestationMetadata) {
     return addRegistration(
         userIdentity,
         nickname,
@@ -640,8 +668,7 @@ public class WebAuthnServer {
             .signatureCount(result.getSignatureCount())
             .build(),
         result.getKeyId().getTransports().orElseGet(TreeSet::new),
-        Optional.empty() // TODO implement this
-        );
+        attestationMetadata);
   }
 
   private CredentialRegistration addRegistration(
@@ -658,31 +685,7 @@ public class WebAuthnServer {
             .publicKeyCose(result.getPublicKeyCose())
             .signatureCount(signatureCount)
             .build(),
-        new TreeSet<>(
-            result
-                .getAttestationMetadata()
-                .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
-                .flatMap(MetadataStatement::getAttachmentHint)
-                .orElse(Collections.emptySet())
-                .stream()
-                .map(
-                    attachmentHint -> {
-                      switch (attachmentHint) {
-                        case ATTACHMENT_HINT_INTERNAL:
-                          return Optional.of(AuthenticatorTransport.INTERNAL);
-                        case ATTACHMENT_HINT_WIRED:
-                          return Optional.of(AuthenticatorTransport.USB);
-                        case ATTACHMENT_HINT_NFC:
-                          return Optional.of(AuthenticatorTransport.NFC);
-                        case ATTACHMENT_HINT_BLUETOOTH:
-                          return Optional.of(AuthenticatorTransport.BLE);
-                        default:
-                          return Optional.<AuthenticatorTransport>empty();
-                      }
-                    })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toSet())),
+        Collections.emptySortedSet(),
         result.getAttestationMetadata());
   }
 
@@ -691,7 +694,7 @@ public class WebAuthnServer {
       Optional<String> nickname,
       RegisteredCredential credential,
       SortedSet<AuthenticatorTransport> transports,
-      Optional<MetadataBLOBPayloadEntry> attestationMetadata) {
+      Optional<Attestation> attestationMetadata) {
     CredentialRegistration reg =
         CredentialRegistration.builder()
             .userIdentity(userIdentity)

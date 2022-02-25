@@ -16,10 +16,11 @@ dependencies {
     project(':webauthn-server-core'),
     project(':yubico-util'),
 
-    'com.google.guava:guava',
     'com.fasterxml.jackson.core:jackson-databind',
+    'com.google.guava:guava',
     'com.upokecenter:cbor',
     'javax.ws.rs:javax.ws.rs-api',
+    'org.bouncycastle:bcprov-jdk15on',
     'org.eclipse.jetty:jetty-server',
     'org.eclipse.jetty:jetty-servlet',
     'org.glassfish.jersey.containers:jersey-container-servlet-core',

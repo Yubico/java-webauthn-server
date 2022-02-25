@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Yubico AB
+// Copyright (c) 2015-2018, Yubico AB
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -22,41 +22,35 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package demo.webauthn.data;
+package com.yubico.webauthn.attestation.matcher;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.webauthn.RegisteredCredential;
-import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.data.AuthenticatorTransport;
-import com.yubico.webauthn.data.UserIdentity;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.SortedSet;
-import lombok.Builder;
-import lombok.Value;
-import lombok.experimental.Wither;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.hash.Hashing;
+import com.yubico.webauthn.attestation.DeviceMatcher;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 
-@Value
-@Builder
-@Wither
-public class CredentialRegistration {
+public final class FingerprintMatcher implements DeviceMatcher {
+  public static final String SELECTOR_TYPE = "fingerprint";
 
-  UserIdentity userIdentity;
-  Optional<String> credentialNickname;
-  SortedSet<AuthenticatorTransport> transports;
+  private static final String FINGERPRINTS_KEY = "fingerprints";
 
-  @JsonIgnore Instant registrationTime;
-  RegisteredCredential credential;
-
-  Optional<Attestation> attestationMetadata;
-
-  @JsonProperty("registrationTime")
-  public String getRegistrationTimestamp() {
-    return registrationTime.toString();
-  }
-
-  public String getUsername() {
-    return userIdentity.getName();
+  @Override
+  public boolean matches(X509Certificate attestationCertificate, JsonNode parameters) {
+    JsonNode fingerprints = parameters.get(FINGERPRINTS_KEY);
+    if (fingerprints.isArray()) {
+      try {
+        String fingerprint =
+            Hashing.sha1().hashBytes(attestationCertificate.getEncoded()).toString().toLowerCase();
+        for (JsonNode candidate : fingerprints) {
+          if (fingerprint.equals(candidate.asText().toLowerCase())) {
+            return true;
+          }
+        }
+      } catch (CertificateEncodingException e) {
+        // Fall through to return false.
+      }
+    }
+    return false;
   }
 }
