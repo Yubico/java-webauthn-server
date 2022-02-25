@@ -516,7 +516,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step22 nextStep() {
-      return new Step22(attestationType, attestationTrusted);
+      return new Step22(attestationType, attestationTrusted, attestationTrustPath);
     }
 
     public boolean attestationTrusted() {
@@ -573,6 +573,7 @@ final class FinishRegistrationSteps {
   class Step22 implements Step<Finished> {
     private final AttestationType attestationType;
     private final boolean attestationTrusted;
+    private final Optional<List<X509Certificate>> attestationTrustPath;
 
     @Override
     public void validate() {
@@ -584,7 +585,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Finished nextStep() {
-      return new Finished(attestationType, attestationTrusted);
+      return new Finished(attestationType, attestationTrusted, attestationTrustPath);
     }
   }
 
@@ -595,6 +596,7 @@ final class FinishRegistrationSteps {
   class Finished implements Step<Finished> {
     private final AttestationType attestationType;
     private final boolean attestationTrusted;
+    private final Optional<List<X509Certificate>> attestationTrustPath;
 
     @Override
     public void validate() {
@@ -628,6 +630,7 @@ final class FinishRegistrationSteps {
                   AuthenticatorRegistrationExtensionOutputs.fromAuthenticatorData(
                           response.getResponse().getParsedAuthenticatorData())
                       .orElse(null))
+              .attestationTrustPath(attestationTrustPath.orElse(null))
               .build());
     }
 

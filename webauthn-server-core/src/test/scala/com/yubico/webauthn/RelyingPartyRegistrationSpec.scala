@@ -3519,6 +3519,42 @@ class RelyingPartyRegistrationSpec
           )
         }
       }
+
+      it("exposes getAttestationTrustPath() with the attestation trust path, if any.") {
+        val testData = RegistrationTestData.FidoU2f.BasicAttestation
+        val steps = finishRegistration(
+          testData = testData,
+          attestationTrustSource = Some(
+            trustSourceWith(
+              testData.attestationCertChain.last._1,
+              crls = Some(
+                testData.attestationCertChain
+                  .map({
+                    case (cert, key) =>
+                      TestAuthenticator.buildCrl(
+                        JcaX500NameUtil.getSubject(cert),
+                        key,
+                        "SHA256withECDSA",
+                        TestAuthenticator.Defaults.certValidFrom,
+                        TestAuthenticator.Defaults.certValidTo,
+                      )
+                  })
+                  .toSet
+              ),
+            )
+          ),
+          credentialRepository = Helpers.CredentialRepository.empty,
+          clock = Clock.fixed(
+            TestAuthenticator.Defaults.certValidFrom,
+            ZoneOffset.UTC,
+          ),
+        )
+        val result = steps.run()
+        result.isAttestationTrusted should be(true)
+        result.getAttestationTrustPath.asScala.map(_.asScala) should equal(
+          Some(testData.attestationCertChain.init.map(_._1))
+        )
+      }
     }
 
   }

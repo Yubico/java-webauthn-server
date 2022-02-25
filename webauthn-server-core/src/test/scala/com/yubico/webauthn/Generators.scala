@@ -10,9 +10,13 @@ import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
+import org.bouncycastle.asn1.x500.X500Name
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+
+import java.security.cert.X509Certificate
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object Generators {
 
@@ -44,6 +48,7 @@ object Generators {
     Arbitrary(
       for {
         attestationTrusted <- arbitrary[Boolean]
+        attestationTrustPath <- generateAttestationCertificateChain
         attestationType <- arbitrary[AttestationType]
         authenticatorExtensionOutputs <-
           arbitrary[Option[AuthenticatorRegistrationExtensionOutputs]]
@@ -60,6 +65,7 @@ object Generators {
         .signatureCount(signatureCount)
         .clientExtensionOutputs(clientExtensionOutputs)
         .authenticatorExtensionOutputs(authenticatorExtensionOutputs.orNull)
+        .attestationTrustPath(attestationTrustPath.asJava)
         .build()
     )
 
@@ -98,5 +104,29 @@ object Generators {
       b.build()
     }
   )
+
+  def generateAttestationCertificateChain: Gen[List[X509Certificate]] =
+    for {
+      dummy <- Gen.nonEmptyListOf[Int](arbitrary[Int])
+    } yield {
+      if (dummy.length >= 2) {
+        val tail = dummy.tail.init.foldLeft(
+          List(TestAuthenticator.generateAttestationCaCertificate())
+        )({
+          case (chain, _) =>
+            TestAuthenticator.generateAttestationCaCertificate(
+              name = new X500Name(
+                s"CN=Yubico WebAuthn unit tests intermediate CA ${chain.length}, O=Yubico, OU=Authenticator Attestation, C=SE"
+              ),
+              superCa = Some(chain.head),
+            ) +: chain
+        })
+        (TestAuthenticator.generateAttestationCertificate(caCertAndKey =
+          Some(tail.head)
+        ) +: tail).map(_._1)
+      } else {
+        List(TestAuthenticator.generateAttestationCertificate()._1)
+      }
+    }
 
 }

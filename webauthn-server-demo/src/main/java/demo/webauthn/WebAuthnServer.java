@@ -376,23 +376,7 @@ public class WebAuthnServer {
                 addRegistration(
                     request.getPublicKeyCredentialCreationOptions().getUser(),
                     request.getCredentialNickname(),
-                    registration,
-                    Optional.ofNullable(
-                            response
-                                .getCredential()
-                                .getResponse()
-                                .getAttestation()
-                                .getAttestationStatement()
-                                .get("x5c"))
-                        .flatMap(
-                            x5c -> {
-                              try {
-                                return metadataService.findMetadata(
-                                    CertificateParser.parseDer(x5c.get(0).binaryValue()));
-                              } catch (CertificateException | IOException e) {
-                                throw new RuntimeException(e);
-                              }
-                            })),
+                    registration),
                 registration.isAttestationTrusted(),
                 sessions.createSession(
                     request.getPublicKeyCredentialCreationOptions().getUser().getId())));
@@ -654,10 +638,7 @@ public class WebAuthnServer {
   }
 
   private CredentialRegistration addRegistration(
-      UserIdentity userIdentity,
-      Optional<String> nickname,
-      RegistrationResult result,
-      Optional<Attestation> attestationMetadata) {
+      UserIdentity userIdentity, Optional<String> nickname, RegistrationResult result) {
     return addRegistration(
         userIdentity,
         nickname,
@@ -668,7 +649,10 @@ public class WebAuthnServer {
             .signatureCount(result.getSignatureCount())
             .build(),
         result.getKeyId().getTransports().orElseGet(TreeSet::new),
-        attestationMetadata);
+        result
+            .getAttestationTrustPath()
+            .flatMap(x5c -> x5c.stream().findFirst())
+            .flatMap(metadataService::findMetadata));
   }
 
   private CredentialRegistration addRegistration(

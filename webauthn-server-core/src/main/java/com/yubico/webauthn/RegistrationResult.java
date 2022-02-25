@@ -25,7 +25,9 @@
 package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
@@ -34,7 +36,12 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -85,6 +92,23 @@ public class RegistrationResult {
   @NonNull private final AttestationType attestationType;
 
   /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">attestation
+   * trust path</a> for the created credential, if any.
+   *
+   * <p>If present, this may be useful for looking up attestation metadata from external sources.
+   * The attestation trust path has been successfully verified as trusted if and only if {@link
+   * #isAttestationTrusted()} is <code>true</code>.
+   *
+   * <p>You can ignore this if authenticator attestation is not relevant to your application.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">Attestation
+   *     trust path</a>
+   */
+  private final List<X509Certificate> attestationTrustPath;
+
+  /**
    * The public key of the created credential.
    *
    * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
@@ -108,20 +132,19 @@ public class RegistrationResult {
 
   private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
 
-  @JsonCreator
   private RegistrationResult(
-      @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
-      @JsonProperty("attestationTrusted") boolean attestationTrusted,
-      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
-      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
-      @JsonProperty("signatureCount") Long signatureCount,
-      @JsonProperty("clientExtensionOutputs")
-          ClientRegistrationExtensionOutputs clientExtensionOutputs,
-      @JsonProperty("authenticatorExtensionOutputs")
-          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
+      @NonNull PublicKeyCredentialDescriptor keyId,
+      boolean attestationTrusted,
+      @NonNull AttestationType attestationType,
+      List<X509Certificate> attestationTrustPath,
+      @NonNull ByteArray publicKeyCose,
+      Long signatureCount,
+      ClientRegistrationExtensionOutputs clientExtensionOutputs,
+      AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
     this.keyId = keyId;
     this.attestationTrusted = attestationTrusted;
     this.attestationType = attestationType;
+    this.attestationTrustPath = attestationTrustPath;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount == null ? 0 : signatureCount;
     this.clientExtensionOutputs =
@@ -129,6 +152,60 @@ public class RegistrationResult {
             ? null
             : clientExtensionOutputs;
     this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
+  }
+
+  @JsonCreator
+  private static RegistrationResult fromJson(
+      @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
+      @JsonProperty("attestationTrusted") boolean attestationTrusted,
+      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
+      @JsonProperty("attestationTrustPath") List<String> attestationTrustPath,
+      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+      @JsonProperty("signatureCount") Long signatureCount,
+      @JsonProperty("clientExtensionOutputs")
+          ClientRegistrationExtensionOutputs clientExtensionOutputs,
+      @JsonProperty("authenticatorExtensionOutputs")
+          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
+    return new RegistrationResult(
+        keyId,
+        attestationTrusted,
+        attestationType,
+        attestationTrustPath.stream()
+            .map(
+                pem -> {
+                  try {
+                    return CertificateParser.parsePem(pem);
+                  } catch (CertificateException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .collect(Collectors.toList()),
+        publicKeyCose,
+        signatureCount,
+        clientExtensionOutputs,
+        authenticatorExtensionOutputs);
+  }
+
+  @JsonIgnore
+  public Optional<List<X509Certificate>> getAttestationTrustPath() {
+    return Optional.ofNullable(attestationTrustPath);
+  }
+
+  @JsonProperty("attestationTrustPath")
+  private Optional<List<String>> getAttestationTrustPathJson() {
+    return getAttestationTrustPath()
+        .map(
+            x5c ->
+                x5c.stream()
+                    .map(
+                        cert -> {
+                          try {
+                            return new ByteArray(cert.getEncoded()).getBase64();
+                          } catch (CertificateEncodingException e) {
+                            throw new RuntimeException(e);
+                          }
+                        })
+                    .collect(Collectors.toList()));
   }
 
   /**
