@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
@@ -898,7 +897,7 @@ public final class FidoMetadataDownloader {
           SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final ObjectMapper headerJsonMapper =
-        JacksonCodecs.json()
+        com.yubico.internal.util.JacksonCodecs.json()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
             .setBase64Variant(Base64Variants.MIME_NO_LINEFEEDS);
     final MetadataBLOBHeader header =
@@ -967,7 +966,9 @@ public final class FidoMetadataDownloader {
     cpv.validate(blobCertPath, pathParams);
 
     return new MetadataBLOB(
-        header, JacksonCodecs.json().readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class));
+        header,
+        JacksonCodecs.jsonWithDefaultEnums()
+            .readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class));
   }
 
   private static ByteArray readAll(InputStream is) throws IOException {

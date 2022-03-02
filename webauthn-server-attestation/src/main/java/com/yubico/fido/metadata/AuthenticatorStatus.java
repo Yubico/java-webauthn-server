@@ -1,5 +1,7 @@
 package com.yubico.fido.metadata;
 
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
+
 /**
  * This enumeration describes the status of an authenticator model as identified by its AAID/AAGUID
  * or attestationCertificateKeyIdentifiers and potentially some additional information (such as a
@@ -10,6 +12,9 @@ package com.yubico.fido.metadata;
  *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
  */
 public enum AuthenticatorStatus {
+  /** (NOT DEFINED IN SPEC) Placeholder for any unknown {@link AuthenticatorStatus} value. */
+  @JsonEnumDefaultValue
+  UNKNOWN(0),
 
   /**
    * This authenticator is not FIDO certified.

@@ -27,7 +27,6 @@ package com.yubico.fido.metadata
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.yubico.fido.metadata.Generators2._
-import com.yubico.internal.util.JacksonCodecs
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
@@ -41,7 +40,7 @@ class JsonIoSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
-  def json: ObjectMapper = JacksonCodecs.json()
+  def json: ObjectMapper = JacksonCodecs.jsonWithDefaultEnums()
 
   describe("The class") {
 

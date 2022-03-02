@@ -4,9 +4,11 @@ import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.ByteArray;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -103,7 +105,12 @@ public class MetadataBLOBPayloadEntry {
         CollectionUtil.immutableSetOrEmpty(attestationCertificateKeyIdentifiers);
     this.metadataStatement = metadataStatement;
     this.biometricStatusReports = CollectionUtil.immutableListOrEmpty(biometricStatusReports);
-    this.statusReports = CollectionUtil.immutableListOrEmpty(statusReports);
+    this.statusReports =
+        Collections.unmodifiableList(
+            statusReports.stream()
+                .filter(
+                    statusReport -> !statusReport.getStatus().equals(AuthenticatorStatus.UNKNOWN))
+                .collect(Collectors.toList()));
     this.timeOfLastStatusChange = timeOfLastStatusChange;
     this.rogueListURL = rogueListURL;
     this.rogueListHash = rogueListHash;
