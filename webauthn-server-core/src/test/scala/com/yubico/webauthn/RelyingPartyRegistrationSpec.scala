@@ -1239,7 +1239,7 @@ class RelyingPartyRegistrationSpec
                   attestationAlg: COSEAlgorithmIdentifier,
                   keypair: KeyPair,
               ): Unit = {
-                val (credential, _) = testAuthenticator
+                val (credential, _, _) = testAuthenticator
                   .createBasicAttestedCredential(attestationMaker =
                     AttestationMaker.fidoU2f(
                       new AttestationCert(
@@ -1290,7 +1290,7 @@ class RelyingPartyRegistrationSpec
                   attestationAlg: COSEAlgorithmIdentifier,
                   keypair: KeyPair,
               ): Unit = {
-                val (credential, _) = testAuthenticator
+                val (credential, _, _) = testAuthenticator
                   .createBasicAttestedCredential(attestationMaker =
                     AttestationMaker.fidoU2f(
                       new AttestationCert(
@@ -1533,7 +1533,7 @@ class RelyingPartyRegistrationSpec
                           "O=Yubico, C=AA, OU=Authenticator Attestation"
                         ),
                       )
-                    val (credential, _) =
+                    val (credential, _, _) =
                       authenticator.createBasicAttestedCredential(
                         attestationMaker = AttestationMaker.packed(
                           new AttestationCert(alg, (badCert, key))
@@ -1619,10 +1619,7 @@ class RelyingPartyRegistrationSpec
                   step.attestationType should be(AttestationType.BASIC)
                   step.attestationTrustPath.asScala should not be empty
                   step.attestationTrustPath.get.asScala should be(
-                    List(
-                      testData.packedAttestationCert,
-                      testData.attestationCaCert.get,
-                    )
+                    List(testData.packedAttestationCert)
                   )
                 }
               }
@@ -2007,7 +2004,7 @@ class RelyingPartyRegistrationSpec
                 it("The Basic Constraints extension MUST have the CA component set to false.") {
                   val result = Try(
                     verifier.verifyX5cRequirements(
-                      testDataBase.attestationCaCert.get,
+                      testDataBase.attestationCertChain.last._1,
                       testDataBase.aaguid,
                     )
                   )
@@ -3133,7 +3130,7 @@ class RelyingPartyRegistrationSpec
           val uvmCborExample = ByteArray.fromHex("A16375766d828302040283040101")
 
           val challenge = TestAuthenticator.Defaults.challenge
-          val (cred, _) = TestAuthenticator.createUnattestedCredential(
+          val (cred, _, _) = TestAuthenticator.createUnattestedCredential(
             authenticatorExtensions =
               Some(JacksonCodecs.cbor().readTree(uvmCborExample.getBytes)),
             challenge = challenge,

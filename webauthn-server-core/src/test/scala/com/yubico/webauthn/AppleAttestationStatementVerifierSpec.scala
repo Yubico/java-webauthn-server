@@ -70,7 +70,7 @@ class AppleAttestationStatementVerifierSpec
 
         it("a test-generated apple attestation statement.") {
           val (attestationMaker, _, _) = AttestationMaker.apple()
-          val (pkc, _) = TestAuthenticator.createBasicAttestedCredential(
+          val (pkc, _, _) = TestAuthenticator.createBasicAttestedCredential(
             attestationMaker = attestationMaker
           )
           val result = verifier.verifyAttestationSignature(
@@ -106,7 +106,7 @@ class AppleAttestationStatementVerifierSpec
         it("an attestation statement without the attestation cert extension 1.2.840.113635.100.8.2 .") {
           val (attestationMaker, _, _) =
             AttestationMaker.apple(addNonceExtension = false)
-          val (pkc, _) = TestAuthenticator.createBasicAttestedCredential(
+          val (pkc, _, _) = TestAuthenticator.createBasicAttestedCredential(
             attestationMaker = attestationMaker
           )
           an[IllegalArgumentException] shouldBe thrownBy {
@@ -121,7 +121,7 @@ class AppleAttestationStatementVerifierSpec
           forAll { incorrectNonce: ByteArray =>
             val (attestationMaker, _, _) =
               AttestationMaker.apple(nonceValue = Some(incorrectNonce))
-            val (pkc, _) = TestAuthenticator.createBasicAttestedCredential(
+            val (pkc, _, _) = TestAuthenticator.createBasicAttestedCredential(
               attestationMaker = attestationMaker
             )
 
@@ -140,7 +140,7 @@ class AppleAttestationStatementVerifierSpec
             AttestationMaker.apple(certSubjectPublicKey =
               Some(certSubjectKeypair.getPublic)
             )
-          val (pkc, _) = TestAuthenticator.createBasicAttestedCredential(
+          val (pkc, _, _) = TestAuthenticator.createBasicAttestedCredential(
             attestationMaker = appleAttestationMaker
           )
 

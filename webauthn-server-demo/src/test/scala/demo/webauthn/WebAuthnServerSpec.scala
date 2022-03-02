@@ -189,7 +189,7 @@ class WebAuthnServerSpec
             )
             .right
             .get
-          val (cred, keypair) =
+          val (cred, keypair, _) =
             TestAuthenticator.createUnattestedCredential(challenge =
               request.getPublicKeyCredentialCreationOptions.getChallenge
             )

@@ -24,34 +24,19 @@
 
 package com.yubico.webauthn.test
 
-import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.data.ByteArray
 import org.bouncycastle.asn1.sec.SECNamedCurves
-import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECParameterSpec
 import org.bouncycastle.jce.spec.ECPublicKeySpec
-import org.bouncycastle.openssl.PEMParser
 
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.PublicKey
-import java.security.cert.X509Certificate
 import scala.language.reflectiveCalls
 import scala.util.Try
 
 object Util {
-
-  def importCertFromPem(certPem: InputStream): X509Certificate =
-    CertificateParser.parseDer(
-      new PEMParser(new BufferedReader(new InputStreamReader(certPem)))
-        .readObject()
-        .asInstanceOf[X509CertificateHolder]
-        .getEncoded
-    )
 
   def decodePublicKey(encodedPublicKey: ByteArray): PublicKey =
     try {
