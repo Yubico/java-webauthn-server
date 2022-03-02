@@ -51,15 +51,20 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.cert.CRL;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertStore;
+import java.security.cert.CertStoreParameters;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -80,6 +85,10 @@ import lombok.extern.slf4j.Slf4j;
  * Utility for downloading, caching and verifying Fido Metadata Service BLOBs and associated
  * certificates.
  *
+ * <p>This class is NOT THREAD SAFE since it reads and writes caches. However, it has no internal
+ * mutable state, so instances MAY be reused in single-threaded or externally synchronized contexts.
+ * See also the {@link #loadBlob()} method.
+ *
  * <p>Use the {@link #builder() builder} to configure settings, then use the {@link #loadBlob()}
  * method to load the metadata BLOB.
  */
@@ -99,6 +108,7 @@ public final class FidoMetadataDownloader {
   private final File blobCacheFile;
   private final Supplier<Optional<ByteArray>> blobCacheSupplier;
   private final Consumer<ByteArray> blobCacheConsumer;
+  private final CertStore certStore;
   @NonNull private final Clock clock;
 
   /**
@@ -126,6 +136,7 @@ public final class FidoMetadataDownloader {
     private final Supplier<Optional<ByteArray>> blobCacheSupplier;
     private final Consumer<ByteArray> blobCacheConsumer;
 
+    private CertStore certStore = null;
     @NonNull private Clock clock = Clock.systemUTC();
 
     public FidoMetadataDownloader build() {
@@ -142,6 +153,7 @@ public final class FidoMetadataDownloader {
           blobCacheFile,
           blobCacheSupplier,
           blobCacheConsumer,
+          certStore,
           clock);
     }
 
@@ -510,12 +522,46 @@ public final class FidoMetadataDownloader {
       this.clock = clock;
       return this;
     }
+
+    /**
+     * Use the provided CRLs.
+     *
+     * <p>CRLs will also be downloaded from distribution points if the <code>
+     * com.sun.security.enableCRLDP</code> system property is set to <code>true</code> (assuming the
+     * use of the {@link CertPathValidator} implementation from the SUN provider).
+     *
+     * @throws InvalidAlgorithmParameterException if {@link CertStore#getInstance(String,
+     *     CertStoreParameters)} does.
+     * @throws NoSuchAlgorithmException if a <code>"Collection"</code> type {@link CertStore}
+     *     provider is not available.
+     * @see #useCrls(CertStore)
+     */
+    public FidoMetadataDownloaderBuilder useCrls(@NonNull Collection<CRL> crls)
+        throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+      return useCrls(CertStore.getInstance("Collection", new CollectionCertStoreParameters(crls)));
+    }
+
+    /**
+     * Use CRLs in the provided {@link CertStore}.
+     *
+     * <p>CRLs will also be downloaded from distribution points if the <code>
+     * com.sun.security.enableCRLDP</code> system property is set to <code>true</code> (assuming the
+     * use of the {@link CertPathValidator} implementation from the SUN provider).
+     *
+     * @see #useCrls(Collection)
+     */
+    public FidoMetadataDownloaderBuilder useCrls(CertStore certStore) {
+      this.certStore = certStore;
+      return this;
+    }
   }
 
   /**
    * Load the metadata BLOB from cache, or download a fresh one if necessary.
    *
-   * <p>On each invocation this will, in order:
+   * <p>This method is NOT THREAD SAFE since it reads and writes caches.
+   *
+   * <p>On each execution this will, in order:
    *
    * <ol>
    *   <li>Download the trust root certificate, if necessary: if the cache is empty, the cache fails
@@ -537,15 +583,15 @@ public final class FidoMetadataDownloader {
    *       BLOB, if any, and the downloaded BLOB.
    *   <li>If a BLOB with a newer <code>"no"</code> was downloaded and had an expected <code>
    *       "legalHeader"</code>, cache the new BLOB using the configured {@link File} or {@link
-   *       Consumer} (see {@link FidoMetadataDownloaderBuilder.Step5})
+   *       Consumer} (see {@link FidoMetadataDownloaderBuilder.Step5}).
    * </ol>
    *
-   * No mutable state is maintained between {@link #loadBlob()} calls; each invocation will
-   * reload/rewrite caches, perform downloads and check the <code>"legalHeader"</code> as necessary.
-   * You may therefore reuse a {@link FidoMetadataDownloader} instance and, for example, call {@link
-   * #loadBlob()} periodically to refresh the BLOB when appropriate. Each call will return a new
-   * {@link MetadataBLOBPayload} instance; ones already returned will not be updated by subsequent
-   * {@link #loadBlob()} calls.
+   * No internal mutable state is maintained between invocations of <code>loadBlob()</code>; each
+   * invocation will reload/rewrite caches, perform downloads and check the <code>"legalHeader"
+   * </code> as necessary. You may therefore reuse a {@link FidoMetadataDownloader} instance and,
+   * for example, call <code>loadBlob()</code> periodically to refresh the BLOB when appropriate.
+   * Each call will return a new {@link MetadataBLOBPayload} instance; ones already returned will
+   * not be updated by subsequent <code>loadBlob()</code> calls.
    *
    * @return the successfully retrieved and validated metadata BLOB.
    * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact
@@ -578,7 +624,7 @@ public final class FidoMetadataDownloader {
           CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
           InvalidKeyException, UnexpectedLegalHeader, DigestException {
     X509Certificate trustRoot = retrieveTrustRootCert();
-    return retrieveBlob(trustRoot);
+    return retrieveBlob(trustRoot, certStore);
   }
 
   /**
@@ -659,13 +705,14 @@ public final class FidoMetadataDownloader {
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
    */
-  private MetadataBLOBPayload retrieveBlob(X509Certificate trustRootCertificate)
+  private MetadataBLOBPayload retrieveBlob(
+      X509Certificate trustRootCertificate, CertStore certStore)
       throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
           InvalidAlgorithmParameterException, InvalidKeyException, UnexpectedLegalHeader,
           NoSuchAlgorithmException, SignatureException {
     if (blobJwt != null) {
       return parseAndVerifyBlob(
-          new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate);
+          new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate, certStore);
 
     } else {
 
@@ -681,7 +728,7 @@ public final class FidoMetadataDownloader {
               .map(
                   cached -> {
                     try {
-                      return parseAndVerifyBlob(cached, trustRootCertificate);
+                      return parseAndVerifyBlob(cached, trustRootCertificate, certStore);
                     } catch (Exception e) {
                       return null;
                     }
@@ -698,7 +745,7 @@ public final class FidoMetadataDownloader {
       } else {
         final ByteArray downloaded = httpGet(blobUrl);
         final MetadataBLOBPayload downloadedBlob =
-            parseAndVerifyBlob(downloaded, trustRootCertificate);
+            parseAndVerifyBlob(downloaded, trustRootCertificate, certStore);
 
         if (cachedBlob == null || downloadedBlob.getNo() > cachedBlob.getNo()) {
           if (expectedLegalHeaders.contains(downloadedBlob.getLegalHeader())) {
@@ -755,7 +802,7 @@ public final class FidoMetadataDownloader {
   }
 
   private static MetadataBLOBPayload parseAndVerifyBlob(
-      ByteArray jwt, X509Certificate trustRootCertificate)
+      ByteArray jwt, X509Certificate trustRootCertificate, CertStore certStore)
       throws CertPathValidatorException, InvalidAlgorithmParameterException, CertificateException,
           IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
           Base64UrlException {
@@ -763,14 +810,15 @@ public final class FidoMetadataDownloader {
     final ByteArray header = ByteArray.fromBase64Url(s.next());
     final ByteArray payload = ByteArray.fromBase64Url(s.next());
     final ByteArray signature = ByteArray.fromBase64Url(s.next());
-    return verifyBlob(header, payload, signature, trustRootCertificate);
+    return verifyBlob(header, payload, signature, trustRootCertificate, certStore);
   }
 
   private static MetadataBLOBPayload verifyBlob(
       ByteArray jwtHeader,
       ByteArray jwtPayload,
       ByteArray jwtSignature,
-      X509Certificate trustRootCertificate)
+      X509Certificate trustRootCertificate,
+      CertStore certStore)
       throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeyException,
           SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException {
     final ObjectMapper headerJsonMapper =
@@ -820,6 +868,9 @@ public final class FidoMetadataDownloader {
     final CertPath blobCertPath = certFactory.generateCertPath(certChain);
     final PKIXParameters pathParams =
         new PKIXParameters(Collections.singleton(new TrustAnchor(trustRootCertificate, null)));
+    if (certStore != null) {
+      pathParams.addCertStore(certStore);
+    }
     cpv.validate(blobCertPath, pathParams);
 
     return JacksonCodecs.json().readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class);

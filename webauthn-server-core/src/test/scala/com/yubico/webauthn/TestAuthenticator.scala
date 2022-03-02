@@ -48,7 +48,9 @@ import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.ReasonFlags
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.cert.X509v2CRLBuilder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
@@ -59,6 +61,7 @@ import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
+import java.io.ByteArrayInputStream
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
@@ -69,6 +72,7 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Signature
+import java.security.cert.CRL
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
@@ -1016,6 +1020,33 @@ object TestAuthenticator {
 
       builder.build(signerBuilder.build(signingKey)).getEncoded
     })
+  }
+
+  def buildCrl(
+      issuerName: X500Name,
+      signingKey: PrivateKey,
+      signingAlgJavaName: String,
+      currentTime: Instant,
+      nextUpdate: Instant,
+      revoked: Set[X509Certificate] = Set.empty,
+  ): CRL = {
+    java.security.cert.CertificateFactory
+      .getInstance("X.509")
+      .generateCRL(new ByteArrayInputStream({
+        val builder = new X509v2CRLBuilder(issuerName, Date.from(currentTime))
+        builder.setNextUpdate(Date.from(nextUpdate))
+
+        for { revoked <- revoked } {
+          builder.addCRLEntry(
+            revoked.getSerialNumber,
+            Date.from(currentTime),
+            ReasonFlags.cessationOfOperation,
+          )
+        }
+
+        val signerBuilder = new JcaContentSignerBuilder(signingAlgJavaName)
+        builder.build(signerBuilder.build(signingKey)).getEncoded
+      }))
   }
 
   def generateRsaCertificate(): (X509Certificate, PrivateKey) =

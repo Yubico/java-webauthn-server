@@ -12,11 +12,13 @@ import org.scalatestplus.junit.JUnitRunner
 
 import java.nio.charset.StandardCharsets
 import java.security.KeyPair
+import java.security.cert.CRL
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertPathValidatorException.BasicReason
 import java.security.cert.X509Certificate
 import java.time.Instant
 import java.time.LocalDate
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 @Network
 @RunWith(classOf[JUnitRunner])
@@ -171,6 +173,151 @@ class FidoMetadataDownloaderSpec extends FunSpec with Matchers {
         thrown.getReason should equal(
           BasicReason.UNDETERMINED_REVOCATION_STATUS
         )
+      }
+
+      it("and succeeds if explicitly given appropriate CRLs.") {
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+        )
+
+        val blob = FidoMetadataDownloader
+          .builder()
+          .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+          .useTrustRoot(trustRootCert)
+          .useBlob(blobJwt)
+          .useCrls(crls.asJava)
+          .build()
+          .loadBlob()
+        blob should not be null
+      }
+
+      it("and fails if explicitly given CRLs where a cert in the chain is revoked.") {
+        val crls = List[CRL](
+          TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+            revoked = Set(blobCert),
+          )
+        )
+
+        val thrown = the[CertPathValidatorException] thrownBy {
+          FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .build()
+            .loadBlob()
+        }
+        thrown.getReason should equal(
+          BasicReason.REVOKED
+        )
+      }
+
+      describe("and intermediate certificates") {
+
+        val (intermediateCert, intermediateKeypair, intermediateName) =
+          makeCert(
+            caKeypair,
+            caName,
+            isCa = true,
+            name = "CN=Yubico java-webauthn-server unit tests intermediate CA, O=Yubico",
+          )
+        val (blobCert, blobKeypair, _) =
+          makeCert(intermediateKeypair, intermediateName)
+        val blobJwt = makeBlob(
+          List(blobCert, intermediateCert),
+          blobKeypair,
+          LocalDate.parse("2022-01-19"),
+        )
+
+        it("each require their own CRL.") {
+          val thrown = the[CertPathValidatorException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .build()
+              .loadBlob()
+          }
+          thrown.getReason should equal(
+            BasicReason.UNDETERMINED_REVOCATION_STATUS
+          )
+
+          val rootCrl = TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+          val intermediateCrl = TestAuthenticator.buildCrl(
+            intermediateName,
+            intermediateKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+          val crls = List(rootCrl, intermediateCrl)
+
+          val blob = FidoMetadataDownloader
+            .builder()
+            .expectLegalHeader("Kom ihåg att du aldrig får snyta dig i mattan!")
+            .useTrustRoot(trustRootCert)
+            .useBlob(blobJwt)
+            .useCrls(crls.asJava)
+            .build()
+            .loadBlob()
+          blob should not be null
+        }
+
+        it("can revoke downstream certificates too.") {
+          val rootCrl = TestAuthenticator.buildCrl(
+            caName,
+            caKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+          )
+          val intermediateCrl = TestAuthenticator.buildCrl(
+            intermediateName,
+            intermediateKeypair.getPrivate,
+            "SHA256withECDSA",
+            Instant.now(),
+            Instant.now().plusSeconds(600),
+            revoked = Set(blobCert),
+          )
+          val crls = List(rootCrl, intermediateCrl)
+
+          val thrown = the[CertPathValidatorException] thrownBy {
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .useCrls(crls.asJava)
+              .build()
+              .loadBlob()
+          }
+          thrown.getReason should equal(
+            BasicReason.REVOKED
+          )
+        }
       }
     }
   }
