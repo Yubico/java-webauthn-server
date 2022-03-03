@@ -660,7 +660,7 @@ public final class FidoMetadataDownloader {
           CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
           InvalidKeyException, UnexpectedLegalHeader, DigestException {
     X509Certificate trustRoot = retrieveTrustRootCert();
-    return retrieveBlob(trustRoot, certStore);
+    return retrieveBlob(trustRoot);
   }
 
   /**
@@ -741,13 +741,13 @@ public final class FidoMetadataDownloader {
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
    */
-  private MetadataBLOB retrieveBlob(X509Certificate trustRootCertificate, CertStore certStore)
+  private MetadataBLOB retrieveBlob(X509Certificate trustRootCertificate)
       throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
           InvalidAlgorithmParameterException, InvalidKeyException, UnexpectedLegalHeader,
           NoSuchAlgorithmException, SignatureException {
     if (blobJwt != null) {
       return parseAndVerifyBlob(
-          new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate, certStore);
+          new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate);
 
     } else {
 
@@ -763,7 +763,7 @@ public final class FidoMetadataDownloader {
               .map(
                   cached -> {
                     try {
-                      return parseAndVerifyBlob(cached, trustRootCertificate, certStore);
+                      return parseAndVerifyBlob(cached, trustRootCertificate);
                     } catch (Exception e) {
                       return null;
                     }
@@ -781,8 +781,7 @@ public final class FidoMetadataDownloader {
 
       } else {
         final ByteArray downloaded = httpGet(blobUrl);
-        final MetadataBLOB downloadedBlob =
-            parseAndVerifyBlob(downloaded, trustRootCertificate, certStore);
+        final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloaded, trustRootCertificate);
 
         if (cachedBlob == null
             || downloadedBlob.getPayload().getNo() > cachedBlob.getPayload().getNo()) {
@@ -854,8 +853,7 @@ public final class FidoMetadataDownloader {
     }
   }
 
-  private static MetadataBLOB parseAndVerifyBlob(
-      ByteArray jwt, X509Certificate trustRootCertificate, CertStore certStore)
+  private MetadataBLOB parseAndVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
       throws CertPathValidatorException, InvalidAlgorithmParameterException, CertificateException,
           IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
           Base64UrlException {
@@ -863,15 +861,14 @@ public final class FidoMetadataDownloader {
     final ByteArray header = ByteArray.fromBase64Url(s.next());
     final ByteArray payload = ByteArray.fromBase64Url(s.next());
     final ByteArray signature = ByteArray.fromBase64Url(s.next());
-    return verifyBlob(header, payload, signature, trustRootCertificate, certStore);
+    return verifyBlob(header, payload, signature, trustRootCertificate);
   }
 
-  private static MetadataBLOB verifyBlob(
+  private MetadataBLOB verifyBlob(
       ByteArray jwtHeader,
       ByteArray jwtPayload,
       ByteArray jwtSignature,
-      X509Certificate trustRootCertificate,
-      CertStore certStore)
+      X509Certificate trustRootCertificate)
       throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeyException,
           SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException {
     final ObjectMapper headerJsonMapper =
