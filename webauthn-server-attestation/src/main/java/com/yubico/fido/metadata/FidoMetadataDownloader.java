@@ -285,8 +285,12 @@ public final class FidoMetadataDownloader {
        * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
        * @param acceptedCertSha256 a set of SHA-256 hashes to verify the downloaded certificate
        *     against. The downloaded certificate MUST match at least one of these hashes.
+       * @throws IllegalArgumentException if <code>url</code> is not a HTTPS URL.
        */
       public Step3 downloadTrustRoot(@NonNull URL url, @NonNull Set<ByteArray> acceptedCertSha256) {
+        if (!"https".equals(url.getProtocol())) {
+          throw new IllegalArgumentException("Trust certificate download URL must be a HTTPS URL.");
+        }
         return new Step3(this, null, url, acceptedCertSha256);
       }
 
@@ -821,41 +825,29 @@ public final class FidoMetadataDownloader {
     }
   }
 
-  /**
-   * Download an HTTP GET body from the given <code>url</code>.
-   *
-   * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
-   * @return the HTTP GET response body, if it matches any of the accepted hashes.
-   * @throws IllegalArgumentException if <code>url</code> is not an HTTPS URL.
-   * @throws IOException if the download connection fails.
-   */
   private ByteArray download(URL url) throws IOException {
-    if ("http".equals(url.getProtocol())) {
-      throw new IllegalArgumentException("HTTP download URL must be a https URL.");
-    } else {
-      URLConnection conn = url.openConnection();
+    URLConnection conn = url.openConnection();
 
-      if (conn instanceof HttpsURLConnection) {
-        HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
-        if (httpsTrustStore != null) {
-          try {
-            TrustManagerFactory trustMan =
-                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustMan.init(httpsTrustStore);
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustMan.getTrustManagers(), null);
+    if (conn instanceof HttpsURLConnection) {
+      HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
+      if (httpsTrustStore != null) {
+        try {
+          TrustManagerFactory trustMan =
+              TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+          trustMan.init(httpsTrustStore);
+          SSLContext sslContext = SSLContext.getInstance("TLS");
+          sslContext.init(null, trustMan.getTrustManagers(), null);
 
-            httpsConn.setSSLSocketFactory(sslContext.getSocketFactory());
-          } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-            // TODO don't do this
-            throw new RuntimeException(e);
-          }
+          httpsConn.setSSLSocketFactory(sslContext.getSocketFactory());
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+          // TODO don't do this
+          throw new RuntimeException(e);
         }
-        httpsConn.setRequestMethod("GET");
       }
-
-      return readAll(conn.getInputStream());
+      httpsConn.setRequestMethod("GET");
     }
+
+    return readAll(conn.getInputStream());
   }
 
   private MetadataBLOB parseAndVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
