@@ -1,8 +1,5 @@
 package com.yubico.webauthn
 
-import com.yubico.scalacheck.gen.JavaGenerators._
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs
@@ -16,8 +13,6 @@ import com.yubico.webauthn.data.UserVerificationRequirement
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-
-import java.util.Optional
 
 object Generators {
 
@@ -48,7 +43,6 @@ object Generators {
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] =
     Arbitrary(
       for {
-        attestationMetadata <- arbitrary[Optional[Attestation]]
         attestationTrusted <- arbitrary[Boolean]
         attestationType <- arbitrary[AttestationType]
         authenticatorExtensionOutputs <-
@@ -66,7 +60,6 @@ object Generators {
         .signatureCount(signatureCount)
         .clientExtensionOutputs(clientExtensionOutputs)
         .authenticatorExtensionOutputs(authenticatorExtensionOutputs.orNull)
-        .attestationMetadata(attestationMetadata)
         .build()
     )
 

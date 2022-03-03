@@ -35,9 +35,6 @@ import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationResult
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
-import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -97,7 +94,6 @@ class JsonIoSpec
     test(new TypeReference[AssertionExtensionInputs]() {})
     test(new TypeReference[AssertionRequest]() {})
     test(new TypeReference[AssertionResult]() {})
-    test(new TypeReference[Attestation]() {})
     test(new TypeReference[AttestationConveyancePreference]() {})
     test(new TypeReference[AttestationObject]() {})
     test(new TypeReference[AttestationType]() {})
@@ -136,7 +132,6 @@ class JsonIoSpec
     test(new TypeReference[RelyingPartyIdentity]() {})
     test(new TypeReference[TokenBindingInfo]() {})
     test(new TypeReference[TokenBindingStatus]() {})
-    test(new TypeReference[Transport]() {})
     test(new TypeReference[UserIdentity]() {})
     test(new TypeReference[UserVerificationRequirement]() {})
   }

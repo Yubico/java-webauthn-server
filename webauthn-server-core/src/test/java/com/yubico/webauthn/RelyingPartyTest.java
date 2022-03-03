@@ -4,8 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.attestation.MetadataService;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
@@ -18,7 +17,6 @@ import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import java.security.Provider;
 import java.security.Security;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -57,11 +55,16 @@ public class RelyingPartyTest {
   @Test(expected = NullPointerException.class)
   public void itHasTheseBuilderMethods() throws InvalidAppIdException {
 
-    final MetadataService metadataService =
-        new MetadataService() {
+    final AttestationTrustSource attestationTrustSource =
+        new AttestationTrustSource() {
           @Override
-          public Attestation getAttestation(List<X509Certificate> attestationCertificateChain)
-              throws CertificateEncodingException {
+          public Set<X509Certificate> findTrustRoots(ByteArray aaguid) {
+            return null;
+          }
+
+          @Override
+          public Set<X509Certificate> findTrustRoots(
+              List<X509Certificate> attestationCertificateChain) {
             return null;
           }
         };
@@ -74,8 +77,8 @@ public class RelyingPartyTest {
         .appId(Optional.of(new AppId("https://example.com")))
         .attestationConveyancePreference(AttestationConveyancePreference.DIRECT)
         .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
-        .metadataService(metadataService)
-        .metadataService(Optional.of(metadataService))
+        .attestationTrustSource(attestationTrustSource)
+        .attestationTrustSource(Optional.of(attestationTrustSource))
         .preferredPubkeyParams(Collections.emptyList())
         .allowUntrustedAttestation(true)
         .validateSignatureCounter(true);

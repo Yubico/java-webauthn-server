@@ -31,12 +31,13 @@ import com.upokecenter.cbor.CBORObject
 import com.yubico.fido.metadata.KeyProtectionType
 import com.yubico.fido.metadata.MatcherProtectionType
 import com.yubico.fido.metadata.UserVerificationMethod
+import com.yubico.internal.util.BinaryUtil
+import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.MetadataService
+import com.yubico.webauthn.attestation.AttestationTrustSource
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorData
@@ -64,6 +65,7 @@ import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.scalacheck.Gen
@@ -74,13 +76,23 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.io.IOException
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
 import java.security.SignatureException
+import java.security.cert.CRL
+import java.security.cert.CertStore
+import java.security.cert.CollectionCertStoreParameters
 import java.security.cert.X509Certificate
 import java.security.interfaces.RSAPublicKey
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util
+import java.util.Collections
+import java.util.Optional
 import javax.security.auth.x500.X500Principal
 import scala.jdk.CollectionConverters._
 import scala.util.Failure
@@ -116,7 +128,8 @@ class RelyingPartyRegistrationSpec
       callerTokenBindingId: Option[ByteArray] = None,
       credentialRepository: CredentialRepository =
         Helpers.CredentialRepository.unimplemented,
-      metadataService: Option[MetadataService] = None,
+      enableRevocationChecking: Boolean = true,
+      attestationTrustSource: Option[AttestationTrustSource] = None,
       origins: Option[Set[String]] = None,
       preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
       rp: RelyingPartyIdentity = RelyingPartyIdentity
@@ -125,6 +138,7 @@ class RelyingPartyRegistrationSpec
         .name("Test party")
         .build(),
       testData: RegistrationTestData,
+      clock: Clock = Clock.systemUTC(),
   ): FinishRegistrationSteps = {
     var builder = RelyingParty
       .builder()
@@ -134,8 +148,11 @@ class RelyingPartyRegistrationSpec
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(allowUntrustedAttestation)
+      .clock(clock)
 
-    metadataService.foreach { mds => builder = builder.metadataService(mds) }
+    attestationTrustSource.foreach { ats =>
+      builder = builder.attestationTrustSource(ats)
+    }
 
     origins.map(_.asJava).foreach(builder.origins _)
 
@@ -145,18 +162,41 @@ class RelyingPartyRegistrationSpec
         testData.request,
         testData.response,
         callerTokenBindingId.asJava,
+        enableRevocationChecking,
       )
   }
 
-  class TestMetadataService(private val attestation: Option[Attestation] = None)
-      extends MetadataService {
-    override def getAttestation(
-        attestationCertificateChain: java.util.List[X509Certificate]
-    ): Attestation =
-      attestation match {
-        case None    => Attestation.builder().trusted(false).build()
-        case Some(a) => a
-      }
+  val emptyTrustSource = new AttestationTrustSource {
+    override def findTrustRoots(
+        aaguid: ByteArray
+    ): util.Set[X509Certificate] = Collections.emptySet()
+    override def findTrustRoots(
+        attestationCertificateChain: util.List[X509Certificate]
+    ): util.Set[X509Certificate] = Collections.emptySet()
+  }
+  def trustSourceWith(
+      trustedCert: X509Certificate,
+      crls: Option[Set[CRL]] = None,
+  ): AttestationTrustSource = {
+    new AttestationTrustSource {
+      override def findTrustRoots(
+          aaguid: ByteArray
+      ): util.Set[X509Certificate] = Collections.singleton(trustedCert)
+      override def findTrustRoots(
+          attestationCertificateChain: util.List[X509Certificate]
+      ): util.Set[X509Certificate] = Collections.singleton(trustedCert)
+      override def getCertStore(
+          attestationCertificateChain: util.List[X509Certificate]
+      ): Optional[CertStore] =
+        crls
+          .map(crls =>
+            CertStore.getInstance(
+              "Collection",
+              new CollectionCertStoreParameters(crls.asJava),
+            )
+          )
+          .asJava
+    }
   }
 
   testWithEachProvider { it =>
@@ -2278,80 +2318,66 @@ class RelyingPartyRegistrationSpec
 
         describe("20. If validation is successful, obtain a list of acceptable trust anchors (i.e. attestation root certificates) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.") {
 
-          describe("For the android-safetynet statement format") {
-            it("a trust resolver is returned.") {
-              val metadataService: MetadataService = new TestMetadataService()
-              val steps = finishRegistration(
-                testData = RegistrationTestData.AndroidSafetynet.RealExample,
-                metadataService = Some(metadataService),
-                rp = RegistrationTestData.AndroidSafetynet.RealExample.rpId,
-              )
-              val step: FinishRegistrationSteps#Step20 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+          val testData = RegistrationTestData.Packed.BasicAttestation
+          val (attestationRootCert, _) =
+            TestAuthenticator.generateAttestationCertificate()
 
-              step.validations shouldBe a[Success[_]]
-              step.trustResolver.get should not be null
-              step.tryNext shouldBe a[Success[_]]
-            }
+          it("If an attestation trust source is set, it is used to get trust anchors.") {
+            val attestationTrustSource: AttestationTrustSource =
+              new AttestationTrustSource {
+                override def findTrustRoots(
+                    aaguid: ByteArray
+                ): util.Set[X509Certificate] = Set.empty[X509Certificate].asJava
+                override def findTrustRoots(
+                    attestationCertificateChain: util.List[X509Certificate]
+                ): util.Set[X509Certificate] = {
+                  if (
+                    attestationCertificateChain
+                      .get(0)
+                      .equals(
+                        CertificateParser.parseDer(
+                          new AttestationObject(
+                            testData.attestationObject
+                          ).getAttestationStatement
+                            .get("x5c")
+                            .get(0)
+                            .binaryValue()
+                        )
+                      )
+                  ) {
+                    Set(attestationRootCert).asJava
+                  } else {
+                    Set.empty[X509Certificate].asJava
+                  }
+                }
+              }
+            val steps = finishRegistration(
+              testData = testData,
+              attestationTrustSource = Some(attestationTrustSource),
+              rp = testData.rpId,
+            )
+            val step: FinishRegistrationSteps#Step20 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a[Success[_]]
+            step.getTrustRoots.asScala should equal(Set(attestationRootCert))
+            step.tryNext shouldBe a[Success[_]]
           }
 
-          describe("For the fido-u2f statement format") {
+          it(
+            "If an attestation trust source is not set, no trust anchors are returned."
+          ) {
+            val steps = finishRegistration(
+              testData = testData,
+              attestationTrustSource = None,
+              rp = testData.rpId,
+            )
+            val step: FinishRegistrationSteps#Step20 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
-            it("with self attestation, no trust anchors are returned.") {
-              val steps = finishRegistration(testData =
-                RegistrationTestData.FidoU2f.SelfAttestation
-              )
-              val step: FinishRegistrationSteps#Step20 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-              step.validations shouldBe a[Success[_]]
-              step.trustResolver.asScala shouldBe empty
-              step.tryNext shouldBe a[Success[_]]
-            }
-
-            it("with basic attestation, a trust resolver is returned.") {
-              val metadataService: MetadataService = new TestMetadataService()
-              val steps = finishRegistration(
-                testData = RegistrationTestData.FidoU2f.BasicAttestation,
-                metadataService = Some(metadataService),
-              )
-              val step: FinishRegistrationSteps#Step20 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-              step.validations shouldBe a[Success[_]]
-              step.trustResolver.get should not be null
-              step.tryNext shouldBe a[Success[_]]
-            }
-
-          }
-
-          describe("For the none statement format") {
-            it("no trust anchors are returned.") {
-              val steps = finishRegistration(testData =
-                RegistrationTestData.NoneAttestation.Default
-              )
-              val step: FinishRegistrationSteps#Step20 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-              step.validations shouldBe a[Success[_]]
-              step.trustResolver.asScala shouldBe empty
-              step.tryNext shouldBe a[Success[_]]
-            }
-          }
-
-          describe("For unknown attestation statement formats") {
-            it("no trust anchors are returned.") {
-              val steps = finishRegistration(testData =
-                RegistrationTestData.FidoU2f.BasicAttestation
-                  .setAttestationStatementFormat("urgel")
-              )
-              val step: FinishRegistrationSteps#Step20 =
-                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-              step.validations shouldBe a[Success[_]]
-              step.trustResolver.asScala shouldBe empty
-              step.tryNext shouldBe a[Success[_]]
-            }
+            step.validations shouldBe a[Success[_]]
+            step.getTrustRoots.asScala shouldBe empty
+            step.tryNext shouldBe a[Success[_]]
           }
         }
 
@@ -2457,73 +2483,130 @@ class RelyingPartyRegistrationSpec
                 step.attestationTrusted should be(false)
                 step.tryNext shouldBe a[Success[_]]
               }
-            }
-          }
 
-          describe("Otherwise, use the X.509 certificates returned as the attestation trust path from the verification procedure to verify that the attestation public key either correctly chains up to an acceptable root certificate, or is itself an acceptable certificate (i.e., it and the root certificate obtained in Step 20 may be the same).") {
-
-            def generateTests(testData: RegistrationTestData): Unit = {
-              it("is rejected if untrusted attestation is not allowed and the metadata service does not trust it.") {
-                val metadataService: MetadataService = new TestMetadataService()
+              it("is accepted if untrusted attestation is not allowed, but the self attestation key is a trust anchor.") {
+                val testData = RegistrationTestData.FidoU2f.SelfAttestation
+                val selfAttestationCert = CertificateParser.parseDer(
+                  new AttestationObject(
+                    testData.attestationObject
+                  ).getAttestationStatement.get("x5c").get(0).binaryValue()
+                )
                 val steps = finishRegistration(
+                  testData = testData,
+                  attestationTrustSource = Some(
+                    trustSourceWith(
+                      selfAttestationCert,
+                      crls = Some(
+                        Set(
+                          TestAuthenticator.buildCrl(
+                            JcaX500NameUtil.getX500Name(
+                              selfAttestationCert.getSubjectX500Principal
+                            ),
+                            WebAuthnTestCodecs.importPrivateKey(
+                              testData.privateKey.get,
+                              testData.alg,
+                            ),
+                            "SHA256withECDSA",
+                            currentTime =
+                              TestAuthenticator.Defaults.certValidFrom,
+                            nextUpdate = TestAuthenticator.Defaults.certValidTo,
+                          )
+                        )
+                      ),
+                    )
+                  ),
                   allowUntrustedAttestation = false,
-                  testData = testData,
-                  metadataService = Some(metadataService),
-                  rp = testData.rpId,
-                )
-                val step: FinishRegistrationSteps#Step21 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                step.validations shouldBe a[Failure[_]]
-                step.attestationTrusted should be(false)
-                step.attestationMetadata.asScala should not be empty
-                step.attestationMetadata.get.getMetadataIdentifier.asScala shouldBe empty
-                step.tryNext shouldBe a[Failure[_]]
-              }
-
-              it("is accepted if untrusted attestation is allowed and the metadata service does not trust it.") {
-                val metadataService: MetadataService = new TestMetadataService()
-                val steps = finishRegistration(
-                  allowUntrustedAttestation = true,
-                  testData = testData,
-                  metadataService = Some(metadataService),
-                  rp = testData.rpId,
-                )
-                val step: FinishRegistrationSteps#Step21 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
-
-                step.validations shouldBe a[Success[_]]
-                step.attestationTrusted should be(false)
-                step.attestationMetadata.asScala should not be empty
-                step.attestationMetadata.get.getMetadataIdentifier.asScala shouldBe empty
-                step.tryNext shouldBe a[Success[_]]
-              }
-
-              it("is accepted if the metadata service trusts it.") {
-                val metadataService: MetadataService = new TestMetadataService(
-                  Some(
-                    Attestation
-                      .builder()
-                      .trusted(true)
-                      .metadataIdentifier(Some("Test attestation CA").asJava)
-                      .build()
-                  )
-                )
-
-                val steps = finishRegistration(
-                  testData = testData,
-                  metadataService = Some(metadataService),
-                  rp = testData.rpId,
+                  clock = Clock.fixed(
+                    TestAuthenticator.Defaults.certValidFrom,
+                    ZoneOffset.UTC,
+                  ),
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.attestationTrusted should be(true)
-                step.attestationMetadata.asScala should not be empty
-                step.attestationMetadata.get.getMetadataIdentifier.asScala should equal(
-                  Some("Test attestation CA")
+                step.tryNext shouldBe a[Success[_]]
+              }
+            }
+          }
+
+          describe("Otherwise, use the X.509 certificates returned as the attestation trust path from the verification procedure to verify that the attestation public key either correctly chains up to an acceptable root certificate, or is itself an acceptable certificate (i.e., it and the root certificate obtained in Step 20 may be the same).") {
+
+            def generateTests(
+                testData: RegistrationTestData,
+                clock: Clock,
+                trustedRootCert: Option[X509Certificate] = None,
+                enableRevocationChecking: Boolean = true,
+            ): Unit = {
+              it("is rejected if untrusted attestation is not allowed and the trust source does not trust it.") {
+                val steps = finishRegistration(
+                  allowUntrustedAttestation = false,
+                  testData = testData,
+                  attestationTrustSource = Some(emptyTrustSource),
+                  rp = testData.rpId,
+                  clock = clock,
+                  enableRevocationChecking = enableRevocationChecking,
                 )
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Failure[_]]
+                step.attestationTrusted should be(false)
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it("is accepted if untrusted attestation is allowed and the trust source does not trust it.") {
+                val steps = finishRegistration(
+                  allowUntrustedAttestation = true,
+                  testData = testData,
+                  attestationTrustSource = Some(emptyTrustSource),
+                  rp = testData.rpId,
+                  clock = clock,
+                  enableRevocationChecking = enableRevocationChecking,
+                )
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Success[_]]
+                step.attestationTrusted should be(false)
+                step.tryNext shouldBe a[Success[_]]
+              }
+
+              it("is accepted if the trust source trusts it.") {
+                val attestationTrustSource: Option[AttestationTrustSource] =
+                  trustedRootCert
+                    .orElse(testData.attestationCertChain.lastOption.map(_._1))
+                    .map(
+                      trustSourceWith(
+                        _,
+                        crls = testData.attestationCertChain.lastOption
+                          .map({
+                            case (cert, key) =>
+                              Set(
+                                TestAuthenticator.buildCrl(
+                                  JcaX500NameUtil.getSubject(cert),
+                                  key,
+                                  "SHA256withECDSA",
+                                  clock.instant(),
+                                  clock.instant().plusSeconds(3600 * 24),
+                                )
+                              )
+                          }),
+                      )
+                    )
+                val steps = finishRegistration(
+                  testData = testData,
+                  attestationTrustSource = attestationTrustSource,
+                  rp = testData.rpId,
+                  clock = clock,
+                  enableRevocationChecking = enableRevocationChecking,
+                )
+                val step: FinishRegistrationSteps#Step21 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Success[_]]
+                step.attestationTrusted should be(true)
                 step.tryNext shouldBe a[Success[_]]
               }
             }
@@ -2535,20 +2618,43 @@ class RelyingPartyRegistrationSpec
             }
 
             describe("An android-safetynet basic attestation") {
-              generateTests(testData =
-                RegistrationTestData.AndroidSafetynet.RealExample
+              generateTests(
+                testData = RegistrationTestData.AndroidSafetynet.RealExample,
+                Clock
+                  .fixed(Instant.parse("2019-01-01T00:00:00Z"), ZoneOffset.UTC),
+                trustedRootCert = Some(
+                  CertificateParser.parsePem(
+                    new String(
+                      BinaryUtil.readAll(
+                        getClass()
+                          .getResourceAsStream("/globalsign-root-r2.pem")
+                      ),
+                      StandardCharsets.UTF_8,
+                    )
+                  )
+                ),
+                enableRevocationChecking =
+                  false, // CRLs for this example are no longer available
               )
             }
 
             describe("A fido-u2f basic attestation") {
-              generateTests(testData =
-                RegistrationTestData.FidoU2f.BasicAttestation
+              generateTests(
+                testData = RegistrationTestData.FidoU2f.BasicAttestation,
+                Clock.fixed(
+                  TestAuthenticator.Defaults.certValidFrom,
+                  ZoneOffset.UTC,
+                ),
               )
             }
 
             describe("A packed basic attestation") {
-              generateTests(testData =
-                RegistrationTestData.Packed.BasicAttestation
+              generateTests(
+                testData = RegistrationTestData.Packed.BasicAttestation,
+                Clock.fixed(
+                  TestAuthenticator.Defaults.certValidFrom,
+                  ZoneOffset.UTC,
+                ),
               )
             }
           }
@@ -2605,12 +2711,30 @@ class RelyingPartyRegistrationSpec
           val testData = RegistrationTestData.FidoU2f.BasicAttestation
           val steps = finishRegistration(
             testData = testData,
-            metadataService = Some(
-              new TestMetadataService(
-                Some(Attestation.builder().trusted(true).build())
+            attestationTrustSource = Some(
+              trustSourceWith(
+                testData.attestationCertChain.last._1,
+                crls = Some(
+                  testData.attestationCertChain.tail
+                    .map({
+                      case (cert, key) =>
+                        TestAuthenticator.buildCrl(
+                          JcaX500NameUtil.getSubject(cert),
+                          key,
+                          "SHA256withECDSA",
+                          TestAuthenticator.Defaults.certValidFrom,
+                          TestAuthenticator.Defaults.certValidTo,
+                        )
+                    })
+                    .toSet
+                ),
               )
             ),
             credentialRepository = Helpers.CredentialRepository.empty,
+            clock = Clock.fixed(
+              TestAuthenticator.Defaults.certValidFrom,
+              ZoneOffset.UTC,
+            ),
           )
           val result = steps.run()
           result.isAttestationTrusted should be(true)
@@ -2665,7 +2789,6 @@ class RelyingPartyRegistrationSpec
               result shouldBe a[Success[_]]
               result.get.isAttestationTrusted should be(false)
               result.get.getAttestationType should be(AttestationType.UNKNOWN)
-              result.get.getAttestationMetadata.asScala shouldBe empty
             }
 
             it("fails if the RP required trusted attestation.") {
@@ -2683,11 +2806,11 @@ class RelyingPartyRegistrationSpec
           def testUntrusted(testData: RegistrationTestData): Unit = {
             val fmt =
               new AttestationObject(testData.attestationObject).getFormat
-            it(s"""A test case with good "${fmt}" attestation but no metadata service succeeds, but reports attestation as not trusted.""") {
+            it(s"""A test case with good "${fmt}" attestation but no attestation trust source succeeds, but reports attestation as not trusted.""") {
               val testData = RegistrationTestData.FidoU2f.BasicAttestation
               val steps = finishRegistration(
                 testData = testData,
-                metadataService = None,
+                attestationTrustSource = None,
                 allowUntrustedAttestation = true,
                 credentialRepository = Helpers.CredentialRepository.empty,
               )

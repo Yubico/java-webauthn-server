@@ -25,21 +25,146 @@
 package com.yubico.fido.metadata;
 
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.exception.Base64UrlException;
+import java.io.IOException;
+import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Utility for filtering and querying <a
+ * href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob-payload-entry-dictionary">Fido
+ * Metadata Service BLOB entries</a>.
+ *
+ * <p>This class implements {@link AttestationTrustSource}, so it can be configured as the {@link
+ * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
+ * setting in {@link RelyingParty}.
+ *
+ * <p>The metadata service may be configured with a {@link
+ * FidoMetadataServiceBuilder#filter(Predicate) filter} to select trusted authenticators. Any
+ * metadata entry that matches the filter will be considered trusted.
+ *
+ * <p>Use the {@link #builder() builder} to configure settings, then use the {@link
+ * #findEntry(AAGUID)} and/or {@link #findEntry(List)} methods to retrieve metadata entries.
+ */
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PUBLIC)
-public final class FidoMetadataService {
+public final class FidoMetadataService implements AttestationTrustSource {
 
   @NonNull private final MetadataBLOBPayload blob;
+  private final Predicate<MetadataBLOBPayloadEntry> filter;
+
+  public static FidoMetadataServiceBuilder.Step1 builder() {
+    return new FidoMetadataServiceBuilder.Step1();
+  }
+
+  @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+  public static class FidoMetadataServiceBuilder {
+    private final FidoMetadataDownloader downloader;
+    private final MetadataBLOBPayload blob;
+
+    private Predicate<MetadataBLOBPayloadEntry> filter = null;
+
+    public static class Step1 {
+      /**
+       * Use the given <code>downloader</code> to retrieve the data source.
+       *
+       * <p>The <code>downloader</code>'s {@link FidoMetadataDownloader#loadBlob()} method will be
+       * called in the {@link #build()} method to construct the {@link FidoMetadataService}
+       * instance. Once the {@link FidoMetadataService} is constructed, the <code>downloader</code>
+       * will not be used again.
+       */
+      public FidoMetadataServiceBuilder useDownloader(@NonNull FidoMetadataDownloader downloader) {
+        return new FidoMetadataServiceBuilder(downloader, null);
+      }
+
+      /** Use the given <code>blob</code> as the data source. */
+      public FidoMetadataServiceBuilder useBlob(@NonNull MetadataBLOBPayload blob) {
+        return new FidoMetadataServiceBuilder(null, blob);
+      }
+    }
+
+    /**
+     * Set a filter for which metadata entries to include in the data source.
+     *
+     * <p>By default, TODO
+     *
+     * @param filter a {@link Predicate} which returns <code>true</code> for metadata entries to
+     *     include in the data source.
+     */
+    public FidoMetadataServiceBuilder filter(@NonNull Predicate<MetadataBLOBPayloadEntry> filter) {
+      this.filter = filter;
+      return this;
+    }
+
+    public FidoMetadataService build()
+        throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
+            DigestException, FidoMetadataDownloaderException, CertificateException,
+            UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+            InvalidKeyException {
+      if (downloader == null && blob != null) {
+        return new FidoMetadataService(blob, filter);
+      } else if (downloader != null && blob == null) {
+        return new FidoMetadataService(downloader.loadBlob().getPayload(), filter);
+      } else {
+        throw new IllegalStateException(
+            "Either downloader or blob must be provided, none was. This should not be possible, please file a bug report.");
+      }
+    }
+  }
+
+  /**
+   * Preconfigured filters and utilities for combining filters. See the {@link
+   * FidoMetadataServiceBuilder#filter(Predicate) filter} setting.
+   *
+   * @see FidoMetadataServiceBuilder#filter(Predicate)
+   */
+  public static class Filters {
+    /**
+     * Combine a set of filters into a filter that requires metadata entries to satisfy ALL of those
+     * filters.
+     *
+     * <p>If <code>filters</code> is empty, then all metadata entries will satisfy the resulting
+     * filter.
+     *
+     * @param filters A set of filters.
+     * @return A filter which only includes metadata entries that satisfy ALL of the given <code>
+     *     filters</code>.
+     */
+    public static Predicate<MetadataBLOBPayloadEntry> allOf(
+        Predicate<MetadataBLOBPayloadEntry>... filters) {
+      return (entry) -> Stream.of(filters).allMatch(filter -> filter.test(entry));
+    }
+  }
+
+  private Stream<MetadataBLOBPayloadEntry> getFilteredEntries() {
+    final Stream<MetadataBLOBPayloadEntry> allEntries = blob.getEntries().stream();
+    if (this.filter == null) {
+      return allEntries;
+    } else {
+      return allEntries.filter(this.filter);
+    }
+  }
 
   public Optional<MetadataBLOBPayloadEntry> findEntry(AAGUID aaguid) {
     if (aaguid.isZero()) {
@@ -47,7 +172,7 @@ public final class FidoMetadataService {
       return Optional.empty();
     } else {
       final Optional<MetadataBLOBPayloadEntry> result =
-          blob.getEntries().stream()
+          getFilteredEntries()
               .filter(entry -> aaguid.equals(entry.getAaguid().orElse(null)))
               .findAny();
       log.debug("findEntry(aaguid = {}) => {}", aaguid, result.isPresent() ? "found" : "not found");
@@ -58,20 +183,31 @@ public final class FidoMetadataService {
   /**
    * @param attestationCertificateChain
    * @return
-   * @throws NoSuchAlgorithmException if the SHA-1 hash algorithm is not available.
    */
   public Optional<MetadataBLOBPayloadEntry> findEntry(
-      List<X509Certificate> attestationCertificateChain) throws NoSuchAlgorithmException {
+      List<X509Certificate> attestationCertificateChain) {
     for (X509Certificate cert : attestationCertificateChain) {
-      final String subjectKeyIdentifierHex =
-          new ByteArray(CertificateParser.computeSubjectKeyIdentifier(cert)).getHex();
+      final String subjectKeyIdentifierHex;
+      try {
+        subjectKeyIdentifierHex =
+            new ByteArray(CertificateParser.computeSubjectKeyIdentifier(cert)).getHex();
+      } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException("SHA-1 hash algorithm is not available in JCA context.", e);
+      }
 
       final Optional<MetadataBLOBPayloadEntry> certSubjectKeyIdentifierMatch =
-          blob.getEntries().stream()
+          getFilteredEntries()
               .filter(
                   entry ->
                       entry.getAttestationCertificateKeyIdentifiers().stream()
-                          .anyMatch(subjectKeyIdentifierHex::equals))
+                              .anyMatch(subjectKeyIdentifierHex::equals)
+                          || entry
+                              .getMetadataStatement()
+                              .map(
+                                  stmt ->
+                                      stmt.getAttestationCertificateKeyIdentifiers().stream()
+                                          .anyMatch(subjectKeyIdentifierHex::equals))
+                              .orElse(false))
               .findAny();
 
       if (certSubjectKeyIdentifierMatch.isPresent()) {
@@ -83,5 +219,21 @@ public final class FidoMetadataService {
     }
 
     return Optional.empty();
+  }
+
+  @Override
+  public Set<X509Certificate> findTrustRoots(ByteArray aaguid) {
+    return findEntry(new AAGUID(aaguid))
+        .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
+        .map(MetadataStatement::getAttestationRootCertificates)
+        .orElseGet(Collections::emptySet);
+  }
+
+  @Override
+  public Set<X509Certificate> findTrustRoots(List<X509Certificate> attestationCertificateChain) {
+    return findEntry(attestationCertificateChain)
+        .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
+        .map(MetadataStatement::getAttestationRootCertificates)
+        .orElseGet(Collections::emptySet);
   }
 }

@@ -1,9 +1,9 @@
 = webauthn-server-attestation
 
 An optional module which extends link:../[`webauthn-server-core`]
-with trust root sources for verifying
+with a trust root source for verifying
 https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation statements],
-most importantly by interfacing with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
+by interfacing with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
 
 
 == Using the FIDO Metadata Service

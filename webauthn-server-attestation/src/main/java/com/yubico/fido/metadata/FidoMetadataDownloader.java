@@ -282,7 +282,7 @@ public final class FidoMetadataDownloader {
        * certificate is not currently valid.
        *
        * <p>If the cert is downloaded, it is also written to the cache {@link File} or {@link
-       * Consumer} configured in the previous step.
+       * Consumer} configured in the {@link Step3 next step}.
        *
        * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
        * @param acceptedCertSha256 a set of SHA-256 hashes to verify the downloaded certificate

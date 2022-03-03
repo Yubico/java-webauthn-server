@@ -36,20 +36,18 @@ class FidoMetadataServiceIntegrationTest
   describe("FidoMetadataService") {
 
     describe("downloaded with default settings") {
-      val blob = Try(
-        FidoMetadataDownloader
-          .builder()
-          .expectLegalHeader(
-            "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/"
-          )
-          .useDefaultTrustRoot()
-          .useTrustRootCache(() => Optional.empty(), _ => {})
-          .useDefaultBlob()
-          .useBlobCache(() => Optional.empty(), _ => {})
-          .build()
-          .loadBlob()
-      )
-      val fidoMds = blob.map(_.getPayload).map(new FidoMetadataService(_))
+      val downloader = FidoMetadataDownloader
+        .builder()
+        .expectLegalHeader(
+          "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/"
+        )
+        .useDefaultTrustRoot()
+        .useTrustRootCache(() => Optional.empty(), _ => {})
+        .useDefaultBlob()
+        .useBlobCache(() => Optional.empty(), _ => {})
+        .build()
+      val fidoMds =
+        Try(FidoMetadataService.builder().useDownloader(downloader).build())
 
       val attachmentHintsUsb =
         Set(ATTACHMENT_HINT_EXTERNAL, ATTACHMENT_HINT_WIRED)

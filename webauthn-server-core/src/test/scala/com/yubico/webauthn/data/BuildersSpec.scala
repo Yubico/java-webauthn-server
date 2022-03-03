@@ -29,8 +29,6 @@ import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.RegistrationResult
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
 import com.yubico.webauthn.data.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -68,7 +66,6 @@ class BuildersSpec
     test(new TypeReference[AssertionExtensionInputs]() {})
     test(new TypeReference[AssertionRequest]() {})
     test(new TypeReference[AssertionResult]() {})
-    test(new TypeReference[Attestation]() {})
     test(new TypeReference[AttestedCredentialData]() {})
     test(new TypeReference[AuthenticatorAssertionResponse]() {})
     test(new TypeReference[AuthenticatorAttestationResponse]() {})

@@ -73,7 +73,6 @@ class RelyingPartyCeremoniesSpec
       testData.attestation.credential.getId
     )
     registrationResult.isAttestationTrusted should be(false)
-    registrationResult.getAttestationMetadata.isPresent should be(false)
 
     val assertionRp = newRp(
       testData,

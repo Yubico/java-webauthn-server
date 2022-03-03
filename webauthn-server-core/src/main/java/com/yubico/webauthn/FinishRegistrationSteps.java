@@ -29,8 +29,7 @@ import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 
 import COSE.CoseException;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.attestation.MetadataService;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
@@ -44,12 +43,21 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Date;
+import java.time.Clock;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -72,12 +80,14 @@ final class FinishRegistrationSteps {
   private final Set<String> origins;
   private final String rpId;
   private final boolean allowUntrustedAttestation;
-  private final Optional<MetadataService> metadataService;
+  private final Optional<AttestationTrustSource> attestationTrustSource;
   private final CredentialRepository credentialRepository;
+  private final Clock clock;
 
   @Builder.Default private final boolean allowOriginPort = false;
   @Builder.Default private final boolean allowOriginSubdomain = false;
   @Builder.Default private final boolean allowUnrequestedExtensions = false;
+  @Builder.Default private final boolean enableAttestationCertRevocationChecking = true;
 
   public Step6 begin() {
     return new Step6();
@@ -439,42 +449,42 @@ final class FinishRegistrationSteps {
     private final AttestationType attestationType;
     private final Optional<List<X509Certificate>> attestationTrustPath;
 
+    private final Set<X509Certificate> trustRoots;
+
+    public Step20(
+        AttestationObject attestation,
+        AttestationType attestationType,
+        Optional<List<X509Certificate>> attestationTrustPath) {
+      this.attestation = attestation;
+      this.attestationType = attestationType;
+      this.attestationTrustPath = attestationTrustPath;
+      this.trustRoots = findTrustRoots();
+    }
+
     @Override
     public void validate() {}
 
     @Override
     public Step21 nextStep() {
-      return new Step21(attestation, attestationType, attestationTrustPath, trustResolver());
+      return new Step21(attestation, attestationType, attestationTrustPath, findTrustRoots());
     }
 
-    public Optional<AttestationTrustResolver> trustResolver() {
-      switch (attestationType) {
-        case NONE:
-        case SELF_ATTESTATION:
-        case UNKNOWN:
-          return Optional.empty();
-
-        case ANONYMIZATION_CA:
-        case ATTESTATION_CA:
-        case BASIC:
-          switch (attestation.getFormat()) {
-            case "android-key":
-            case "android-safetynet":
-            case "apple":
-            case "fido-u2f":
-            case "packed":
-            case "tpm":
-              return metadataService.map(KnownX509TrustAnchorsTrustResolver::new);
-            default:
-              throw new UnsupportedOperationException(
-                  String.format(
-                      "Attestation type %s is not supported for attestation statement format \"%s\".",
-                      attestationType, attestation.getFormat()));
-          }
-
-        default:
-          throw new UnsupportedOperationException(
-              "Attestation type not implemented: " + attestationType);
+    private Set<X509Certificate> findTrustRoots() {
+      if (attestationTrustSource.isPresent()) {
+        final Set<X509Certificate> certs = new HashSet<>();
+        certs.addAll(
+            attestationTrustSource
+                .get()
+                .findTrustRoots(
+                    attestation
+                        .getAuthenticatorData()
+                        .getAttestedCredentialData()
+                        .get()
+                        .getAaguid()));
+        certs.addAll(attestationTrustSource.get().findTrustRoots(attestationTrustPath.get()));
+        return certs;
+      } else {
+        return Collections.emptySet();
       }
     }
   }
@@ -484,82 +494,105 @@ final class FinishRegistrationSteps {
     private final AttestationObject attestation;
     private final AttestationType attestationType;
     private final Optional<List<X509Certificate>> attestationTrustPath;
-    private final Optional<AttestationTrustResolver> trustResolver;
+    private final Set<X509Certificate> trustRoots;
+
+    private final boolean attestationTrusted;
+
+    public Step21(
+        AttestationObject attestation,
+        AttestationType attestationType,
+        Optional<List<X509Certificate>> attestationTrustPath,
+        Set<X509Certificate> trustRoots) {
+      this.attestation = attestation;
+      this.attestationType = attestationType;
+      this.attestationTrustPath = attestationTrustPath;
+      this.trustRoots = trustRoots;
+
+      this.attestationTrusted = attestationTrusted();
+    }
 
     @Override
     public void validate() {
       assure(
-          trustResolver.isPresent() || allowUntrustedAttestation,
-          "Failed to obtain attestation trust anchors.");
-
-      switch (attestationType) {
-        case SELF_ATTESTATION:
-          assure(allowUntrustedAttestation, "Self attestation is not allowed.");
-          break;
-
-        case ANONYMIZATION_CA:
-        case ATTESTATION_CA:
-        case BASIC:
-          assure(
-              allowUntrustedAttestation || attestationTrusted(),
-              "Failed to derive trust for attestation key.");
-          break;
-
-        case NONE:
-          assure(allowUntrustedAttestation, "No attestation is not allowed.");
-          break;
-
-        case UNKNOWN:
-          assure(
-              allowUntrustedAttestation, "Unknown attestation statement formats are not allowed.");
-          break;
-
-        default:
-          throw new UnsupportedOperationException(
-              "Attestation type not implemented: " + attestationType);
-      }
+          allowUntrustedAttestation || attestationTrusted,
+          "Failed to derive trust for attestation key.");
     }
 
     @Override
     public Step22 nextStep() {
-      return new Step22(attestationType, attestationMetadata(), attestationTrusted());
+      return new Step22(attestationType, attestationTrusted);
     }
 
     public boolean attestationTrusted() {
-      switch (attestationType) {
-        case NONE:
-        case SELF_ATTESTATION:
-        case UNKNOWN:
+      if (attestationTrustPath.isPresent() && attestationTrustSource.isPresent()) {
+        try {
+          final Set<X509Certificate> trustRoots = new HashSet<>();
+          trustRoots.addAll(
+              attestationTrustSource.get().findTrustRoots(attestationTrustPath.get()));
+          trustRoots.addAll(
+              attestationTrustSource
+                  .get()
+                  .findTrustRoots(
+                      response
+                          .getResponse()
+                          .getParsedAuthenticatorData()
+                          .getAttestedCredentialData()
+                          .get()
+                          .getAaguid()));
+
+          if (trustRoots.isEmpty()) {
+            return false;
+
+          } else {
+            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            final CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
+            final CertPath certPath = certFactory.generateCertPath(attestationTrustPath.get());
+            final PKIXParameters pathParams =
+                new PKIXParameters(
+                    trustRoots.stream()
+                        .map(rootCert -> new TrustAnchor(rootCert, null))
+                        .collect(Collectors.toSet()));
+            pathParams.setDate(Date.from(clock.instant()));
+            pathParams.setRevocationEnabled(enableAttestationCertRevocationChecking);
+            attestationTrustSource
+                .get()
+                .getCertStore(attestationTrustPath.get())
+                .ifPresent(pathParams::addCertStore);
+            cpv.validate(certPath, pathParams);
+            return true;
+          }
+
+        } catch (CertPathValidatorException e) {
+          log.info(
+              "Failed to derive trust in attestation statement: {} at cert index {}: {}",
+              e.getReason(),
+              e.getIndex(),
+              e.getMessage());
           return false;
 
-        case ANONYMIZATION_CA:
-        case ATTESTATION_CA:
-        case BASIC:
-          return attestationMetadata().map(Attestation::isTrusted).orElse(false);
-        default:
-          throw new UnsupportedOperationException(
-              "Attestation type not implemented: " + attestationType);
-      }
-    }
+        } catch (CertificateException e) {
+          log.warn("Failed to build attestation certificate path.", e);
+          return false;
 
-    public Optional<Attestation> attestationMetadata() {
-      return trustResolver.flatMap(
-          tr -> {
-            try {
-              return Optional.of(
-                  tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList)));
-            } catch (CertificateEncodingException e) {
-              log.debug("Failed to resolve trust anchor for attestation: {}", attestation, e);
-              return Optional.empty();
-            }
-          });
+        } catch (NoSuchAlgorithmException e) {
+          throw new RuntimeException(
+              "Failed to check attestation trust path. A JCA provider is likely missing in the runtime environment.",
+              e);
+
+        } catch (InvalidAlgorithmParameterException e) {
+          throw new RuntimeException(
+              "Failed to initialize attestation trust path validator. This is likely a bug, please file a bug report.",
+              e);
+        }
+      } else {
+        return false;
+      }
     }
   }
 
   @Value
   class Step22 implements Step<Finished> {
     private final AttestationType attestationType;
-    private final Optional<Attestation> attestationMetadata;
     private final boolean attestationTrusted;
 
     @Override
@@ -572,7 +605,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Finished nextStep() {
-      return new Finished(attestationType, attestationMetadata, attestationTrusted);
+      return new Finished(attestationType, attestationTrusted);
     }
   }
 
@@ -582,7 +615,6 @@ final class FinishRegistrationSteps {
   @Value
   class Finished implements Step<Finished> {
     private final AttestationType attestationType;
-    private final Optional<Attestation> attestationMetadata;
     private final boolean attestationTrusted;
 
     @Override
@@ -617,7 +649,6 @@ final class FinishRegistrationSteps {
                   AuthenticatorRegistrationExtensionOutputs.fromAuthenticatorData(
                           response.getResponse().getParsedAuthenticatorData())
                       .orElse(null))
-              .attestationMetadata(attestationMetadata)
               .build());
     }
 

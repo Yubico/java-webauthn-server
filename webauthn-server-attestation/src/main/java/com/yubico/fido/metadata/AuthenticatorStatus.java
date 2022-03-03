@@ -18,7 +18,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  NOT_FIDO_CERTIFIED,
+  NOT_FIDO_CERTIFIED(0),
 
   /**
    * This authenticator has passed FIDO functional certification. This certification scheme is
@@ -28,7 +28,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED,
+  FIDO_CERTIFIED(10),
 
   /**
    * Indicates that malware is able to bypass the user verification. This means that the
@@ -39,7 +39,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  USER_VERIFICATION_BYPASS,
+  USER_VERIFICATION_BYPASS(0),
 
   /**
    * Indicates that an attestation key for this authenticator is known to be compromised. The
@@ -52,7 +52,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  ATTESTATION_KEY_COMPROMISE,
+  ATTESTATION_KEY_COMPROMISE(0),
 
   /**
    * This authenticator has identified weaknesses that allow registered keys to be compromised and
@@ -64,7 +64,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  USER_KEY_REMOTE_COMPROMISE,
+  USER_KEY_REMOTE_COMPROMISE(0),
 
   /**
    * This authenticator has known weaknesses in its key protection mechanism(s) that allow user keys
@@ -74,7 +74,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  USER_KEY_PHYSICAL_COMPROMISE,
+  USER_KEY_PHYSICAL_COMPROMISE(0),
 
   /**
    * A software or firmware update is available for the device. The Authenticator manufacturer
@@ -92,7 +92,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  UPDATE_AVAILABLE,
+  UPDATE_AVAILABLE(0),
 
   /**
    * The FIDO Alliance has determined that this authenticator should not be trusted for any reason.
@@ -103,7 +103,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  REVOKED,
+  REVOKED(0),
 
   /**
    * The authenticator vendor has completed and submitted the self-certification checklist to the
@@ -114,7 +114,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  SELF_ASSERTION_SUBMITTED,
+  SELF_ASSERTION_SUBMITTED(0),
 
   /**
    * The authenticator has passed FIDO Authenticator certification at level 1. This level is the
@@ -124,7 +124,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED_L1,
+  FIDO_CERTIFIED_L1(10),
 
   /**
    * The authenticator has passed FIDO Authenticator certification at level 1+. This level is the
@@ -134,7 +134,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED_L1plus,
+  FIDO_CERTIFIED_L1plus(11),
 
   /**
    * The authenticator has passed FIDO Authenticator certification at level 2. This level is more
@@ -144,7 +144,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED_L2,
+  FIDO_CERTIFIED_L2(20),
 
   /**
    * The authenticator has passed FIDO Authenticator certification at level 2+. This level is more
@@ -154,7 +154,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED_L2plus,
+  FIDO_CERTIFIED_L2plus(21),
 
   /**
    * The authenticator has passed FIDO Authenticator certification at level 3. This level is more
@@ -164,7 +164,7 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED_L3,
+  FIDO_CERTIFIED_L3(30),
 
   /**
    * The authenticator has passed FIDO Authenticator certification at level 3+. This level is more
@@ -174,5 +174,11 @@ public enum AuthenticatorStatus {
    *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#enumdef-authenticatorstatus">FIDO
    *     Metadata Service §3.1.4. AuthenticatorStatus enum</a>
    */
-  FIDO_CERTIFIED_L3plus;
+  FIDO_CERTIFIED_L3plus(31);
+
+  int certificationLevel;
+
+  AuthenticatorStatus(int certificationLevel) {
+    this.certificationLevel = certificationLevel;
+  }
 }

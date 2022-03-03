@@ -3,6 +3,7 @@ package com.yubico.webauthn.attestation;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.yubico.fido.metadata.FidoMetadataService;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
@@ -14,7 +15,7 @@ public class ManifestInfoTest {
 
   private static String lookup(String key) throws IOException {
     final Enumeration<URL> resources =
-        AttestationResolver.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
+        FidoMetadataService.class.getClassLoader().getResources("META-INF/MANIFEST.MF");
 
     while (resources.hasMoreElements()) {
       final URL resource = resources.nextElement();

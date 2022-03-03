@@ -26,8 +26,8 @@ package demo.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.fido.metadata.MetadataBLOBPayloadEntry;
 import com.yubico.webauthn.RegisteredCredential;
-import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.UserIdentity;
 import java.time.Instant;
@@ -49,7 +49,7 @@ public class CredentialRegistration {
   @JsonIgnore Instant registrationTime;
   RegisteredCredential credential;
 
-  Optional<Attestation> attestationMetadata;
+  Optional<MetadataBLOBPayloadEntry> attestationMetadata;
 
   @JsonProperty("registrationTime")
   public String getRegistrationTimestamp() {

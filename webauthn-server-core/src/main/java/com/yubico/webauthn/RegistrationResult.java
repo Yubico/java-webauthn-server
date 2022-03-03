@@ -26,7 +26,8 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.ByteArray;
@@ -61,6 +62,10 @@ public class RegistrationResult {
   /**
    * <code>true</code> if and only if the attestation signature was successfully linked to a trusted
    * attestation root.
+   *
+   * <p>This will always be <code>false</code> unless the {@link
+   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
+   * setting was configured on the {@link RelyingParty} instance.
    *
    * <p>You can ignore this if authenticator attestation is not relevant to your application.
    */
@@ -99,20 +104,6 @@ public class RegistrationResult {
    */
   private final long signatureCount;
 
-  /**
-   * Additional information about the authenticator, identified based on the attestation
-   * certificate.
-   *
-   * <p>This will be absent unless you set a {@link
-   * com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional) metadataService}
-   * in {@link RelyingParty}.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
-   *     Attestation</a>
-   * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
-   */
-  private final Attestation attestationMetadata;
-
   private final ClientRegistrationExtensionOutputs clientExtensionOutputs;
 
   private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
@@ -124,7 +115,6 @@ public class RegistrationResult {
       @NonNull @JsonProperty("attestationType") AttestationType attestationType,
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
       @JsonProperty("signatureCount") Long signatureCount,
-      @JsonProperty("attestationMetadata") Attestation attestationMetadata,
       @JsonProperty("clientExtensionOutputs")
           ClientRegistrationExtensionOutputs clientExtensionOutputs,
       @JsonProperty("authenticatorExtensionOutputs")
@@ -134,16 +124,11 @@ public class RegistrationResult {
     this.attestationType = attestationType;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount == null ? 0 : signatureCount;
-    this.attestationMetadata = attestationMetadata;
     this.clientExtensionOutputs =
         clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
             ? null
             : clientExtensionOutputs;
     this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
-  }
-
-  public Optional<Attestation> getAttestationMetadata() {
-    return Optional.ofNullable(attestationMetadata);
   }
 
   /**
@@ -257,20 +242,6 @@ public class RegistrationResult {
           return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
         }
       }
-    }
-
-    RegistrationResultBuilder attestationMetadata(
-        @NonNull Optional<Attestation> attestationMetadata) {
-      this.attestationMetadata = attestationMetadata.orElse(null);
-      return this;
-    }
-
-    /*
-     * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
-     * Consider reverting this workaround if Lombok fixes that issue.
-     */
-    private RegistrationResultBuilder attestationMetadata(Attestation attestationMetadata) {
-      return this.attestationMetadata(Optional.ofNullable(attestationMetadata));
     }
   }
 }
