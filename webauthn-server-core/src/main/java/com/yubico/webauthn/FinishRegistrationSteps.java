@@ -613,6 +613,14 @@ final class FinishRegistrationSteps {
       return Optional.of(
           RegistrationResult.builder()
               .keyId(keyId())
+              .aaguid(
+                  response
+                      .getResponse()
+                      .getAttestation()
+                      .getAuthenticatorData()
+                      .getAttestedCredentialData()
+                      .get()
+                      .getAaguid())
               .attestationTrusted(attestationTrusted)
               .attestationType(attestationType)
               .publicKeyCose(

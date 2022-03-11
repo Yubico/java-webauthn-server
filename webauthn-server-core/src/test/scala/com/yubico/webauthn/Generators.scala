@@ -47,6 +47,7 @@ object Generators {
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] =
     Arbitrary(
       for {
+        aaguid <- byteArray(16)
         attestationTrusted <- arbitrary[Boolean]
         attestationTrustPath <- generateAttestationCertificateChain
         attestationType <- arbitrary[AttestationType]
@@ -59,6 +60,7 @@ object Generators {
       } yield RegistrationResult
         .builder()
         .keyId(keyId)
+        .aaguid(aaguid)
         .attestationTrusted(attestationTrusted)
         .attestationType(attestationType)
         .publicKeyCose(publicKeyCose)

@@ -3555,6 +3555,19 @@ class RelyingPartyRegistrationSpec
           Some(testData.attestationCertChain.init.map(_._1))
         )
       }
+
+      it("exposes getAaguid() with the authenticator AAGUID.") {
+        val testData = RegistrationTestData.Packed.BasicAttestation
+        val steps = finishRegistration(
+          testData = testData,
+          credentialRepository = Helpers.CredentialRepository.empty,
+          allowUntrustedAttestation = true,
+        )
+        val result = steps.run()
+        result.getAaguid should equal(
+          testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getAaguid
+        )
+      }
     }
 
   }

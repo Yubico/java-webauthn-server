@@ -38,6 +38,7 @@ Breaking changes:
 
 New features:
 
+* Method `getAaguid()` added to `RegistrationResult`.
 * Method `getAttestationTrustPath()` added to `RegistrationResult`.
 * Setting `.clock(Clock)` added to `RelyingParty`. It is used for attestation
   path validation if an `attestationTrustSource` is configured.

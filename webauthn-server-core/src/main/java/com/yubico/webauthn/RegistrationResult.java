@@ -67,6 +67,16 @@ public class RegistrationResult {
   @NonNull private final PublicKeyCredentialDescriptor keyId;
 
   /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#aaguid"><code>aaguid</code>
+   * </a> reported in the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">of the
+   * created credential.</a>
+   *
+   * <p>This MAY be an AAGUID consisting of only zeroes.
+   */
+  @NonNull private final ByteArray aaguid;
+
+  /**
    * <code>true</code> if and only if the attestation signature was successfully linked to a trusted
    * attestation root.
    *
@@ -134,6 +144,7 @@ public class RegistrationResult {
 
   private RegistrationResult(
       @NonNull PublicKeyCredentialDescriptor keyId,
+      @NonNull ByteArray aaguid,
       boolean attestationTrusted,
       @NonNull AttestationType attestationType,
       List<X509Certificate> attestationTrustPath,
@@ -142,6 +153,7 @@ public class RegistrationResult {
       ClientRegistrationExtensionOutputs clientExtensionOutputs,
       AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
     this.keyId = keyId;
+    this.aaguid = aaguid;
     this.attestationTrusted = attestationTrusted;
     this.attestationType = attestationType;
     this.attestationTrustPath = attestationTrustPath;
@@ -157,6 +169,7 @@ public class RegistrationResult {
   @JsonCreator
   private static RegistrationResult fromJson(
       @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
+      @NonNull @JsonProperty("aaguid") ByteArray aaguid,
       @JsonProperty("attestationTrusted") boolean attestationTrusted,
       @NonNull @JsonProperty("attestationType") AttestationType attestationType,
       @JsonProperty("attestationTrustPath") List<String> attestationTrustPath,
@@ -168,6 +181,7 @@ public class RegistrationResult {
           AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
     return new RegistrationResult(
         keyId,
+        aaguid,
         attestationTrusted,
         attestationType,
         attestationTrustPath.stream()
@@ -279,41 +293,48 @@ public class RegistrationResult {
       }
 
       class Step2 {
-        Step3 attestationTrusted(boolean attestationTrusted) {
-          builder.attestationTrusted(attestationTrusted);
+        Step3 aaguid(ByteArray aaguid) {
+          builder.aaguid(aaguid);
           return new Step3();
         }
       }
 
       class Step3 {
-        Step4 attestationType(AttestationType attestationType) {
-          builder.attestationType(attestationType);
+        Step4 attestationTrusted(boolean attestationTrusted) {
+          builder.attestationTrusted(attestationTrusted);
           return new Step4();
         }
       }
 
       class Step4 {
-        Step5 publicKeyCose(ByteArray publicKeyCose) {
-          builder.publicKeyCose(publicKeyCose);
+        Step5 attestationType(AttestationType attestationType) {
+          builder.attestationType(attestationType);
           return new Step5();
         }
       }
 
       class Step5 {
-        Step6 signatureCount(long signatureCount) {
-          builder.signatureCount(signatureCount);
+        Step6 publicKeyCose(ByteArray publicKeyCose) {
+          builder.publicKeyCose(publicKeyCose);
           return new Step6();
         }
       }
 
       class Step6 {
-        Step7 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
-          builder.clientExtensionOutputs(clientExtensionOutputs);
+        Step7 signatureCount(long signatureCount) {
+          builder.signatureCount(signatureCount);
           return new Step7();
         }
       }
 
       class Step7 {
+        Step8 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
+          builder.clientExtensionOutputs(clientExtensionOutputs);
+          return new Step8();
+        }
+      }
+
+      class Step8 {
         RegistrationResultBuilder authenticatorExtensionOutputs(
             AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
           return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
