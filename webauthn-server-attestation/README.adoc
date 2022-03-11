@@ -1,4 +1,7 @@
 = webauthn-server-attestation
+:toc:
+:toc-placement: macro
+:toc-title:
 
 An optional module which extends link:../[`webauthn-server-core`]
 with a trust root source for verifying
@@ -6,18 +9,306 @@ https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation
 by interfacing with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
 
 
-== Using the FIDO Metadata Service
+toc::[]
 
-The FidoMetadataDownloader class can download and verify metadata BLOBs from the FIDO Metadata Service.
-This process involves certificate path validation,
-for which the `com.sun.security.enableCRLDP` system property needs to be set to the value `true`.
+== Features
+
+This module does four things:
+
+- Download, verify and cache metadata BLOBs from the FIDO Metadata Service.
+- Re-download the metadata BLOB when out of date or invalid.
+- Provide utilities for selecting trusted metadata entries and authenticators.
+- Integrate with the
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  class in the base library, to provide trust root certificates
+  for verifying attestation statements during credential registrations.
+
+Notable *non-features* include:
+
+- *Scheduled BLOB downloads.*
++
+The `FidoMetadataDownloader`
+class will attempt to download a new BLOB only when its `loadBlob()` is executed,
+and then only if the cache is empty or if the cached BLOB is invalid or out of date.
+`FidoMetadataService`
+will never re-download a new BLOB once instantiated.
++
+You should use some external scheduling mechanism to re-run `loadBlob()` periodically
+and rebuild new `FidoMetadataService` instances with the updated metadata contents.
+You can do this with minimal disruption since the `FidoMetadataService` and `RelyingParty`
+classes keep no internal mutable state.
+
+- *Revocation of already-registered credentials*
++
+The FIDO Metadata Service may from time to time report security issues with particular authenticator models.
+The `FidoMetadataService` class can be configured with a filter for which authenticators to trust,
+and untrusted authenticators can be rejected during registration by setting `.allowUntrustedAttestation(false)` on `RelyingParty`,
+but this will not affect any credentials already registered.
+
+
+== Before you start
+
+It is important to be aware that *requiring attestation is an invasive policy*,
+especially when used to restrict users' choice of authenticator.
+For some applications this is necessary; for most it is not.
+Similarly, *attestation does not automatically make your users more secure*.
+Attestation gives you information, but you have to know what to do with that information
+in order to get a security benefit from it; it is a powerful tool but does very little on its own.
+This library can help retrieve and verify additional information about an authenticator,
+and enforce some very basic policy based on it,
+but it is your responsibility to further leverage that information into improved security.
+
+When in doubt, err towards being more permissive, because _using WebAuthn is more secure than not using WebAuthn_.
+It may still be useful to request and store attestation information for future reference -
+for example, to warn users if security issues are discovered in their authenticators -
+but we recommend that you do not _require_ a trusted attestation unless you have specific reason to do so.
+
+
+== Migrating from version `1.x`
+
+See link:doc/Migrating_from_v1.adoc[the migration guide].
+
+
+== Getting started
+
+Using this module consists of 4 major steps:
+
+ 1. Create a
+    `FidoMetadataDownloader`
+    instance to download and cache metadata BLOBs,
+    and a
+    `FidoMetadataService`
+    instance to make use of the downloaded BLOB.
+    See the JavaDoc for these classes for details on how to construct them.
++
+[WARNING]
+=====
+Unlike other classes in this module and the core library,
+`FidoMetadataDownloader` is NOT THREAD SAFE since its `loadBlob()` method reads and writes caches.
+`FidoMetadataService`, on the other hand, is thread safe,
+and `FidoMetadataDownloader` instances can be reused for subsequent `loadBlob()` calls
+as long as only one `loadBlob()` call executes at a time.
+=====
++
+[source,java]
+----------
+FidoMetadataDownloader downloader = FidoMetadataDownloader.builder()
+  .expectLegalHeader("Lorem ipsum dolor sit amet")
+  .useDefaultTrustRoot()
+  .useTrustRootCacheFile(new File("/var/cache/webauthn-server/fido-mds-trust-root.bin"))
+  .useDefaultBlob()
+  .useBlobCacheFile(new File("/var/cache/webauthn-server/fido-mds-blob.bin"))
+  .build();
+
+FidoMetadataService mds = FidoMetadataService.builder()
+  .useBlob(downloader.loadBlob())
+  .build();
+----------
+
+ 2. Set the `FidoMetadataService` as the `attestationTrustSource` on your
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+    instance,
+    and set `attestationConveyancePreference(AttestationConveyancePreference.DIRECT)` on `RelyingParty`
+    to request an attestation statement for new registrations.
+    Optionally also set `.allowUntrustedAttestation(false)` on `RelyingParty` to require trusted attestation for new registrations.
++
+[source,java]
+----------
+RelyingParty rp = RelyingParty.builder()
+  .identity(/* ... */)
+  .credentialRepository(/* ... */)
+  .attestationTrustSource(mds)
+  .attestationConveyancePreference(AttestationConveyancePreference.DIRECT)
+  .allowUntrustedAttestation(true) // Optional step: set to true (default) or false
+  .build();
+----------
+
+ 3. After performing registrations, inspect the `isAttestationTrusted()` result in
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+    to determine whether the authenticator presented an attestation statement that could be verified
+    by any of the trusted attestation certificates in the FIDO Metadata Service.
++
+[source,java]
+----------
+RelyingParty rp = /* ... */;
+RegistrationResult result = rp.finishRegistration(/* ... */);
+
+if (result.isAttestationTrusted()) {
+  // Do something...
+} else {
+  // Do something else...
+}
+----------
+
+ 4. If needed, use the `findEntries` methods of `FidoMetadataService` to retrieve additional authenticator metadata for new registrations.
++
+[source,java]
+----------
+RelyingParty rp = /* ... */;
+RegistrationResult result = rp.finishRegistration(/* ... */);
+
+Set<MetadataBLOBPayloadEntry> metadata = mds.findEntries(result);
+----------
+
+By default, `FidoMetadataDownloader` will probably use the SUN provider for the `PKIX` certificate path validation algorithm.
+This requires the `com.sun.security.enableCRLDP` system property set to `true` in order to verify the BLOB signature.
 For example, this can be done on the JVM command line using a `-Dcom.sun.security.enableCRLDP=true` option.
 See the https://docs.oracle.com/javase/9/security/java-pki-programmers-guide.htm#JSSEC-GUID-EB250086-0AC1-4D60-AE2A-FC7461374746[Java PKI Programmers Guide]
 for details.
 
 
-=== Overriding certificate path validation
+== Selecting trusted authenticators
 
-The FidoMetadataDownloader class uses `CertPathValidator.getInstance("PKIX")` to retrieve a `CertPathValidator` instance.
+The
+`FidoMetadataService`
+class can be configured with filters for which authenticators to trust.
+When the `FidoMetadataService` is used as the `.attestationTrustSource()` in `RelyingParty`,
+this will be reflected in the `.isAttestationTrusted()` result in
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`].
+Any authenticators not trusted will also be rejected for new registrations if you set `.allowUntrustedAttestation(false)` on `RelyingParty`.
+
+The filter has two stages: a "prefilter" which selects metadata entries to include in the data source,
+and a registration-time filter which decides whether to associate a metadata entry
+with a particular authenticator.
+The prefilter executes only once (per metadata entry):
+when the `FidoMetadataService` instance is constructed.
+The registration-time filter takes effect during credential registration
+and in the `findEntries()` methods of `FidoMetadataService`.
+The following figure illustrates where each filter appears in the data flows:
+
+[source]
+----------
+  +----------+
+  | FIDO MDS |
+  +----------+
+    |
+    | Metadata BLOB
+    |
++--------------------------------------------------------------------------+
+|   |                                                  FidoMetadataService |
+|   v                                                  =================== |
+| +-----------+                                                            |
+| | Prefilter |                                                            |
+| +-----------+                                                            |
+|   |                                                                      |
+|   | Selected metadata entries                                            |
+|   v                                  Matching                            |
+| +-----------------------------+      metadata      +-------------------+ |
+| | Search by AAGUID &          |      entries       | Registration-time | |
+| | Attestation certificate key |------------------->| filter            | |
+| +-----------------------------+                    +-------------------+ |
+|   ^ (1)                    ^ (2)                     | (1)       (2) |   |
+|   | (internal)             | findEntries()           |               |   |
++--------------------------------------------------------------------------+
+    |                        |                         |               |
+    |                        `-------------------------|--.            |
+    | Get trust roots                                  |  |            v
+    |                                       Matched    |  |         Matched
+ +-----------------------------------+    trust roots  |  |     metadata entries
+ | RelyingParty.finishRegistration() |<----------------'  |
+ +-----------------------------------+                    |
+    ^                         |                           |
+    |                         | Verify signature          |
+    | PublicKeyCredential     | Validate contents         | Retrieve matching
+    |                         | Evaluate trust            | metadata entries
+    |                         v                           |
+ +-------------+        +-----------------------------------+
+ | Registering |        | RegistrationResult                |
+ | user        |        | - getAaguid(): ByteArray          |
+ +-------------+        | - getAttestationTrustPath(): List |
+                        | - isAttestationTrusted(): boolean |
+                        | - getPublicKeyCose(): ByteArray   |
+                        +-----------------------------------+
+----------
+
+The default prefilter excludes any authenticator with any `REVOKED`
+link:https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#dom-metadatablobpayloadentry-statusreports[status report]
+entry,
+and the default registration-time filter excludes any authenticator
+with a matching `ATTESTATION_KEY_COMPROMISE` status report entry.
+To customize the filters, configure the `.prefilter(Predicate)` and `.filter(Predicate)` settings
+in the `FidoMetadataService` builder.
+The filters are predicate functions;
+each metadata entry will be trusted if and only if the prefilter predicate returns `true` for that entry.
+Similarly during registration or metadata lookup, the authenticator will be matched with each metadata entry
+only if the registration-time filter returns `true` for that pair of authenticator and metadata entry.
+You can also use the `FidoMetadataService.Filters.allOf()` combinator to merge several predicates into one.
+
+[NOTE]
+=====
+Setting a custom filter will replace the default filter.
+This is true for both the prefilter and the registration-time filter.
+If you want to maintain the default filter in addition to the new behaviour,
+you must include the default condition in the new filter.
+For example, you can use `FidoMetadataService.Filters.allOf()` to combine a predefined filter with a custom one.
+The default filters are available via static functions in `FidoMetadataService.Filters`.
+=====
+
+
+=== A note on "allow-lists" vs "deny-lists"
+
+The filtering functionality described above essentially expresses an "allow-list" policy.
+Any metadata entry that satisfies the filters is eligible as a trust root;
+any attestation statement that can be verified by one of those trust roots is trusted,
+and any that cannot is not trusted.
+There is no complementary "deny-list" option to reject some specific authenticators
+and implicitly trust everything else even with unknown trust roots.
+This is because you cannot use such a deny list to enforce an attestation policy.
+
+If unknown attestation trust roots were permitted,
+then a deny list could be easily circumvented by making up an attestation that is not on the deny list.
+Since it will have an unknown trust root, it would then be implicitly trusted.
+This is why any enforceable attestation policy must disallow unknown trust roots.
+
+Note that unknown and untrusted attestation is allowed by default,
+but can be disallowed by explicitly configuring `RelyingParty` with `.allowUntrustedAttestation(false)`.
+
+
+== Alignment with FIDO MDS spec
+
+The FIDO Metadata Service specification defines
+link:https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob-object-processing-rules[processing rules for servers].
+The library implements these as closely as possible, but with some slight departures from the spec:
+
+* Processing rules steps 1-7 are implemented as specified, by the `FidoMetadataDownloader` class.
+  All "SHOULD" clauses are also respected, with some caveats:
+
+ ** Step 3 states "The `nextUpdate` field of the Metadata BLOB specifies a date when the download SHOULD occur at latest".
+    `FidoMetadataDownloader` does not automatically re-download the BLOB.
+    Instead, each time its `.loadBlob()` method is executed it checks whether a new BLOB should be downloaded.
++
+If no BLOB exists in cache, or the cached BLOB is invalid, or if the current date is greater than or equal to `nextUpdate`,
+then a new BLOB is downloaded.
+If the new BLOB is valid, has a correct signature, and has a `no` field greater than the cached BLOB,
+then the new BLOB replaces the cached one;
+otherwise, the new BLOB is discarded and the cached one is kept until the next execution of `.loadBlob()`.
+
+* Metadata entries are not stored or cached individually, instead the BLOB is cached as a whole.
+  In processing rules step 8, neither `FidoMetadataDownloader` nor `FidoMetadataService`
+  performs any comparison between versions of a metadata entry.
+  Policy for ignoring metadata entries can be configured via the filter settings in `FidoMetadataService`.
+  See above for details.
+
+There are also some other requirements throughout the spec, which may not be obvious:
+
+* The
+  link:https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#info-statuses[AuthenticatorStatus section]
+  states that "The Relying party MUST reject the Metadata Statement if the `authenticatorVersion` has not increased"
+  in an `UPDATE_AVAILABLE` status report.
+  Thus, `FidoMetadataService` silently ignores any `MetadataBLOBPayloadEntry`
+  whose `metadataStatement.authenticatorVersion` is present and not greater than or equal to
+  the `authenticatorVersion` in the respective status report.
+  Again, no comparison is made between metadata entries from different BLOB versions.
+
+* The
+  link:https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#info-statuses[AuthenticatorStatus section]
+  states that "FIDO Servers MUST silently ignore all unknown AuthenticatorStatus values".
+  Thus any unknown status valus will be parsed as `AuthenticatorStatus.UNKNOWN`,
+  and `MetadataBLOBPayloadEntry` will silently ignore any status report with that status.
+
+
+== Overriding certificate path validation
+
+The `FidoMetadataDownloader` class uses `CertPathValidator.getInstance("PKIX")` to retrieve a `CertPathValidator` instance.
 If you need to override any aspect of certificate path validation,
 such as CRL retrieval or OCSP, you may provide a custom `CertPathValidator` provider for the `"PKIX"` algorithm.

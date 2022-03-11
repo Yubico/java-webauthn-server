@@ -57,9 +57,9 @@ Breaking changes to these will NOT be reflected in version numbers.
 
 In addition to the main `webauthn-server-core` module, there is also:
 
-- `webauthn-server-attestation`: A simple implementation of the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/attestation/MetadataService.html[`MetadataService`]
-  interface, which by default comes preloaded with attestation metadata for Yubico devices.
+- `webauthn-server-attestation`: Integration with the https://fidoalliance.org/metadata/[FIDO Metadata Service]
+  for retrieving and selecting trust roots to use for verifying
+  https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation statements].
 
 
 == Features
@@ -72,7 +72,6 @@ In addition to the main `webauthn-server-core` module, there is also:
 - No mutable state or side effects - everything (except builders) is thread safe
 - Optionally integrates with a "metadata service" to verify
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
-  and annotate responses with additional authenticator metadata
 - Reproducible builds: release signatures match fresh builds from source. See
   link:#reproducible-builds[Reproducible builds] below.
 
@@ -91,6 +90,11 @@ but the authentication mechanism alone does not make a security system.
 See the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/package-summary.html[Javadoc]
 for in-depth API documentation.
+
+
+== Migrating from version `1.x`
+
+See link:doc/Migrating_from_v1.adoc[the migration guide].
 
 
 == Getting started
@@ -555,6 +559,19 @@ credentials.
   counter stored in the database for the credential.
 
 . Finally, the application reports success and resumes its business logic.
+
+
+== Using attestation
+
+WebAuthn supports
+link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[authenticator attestation],
+which provides a way for the web service
+to request cryptographic proof of what authenticator the user is using.
+Most services do not need this, and it is disabled by default.
+
+The link:webauthn-server-attestation[`webauthn-server-attestation` module]
+provides optional additional features for working with attestation.
+See the module documentation for more details.
 
 
 == Building
