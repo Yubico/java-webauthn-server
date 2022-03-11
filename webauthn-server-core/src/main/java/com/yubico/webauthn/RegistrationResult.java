@@ -46,8 +46,8 @@ public class RegistrationResult {
   /**
    * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
    * ID</a> and <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>of
-   * the created credential.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>
+   * of the created credential.
    *
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
    *     ID</a>
