@@ -83,8 +83,8 @@ public final class FidoMetadataService implements AttestationTrustSource {
     this.filteredEntries =
         Collections.unmodifiableList(
             blob.getEntries().stream()
-                .filter(filter)
                 .filter(FidoMetadataService::ignoreInvalidUpdateAvailableAuthenticatorVersion)
+                .filter(filter)
                 .collect(Collectors.toList()));
     this.certStore = certStore;
   }
