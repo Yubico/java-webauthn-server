@@ -45,6 +45,7 @@ import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsScala
 import scala.jdk.FunctionConverters.enrichAsJavaPredicate
+import scala.jdk.OptionConverters.RichOption
 import scala.jdk.OptionConverters.RichOptional
 
 @Slow
@@ -532,14 +533,18 @@ class FidoMds3Spec extends FunSpec with Matchers {
       FidoMetadataService.builder().useDownloader(downloader).build()
     mds should not be null
 
-    val entry = mds
-      .findEntry(
-        new AAGUID(ByteArray.fromHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+    val entries = mds
+      .findEntries(
+        Collections.emptyList(),
+        Some(
+          new AAGUID(ByteArray.fromHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+        ).toJava,
       )
-      .toScala
-    entry should not be None
-    entry.get.getStatusReports should have size 1
-    entry.get.getStatusReports.get(0).getStatus should be(
+      .asScala
+    entries should not be empty
+    entries should have size 1
+    entries.head.getStatusReports should have size 1
+    entries.head.getStatusReports.get(0).getStatus should be(
       AuthenticatorStatus.NOT_FIDO_CERTIFIED
     )
   }
@@ -606,7 +611,9 @@ class FidoMds3Spec extends FunSpec with Matchers {
         )
       )
 
-      mds.findEntry(aaguid).toScala should be(None)
+      mds
+        .findEntries(Collections.emptyList(), Some(aaguid).toJava)
+        .asScala shouldBe empty
     }
 
     it("A metadata statement with UPDATE_AVAILABLE with authenticatorVersion equal to top-level authenticatorVersion is accepted.") {
@@ -624,7 +631,9 @@ class FidoMds3Spec extends FunSpec with Matchers {
         )
       )
 
-      mds.findEntry(aaguid).toScala should not be None
+      mds
+        .findEntries(Collections.emptyList(), Some(aaguid).toJava)
+        .asScala should not be empty
     }
 
     it("A metadata statement with UPDATE_AVAILABLE with authenticatorVersion less than top-level authenticatorVersion is accepted.") {
@@ -642,7 +651,9 @@ class FidoMds3Spec extends FunSpec with Matchers {
         )
       )
 
-      mds.findEntry(aaguid).toScala should not be None
+      mds
+        .findEntries(Collections.emptyList(), Some(aaguid).toJava)
+        .asScala should not be empty
     }
   }
 

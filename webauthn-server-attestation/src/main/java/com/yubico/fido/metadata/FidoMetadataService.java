@@ -41,7 +41,6 @@ import java.security.cert.CertStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -68,7 +67,7 @@ import lombok.extern.slf4j.Slf4j;
  * entry that matches the filter will be considered trusted.
  *
  * <p>Use the {@link #builder() builder} to configure settings, then use the {@link
- * #findEntry(AAGUID)} and/or {@link #findEntry(List)} methods to retrieve metadata entries.
+ * #findEntries(List, AAGUID)} method or its overloads to retrieve metadata entries.
  */
 @Slf4j
 public final class FidoMetadataService implements AttestationTrustSource {
@@ -228,81 +227,133 @@ public final class FidoMetadataService implements AttestationTrustSource {
     return filteredEntries.stream();
   }
 
-  public Optional<MetadataBLOBPayloadEntry> findEntry(AAGUID aaguid) {
-    if (aaguid.isZero()) {
-      log.debug("findEntry(aaguid = {}) => ignoring zero AAGUID", aaguid);
-      return Optional.empty();
-    } else {
-      final Optional<MetadataBLOBPayloadEntry> result =
-          getFilteredEntries()
-              .filter(entry -> aaguid.equals(entry.getAaguid().orElse(null)))
-              .findAny();
-      log.debug("findEntry(aaguid = {}) => {}", aaguid, result.isPresent() ? "found" : "not found");
-      return result;
+  /**
+   * Look up metadata entries matching a given attestation certificate chain or AAGUID.
+   *
+   * @param attestationCertificateChain an attestation certificate chain, presumably from a WebAuthn
+   *     attestation statement.
+   * @param aaguid the AAGUID of the authenticator to look up, if available.
+   * @return All metadata entries which satisfy ALL of the following:
+   *     <ul>
+   *       <li>It satisfies the {@link FidoMetadataServiceBuilder#filter(Predicate) filter}.
+   *       <li>It satisfies AT LEAST ONE of the following:
+   *           <ul>
+   *             <li><code>aaguid</code> is present and equals the {@link
+   *                 MetadataBLOBPayloadEntry#getAaguid() AAGUID} of the metadata entry.
+   *             <li><code>aaguid</code> is present and equals the {@link
+   *                 MetadataBLOBPayloadEntry#getAaguid() AAGUID} of the {@link
+   *                 MetadataBLOBPayloadEntry#getMetadataStatement() metadata statement}, if any, in
+   *                 the metadata entry.
+   *             <li>The certificate subject key identifier of any certificate in <code>
+   *                 attestationCertificateChain</code> matches any element of {@link
+   *                 MetadataBLOBPayloadEntry#getAttestationCertificateKeyIdentifiers()
+   *                 attestationCertificateKeyIdentifiers} in the metadata entry.
+   *             <li>The certificate subject key identifier of any certificate in <code>
+   *                 attestationCertificateChain</code> matches any element of {@link
+   *                 MetadataStatement#getAttestationCertificateKeyIdentifiers()
+   *                 attestationCertificateKeyIdentifiers} in the {@link
+   *                 MetadataBLOBPayloadEntry#getMetadataStatement() metadata statement}, if any, in
+   *                 the metadata entry.
+   *           </ul>
+   *     </ul>
+   *
+   * @see #findEntries(List)
+   * @see #findEntries(List, AAGUID)
+   */
+  public Set<MetadataBLOBPayloadEntry> findEntries(
+      @NonNull List<X509Certificate> attestationCertificateChain,
+      @NonNull Optional<AAGUID> aaguid) {
+
+    final Set<String> certSubjectKeyIdentifiers =
+        attestationCertificateChain.stream()
+            .map(
+                cert -> {
+                  final String subjectKeyIdentifierHex;
+                  try {
+                    subjectKeyIdentifierHex =
+                        new ByteArray(CertificateParser.computeSubjectKeyIdentifier(cert)).getHex();
+                  } catch (NoSuchAlgorithmException e) {
+                    throw new RuntimeException(
+                        "SHA-1 hash algorithm is not available in JCA context.", e);
+                  }
+
+                  return subjectKeyIdentifierHex;
+                })
+            .collect(Collectors.toSet());
+
+    final Optional<AAGUID> nonzeroAaguid = aaguid.filter(a -> !a.isZero());
+
+    log.debug(
+        "findEntries(certSubjectKeyIdentifiers = {}, aaguid = {})",
+        certSubjectKeyIdentifiers,
+        aaguid);
+
+    if (!nonzeroAaguid.isPresent()) {
+      log.debug("findEntries: ignoring zero AAGUID");
     }
+
+    final Set<MetadataBLOBPayloadEntry> result =
+        getFilteredEntries()
+            .filter(
+                entry ->
+                    (nonzeroAaguid.isPresent()
+                            && (nonzeroAaguid.equals(entry.getAaguid())
+                                || nonzeroAaguid.equals(
+                                    entry
+                                        .getMetadataStatement()
+                                        .flatMap(MetadataStatement::getAaguid))))
+                        || entry.getAttestationCertificateKeyIdentifiers().stream()
+                            .anyMatch(certSubjectKeyIdentifiers::contains)
+                        || entry
+                            .getMetadataStatement()
+                            .map(
+                                stmt ->
+                                    stmt.getAttestationCertificateKeyIdentifiers().stream()
+                                        .anyMatch(certSubjectKeyIdentifiers::contains))
+                            .orElse(false))
+            .collect(Collectors.toSet());
+
+    log.debug(
+        "findEntries(certSubjectKeyIdentifiers = {}, aaguid = {}) => {} matches",
+        certSubjectKeyIdentifiers,
+        aaguid,
+        result.size());
+    return result;
   }
 
   /**
-   * @param attestationCertificateChain
-   * @return
+   * Alias of <code>findEntries(attestationCertificateChain, Optional.empty())</code>.
+   *
+   * @see #findEntries(List, Optional)
    */
-  public Optional<MetadataBLOBPayloadEntry> findEntry(
-      List<X509Certificate> attestationCertificateChain) {
-    for (X509Certificate cert : attestationCertificateChain) {
-      final String subjectKeyIdentifierHex;
-      try {
-        subjectKeyIdentifierHex =
-            new ByteArray(CertificateParser.computeSubjectKeyIdentifier(cert)).getHex();
-      } catch (NoSuchAlgorithmException e) {
-        throw new RuntimeException("SHA-1 hash algorithm is not available in JCA context.", e);
-      }
+  public Set<MetadataBLOBPayloadEntry> findEntries(
+      @NonNull List<X509Certificate> attestationCertificateChain) {
+    return findEntries(attestationCertificateChain, Optional.empty());
+  }
 
-      final Optional<MetadataBLOBPayloadEntry> certSubjectKeyIdentifierMatch =
-          getFilteredEntries()
-              .filter(
-                  entry ->
-                      entry.getAttestationCertificateKeyIdentifiers().stream()
-                              .anyMatch(subjectKeyIdentifierHex::equals)
-                          || entry
-                              .getMetadataStatement()
-                              .map(
-                                  stmt ->
-                                      stmt.getAttestationCertificateKeyIdentifiers().stream()
-                                          .anyMatch(subjectKeyIdentifierHex::equals))
-                              .orElse(false))
-              .findAny();
-
-      if (certSubjectKeyIdentifierMatch.isPresent()) {
-        log.debug("findEntry(certKeyIdentifier = {}) => found", subjectKeyIdentifierHex);
-        return certSubjectKeyIdentifierMatch;
-      } else {
-        log.debug("findEntry(certKeyIdentifier = {}) => not found", subjectKeyIdentifierHex);
-      }
-    }
-
-    return Optional.empty();
+  /**
+   * Alias of <code>findEntries(attestationCertificateChain, Optional.of(aaguid))</code>.
+   *
+   * @see #findEntries(List, Optional)
+   */
+  public Set<MetadataBLOBPayloadEntry> findEntries(
+      @NonNull List<X509Certificate> attestationCertificateChain, @NonNull AAGUID aaguid) {
+    return findEntries(attestationCertificateChain, Optional.of(aaguid));
   }
 
   @Override
   public TrustRootsResult findTrustRoots(
       List<X509Certificate> attestationCertificateChain, Optional<ByteArray> aaguid) {
-    Set<X509Certificate> trustRoots =
-        new HashSet<>(
-            findEntry(attestationCertificateChain)
-                .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
-                .map(MetadataStatement::getAttestationRootCertificates)
-                .orElseGet(Collections::emptySet));
-
-    aaguid.ifPresent(
-        aag ->
-            trustRoots.addAll(
-                findEntry(new AAGUID(aag))
-                    .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
-                    .map(MetadataStatement::getAttestationRootCertificates)
-                    .orElseGet(Collections::emptySet)));
-
     return TrustRootsResult.builder()
-        .trustRoots(trustRoots)
+        .trustRoots(
+            findEntries(attestationCertificateChain, aaguid.map(AAGUID::new)).stream()
+                .map(MetadataBLOBPayloadEntry::getMetadataStatement)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .flatMap(
+                    metadataStatement ->
+                        metadataStatement.getAttestationRootCertificates().stream())
+                .collect(Collectors.toSet()))
         .certStore(certStore)
         .enableRevocationChecking(false)
         .build();
