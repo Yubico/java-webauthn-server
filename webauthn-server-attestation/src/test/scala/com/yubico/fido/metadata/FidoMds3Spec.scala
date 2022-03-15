@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import com.yubico.internal.util.JacksonCodecs
+import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RegistrationResult
 import com.yubico.webauthn.RelyingParty
@@ -163,7 +163,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
             acki: Option[Set[String]] = None,
         ): String = {
           val entry = JacksonCodecs
-            .json()
+            .jsonWithDefaultEnums()
             .readTree(s"""{
              "metadataStatement": {
                "authenticatorVersion": 1,
@@ -200,7 +200,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
               ),
             )
           )
-          JacksonCodecs.json().writeValueAsString(entry)
+          JacksonCodecs.jsonWithDefaultEnums.writeValueAsString(entry)
         }
 
         def makeMds(
@@ -210,7 +210,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
           FidoMetadataService
             .builder()
             .useDownloader(makeDownloader(blobTuple))
-            .filter(filter.asJava)
+            .prefilter(filter.asJava)
             .certStore(
               CertStore.getInstance(
                 "Collection",
@@ -242,7 +242,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
 
         it("Filtering in getFilteredEntries works as expected.") {
           def count(filter: MetadataBLOBPayloadEntry => Boolean): Long =
-            makeMds(blobTuple)(filter).getFilteredEntries.count
+            makeMds(blobTuple)(filter).getPrefilteredEntries.count
 
           implicit class MetadataBLOBPayloadEntryWithAbbreviatedAttestationCertificateKeyIdentifiers(
               entry: MetadataBLOBPayloadEntry
@@ -293,13 +293,13 @@ class FidoMds3Spec extends FunSpec with Matchers {
 
           makeMds(blobTuple)(
             _.getAaid.toScala.contains(aaidA)
-          ).getFilteredEntries.findAny.get.getAaid.get should be(aaidA)
+          ).getPrefilteredEntries.findAny.get.getAaid.get should be(aaidA)
           makeMds(blobTuple)(
             _.getAaguid.toScala.contains(aaguidB)
-          ).getFilteredEntries.findAny.get.getAaguid.get should be(aaguidB)
+          ).getPrefilteredEntries.findAny.get.getAaguid.get should be(aaguidB)
           makeMds(blobTuple)(
             _.getACKI == ackiC
-          ).getFilteredEntries.findAny.get.getAaguid.get should be(aaguidC)
+          ).getPrefilteredEntries.findAny.get.getAaguid.get should be(aaguidC)
         }
 
         it("Filtering correctly impacts the trust verdict in RelyingParty.finishRegistration.") {
@@ -310,11 +310,11 @@ class FidoMds3Spec extends FunSpec with Matchers {
             .build()
           val (pkc, _, attestationChain) =
             TestAuthenticator.createBasicAttestedCredential(
-              aaguid = aaguidA.asBytes(),
+              aaguid = aaguidA.asBytes,
               attestationMaker = AttestationMaker.packed(
                 AttestationSigner.ca(
                   COSEAlgorithmIdentifier.ES256,
-                  aaguid = aaguidA.asBytes(),
+                  aaguid = aaguidA.asBytes,
                   validFrom = CertValidFrom,
                   validTo = CertValidTo,
                 )
@@ -480,7 +480,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
               ]
             }"""))
 
-          mds.getFilteredEntries
+          mds.getPrefilteredEntries
             .map(_.getAaguid.toScala)
             .collect(Collectors.toList[Option[AAGUID]])
             .asScala should equal(List(Some(aaguidA)))
@@ -655,6 +655,273 @@ class FidoMds3Spec extends FunSpec with Matchers {
         .findEntries(Collections.emptyList(), Some(aaguid).toJava)
         .asScala should not be empty
     }
+  }
+
+  describe("The noAttestationKeyCompromise filter") {
+
+    val attestationRoot = TestAuthenticator.generateAttestationCaCertificate()
+    val rootCertBase64 = new ByteArray(attestationRoot._1.getEncoded).getBase64
+
+    val (compromisedCert, _) =
+      TestAuthenticator.generateAttestationCertificate(
+        name = new X500Name("CN=Compromised cert 1"),
+        caCertAndKey = Some(attestationRoot),
+      )
+    val (goodCert, _) = TestAuthenticator.generateAttestationCertificate(
+      name = new X500Name("CN=Good cert"),
+      caCertAndKey = Some(attestationRoot),
+    )
+
+    val (compromisedCert2a, _) =
+      TestAuthenticator.generateAttestationCertificate(
+        name = new X500Name("CN=Compromised cert 2a"),
+        caCertAndKey = Some(attestationRoot),
+      )
+    val (compromisedCert2b, _) =
+      TestAuthenticator.generateAttestationCertificate(
+        name = new X500Name("CN=Compromised cert 2b"),
+        caCertAndKey = Some(attestationRoot),
+      )
+
+    val (unrelatedCert, _) =
+      TestAuthenticator.generateAttestationCertificate(name =
+        new X500Name("CN=Unrelated cert")
+      )
+
+    val compromisedCertKeyIdentifier = new ByteArray(
+      CertificateParser.computeSubjectKeyIdentifier(compromisedCert)
+    ).getHex
+    val compromisedCert2aKeyIdentifier = new ByteArray(
+      CertificateParser.computeSubjectKeyIdentifier(compromisedCert2a)
+    ).getHex
+    val compromisedCert2bKeyIdentifier = new ByteArray(
+      CertificateParser.computeSubjectKeyIdentifier(compromisedCert2b)
+    ).getHex
+    val goodCertKeyIdentifier = new ByteArray(
+      CertificateParser.computeSubjectKeyIdentifier(goodCert)
+    ).getHex
+
+    val aaguidA =
+      new AAGUID(ByteArray.fromHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+    val aaguidB =
+      new AAGUID(ByteArray.fromHex("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))
+    val aaguidC =
+      new AAGUID(ByteArray.fromHex("cccccccccccccccccccccccccccccccc"))
+
+    val blob: MetadataBLOBPayload =
+      JacksonCodecs.jsonWithDefaultEnums.readValue(
+        s"""{
+        "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+        "nextUpdate" : "2022-12-01",
+        "no" : 0,
+        "entries": [
+          {
+            "aaguid": "${aaguidA.asGuidString()}",
+            "attestationCertificateKeyIdentifiers": ["${goodCertKeyIdentifier}"],
+            "metadataStatement": {
+              "aaguid": "${aaguidA.asGuidString()}",
+              "attestationCertificateKeyIdentifiers": ["${goodCertKeyIdentifier}"],
+              "authenticatorVersion": 1,
+              "attachmentHint" : ["internal"],
+              "attestationRootCertificates": ["${rootCertBase64}"],
+              "attestationTypes" : ["basic_full"],
+              "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+              "description" : "Test authenticator",
+              "keyProtection" : ["software"],
+              "matcherProtection" : ["software"],
+              "protocolFamily" : "u2f",
+              "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+              "schema" : 3,
+              "tcDisplay" : [],
+              "upv" : [{ "major" : 1, "minor" : 1 }],
+              "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+            },
+            "statusReports": [],
+            "timeOfLastStatusChange": "2022-02-15"
+          },
+
+          {
+            "aaguid": "${aaguidB.asGuidString()}",
+            "attestationCertificateKeyIdentifiers": ["${compromisedCertKeyIdentifier}"],
+            "metadataStatement": {
+              "aaguid": "${aaguidB.asGuidString()}",
+              "attestationCertificateKeyIdentifiers": ["${compromisedCertKeyIdentifier}"],
+              "authenticatorVersion": 1,
+              "attachmentHint" : ["internal"],
+              "attestationRootCertificates": ["${rootCertBase64}"],
+              "attestationTypes" : ["basic_full"],
+              "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+              "description" : "Test authenticator",
+              "keyProtection" : ["software"],
+              "matcherProtection" : ["software"],
+              "protocolFamily" : "u2f",
+              "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+              "schema" : 3,
+              "tcDisplay" : [],
+              "upv" : [{ "major" : 1, "minor" : 1 }],
+              "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+            },
+            "statusReports": [
+              {
+                "status": "ATTESTATION_KEY_COMPROMISE",
+                "certificate": "${new ByteArray(compromisedCert.getEncoded).getBase64}"
+              }
+            ],
+            "timeOfLastStatusChange": "2022-02-15"
+          },
+
+          {
+            "aaguid": "${aaguidC.asGuidString()}",
+            "attestationCertificateKeyIdentifiers": ["${compromisedCert2aKeyIdentifier}"],
+            "metadataStatement": {
+              "aaguid": "${aaguidC.asGuidString()}",
+              "attestationCertificateKeyIdentifiers": ["${compromisedCert2bKeyIdentifier}"],
+              "authenticatorVersion": 1,
+              "attachmentHint" : ["internal"],
+              "attestationRootCertificates": ["${rootCertBase64}"],
+              "attestationTypes" : ["basic_full"],
+              "authenticationAlgorithms" : ["secp256r1_ecdsa_sha256_raw"],
+              "description" : "Test authenticator",
+              "keyProtection" : ["software"],
+              "matcherProtection" : ["software"],
+              "protocolFamily" : "u2f",
+              "publicKeyAlgAndEncodings" : ["ecc_x962_raw"],
+              "schema" : 3,
+              "tcDisplay" : [],
+              "upv" : [{ "major" : 1, "minor" : 1 }],
+              "userVerificationDetails" : [[{ "userVerificationMethod" : "presence_internal" }]]
+            },
+            "statusReports": [
+              { "status": "ATTESTATION_KEY_COMPROMISE" }
+            ],
+            "timeOfLastStatusChange": "2022-02-15"
+          }
+        ]
+      }""".stripMargin,
+        classOf[MetadataBLOBPayload],
+      )
+
+    it("is enabled by default.") {
+      val mds = FidoMetadataService.builder().useBlob(blob).build()
+
+      mds
+        .findTrustRoots(
+          List(unrelatedCert).asJava,
+          Some(aaguidA.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala should not be empty
+
+      mds
+        .findTrustRoots(
+          List(goodCert).asJava,
+          None.toJava,
+        )
+        .getTrustRoots
+        .asScala should not be empty
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert).asJava,
+          Some(aaguidB.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+
+      mds
+        .findTrustRoots(
+          List(unrelatedCert).asJava,
+          Some(aaguidC.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert).asJava,
+          None.toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert2a).asJava,
+          None.toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert2b).asJava,
+          None.toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+    }
+
+    it("can be enabled explicitly.") {
+      val mds = FidoMetadataService
+        .builder()
+        .useBlob(blob)
+        .filter(FidoMetadataService.Filters.noAttestationKeyCompromise())
+        .build()
+
+      mds
+        .findTrustRoots(
+          List(goodCert).asJava,
+          Some(aaguidA.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala should not be empty
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert).asJava,
+          Some(aaguidB.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+
+      mds
+        .findTrustRoots(
+          List(unrelatedCert).asJava,
+          Some(aaguidC.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala shouldBe empty
+    }
+
+    it("can be overridden with a different filter.") {
+      val mds =
+        FidoMetadataService.builder().useBlob(blob).filter(_ => true).build()
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert).asJava,
+          Some(aaguidB.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala should not be empty
+
+      mds
+        .findTrustRoots(
+          List(compromisedCert).asJava,
+          Some(aaguidB.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala should not be empty
+
+      mds
+        .findTrustRoots(
+          List(unrelatedCert).asJava,
+          Some(aaguidC.asBytes).toJava,
+        )
+        .getTrustRoots
+        .asScala should not be empty
+    }
+
   }
 
 }

@@ -24,6 +24,7 @@
 
 package com.yubico.fido.metadata;
 
+import com.yubico.fido.metadata.FidoMetadataService.Filters.AuthenticatorToBeFiltered;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
@@ -40,6 +41,7 @@ import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -48,8 +50,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -61,10 +65,12 @@ import lombok.extern.slf4j.Slf4j;
  * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
  * setting in {@link RelyingParty}.
  *
- * <p>The metadata service may be configured with a {@link
- * FidoMetadataServiceBuilder#filter(Predicate) filter} to select trusted authenticators. This
- * filter is executed when the {@link FidoMetadataService} instance is constructed. Any metadata
- * entry that matches the filter will be considered trusted.
+ * <p>The metadata service may be configured with a two stages of filters to select trusted
+ * authenticators. The first stage is the {@link FidoMetadataServiceBuilder#prefilter(Predicate)
+ * prefilter} setting, which is executed once when the {@link FidoMetadataService} instance is
+ * constructed. The second stage is the {@link FidoMetadataServiceBuilder#filter(Predicate) filter}
+ * setting, which is executed whenever metadata or trust roots are to be looked up for a given
+ * authenticator. Any metadata entry that satisfies both filters will be considered trusted.
  *
  * <p>Use the {@link #builder() builder} to configure settings, then use the {@link
  * #findEntries(List, AAGUID)} method or its overloads to retrieve metadata entries.
@@ -72,19 +78,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class FidoMetadataService implements AttestationTrustSource {
 
-  private final List<MetadataBLOBPayloadEntry> filteredEntries;
+  private final List<MetadataBLOBPayloadEntry> prefilteredEntries;
+  private final Predicate<AuthenticatorToBeFiltered> filter;
   private final CertStore certStore;
 
   private FidoMetadataService(
       @NonNull MetadataBLOBPayload blob,
-      @NonNull Predicate<MetadataBLOBPayloadEntry> filter,
+      @NonNull Predicate<MetadataBLOBPayloadEntry> prefilter,
+      @NonNull Predicate<AuthenticatorToBeFiltered> filter,
       CertStore certStore) {
-    this.filteredEntries =
+    this.prefilteredEntries =
         Collections.unmodifiableList(
             blob.getEntries().stream()
                 .filter(FidoMetadataService::ignoreInvalidUpdateAvailableAuthenticatorVersion)
-                .filter(filter)
+                .filter(prefilter)
                 .collect(Collectors.toList()));
+    this.filter = filter;
     this.certStore = certStore;
   }
 
@@ -117,7 +126,8 @@ public final class FidoMetadataService implements AttestationTrustSource {
     private final FidoMetadataDownloader downloader;
     private final MetadataBLOBPayload blob;
 
-    private Predicate<MetadataBLOBPayloadEntry> filter = Filters.notRevoked();
+    private Predicate<MetadataBLOBPayloadEntry> prefilter = Filters.notRevoked();
+    private Predicate<AuthenticatorToBeFiltered> filter = Filters.noAttestationKeyCompromise();
     private CertStore certStore = null;
 
     public static class Step1 {
@@ -140,17 +150,56 @@ public final class FidoMetadataService implements AttestationTrustSource {
     }
 
     /**
-     * Set a filter for which metadata entries to include in the data source.
+     * Set a first-stage filter for which metadata entries to include in the data source.
+     *
+     * <p>This prefilter is executed once for each metadata entry during initial construction of a
+     * {@link FidoMetadataService} instance.
      *
      * <p>The default is {@link Filters#notRevoked() Filters.notRevoked()}. Setting a different
      * filter overrides this default; to preserve the "not revoked" condition in addition to the new
      * filter, you must explicitly include the condition in the few filter. For example, by using
      * {@link Filters#allOf(Predicate[]) Filters.allOf(Predicate...)}.
      *
-     * @param filter a {@link Predicate} which returns <code>true</code> for metadata entries to
+     * @param prefilter a {@link Predicate} which returns <code>true</code> for metadata entries to
      *     include in the data source.
+     * @see #filter
+     * @see Filters#allOf(Predicate[])
      */
-    public FidoMetadataServiceBuilder filter(@NonNull Predicate<MetadataBLOBPayloadEntry> filter) {
+    public FidoMetadataServiceBuilder prefilter(
+        @NonNull Predicate<MetadataBLOBPayloadEntry> prefilter) {
+      this.prefilter = prefilter;
+      return this;
+    }
+
+    /**
+     * Set a filter for which metadata entries to allow for a given authenticator during credential
+     * registration and metadata lookup.
+     *
+     * <p>This filter is executed during each execution of {@link #findEntries(List, AAGUID)}, its
+     * overloads, and {@link #findTrustRoots(List, Optional)}.
+     *
+     * <p>The default is {@link Filters#noAttestationKeyCompromise()
+     * Filters.noAttestationKeyCompromise()}. Setting a different filter overrides this default; to
+     * preserve this condition in addition to the new filter, you must explicitly include the
+     * condition in the few filter. For example, by using {@link Filters#allOf(Predicate[])
+     * Filters.allOf(Predicate...)}.
+     *
+     * <p>Note: Returning <code>true</code> in the filter predicate does not automatically make the
+     * authenticator trusted, as its attestation certificate must also correctly chain to a trusted
+     * attestation root. Rather, returning <code>true</code> in the filter predicate allows the
+     * corresponding metadata entry to be used for further trust assessment for that authenticator,
+     * while returning <code>false</code> eliminates the metadata entry (and thus any associated
+     * trust roots) for the ongoing query.
+     *
+     * @param filter a {@link Predicate} which returns <code>true</code> for metadata entries to
+     *     allow for the corresponding authenticator during credential registration and metadata
+     *     lookup.
+     * @see #prefilter(Predicate)
+     * @see AuthenticatorToBeFiltered
+     * @see Filters#allOf(Predicate[])
+     */
+    public FidoMetadataServiceBuilder filter(
+        @NonNull Predicate<FidoMetadataService.Filters.AuthenticatorToBeFiltered> filter) {
       this.filter = filter;
       return this;
     }
@@ -175,9 +224,10 @@ public final class FidoMetadataService implements AttestationTrustSource {
             UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
             InvalidKeyException {
       if (downloader == null && blob != null) {
-        return new FidoMetadataService(blob, filter, certStore);
+        return new FidoMetadataService(blob, prefilter, filter, certStore);
       } else if (downloader != null && blob == null) {
-        return new FidoMetadataService(downloader.loadBlob().getPayload(), filter, certStore);
+        return new FidoMetadataService(
+            downloader.loadBlob().getPayload(), prefilter, filter, certStore);
       } else {
         throw new IllegalStateException(
             "Either downloader or blob must be provided, none was. This should not be possible, please file a bug report.");
@@ -187,24 +237,22 @@ public final class FidoMetadataService implements AttestationTrustSource {
 
   /**
    * Preconfigured filters and utilities for combining filters. See the {@link
-   * FidoMetadataServiceBuilder#filter(Predicate) filter} setting.
+   * FidoMetadataServiceBuilder#prefilter(Predicate) filter} setting.
    *
-   * @see FidoMetadataServiceBuilder#filter(Predicate)
+   * @see FidoMetadataServiceBuilder#prefilter(Predicate)
    */
   public static class Filters {
+
     /**
-     * Combine a set of filters into a filter that requires metadata entries to satisfy ALL of those
-     * filters.
+     * Combine a set of filters into a filter that requires inputs to satisfy ALL of those filters.
      *
-     * <p>If <code>filters</code> is empty, then all metadata entries will satisfy the resulting
-     * filter.
+     * <p>If <code>filters</code> is empty, then all inputs will satisfy the resulting filter.
      *
      * @param filters A set of filters.
-     * @return A filter which only includes metadata entries that satisfy ALL of the given <code>
+     * @return A filter which only accepts inputs that satisfy ALL of the given <code>
      *     filters</code>.
      */
-    public static Predicate<MetadataBLOBPayloadEntry> allOf(
-        Predicate<MetadataBLOBPayloadEntry>... filters) {
+    public static <T> Predicate<T> allOf(Predicate<T>... filters) {
       return (entry) -> Stream.of(filters).allMatch(filter -> filter.test(entry));
     }
 
@@ -221,10 +269,79 @@ public final class FidoMetadataService implements AttestationTrustSource {
               .noneMatch(
                   statusReport -> AuthenticatorStatus.REVOKED.equals(statusReport.getStatus()));
     }
+
+    /**
+     * Accept any authenticator whose matched metadata entry does NOT indicate a compromised
+     * attestation key.
+     *
+     * <p>A metadata entry indicates a compromised attestation key if any of its {@link
+     * MetadataBLOBPayloadEntry#getStatusReports() statusReports} entries has {@link
+     * AuthenticatorStatus#ATTESTATION_KEY_COMPROMISE ATTESTATION_KEY_COMPROMISE} status and either
+     * an empty {@link StatusReport#getCertificate() certificate} field or a {@link
+     * StatusReport#getCertificate() certificate} whose public key appears in the authenticator's
+     * {@link AuthenticatorToBeFiltered#getAttestationCertificateChain() attestation certificate
+     * chain}.
+     *
+     * @see AuthenticatorStatus#ATTESTATION_KEY_COMPROMISE
+     */
+    public static Predicate<AuthenticatorToBeFiltered> noAttestationKeyCompromise() {
+      return (params) ->
+          params.getMetadataEntry().getStatusReports().stream()
+              .filter(
+                  statusReport ->
+                      AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE.equals(
+                          statusReport.getStatus()))
+              .noneMatch(
+                  statusReport ->
+                      !statusReport.getCertificate().isPresent()
+                          || (params.getAttestationCertificateChain().stream()
+                              .anyMatch(
+                                  cert ->
+                                      Arrays.equals(
+                                          statusReport
+                                              .getCertificate()
+                                              .get()
+                                              .getPublicKey()
+                                              .getEncoded(),
+                                          cert.getPublicKey().getEncoded()))));
+    }
+
+    /**
+     * This class encapsulates parameters for filtering authenticators in the {@link
+     * FidoMetadataServiceBuilder#filter(Predicate) filter} setting of {@link FidoMetadataService}.
+     */
+    @Value
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
+    public static class AuthenticatorToBeFiltered {
+
+      /**
+       * The attestation certificate chain from the <a
+       * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-statement">attestation
+       * statement</a> from an authenticator about ot be registered.
+       */
+      @NonNull List<X509Certificate> attestationCertificateChain;
+
+      /**
+       * A metadata BLOB entry that matches the {@link #getAttestationCertificateChain()} and {@link
+       * #getAaguid()} in this same {@link AuthenticatorToBeFiltered} object.
+       */
+      @NonNull MetadataBLOBPayloadEntry metadataEntry;
+
+      AAGUID aaguid;
+
+      /**
+       * The AAGUID from the <a
+       * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attested-credential-data">attested
+       * credential data</a> of a credential about ot be registered.
+       */
+      public Optional<AAGUID> getAaguid() {
+        return Optional.ofNullable(aaguid);
+      }
+    }
   }
 
-  Stream<MetadataBLOBPayloadEntry> getFilteredEntries() {
-    return filteredEntries.stream();
+  Stream<MetadataBLOBPayloadEntry> getPrefilteredEntries() {
+    return prefilteredEntries.stream();
   }
 
   /**
@@ -235,7 +352,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
    * @param aaguid the AAGUID of the authenticator to look up, if available.
    * @return All metadata entries which satisfy ALL of the following:
    *     <ul>
-   *       <li>It satisfies the {@link FidoMetadataServiceBuilder#filter(Predicate) filter}.
+   *       <li>It satisfies the {@link FidoMetadataServiceBuilder#prefilter(Predicate) prefilter}.
    *       <li>It satisfies AT LEAST ONE of the following:
    *           <ul>
    *             <li><code>aaguid</code> is present and equals the {@link
@@ -255,6 +372,8 @@ public final class FidoMetadataService implements AttestationTrustSource {
    *                 MetadataBLOBPayloadEntry#getMetadataStatement() metadata statement}, if any, in
    *                 the metadata entry.
    *           </ul>
+   *       <li>It satisfies the {@link FidoMetadataServiceBuilder#filter(Predicate) filter} together
+   *           with <code>attestationCertificateChain</code> and <code>aaguid</code>.
    *     </ul>
    *
    * @see #findEntries(List)
@@ -268,16 +387,13 @@ public final class FidoMetadataService implements AttestationTrustSource {
         attestationCertificateChain.stream()
             .map(
                 cert -> {
-                  final String subjectKeyIdentifierHex;
                   try {
-                    subjectKeyIdentifierHex =
-                        new ByteArray(CertificateParser.computeSubjectKeyIdentifier(cert)).getHex();
+                    return new ByteArray(CertificateParser.computeSubjectKeyIdentifier(cert))
+                        .getHex();
                   } catch (NoSuchAlgorithmException e) {
                     throw new RuntimeException(
                         "SHA-1 hash algorithm is not available in JCA context.", e);
                   }
-
-                  return subjectKeyIdentifierHex;
                 })
             .collect(Collectors.toSet());
 
@@ -293,7 +409,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
     }
 
     final Set<MetadataBLOBPayloadEntry> result =
-        getFilteredEntries()
+        getPrefilteredEntries()
             .filter(
                 entry ->
                     (nonzeroAaguid.isPresent()
@@ -311,6 +427,13 @@ public final class FidoMetadataService implements AttestationTrustSource {
                                     stmt.getAttestationCertificateKeyIdentifiers().stream()
                                         .anyMatch(certSubjectKeyIdentifiers::contains))
                             .orElse(false))
+            .filter(
+                metadataBLOBPayloadEntry ->
+                    this.filter.test(
+                        new AuthenticatorToBeFiltered(
+                            attestationCertificateChain,
+                            metadataBLOBPayloadEntry,
+                            aaguid.orElse(null))))
             .collect(Collectors.toSet());
 
     log.debug(
