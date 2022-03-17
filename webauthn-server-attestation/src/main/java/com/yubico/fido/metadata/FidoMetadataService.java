@@ -26,6 +26,7 @@ package com.yubico.fido.metadata;
 
 import com.yubico.fido.metadata.FidoMetadataService.Filters.AuthenticatorToBeFiltered;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
@@ -462,6 +463,26 @@ public final class FidoMetadataService implements AttestationTrustSource {
   public Set<MetadataBLOBPayloadEntry> findEntries(
       @NonNull List<X509Certificate> attestationCertificateChain, @NonNull AAGUID aaguid) {
     return findEntries(attestationCertificateChain, Optional.of(aaguid));
+  }
+
+  /**
+   * Find metadata entries matching the credential represented by <code>registrationResult</code>.
+   *
+   * <p>This is an alias of:
+   *
+   * <pre>
+   * registrationResult.getAttestationTrustPath()
+   *   .map(atp -&gt; this.findEntries(atp, new AAGUID(registrationResult.getAaguid())))
+   *   .orElseGet(Collections::emptySet)
+   * </pre>
+   *
+   * @see #findEntries(List, Optional)
+   */
+  public Set<MetadataBLOBPayloadEntry> findEntries(@NonNull RegistrationResult registrationResult) {
+    return registrationResult
+        .getAttestationTrustPath()
+        .map(atp -> findEntries(atp, new AAGUID(registrationResult.getAaguid())))
+        .orElseGet(Collections::emptySet);
   }
 
   @Override
