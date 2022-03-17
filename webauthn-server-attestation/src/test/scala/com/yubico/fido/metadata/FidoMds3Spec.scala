@@ -38,9 +38,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Collections
-import java.util.stream.Collectors
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsScala
@@ -242,7 +240,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
 
         it("Filtering in getFilteredEntries works as expected.") {
           def count(filter: MetadataBLOBPayloadEntry => Boolean): Long =
-            makeMds(blobTuple)(filter).getPrefilteredEntries.count
+            makeMds(blobTuple)(filter).findEntries(_ => true).size
 
           implicit class MetadataBLOBPayloadEntryWithAbbreviatedAttestationCertificateKeyIdentifiers(
               entry: MetadataBLOBPayloadEntry
@@ -293,13 +291,13 @@ class FidoMds3Spec extends FunSpec with Matchers {
 
           makeMds(blobTuple)(
             _.getAaid.toScala.contains(aaidA)
-          ).getPrefilteredEntries.findAny.get.getAaid.get should be(aaidA)
+          ).findEntries(_ => true).forEach(_.getAaid.get should be(aaidA))
           makeMds(blobTuple)(
             _.getAaguid.toScala.contains(aaguidB)
-          ).getPrefilteredEntries.findAny.get.getAaguid.get should be(aaguidB)
+          ).findEntries(_ => true).forEach(_.getAaguid.get should be(aaguidB))
           makeMds(blobTuple)(
             _.getACKI == ackiC
-          ).getPrefilteredEntries.findAny.get.getAaguid.get should be(aaguidC)
+          ).findEntries(_ => true).forEach(_.getAaguid.get should be(aaguidC))
         }
 
         it("Filtering correctly impacts the trust verdict in RelyingParty.finishRegistration.") {
@@ -480,10 +478,10 @@ class FidoMds3Spec extends FunSpec with Matchers {
               ]
             }"""))
 
-          mds.getPrefilteredEntries
-            .map(_.getAaguid.toScala)
-            .collect(Collectors.toList[Option[AAGUID]])
-            .asScala should equal(List(Some(aaguidA)))
+          mds
+            .findEntries(_ => true)
+            .asScala
+            .map(_.getAaguid.toScala) should equal(Set(Some(aaguidA)))
         }
       }
 

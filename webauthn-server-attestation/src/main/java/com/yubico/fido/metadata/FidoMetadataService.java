@@ -43,10 +43,15 @@ import java.security.cert.CertStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -79,7 +84,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class FidoMetadataService implements AttestationTrustSource {
 
-  private final List<MetadataBLOBPayloadEntry> prefilteredEntries;
+  private final HashMap<String, HashSet<MetadataBLOBPayloadEntry>>
+      prefilteredEntriesByCertificateKeyIdentifier;
+  private final HashMap<AAGUID, HashSet<MetadataBLOBPayloadEntry>> prefilteredEntriesByAaguid;
+  private final HashSet<MetadataBLOBPayloadEntry> prefilteredUnindexedEntries;
+
   private final Predicate<AuthenticatorToBeFiltered> filter;
   private final CertStore certStore;
 
@@ -88,12 +97,24 @@ public final class FidoMetadataService implements AttestationTrustSource {
       @NonNull Predicate<MetadataBLOBPayloadEntry> prefilter,
       @NonNull Predicate<AuthenticatorToBeFiltered> filter,
       CertStore certStore) {
-    this.prefilteredEntries =
-        Collections.unmodifiableList(
-            blob.getEntries().stream()
-                .filter(FidoMetadataService::ignoreInvalidUpdateAvailableAuthenticatorVersion)
-                .filter(prefilter)
-                .collect(Collectors.toList()));
+    final List<MetadataBLOBPayloadEntry> prefilteredEntries =
+        blob.getEntries().stream()
+            .filter(FidoMetadataService::ignoreInvalidUpdateAvailableAuthenticatorVersion)
+            .filter(prefilter)
+            .collect(Collectors.toList());
+
+    this.prefilteredEntriesByCertificateKeyIdentifier = buildCkiMap(prefilteredEntries);
+    this.prefilteredEntriesByAaguid = buildAaguidMap(prefilteredEntries);
+
+    this.prefilteredUnindexedEntries = new HashSet<>(prefilteredEntries);
+    for (HashSet<MetadataBLOBPayloadEntry> byAaguid : prefilteredEntriesByAaguid.values()) {
+      prefilteredUnindexedEntries.removeAll(byAaguid);
+    }
+    for (HashSet<MetadataBLOBPayloadEntry> byCski :
+        prefilteredEntriesByCertificateKeyIdentifier.values()) {
+      prefilteredUnindexedEntries.removeAll(byCski);
+    }
+
     this.filter = filter;
     this.certStore = certStore;
   }
@@ -116,6 +137,73 @@ public final class FidoMetadataService implements AttestationTrustSource {
                                 .map(av -> av > authenticatorVersion)
                                 .orElse(false)))
         .orElse(true);
+  }
+
+  private static HashMap<String, HashSet<MetadataBLOBPayloadEntry>> buildCkiMap(
+      @NonNull List<MetadataBLOBPayloadEntry> entries) {
+
+    return entries.stream()
+        .collect(
+            HashMap::new,
+            (result, metadataBLOBPayloadEntry) -> {
+              for (String acki :
+                  metadataBLOBPayloadEntry.getAttestationCertificateKeyIdentifiers()) {
+                result.computeIfAbsent(acki, o -> new HashSet<>()).add(metadataBLOBPayloadEntry);
+              }
+              for (String acki :
+                  metadataBLOBPayloadEntry
+                      .getMetadataStatement()
+                      .map(MetadataStatement::getAttestationCertificateKeyIdentifiers)
+                      .orElseGet(Collections::emptySet)) {
+                result.computeIfAbsent(acki, o -> new HashSet<>()).add(metadataBLOBPayloadEntry);
+              }
+            },
+            (mapA, mapB) -> {
+              for (Map.Entry<String, HashSet<MetadataBLOBPayloadEntry>> e : mapB.entrySet()) {
+                mapA.merge(
+                    e.getKey(),
+                    e.getValue(),
+                    (entriesA, entriesB) -> {
+                      entriesA.addAll(entriesB);
+                      return entriesA;
+                    });
+              }
+            });
+  }
+
+  private static HashMap<AAGUID, HashSet<MetadataBLOBPayloadEntry>> buildAaguidMap(
+      @NonNull List<MetadataBLOBPayloadEntry> entries) {
+
+    return entries.stream()
+        .collect(
+            HashMap::new,
+            (result, metadataBLOBPayloadEntry) -> {
+              final Consumer<AAGUID> appendToAaguidEntry =
+                  aaguid ->
+                      result
+                          .computeIfAbsent(aaguid, o -> new HashSet<>())
+                          .add(metadataBLOBPayloadEntry);
+              metadataBLOBPayloadEntry
+                  .getAaguid()
+                  .filter(aaguid -> !aaguid.isZero())
+                  .ifPresent(appendToAaguidEntry);
+              metadataBLOBPayloadEntry
+                  .getMetadataStatement()
+                  .flatMap(MetadataStatement::getAaguid)
+                  .filter(aaguid -> !aaguid.isZero())
+                  .ifPresent(appendToAaguidEntry);
+            },
+            (mapA, mapB) -> {
+              for (Map.Entry<AAGUID, HashSet<MetadataBLOBPayloadEntry>> e : mapB.entrySet()) {
+                mapA.merge(
+                    e.getKey(),
+                    e.getValue(),
+                    (entriesA, entriesB) -> {
+                      entriesA.addAll(entriesB);
+                      return entriesA;
+                    });
+              }
+            });
   }
 
   public static FidoMetadataServiceBuilder.Step1 builder() {
@@ -343,10 +431,6 @@ public final class FidoMetadataService implements AttestationTrustSource {
     }
   }
 
-  Stream<MetadataBLOBPayloadEntry> getPrefilteredEntries() {
-    return prefilteredEntries.stream();
-  }
-
   /**
    * Look up metadata entries matching a given attestation certificate chain or AAGUID.
    *
@@ -412,24 +496,18 @@ public final class FidoMetadataService implements AttestationTrustSource {
     }
 
     final Set<MetadataBLOBPayloadEntry> result =
-        getPrefilteredEntries()
-            .filter(
-                entry ->
-                    (nonzeroAaguid.isPresent()
-                            && (nonzeroAaguid.equals(entry.getAaguid())
-                                || nonzeroAaguid.equals(
-                                    entry
-                                        .getMetadataStatement()
-                                        .flatMap(MetadataStatement::getAaguid))))
-                        || entry.getAttestationCertificateKeyIdentifiers().stream()
-                            .anyMatch(certSubjectKeyIdentifiers::contains)
-                        || entry
-                            .getMetadataStatement()
-                            .map(
-                                stmt ->
-                                    stmt.getAttestationCertificateKeyIdentifiers().stream()
-                                        .anyMatch(certSubjectKeyIdentifiers::contains))
-                            .orElse(false))
+        Stream.concat(
+                nonzeroAaguid
+                    .map(prefilteredEntriesByAaguid::get)
+                    .map(Collection::stream)
+                    .orElseGet(Stream::empty),
+                certSubjectKeyIdentifiers.stream()
+                    .flatMap(
+                        cski ->
+                            Optional.ofNullable(
+                                    prefilteredEntriesByCertificateKeyIdentifier.get(cski))
+                                .map(Collection::stream)
+                                .orElseGet(Stream::empty)))
             .filter(
                 metadataBLOBPayloadEntry ->
                     this.filter.test(
@@ -494,6 +572,31 @@ public final class FidoMetadataService implements AttestationTrustSource {
    */
   public Set<MetadataBLOBPayloadEntry> findEntries(@NonNull AAGUID aaguid) {
     return findEntries(Collections.emptyList(), aaguid);
+  }
+
+  /**
+   * Retrieve metadata entries matching the given filter.
+   *
+   * <p>Note: The result MAY include fewer results than the number of times the <code>filter</code>
+   * returned <code>true</code>, because of possible duplication in the underlying data store.
+   *
+   * @param filter a {@link Predicate} which returns <code>true</code> for metadata entries to
+   *     include in the result.
+   * @return All metadata entries which which satisfy the {@link
+   *     FidoMetadataServiceBuilder#prefilter(Predicate) prefilter} AND for which the <code>filter
+   *     </code> returns <code>true</code>.
+   * @see #findEntries(List, Optional)
+   */
+  public Set<MetadataBLOBPayloadEntry> findEntries(
+      @NonNull Predicate<MetadataBLOBPayloadEntry> filter) {
+    return Stream.concat(
+            Stream.concat(
+                prefilteredEntriesByAaguid.values().stream().flatMap(Collection::stream),
+                prefilteredEntriesByCertificateKeyIdentifier.values().stream()
+                    .flatMap(Collection::stream)),
+            prefilteredUnindexedEntries.stream())
+        .filter(filter)
+        .collect(Collectors.toSet());
   }
 
   @Override
