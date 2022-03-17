@@ -487,6 +487,15 @@ public final class FidoMetadataService implements AttestationTrustSource {
         .orElseGet(Collections::emptySet);
   }
 
+  /**
+   * Find metadata entries matching the given AAGUID.
+   *
+   * @see #findEntries(List, Optional)
+   */
+  public Set<MetadataBLOBPayloadEntry> findEntries(@NonNull AAGUID aaguid) {
+    return findEntries(Collections.emptyList(), aaguid);
+  }
+
   @Override
   public TrustRootsResult findTrustRoots(
       List<X509Certificate> attestationCertificateChain, Optional<ByteArray> aaguid) {
