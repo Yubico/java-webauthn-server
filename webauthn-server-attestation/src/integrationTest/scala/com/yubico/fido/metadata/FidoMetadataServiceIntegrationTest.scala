@@ -48,7 +48,9 @@ class FidoMetadataServiceIntegrationTest
         .useBlobCache(() => Optional.empty(), _ => {})
         .build()
       val fidoMds =
-        Try(FidoMetadataService.builder().useDownloader(downloader).build())
+        Try(
+          FidoMetadataService.builder().useBlob(downloader.loadBlob()).build()
+        )
 
       val attachmentHintsUsb =
         Set(ATTACHMENT_HINT_EXTERNAL, ATTACHMENT_HINT_WIRED)

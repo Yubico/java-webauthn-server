@@ -124,8 +124,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   public static class FidoMetadataServiceBuilder {
-    private final FidoMetadataDownloader downloader;
-    private final MetadataBLOBPayload blob;
+    @NonNull private final MetadataBLOBPayload blob;
 
     private Predicate<MetadataBLOBPayloadEntry> prefilter = Filters.notRevoked();
     private Predicate<AuthenticatorToBeFiltered> filter = Filters.noAttestationKeyCompromise();
@@ -133,20 +132,31 @@ public final class FidoMetadataService implements AttestationTrustSource {
 
     public static class Step1 {
       /**
-       * Use the given <code>downloader</code> to retrieve the data source.
+       * Use payload of the given <code>blob</code> as the data source.
        *
-       * <p>The <code>downloader</code>'s {@link FidoMetadataDownloader#loadBlob()} method will be
-       * called in the {@link #build()} method to construct the {@link FidoMetadataService}
-       * instance. Once the {@link FidoMetadataService} is constructed, the <code>downloader</code>
-       * will not be used again.
+       * <p>The {@link FidoMetadataDownloader#loadBlob()} method returns a value suitable for use
+       * here.
+       *
+       * <p>This is an alias of <code>useBlob(blob.getPayload()</code>.
+       *
+       * @see FidoMetadataDownloader#loadBlob()
+       * @see #useBlob(MetadataBLOBPayload)
        */
-      public FidoMetadataServiceBuilder useDownloader(@NonNull FidoMetadataDownloader downloader) {
-        return new FidoMetadataServiceBuilder(downloader, null);
+      public FidoMetadataServiceBuilder useBlob(@NonNull MetadataBLOB blob) {
+        return useBlob(blob.getPayload());
       }
 
-      /** Use the given <code>blob</code> as the data source. */
-      public FidoMetadataServiceBuilder useBlob(@NonNull MetadataBLOBPayload blob) {
-        return new FidoMetadataServiceBuilder(null, blob);
+      /**
+       * Use the given <code>blobPayload</code> as the data source.
+       *
+       * <p>The {@link FidoMetadataDownloader#loadBlob()} method returns a value whose {@link
+       * MetadataBLOB#getPayload() .getPayload()} result is suitable for use here.
+       *
+       * @see FidoMetadataDownloader#loadBlob()
+       * @see #useBlob(MetadataBLOB)
+       */
+      public FidoMetadataServiceBuilder useBlob(@NonNull MetadataBLOBPayload blobPayload) {
+        return new FidoMetadataServiceBuilder(blobPayload);
       }
     }
 
@@ -224,15 +234,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
             DigestException, FidoMetadataDownloaderException, CertificateException,
             UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
             InvalidKeyException {
-      if (downloader == null && blob != null) {
-        return new FidoMetadataService(blob, prefilter, filter, certStore);
-      } else if (downloader != null && blob == null) {
-        return new FidoMetadataService(
-            downloader.loadBlob().getPayload(), prefilter, filter, certStore);
-      } else {
-        throw new IllegalStateException(
-            "Either downloader or blob must be provided, none was. This should not be possible, please file a bug report.");
-      }
+      return new FidoMetadataService(blob, prefilter, filter, certStore);
     }
   }
 
