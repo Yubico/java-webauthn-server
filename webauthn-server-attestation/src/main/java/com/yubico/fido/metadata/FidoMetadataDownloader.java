@@ -75,6 +75,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -585,12 +586,27 @@ public final class FidoMetadataDownloader {
      *
      * If not set, the system default certificate store will be used.
      */
-    public FidoMetadataDownloaderBuilder trustHttpsCerts(X509Certificate... certificates)
-        throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException {
-      KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-      trustStore.load(null);
+    public FidoMetadataDownloaderBuilder trustHttpsCerts(@NonNull X509Certificate... certificates) {
+      final KeyStore trustStore;
+      try {
+        trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        trustStore.load(null);
+      } catch (KeyStoreException
+          | IOException
+          | NoSuchAlgorithmException
+          | CertificateException e) {
+        throw new RuntimeException(
+            "Failed to instantiate or initialize KeyStore. This should not be possible, please file a bug report.",
+            e);
+      }
       for (X509Certificate cert : certificates) {
-        trustStore.setCertificateEntry(cert.getSubjectDN().getName(), cert);
+        try {
+          trustStore.setCertificateEntry(UUID.randomUUID().toString(), cert);
+        } catch (KeyStoreException e) {
+          throw new RuntimeException(
+              "Failed to import HTTPS cert into KeyStore. This should not be possible, please file a bug report.",
+              e);
+        }
       }
       this.httpsTrustStore = trustStore;
 
@@ -840,8 +856,9 @@ public final class FidoMetadataDownloader {
 
           httpsConn.setSSLSocketFactory(sslContext.getSocketFactory());
         } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-          // TODO don't do this
-          throw new RuntimeException(e);
+          throw new RuntimeException(
+              "Failed to initialize HTTPS trust store. This should be impossible, please file a bug report.",
+              e);
         }
       }
       httpsConn.setRequestMethod("GET");
