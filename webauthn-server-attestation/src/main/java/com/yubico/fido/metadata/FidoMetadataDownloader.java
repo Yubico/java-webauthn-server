@@ -67,7 +67,7 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -895,21 +895,15 @@ public final class FidoMetadataDownloader {
                 "x5u in BLOB header must have same origin as the URL the BLOB was downloaded from. Expected origin of: %s ; found: %s",
                 blobUrl, x5u));
       }
-      certChain =
-          Arrays.stream(
-                  new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
-                      .trim()
-                      .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+"))
-              .map(
-                  pem -> {
-                    try {
-                      return CertificateParser.parsePem(pem);
-                    } catch (CertificateException e) {
-                      // TODO don't do this
-                      throw new RuntimeException(e);
-                    }
-                  })
-              .collect(Collectors.toList());
+      List<X509Certificate> certs = new ArrayList<>();
+      for (String pem :
+          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
+              .trim()
+              .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
+        X509Certificate x509Certificate = CertificateParser.parsePem(pem);
+        certs.add(x509Certificate);
+      }
+      certChain = certs;
     } else if (header.getX5c().isPresent()) {
       certChain = header.getX5c().get();
     } else {
