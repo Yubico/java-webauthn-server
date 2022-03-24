@@ -1,5 +1,10 @@
 == Version 2.0.0 (unreleased) ==
 
+This release removes deprecated APIs and changes some defaults to better align
+with the L2 version of the WebAuthn spec. It also adds a new major feature:
+optional integration with the FIDO Metadata Service for retrieving authenticator
+metadata and attestation trust roots. See below for details.
+
 `webauthn-server-core`:
 
 Breaking changes:
