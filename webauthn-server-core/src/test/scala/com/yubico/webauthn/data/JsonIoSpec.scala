@@ -47,6 +47,8 @@ import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
@@ -346,6 +348,44 @@ class JsonIoSpec
           an[ValueInstantiationException] should be thrownBy {
             json.readValue(reencoded, tpe)
           }
+        }
+      }
+
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
+    }
+
+    it("allows and ignores an authenticatorAttachment attribute.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
+        forAll(
+          a.arbitrary,
+          Gen.oneOf(
+            arbitrary[AuthenticatorAttachment].map(_.toJsonString),
+            arbitrary[String],
+          ),
+        ) { (value: P, authenticatorAttachment: String) =>
+          val tree: ObjectNode = json.valueToTree(value)
+          tree.set(
+            "authenticatorAttachment",
+            new TextNode(authenticatorAttachment),
+          )
+          val encoded = json.writeValueAsString(tree)
+          println(authenticatorAttachment)
+          val decoded = json.readValue(encoded, tpe)
+
+          decoded should equal(value)
         }
       }
 

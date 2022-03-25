@@ -1,3 +1,11 @@
+== Version 1.12.3 (unreleased) ==
+
+Fixes:
+
+* Fixed `PublicKeyCredential` failing to parse from JSON if an
+  `"authenticatorAttachment"` attribute was present.
+
+
 == Version 1.12.2 ==
 
 Fixes:
