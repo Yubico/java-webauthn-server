@@ -4,6 +4,8 @@ Fixes:
 
 * Fixed `PublicKeyCredential` failing to parse from JSON if an
   `"authenticatorAttachment"` attribute was present.
+* Bumped Jackson dependency to version [2.13.2.1,3) in response to
+  CVE-2020-36518
 
 
 == Version 1.12.2 ==
