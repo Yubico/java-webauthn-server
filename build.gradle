@@ -46,9 +46,13 @@ wrapper {
 dependencies {
   constraints {
     api('com.augustcellars.cose:cose-java:[1.0.0,2)')
-    api('com.fasterxml.jackson.core:jackson-databind:[2.11.0,3)')
-    api('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:[2.11.0,3)')
-    api('com.fasterxml.jackson.datatype:jackson-datatype-jdk8:[2.11.0,3)')
+
+    // Jackson versions restricted to pre-2.13.2.1 because of (probably temporary) transitive dependency resolution issues
+    // TODO: Revert to pre-3.0 once above issues are resolved
+    api('com.fasterxml.jackson.core:jackson-databind:[2.11.0,2.13.2.1)')
+    api('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:[2.11.0,2.13.2.1)')
+    api('com.fasterxml.jackson.datatype:jackson-datatype-jdk8:[2.11.0,2.13.2.1)')
+
     api('com.google.guava:guava:[24.1.1,31)')
     api('com.upokecenter:cbor:[4.5.1,5)')
     api('javax.ws.rs:javax.ws.rs-api:[2.1,3)')
