@@ -1159,7 +1159,6 @@ class RelyingPartyRegistrationSpec
                 ),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
-                Nil.asJava,
               )
 
               step.validations shouldBe a[Failure[_]]
@@ -1178,7 +1177,6 @@ class RelyingPartyRegistrationSpec
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
-                Nil.asJava,
               )
 
               step.validations shouldBe a[Failure[_]]
@@ -1224,7 +1222,6 @@ class RelyingPartyRegistrationSpec
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
                 Some(new FidoU2fAttestationStatementVerifier).asJava,
-                Nil.asJava,
               )
 
               step.validations shouldBe a[Failure[_]]
@@ -1376,7 +1373,6 @@ class RelyingPartyRegistrationSpec
                   Crypto.sha256(testData.clientDataJsonBytes),
                   new AttestationObject(testData.attestationObject),
                   Some(new NoneAttestationStatementVerifier).asJava,
-                  Nil.asJava,
                 )
 
                 step.validations shouldBe a[Success[_]]

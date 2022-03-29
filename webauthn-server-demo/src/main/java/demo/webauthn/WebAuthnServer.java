@@ -560,23 +560,20 @@ public class WebAuthnServer {
 
     private final String username;
     private final ByteArray sessionToken;
-    private final List<String> warnings;
 
     public SuccessfulAuthenticationResult(
         AssertionRequestWrapper request,
         AssertionResponse response,
         Collection<CredentialRegistration> registrations,
         String username,
-        ByteArray sessionToken,
-        List<String> warnings) {
+        ByteArray sessionToken) {
       this(
           request,
           response,
           registrations,
           response.getCredential().getResponse().getParsedAuthenticatorData(),
           username,
-          sessionToken,
-          warnings);
+          sessionToken);
     }
   }
 
@@ -624,8 +621,7 @@ public class WebAuthnServer {
                   response,
                   userStorage.getRegistrationsByUsername(result.getUsername()),
                   result.getUsername(),
-                  sessions.createSession(result.getUserHandle()),
-                  result.getWarnings()));
+                  sessions.createSession(result.getUserHandle())));
         } else {
           return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));
         }

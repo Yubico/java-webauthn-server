@@ -107,8 +107,6 @@
  *       com.yubico.webauthn.RegistrationResult#getPublicKeyCose() publicKeyCose} as a new
  *       credential for the user. The {@link com.yubico.webauthn.CredentialRepository} will need to
  *       look these up for authentication.
- *   <li>Inspect the {@link com.yubico.webauthn.RegistrationResult#getWarnings() warnings} - ideally
- *       there should of course be none.
  *   <li>If you care about authenticator attestation, use the {@link
  *       com.yubico.webauthn.RegistrationResult#isAttestationTrusted() attestationTrusted}, {@link
  *       com.yubico.webauthn.RegistrationResult#getAttestationType() attestationType} and {@link
@@ -170,8 +168,6 @@
  *       com.yubico.webauthn.AssertionResult#getCredentialId() credentialId} result) to equal the
  *       value returned in the {@link com.yubico.webauthn.AssertionResult#getSignatureCount()
  *       signatureCount} result.
- *   <li>Inspect the {@link com.yubico.webauthn.RegistrationResult#getWarnings() warnings} - ideally
- *       there should of course be none.
  * </ul>
  */
 package com.yubico.webauthn;

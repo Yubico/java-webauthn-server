@@ -32,7 +32,6 @@ object Generators {
       success <- arbitrary[Boolean]
       userHandle <- arbitrary[ByteArray]
       username <- arbitrary[String]
-      warnings <- arbitrary[java.util.List[String]]
     } yield AssertionResult
       .builder()
       .success(success)
@@ -43,7 +42,6 @@ object Generators {
       .signatureCounterValid(signatureCounterValid)
       .clientExtensionOutputs(clientExtensionOutputs)
       .assertionExtensionOutputs(authenticatorExtensionOutputs.orNull)
-      .warnings(warnings)
       .build()
   )
 
@@ -59,7 +57,6 @@ object Generators {
         keyId <- arbitrary[PublicKeyCredentialDescriptor]
         publicKeyCose <- arbitrary[ByteArray]
         signatureCount <- arbitrary[Long]
-        warnings <- arbitrary[java.util.List[String]]
       } yield RegistrationResult
         .builder()
         .keyId(keyId)
@@ -70,7 +67,6 @@ object Generators {
         .clientExtensionOutputs(clientExtensionOutputs)
         .authenticatorExtensionOutputs(authenticatorExtensionOutputs.orNull)
         .attestationMetadata(attestationMetadata)
-        .warnings(warnings)
         .build()
     )
 

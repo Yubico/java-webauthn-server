@@ -750,7 +750,6 @@ class RelyingPartyAssertionSpec
               Defaults.username,
               Defaults.userHandle,
               None.asJava,
-              Nil.asJava,
             )
 
             step.validations shouldBe a[Failure[_]]

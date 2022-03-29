@@ -18,6 +18,8 @@ Breaking changes:
   dependent project may need to add additional dependencies and configure JCA
   providers externally.
 * Enum value `AttestationType.ECDAA` removed without replacement.
+* Deleted methods `RegistrationResult.getWarnings()` and
+  `AssertionResult.getWarnings()` since they are now always empty.
 
 
 == Version 1.12.4 (unreleased) ==

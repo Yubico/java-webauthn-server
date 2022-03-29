@@ -29,7 +29,6 @@ import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 
 import COSE.CoseException;
 import com.upokecenter.cbor.CBORObject;
-import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.MetadataService;
 import com.yubico.webauthn.data.AttestationObject;
@@ -50,7 +49,6 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -94,21 +92,8 @@ final class FinishRegistrationSteps {
 
     void validate();
 
-    List<String> getPrevWarnings();
-
     default Optional<RegistrationResult> result() {
       return Optional.empty();
-    }
-
-    default List<String> getWarnings() {
-      return Collections.emptyList();
-    }
-
-    default List<String> allWarnings() {
-      List<String> result = new ArrayList<>(getPrevWarnings().size() + getWarnings().size());
-      result.addAll(getPrevWarnings());
-      result.addAll(getWarnings());
-      return CollectionUtil.immutableList(result);
     }
 
     default Next next() {
@@ -141,11 +126,6 @@ final class FinishRegistrationSteps {
       return new Step7(clientData());
     }
 
-    @Override
-    public List<String> getPrevWarnings() {
-      return Collections.emptyList();
-    }
-
     public CollectedClientData clientData() {
       return response.getResponse().getClientData();
     }
@@ -154,8 +134,6 @@ final class FinishRegistrationSteps {
   @Value
   class Step7 implements Step<Step8> {
     private final CollectedClientData clientData;
-
-    private List<String> warnings = new ArrayList<>(0);
 
     @Override
     public void validate() {
@@ -168,24 +146,13 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step8 nextStep() {
-      return new Step8(clientData, allWarnings());
-    }
-
-    @Override
-    public List<String> getPrevWarnings() {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public List<String> getWarnings() {
-      return CollectionUtil.immutableList(warnings);
+      return new Step8(clientData);
     }
   }
 
   @Value
   class Step8 implements Step<Step9> {
     private final CollectedClientData clientData;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -194,14 +161,13 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step9 nextStep() {
-      return new Step9(clientData, allWarnings());
+      return new Step9(clientData);
     }
   }
 
   @Value
   class Step9 implements Step<Step10> {
     private final CollectedClientData clientData;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -213,14 +179,13 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step10 nextStep() {
-      return new Step10(clientData, allWarnings());
+      return new Step10(clientData);
     }
   }
 
   @Value
   class Step10 implements Step<Step11> {
     private final CollectedClientData clientData;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -229,14 +194,12 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step11 nextStep() {
-      return new Step11(allWarnings());
+      return new Step11();
     }
   }
 
   @Value
   class Step11 implements Step<Step12> {
-    private final List<String> prevWarnings;
-
     @Override
     public void validate() {
       assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
@@ -244,7 +207,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step12 nextStep() {
-      return new Step12(clientDataJsonHash(), allWarnings());
+      return new Step12(clientDataJsonHash());
     }
 
     public ByteArray clientDataJsonHash() {
@@ -255,7 +218,6 @@ final class FinishRegistrationSteps {
   @Value
   class Step12 implements Step<Step13> {
     private final ByteArray clientDataJsonHash;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -264,7 +226,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step13 nextStep() {
-      return new Step13(clientDataJsonHash, attestation(), allWarnings());
+      return new Step13(clientDataJsonHash, attestation());
     }
 
     public AttestationObject attestation() {
@@ -276,7 +238,6 @@ final class FinishRegistrationSteps {
   class Step13 implements Step<Step14> {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -288,7 +249,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step14 nextStep() {
-      return new Step14(clientDataJsonHash, attestation, allWarnings());
+      return new Step14(clientDataJsonHash, attestation);
     }
   }
 
@@ -296,7 +257,6 @@ final class FinishRegistrationSteps {
   class Step14 implements Step<Step15> {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -307,7 +267,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step15 nextStep() {
-      return new Step15(clientDataJsonHash, attestation, allWarnings());
+      return new Step15(clientDataJsonHash, attestation);
     }
   }
 
@@ -315,7 +275,6 @@ final class FinishRegistrationSteps {
   class Step15 implements Step<Step16> {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -332,7 +291,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step16 nextStep() {
-      return new Step16(clientDataJsonHash, attestation, allWarnings());
+      return new Step16(clientDataJsonHash, attestation);
     }
   }
 
@@ -340,7 +299,6 @@ final class FinishRegistrationSteps {
   class Step16 implements Step<Step18> {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -371,7 +329,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step18 nextStep() {
-      return new Step18(clientDataJsonHash, attestation, allWarnings());
+      return new Step18(clientDataJsonHash, attestation);
     }
   }
 
@@ -381,15 +339,13 @@ final class FinishRegistrationSteps {
   class Step18 implements Step<Step19> {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {}
 
     @Override
     public Step19 nextStep() {
-      return new Step19(
-          clientDataJsonHash, attestation, attestationStatementVerifier(), allWarnings());
+      return new Step19(clientDataJsonHash, attestation, attestationStatementVerifier());
     }
 
     public String format() {
@@ -419,7 +375,6 @@ final class FinishRegistrationSteps {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
     private final Optional<AttestationStatementVerifier> attestationStatementVerifier;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -435,7 +390,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step20 nextStep() {
-      return new Step20(attestation, attestationType(), attestationTrustPath(), allWarnings());
+      return new Step20(attestation, attestationType(), attestationTrustPath());
     }
 
     public AttestationType attestationType() {
@@ -483,15 +438,13 @@ final class FinishRegistrationSteps {
     private final AttestationObject attestation;
     private final AttestationType attestationType;
     private final Optional<List<X509Certificate>> attestationTrustPath;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {}
 
     @Override
     public Step21 nextStep() {
-      return new Step21(
-          attestation, attestationType, attestationTrustPath, trustResolver(), allWarnings());
+      return new Step21(attestation, attestationType, attestationTrustPath, trustResolver());
     }
 
     public Optional<AttestationTrustResolver> trustResolver() {
@@ -532,7 +485,6 @@ final class FinishRegistrationSteps {
     private final AttestationType attestationType;
     private final Optional<List<X509Certificate>> attestationTrustPath;
     private final Optional<AttestationTrustResolver> trustResolver;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -570,8 +522,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Step22 nextStep() {
-      return new Step22(
-          attestationType, attestationMetadata(), attestationTrusted(), allWarnings());
+      return new Step22(attestationType, attestationMetadata(), attestationTrusted());
     }
 
     public boolean attestationTrusted() {
@@ -598,7 +549,7 @@ final class FinishRegistrationSteps {
               return Optional.of(
                   tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList)));
             } catch (CertificateEncodingException e) {
-              log.info("Failed to resolve trust anchor for attestation: {}", attestation, e);
+              log.debug("Failed to resolve trust anchor for attestation: {}", attestation, e);
               return Optional.empty();
             }
           });
@@ -610,7 +561,6 @@ final class FinishRegistrationSteps {
     private final AttestationType attestationType;
     private final Optional<Attestation> attestationMetadata;
     private final boolean attestationTrusted;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -622,7 +572,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public Finished nextStep() {
-      return new Finished(attestationType, attestationMetadata, attestationTrusted, allWarnings());
+      return new Finished(attestationType, attestationMetadata, attestationTrusted);
     }
   }
 
@@ -634,7 +584,6 @@ final class FinishRegistrationSteps {
     private final AttestationType attestationType;
     private final Optional<Attestation> attestationMetadata;
     private final boolean attestationTrusted;
-    private final List<String> prevWarnings;
 
     @Override
     public void validate() {
@@ -669,7 +618,6 @@ final class FinishRegistrationSteps {
                           response.getResponse().getParsedAuthenticatorData())
                       .orElse(null))
               .attestationMetadata(attestationMetadata)
-              .warnings(allWarnings())
               .build());
     }
 

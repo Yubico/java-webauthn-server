@@ -26,7 +26,6 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
@@ -34,8 +33,6 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -102,9 +99,6 @@ public class RegistrationResult {
    */
   private final long signatureCount;
 
-  /** Zero or more human-readable messages about non-critical issues. */
-  @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
-
   /**
    * Additional information about the authenticator, identified based on the attestation
    * certificate.
@@ -130,7 +124,6 @@ public class RegistrationResult {
       @NonNull @JsonProperty("attestationType") AttestationType attestationType,
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
       @JsonProperty("signatureCount") Long signatureCount,
-      @NonNull @JsonProperty("warnings") List<String> warnings,
       @JsonProperty("attestationMetadata") Attestation attestationMetadata,
       @JsonProperty("clientExtensionOutputs")
           ClientRegistrationExtensionOutputs clientExtensionOutputs,
@@ -141,7 +134,6 @@ public class RegistrationResult {
     this.attestationType = attestationType;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount == null ? 0 : signatureCount;
-    this.warnings = CollectionUtil.immutableList(warnings);
     this.attestationMetadata = attestationMetadata;
     this.clientExtensionOutputs =
         clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()

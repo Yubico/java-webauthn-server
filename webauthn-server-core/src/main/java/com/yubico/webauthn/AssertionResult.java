@@ -26,14 +26,12 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserIdentity;
-import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -109,9 +107,6 @@ public class AssertionResult {
 
   private final AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs;
 
-  /** Zero or more human-readable messages about non-critical issues. */
-  @NonNull private final List<String> warnings;
-
   @JsonCreator
   private AssertionResult(
       @JsonProperty("success") boolean success,
@@ -123,8 +118,7 @@ public class AssertionResult {
       @JsonProperty("clientExtensionOutputs")
           ClientAssertionExtensionOutputs clientExtensionOutputs,
       @JsonProperty("authenticatorExtensionOutputs")
-          AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs,
-      @NonNull @JsonProperty("warnings") List<String> warnings) {
+          AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
     this.success = success;
     this.credentialId = credentialId;
     this.userHandle = userHandle;
@@ -136,7 +130,6 @@ public class AssertionResult {
             ? null
             : clientExtensionOutputs;
     this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
-    this.warnings = CollectionUtil.immutableList(warnings);
   }
 
   /**
@@ -230,16 +223,9 @@ public class AssertionResult {
       }
 
       public class Step8 {
-        public Step9 assertionExtensionOutputs(
+        public AssertionResultBuilder assertionExtensionOutputs(
             AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
-          builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
-          return new Step9();
-        }
-      }
-
-      public class Step9 {
-        public AssertionResultBuilder warnings(List<String> warnings) {
-          return builder.warnings(warnings);
+          return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
         }
       }
     }
