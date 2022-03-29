@@ -598,25 +598,10 @@ final class FinishRegistrationSteps {
               return Optional.of(
                   tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList)));
             } catch (CertificateEncodingException e) {
-              log.debug("Failed to resolve trust anchor for attestation: {}", attestation, e);
+              log.info("Failed to resolve trust anchor for attestation: {}", attestation, e);
               return Optional.empty();
             }
           });
-    }
-
-    @Override
-    public List<String> getWarnings() {
-      return trustResolver
-          .map(
-              tr -> {
-                try {
-                  tr.resolveTrustAnchor(attestationTrustPath.orElseGet(Collections::emptyList));
-                  return Collections.<String>emptyList();
-                } catch (CertificateEncodingException e) {
-                  return Collections.singletonList("Failed to resolve trust anchor: " + e);
-                }
-              })
-          .orElseGet(Collections::emptyList);
     }
   }
 
