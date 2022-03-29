@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.TestAuthenticator.AttestationSigner
@@ -58,6 +57,7 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -752,7 +752,7 @@ case class RegistrationTestData(
         ).asJava
       )
       .extensions(requestedExtensions)
-      .authenticatorSelection(authenticatorSelection.asJava)
+      .authenticatorSelection(authenticatorSelection.toJava)
       .build()
 
   def response: PublicKeyCredential[

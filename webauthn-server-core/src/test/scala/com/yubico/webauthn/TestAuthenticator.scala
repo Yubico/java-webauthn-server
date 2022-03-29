@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
@@ -84,6 +83,7 @@ import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Date
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 import scala.util.Try
 
 object TestAuthenticator {
@@ -545,7 +545,7 @@ object TestAuthenticator {
           alg,
         )
       )
-      .userHandle(userHandle.asJava)
+      .userHandle(userHandle.toJava)
       .build()
 
     PublicKeyCredential

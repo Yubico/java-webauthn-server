@@ -1,6 +1,5 @@
 package com.yubico.scalacheck.gen
 
-import com.yubico.internal.util.scala.JavaConverters._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -8,13 +7,14 @@ import org.scalacheck.Gen
 import java.net.URL
 import java.util.Optional
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 
 object JavaGenerators {
 
   implicit def arbitraryOptional[A](implicit
       a: Arbitrary[A]
   ): Arbitrary[Optional[A]] =
-    Arbitrary(Gen.option(a.arbitrary).map(_.asJava))
+    Arbitrary(Gen.option(a.arbitrary).map(_.toJava))
 
   implicit def arbitraryList[A](implicit
       a: Arbitrary[List[A]]

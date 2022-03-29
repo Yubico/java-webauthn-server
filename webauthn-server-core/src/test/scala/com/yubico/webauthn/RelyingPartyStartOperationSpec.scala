@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn
 
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationConveyancePreference
@@ -52,6 +51,8 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.util.Optional
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
+import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyStartOperationSpec
@@ -73,8 +74,8 @@ class RelyingPartyStartOperationSpec
       override def getUsernameForUserHandle(
           userHandle: ByteArray
       ): Optional[String] =
-        if (userHandle == userId.getId) Some(userId.getName).asJava
-        else None.asJava
+        if (userHandle == userId.getId) Some(userId.getName).toJava
+        else None.toJava
       override def lookup(
           credentialId: ByteArray,
           userHandle: ByteArray,
@@ -129,7 +130,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getExcludeCredentials.asScala.map(_.asScala) should equal(
+        result.getExcludeCredentials.toScala.map(_.asScala) should equal(
           Some(credentials)
         )
       }
@@ -164,7 +165,7 @@ class RelyingPartyStartOperationSpec
           .authenticatorSelection(authnrSel)
           .build()
       )
-      pkcco.getAuthenticatorSelection.asScala should equal(Some(authnrSel))
+      pkcco.getAuthenticatorSelection.toScala should equal(Some(authnrSel))
     }
 
     it("allows setting authenticatorSelection with an Optional value.") {
@@ -190,8 +191,8 @@ class RelyingPartyStartOperationSpec
           )
           .build()
       )
-      pkccoWith.getAuthenticatorSelection.asScala should equal(Some(authnrSel))
-      pkccoWithout.getAuthenticatorSelection.asScala should equal(None)
+      pkccoWith.getAuthenticatorSelection.toScala should equal(Some(authnrSel))
+      pkccoWithout.getAuthenticatorSelection.toScala should equal(None)
     }
 
     it("uses the RelyingParty setting for attestationConveyancePreference.") {
@@ -218,7 +219,7 @@ class RelyingPartyStartOperationSpec
           .timeout(Optional.empty[java.lang.Long])
           .build()
       )
-      pkcco.getTimeout.asScala shouldBe empty
+      pkcco.getTimeout.toScala shouldBe empty
     }
 
     it("allows setting the timeout to a positive value.") {
@@ -233,7 +234,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        pkcco.getTimeout.asScala should equal(Some(timeout))
+        pkcco.getTimeout.toScala should equal(Some(timeout))
       }
     }
 
@@ -281,7 +282,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getExtensions.getAppidExclude.asScala should equal(Some(appId))
+        result.getExtensions.getAppidExclude.toScala should equal(Some(appId))
       }
     }
 
@@ -294,7 +295,7 @@ class RelyingPartyStartOperationSpec
           .build()
       )
 
-      result.getExtensions.getAppidExclude.asScala should equal(None)
+      result.getExtensions.getAppidExclude.toScala should equal(None)
     }
 
     it("does not override the appidExclude extension with an empty value if already non-null in StartRegistrationOptions.") {
@@ -313,7 +314,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getExtensions.getAppidExclude.asScala should equal(
+        result.getExtensions.getAppidExclude.toScala should equal(
           Some(requestAppId)
         )
       }
@@ -336,7 +337,7 @@ class RelyingPartyStartOperationSpec
               .build()
           )
 
-          result.getExtensions.getAppidExclude.asScala should equal(
+          result.getExtensions.getAppidExclude.toScala should equal(
             Some(requestAppId)
           )
         }
@@ -453,16 +454,16 @@ class RelyingPartyStartOperationSpec
           .build()
       )
 
-      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         Some(ResidentKeyRequirement.DISCOURAGED)
       )
-      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         Some(ResidentKeyRequirement.PREFERRED)
       )
-      pkccoRequired.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+      pkccoRequired.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         Some(ResidentKeyRequirement.REQUIRED)
       )
-      pkccoUnspecified.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+      pkccoUnspecified.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         None
       )
     }
@@ -509,13 +510,13 @@ class RelyingPartyStartOperationSpec
           .build()
       )
 
-      pkcco.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
+      pkcco.getAuthenticatorSelection.get.getAuthenticatorAttachment.toScala should be(
         Some(AuthenticatorAttachment.CROSS_PLATFORM)
       )
-      pkccoWith.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
+      pkccoWith.getAuthenticatorSelection.get.getAuthenticatorAttachment.toScala should be(
         Some(AuthenticatorAttachment.PLATFORM)
       )
-      pkccoWithout.getAuthenticatorSelection.get.getAuthenticatorAttachment.asScala should be(
+      pkccoWithout.getAuthenticatorSelection.get.getAuthenticatorAttachment.toScala should be(
         None
       )
     }
@@ -528,7 +529,7 @@ class RelyingPartyStartOperationSpec
         val rp = relyingParty(credentials = credentials, userId = userId)
         val result = rp.startAssertion(StartAssertionOptions.builder().build())
 
-        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala shouldBe empty
+        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.toScala shouldBe empty
       }
     }
 
@@ -542,7 +543,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala
+        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.toScala
           .map(_.asScala.toSet) should equal(Some(credentials))
       }
     }
@@ -557,7 +558,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.asScala
+        result.getPublicKeyCredentialRequestOptions.getAllowCredentials.toScala
           .map(_.asScala.toSet) should equal(Some(credentials))
       }
     }
@@ -602,13 +603,13 @@ class RelyingPartyStartOperationSpec
 
           val requestCreds =
             result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
-          requestCreds.head.getTransports.asScala should equal(
+          requestCreds.head.getTransports.toScala should equal(
             Some(cred1Transports.asJava)
           )
-          requestCreds(1).getTransports.asScala should equal(
+          requestCreds(1).getTransports.toScala should equal(
             Some(Set.empty.asJava)
           )
-          requestCreds(2).getTransports.asScala should equal(None)
+          requestCreds(2).getTransports.toScala should equal(None)
       }
     }
 
@@ -633,7 +634,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.toScala should equal(
           Some(appId)
         )
       }
@@ -648,7 +649,7 @@ class RelyingPartyStartOperationSpec
           .build()
       )
 
-      result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+      result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.toScala should equal(
         None
       )
     }
@@ -669,7 +670,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.toScala should equal(
           Some(requestAppId)
         )
       }
@@ -692,7 +693,7 @@ class RelyingPartyStartOperationSpec
               .build()
           )
 
-          result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.asScala should equal(
+          result.getPublicKeyCredentialRequestOptions.getExtensions.getAppid.toScala should equal(
             Some(requestAppId)
           )
         }
@@ -706,7 +707,7 @@ class RelyingPartyStartOperationSpec
           .timeout(Optional.empty[java.lang.Long])
           .build()
       )
-      req.getPublicKeyCredentialRequestOptions.getTimeout.asScala shouldBe empty
+      req.getPublicKeyCredentialRequestOptions.getTimeout.toScala shouldBe empty
     }
 
     it("allows setting the timeout to a positive value.") {
@@ -720,7 +721,7 @@ class RelyingPartyStartOperationSpec
             .build()
         )
 
-        req.getPublicKeyCredentialRequestOptions.getTimeout.asScala should equal(
+        req.getPublicKeyCredentialRequestOptions.getTimeout.toScala should equal(
           Some(timeout)
         )
       }
@@ -788,24 +789,24 @@ class RelyingPartyStartOperationSpec
     it("resets username when userHandle is set.") {
       forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
         val result = sao.toBuilder.userHandle(userHandle).build()
-        result.getUsername.asScala shouldBe empty
+        result.getUsername.toScala shouldBe empty
       }
 
       forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
-        val result = sao.toBuilder.userHandle(Some(userHandle).asJava).build()
-        result.getUsername.asScala shouldBe empty
+        val result = sao.toBuilder.userHandle(Some(userHandle).toJava).build()
+        result.getUsername.toScala shouldBe empty
       }
     }
 
     it("resets userHandle when username is set.") {
       forAll { (sao: StartAssertionOptions, username: String) =>
         val result = sao.toBuilder.username(username).build()
-        result.getUserHandle.asScala shouldBe empty
+        result.getUserHandle.toScala shouldBe empty
       }
 
       forAll { (sao: StartAssertionOptions, username: String) =>
-        val result = sao.toBuilder.username(Some(username).asJava).build()
-        result.getUserHandle.asScala shouldBe empty
+        val result = sao.toBuilder.username(Some(username).toJava).build()
+        result.getUserHandle.toScala shouldBe empty
       }
     }
 
@@ -815,7 +816,7 @@ class RelyingPartyStartOperationSpec
           .username(username)
           .userHandle(Optional.empty[ByteArray])
           .build()
-        result.getUsername.asScala should equal(Some(username))
+        result.getUsername.toScala should equal(Some(username))
       }
 
       forAll { (sao: StartAssertionOptions, username: String) =>
@@ -823,7 +824,7 @@ class RelyingPartyStartOperationSpec
           .username(username)
           .userHandle(null: ByteArray)
           .build()
-        result.getUsername.asScala should equal(Some(username))
+        result.getUsername.toScala should equal(Some(username))
       }
     }
 
@@ -833,7 +834,7 @@ class RelyingPartyStartOperationSpec
           .userHandle(userHandle)
           .username(Optional.empty[String])
           .build()
-        result.getUserHandle.asScala should equal(Some(userHandle))
+        result.getUserHandle.toScala should equal(Some(userHandle))
       }
 
       forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
@@ -841,35 +842,35 @@ class RelyingPartyStartOperationSpec
           .userHandle(userHandle)
           .username(null: String)
           .build()
-        result.getUserHandle.asScala should equal(Some(userHandle))
+        result.getUserHandle.toScala should equal(Some(userHandle))
       }
     }
 
     it("allows unsetting username.") {
       forAll { (sao: StartAssertionOptions, username: String) =>
         val preresult = sao.toBuilder.username(username).build()
-        preresult.getUsername.asScala should equal(Some(username))
+        preresult.getUsername.toScala should equal(Some(username))
 
         val result1 =
           preresult.toBuilder.username(Optional.empty[String]).build()
-        result1.getUsername.asScala shouldBe empty
+        result1.getUsername.toScala shouldBe empty
 
         val result2 = preresult.toBuilder.username(null: String).build()
-        result2.getUsername.asScala shouldBe empty
+        result2.getUsername.toScala shouldBe empty
       }
     }
 
     it("allows unsetting userHandle.") {
       forAll { (sao: StartAssertionOptions, userHandle: ByteArray) =>
         val preresult = sao.toBuilder.userHandle(userHandle).build()
-        preresult.getUserHandle.asScala should equal(Some(userHandle))
+        preresult.getUserHandle.toScala should equal(Some(userHandle))
 
         val result1 =
           preresult.toBuilder.userHandle(Optional.empty[ByteArray]).build()
-        result1.getUserHandle.asScala shouldBe empty
+        result1.getUserHandle.toScala shouldBe empty
 
         val result2 = preresult.toBuilder.userHandle(null: ByteArray).build()
-        result2.getUserHandle.asScala shouldBe empty
+        result2.getUserHandle.toScala shouldBe empty
       }
     }
   }

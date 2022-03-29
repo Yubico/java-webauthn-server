@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorTransport
@@ -71,6 +70,8 @@ import java.security.MessageDigest
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
+import scala.jdk.OptionConverters.RichOptional
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -137,7 +138,7 @@ class RelyingPartyAssertionSpec
       userHandle: ByteArray,
   ): Optional[ByteArray] =
     if (username == Defaults.username)
-      Some(userHandle).asJava
+      Some(userHandle).toJava
     else
       ???
 
@@ -146,7 +147,7 @@ class RelyingPartyAssertionSpec
       username: String,
   ): Optional[String] =
     if (userHandle == Defaults.userHandle)
-      Some(username).asJava
+      Some(username).toJava
     else
       ???
 
@@ -201,12 +202,12 @@ class RelyingPartyAssertionSpec
           .builder()
           .challenge(challenge)
           .rpId(rpId.getId)
-          .allowCredentials(allowCredentials.asJava)
+          .allowCredentials(allowCredentials.toJava)
           .userVerification(userVerificationRequirement)
           .extensions(requestedExtensions)
           .build()
       )
-      .username(usernameForRequest.asJava)
+      .username(usernameForRequest.toJava)
       .build()
 
     val response = PublicKeyCredential
@@ -246,9 +247,9 @@ class RelyingPartyAssertionSpec
                     .build()
                 )
               else None
-            ).asJava
+            ).toJava
           override def lookupAll(credId: ByteArray) =
-            lookup(credId, null).asScala.toSet.asJava
+            lookup(credId, null).toScala.toSet.asJava
           override def getCredentialIdsForUsername(username: String) = ???
           override def getUserHandleForUsername(username: String)
               : Optional[ByteArray] =
@@ -274,7 +275,7 @@ class RelyingPartyAssertionSpec
 
     builder
       .build()
-      ._finishAssertion(request, response, callerTokenBindingId.asJava)
+      ._finishAssertion(request, response, callerTokenBindingId.toJava)
   }
 
   testWithEachProvider { it =>
@@ -298,10 +299,10 @@ class RelyingPartyAssertionSpec
               .build()
           )
 
-          request1.getPublicKeyCredentialRequestOptions.getUserVerification.asScala should be(
+          request1.getPublicKeyCredentialRequestOptions.getUserVerification.toScala should be(
             None
           )
-          request2.getPublicKeyCredentialRequestOptions.getUserVerification.asScala should be(
+          request2.getPublicKeyCredentialRequestOptions.getUserVerification.toScala should be(
             None
           )
         }
@@ -317,11 +318,11 @@ class RelyingPartyAssertionSpec
             val request = rp.startAssertion(
               StartAssertionOptions
                 .builder()
-                .userVerification(uv.asJava)
+                .userVerification(uv.toJava)
                 .build()
             )
 
-            request.getPublicKeyCredentialRequestOptions.getUserVerification.asScala should equal(
+            request.getPublicKeyCredentialRequestOptions.getUserVerification.toScala should equal(
               uv
             )
           }
@@ -368,15 +369,15 @@ class RelyingPartyAssertionSpec
                 username: String
             ): Optional[ByteArray] =
               if (username == user.getName)
-                Some(user.getId).asJava
-              else None.asJava
+                Some(user.getId).toJava
+              else None.toJava
 
             override def getUsernameForUserHandle(
                 userHandle: ByteArray
             ): Optional[String] =
               if (userHandle == user.getId)
-                Some(user.getName).asJava
-              else None.asJava
+                Some(user.getName).toJava
+              else None.toJava
 
             override def lookup(
                 credentialId: ByteArray,
@@ -386,8 +387,8 @@ class RelyingPartyAssertionSpec
               if (
                 credentialId == credential.getCredentialId && userHandle == user.getId
               )
-                Some(credential).asJava
-              else None.asJava
+                Some(credential).toJava
+              else None.toJava
             }
 
             override def lookupAll(
@@ -492,13 +493,13 @@ class RelyingPartyAssertionSpec
 
                 val requestCreds =
                   result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
-                requestCreds.head.getTransports.asScala should equal(
+                requestCreds.head.getTransports.toScala should equal(
                   Some(cred1Transports.asJava)
                 )
-                requestCreds(1).getTransports.asScala should equal(
+                requestCreds(1).getTransports.toScala should equal(
                   Some(Set.empty.asJava)
                 )
-                requestCreds(2).getTransports.asScala should equal(None)
+                requestCreds(2).getTransports.toScala should equal(None)
             }
           }
         }
@@ -614,7 +615,7 @@ class RelyingPartyAssertionSpec
                   .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
                   .signatureCount(0)
                   .build()
-              ).asJava
+              ).toJava
             override def lookupAll(id: ByteArray) = ???
             override def getCredentialIdsForUsername(username: String) = ???
             override def getUserHandleForUsername(
@@ -623,14 +624,14 @@ class RelyingPartyAssertionSpec
               Some(
                 if (username == owner.username) owner.userHandle
                 else nonOwner.userHandle
-              ).asJava
+              ).toJava
             override def getUsernameForUserHandle(
                 userHandle: ByteArray
             ): Optional[String] =
               Some(
                 if (userHandle == owner.userHandle) owner.username
                 else nonOwner.username
-              ).asJava
+              ).toJava
           })
 
           describe("If the user was identified before the authentication ceremony was initiated, e.g., via a username or cookie, verify that the identified user is the owner of credentialSource. If response.userHandle is present, let userHandle be its value. Verify that userHandle also maps to the same user.") {
@@ -749,7 +750,7 @@ class RelyingPartyAssertionSpec
             val step: steps.Step7 = new steps.Step7(
               Defaults.username,
               Defaults.userHandle,
-              None.asJava,
+              None.toJava,
             )
 
             step.validations shouldBe a[Failure[_]]
@@ -1302,7 +1303,7 @@ class RelyingPartyAssertionSpec
             val appid = new AppId("https://test.example.org/foo")
             val extensions = AssertionExtensionInputs
               .builder()
-              .appid(Some(appid).asJava)
+              .appid(Some(appid).toJava)
               .build()
 
             it("fails if RP ID is different.") {
@@ -2238,10 +2239,10 @@ class RelyingPartyAssertionSpec
               .build()
           )
 
-          result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.asScala should be(
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.toScala should be(
             Some(true)
           )
-          result.getClientExtensionOutputs.get.getLargeBlob.get.getBlob.asScala should be(
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getBlob.toScala should be(
             None
           )
         }
@@ -2282,10 +2283,10 @@ class RelyingPartyAssertionSpec
               .build()
           )
 
-          result.getClientExtensionOutputs.get.getLargeBlob.get.getBlob.asScala should be(
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getBlob.toScala should be(
             Some(ByteArray.fromHex("00010203"))
           )
-          result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.asScala should be(
+          result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.toScala should be(
             None
           )
         }
@@ -2337,7 +2338,7 @@ class RelyingPartyAssertionSpec
               .build()
           )
 
-          result.getAuthenticatorExtensionOutputs.get.getUvm.asScala should equal(
+          result.getAuthenticatorExtensionOutputs.get.getUvm.toScala should equal(
             Some(
               List(
                 new UvmEntry(

@@ -31,7 +31,6 @@ import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.attestation.AttestationTrustSource
@@ -96,6 +95,8 @@ import java.util.Collections
 import java.util.Optional
 import javax.security.auth.x500.X500Principal
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
+import scala.jdk.OptionConverters.RichOptional
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -161,7 +162,7 @@ class RelyingPartyRegistrationSpec
       ._finishRegistration(
         testData.request,
         testData.response,
-        callerTokenBindingId.asJava,
+        callerTokenBindingId.toJava,
       )
   }
 
@@ -1091,7 +1092,7 @@ class RelyingPartyRegistrationSpec
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
               step.format should equal(format)
-              step.attestationStatementVerifier.asScala shouldBe empty
+              step.attestationStatementVerifier.toScala shouldBe empty
             }
           }
 
@@ -1104,7 +1105,7 @@ class RelyingPartyRegistrationSpec
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
               step.format should equal(format)
-              step.attestationStatementVerifier.asScala should not be empty
+              step.attestationStatementVerifier.toScala should not be empty
             }
           }
 
@@ -1194,7 +1195,7 @@ class RelyingPartyRegistrationSpec
                   )
                 ),
                 new AttestationObject(testData.attestationObject),
-                Some(new FidoU2fAttestationStatementVerifier).asJava,
+                Optional.of(new FidoU2fAttestationStatementVerifier),
               )
 
               step.validations shouldBe a[Failure[_]]
@@ -1212,7 +1213,7 @@ class RelyingPartyRegistrationSpec
               val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
-                Some(new FidoU2fAttestationStatementVerifier).asJava,
+                Optional.of(new FidoU2fAttestationStatementVerifier),
               )
 
               step.validations shouldBe a[Failure[_]]
@@ -1257,7 +1258,7 @@ class RelyingPartyRegistrationSpec
               val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                 Crypto.sha256(testData.clientDataJsonBytes),
                 new AttestationObject(testData.attestationObject),
-                Some(new FidoU2fAttestationStatementVerifier).asJava,
+                Optional.of(new FidoU2fAttestationStatementVerifier),
               )
 
               step.validations shouldBe a[Failure[_]]
@@ -1408,7 +1409,7 @@ class RelyingPartyRegistrationSpec
                 val step: FinishRegistrationSteps#Step19 = new steps.Step19(
                   Crypto.sha256(testData.clientDataJsonBytes),
                   new AttestationObject(testData.attestationObject),
-                  Some(new NoneAttestationStatementVerifier).asJava,
+                  Optional.of(new NoneAttestationStatementVerifier),
                 )
 
                 step.validations shouldBe a[Success[_]]
@@ -1649,7 +1650,7 @@ class RelyingPartyRegistrationSpec
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
                   step.attestationType should be(AttestationType.BASIC)
-                  step.attestationTrustPath.asScala should not be empty
+                  step.attestationTrustPath.toScala should not be empty
                   step.attestationTrustPath.get.asScala should be(
                     List(testData.packedAttestationCert)
                   )
@@ -1859,7 +1860,7 @@ class RelyingPartyRegistrationSpec
                   step.attestationType should be(
                     AttestationType.SELF_ATTESTATION
                   )
-                  step.attestationTrustPath.asScala shouldBe empty
+                  step.attestationTrustPath.toScala shouldBe empty
                 }
               }
             }
@@ -2293,7 +2294,7 @@ class RelyingPartyRegistrationSpec
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
             step.attestationType should be(AttestationType.UNKNOWN)
-            step.attestationTrustPath.asScala shouldBe empty
+            step.attestationTrustPath.toScala shouldBe empty
           }
 
           it("(Deleted) If verification of the attestation statement failed, the Relying Party MUST fail the registration ceremony.") {
@@ -2357,7 +2358,7 @@ class RelyingPartyRegistrationSpec
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
-            step.getTrustRoots.asScala.map(
+            step.getTrustRoots.toScala.map(
               _.getTrustRoots.asScala
             ) should equal(
               Some(Set(attestationRootCert))
@@ -2377,7 +2378,7 @@ class RelyingPartyRegistrationSpec
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
-            step.getTrustRoots.asScala shouldBe empty
+            step.getTrustRoots.toScala shouldBe empty
             step.tryNext shouldBe a[Success[_]]
           }
         }
@@ -2833,7 +2834,7 @@ class RelyingPartyRegistrationSpec
 
           describe("It is RECOMMENDED to also:") {
             it("Associate the credentialId with the transport hints returned by calling credential.response.getTransports(). This value SHOULD NOT be modified before or after storing it. It is RECOMMENDED to use this value to populate the transports of the allowCredentials option in future get() calls to help the client know how to find a suitable authenticator.") {
-              result.getKeyId.getTransports.asScala should equal(
+              result.getKeyId.getTransports.toScala should equal(
                 Some(
                   testData.response.getResponse.getTransports
                 )
@@ -3234,7 +3235,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.isDiscoverable.asScala should equal(Some(true))
+          result.isDiscoverable.toScala should equal(Some(true))
         }
 
         it("when set to false.") {
@@ -3257,7 +3258,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.isDiscoverable.asScala should equal(Some(false))
+          result.isDiscoverable.toScala should equal(Some(false))
         }
 
         it("when not available.") {
@@ -3269,7 +3270,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.isDiscoverable.asScala should equal(None)
+          result.isDiscoverable.toScala should equal(None)
         }
       }
 
@@ -3372,7 +3373,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getAuthenticatorExtensionOutputs.get.getUvm.asScala should equal(
+          result.getAuthenticatorExtensionOutputs.get.getUvm.toScala should equal(
             Some(
               List(
                 new UvmEntry(
@@ -3467,7 +3468,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+          result.getKeyId.getTransports.toScala.map(_.asScala) should equal(
             Some(Set(AuthenticatorTransport.USB, AuthenticatorTransport.NFC))
           )
         }
@@ -3491,7 +3492,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+          result.getKeyId.getTransports.toScala.map(_.asScala) should equal(
             Some(Set.empty)
           )
         }
@@ -3514,7 +3515,7 @@ class RelyingPartyRegistrationSpec
               .build()
           )
 
-          result.getKeyId.getTransports.asScala.map(_.asScala) should equal(
+          result.getKeyId.getTransports.toScala.map(_.asScala) should equal(
             Some(Set.empty)
           )
         }
@@ -3551,7 +3552,7 @@ class RelyingPartyRegistrationSpec
         )
         val result = steps.run()
         result.isAttestationTrusted should be(true)
-        result.getAttestationTrustPath.asScala.map(_.asScala) should equal(
+        result.getAttestationTrustPath.toScala.map(_.asScala) should equal(
           Some(testData.attestationCertChain.init.map(_._1))
         )
       }

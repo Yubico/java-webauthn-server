@@ -30,7 +30,6 @@ import com.upokecenter.cbor.CBOREncodeOptions
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
@@ -57,6 +56,8 @@ import java.net.URL
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
+import scala.jdk.OptionConverters.RichOptional
 
 object Generators {
 
@@ -229,7 +230,7 @@ object Generators {
       .authenticatorData(authenticatorData)
       .clientDataJSON(clientDataJson)
       .signature(signature)
-      .userHandle(userHandle.asJava)
+      .userHandle(userHandle.toJava)
       .build()
 
   implicit val arbitraryAuthenticatorAttestationResponse
@@ -875,7 +876,7 @@ object Generators {
       : Arbitrary[Option[AuthenticatorAssertionExtensionOutputs]] = Arbitrary(
     Extensions.anyAssertionExtensions map {
       case (_, _, aaeo) =>
-        AuthenticatorAssertionExtensionOutputs.fromCbor(aaeo).asScala
+        AuthenticatorAssertionExtensionOutputs.fromCbor(aaeo).toScala
     }
   )
   implicit val arbitraryAuthenticatorRegistrationExtensionOutputs
@@ -883,7 +884,7 @@ object Generators {
     Arbitrary(
       Extensions.anyRegistrationExtensions map {
         case (_, _, areo) =>
-          AuthenticatorRegistrationExtensionOutputs.fromCbor(areo).asScala
+          AuthenticatorRegistrationExtensionOutputs.fromCbor(areo).toScala
       }
     )
 
@@ -907,7 +908,7 @@ object Generators {
           .set("type", jsonFactory.textNode(tpe))
           .asInstanceOf[ObjectNode]
 
-        tokenBinding.asScala foreach { tb =>
+        tokenBinding.toScala foreach { tb =>
           json.set[ObjectNode](
             "tokenBinding",
             JacksonCodecs
@@ -916,7 +917,7 @@ object Generators {
           )
         }
 
-        authenticatorExtensions.asScala foreach { ae =>
+        authenticatorExtensions.toScala foreach { ae =>
           json.set[ObjectNode](
             "authenticatorExtensions",
             JacksonCodecs
@@ -925,7 +926,7 @@ object Generators {
           )
         }
 
-        clientExtensions.asScala foreach { ce =>
+        clientExtensions.toScala foreach { ce =>
           json.set[ObjectNode](
             "clientExtensions",
             JacksonCodecs
