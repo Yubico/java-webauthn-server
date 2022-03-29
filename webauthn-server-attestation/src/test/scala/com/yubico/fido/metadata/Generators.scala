@@ -7,6 +7,9 @@ import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
 import com.yubico.webauthn.data.Generators.arbitraryPublicKeyCredentialParameters
 import com.yubico.webauthn.data.Generators.byteArray
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
+import com.yubico.webauthn.extension.uvm.KeyProtectionType
+import com.yubico.webauthn.extension.uvm.MatcherProtectionType
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
@@ -18,7 +21,7 @@ import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsJava
 
-object Generators2 {
+object Generators {
 
   implicit val arbitraryMetadataBLOBHeader: Arbitrary[MetadataBLOBHeader] =
     Arbitrary(

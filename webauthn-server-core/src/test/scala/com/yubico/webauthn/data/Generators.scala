@@ -28,9 +28,6 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBOREncodeOptions
 import com.upokecenter.cbor.CBORObject
-import com.yubico.fido.metadata.Generators.keyProtectionType
-import com.yubico.fido.metadata.Generators.matcherProtectionType
-import com.yubico.fido.metadata.Generators.userVerificationMethod
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
@@ -49,6 +46,9 @@ import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
+import com.yubico.webauthn.extension.uvm.Generators.keyProtectionType
+import com.yubico.webauthn.extension.uvm.Generators.matcherProtectionType
+import com.yubico.webauthn.extension.uvm.Generators.userVerificationMethod
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen

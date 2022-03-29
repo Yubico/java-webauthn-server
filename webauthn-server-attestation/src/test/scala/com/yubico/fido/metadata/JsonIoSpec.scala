@@ -26,7 +26,7 @@ package com.yubico.fido.metadata
 
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.yubico.fido.metadata.Generators2._
+import com.yubico.fido.metadata.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec

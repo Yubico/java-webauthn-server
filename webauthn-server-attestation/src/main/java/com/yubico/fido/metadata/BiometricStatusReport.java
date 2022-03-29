@@ -1,5 +1,6 @@
 package com.yubico.fido.metadata;
 
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
 import java.time.LocalDate;
 import java.util.Optional;
 import lombok.Builder;

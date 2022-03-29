@@ -40,6 +40,9 @@ Breaking changes:
   validate attestation certificate paths, if an attestation trust source has
   been configured. This requires a compatible JCA provider, but should already
   be available in most environments.
+* Classes in package `com.yubico.fido.metadata` moved to
+  `com.yubico.webauthn.extension.uvm` to avoid name clash with
+  `webauthn-server-attestation` module in JPMS.
 
 New features:
 

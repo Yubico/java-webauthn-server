@@ -1,5 +1,6 @@
 package com.yubico.fido.metadata;
 
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;

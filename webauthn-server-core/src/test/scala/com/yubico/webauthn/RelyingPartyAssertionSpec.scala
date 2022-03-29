@@ -28,9 +28,6 @@ import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
-import com.yubico.fido.metadata.KeyProtectionType
-import com.yubico.fido.metadata.MatcherProtectionType
-import com.yubico.fido.metadata.UserVerificationMethod
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AssertionExtensionInputs
@@ -53,6 +50,9 @@ import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
 import com.yubico.webauthn.exception.InvalidSignatureCountException
 import com.yubico.webauthn.extension.appid.AppId
+import com.yubico.webauthn.extension.uvm.KeyProtectionType
+import com.yubico.webauthn.extension.uvm.MatcherProtectionType
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities

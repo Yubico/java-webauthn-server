@@ -3,6 +3,8 @@ package com.yubico.fido.metadata;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.webauthn.extension.uvm.KeyProtectionType;
+import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;

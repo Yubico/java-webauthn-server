@@ -22,6 +22,7 @@ Here is a high-level outline of what needs to be updated:
 - Update uses of renamed and replaced features.
 - Replace any implementations of `MetadataService` with
   `AttestationTrustSource`.
+- Rename imports of classes in `com.yubico.fido.metadata`.
 
 
 == Replace dependency on `webauthn-server-core-minimal`
@@ -275,3 +276,24 @@ See the JavaDoc for `AttestationTrustSource` for details on how to implement it,
 and see the `FidoMetadataService` class in the
 link:../webauthn-server-attestation[`webauthn-server-attestation` module]
 for a reference implementation.
+
+== Rename imports of classes in `com.yubico.fido.metadata`
+
+The `com.yubico.fido.metadata` package appears in both
+the `webauthn-server-core` and `webauthn-server-attestation` modules.
+This causes split package name clash in JPMS (Java Platform Module System),
+so the classes in the core module have been moved
+to the `com.yubico.webauthn.extension.uvm` package to avoid this name conflict.
+Update any imports of these classes.
+
+Example:
+
+[source,diff]
+----------
+-import com.yubico.fido.metadata.KeyProtectionType;
+-import com.yubico.fido.metadata.MatcherProtectionType;
+-import com.yubico.fido.metadata.UserVerificationMethod;
++import com.yubico.webauthn.extension.uvm.KeyProtectionType;
++import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
++import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
+----------

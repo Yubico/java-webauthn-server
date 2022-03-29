@@ -1,4 +1,4 @@
-package com.yubico.fido.metadata;
+package com.yubico.webauthn.extension.uvm;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

@@ -1,14 +1,25 @@
 package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -157,8 +168,8 @@ public class AuthenticatorGetInfo {
    */
   Integer preferredPlatformUvAttempts;
 
-  @JsonDeserialize(using = UserVerificationMethod.SetFromIntJsonDeserializer.class)
-  @JsonSerialize(contentUsing = UserVerificationMethod.IntFromSetJsonSerializer.class)
+  @JsonDeserialize(using = SetFromIntJsonDeserializer.class)
+  @JsonSerialize(contentUsing = IntFromSetJsonSerializer.class)
   Set<UserVerificationMethod> uvModality;
 
   Map<CtapCertificationId, Integer> certifications;
@@ -343,5 +354,28 @@ public class AuthenticatorGetInfo {
    */
   public Optional<Set<Integer>> getVendorPrototypeConfigCommands() {
     return Optional.ofNullable(vendorPrototypeConfigCommands);
+  }
+
+  private static class SetFromIntJsonDeserializer
+      extends JsonDeserializer<Set<UserVerificationMethod>> {
+    @Override
+    public Set<UserVerificationMethod> deserialize(JsonParser p, DeserializationContext ctxt)
+        throws IOException, JacksonException {
+      final int bitset = p.getNumberValue().intValue();
+      return Arrays.stream(UserVerificationMethod.values())
+          .filter(uvm -> (uvm.getValue() & bitset) != 0)
+          .collect(Collectors.toSet());
+    }
+  }
+
+  private static class IntFromSetJsonSerializer
+      extends JsonSerializer<Set<UserVerificationMethod>> {
+    @Override
+    public void serialize(
+        Set<UserVerificationMethod> value, JsonGenerator gen, SerializerProvider serializers)
+        throws IOException {
+      gen.writeNumber(
+          value.stream().reduce(0, (acc, next) -> acc | next.getValue(), (a, b) -> a | b));
+    }
   }
 }
