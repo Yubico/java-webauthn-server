@@ -413,8 +413,10 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      if (request.getPublicKeyCredentialRequestOptions().getUserVerification()
-          == UserVerificationRequirement.REQUIRED) {
+      if (request
+          .getPublicKeyCredentialRequestOptions()
+          .getUserVerification()
+          .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
         assure(
             response.getResponse().getParsedAuthenticatorData().getFlags().UV,
             "User Verification is required.");

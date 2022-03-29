@@ -443,14 +443,27 @@ class RelyingPartyStartOperationSpec
           .build()
       )
 
-      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey should be(
-        ResidentKeyRequirement.DISCOURAGED
+      val pkccoUnspecified = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(userId)
+          .authenticatorSelection(
+            AuthenticatorSelectionCriteria.builder().build()
+          )
+          .build()
       )
-      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey should be(
-        ResidentKeyRequirement.PREFERRED
+
+      pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+        Some(ResidentKeyRequirement.DISCOURAGED)
       )
-      pkccoRequired.getAuthenticatorSelection.get.getResidentKey should be(
-        ResidentKeyRequirement.REQUIRED
+      pkccoPreferred.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+        Some(ResidentKeyRequirement.PREFERRED)
+      )
+      pkccoRequired.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+        Some(ResidentKeyRequirement.REQUIRED)
+      )
+      pkccoUnspecified.getAuthenticatorSelection.get.getResidentKey.asScala should be(
+        None
       )
     }
 

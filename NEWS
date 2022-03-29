@@ -43,6 +43,13 @@ Breaking changes:
 * Classes in package `com.yubico.fido.metadata` moved to
   `com.yubico.webauthn.extension.uvm` to avoid name clash with
   `webauthn-server-attestation` module in JPMS.
+* Changed return type of
+  `PublicKeyCredentialRequestOptions.getUserVerification()`,
+  `AuthenticatorSelectionCriteria.getUserVerification()` and
+  `AuthenticatorSelectionCriteria.getResidentKey()` to `Optional`, and changed
+  defaults for `userVerification` and `residentKey` to empty. This means we
+  won't inadvertently suppress warnings that browsers might issue in the browser
+  console if for example `userVerification` is not set explicitly.
 
 New features:
 

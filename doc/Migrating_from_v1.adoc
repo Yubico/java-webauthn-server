@@ -23,6 +23,8 @@ Here is a high-level outline of what needs to be updated:
 - Replace any implementations of `MetadataService` with
   `AttestationTrustSource`.
 - Rename imports of classes in `com.yubico.fido.metadata`.
+- Update `getUserVerification()` and `getResidentKey()` calls
+  to expect `Optional` values.
 
 
 == Replace dependency on `webauthn-server-core-minimal`
@@ -296,4 +298,54 @@ Example:
 +import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 +import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
 +import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
+----------
+
+
+== Update `getUserVerification()` and `getResidentKey()` calls to expect `Optional` values
+
+The default `"preferred"` for `userVerification` has
+link:https://github.com/w3c/webauthn/issues/1253[turned out to cause confusion].
+Therefore, browsers have started issuing console warnings
+when `userVerification` is not set explicitly.
+This library has mirrored the defaults for
+`PublicKeyCredentialRequestOptions.userVerification` and
+`AuthenticatorSelectionCriteria.userVerification`,
+but this inadvertently suppresses any browser console warnings
+since the library emits parameter objects with an explicit value set,
+even if the value was not explicitly set at the library level.
+The defaults have therefore been removed,
+and the corresponding getters now return `Optional` values.
+For consistency, the same change applies to
+`AuthenticatorSelectionCriteria.residentKey` as well.
+
+The setters for these settings remain unchanged,
+but if you use the getters you need to expect `Optional` values instead.
+
+Example:
+
+[source,diff]
+----------
+ PublicKeyCredentialCreationOptions pkcco = /* ... */;
+ if (pkcco
+         .getAuthenticatorSelectionCriteria()
+-        .map(AuthenticatorSelectionCriteria::getUserVerification)
++        .flatMap(AuthenticatorSelectionCriteria::getUserVerification)
+         .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
+     // Do something...
+ }
+ if (pkcco
+         .getAuthenticatorSelectionCriteria()
+-        .map(AuthenticatorSelectionCriteria::getResidentKey)
++        .flatMap(AuthenticatorSelectionCriteria::getResidentKey)
+         .equals(Optional.of(ResidentKeyRequirement.REQUIRED))) {
+     // Do something...
+ }
+
+ PublicKeyCredentialRequestOptions pkcro = /* ... */;
+ if (pkcro
+         .getUserVerification()
+-        == UserVerificationRequirement.REQUIRED)) {
++        .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
+     // Do something...
+ }
 ----------

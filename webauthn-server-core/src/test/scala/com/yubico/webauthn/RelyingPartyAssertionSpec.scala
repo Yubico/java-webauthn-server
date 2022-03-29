@@ -283,10 +283,7 @@ class RelyingPartyAssertionSpec
       describe(
         "respects the userVerification parameter in StartAssertionOptions."
       ) {
-
-        val default = UserVerificationRequirement.PREFERRED
-
-        it(s"If the parameter is not set, or set to empty, the default of ${default} is used.") {
+        it(s"If the parameter is not set, or set to empty, it is also empty in the result.") {
           val rp = RelyingParty
             .builder()
             .identity(Defaults.rpId)
@@ -301,11 +298,11 @@ class RelyingPartyAssertionSpec
               .build()
           )
 
-          request1.getPublicKeyCredentialRequestOptions.getUserVerification should equal(
-            default
+          request1.getPublicKeyCredentialRequestOptions.getUserVerification.asScala should be(
+            None
           )
-          request2.getPublicKeyCredentialRequestOptions.getUserVerification should equal(
-            default
+          request2.getPublicKeyCredentialRequestOptions.getUserVerification.asScala should be(
+            None
           )
         }
 
@@ -316,12 +313,15 @@ class RelyingPartyAssertionSpec
             .credentialRepository(Helpers.CredentialRepository.empty)
             .build()
 
-          forAll { uv: UserVerificationRequirement =>
+          forAll { uv: Option[UserVerificationRequirement] =>
             val request = rp.startAssertion(
-              StartAssertionOptions.builder().userVerification(uv).build()
+              StartAssertionOptions
+                .builder()
+                .userVerification(uv.asJava)
+                .build()
             )
 
-            request.getPublicKeyCredentialRequestOptions.getUserVerification should equal(
+            request.getPublicKeyCredentialRequestOptions.getUserVerification.asScala should equal(
               uv
             )
           }

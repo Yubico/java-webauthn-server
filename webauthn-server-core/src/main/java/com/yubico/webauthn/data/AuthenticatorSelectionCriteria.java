@@ -53,7 +53,8 @@ public class AuthenticatorSelectionCriteria {
    * Specifies the extent to which the Relying Party desires to create a client-side discoverable
    * credential. For historical reasons the naming retains the deprecated “resident” terminology.
    *
-   * <p>The default is {@link ResidentKeyRequirement#DISCOURAGED}.
+   * <p>By default, this is not set. When not set, the default in the browser is {@link
+   * ResidentKeyRequirement#DISCOURAGED}.
    *
    * @see ResidentKeyRequirement
    * @see <a
@@ -70,6 +71,16 @@ public class AuthenticatorSelectionCriteria {
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
    * verification</a> for the <code>navigator.credentials.create()</code> operation. Eligible
    * authenticators are filtered to only those capable of satisfying this requirement.
+   *
+   * <p>By default, this is not set. When not set, the default in the browser is {@link
+   * UserVerificationRequirement#PREFERRED}.
+   *
+   * @see UserVerificationRequirement
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-userVerificationRequirement">§5.8.6.
+   *     User Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+   *     Verification</a>
    */
   private UserVerificationRequirement userVerification;
 
@@ -82,6 +93,45 @@ public class AuthenticatorSelectionCriteria {
     return Optional.ofNullable(authenticatorAttachment);
   }
 
+  /**
+   * Specifies the extent to which the Relying Party desires to create a client-side discoverable
+   * credential. For historical reasons the naming retains the deprecated “resident” terminology.
+   *
+   * <p>By default, this is not set. When not set, the default in the browser is {@link
+   * ResidentKeyRequirement#DISCOURAGED}.
+   *
+   * @see ResidentKeyRequirement
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
+   *     Resident Key Requirement Enumeration (enum ResidentKeyRequirement)</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
+   *     discoverable Credential</a>
+   */
+  public Optional<ResidentKeyRequirement> getResidentKey() {
+    return Optional.ofNullable(residentKey);
+  }
+
+  /**
+   * Describes the Relying Party's requirements regarding <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">user
+   * verification</a> for the <code>navigator.credentials.create()</code> operation. Eligible
+   * authenticators are filtered to only those capable of satisfying this requirement.
+   *
+   * <p>By default, this is not set. When not set, the default in the browser is {@link
+   * UserVerificationRequirement#PREFERRED}.
+   *
+   * @see UserVerificationRequirement
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-userVerificationRequirement">§5.8.6.
+   *     User Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+   *     Verification</a>
+   */
+  public Optional<UserVerificationRequirement> getUserVerification() {
+    return Optional.ofNullable(userVerification);
+  }
+
   @JsonCreator
   private AuthenticatorSelectionCriteria(
       @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
@@ -90,15 +140,16 @@ public class AuthenticatorSelectionCriteria {
       @JsonProperty("userVerification") UserVerificationRequirement userVerification) {
     this.authenticatorAttachment = authenticatorAttachment;
 
-    if (residentKey == null && requireResidentKey != null) {
+    if (residentKey != null) {
+      this.residentKey = residentKey;
+    } else if (requireResidentKey != null) {
       this.residentKey =
           requireResidentKey ? ResidentKeyRequirement.REQUIRED : ResidentKeyRequirement.DISCOURAGED;
     } else {
-      this.residentKey = residentKey == null ? ResidentKeyRequirement.DISCOURAGED : residentKey;
+      this.residentKey = null;
     }
 
-    this.userVerification =
-        userVerification == null ? UserVerificationRequirement.PREFERRED : userVerification;
+    this.userVerification = userVerification;
   }
 
   /** For use by the builder. */

@@ -289,7 +289,7 @@ final class FinishRegistrationSteps {
     public void validate() {
       if (request
               .getAuthenticatorSelection()
-              .map(AuthenticatorSelectionCriteria::getUserVerification)
+              .flatMap(AuthenticatorSelectionCriteria::getUserVerification)
               .orElse(UserVerificationRequirement.PREFERRED)
           == UserVerificationRequirement.REQUIRED) {
         assure(

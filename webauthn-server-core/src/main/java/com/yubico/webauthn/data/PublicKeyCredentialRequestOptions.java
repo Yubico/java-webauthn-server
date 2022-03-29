@@ -86,10 +86,18 @@ public class PublicKeyCredentialRequestOptions {
    * verification</a> for the <code>navigator.credentials.get()</code> operation.
    *
    * <p>Eligible authenticators are filtered to only those capable of satisfying this requirement.
+   *
+   * <p>By default, this is not set. When not set, the default in the browser is {@link
+   * UserVerificationRequirement#PREFERRED}.
+   *
+   * @see UserVerificationRequirement
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-userVerificationRequirement">§5.8.6.
+   *     User Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+   *     Verification</a>
    */
-  @NonNull @Builder.Default
-  private final UserVerificationRequirement userVerification =
-      UserVerificationRequirement.PREFERRED;
+  private final UserVerificationRequirement userVerification;
 
   /**
    * Additional parameters requesting additional processing by the client and authenticator.
@@ -106,7 +114,7 @@ public class PublicKeyCredentialRequestOptions {
       @JsonProperty("timeout") Long timeout,
       @JsonProperty("rpId") String rpId,
       @JsonProperty("allowCredentials") List<PublicKeyCredentialDescriptor> allowCredentials,
-      @NonNull @JsonProperty("userVerification") UserVerificationRequirement userVerification,
+      @JsonProperty("userVerification") UserVerificationRequirement userVerification,
       @NonNull @JsonProperty("extensions") AssertionExtensionInputs extensions) {
     this.challenge = challenge;
     this.timeout = timeout;
@@ -123,6 +131,10 @@ public class PublicKeyCredentialRequestOptions {
 
   public Optional<List<PublicKeyCredentialDescriptor>> getAllowCredentials() {
     return Optional.ofNullable(allowCredentials);
+  }
+
+  public Optional<UserVerificationRequirement> getUserVerification() {
+    return Optional.ofNullable(userVerification);
   }
 
   /**

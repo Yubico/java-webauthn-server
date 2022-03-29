@@ -27,7 +27,7 @@ public class AuthenticatorSelectionCriteriaTest {
         json.readValue(
             "{\"requireResidentKey\": false, \"residentKey\": \"required\"}",
             AuthenticatorSelectionCriteria.class);
-    assertEquals(decoded.getResidentKey(), ResidentKeyRequirement.REQUIRED);
+    assertEquals(decoded.getResidentKey(), Optional.of(ResidentKeyRequirement.REQUIRED));
   }
 
   @Test
@@ -35,6 +35,6 @@ public class AuthenticatorSelectionCriteriaTest {
     ObjectMapper json = JacksonCodecs.json();
     AuthenticatorSelectionCriteria decoded =
         json.readValue("{\"requireResidentKey\": true}", AuthenticatorSelectionCriteria.class);
-    assertEquals(decoded.getResidentKey(), ResidentKeyRequirement.REQUIRED);
+    assertEquals(decoded.getResidentKey(), Optional.of(ResidentKeyRequirement.REQUIRED));
   }
 }

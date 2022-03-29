@@ -435,6 +435,17 @@ class JsonIoSpec
   }
 
   describe("The class PublicKeyCredentialRequestOptions") {
+    it("by default does not set a userVerification value.") {
+      forAll { challenge: ByteArray =>
+        val pkcro = PublicKeyCredentialRequestOptions
+          .builder()
+          .challenge(challenge)
+          .build()
+        val jsonValue = JacksonCodecs.json.valueToTree[ObjectNode](pkcro)
+        jsonValue.get("userVerification") should be(null)
+      }
+    }
+
     it("""has a toCredentialsGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
       forAll { pkcro: PublicKeyCredentialRequestOptions =>
         val jsonValue = JacksonCodecs.json.readTree(pkcro.toCredentialsGetJson)
@@ -444,6 +455,21 @@ class JsonIoSpec
           classOf[PublicKeyCredentialRequestOptions],
         ) should equal(pkcro)
       }
+    }
+  }
+
+  describe("The class AuthenticatorSelectionCriteria") {
+    it("by default does not set a userVerification value.") {
+      val asc = AuthenticatorSelectionCriteria.builder().build()
+      val jsonValue = JacksonCodecs.json.valueToTree[ObjectNode](asc)
+      jsonValue.get("userVerification") should be(null)
+    }
+
+    it("by default does not set a residentKey value.") {
+      val asc = AuthenticatorSelectionCriteria.builder().build()
+      val jsonValue = JacksonCodecs.json.valueToTree[ObjectNode](asc)
+      jsonValue.get("residentKey") should be(null)
+      jsonValue.get("requireResidentKey") should be(null)
     }
   }
 
