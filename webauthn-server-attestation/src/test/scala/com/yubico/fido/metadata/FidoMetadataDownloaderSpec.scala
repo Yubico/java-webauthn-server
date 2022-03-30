@@ -8,8 +8,6 @@ import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.bouncycastle.asn1.x500.X500Name
 import org.eclipse.jetty.server.HttpConfiguration
 import org.eclipse.jetty.server.HttpConnectionFactory
@@ -46,6 +44,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.Optional
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsJava
