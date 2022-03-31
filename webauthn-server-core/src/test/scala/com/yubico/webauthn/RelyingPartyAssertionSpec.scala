@@ -179,7 +179,7 @@ class RelyingPartyAssertionSpec
         Defaults.requestedExtensions,
       rpId: RelyingPartyIdentity = Defaults.rpId,
       signature: ByteArray = Defaults.signature,
-      userHandleForResponse: ByteArray = Defaults.userHandle,
+      userHandleForResponse: Option[ByteArray] = Some(Defaults.userHandle),
       userHandleForUser: ByteArray = Defaults.userHandle,
       usernameForRequest: Option[String] = Some(Defaults.username),
       usernameForUser: String = Defaults.username,
@@ -220,7 +220,7 @@ class RelyingPartyAssertionSpec
             if (clientDataJsonBytes == null) null else clientDataJsonBytes
           )
           .signature(if (signature == null) null else signature)
-          .userHandle(userHandleForResponse)
+          .userHandle(userHandleForResponse.asJava)
           .build()
       )
       .clientExtensionResults(clientExtensionResults)
@@ -523,7 +523,7 @@ class RelyingPartyAssertionSpec
                 credentialRepository = credentialRepository,
                 usernameForRequest = Some(owner.username),
                 userHandleForUser = owner.userHandle,
-                userHandleForResponse = nonOwner.userHandle,
+                userHandleForResponse = Some(nonOwner.userHandle),
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
@@ -537,7 +537,7 @@ class RelyingPartyAssertionSpec
                 credentialRepository = credentialRepository,
                 usernameForRequest = Some(owner.username),
                 userHandleForUser = owner.userHandle,
-                userHandleForResponse = owner.userHandle,
+                userHandleForResponse = Some(owner.userHandle),
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
@@ -554,9 +554,23 @@ class RelyingPartyAssertionSpec
                 credentialRepository = credentialRepository,
                 usernameForRequest = None,
                 userHandleForUser = owner.userHandle,
-                userHandleForResponse = nonOwner.userHandle,
+                userHandleForResponse = Some(nonOwner.userHandle),
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+              step.tryNext shouldBe a[Failure[_]]
+            }
+
+            it("Fails if neither username nor user handle is given.") {
+              val steps = finishAssertion(
+                credentialRepository = credentialRepository,
+                usernameForRequest = None,
+                userHandleForUser = owner.userHandle,
+                userHandleForResponse = None,
+              )
+              val step: FinishAssertionSteps#Step0 = steps.begin
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -568,7 +582,7 @@ class RelyingPartyAssertionSpec
                 credentialRepository = credentialRepository,
                 usernameForRequest = None,
                 userHandleForUser = owner.userHandle,
-                userHandleForResponse = owner.userHandle,
+                userHandleForResponse = Some(owner.userHandle),
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
