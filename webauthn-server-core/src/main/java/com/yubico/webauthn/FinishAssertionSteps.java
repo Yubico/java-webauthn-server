@@ -119,9 +119,10 @@ final class FinishAssertionSteps {
   class Step0 implements Step<Step1> {
 
     private final Optional<ByteArray> userHandle =
-        response
-            .getResponse()
+        request
             .getUserHandle()
+            .map(Optional::of)
+            .orElseGet(() -> response.getResponse().getUserHandle())
             .map(Optional::of)
             .orElseGet(
                 () ->
@@ -131,12 +132,7 @@ final class FinishAssertionSteps {
         request
             .getUsername()
             .map(Optional::of)
-            .orElseGet(
-                () ->
-                    response
-                        .getResponse()
-                        .getUserHandle()
-                        .flatMap(credentialRepository::getUsernameForUserHandle));
+            .orElseGet(() -> userHandle.flatMap(credentialRepository::getUsernameForUserHandle));
 
     @Override
     public Step1 nextStep() {
@@ -146,8 +142,18 @@ final class FinishAssertionSteps {
     @Override
     public void validate() {
       assure(
-          request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
+          request.getUsername().isPresent()
+              || request.getUserHandle().isPresent()
+              || response.getResponse().getUserHandle().isPresent(),
           "At least one of username and user handle must be given; none was.");
+      if (request.getUserHandle().isPresent()
+          && response.getResponse().getUserHandle().isPresent()) {
+        assure(
+            request.getUserHandle().get().equals(response.getResponse().getUserHandle().get()),
+            "User handle set in request (%s) does not match user handle in response (%s).",
+            request.getUserHandle().get(),
+            response.getResponse().getUserHandle().get());
+      }
       assure(
           userHandle.isPresent(),
           "User handle not found for username: %s",

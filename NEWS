@@ -9,6 +9,15 @@ Fixes:
 * Fixed bug in `RelyingParty.finishAssertion` that would throw a nondescript
   `NoSuchElementException` if username and user handle are both absent, instead
   of an `IllegalArgumentException` with a better error message.
+* Fixed bug in `RelyingParty.finishAssertion` where if
+  `StartAssertionOptions.userHandle` was set, it did not propagate to
+  `RelyingParty.finishAssertion` and caused an error saying username and user
+  handle are both absent unless a user handle was returned by the authenticator.
+
+New features:
+
+* Added `userHandle` field to `AssertionRequest` as part of above bug fix.
+  `userHandle` is mutually exclusive with `username`.
 
 
 == Version 1.12.2 ==

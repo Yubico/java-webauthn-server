@@ -180,6 +180,7 @@ class RelyingPartyAssertionSpec
       rpId: RelyingPartyIdentity = Defaults.rpId,
       signature: ByteArray = Defaults.signature,
       userHandleForResponse: Option[ByteArray] = Some(Defaults.userHandle),
+      userHandleForRequest: Option[ByteArray] = None,
       userHandleForUser: ByteArray = Defaults.userHandle,
       usernameForRequest: Option[String] = Some(Defaults.username),
       usernameForUser: String = Defaults.username,
@@ -205,6 +206,7 @@ class RelyingPartyAssertionSpec
           .build()
       )
       .username(usernameForRequest.asJava)
+      .userHandle(userHandleForRequest.asJava)
       .build()
 
     val response = PublicKeyCredential
@@ -521,9 +523,9 @@ class RelyingPartyAssertionSpec
             ) {
               val steps = finishAssertion(
                 credentialRepository = credentialRepository,
-                usernameForRequest = Some(owner.username),
-                userHandleForUser = owner.userHandle,
                 userHandleForResponse = Some(nonOwner.userHandle),
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = Some(owner.username),
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
@@ -535,9 +537,9 @@ class RelyingPartyAssertionSpec
             it("Succeeds if credential ID is owned by the given user handle.") {
               val steps = finishAssertion(
                 credentialRepository = credentialRepository,
-                usernameForRequest = Some(owner.username),
-                userHandleForUser = owner.userHandle,
                 userHandleForResponse = Some(owner.userHandle),
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = Some(owner.username),
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
@@ -548,13 +550,30 @@ class RelyingPartyAssertionSpec
 
           describe("If the user was not identified before the authentication ceremony was initiated, verify that credential.response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
             it(
-              "Fails if credential ID is not owned by the given user handle."
+              "Fails if credential ID is not owned by the user handle in the response."
             ) {
               val steps = finishAssertion(
                 credentialRepository = credentialRepository,
-                usernameForRequest = None,
-                userHandleForUser = owner.userHandle,
                 userHandleForResponse = Some(nonOwner.userHandle),
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = None,
+              )
+              val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+              step.tryNext shouldBe a[Failure[_]]
+            }
+
+            it(
+              "Fails if credential ID is not owned by the user handle in the request."
+            ) {
+              val steps = finishAssertion(
+                credentialRepository = credentialRepository,
+                userHandleForRequest = Some(nonOwner.userHandle),
+                userHandleForResponse = None,
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = None,
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
@@ -566,9 +585,10 @@ class RelyingPartyAssertionSpec
             it("Fails if neither username nor user handle is given.") {
               val steps = finishAssertion(
                 credentialRepository = credentialRepository,
-                usernameForRequest = None,
-                userHandleForUser = owner.userHandle,
+                userHandleForRequest = None,
                 userHandleForResponse = None,
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = None,
               )
               val step: FinishAssertionSteps#Step0 = steps.begin
 
@@ -577,12 +597,41 @@ class RelyingPartyAssertionSpec
               step.tryNext shouldBe a[Failure[_]]
             }
 
-            it("Succeeds if credential ID is owned by the given user handle.") {
+            it("Fails if user handle in request does not agree with user handle in response.") {
               val steps = finishAssertion(
                 credentialRepository = credentialRepository,
-                usernameForRequest = None,
+                userHandleForRequest = Some(owner.userHandle),
+                userHandleForResponse = Some(nonOwner.userHandle),
                 userHandleForUser = owner.userHandle,
+                usernameForRequest = None,
+              )
+              val step: FinishAssertionSteps#Step0 = steps.begin
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+              step.tryNext shouldBe a[Failure[_]]
+            }
+
+            it("Succeeds if credential ID is owned by the user handle in the response.") {
+              val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 userHandleForResponse = Some(owner.userHandle),
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = None,
+              )
+              val step: FinishAssertionSteps#Step2 = steps.begin.next.next
+
+              step.validations shouldBe a[Success[_]]
+              step.tryNext shouldBe a[Success[_]]
+            }
+
+            it("Succeeds if credential ID is owned by the user handle in the request.") {
+              val steps = finishAssertion(
+                credentialRepository = credentialRepository,
+                userHandleForRequest = Some(owner.userHandle),
+                userHandleForResponse = None,
+                userHandleForUser = owner.userHandle,
+                usernameForRequest = None,
               )
               val step: FinishAssertionSteps#Step2 = steps.begin.next.next
 
