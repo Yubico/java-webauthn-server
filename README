@@ -25,7 +25,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.12.2</version>
+  <version>1.12.3</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -33,7 +33,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.12.2'
+compile 'com.yubico:webauthn-server-core:1.12.3'
 ----------
 
 === Semantic versioning

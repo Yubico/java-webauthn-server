@@ -47,6 +47,8 @@ import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import org.scalatestplus.junit.JUnitRunner
@@ -89,16 +91,9 @@ class JsonIoSpec
 
         it("is identical after multiple serialization round-trips..") {
           forAll { value: A =>
-            println(value)
-
             val encoded: String = json.writeValueAsString(value)
-            println(encoded)
-
             val decoded: A = json.readValue(encoded, tpe)
-            println(decoded)
-
             val recoded: String = json.writeValueAsString(decoded)
-            println(recoded)
 
             decoded should equal(value)
             recoded should equal(encoded)
@@ -369,12 +364,49 @@ class JsonIoSpec
         ]]() {}
       )
     }
+
+    it("allows and ignores an authenticatorAttachment attribute.") {
+      def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
+          a: Arbitrary[P]
+      ): Unit = {
+        forAll(
+          a.arbitrary,
+          Gen.oneOf(
+            arbitrary[AuthenticatorAttachment].map(_.toJsonString),
+            arbitrary[String],
+          ),
+        ) { (value: P, authenticatorAttachment: String) =>
+          val tree: ObjectNode = json.valueToTree(value)
+          tree.set(
+            "authenticatorAttachment",
+            new TextNode(authenticatorAttachment),
+          )
+          val encoded = json.writeValueAsString(tree)
+          println(authenticatorAttachment)
+          val decoded = json.readValue(encoded, tpe)
+
+          decoded should equal(value)
+        }
+      }
+
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
+    }
   }
 
   describe("The class PublicKeyCredentialCreationOptions") {
     it("""has a toCredentialsCreateJson() method which returns a JSON object with the PublicKeyCredentialCreationOptions set as a top-level "publicKey" property.""") {
       forAll { pkcco: PublicKeyCredentialCreationOptions =>
-        println(pkcco)
         val jsonValue =
           JacksonCodecs.json.readTree(pkcco.toCredentialsCreateJson)
         jsonValue.get("publicKey") should not be null
@@ -388,7 +420,6 @@ class JsonIoSpec
     describe("has a toJson() method and a fromJson(String) factory method") {
       it("which behave like a Jackson ObjectMapper.") {
         forAll { req: PublicKeyCredentialCreationOptions =>
-          println(req)
           val json1 = req.toJson
           val json2 = JacksonCodecs.json.writeValueAsString(req)
           json1 should equal(json2)
@@ -404,7 +435,6 @@ class JsonIoSpec
 
       it("which are stable over multiple serialization round-trips.") {
         forAll { req: PublicKeyCredentialCreationOptions =>
-          println(req)
           val encoded = req.toJson
           val decoded = PublicKeyCredentialCreationOptions.fromJson(encoded)
           val reencoded = decoded.toJson
@@ -421,7 +451,6 @@ class JsonIoSpec
   describe("The class PublicKeyCredentialRequestOptions") {
     it("""has a toCredentialsGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
       forAll { pkcro: PublicKeyCredentialRequestOptions =>
-        println(pkcro)
         val jsonValue = JacksonCodecs.json.readTree(pkcro.toCredentialsGetJson)
         jsonValue.get("publicKey") should not be null
         JacksonCodecs.json.treeToValue(
@@ -435,8 +464,6 @@ class JsonIoSpec
   describe("The class AssertionRequest") {
     it("""has a toCredentialsGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
       forAll { req: AssertionRequest =>
-        println(req)
-
         val jsonValue = JacksonCodecs.json.readTree(req.toCredentialsGetJson)
         jsonValue.get("publicKey") should not be null
         JacksonCodecs.json.treeToValue(
@@ -449,7 +476,6 @@ class JsonIoSpec
     describe("has a toJson() method and a fromJson(String) factory method") {
       it("which behave like a Jackson ObjectMapper.") {
         forAll { req: AssertionRequest =>
-          println(req)
           val json1 = req.toJson
           val json2 = JacksonCodecs.json.writeValueAsString(req)
 
@@ -463,7 +489,6 @@ class JsonIoSpec
 
       it("which are stable over multiple serialization round-trips.") {
         forAll { req: AssertionRequest =>
-          println(req)
           val encoded = req.toJson
           val decoded = AssertionRequest.fromJson(encoded)
           val reencoded = decoded.toJson

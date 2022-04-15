@@ -346,9 +346,6 @@ class RelyingPartyStartOperationSpec
     it("by default sets the credProps extension.") {
       forAll(registrationExtensionInputs(credPropsGen = None)) {
         extensions: RegistrationExtensionInputs =>
-          println(extensions.getExtensionIds)
-          println(extensions)
-
           val rp = relyingParty(userId = userId)
           val result = rp.startRegistration(
             StartRegistrationOptions

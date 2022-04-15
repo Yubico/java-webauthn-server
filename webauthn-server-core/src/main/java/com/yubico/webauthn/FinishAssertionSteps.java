@@ -124,7 +124,8 @@ final class FinishAssertionSteps {
             .getUserHandle()
             .map(Optional::of)
             .orElseGet(
-                () -> credentialRepository.getUserHandleForUsername(request.getUsername().get()));
+                () ->
+                    request.getUsername().flatMap(credentialRepository::getUserHandleForUsername));
 
     private final Optional<String> username =
         request
@@ -132,8 +133,10 @@ final class FinishAssertionSteps {
             .map(Optional::of)
             .orElseGet(
                 () ->
-                    credentialRepository.getUsernameForUserHandle(
-                        response.getResponse().getUserHandle().get()));
+                    response
+                        .getResponse()
+                        .getUserHandle()
+                        .flatMap(credentialRepository::getUsernameForUserHandle));
 
     @Override
     public Step1 nextStep() {
@@ -147,12 +150,12 @@ final class FinishAssertionSteps {
           "At least one of username and user handle must be given; none was.");
       assure(
           userHandle.isPresent(),
-          "No user found for username: %s, userHandle: %s",
+          "User handle not found for username: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
       assure(
           username.isPresent(),
-          "No user found for username: %s, userHandle: %s",
+          "Username not found for userHandle: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
     }

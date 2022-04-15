@@ -25,6 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.yubico.internal.util.JacksonCodecs;
@@ -45,6 +46,7 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
+@JsonIgnoreProperties({"authenticatorAttachment"})
 public class PublicKeyCredential<
     A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
 

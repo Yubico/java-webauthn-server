@@ -50,7 +50,6 @@ class ExtensionsSpec
       val json = JacksonCodecs.json()
       forAll(Generators.Extensions.registrationExtensionInputsJson()) {
         encoded: ObjectNode =>
-          println(encoded)
           val decoded =
             json.treeToValue(encoded, classOf[RegistrationExtensionInputs])
 
@@ -249,9 +248,6 @@ class ExtensionsSpec
           val jsonKeyNames = json.fieldNames.asScala.toList
           val extensionIds = input.getExtensionIds
 
-          println(input)
-          println(json)
-
           jsonKeyNames.length should equal(extensionIds.size)
           jsonKeyNames.toSet should equal(extensionIds.asScala)
         }
@@ -267,7 +263,6 @@ class ExtensionsSpec
         val encoded = json.valueToTree[ObjectNode](clientExtensionOutputs)
         encoded.setAll(unknownOutputs)
 
-        println(encoded)
         val decoded = json.treeToValue(
           encoded,
           classOf[ClientRegistrationExtensionOutputs],
@@ -292,7 +287,6 @@ class ExtensionsSpec
           )
       ) { input: ClientRegistrationExtensionOutputs =>
         val json = JacksonCodecs.json().valueToTree[ObjectNode](input)
-        println(json)
         json.has(Extensions.AppidExclude.EXTENSION_ID) should be(true)
         json.get("appidExclude").booleanValue should equal(
           input.getAppidExclude.get

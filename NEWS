@@ -1,3 +1,16 @@
+== Version 1.12.3 ==
+
+Fixes:
+
+* Fixed `PublicKeyCredential` failing to parse from JSON if an
+  `"authenticatorAttachment"` attribute was present.
+* Bumped Jackson dependency to version [2.13.2.1,3) in response to
+  CVE-2020-36518
+* Fixed bug in `RelyingParty.finishAssertion` that would throw a nondescript
+  `NoSuchElementException` if username and user handle are both absent, instead
+  of an `IllegalArgumentException` with a better error message.
+
+
 == Version 1.12.2 ==
 
 Fixes:
