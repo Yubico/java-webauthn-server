@@ -164,13 +164,13 @@ final class FinishAssertionSteps {
 
       assure(
           userHandle.isPresent(),
-          "No user found for username: %s, userHandle: %s",
+          "User handle not found for username: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
 
       assure(
           username.isPresent(),
-          "No user found for username: %s, userHandle: %s",
+          "Username not found for userHandle: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
 

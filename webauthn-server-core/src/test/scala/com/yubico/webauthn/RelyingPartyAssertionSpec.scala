@@ -223,7 +223,7 @@ class RelyingPartyAssertionSpec
             if (clientDataJsonBytes == null) null else clientDataJsonBytes
           )
           .signature(if (signature == null) null else signature)
-          .userHandle(userHandleForResponse.orNull)
+          .userHandle(userHandleForResponse.toJava)
           .build()
       )
       .clientExtensionResults(clientExtensionResults)
@@ -706,6 +706,20 @@ class RelyingPartyAssertionSpec
                 usernameForRequest = None,
                 userHandleForUser = owner.userHandle,
                 userHandleForResponse = Some(nonOwner.userHandle),
+              )
+              val step: FinishAssertionSteps#Step6 = steps.begin.next
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+              step.tryNext shouldBe a[Failure[_]]
+            }
+
+            it("Fails if neither username nor user handle is given.") {
+              val steps = finishAssertion(
+                credentialRepository = credentialRepository,
+                usernameForRequest = None,
+                userHandleForUser = owner.userHandle,
+                userHandleForResponse = None,
               )
               val step: FinishAssertionSteps#Step6 = steps.begin.next
 
