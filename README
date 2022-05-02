@@ -14,6 +14,19 @@ for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
 
+[WARNING]
+.*Psychic signatures in Java*
+==========
+In April 2022, link:https://neilmadden.blog/2022/04/19/psychic-signatures-in-java/[CVE-2022-21449]
+was disclosed in Oracle's OpenJDK (and other JVMs derived from it) which can impact applications using java-webauthn-server.
+The impact is that for the most common type of WebAuthn credential, invalid signatures are accepted as valid,
+allowing authentication bypass for users with such a credential.
+Please read link:https://openjdk.java.net/groups/vulnerability/advisories/2022-04-19[Oracle's advisory]
+and make sure you are not using one of the impacted OpenJDK versions.
+If you are, we urge you to upgrade your Java deployment to a version that is safe.
+==========
+
+
 toc::[]
 
 
