@@ -5,7 +5,7 @@ buildscript {
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.3.0'
-    classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.8'
+    classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
 plugins {
@@ -150,6 +150,12 @@ subprojects { project ->
   if (project.plugins.hasPlugin('scala')) {
     project.scalafix {
       configFile = rootProject.file('scalafix.conf')
+
+      // Work around dependency resolution issues in April 2022
+      semanticdb {
+        autoConfigure = true
+        version = '4.5.5'
+      }
     }
     dependencies.scalafix('com.github.liancheng:organize-imports_2.13:0.6.0')
     project.tasks.spotlessApply.dependsOn(project.tasks.scalafix)
