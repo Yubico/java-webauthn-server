@@ -19,7 +19,7 @@ This module does four things:
 - Re-download the metadata BLOB when out of date or invalid.
 - Provide utilities for selecting trusted metadata entries and authenticators.
 - Integrate with the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
   class in the base library, to provide trust root certificates
   for verifying attestation statements during credential registrations.
 
@@ -106,7 +106,7 @@ FidoMetadataService mds = FidoMetadataService.builder()
 ----------
 
  2. Set the `FidoMetadataService` as the `attestationTrustSource` on your
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
     instance,
     and set `attestationConveyancePreference(AttestationConveyancePreference.DIRECT)` on `RelyingParty`
     to request an attestation statement for new registrations.
@@ -124,7 +124,7 @@ RelyingParty rp = RelyingParty.builder()
 ----------
 
  3. After performing registrations, inspect the `isAttestationTrusted()` result in
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
     to determine whether the authenticator presented an attestation statement that could be verified
     by any of the trusted attestation certificates in the FIDO Metadata Service.
 +
@@ -164,7 +164,7 @@ The
 class can be configured with filters for which authenticators to trust.
 When the `FidoMetadataService` is used as the `.attestationTrustSource()` in `RelyingParty`,
 this will be reflected in the `.isAttestationTrusted()` result in
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`].
 Any authenticators not trusted will also be rejected for new registrations if you set `.allowUntrustedAttestation(false)` on `RelyingParty`.
 
 The filter has two stages: a "prefilter" which selects metadata entries to include in the data source,

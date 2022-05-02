@@ -99,20 +99,22 @@ Release versions
 
  5. Update the version in the dependency snippets in the README.
 
- 6. Amend these changes into the merge commit:
+ 6. Update the version in JavaDoc links in the READMEs.
+
+ 7. Amend these changes into the merge commit:
 
     ```
     $ git add NEWS
     $ git commit --amend --reset-author
     ```
 
- 7. Run the tests one more time:
+ 8. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 8. Tag the merge commit with an `X.Y.Z` tag:
+ 9. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -120,25 +122,25 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
- 9. Publish to Sonatype Nexus:
+10. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
-10. Wait for the artifacts to become downloadable at
+11. Wait for the artifacts to become downloadable at
     https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
     needed for one of the GitHub Actions release workflows and usually takes
     less than 30 minutes (long before the artifacts become searchable on the
     main Maven Central website).
 
-11. Push to GitHub:
+12. Push to GitHub:
 
     ```
     $ git push origin main 1.4.0
     ```
 
-12. Make GitHub release.
+13. Make GitHub release.
 
     - Use the new tag as the release tag
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
