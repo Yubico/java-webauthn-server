@@ -23,14 +23,18 @@ public class SessionManager {
         .build();
   }
 
-  /** @return Create a new session for the given user, or return the existing one. */
+  /**
+   * @return Create a new session for the given user, or return the existing one.
+   */
   public ByteArray createSession(@NonNull ByteArray userHandle) throws ExecutionException {
     ByteArray sessionId = usersToSessionIds.get(userHandle, () -> generateRandom(32));
     sessionIdsToUsers.put(sessionId, userHandle);
     return sessionId;
   }
 
-  /** @return the user handle of the given session, if any. */
+  /**
+   * @return the user handle of the given session, if any.
+   */
   public Optional<ByteArray> getSession(@NonNull ByteArray token) {
     return Optional.ofNullable(sessionIdsToUsers.getIfPresent(token));
   }

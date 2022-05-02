@@ -109,22 +109,30 @@ public final class ByteArray implements Comparable<ByteArray> {
     return this.bytes.length;
   }
 
-  /** @return a copy of the raw byte contents. */
+  /**
+   * @return a copy of the raw byte contents.
+   */
   public byte[] getBytes() {
     return BinaryUtil.copy(bytes);
   }
 
-  /** @return the content bytes encoded as classic Base64 data. */
+  /**
+   * @return the content bytes encoded as classic Base64 data.
+   */
   public String getBase64() {
     return BASE64_ENCODER.encodeToString(bytes);
   }
 
-  /** @return the content bytes encoded as Base64Url data, without padding. */
+  /**
+   * @return the content bytes encoded as Base64Url data, without padding.
+   */
   public String getBase64Url() {
     return base64url;
   }
 
-  /** @return the content bytes encoded as hexadecimal data. */
+  /**
+   * @return the content bytes encoded as hexadecimal data.
+   */
   @ToString.Include
   public String getHex() {
     return BinaryUtil.toHex(bytes);

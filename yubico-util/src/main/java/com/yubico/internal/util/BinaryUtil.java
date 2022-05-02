@@ -37,12 +37,16 @@ public class BinaryUtil {
     return Arrays.copyOf(bytes, bytes.length);
   }
 
-  /** @param bytes Bytes to encode */
+  /**
+   * @param bytes Bytes to encode
+   */
   public static String toHex(byte[] bytes) {
     return BaseEncoding.base16().encode(bytes).toLowerCase();
   }
 
-  /** @param hex String of hexadecimal digits to decode as bytes. */
+  /**
+   * @param hex String of hexadecimal digits to decode as bytes.
+   */
   public static byte[] fromHex(String hex) {
     return BaseEncoding.base16().decode(hex.toUpperCase());
   }
