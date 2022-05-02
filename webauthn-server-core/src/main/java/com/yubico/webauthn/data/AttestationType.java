@@ -101,25 +101,6 @@ public enum AttestationType {
   ANONYMIZATION_CA,
 
   /**
-   * In this case, the Authenticator receives direct anonymous attestation (DAA) credentials from a
-   * single DAA-Issuer. These DAA credentials are used along with blinding to sign the attested
-   * credential data. The concept of blinding avoids the DAA credentials being misused as global
-   * correlation handle. WebAuthn supports DAA using elliptic curve cryptography and bilinear
-   * pairings, called ECDAA. See the <a href=
-   * "https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
-   * ECDAA Algorithm</a> for details.
-   *
-   * @see <a href= "https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#ecdaa">Elliptic Curve based
-   *     Direct Anonymous Attestation (ECDAA)</a>
-   * @see <a href=
-   *     "https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
-   *     ECDAA Algorithm</a>
-   * @deprecated ECDAA was removed in WebAuthn Level 2.
-   */
-  @Deprecated
-  ECDAA,
-
-  /**
    * In this case, no attestation information is available. See also <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-none-attestation">§8.7 None
    * Attestation Statement Format</a>.

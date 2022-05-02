@@ -109,7 +109,7 @@ final class WebAuthnCodecs {
         new RSAPublicKeySpec(
             new BigInteger(1, cose.get(CBORObject.FromObject(-1)).GetByteString()),
             new BigInteger(1, cose.get(CBORObject.FromObject(-2)).GetByteString()));
-    return Crypto.getKeyFactory("RSA").generatePublic(spec);
+    return KeyFactory.getInstance("RSA").generatePublic(spec);
   }
 
   private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
@@ -136,7 +136,7 @@ final class WebAuthnCodecs {
             .concat(new ByteArray(new byte[] {0x03, (byte) (rawKey.size() + 1), 0}))
             .concat(rawKey);
 
-    KeyFactory kFact = Crypto.getKeyFactory("EdDSA");
+    KeyFactory kFact = KeyFactory.getInstance("EdDSA");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
   }
 

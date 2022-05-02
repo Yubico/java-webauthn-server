@@ -25,6 +25,8 @@
 package com.yubico.internal.util;
 
 import com.google.common.io.BaseEncoding;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -35,12 +37,16 @@ public class BinaryUtil {
     return Arrays.copyOf(bytes, bytes.length);
   }
 
-  /** @param bytes Bytes to encode */
+  /**
+   * @param bytes Bytes to encode
+   */
   public static String toHex(byte[] bytes) {
     return BaseEncoding.base16().encode(bytes).toLowerCase();
   }
 
-  /** @param hex String of hexadecimal digits to decode as bytes. */
+  /**
+   * @param hex String of hexadecimal digits to decode as bytes.
+   */
   public static byte[] fromHex(String hex) {
     return BaseEncoding.base16().decode(hex.toUpperCase());
   }
@@ -125,5 +131,21 @@ public class BinaryUtil {
     b.putLong(value);
     b.rewind();
     return Arrays.copyOfRange(b.array(), 4, 8);
+  }
+
+  public static byte[] readAll(InputStream is) throws IOException {
+    byte[] buffer = new byte[1024];
+    int bufferLen = 0;
+    while (true) {
+      final int moreLen = is.read(buffer, bufferLen, buffer.length - bufferLen);
+      if (moreLen <= 0) {
+        return Arrays.copyOf(buffer, bufferLen);
+      } else {
+        bufferLen += moreLen;
+        if (bufferLen == buffer.length) {
+          buffer = Arrays.copyOf(buffer, buffer.length * 2);
+        }
+      }
+    }
   }
 }

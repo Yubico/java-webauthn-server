@@ -26,7 +26,7 @@ package com.yubico.webauthn;
 
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.OptionalUtil;
-import com.yubico.webauthn.attestation.MetadataService;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
@@ -50,13 +50,18 @@ import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.Signature;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -175,7 +180,7 @@ public class RelyingParty {
    *
    * <p>If you set this, you may want to explicitly set {@link
    * RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
-   * RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
+   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource} too.
    *
    * <p>By default, this is not set.
    *
@@ -186,9 +191,9 @@ public class RelyingParty {
   @NonNull private final Optional<AttestationConveyancePreference> attestationConveyancePreference;
 
   /**
-   * A {@link MetadataService} instance to use for looking up device attestation metadata. This
-   * matters only if {@link #getAttestationConveyancePreference()} is non-empty and not set to
-   * {@link AttestationConveyancePreference#NONE}.
+   * An {@link AttestationTrustSource} instance to use for looking up trust roots for authenticator
+   * attestation. This matters only if {@link #getAttestationConveyancePreference()} is non-empty
+   * and not set to {@link AttestationConveyancePreference#NONE}.
    *
    * <p>By default, this is not set.
    *
@@ -196,7 +201,7 @@ public class RelyingParty {
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
    */
-  @NonNull private final Optional<MetadataService> metadataService;
+  @NonNull private final Optional<AttestationTrustSource> attestationTrustSource;
 
   /**
    * The argument for the {@link PublicKeyCredentialCreationOptions#getPubKeyCredParams()
@@ -311,26 +316,10 @@ public class RelyingParty {
   @Builder.Default private final boolean allowOriginSubdomain = false;
 
   /**
-   * If <code>true</code>, {@link #finishRegistration(FinishRegistrationOptions) finishRegistration}
-   * and {@link #finishAssertion(FinishAssertionOptions) finishAssertion} will accept responses
-   * containing extension outputs for which there was no extension input.
-   *
-   * <p>The default is <code>false</code>.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
-   *     Extensions</a>
-   * @deprecated The <code>false</code> setting (default) is not compatible with WebAuthn Level 2
-   *     since authenticators are now always allowed to add unsolicited extensions. The next major
-   *     version release will remove this option and always behave as if the option had been set to
-   *     <code>
-   *     true</code>.
-   */
-  @Deprecated @Builder.Default private final boolean allowUnrequestedExtensions = false;
-
-  /**
    * If <code>false</code>, {@link #finishRegistration(FinishRegistrationOptions)
    * finishRegistration} will only allow registrations where the attestation signature can be linked
-   * to a trusted attestation root. This excludes self attestation and none attestation.
+   * to a trusted attestation root. This excludes none attestation, and self attestation unless the
+   * self attestation key is explicitly trusted.
    *
    * <p>Regardless of the value of this option, invalid attestation statements of supported formats
    * will always be rejected. For example, a "packed" attestation statement with an invalid
@@ -350,19 +339,31 @@ public class RelyingParty {
    */
   @Builder.Default private final boolean validateSignatureCounter = true;
 
+  /**
+   * A {@link Clock} which will be used to tell the current time while verifying attestation
+   * certificate chains.
+   *
+   * <p>This is intended primarily for testing, and relevant only if {@link
+   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource)} is set.
+   *
+   * <p>The default is <code>Clock.systemUTC()</code>.
+   */
+  @Builder.Default @NonNull private final Clock clock = Clock.systemUTC();
+
+  @Builder
   private RelyingParty(
       @NonNull RelyingPartyIdentity identity,
       Set<String> origins,
       @NonNull CredentialRepository credentialRepository,
       @NonNull Optional<AppId> appId,
       @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
-      @NonNull Optional<MetadataService> metadataService,
+      @NonNull Optional<AttestationTrustSource> attestationTrustSource,
       List<PublicKeyCredentialParameters> preferredPubkeyParams,
       boolean allowOriginPort,
       boolean allowOriginSubdomain,
-      boolean allowUnrequestedExtensions,
       boolean allowUntrustedAttestation,
-      boolean validateSignatureCounter) {
+      boolean validateSignatureCounter,
+      Clock clock) {
     this.identity = identity;
     this.origins =
         origins != null
@@ -382,19 +383,79 @@ public class RelyingParty {
     this.credentialRepository = credentialRepository;
     this.appId = appId;
     this.attestationConveyancePreference = attestationConveyancePreference;
-    this.metadataService = metadataService;
-    this.preferredPubkeyParams = preferredPubkeyParams;
+    this.attestationTrustSource = attestationTrustSource;
+    this.preferredPubkeyParams = filterAvailableAlgorithms(preferredPubkeyParams);
     this.allowOriginPort = allowOriginPort;
     this.allowOriginSubdomain = allowOriginSubdomain;
-    this.allowUnrequestedExtensions = allowUnrequestedExtensions;
     this.allowUntrustedAttestation = allowUntrustedAttestation;
     this.validateSignatureCounter = validateSignatureCounter;
+    this.clock = clock;
   }
 
   private static ByteArray generateChallenge() {
     byte[] bytes = new byte[32];
     random.nextBytes(bytes);
     return new ByteArray(bytes);
+  }
+
+  /**
+   * Filter <code>pubKeyCredParams</code> to only contain algorithms with a {@link KeyFactory} and a
+   * {@link Signature} available, and log a warning for every unsupported algorithm.
+   *
+   * @return a new {@link List} containing only the algorithms supported in the current JCA context.
+   */
+  private static List<PublicKeyCredentialParameters> filterAvailableAlgorithms(
+      List<PublicKeyCredentialParameters> pubKeyCredParams) {
+    return Collections.unmodifiableList(
+        pubKeyCredParams.stream()
+            .filter(
+                param -> {
+                  try {
+                    switch (param.getAlg()) {
+                      case EdDSA:
+                        KeyFactory.getInstance("EdDSA");
+                        break;
+
+                      case ES256:
+                        KeyFactory.getInstance("EC");
+                        break;
+
+                      case RS256:
+                      case RS1:
+                        KeyFactory.getInstance("RSA");
+                        break;
+
+                      default:
+                        log.warn(
+                            "Unknown algorithm: {}. Please file a bug report.", param.getAlg());
+                    }
+                  } catch (NoSuchAlgorithmException e) {
+                    log.warn(
+                        "Unsupported algorithm in RelyingParty.preferredPubkeyParams: {}. No KeyFactory available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
+                        param.getAlg());
+                    return false;
+                  }
+
+                  final String signatureAlgName;
+                  try {
+                    signatureAlgName = WebAuthnCodecs.getJavaAlgorithmName(param.getAlg());
+                  } catch (IllegalArgumentException e) {
+                    log.warn("Unknown algorithm: {}. Please file a bug report.", param.getAlg());
+                    return false;
+                  }
+
+                  try {
+                    Signature.getInstance(signatureAlgName);
+                  } catch (NoSuchAlgorithmException e) {
+                    log.warn(
+                        "Unsupported algorithm in RelyingParty.preferredPubkeyParams: {}. No Signature available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
+                        param.getAlg());
+                    return false;
+                  }
+
+                  return true;
+                })
+            .collect(Collectors.toList()));
   }
 
   public PublicKeyCredentialCreationOptions startRegistration(
@@ -456,9 +517,9 @@ public class RelyingParty {
         .rpId(identity.getId())
         .allowOriginPort(allowOriginPort)
         .allowOriginSubdomain(allowOriginSubdomain)
-        .allowUnrequestedExtensions(allowUnrequestedExtensions)
         .allowUntrustedAttestation(allowUntrustedAttestation)
-        .metadataService(metadataService)
+        .attestationTrustSource(attestationTrustSource)
+        .clock(clock)
         .build();
   }
 
@@ -533,7 +594,6 @@ public class RelyingParty {
         .credentialRepository(credentialRepository)
         .allowOriginPort(allowOriginPort)
         .allowOriginSubdomain(allowOriginSubdomain)
-        .allowUnrequestedExtensions(allowUnrequestedExtensions)
         .validateSignatureCounter(validateSignatureCounter)
         .build();
   }
@@ -546,7 +606,7 @@ public class RelyingParty {
     private @NonNull Optional<AppId> appId = Optional.empty();
     private @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference =
         Optional.empty();
-    private @NonNull Optional<MetadataService> metadataService = Optional.empty();
+    private @NonNull Optional<AttestationTrustSource> attestationTrustSource = Optional.empty();
 
     public static class MandatoryStages {
       private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
@@ -645,7 +705,8 @@ public class RelyingParty {
      *
      * <p>If you set this, you may want to explicitly set {@link
      * RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
-     * RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
+     * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
+     * too.
      *
      * <p>By default, this is not set.
      *
@@ -668,7 +729,8 @@ public class RelyingParty {
      *
      * <p>If you set this, you may want to explicitly set {@link
      * RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
-     * RelyingPartyBuilder#metadataService(MetadataService) metadataService} too.
+     * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
+     * too.
      *
      * <p>By default, this is not set.
      *
@@ -682,9 +744,9 @@ public class RelyingParty {
     }
 
     /**
-     * A {@link MetadataService} instance to use for looking up device attestation metadata. This
-     * matters only if {@link #getAttestationConveyancePreference()} is non-empty and not set to
-     * {@link AttestationConveyancePreference#NONE}.
+     * An {@link AttestationTrustSource} instance to use for looking up trust roots for
+     * authenticator attestation. This matters only if {@link #getAttestationConveyancePreference()}
+     * is non-empty and not set to {@link AttestationConveyancePreference#NONE}.
      *
      * <p>By default, this is not set.
      *
@@ -692,15 +754,16 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
-    public RelyingPartyBuilder metadataService(@NonNull Optional<MetadataService> metadataService) {
-      this.metadataService = metadataService;
+    public RelyingPartyBuilder attestationTrustSource(
+        @NonNull Optional<AttestationTrustSource> attestationTrustSource) {
+      this.attestationTrustSource = attestationTrustSource;
       return this;
     }
 
     /**
-     * A {@link MetadataService} instance to use for looking up device attestation metadata. This
-     * matters only if {@link #getAttestationConveyancePreference()} is non-empty and not set to
-     * {@link AttestationConveyancePreference#NONE}.
+     * An {@link AttestationTrustSource} instance to use for looking up trust roots for
+     * authenticator attestation. This matters only if {@link #getAttestationConveyancePreference()}
+     * is non-empty and not set to {@link AttestationConveyancePreference#NONE}.
      *
      * <p>By default, this is not set.
      *
@@ -708,8 +771,9 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
-    public RelyingPartyBuilder metadataService(@NonNull MetadataService metadataService) {
-      return this.metadataService(Optional.of(metadataService));
+    public RelyingPartyBuilder attestationTrustSource(
+        @NonNull AttestationTrustSource attestationTrustSource) {
+      return this.attestationTrustSource(Optional.of(attestationTrustSource));
     }
   }
 }

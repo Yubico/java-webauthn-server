@@ -1,9 +1,9 @@
 package com.yubico.webauthn.data
 
-import com.yubico.fido.metadata.KeyProtectionType
-import com.yubico.fido.metadata.MatcherProtectionType
-import com.yubico.fido.metadata.UserVerificationMethod
 import com.yubico.internal.util.JacksonCodecs
+import com.yubico.webauthn.extension.uvm.KeyProtectionType
+import com.yubico.webauthn.extension.uvm.MatcherProtectionType
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import org.junit.runner.RunWith
 import org.scalatest.FunSpec
 import org.scalatest.Matchers

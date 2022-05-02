@@ -29,9 +29,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.yubico.fido.metadata.FidoMetadataDownloaderException;
+import com.yubico.fido.metadata.UnexpectedLegalHeader;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import com.yubico.webauthn.meta.VersionInfo;
@@ -41,6 +44,12 @@ import demo.webauthn.data.RegistrationRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
@@ -74,7 +83,11 @@ public class WebAuthnRestResource {
   private final ObjectMapper jsonMapper = JacksonCodecs.json();
   private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
-  public WebAuthnRestResource() throws InvalidAppIdException, CertificateException {
+  public WebAuthnRestResource()
+      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
+          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
+          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
+          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
     this(new WebAuthnServer());
   }
 
@@ -168,7 +181,9 @@ public class WebAuthnRestResource {
             username,
             displayName,
             Optional.ofNullable(credentialNickname),
-            requireResidentKey,
+            requireResidentKey
+                ? ResidentKeyRequirement.REQUIRED
+                : ResidentKeyRequirement.DISCOURAGED,
             Optional.ofNullable(sessionTokenBase64)
                 .map(
                     base64 -> {

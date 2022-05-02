@@ -33,7 +33,6 @@ import java.util.Set;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Contains <a
@@ -50,7 +49,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Value
 @Builder(toBuilder = true)
-@Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ClientRegistrationExtensionOutputs implements ClientExtensionOutputs {
 

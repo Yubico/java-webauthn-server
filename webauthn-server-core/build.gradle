@@ -7,7 +7,7 @@ plugins {
   id 'io.github.cosmicsilence.scalafix'
 }
 
-description = 'Yubico WebAuthn server core API (fewer dependencies)'
+description = 'Yubico WebAuthn server core API'
 
 project.ext.publishMe = true
 
@@ -21,15 +21,10 @@ dependencies {
     project(':yubico-util'),
   )
 
-  compileOnly(
-    platform(rootProject),
-    'org.bouncycastle:bcprov-jdk15on',
-  )
-
   implementation(
     'com.augustcellars.cose:cose-java',
-    'com.google.guava:guava',
     'com.fasterxml.jackson.core:jackson-databind',
+    'com.google.guava:guava',
     'com.upokecenter:cbor',
     'org.apache.httpcomponents:httpclient',
     'org.slf4j:slf4j-api',
@@ -45,7 +40,14 @@ dependencies {
     'org.scala-lang:scala-library',
     'org.scalacheck:scalacheck_2.13',
     'org.scalatest:scalatest_2.13',
+    'uk.org.lidalia:slf4j-test',
   )
+
+  testImplementation('org.slf4j:slf4j-api') {
+    version {
+      strictly '[1.7.25,1.8-a)' // Pre-1.8 version required by slf4j-test
+    }
+  }
 }
 
 jar {

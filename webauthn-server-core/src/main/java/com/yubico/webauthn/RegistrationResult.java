@@ -25,18 +25,23 @@
 package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.internal.util.CollectionUtil;
-import com.yubico.webauthn.attestation.Attestation;
+import com.yubico.internal.util.CertificateParser;
+import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
-import java.util.Collections;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -49,8 +54,8 @@ public class RegistrationResult {
   /**
    * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
    * ID</a> and <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>of
-   * the created credential.
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>
+   * of the created credential.
    *
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
    *     ID</a>
@@ -62,8 +67,22 @@ public class RegistrationResult {
   @NonNull private final PublicKeyCredentialDescriptor keyId;
 
   /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#aaguid"><code>aaguid</code>
+   * </a> reported in the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">of the
+   * created credential.</a>
+   *
+   * <p>This MAY be an AAGUID consisting of only zeroes.
+   */
+  @NonNull private final ByteArray aaguid;
+
+  /**
    * <code>true</code> if and only if the attestation signature was successfully linked to a trusted
    * attestation root.
+   *
+   * <p>This will always be <code>false</code> unless the {@link
+   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
+   * setting was configured on the {@link RelyingParty} instance.
    *
    * <p>You can ignore this if authenticator attestation is not relevant to your application.
    */
@@ -81,6 +100,23 @@ public class RegistrationResult {
    *     Attestation Types</a>
    */
   @NonNull private final AttestationType attestationType;
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">attestation
+   * trust path</a> for the created credential, if any.
+   *
+   * <p>If present, this may be useful for looking up attestation metadata from external sources.
+   * The attestation trust path has been successfully verified as trusted if and only if {@link
+   * #isAttestationTrusted()} is <code>true</code>.
+   *
+   * <p>You can ignore this if authenticator attestation is not relevant to your application.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">Attestation
+   *     trust path</a>
+   */
+  private final List<X509Certificate> attestationTrustPath;
 
   /**
    * The public key of the created credential.
@@ -102,47 +138,27 @@ public class RegistrationResult {
    */
   private final long signatureCount;
 
-  /** Zero or more human-readable messages about non-critical issues. */
-  @NonNull @Builder.Default private final List<String> warnings = Collections.emptyList();
-
-  /**
-   * Additional information about the authenticator, identified based on the attestation
-   * certificate.
-   *
-   * <p>This will be absent unless you set a {@link
-   * com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional) metadataService}
-   * in {@link RelyingParty}.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
-   *     Attestation</a>
-   * @see com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#metadataService(Optional)
-   */
-  private final Attestation attestationMetadata;
-
   private final ClientRegistrationExtensionOutputs clientExtensionOutputs;
 
   private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
 
-  @JsonCreator
   private RegistrationResult(
-      @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
-      @JsonProperty("attestationTrusted") boolean attestationTrusted,
-      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
-      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
-      @JsonProperty("signatureCount") Long signatureCount,
-      @NonNull @JsonProperty("warnings") List<String> warnings,
-      @JsonProperty("attestationMetadata") Attestation attestationMetadata,
-      @JsonProperty("clientExtensionOutputs")
-          ClientRegistrationExtensionOutputs clientExtensionOutputs,
-      @JsonProperty("authenticatorExtensionOutputs")
-          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
+      @NonNull PublicKeyCredentialDescriptor keyId,
+      @NonNull ByteArray aaguid,
+      boolean attestationTrusted,
+      @NonNull AttestationType attestationType,
+      List<X509Certificate> attestationTrustPath,
+      @NonNull ByteArray publicKeyCose,
+      Long signatureCount,
+      ClientRegistrationExtensionOutputs clientExtensionOutputs,
+      AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
     this.keyId = keyId;
+    this.aaguid = aaguid;
     this.attestationTrusted = attestationTrusted;
     this.attestationType = attestationType;
+    this.attestationTrustPath = attestationTrustPath;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount == null ? 0 : signatureCount;
-    this.warnings = CollectionUtil.immutableList(warnings);
-    this.attestationMetadata = attestationMetadata;
     this.clientExtensionOutputs =
         clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
             ? null
@@ -150,8 +166,60 @@ public class RegistrationResult {
     this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
   }
 
-  public Optional<Attestation> getAttestationMetadata() {
-    return Optional.ofNullable(attestationMetadata);
+  @JsonCreator
+  private static RegistrationResult fromJson(
+      @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
+      @NonNull @JsonProperty("aaguid") ByteArray aaguid,
+      @JsonProperty("attestationTrusted") boolean attestationTrusted,
+      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
+      @JsonProperty("attestationTrustPath") List<String> attestationTrustPath,
+      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
+      @JsonProperty("signatureCount") Long signatureCount,
+      @JsonProperty("clientExtensionOutputs")
+          ClientRegistrationExtensionOutputs clientExtensionOutputs,
+      @JsonProperty("authenticatorExtensionOutputs")
+          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
+    return new RegistrationResult(
+        keyId,
+        aaguid,
+        attestationTrusted,
+        attestationType,
+        attestationTrustPath.stream()
+            .map(
+                pem -> {
+                  try {
+                    return CertificateParser.parsePem(pem);
+                  } catch (CertificateException e) {
+                    throw new RuntimeException(e);
+                  }
+                })
+            .collect(Collectors.toList()),
+        publicKeyCose,
+        signatureCount,
+        clientExtensionOutputs,
+        authenticatorExtensionOutputs);
+  }
+
+  @JsonIgnore
+  public Optional<List<X509Certificate>> getAttestationTrustPath() {
+    return Optional.ofNullable(attestationTrustPath);
+  }
+
+  @JsonProperty("attestationTrustPath")
+  private Optional<List<String>> getAttestationTrustPathJson() {
+    return getAttestationTrustPath()
+        .map(
+            x5c ->
+                x5c.stream()
+                    .map(
+                        cert -> {
+                          try {
+                            return new ByteArray(cert.getEncoded()).getBase64();
+                          } catch (CertificateEncodingException e) {
+                            throw new RuntimeException(e);
+                          }
+                        })
+                    .collect(Collectors.toList()));
   }
 
   /**
@@ -225,60 +293,53 @@ public class RegistrationResult {
       }
 
       class Step2 {
-        Step3 attestationTrusted(boolean attestationTrusted) {
-          builder.attestationTrusted(attestationTrusted);
+        Step3 aaguid(ByteArray aaguid) {
+          builder.aaguid(aaguid);
           return new Step3();
         }
       }
 
       class Step3 {
-        Step4 attestationType(AttestationType attestationType) {
-          builder.attestationType(attestationType);
+        Step4 attestationTrusted(boolean attestationTrusted) {
+          builder.attestationTrusted(attestationTrusted);
           return new Step4();
         }
       }
 
       class Step4 {
-        Step5 publicKeyCose(ByteArray publicKeyCose) {
-          builder.publicKeyCose(publicKeyCose);
+        Step5 attestationType(AttestationType attestationType) {
+          builder.attestationType(attestationType);
           return new Step5();
         }
       }
 
       class Step5 {
-        Step6 signatureCount(long signatureCount) {
-          builder.signatureCount(signatureCount);
+        Step6 publicKeyCose(ByteArray publicKeyCose) {
+          builder.publicKeyCose(publicKeyCose);
           return new Step6();
         }
       }
 
       class Step6 {
-        Step7 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
-          builder.clientExtensionOutputs(clientExtensionOutputs);
+        Step7 signatureCount(long signatureCount) {
+          builder.signatureCount(signatureCount);
           return new Step7();
         }
       }
 
       class Step7 {
+        Step8 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
+          builder.clientExtensionOutputs(clientExtensionOutputs);
+          return new Step8();
+        }
+      }
+
+      class Step8 {
         RegistrationResultBuilder authenticatorExtensionOutputs(
             AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
           return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
         }
       }
-    }
-
-    RegistrationResultBuilder attestationMetadata(
-        @NonNull Optional<Attestation> attestationMetadata) {
-      this.attestationMetadata = attestationMetadata.orElse(null);
-      return this;
-    }
-
-    /*
-     * Workaround, see: https://github.com/rzwitserloot/lombok/issues/2623#issuecomment-714816001
-     * Consider reverting this workaround if Lombok fixes that issue.
-     */
-    private RegistrationResultBuilder attestationMetadata(Attestation attestationMetadata) {
-      return this.attestationMetadata(Optional.ofNullable(attestationMetadata));
     }
   }
 }

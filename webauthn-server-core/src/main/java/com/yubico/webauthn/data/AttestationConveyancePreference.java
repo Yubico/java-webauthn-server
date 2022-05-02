@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
@@ -42,9 +40,8 @@ import lombok.NonNull;
  * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-conveyance">§5.4.6.
  *     Attestation Conveyance Preference Enumeration (enum AttestationConveyancePreference) </a>
  */
-@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public enum AttestationConveyancePreference implements JsonStringSerializable {
+public enum AttestationConveyancePreference {
 
   /**
    * Indicates that the Relying Party is not interested in authenticator attestation.
@@ -78,7 +75,7 @@ public enum AttestationConveyancePreference implements JsonStringSerializable {
    */
   DIRECT("direct");
 
-  @Getter @NonNull private final String value;
+  @JsonValue @Getter @NonNull private final String value;
 
   private static Optional<AttestationConveyancePreference> fromString(@NonNull String value) {
     return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
@@ -93,12 +90,5 @@ public enum AttestationConveyancePreference implements JsonStringSerializable {
                     String.format(
                         "Unknown %s value: %s",
                         AttestationConveyancePreference.class.getSimpleName(), value)));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getValue()} instead. */
-  public String toJsonString() {
-    return value;
   }
 }

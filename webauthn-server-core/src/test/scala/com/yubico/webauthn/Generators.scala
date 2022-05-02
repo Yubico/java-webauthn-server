@@ -1,8 +1,5 @@
 package com.yubico.webauthn
 
-import com.yubico.scalacheck.gen.JavaGenerators._
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs
@@ -13,11 +10,13 @@ import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.UserVerificationRequirement
+import org.bouncycastle.asn1.x500.X500Name
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 
-import java.util.Optional
+import java.security.cert.X509Certificate
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object Generators {
 
@@ -32,7 +31,6 @@ object Generators {
       success <- arbitrary[Boolean]
       userHandle <- arbitrary[ByteArray]
       username <- arbitrary[String]
-      warnings <- arbitrary[java.util.List[String]]
     } yield AssertionResult
       .builder()
       .success(success)
@@ -43,15 +41,15 @@ object Generators {
       .signatureCounterValid(signatureCounterValid)
       .clientExtensionOutputs(clientExtensionOutputs)
       .assertionExtensionOutputs(authenticatorExtensionOutputs.orNull)
-      .warnings(warnings)
       .build()
   )
 
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] =
     Arbitrary(
       for {
-        attestationMetadata <- arbitrary[Optional[Attestation]]
+        aaguid <- byteArray(16)
         attestationTrusted <- arbitrary[Boolean]
+        attestationTrustPath <- generateAttestationCertificateChain
         attestationType <- arbitrary[AttestationType]
         authenticatorExtensionOutputs <-
           arbitrary[Option[AuthenticatorRegistrationExtensionOutputs]]
@@ -59,18 +57,17 @@ object Generators {
         keyId <- arbitrary[PublicKeyCredentialDescriptor]
         publicKeyCose <- arbitrary[ByteArray]
         signatureCount <- arbitrary[Long]
-        warnings <- arbitrary[java.util.List[String]]
       } yield RegistrationResult
         .builder()
         .keyId(keyId)
+        .aaguid(aaguid)
         .attestationTrusted(attestationTrusted)
         .attestationType(attestationType)
         .publicKeyCose(publicKeyCose)
         .signatureCount(signatureCount)
         .clientExtensionOutputs(clientExtensionOutputs)
         .authenticatorExtensionOutputs(authenticatorExtensionOutputs.orNull)
-        .attestationMetadata(attestationMetadata)
-        .warnings(warnings)
+        .attestationTrustPath(attestationTrustPath.asJava)
         .build()
     )
 
@@ -109,5 +106,29 @@ object Generators {
       b.build()
     }
   )
+
+  def generateAttestationCertificateChain: Gen[List[X509Certificate]] =
+    for {
+      dummy <- Gen.nonEmptyListOf[Int](arbitrary[Int])
+    } yield {
+      if (dummy.length >= 2) {
+        val tail = dummy.tail.init.foldLeft(
+          List(TestAuthenticator.generateAttestationCaCertificate())
+        )({
+          case (chain, _) =>
+            TestAuthenticator.generateAttestationCaCertificate(
+              name = new X500Name(
+                s"CN=Yubico WebAuthn unit tests intermediate CA ${chain.length}, O=Yubico, OU=Authenticator Attestation, C=SE"
+              ),
+              superCa = Some(chain.head),
+            ) +: chain
+        })
+        (TestAuthenticator.generateAttestationCertificate(caCertAndKey =
+          Some(tail.head)
+        ) +: tail).map(_._1)
+      } else {
+        List(TestAuthenticator.generateAttestationCertificate()._1)
+      }
+    }
 
 }

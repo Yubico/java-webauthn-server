@@ -25,7 +25,6 @@
 package com.yubico.webauthn
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
@@ -42,6 +41,7 @@ import java.security.KeyPair
 import java.security.interfaces.ECPublicKey
 import java.util.Optional
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -111,7 +111,7 @@ class RelyingPartyUserIdentificationSpec extends FunSpec with Matchers {
         .authenticatorData(authenticatorData)
         .clientDataJSON(clientDataJsonBytes)
         .signature(signature)
-        .userHandle(userHandle.asJava)
+        .userHandle(userHandle.toJava)
         .build()
 
     def defaultPublicKeyCredential(
@@ -162,23 +162,23 @@ class RelyingPartyUserIdentificationSpec extends FunSpec with Matchers {
                   )
                   .signatureCount(0)
                   .build()
-              ).asJava
+              ).toJava
             else
-              None.asJava
+              None.toJava
 
           override def lookupAll(credId: ByteArray) = ???
           override def getUserHandleForUsername(username: String)
               : Optional[ByteArray] =
             if (username == Defaults.username)
-              Some(Defaults.userHandle).asJava
+              Some(Defaults.userHandle).toJava
             else
-              None.asJava
+              None.toJava
           override def getUsernameForUserHandle(userHandle: ByteArray)
               : Optional[String] =
             if (userHandle == Defaults.userHandle)
-              Some(Defaults.username).asJava
+              Some(Defaults.username).toJava
             else
-              None.asJava
+              None.toJava
         }
       )
       .preferredPubkeyParams(Nil.asJava)

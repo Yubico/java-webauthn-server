@@ -1,0 +1,148 @@
+= v1.x to v2.0 migration guide
+
+The `2.0` release of the `webauthn-server-attestation` module
+makes lots of breaking changes compared to the `1.x` versions.
+This guide aims to help migrating between versions.
+
+If you find this migration guide to be incomplete, incorrect,
+or otherwise difficult to follow, please
+link:https://github.com/Yubico/java-webauthn-server/issues/new[let us know!]
+
+Here is a high-level outline of what needs to be updated:
+
+- Replace uses of `StandardMetadataService` and its related classes
+  with `FidoMetadataService` and `FidoMetadataDownloader`.
+- Update the name of the `RelyingParty` integration point
+  from `metadataService` to `attestationTrustSource`.
+- `RegistrationResult` no longer includes attestation metadata,
+  instead you'll need to retrieve it separately after a successful registration.
+- Replace uses of the `Attestation` result type with `MetadataBLOBPayloadEntry`.
+
+
+== Replace `StandardMetadataService`
+
+`StandardMetadataService` and its constituent classes have been removed
+in favour of `FidoMetadataService` and `FidoMetadataDownloader`.
+See the link:../#getting-started[Getting started] documentation
+for details on how to configure and construct them.
+
+Example `1.x` code:
+
+[source,java]
+----------
+MetadataService metadataService =
+    new StandardMetadataService(
+        StandardMetadataService.createDefaultAttestationResolver(
+            StandardMetadataService.createDefaultTrustResolver()
+    ));
+----------
+
+Example `2.0` code:
+
+[source,java]
+----------
+FidoMetadataService metadataService = FidoMetadataService.builder()
+    .useBlob(FidoMetadataDownloader.builder()
+        .expectLegalHeader("Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/")
+        .useDefaultTrustRoot()
+        .useTrustRootCacheFile(new File("fido-mds-trust-root-cache.bin"))
+        .useDefaultBlob()
+        .useBlobCacheFile(new File("fido-mds-blob-cache.bin"))
+        .build()
+        .loadBlob()
+    )
+    .build();
+----------
+
+You may also need to add external logic to occasionally re-run `loadBlob()`
+and reconstruct the `FidoMetadataService`,
+as `FidoMetadataService` will not automatically update the BLOB on its own.
+
+
+== Update `RelyingParty` integration point
+
+`FidoMetadataService` integrates with `RelyingParty` in much the same way as `StandardMetadataService`,
+although the name of the setting has changed.
+
+Example `1.x` code:
+
+[source,diff]
+----------
+ RelyingParty rp = RelyingParty.builder()
+     .identity(rpIdentity)
+     .credentialRepository(credentialRepo)
+     .attestationConveyancePreference(AttestationConveyancePreference.DIRECT)
+-    .metadataService(metadataService))
+     .allowUntrustedAttestation(true)
+     .build();
+----------
+
+Example `2.0` code:
+
+[source,diff]
+----------
+ RelyingParty rp = RelyingParty.builder()
+     .identity(rpIdentity)
+     .credentialRepository(credentialRepo)
+     .attestationConveyancePreference(AttestationConveyancePreference.DIRECT)
++    .attestationTrustSource(metadataService)
+     .allowUntrustedAttestation(true)
+     .build();
+----------
+
+
+== Retrieve attestation metadata separately
+
+In `1.x`, `RegistrationResult` could include an `Attestation` object with attestation metadata,
+if a metadata service was configured and the authenticator matched anything in the metadata service.
+In order to keep `RelyingParty` and the new `AttestationTrustSource` interface
+decoupled from any particular format of attestation metadata, this result field has been removed.
+Instead, use the `findEntries` methods of `FidoMetadataService`
+to retrieve attestation metadata after a successful registration, if needed.
+
+Example `1.x` code:
+
+[source,java]
+----------
+RegistrationResult result = rp.finishRegistration(/* ... */);
+Optional<String> authenticatorName = result.getAttestationMetadata()
+  .flatMap(Attestation::getDeviceProperties)
+  .map(deviceProps -> deviceProps.get("description"));
+----------
+
+Example `2.0` code:
+
+[source,java]
+----------
+FidoMetadataService mds = /* ... */;
+RegistrationResult result = rp.finishRegistration(/* ... */);
+Optional<String> authenticatorName = mds.findEntries(result)
+    .stream()
+    .findAny()
+    .flatMap(MetadataBLOBPayloadEntry::getMetadataStatement)
+    .flatMap(MetadataStatement::getDescription);
+----------
+
+
+== Replace `Attestation` with `MetadataBLOBPayloadEntry`
+
+This ties in with the previous step, and much of it will likely be done already.
+However if your front-end accesses and/or displays contents of an `Attestation` object,
+it will need to be updated to work with `MetadataBLOBPayloadEntry` or similar types instead.
+
+
+Example `1.x` code:
+
+[source,diff]
+----------
+ var registrationResult = fetch(/* ... */).then(response => response.json());
+-var authenticatorName = registrationResult.attestationMetadata?.deviceProperties?.description;
+----------
+
+Example `2.0` code:
+
+[source,diff]
+----------
+ var registrationResult = fetch(/* ... */).then(response => response.json());
++var authenticatorName = registrationResult.attestationMetadata?.metadataStatement?.description;
+----------

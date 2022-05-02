@@ -27,7 +27,6 @@ package demo.webauthn
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.TestAuthenticator
@@ -38,6 +37,7 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.ResidentKeyRequirement
 import com.yubico.webauthn.extension.appid.AppId
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
@@ -54,6 +54,8 @@ import java.time.Instant
 import java.util.Optional
 import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
+import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class WebAuthnServerSpec
@@ -64,8 +66,8 @@ class WebAuthnServerSpec
   private val jsonMapper = JacksonCodecs.json()
   private val username = "foo-user"
   private val displayName = "Foo User"
-  private val credentialNickname = Some("My Lovely Credential").asJava
-  private val requireResidentKey = false
+  private val credentialNickname = Some("My Lovely Credential").toJava
+  private val residentKeyRequirement = ResidentKeyRequirement.DISCOURAGED
   private val requestId = ByteArray.fromBase64Url("request1")
   private val rpId =
     RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
@@ -82,7 +84,7 @@ class WebAuthnServerSpec
           username,
           displayName,
           credentialNickname,
-          requireResidentKey,
+          residentKeyRequirement,
           Optional.empty(),
         )
         val json = jsonMapper.writeValueAsString(request.right.get)
@@ -182,13 +184,13 @@ class WebAuthnServerSpec
             .startRegistration(
               username,
               displayName,
-              None.asJava,
-              false,
-              None.asJava,
+              None.toJava,
+              ResidentKeyRequirement.DISCOURAGED,
+              None.toJava,
             )
             .right
             .get
-          val (cred, keypair) =
+          val (cred, keypair, _) =
             TestAuthenticator.createUnattestedCredential(challenge =
               request.getPublicKeyCredentialCreationOptions.getChallenge
             )
@@ -270,7 +272,7 @@ class WebAuthnServerSpec
                   .rpId(rpId.getId)
                   .build()
               )
-              .username(Some(testData.userId.getName).asJava)
+              .username(Some(testData.userId.getName).toJava)
               .build(),
           ),
         )
@@ -317,7 +319,7 @@ class WebAuthnServerSpec
         val creds =
           assertionRequest.right.get.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
         creds should have size 1
-        creds.head.getTransports.asScala should equal(
+        creds.head.getTransports.toScala should equal(
           Some(transports.asJava)
         )
       }

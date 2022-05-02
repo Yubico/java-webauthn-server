@@ -31,12 +31,24 @@ public class CollectionUtil {
   }
 
   /**
+   * Alias of <code>s == null ? Collections.emptyList() : CollectionUtil.immutableList(s)</code>.
+   */
+  public static <T> List<T> immutableListOrEmpty(List<T> l) {
+    return l == null ? Collections.emptyList() : immutableList(l);
+  }
+
+  /**
    * Make an unmodifiable shallow copy of the argument.
    *
    * @return A shallow copy of <code>s</code> which cannot be modified
    */
   public static <T> Set<T> immutableSet(Set<T> s) {
     return Collections.unmodifiableSet(new HashSet<>(s));
+  }
+
+  /** Alias of <code>s == null ? Collections.emptySet() : CollectionUtil.immutableSet(s)</code>. */
+  public static <T> Set<T> immutableSetOrEmpty(Set<T> s) {
+    return s == null ? Collections.emptySet() : immutableSet(s);
   }
 
   /**

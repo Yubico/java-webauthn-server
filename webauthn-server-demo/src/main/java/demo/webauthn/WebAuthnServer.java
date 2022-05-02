@@ -32,10 +32,10 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.io.Closeables;
 import com.upokecenter.cbor.CBORObject;
+import com.yubico.fido.metadata.FidoMetadataDownloaderException;
+import com.yubico.fido.metadata.UnexpectedLegalHeader;
 import com.yubico.internal.util.CertificateParser;
-import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
@@ -49,15 +49,7 @@ import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.U2fVerifier;
 import com.yubico.webauthn.attestation.Attestation;
-import com.yubico.webauthn.attestation.AttestationResolver;
-import com.yubico.webauthn.attestation.MetadataObject;
-import com.yubico.webauthn.attestation.MetadataService;
-import com.yubico.webauthn.attestation.StandardMetadataService;
-import com.yubico.webauthn.attestation.TrustResolver;
-import com.yubico.webauthn.attestation.resolver.CompositeAttestationResolver;
-import com.yubico.webauthn.attestation.resolver.CompositeTrustResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleAttestationResolver;
-import com.yubico.webauthn.attestation.resolver.SimpleTrustResolverWithEquality;
+import com.yubico.webauthn.attestation.YubicoJsonMetadataService;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
@@ -66,7 +58,9 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
+import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import com.yubico.webauthn.extension.appid.AppId;
@@ -79,9 +73,13 @@ import demo.webauthn.data.RegistrationResponse;
 import demo.webauthn.data.U2fRegistrationResponse;
 import demo.webauthn.data.U2fRegistrationResult;
 import java.io.IOException;
-import java.io.InputStream;
+import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateEncodingException;
+import java.security.SignatureException;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
@@ -98,7 +96,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.Value;
@@ -109,31 +106,23 @@ public class WebAuthnServer {
   private static final Logger logger = LoggerFactory.getLogger(WebAuthnServer.class);
   private static final SecureRandom random = new SecureRandom();
 
-  private static final String PREVIEW_METADATA_PATH = "/preview-metadata.json";
-
   private final Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage;
   private final Cache<ByteArray, RegistrationRequest> registerRequestStorage;
   private final InMemoryRegistrationStorage userStorage;
   private final SessionManager sessions = new SessionManager();
 
-  private final TrustResolver trustResolver =
-      new CompositeTrustResolver(
-          Arrays.asList(
-              StandardMetadataService.createDefaultTrustResolver(), createExtraTrustResolver()));
-
-  private final MetadataService metadataService =
-      new StandardMetadataService(
-          new CompositeAttestationResolver(
-              Arrays.asList(
-                  StandardMetadataService.createDefaultAttestationResolver(trustResolver),
-                  createExtraMetadataResolver(trustResolver))));
+  private final YubicoJsonMetadataService metadataService = new YubicoJsonMetadataService();
 
   private final Clock clock = Clock.systemDefaultZone();
   private final ObjectMapper jsonMapper = JacksonCodecs.json();
 
   private final RelyingParty rp;
 
-  public WebAuthnServer() throws InvalidAppIdException, CertificateException {
+  public WebAuthnServer()
+      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
+          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
+          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
+          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
     this(
         new InMemoryRegistrationStorage(),
         newCache(),
@@ -150,7 +139,10 @@ public class WebAuthnServer {
       RelyingPartyIdentity rpIdentity,
       Set<String> origins,
       Optional<AppId> appId)
-      throws InvalidAppIdException, CertificateException {
+      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
+          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
+          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
+          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
     this.userStorage = userStorage;
     this.registerRequestStorage = registerRequestStorage;
     this.assertRequestStorage = assertRequestStorage;
@@ -161,10 +153,9 @@ public class WebAuthnServer {
             .credentialRepository(this.userStorage)
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
-            .metadataService(Optional.of(metadataService))
+            .attestationTrustSource(metadataService)
             .allowOriginPort(false)
             .allowOriginSubdomain(false)
-            .allowUnrequestedExtensions(true)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
             .appId(appId)
@@ -175,44 +166,6 @@ public class WebAuthnServer {
     byte[] bytes = new byte[length];
     random.nextBytes(bytes);
     return new ByteArray(bytes);
-  }
-
-  private static MetadataObject readPreviewMetadata() {
-    InputStream is = WebAuthnServer.class.getResourceAsStream(PREVIEW_METADATA_PATH);
-    try {
-      return JacksonCodecs.json().readValue(is, MetadataObject.class);
-    } catch (IOException e) {
-      throw ExceptionUtil.wrapAndLog(
-          logger, "Failed to read metadata from " + PREVIEW_METADATA_PATH, e);
-    } finally {
-      Closeables.closeQuietly(is);
-    }
-  }
-
-  /**
-   * Create a {@link TrustResolver} that accepts attestation certificates that are directly
-   * recognised as trust anchors.
-   */
-  private static TrustResolver createExtraTrustResolver() {
-    try {
-      MetadataObject metadata = readPreviewMetadata();
-      return new SimpleTrustResolverWithEquality(metadata.getParsedTrustedCertificates());
-    } catch (CertificateException e) {
-      throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
-    }
-  }
-
-  /**
-   * Create a {@link AttestationResolver} with additional metadata for unreleased YubiKey Preview
-   * devices.
-   */
-  private static AttestationResolver createExtraMetadataResolver(TrustResolver trustResolver) {
-    try {
-      MetadataObject metadata = readPreviewMetadata();
-      return new SimpleAttestationResolver(Collections.singleton(metadata), trustResolver);
-    } catch (CertificateException e) {
-      throw ExceptionUtil.wrapAndLog(logger, "Failed to read trusted certificate(s)", e);
-    }
   }
 
   private static <K, V> Cache<K, V> newCache() {
@@ -226,7 +179,7 @@ public class WebAuthnServer {
       @NonNull String username,
       @NonNull String displayName,
       Optional<String> credentialNickname,
-      boolean requireResidentKey,
+      ResidentKeyRequirement residentKeyRequirement,
       Optional<ByteArray> sessionToken)
       throws ExecutionException {
     logger.trace(
@@ -261,7 +214,7 @@ public class WebAuthnServer {
                       .user(registrationUserId)
                       .authenticatorSelection(
                           AuthenticatorSelectionCriteria.builder()
-                              .requireResidentKey(requireResidentKey)
+                              .residentKey(residentKeyRequirement)
                               .build())
                       .build()),
               Optional.of(sessions.createSession(registrationUserId.getId())));
@@ -486,16 +439,7 @@ public class WebAuthnServer {
             e);
       }
 
-      Optional<Attestation> attestation = Optional.empty();
-      try {
-        if (attestationCert != null) {
-          attestation =
-              Optional.of(
-                  metadataService.getAttestation(Collections.singletonList(attestationCert)));
-        }
-      } catch (CertificateEncodingException e) {
-        logger.error("Failed to resolve attestation", e);
-      }
+      Optional<Attestation> attestation = metadataService.findMetadata(attestationCert);
 
       final U2fRegistrationResult result =
           U2fRegistrationResult.builder()
@@ -503,7 +447,7 @@ public class WebAuthnServer {
                   PublicKeyCredentialDescriptor.builder()
                       .id(response.getCredential().getU2fResponse().getKeyHandle())
                       .build())
-              .attestationTrusted(attestation.map(Attestation::isTrusted).orElse(false))
+              .attestationTrusted(attestation.isPresent())
               .publicKeyCose(
                   rawEcdaKeyToCose(response.getCredential().getU2fResponse().getPublicKey()))
               .attestationMetadata(attestation)
@@ -560,23 +504,20 @@ public class WebAuthnServer {
 
     private final String username;
     private final ByteArray sessionToken;
-    private final List<String> warnings;
 
     public SuccessfulAuthenticationResult(
         AssertionRequestWrapper request,
         AssertionResponse response,
         Collection<CredentialRegistration> registrations,
         String username,
-        ByteArray sessionToken,
-        List<String> warnings) {
+        ByteArray sessionToken) {
       this(
           request,
           response,
           registrations,
           response.getCredential().getResponse().getParsedAuthenticatorData(),
           username,
-          sessionToken,
-          warnings);
+          sessionToken);
     }
   }
 
@@ -624,8 +565,7 @@ public class WebAuthnServer {
                   response,
                   userStorage.getRegistrationsByUsername(result.getUsername()),
                   result.getUsername(),
-                  sessions.createSession(result.getUserHandle()),
-                  result.getWarnings()));
+                  sessions.createSession(result.getUserHandle())));
         } else {
           return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));
         }
@@ -709,7 +649,10 @@ public class WebAuthnServer {
             .signatureCount(result.getSignatureCount())
             .build(),
         result.getKeyId().getTransports().orElseGet(TreeSet::new),
-        result.getAttestationMetadata());
+        result
+            .getAttestationTrustPath()
+            .flatMap(x5c -> x5c.stream().findFirst())
+            .flatMap(metadataService::findMetadata));
   }
 
   private CredentialRegistration addRegistration(
@@ -726,16 +669,7 @@ public class WebAuthnServer {
             .publicKeyCose(result.getPublicKeyCose())
             .signatureCount(signatureCount)
             .build(),
-        result
-            .getAttestationMetadata()
-            .flatMap(Attestation::getTransports)
-            .map(
-                transports ->
-                    CollectionUtil.immutableSortedSet(
-                        transports.stream()
-                            .map(AuthenticatorTransport::fromU2fTransport)
-                            .collect(Collectors.toSet())))
-            .orElse(Collections.emptySortedSet()),
+        Collections.emptySortedSet(),
         result.getAttestationMetadata());
   }
 

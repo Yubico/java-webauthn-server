@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
@@ -40,7 +39,6 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Primitive
 import org.bouncycastle.asn1.DEROctetString
@@ -49,7 +47,9 @@ import org.bouncycastle.asn1.DERTaggedObject
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.ReasonFlags
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
+import org.bouncycastle.cert.X509v2CRLBuilder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey
@@ -58,14 +58,9 @@ import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.math.ec.custom.sec.SecP256R1Curve
-import org.bouncycastle.openssl.PEMKeyPair
-import org.bouncycastle.openssl.PEMParser
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
+import java.io.ByteArrayInputStream
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
@@ -76,6 +71,7 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Signature
+import java.security.cert.CRL
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
@@ -87,9 +83,12 @@ import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 import java.util.Date
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 import scala.util.Try
 
 object TestAuthenticator {
+
+  private val random: SecureRandom = new SecureRandom()
 
   object Defaults {
     val aaguid: ByteArray = new ByteArray(
@@ -110,12 +109,15 @@ object TestAuthenticator {
     }
 
     val credentialKey: KeyPair = generateEcKeypair()
+
+    val certValidFrom: Instant = Instant.parse("2018-09-06T17:42:00Z")
+    val certValidTo: Instant = certValidFrom.plusSeconds(7 * 24 * 3600)
   }
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
   private def toBytes(s: String): ByteArray = new ByteArray(s.getBytes("UTF-8"))
-  private def sha256(s: String): ByteArray = sha256(toBytes(s))
-  private def sha256(b: ByteArray): ByteArray =
+  def sha256(s: String): ByteArray = sha256(toBytes(s))
+  def sha256(b: ByteArray): ByteArray =
     new ByteArray(MessageDigest.getInstance("SHA-256").digest(b.getBytes))
 
   sealed trait AttestationMaker {
@@ -124,7 +126,7 @@ object TestAuthenticator {
         authDataBytes: ByteArray,
         clientDataJson: String,
     ): JsonNode
-    def attestationCert: Option[X509Certificate] = ???
+    def certChain: List[(X509Certificate, PrivateKey)] = Nil
 
     def makeAttestationObjectBytes(
         authDataBytes: ByteArray,
@@ -150,8 +152,7 @@ object TestAuthenticator {
     def packed(signer: AttestationSigner): AttestationMaker =
       new AttestationMaker {
         override val format = "packed"
-        override def attestationCert: Option[X509Certificate] =
-          Some(signer.cert)
+        override def certChain = signer.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
             clientDataJson: String,
@@ -161,8 +162,7 @@ object TestAuthenticator {
     def fidoU2f(signer: AttestationSigner): AttestationMaker =
       new AttestationMaker {
         override val format = "fido-u2f"
-        override def attestationCert: Option[X509Certificate] =
-          Some(signer.cert)
+        override def certChain = signer.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
             clientDataJson: String,
@@ -175,7 +175,7 @@ object TestAuthenticator {
     ): AttestationMaker =
       new AttestationMaker {
         override val format = "android-safetynet"
-        override def attestationCert: Option[X509Certificate] = Some(cert.cert)
+        override def certChain = cert.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
             clientDataJson: String,
@@ -225,7 +225,7 @@ object TestAuthenticator {
     def none(): AttestationMaker =
       new AttestationMaker {
         override val format = "none"
-        override def attestationCert: Option[X509Certificate] = None
+        override def certChain = Nil
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
             clientDataJson: String,
@@ -237,18 +237,21 @@ object TestAuthenticator {
   sealed trait AttestationSigner {
     def key: PrivateKey; def alg: COSEAlgorithmIdentifier;
     def cert: X509Certificate
+    def certChain: List[(X509Certificate, PrivateKey)]
   }
   case class SelfAttestation(keypair: KeyPair, alg: COSEAlgorithmIdentifier)
       extends AttestationSigner {
-    def key: PrivateKey = keypair.getPrivate
-    def cert: X509Certificate =
+    override def key: PrivateKey = keypair.getPrivate
+    override def cert: X509Certificate = {
       generateAttestationCertificate(alg = alg, keypair = Some(keypair))._1
+    }
+    override def certChain = Nil
   }
   case class AttestationCert(
-      cert: X509Certificate,
-      key: PrivateKey,
+      override val cert: X509Certificate,
+      override val key: PrivateKey,
       alg: COSEAlgorithmIdentifier,
-      chain: List[X509Certificate],
+      override val certChain: List[(X509Certificate, PrivateKey)],
   ) extends AttestationSigner {
     def this(
         alg: COSEAlgorithmIdentifier,
@@ -258,23 +261,44 @@ object TestAuthenticator {
   object AttestationSigner {
     def ca(
         alg: COSEAlgorithmIdentifier,
+        aaguid: ByteArray = Defaults.aaguid,
         certSubject: X500Name = new X500Name(
-          "CN=Yubico WebAuthn unit tests CA, O=Yubico, OU=Authenticator Attestation, C=SE"
+          "CN=Yubico WebAuthn unit tests, O=Yubico, OU=Authenticator Attestation, C=SE"
         ),
+        validFrom: Instant = Defaults.certValidFrom,
+        validTo: Instant = Defaults.certValidTo,
     ): AttestationCert = {
       val (caCert, caKey) =
-        generateAttestationCaCertificate(signingAlg = alg, name = certSubject)
+        generateAttestationCaCertificate(
+          signingAlg = alg,
+          validFrom = validFrom,
+          validTo = validTo,
+        )
       val (cert, key) = generateAttestationCertificate(
         alg,
         caCertAndKey = Some((caCert, caKey)),
         name = certSubject,
+        extensions = List(
+          (
+            "1.3.6.1.4.1.45724.1.1.4",
+            false,
+            new DEROctetString(aaguid.getBytes),
+          )
+        ),
+        validFrom = validFrom,
+        validTo = validTo,
       )
-      AttestationCert(cert, key, alg, List(caCert))
+      AttestationCert(
+        cert,
+        key,
+        alg,
+        certChain = List((cert, key), (caCert, caKey)),
+      )
     }
 
     def selfsigned(alg: COSEAlgorithmIdentifier): AttestationCert = {
       val (cert, key) = generateAttestationCertificate(alg = alg)
-      AttestationCert(cert, key, alg, Nil)
+      AttestationCert(cert, key, alg, certChain = List((cert, key)))
     }
   }
 
@@ -297,6 +321,7 @@ object TestAuthenticator {
         ClientRegistrationExtensionOutputs,
       ],
       KeyPair,
+      List[(X509Certificate, PrivateKey)],
   ) = {
 
     val clientDataJson: String =
@@ -367,6 +392,7 @@ object TestAuthenticator {
         .clientExtensionResults(clientExtensions)
         .build(),
       keypair,
+      attestationMaker.certChain,
     )
   }
 
@@ -380,6 +406,7 @@ object TestAuthenticator {
         ClientRegistrationExtensionOutputs,
       ],
       KeyPair,
+      List[(X509Certificate, PrivateKey)],
   ) =
     createCredential(
       aaguid = aaguid,
@@ -396,6 +423,7 @@ object TestAuthenticator {
         ClientRegistrationExtensionOutputs,
       ],
       KeyPair,
+      List[(X509Certificate, PrivateKey)],
   ) = {
     val keypair = generateKeypair(keyAlgorithm)
     val signer = SelfAttestation(keypair, keyAlgorithm)
@@ -415,6 +443,7 @@ object TestAuthenticator {
         ClientRegistrationExtensionOutputs,
       ],
       KeyPair,
+      List[(X509Certificate, PrivateKey)],
   ) =
     createCredential(
       attestationMaker = AttestationMaker.none(),
@@ -516,7 +545,7 @@ object TestAuthenticator {
           alg,
         )
       )
-      .userHandle(userHandle.asJava)
+      .userHandle(userHandle.toJava)
       .build()
 
     PublicKeyCredential
@@ -604,15 +633,11 @@ object TestAuthenticator {
             "sig" -> f.binaryNode(signature.getBytes),
           ) ++ (signer match {
             case _: SelfAttestation => Map.empty
-            case AttestationCert(cert, _, _, chain) =>
+            case AttestationCert(cert, _, _, _) =>
               Map(
                 "x5c" -> f
                   .arrayNode()
-                  .addAll(
-                    (cert +: chain)
-                      .map(crt => f.binaryNode(crt.getEncoded))
-                      .asJava
-                  )
+                  .add(cert.getEncoded)
               )
           })
         ).asJava
@@ -632,16 +657,12 @@ object TestAuthenticator {
 
     val jwsHeader = f
       .objectNode()
-      .setAll(
+      .setAll[ObjectNode](
         Map(
           "alg" -> f.textNode("RS256"),
           "x5c" -> f
             .arrayNode()
-            .addAll(
-              (cert.cert +: cert.chain)
-                .map(crt => f.textNode(new ByteArray(crt.getEncoded).getBase64))
-                .asJava
-            ),
+            .add(new ByteArray(cert.cert.getEncoded).getBase64),
         ).asJava
       )
     val jwsHeaderBase64 = new ByteArray(
@@ -650,7 +671,7 @@ object TestAuthenticator {
 
     val jwsPayload = f
       .objectNode()
-      .setAll(
+      .setAll[ObjectNode](
         Map(
           "nonce" -> f.textNode(nonce.getBase64),
           "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
@@ -677,7 +698,7 @@ object TestAuthenticator {
 
     val attStmt = f
       .objectNode()
-      .setAll(
+      .setAll[ObjectNode](
         Map(
           "ver" -> f.textNode("14799021"),
           "response" -> f.binaryNode(
@@ -830,14 +851,16 @@ object TestAuthenticator {
     val g: KeyPairGenerator =
       KeyPairGenerator.getInstance("EC", new BouncyCastleProvider())
 
-    g.initialize(ecSpec, new SecureRandom())
+    g.initialize(ecSpec, random)
 
     g.generateKeyPair()
   }
 
   def generateEddsaKeypair(): KeyPair = {
     val alg = "Ed25519"
-    val keyPairGenerator = KeyPairGenerator.getInstance(alg)
+    // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
+    val keyPairGenerator =
+      KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())
     keyPairGenerator.generateKeyPair()
   }
 
@@ -855,7 +878,7 @@ object TestAuthenticator {
 
   def generateRsaKeypair(): KeyPair = {
     val g: KeyPairGenerator = KeyPairGenerator.getInstance("RSA")
-    g.initialize(2048, new SecureRandom())
+    g.initialize(2048, random)
     g.generateKeyPair()
   }
 
@@ -920,6 +943,8 @@ object TestAuthenticator {
       ),
       superCa: Option[(X509Certificate, PrivateKey)] = None,
       extensions: Iterable[(String, Boolean, ASN1Primitive)] = Nil,
+      validFrom: Instant = Defaults.certValidFrom,
+      validTo: Instant = Defaults.certValidTo,
   ): (X509Certificate, PrivateKey) = {
     val actualKeypair = keypair.getOrElse(generateKeypair(signingAlg))
     (
@@ -932,6 +957,8 @@ object TestAuthenticator {
         signingAlg = signingAlg,
         isCa = true,
         extensions = extensions,
+        validFrom = validFrom,
+        validTo = validTo,
       ),
       actualKeypair.getPrivate,
     )
@@ -951,6 +978,8 @@ object TestAuthenticator {
         )
       ),
       caCertAndKey: Option[(X509Certificate, PrivateKey)] = None,
+      validFrom: Instant = Defaults.certValidFrom,
+      validTo: Instant = Defaults.certValidTo,
   ): (X509Certificate, PrivateKey) = {
     val actualKeypair = keypair.getOrElse(generateKeypair(alg))
 
@@ -966,26 +995,30 @@ object TestAuthenticator {
         signingAlg = alg,
         isCa = false,
         extensions = extensions,
+        validFrom = validFrom,
+        validTo = validTo,
       ),
       actualKeypair.getPrivate,
     )
   }
 
-  private def buildCertificate(
+  def buildCertificate(
       publicKey: PublicKey,
       issuerName: X500Name,
       subjectName: X500Name,
       signingKey: PrivateKey,
       signingAlg: COSEAlgorithmIdentifier,
       isCa: Boolean = false,
-      extensions: Iterable[(String, Boolean, ASN1Primitive)],
+      extensions: Iterable[(String, Boolean, ASN1Primitive)] = None,
+      validFrom: Instant = Defaults.certValidFrom,
+      validTo: Instant = Defaults.certValidTo,
   ): X509Certificate = {
     CertificateParser.parseDer({
       val builder = new X509v3CertificateBuilder(
         issuerName,
-        new BigInteger("1337"),
-        Date.from(Instant.parse("2018-09-06T17:42:00Z")),
-        Date.from(Instant.parse("2018-09-06T17:42:00Z")),
+        BigInteger.valueOf(random.nextInt(10000)),
+        Date.from(validFrom),
+        Date.from(validTo),
         subjectName,
         SubjectPublicKeyInfo.getInstance(publicKey.getEncoded),
       )
@@ -1013,32 +1046,35 @@ object TestAuthenticator {
     })
   }
 
+  def buildCrl(
+      issuerName: X500Name,
+      signingKey: PrivateKey,
+      signingAlgJavaName: String,
+      currentTime: Instant,
+      nextUpdate: Instant,
+      revoked: Set[X509Certificate] = Set.empty,
+  ): CRL = {
+    java.security.cert.CertificateFactory
+      .getInstance("X.509")
+      .generateCRL(new ByteArrayInputStream({
+        val builder = new X509v2CRLBuilder(issuerName, Date.from(currentTime))
+        builder.setNextUpdate(Date.from(nextUpdate))
+
+        for { revoked <- revoked } {
+          builder.addCRLEntry(
+            revoked.getSerialNumber,
+            Date.from(currentTime),
+            ReasonFlags.cessationOfOperation,
+          )
+        }
+
+        val signerBuilder = new JcaContentSignerBuilder(signingAlgJavaName)
+        builder.build(signerBuilder.build(signingKey)).getEncoded
+      }))
+  }
+
   def generateRsaCertificate(): (X509Certificate, PrivateKey) =
     generateAttestationCertificate(COSEAlgorithmIdentifier.RS256)
-
-  def importCertAndKeyFromPem(
-      certPem: InputStream,
-      keyPem: InputStream,
-  ): (X509Certificate, PrivateKey) = {
-    val cert: X509Certificate = Util.importCertFromPem(certPem)
-
-    val priKeyParser = new PEMParser(
-      new BufferedReader(new InputStreamReader(keyPem))
-    )
-    priKeyParser.readObject() // Throw away the EC params part
-
-    val converter = new JcaPEMKeyConverter()
-
-    val key: PrivateKey = converter
-      .getKeyPair(
-        priKeyParser
-          .readObject()
-          .asInstanceOf[PEMKeyPair]
-      )
-      .getPrivate
-
-    (cert, key)
-  }
 
   def coseAlgorithmOfJavaKey(key: PrivateKey): COSEAlgorithmIdentifier =
     Try(COSEAlgorithmIdentifier.valueOf(key.getAlgorithm)) getOrElse

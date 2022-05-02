@@ -51,11 +51,8 @@ class RelyingPartyCeremoniesSpec
       .credentialRepository(credentialRepo)
       .build()
 
-  private def createCheck(
-      modRp: RelyingParty => RelyingParty = identity
-  )(testData: RealExamples.Example): Unit = {
-    val registrationRp =
-      modRp(newRp(testData, Helpers.CredentialRepository.empty))
+  private def createCheck(testData: RealExamples.Example): Unit = {
+    val registrationRp = newRp(testData, Helpers.CredentialRepository.empty)
 
     val registrationRequest = registrationRp
       .startRegistration(
@@ -76,7 +73,6 @@ class RelyingPartyCeremoniesSpec
       testData.attestation.credential.getId
     )
     registrationResult.isAttestationTrusted should be(false)
-    registrationResult.getAttestationMetadata.isPresent should be(false)
 
     val assertionRp = newRp(
       testData,
@@ -84,9 +80,7 @@ class RelyingPartyCeremoniesSpec
         testData.user,
         Helpers.toRegisteredCredential(testData.user, registrationResult),
       ),
-    ).toBuilder
-      .allowUnrequestedExtensions(true)
-      .build()
+    )
 
     val assertionResult = assertionRp.finishAssertion(
       FinishAssertionOptions
@@ -125,7 +119,7 @@ class RelyingPartyCeremoniesSpec
 
   testWithEachProvider { it =>
     describe("The default RelyingParty settings") {
-      val check = createCheck()(_)
+      val check = createCheck(_)
 
       describe("can register and then authenticate") {
         it("a YubiKey NEO.") {
@@ -162,7 +156,7 @@ class RelyingPartyCeremoniesSpec
           check(RealExamples.SecurityKeyNfc)
         }
 
-        ignore("a YubiKey 5 NFC FIPS.") { // TODO Un-ignore when allowUnrequestedExtensions default changes to true
+        it("a YubiKey 5 NFC FIPS.") {
           check(RealExamples.YubikeyFips5Nfc)
         }
 
@@ -179,19 +173,6 @@ class RelyingPartyCeremoniesSpec
         }
         it("an Apple MacOS device.") {
           check(RealExamples.AppleAttestationMacos)
-        }
-      }
-    }
-
-    describe("The default RelyingParty settings, but with allowUnrequestedExtensions(true)") {
-
-      describe("can register and then authenticate") {
-        val check = createCheck(rp =>
-          rp.toBuilder.allowUnrequestedExtensions(true).build()
-        )(_)
-
-        it("a YubiKey 5 NFC FIPS.") { // TODO Delete when allowUnrequestedExtensions default changes to true
-          check(RealExamples.YubikeyFips5Nfc)
         }
       }
     }

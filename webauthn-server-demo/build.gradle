@@ -13,13 +13,14 @@ dependencies {
 
   implementation(
     project(':webauthn-server-attestation'),
-    project(':webauthn-server-core-minimal'),
+    project(':webauthn-server-core'),
     project(':yubico-util'),
 
-    'com.google.guava:guava',
     'com.fasterxml.jackson.core:jackson-databind',
+    'com.google.guava:guava',
     'com.upokecenter:cbor',
     'javax.ws.rs:javax.ws.rs-api',
+    'org.bouncycastle:bcprov-jdk15on',
     'org.eclipse.jetty:jetty-server',
     'org.eclipse.jetty:jetty-servlet',
     'org.glassfish.jersey.containers:jersey-container-servlet-core',
@@ -33,7 +34,7 @@ dependencies {
   )
 
   testImplementation(
-    project(':webauthn-server-core-minimal').sourceSets.test.output,
+    project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
 
     'junit:junit',

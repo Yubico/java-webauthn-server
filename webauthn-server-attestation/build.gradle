@@ -3,6 +3,7 @@ plugins {
   id 'scala'
   id 'maven-publish'
   id 'signing'
+  id 'info.solidsoft.pitest'
   id 'io.github.cosmicsilence.scalafix'
 }
 
@@ -13,13 +14,25 @@ project.ext.publishMe = true
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-evaluationDependsOn(':webauthn-server-core-minimal')
+evaluationDependsOn(':webauthn-server-core')
+
+sourceSets {
+  integrationTest {
+    compileClasspath += sourceSets.main.output
+    runtimeClasspath += sourceSets.main.output
+  }
+}
+
+configurations {
+  integrationTestImplementation.extendsFrom testImplementation
+  integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
 
 dependencies {
   api(platform(rootProject))
 
   api(
-    project(':webauthn-server-core-minimal'),
+    project(':webauthn-server-core'),
   )
 
   implementation(
@@ -31,21 +44,38 @@ dependencies {
   )
 
   testImplementation(
-    project(':webauthn-server-core-minimal').sourceSets.test.output,
+    project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
+    'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
     'junit:junit',
+    'org.bouncycastle:bcpkix-jdk15on',
+    'org.eclipse.jetty:jetty-server:[9.4.9.v20180320,10)',
     'org.mockito:mockito-core',
     'org.scala-lang:scala-library',
     'org.scalacheck:scalacheck_2.13',
     'org.scalatest:scalatest_2.13',
+    'uk.org.lidalia:slf4j-test',
   )
 
-  testRuntimeOnly(
-    // Transitive dependency from :webauthn-server-core:test
-    'org.bouncycastle:bcpkix-jdk15on',
-  )
+  testImplementation('org.slf4j:slf4j-api') {
+    version {
+      strictly '[1.7.25,1.8-a)' // Pre-1.8 version required by slf4j-test
+    }
+  }
 }
 
+tasks.register('integrationTest', Test) {
+  description = 'Runs integration tests.'
+  group = 'verification'
+
+  testClassesDirs = sourceSets.integrationTest.output.classesDirs
+  classpath = sourceSets.integrationTest.runtimeClasspath
+  shouldRunAfter test
+  check.dependsOn it
+
+  // Required for processing CRL distribution points extension
+  systemProperty 'com.sun.security.enableCRLDP', 'true'
+}
 
 jar {
   manifest {
@@ -59,3 +89,17 @@ jar {
   }
 }
 
+pitest {
+  pitestVersion = '1.4.11'
+
+  timestampedReports = false
+  outputFormats = ['XML', 'HTML']
+
+  avoidCallsTo = [
+          'java.util.logging',
+          'org.apache.log4j',
+          'org.slf4j',
+          'org.apache.commons.logging',
+          'com.google.common.io.Closeables',
+  ]
+}

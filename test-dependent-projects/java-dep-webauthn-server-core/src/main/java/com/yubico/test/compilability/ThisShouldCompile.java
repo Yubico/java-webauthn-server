@@ -55,7 +55,7 @@ public class ThisShouldCompile {
 
   public PublicKeyCredentialType getPublicKeyCredentialType() {
     PublicKeyCredentialType a = PublicKeyCredentialType.PUBLIC_KEY;
-    String b = a.toJsonString();
+    String b = a.getId();
     return a;
   }
 }

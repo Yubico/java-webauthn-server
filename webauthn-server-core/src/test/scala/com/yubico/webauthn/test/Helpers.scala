@@ -1,6 +1,5 @@
 package com.yubico.webauthn.test
 
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.CredentialRepository
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationResult
@@ -10,6 +9,7 @@ import com.yubico.webauthn.data.UserIdentity
 
 import java.util.Optional
 import scala.jdk.CollectionConverters._
+import scala.jdk.OptionConverters.RichOption
 
 object Helpers {
 
@@ -20,14 +20,14 @@ object Helpers {
       ): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
       override def getUserHandleForUsername(
           username: String
-      ): Optional[ByteArray] = None.asJava
+      ): Optional[ByteArray] = None.toJava
       override def getUsernameForUserHandle(
           userHandle: ByteArray
-      ): Optional[String] = None.asJava
+      ): Optional[String] = None.toJava
       override def lookup(
           credentialId: ByteArray,
           userHandle: ByteArray,
-      ): Optional[RegisteredCredential] = None.asJava
+      ): Optional[RegisteredCredential] = None.toJava
       override def lookupAll(
           credentialId: ByteArray
       ): java.util.Set[RegisteredCredential] = Set.empty.asJava
@@ -71,14 +71,14 @@ object Helpers {
             username: String
         ): Optional[ByteArray] =
           if (username == user.getName)
-            Some(user.getId).asJava
-          else None.asJava
+            Some(user.getId).toJava
+          else None.toJava
         override def getUsernameForUserHandle(
             userHandle: ByteArray
         ): Optional[String] =
           if (userHandle == user.getId)
-            Some(user.getName).asJava
-          else None.asJava
+            Some(user.getName).toJava
+          else None.toJava
         override def lookup(
             credentialId: ByteArray,
             userHandle: ByteArray,
@@ -86,8 +86,8 @@ object Helpers {
           if (
             credentialId == credential.getCredentialId && userHandle == user.getId
           )
-            Some(credential).asJava
-          else None.asJava
+            Some(credential).toJava
+          else None.toJava
         override def lookupAll(
             credentialId: ByteArray
         ): java.util.Set[RegisteredCredential] =

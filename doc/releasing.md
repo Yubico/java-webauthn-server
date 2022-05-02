@@ -60,10 +60,9 @@ Release candidate versions
       from ASCIIdoc to Markdown and remove line wraps. Include only
       changes/additions since the previous release or pre-release.
     - Attach the signature files from
-      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z-RCN.jar.asc`,
-      `webauthn-server-core/build/libs/webauthn-server-core-minimal-X.Y.Z-RCN.jar.asc`
+      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z-RCN.jar.asc`
       and
-      `webauthn-server-core-bundle/build/libs/webauthn-server-core-X.Y.Z-RCN.jar.asc`.
+      `webauthn-server-core/build/libs/webauthn-server-core-X.Y.Z-RCN.jar.asc`.
     - Note which JDK version was used to build the artifacts.
 
 
@@ -146,9 +145,8 @@ Release versions
       from ASCIIdoc to Markdown and remove line wraps. Include all changes since
       the previous release (not just changes since the previous pre-release).
     - Attach the signature files from
-      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z.jar.asc`,
-      `webauthn-server-core/build/libs/webauthn-server-core-minimal-X.Y.Z.jar.asc`
+      `webauthn-server-attestation/build/libs/webauthn-server-attestation-X.Y.Z.jar.asc`
       and
-      `webauthn-server-core-bundle/build/libs/webauthn-server-core-X.Y.Z.jar.asc`.
+      `webauthn-server-core/build/libs/webauthn-server-core-X.Y.Z.jar.asc`.
 
     - Note which JDK version was used to build the artifacts.

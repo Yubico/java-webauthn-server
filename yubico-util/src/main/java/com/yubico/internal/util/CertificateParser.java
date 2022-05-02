@@ -26,14 +26,21 @@ package com.yubico.internal.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 public class CertificateParser {
+  public static final String ID_FIDO_GEN_CE_AAGUID = "1.3.6.1.4.1.45724.1.1.4";
+
   //    private static final Provider BC_PROVIDER = new BouncyCastleProvider();
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
@@ -88,5 +95,75 @@ public class CertificateParser {
                   .generateCertificate(new ByteArrayInputStream(encoded));
     }
     return cert;
+  }
+
+  /**
+   * Compute a Subject Key Identifier as defined as method (1) in RFC 5280 section 4.2.1.2.
+   *
+   * @throws NoSuchAlgorithmException if the SHA-1 hash algorithm is not available.
+   * @see <a href="https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.2">Internet X.509
+   *     Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile,
+   *     section 4.2.1.2. Subject Key Identifier</a>
+   */
+  public static byte[] computeSubjectKeyIdentifier(final Certificate cert)
+      throws NoSuchAlgorithmException {
+    final byte[] spki = cert.getPublicKey().getEncoded();
+
+    // SubjectPublicKeyInfo  ::=  SEQUENCE  {
+    //     algorithm            AlgorithmIdentifier,
+    //     subjectPublicKey     BIT STRING  }
+    final byte algLength = spki[2 + 1];
+
+    // BIT STRING begins with one octet specifying number of unused bits at end;
+    // this is not included in the content to hash for a Subject Key Identifier.
+    final int spkBitsStart = 2 + 2 + 2 + algLength + 1;
+
+    return MessageDigest.getInstance("SHA-1")
+        .digest(Arrays.copyOfRange(spki, spkBitsStart, spki.length));
+  }
+
+  /**
+   * Parses an AAGUID into bytes. Refer to <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-packed-attestation-cert-requirements">Packed
+   * Attestation Statement Certificate Requirements</a> on the W3C web site for details of the ASN.1
+   * structure that this method parses.
+   *
+   * @param bytes the bytes making up value of the extension
+   * @return the bytes of the AAGUID
+   */
+  private static byte[] parseAaguid(byte[] bytes) {
+
+    if (bytes != null && bytes.length == 20) {
+      ByteBuffer buffer = ByteBuffer.wrap(bytes);
+
+      if (buffer.get() == (byte) 0x04
+          && buffer.get() == (byte) 0x12
+          && buffer.get() == (byte) 0x04
+          && buffer.get() == (byte) 0x10) {
+        byte[] aaguidBytes = new byte[16];
+        buffer.get(aaguidBytes);
+
+        return aaguidBytes;
+      }
+    }
+
+    throw new IllegalArgumentException(
+        "X.509 extension 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) is not valid.");
+  }
+
+  public static Optional<byte[]> parseFidoAaguidExtension(X509Certificate cert) {
+    Optional<byte[]> result =
+        Optional.ofNullable(cert.getExtensionValue(ID_FIDO_GEN_CE_AAGUID))
+            .map(CertificateParser::parseAaguid);
+    result.ifPresent(
+        aaguid -> {
+          if (cert.getCriticalExtensionOIDs().contains(ID_FIDO_GEN_CE_AAGUID)) {
+            throw new IllegalArgumentException(
+                String.format(
+                    "X.509 extension %s (id-fido-gen-ce-aaguid) must not be marked critical.",
+                    ID_FIDO_GEN_CE_AAGUID));
+          }
+        });
+    return result;
   }
 }

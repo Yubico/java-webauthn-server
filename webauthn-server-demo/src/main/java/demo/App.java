@@ -24,8 +24,18 @@
 
 package demo;
 
+import com.yubico.fido.metadata.FidoMetadataDownloaderException;
+import com.yubico.fido.metadata.UnexpectedLegalHeader;
+import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import demo.webauthn.WebAuthnRestResource;
+import java.io.IOException;
+import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,7 +52,18 @@ public class App extends Application {
   public Set<Object> getSingletons() {
     try {
       return new HashSet<>(Arrays.asList(new WebAuthnRestResource()));
-    } catch (InvalidAppIdException | CertificateException e) {
+    } catch (InvalidAppIdException
+        | CertificateException
+        | CertPathValidatorException
+        | InvalidAlgorithmParameterException
+        | Base64UrlException
+        | DigestException
+        | FidoMetadataDownloaderException
+        | UnexpectedLegalHeader
+        | IOException
+        | NoSuchAlgorithmException
+        | SignatureException
+        | InvalidKeyException e) {
       throw new RuntimeException(e);
     }
   }

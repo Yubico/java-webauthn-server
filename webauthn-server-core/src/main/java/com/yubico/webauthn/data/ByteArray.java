@@ -25,11 +25,9 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.primitives.Bytes;
 import com.yubico.internal.util.BinaryUtil;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
 import java.util.Base64;
@@ -38,10 +36,9 @@ import lombok.NonNull;
 import lombok.ToString;
 
 /** An immutable byte array with support for encoding/decoding to/from various encodings. */
-@JsonSerialize(using = JsonStringSerializer.class)
 @EqualsAndHashCode
 @ToString(includeFieldNames = false, onlyExplicitlyIncluded = true)
-public final class ByteArray implements Comparable<ByteArray>, JsonStringSerializable {
+public final class ByteArray implements Comparable<ByteArray> {
 
   private static final Base64.Encoder BASE64_ENCODER = Base64.getEncoder();
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
@@ -51,7 +48,7 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
 
   @NonNull private final byte[] bytes;
 
-  @NonNull private final String base64url;
+  @JsonValue @NonNull private final String base64url;
 
   /** Create a new instance by copying the contents of <code>bytes</code>. */
   public ByteArray(@NonNull byte[] bytes) {
@@ -112,32 +109,33 @@ public final class ByteArray implements Comparable<ByteArray>, JsonStringSeriali
     return this.bytes.length;
   }
 
-  /** @return a copy of the raw byte contents. */
+  /**
+   * @return a copy of the raw byte contents.
+   */
   public byte[] getBytes() {
     return BinaryUtil.copy(bytes);
   }
 
-  /** @return the content bytes encoded as classic Base64 data. */
+  /**
+   * @return the content bytes encoded as classic Base64 data.
+   */
   public String getBase64() {
     return BASE64_ENCODER.encodeToString(bytes);
   }
 
-  /** @return the content bytes encoded as Base64Url data, without padding. */
+  /**
+   * @return the content bytes encoded as Base64Url data, without padding.
+   */
   public String getBase64Url() {
     return base64url;
   }
 
-  /** @return the content bytes encoded as hexadecimal data. */
+  /**
+   * @return the content bytes encoded as hexadecimal data.
+   */
   @ToString.Include
   public String getHex() {
     return BinaryUtil.toHex(bytes);
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getBase64Url()} instead. */
-  public String toJsonString() {
-    return base64url;
   }
 
   @Override

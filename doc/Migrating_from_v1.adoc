@@ -1,0 +1,351 @@
+= v1.x to v2.0 migration guide
+
+The `2.0` release of the `webauthn-server-core` module
+removes some deprecated features
+and completely replaces the optional subsystem for attestation metadata.
+This guide aims to help migrating between versions.
+
+If you find this migration guide to be incomplete, incorrect,
+or otherwise difficult to follow, please
+link:https://github.com/Yubico/java-webauthn-server/issues/new[let us know!]
+
+This is the migration guide for the core library.
+The `webauthn-server-attestation` module has
+link:../webauthn-server-attestation/doc/Migrating_from_v1.adoc[its own migration guide].
+
+Here is a high-level outline of what needs to be updated:
+
+- Replace dependency on `webauthn-server-core-minimal` with
+  `webauthn-server-core`.
+- If using JDK 14 or earlier, add a JCA provider for the `EdDSA` algorithms.
+- Remove uses of removed features.
+- Update uses of renamed and replaced features.
+- Replace any implementations of `MetadataService` with
+  `AttestationTrustSource`.
+- Rename imports of classes in `com.yubico.fido.metadata`.
+- Update `getUserVerification()` and `getResidentKey()` calls
+  to expect `Optional` values.
+
+
+== Replace dependency on `webauthn-server-core-minimal`
+
+If you were depending on the `webauthn-server-core-minimal` module,
+update the dependency to `webauthn-server-core` instead.
+
+Maven example:
+
+[source,diff]
+----------
+ <dependency>
+   <groupId>com.yubico</groupId>
+-  <artifactId>webauthn-server-core-minimal</artifactId>
+-  <version>1.12.2</version>
++  <artifactId>webauthn-server-core</artifactId>
++  <version>2.0.0</version>
+   <scope>compile</scope>
+ </dependency>
+----------
+
+Gradle:
+
+[source,diff]
+----------
+-compile 'com.yubico:webauthn-server-core-minimal:1.12.2'
++compile 'com.yubico:webauthn-server-core:2.0.0'
+----------
+
+
+== Add JCA provider for EdDSA
+
+The library no longer depends explicitly on BouncyCastle for cryptography back-ends.
+For applications running on JRE 15 or later this should not make a noticeable difference
+and no action should be needed.
+However, JRE 14 and earlier do not include EdDSA providers by default,
+so you need to add a JCA provider yourself.
+For example, you can use BouncyCastle.
+First, add the dependency.
+
+Maven example:
+
+[source,xml]
+----------
+<dependency>
+    <groupId>org.bouncycastle</groupId>
+    <artifactId>bcprov-jdk15on</artifactId>
+    <version>1.70</version>
+    <scope>compile</scope>
+</dependency>
+----------
+
+Gradle:
+
+[source,groovy]
+----------
+implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+----------
+
+Then set up the provider. This should be done before instantiating `RelyingParty`.
+
+Example:
+
+[source,java]
+----------
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+Security.addProvider(new BouncyCastleProvider());
+----------
+
+
+== Remove uses of removed features
+
+Several fields, methods and settings have been removed:
+
+- The `icon` field in `RelyingPartyIdentity` and `UserIdentity`,
+  and its associated methods.
+  They were removed in WebAuthn Level 2 and have no replacement.
++
+Example:
++
+[source,diff]
+----------
+ RelyingPartyIdentity rpIdentity = RelyingPartyIdentity.builder()
+     .id("example.org")
+     .name("Example Service")
+-    .icon(new URL("https://example.org/favicon.ico"))
+     .build();
+
+ UserIdentity userIdentity = UserIdentity.builder()
+     .name("test@example.org")
+     .displayName("Test User")
+     .id(new ByteArray(new byte[] { 1, 2, 3, 4 }))
+-    .icon(new URL("https://example.org/user.png"))
+     .build();
+----------
+
+- The setting `allowUnrequestedExtensions(boolean)` in `RelyingParty`.
++
+WebAuthn Level 2 now recommends that unrequested extensions should be allowed,
+so this setting has been removed and is now always enabled.
++
+Example:
++
+[source,diff]
+----------
+ RelyingParty rp = RelyingParty
+     .builder()
+     .identity(rpIdentity)
+     .credentialRepository(credentialRepo)
+-    .allowUnrequestedExtensions(true)
+     .build()
+----------
+
+- Enum value `AttestationType.ECDAA`.
++
+This attestation type was removed from WebAuthn Level 2.
+ECDAA support has not been implemented in this library,
+so this value could in practice never be returned.
++
+Example:
++
+[source,diff]
+----------
+ RelyingParty rp = /* ... */;
+ RegistrationResult result = rp.finishRegistration(/* ... */);
+ switch (result.getAttestationType()) {
+-    case ECDAA:
+-        // Do something...
+-        break;
+-
+     default:
+         // Do something else...
+         break;
+ }
+----------
+
+- Methods `RegistrationResult.getWarnings()` and `AssertionResult.getWarnings()`.
++
+These are now always empty.
+Any warnings are instead logged via SLF4J
+in the `com.yubico.webauthn` package and its subpackages.
++
+Example:
++
+[source,diff]
+----------
+ RelyingParty rp = /* ... */;
+
+ RegistrationResult result = rp.finishRegistration(/* ... */);
+-for (String warning : result.getWarnings()) {
+-    // Do something...
+-}
+
+ AssertionResult result = rp.finishAssertion(/* ... */);
+-for (String warning : result.getWarnings()) {
+-    // Do something...
+-}
+----------
+
+- Types `Attestation` and `Transport`,
+  methods `RegistrationResult.getAttestationMetadata()`
+  and `AuthenticatorTransport.fromU2fTransport()`
+  have been removed in an overhaul of the framework for attestation metadata.
+  The core library no longer exposes attestation metadata directly
+  in its result types,
+  instead each metadata source may provide its own interfaces
+  for retrieving and working with attestation metadata.
+  See for example the
+  link:../webauthn-server-attestation[`webauthn-server-attestation` module],
+  which provides the type `MetadataBlobPayloadEntry` as a replacement for `Attestation`
+  and reuses `AuthenticatorTransport` as a replacement for `Transport`.
+
+
+== Update uses of renamed and replaced features
+
+- Methods `requireResidentKey(boolean)` and `isRequireResidentKey()`
+  in `AuthenticatorSelectionCriteria` have been replaced
+  by `residentKey(ResidentKeyRequirement)` and `getResidentKey()`, respectively.
++
+Replace `requireResidentKey(false)`
+with `residentKey(ResidentKeyRequirement.DISCOURAGED)`.
+Example:
++
+[source,diff]
+----------
+ RelyingParty rp = /* ... */;
+ PublicKeyCredentialCreationOptions pkcco = rp.startRegistration(
+   StartRegistrationOptions
+     .builder()
+     .user(userId)
+     .authenticatorSelection(
+       AuthenticatorSelectionCriteria
+         .builder()
+-        .requireResidentKey(false)
++        .residentKey(ResidentKeyRequirement.DISCOURAGED)
+         .build()
+     )
+     .build()
+ );
+----------
++
+Replace `requireResidentKey(true)`
+with `residentKey(ResidentKeyRequirement.REQUIRED)`.
+Example:
++
+[source,diff]
+----------
+ RelyingParty rp = /* ... */;
+ PublicKeyCredentialCreationOptions pkcco = rp.startRegistration(
+   StartRegistrationOptions
+     .builder()
+     .user(userId)
+     .authenticatorSelection(
+       AuthenticatorSelectionCriteria
+         .builder()
+-        .requireResidentKey(true)
++        .residentKey(ResidentKeyRequirement.REQUIRED)
+         .build()
+     )
+     .build()
+ );
+----------
+
+
+== Replace implementations of `MetadataService`
+
+The `MetadataService` interface has been replaced with `AttestationTrustSource`.
+The new interface has some key differences:
+
+- `MetadataService` implementations were expected to validate
+  the attestation certificate path.
+  `AttestationTrustSource` implementations are not;
+  instead they only need to retrieve the trust root certificates.
+  The `RelyingParty.finishRegistration` method will perform
+  certificate path validation internally
+  and report the result via `RegistrationResult.isAttestationTrusted()`.
+  The `AttestationTrustSource` may also return a `CertStore`
+  of untrusted certificates and CRLs that may be needed
+  for certificate path validation,
+  and/or disable certificate revocation checking for a particular query.
+
+- `MetadataService` implementations return attestation metadata.
+  `AttestationTrustSource` only returns
+  what's necessary for the certificate path validation.
+  Implementations may provide additional methods
+  for accessing attestation metadata,
+  but `RelyingParty` will not integrate them in the core result types.
+
+See the JavaDoc for `AttestationTrustSource` for details on how to implement it,
+and see the `FidoMetadataService` class in the
+link:../webauthn-server-attestation[`webauthn-server-attestation` module]
+for a reference implementation.
+
+== Rename imports of classes in `com.yubico.fido.metadata`
+
+The `com.yubico.fido.metadata` package appears in both
+the `webauthn-server-core` and `webauthn-server-attestation` modules.
+This causes split package name clash in JPMS (Java Platform Module System),
+so the classes in the core module have been moved
+to the `com.yubico.webauthn.extension.uvm` package to avoid this name conflict.
+Update any imports of these classes.
+
+Example:
+
+[source,diff]
+----------
+-import com.yubico.fido.metadata.KeyProtectionType;
+-import com.yubico.fido.metadata.MatcherProtectionType;
+-import com.yubico.fido.metadata.UserVerificationMethod;
++import com.yubico.webauthn.extension.uvm.KeyProtectionType;
++import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
++import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
+----------
+
+
+== Update `getUserVerification()` and `getResidentKey()` calls to expect `Optional` values
+
+The default `"preferred"` for `userVerification` has
+link:https://github.com/w3c/webauthn/issues/1253[turned out to cause confusion].
+Therefore, browsers have started issuing console warnings
+when `userVerification` is not set explicitly.
+This library has mirrored the defaults for
+`PublicKeyCredentialRequestOptions.userVerification` and
+`AuthenticatorSelectionCriteria.userVerification`,
+but this inadvertently suppresses any browser console warnings
+since the library emits parameter objects with an explicit value set,
+even if the value was not explicitly set at the library level.
+The defaults have therefore been removed,
+and the corresponding getters now return `Optional` values.
+For consistency, the same change applies to
+`AuthenticatorSelectionCriteria.residentKey` as well.
+
+The setters for these settings remain unchanged,
+but if you use the getters you need to expect `Optional` values instead.
+
+Example:
+
+[source,diff]
+----------
+ PublicKeyCredentialCreationOptions pkcco = /* ... */;
+ if (pkcco
+         .getAuthenticatorSelectionCriteria()
+-        .map(AuthenticatorSelectionCriteria::getUserVerification)
++        .flatMap(AuthenticatorSelectionCriteria::getUserVerification)
+         .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
+     // Do something...
+ }
+ if (pkcco
+         .getAuthenticatorSelectionCriteria()
+-        .map(AuthenticatorSelectionCriteria::getResidentKey)
++        .flatMap(AuthenticatorSelectionCriteria::getResidentKey)
+         .equals(Optional.of(ResidentKeyRequirement.REQUIRED))) {
+     // Do something...
+ }
+
+ PublicKeyCredentialRequestOptions pkcro = /* ... */;
+ if (pkcro
+         .getUserVerification()
+-        == UserVerificationRequirement.REQUIRED)) {
++        .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
+     // Do something...
+ }
+----------

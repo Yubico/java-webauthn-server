@@ -24,9 +24,6 @@
 
 package com.yubico.webauthn.data;
 
-import java.net.URL;
-import java.util.Optional;
-
 /**
  * Describes a user account, or a WebAuthn Relying Party, which a public key credential is
  * associated with or scoped to, respectively.
@@ -82,19 +79,4 @@ public interface PublicKeyCredentialEntity {
    * @see <a href="https://tools.ietf.org/html/rfc8265">RFC 8265</a>
    */
   String getName();
-
-  /**
-   * A serialized URL which resolves to an image associated with the entity.
-   *
-   * <p>For example, this could be a user's avatar or a Relying Party's logo. This URL MUST be an a
-   * priori authenticated URL. Authenticators MUST accept and store a 128-byte minimum length for an
-   * icon member's value. Authenticators MAY ignore an icon member's value if its length is greater
-   * than 128 bytes. The URL's scheme MAY be "data" to avoid fetches of the URL, at the cost of
-   * needing more storage.
-   *
-   * @deprecated The <code>icon</code> field has been removed from WebAuthn Level 2. This method
-   *     will be removed in the next major version of this library.
-   */
-  @Deprecated
-  Optional<URL> getIcon(); // TODO v2.0: delete this
 }

@@ -26,8 +26,6 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.net.URL;
-import java.util.Optional;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -103,30 +101,14 @@ public class UserIdentity implements PublicKeyCredentialEntity {
    */
   @NonNull private final ByteArray id;
 
-  /**
-   * A URL which resolves to an image associated with the entity. For example, this could be the
-   * user’s avatar.
-   *
-   * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
-   * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s
-   * value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches
-   * of the URL, at the cost of needing more storage.
-   *
-   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This field
-   *     will be removed in the next major version of the library.
-   */
-  @Deprecated private final URL icon; // TODO v2.0: delete this
-
   @JsonCreator
   private UserIdentity(
       @NonNull @JsonProperty("name") String name,
       @NonNull @JsonProperty("displayName") String displayName,
-      @NonNull @JsonProperty("id") ByteArray id,
-      @JsonProperty("icon") URL icon) {
+      @NonNull @JsonProperty("id") ByteArray id) {
     this.name = name;
     this.displayName = displayName;
     this.id = id;
-    this.icon = icon;
   }
 
   public static UserIdentityBuilder.MandatoryStages builder() {
@@ -134,7 +116,6 @@ public class UserIdentity implements PublicKeyCredentialEntity {
   }
 
   public static class UserIdentityBuilder {
-    private URL icon = null;
 
     public static class MandatoryStages {
       private UserIdentityBuilder builder = new UserIdentityBuilder();
@@ -172,50 +153,5 @@ public class UserIdentity implements PublicKeyCredentialEntity {
         }
       }
     }
-
-    /**
-     * A URL which resolves to an image associated with the entity. For example, this could be the
-     * user’s avatar.
-     *
-     * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
-     * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
-     * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
-     * avoid fetches of the URL, at the cost of needing more storage.
-     *
-     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
-     *     method will be removed in the next major version of the library.
-     */
-    @Deprecated
-    public UserIdentityBuilder icon(@NonNull Optional<URL> icon) {
-      return this.icon(icon.orElse(null));
-    }
-
-    /**
-     * A URL which resolves to an image associated with the entity. For example, this could be the
-     * user’s avatar.
-     *
-     * <p>This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a
-     * 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon
-     * member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to
-     * avoid fetches of the URL, at the cost of needing more storage.
-     *
-     * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This
-     *     method will be removed in the next major version of the library.
-     */
-    @Deprecated
-    public UserIdentityBuilder icon(URL icon) {
-      this.icon = icon;
-      return this;
-    }
-  }
-
-  /**
-   * @deprecated The <code>icon</code> property has been removed from WebAuthn Level 2. This method
-   *     will be removed in the next major version of the library.
-   */
-  @Deprecated
-  @Override
-  public Optional<URL> getIcon() {
-    return Optional.ofNullable(icon);
   }
 }

@@ -24,8 +24,10 @@
 
 package com.yubico.internal.util;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import org.junit.Test;
 
@@ -36,8 +38,29 @@ public class CertificateParserTest {
   private static final String PEM_ATTESTATION_CERT =
       "-----BEGIN CERTIFICATE-----\n" + ATTESTATION_CERT + "\n-----END CERTIFICATE-----\n";
 
+  private static final String SKY2_CERT =
+      "-----BEGIN CERTIFICATE-----\n"
+          + "MIICvjCCAaagAwIBAgIEdIb9wjANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbzELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEoMCYGA1UEAwwfWXViaWNvIFUyRiBFRSBTZXJpYWwgMTk1NTAwMzg0MjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJVd8633JH0xde/9nMTzGk6HjrrhgQlWYVD7OIsuX2Unv1dAmqWBpQ0KxS8YRFwKE1SKE1PIpOWacE5SO8BN6+2jbDBqMCIGCSsGAQQBgsQKAgQVMS4zLjYuMS40LjEuNDE0ODIuMS4xMBMGCysGAQQBguUcAgEBBAQDAgUgMCEGCysGAQQBguUcAQEEBBIEEPigEfOMCk0VgAYXER+e3H0wDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQsFAAOCAQEAMVxIgOaaUn44Zom9af0KqG9J655OhUVBVW+q0As6AIod3AH5bHb2aDYakeIyyBCnnGMHTJtuekbrHbXYXERIn4aKdkPSKlyGLsA/A+WEi+OAfXrNVfjhrh7iE6xzq0sg4/vVJoywe4eAJx0fS+Dl3axzTTpYl71Nc7p/NX6iCMmdik0pAuYJegBcTckE3AoYEg4K99AM/JaaKIblsbFh8+3LxnemeNf7UwOczaGGvjS6UzGVI0Odf9lKcPIwYhuTxM5CaNMXTZQ7xq4/yTfC3kPWtE4hFT34UJJflZBiLrxG4OsYxkHw/n5vKgmpspB3GfYuYTWhkDKiE8CYtyg87g==-----END CERTIFICATE-----";
+  private static final String SKY_NFC_CERT =
+      "-----BEGIN CERTIFICATE-----\n"
+          + "MIICvTCCAaWgAwIBAgIEKudiYzANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZdWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAwMDBaGA8yMDUwMDkwNDAwMDAwMFowbjELMAkGA1UEBhMCU0UxEjAQBgNVBAoMCVl1YmljbyBBQjEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEnMCUGA1UEAwweWXViaWNvIFUyRiBFRSBTZXJpYWwgNzE5ODA3MDc1MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKgOGXmBD2Z4R/xCqJVRXhL8Jr45rHjsyFykhb1USGozZENOZ3cdovf5Ke8fj2rxi5tJGn/VnW4/6iQzKdIaeP6NsMGowIgYJKwYBBAGCxAoCBBUxLjMuNi4xLjQuMS40MTQ4Mi4xLjEwEwYLKwYBBAGC5RwCAQEEBAMCBDAwIQYLKwYBBAGC5RwBAQQEEgQQbUS6m/bsLkm5MAyP6SDLczAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQByV9A83MPhFWmEkNb4DvlbUwcjc9nmRzJjKxHc3HeK7GvVkm0H4XucVDB4jeMvTke0WHb/jFUiApvpOHh5VyMx5ydwFoKKcRs5x0/WwSWL0eTZ5WbVcHkDR9pSNcA/D/5AsUKOBcbpF5nkdVRxaQHuuIuwV4k1iK2IqtMNcU8vL6w21U261xCcWwJ6sMq4zzVO8QCKCQhsoIaWrwz828GDmPzfAjFsJiLJXuYivdHACkeJ5KHMt0mjVLpfJ2BCML7/rgbmvwL7wBW80VHfNdcKmKjkLcpEiPzwcQQhiN/qHV90t+p4iyr5xRSpurlP5zic2hlRkLKxMH2/kRjhqSn4-----END CERTIFICATE-----";
+
   @Test
   public void parsePemDoesNotReturnNull() throws CertificateException {
     assertNotNull(CertificateParser.parsePem(PEM_ATTESTATION_CERT));
+  }
+
+  @Test
+  public void subjectPublicKeyIdentifierIsCorrect()
+      throws CertificateException, NoSuchAlgorithmException {
+    assertEquals(
+        "bf12365afcb14d3dd820be7ec4be163cb7c85de0",
+        BinaryUtil.toHex(
+            CertificateParser.computeSubjectKeyIdentifier(CertificateParser.parsePem(SKY2_CERT))));
+    assertEquals(
+        "43c0f809b1d75616aa152c3cba57d73465057f21",
+        BinaryUtil.toHex(
+            CertificateParser.computeSubjectKeyIdentifier(
+                CertificateParser.parsePem(SKY_NFC_CERT))));
   }
 }

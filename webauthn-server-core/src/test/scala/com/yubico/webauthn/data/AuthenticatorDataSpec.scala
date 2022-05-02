@@ -26,7 +26,6 @@ package com.yubico.webauthn.data
 
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
-import com.yubico.internal.util.scala.JavaConverters._
 import com.yubico.webauthn.WebAuthnTestCodecs
 import com.yubico.webauthn.data.Generators.byteArray
 import org.junit.runner.RunWith
@@ -38,6 +37,7 @@ import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.security.interfaces.ECPublicKey
+import scala.jdk.OptionConverters.RichOptional
 import scala.util.Failure
 import scala.util.Try
 
@@ -127,7 +127,7 @@ class AuthenticatorDataSpec
 
       if (hasAttestation) {
         it("gets the correct attestation data from the raw bytes.") {
-          authData.getAttestedCredentialData.asScala shouldBe defined
+          authData.getAttestedCredentialData.toScala shouldBe defined
           authData.getAttestedCredentialData.get.getAaguid.getHex should equal(
             "000102030405060708090a0b0c0d0e0f"
           )
@@ -150,7 +150,7 @@ class AuthenticatorDataSpec
 
       if (hasExtensions) {
         it("gets the correct extension data from the raw bytes.") {
-          authData.getExtensions.asScala shouldBe defined
+          authData.getExtensions.toScala shouldBe defined
           new ByteArray(
             authData.getExtensions.get.EncodeToBytes()
           ) should equal(jsonToCbor("""{ "foo": "bar" }"""))

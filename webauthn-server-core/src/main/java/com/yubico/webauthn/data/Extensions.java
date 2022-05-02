@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
-import com.yubico.fido.metadata.KeyProtectionType;
-import com.yubico.fido.metadata.MatcherProtectionType;
-import com.yubico.fido.metadata.UserVerificationMethod;
 import com.yubico.webauthn.StartRegistrationOptions;
+import com.yubico.webauthn.extension.uvm.KeyProtectionType;
+import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
+import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -166,7 +166,7 @@ public class Extensions {
          * requirement MAY be ignored.
          *
          * <p>Note: CTAP authenticators only support <code>largeBlob</code> in combination with
-         * {@link AuthenticatorSelectionCriteria#isRequireResidentKey()} set to <code>true</code> in
+         * {@link AuthenticatorSelectionCriteria#getResidentKey()} set to <code>REQUIRED</code> in
          * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
          *
          * @see <a
@@ -181,7 +181,7 @@ public class Extensions {
          * created without large blob support.
          *
          * <p>Note: CTAP authenticators only support <code>largeBlob</code> in combination with
-         * {@link AuthenticatorSelectionCriteria#isRequireResidentKey()} set to <code>true</code> in
+         * {@link AuthenticatorSelectionCriteria#getResidentKey()} set to <code>REQUIRED</code> in
          * {@link StartRegistrationOptions#getAuthenticatorSelection()}.
          *
          * @see <a

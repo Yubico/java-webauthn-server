@@ -24,8 +24,6 @@
 
 package com.yubico.webauthn.meta;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.LocalDateJsonSerializer;
 import java.net.URL;
 import java.time.LocalDate;
 import lombok.AccessLevel;
@@ -49,7 +47,6 @@ public class Specification {
   private final DocumentStatus status;
 
   /** The release date of the specification document. */
-  @JsonSerialize(using = LocalDateJsonSerializer.class)
   private final LocalDate releaseDate;
 
   static SpecificationBuilder builder() {

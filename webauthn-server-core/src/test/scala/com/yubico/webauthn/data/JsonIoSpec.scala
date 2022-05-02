@@ -24,24 +24,17 @@
 
 package com.yubico.webauthn.data
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.core.`type`.TypeReference
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.AssertionResult
 import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationResult
-import com.yubico.webauthn.attestation.Attestation
-import com.yubico.webauthn.attestation.Generators._
-import com.yubico.webauthn.attestation.Transport
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -60,12 +53,7 @@ class JsonIoSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
-  def json: ObjectMapper =
-    new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .setSerializationInclusion(Include.NON_ABSENT)
-      .registerModule(new Jdk8Module())
+  def json: ObjectMapper = JacksonCodecs.json()
 
   describe("The class") {
 
@@ -106,7 +94,6 @@ class JsonIoSpec
     test(new TypeReference[AssertionExtensionInputs]() {})
     test(new TypeReference[AssertionRequest]() {})
     test(new TypeReference[AssertionResult]() {})
-    test(new TypeReference[Attestation]() {})
     test(new TypeReference[AttestationConveyancePreference]() {})
     test(new TypeReference[AttestationObject]() {})
     test(new TypeReference[AttestationType]() {})
@@ -145,7 +132,6 @@ class JsonIoSpec
     test(new TypeReference[RelyingPartyIdentity]() {})
     test(new TypeReference[TokenBindingInfo]() {})
     test(new TypeReference[TokenBindingStatus]() {})
-    test(new TypeReference[Transport]() {})
     test(new TypeReference[UserIdentity]() {})
     test(new TypeReference[UserVerificationRequirement]() {})
   }
@@ -372,7 +358,7 @@ class JsonIoSpec
         forAll(
           a.arbitrary,
           Gen.oneOf(
-            arbitrary[AuthenticatorAttachment].map(_.toJsonString),
+            arbitrary[AuthenticatorAttachment].map(_.getValue),
             arbitrary[String],
           ),
         ) { (value: P, authenticatorAttachment: String) =>
@@ -449,6 +435,17 @@ class JsonIoSpec
   }
 
   describe("The class PublicKeyCredentialRequestOptions") {
+    it("by default does not set a userVerification value.") {
+      forAll { challenge: ByteArray =>
+        val pkcro = PublicKeyCredentialRequestOptions
+          .builder()
+          .challenge(challenge)
+          .build()
+        val jsonValue = JacksonCodecs.json.valueToTree[ObjectNode](pkcro)
+        jsonValue.get("userVerification") should be(null)
+      }
+    }
+
     it("""has a toCredentialsGetJson() method which returns a JSON object with the PublicKeyCredentialGetOptions set as a top-level "publicKey" property.""") {
       forAll { pkcro: PublicKeyCredentialRequestOptions =>
         val jsonValue = JacksonCodecs.json.readTree(pkcro.toCredentialsGetJson)
@@ -458,6 +455,21 @@ class JsonIoSpec
           classOf[PublicKeyCredentialRequestOptions],
         ) should equal(pkcro)
       }
+    }
+  }
+
+  describe("The class AuthenticatorSelectionCriteria") {
+    it("by default does not set a userVerification value.") {
+      val asc = AuthenticatorSelectionCriteria.builder().build()
+      val jsonValue = JacksonCodecs.json.valueToTree[ObjectNode](asc)
+      jsonValue.get("userVerification") should be(null)
+    }
+
+    it("by default does not set a residentKey value.") {
+      val asc = AuthenticatorSelectionCriteria.builder().build()
+      val jsonValue = JacksonCodecs.json.valueToTree[ObjectNode](asc)
+      jsonValue.get("residentKey") should be(null)
+      jsonValue.get("requireResidentKey") should be(null)
     }
   }
 

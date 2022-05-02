@@ -1,3 +1,85 @@
+== Version 2.0.0 ==
+
+This release removes deprecated APIs and changes some defaults to better align
+with the L2 version of the WebAuthn spec. It also adds a new major feature:
+optional integration with the FIDO Metadata Service for retrieving authenticator
+metadata and attestation trust roots. See below for details.
+
+`webauthn-server-core`:
+
+Breaking changes:
+
+* Deleted deprecated `icon` field in `RelyingPartyIdentity` and `UserIdentity`,
+  and its associated methods.
+* Deleted deprecated `AuthenticatorSelectionCriteria` methods
+  `builder().requireResidentKey(boolean)` and `isRequireResidentKey()`.
+* `RelyingParty` parameter `allowUnrequestedExtensions` removed. The library
+  will now always accept unrequested extensions.
+* Class `ClientAssertionExtensionOutputs` now silently ignores unknown
+  extensions instead of rejecting them.
+* `webauthn-server-core-minimal` module deleted.
+* `webauthn-server-core` no longer depends on BouncyCastle and will no longer
+  attempt to automatically fall back to it. Therefore, EdDSA keys are no longer
+  supported by default in JDK 14 and earlier. The library will log warnings if
+  configured for algorithms with no JCA provider available, in which case the
+  dependent project may need to add additional dependencies and configure JCA
+  providers externally.
+* Enum value `AttestationType.ECDAA` removed without replacement.
+* Deleted methods `RegistrationResult.getWarnings()` and
+  `AssertionResult.getWarnings()` since they are now always empty.
+* Framework for attestation metadata has been fully overhauled. See the
+  `webauthn-server-attestation` module documentation for the new ways to work
+  with attestation metadata:
+ ** Deleted method `RegistrationResult.getAttestationMetadata()`.
+ ** Interface `MetadataService` replaced with `AttestationTrustSource`, and
+    optional `RelyingParty` setting `.metadataService(MetadataService)` replaced
+    with `.attestationTrustSource(AttestationTrustSource)`.
+ ** Deleted types `Attestation` and `Transport`.
+ ** Deleted method `AuthenticatorTransport.fromU2fTransport`.
+* `RelyingParty.finishRegistration()` now uses a JCA `CertPathValidator` to
+  validate attestation certificate paths, if an attestation trust source has
+  been configured. This requires a compatible JCA provider, but should already
+  be available in most environments.
+* Classes in package `com.yubico.fido.metadata` moved to
+  `com.yubico.webauthn.extension.uvm` to avoid name clash with
+  `webauthn-server-attestation` module in JPMS.
+* Changed return type of
+  `PublicKeyCredentialRequestOptions.getUserVerification()`,
+  `AuthenticatorSelectionCriteria.getUserVerification()` and
+  `AuthenticatorSelectionCriteria.getResidentKey()` to `Optional`, and changed
+  defaults for `userVerification` and `residentKey` to empty. This means we
+  won't inadvertently suppress warnings that browsers might issue in the browser
+  console if for example `userVerification` is not set explicitly.
+
+New features:
+
+* Method `getAaguid()` added to `RegistrationResult`.
+* Method `getAttestationTrustPath()` added to `RegistrationResult`.
+* Setting `.clock(Clock)` added to `RelyingParty`. It is used for attestation
+  path validation if an `attestationTrustSource` is configured.
+
+
+`webauthn-server-attestation`:
+
+Breaking changes:
+
+* Types `AttestationResolver`, `CompositeAttestationResolver`,
+  `CompositeTrustResolver`, `DeviceMatcher`, `ExtensionMatcher`,
+  `FingerprintMatcher`, `MetadataObject`, `SimpleAttestationResolver`,
+  `SimpleTrustResolver`, `StandardMetadataService` and `TrustResolver` deleted
+  in favour of a new attestation metadata framework. Some of the functionality
+  is retained as the new `YubicoJsonMetadataService` class in the
+  `webauthn-server-demo` subproject in the library sources, but no longer
+  exposed in either library module.
+* Library no longer contains a `/metadata.json` resource.
+
+New features:
+
+* New types `FidoMetadataService` and `FidoMetadataDownloader` which integrate
+  with the FIDO Metadata Service for retrieving authenticator metadata and
+  attestation trust roots.
+
+
 == Version 1.12.4 ==
 
 Deprecated features:

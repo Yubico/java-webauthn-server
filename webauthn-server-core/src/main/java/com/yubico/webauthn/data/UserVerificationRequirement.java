@@ -25,9 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
@@ -44,9 +42,8 @@ import lombok.NonNull;
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-userverificationrequirement">§5.10.6.
  *     User Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
  */
-@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum UserVerificationRequirement implements JsonStringSerializable {
+public enum UserVerificationRequirement {
 
   /**
    * This value indicates that the Relying Party does not want user verification employed during the
@@ -67,7 +64,7 @@ public enum UserVerificationRequirement implements JsonStringSerializable {
    */
   REQUIRED("required");
 
-  @Getter @NonNull private final String value;
+  @JsonValue @Getter @NonNull private final String value;
 
   private static Optional<UserVerificationRequirement> fromString(@NonNull String value) {
     return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
@@ -82,12 +79,5 @@ public enum UserVerificationRequirement implements JsonStringSerializable {
                     String.format(
                         "Unknown %s value: %s",
                         UserVerificationRequirement.class.getSimpleName(), value)));
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated Use {@link #getValue()} instead. */
-  public String toJsonString() {
-    return value;
   }
 }

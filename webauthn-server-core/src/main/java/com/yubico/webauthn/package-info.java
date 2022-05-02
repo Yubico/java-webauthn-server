@@ -107,13 +107,14 @@
  *       com.yubico.webauthn.RegistrationResult#getPublicKeyCose() publicKeyCose} as a new
  *       credential for the user. The {@link com.yubico.webauthn.CredentialRepository} will need to
  *       look these up for authentication.
- *   <li>Inspect the {@link com.yubico.webauthn.RegistrationResult#getWarnings() warnings} - ideally
- *       there should of course be none.
- *   <li>If you care about authenticator attestation, use the {@link
- *       com.yubico.webauthn.RegistrationResult#isAttestationTrusted() attestationTrusted}, {@link
- *       com.yubico.webauthn.RegistrationResult#getAttestationType() attestationType} and {@link
- *       com.yubico.webauthn.RegistrationResult#getAttestationMetadata() attestationMetadata} fields
- *       to enforce your attestation policy.
+ *   <li>If you care about authenticator attestation, check that the {@link
+ *       com.yubico.webauthn.RegistrationResult#isAttestationTrusted() attestationTrusted} field
+ *       satisfies your attestation policy. For this you will likely need to configure the {@link
+ *       com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)
+ *       attestationTrustSource} setting on your {@link com.yubico.webauthn.RelyingParty} instance.
+ *       You may also want to consult some external data source to verify the authenticity of the
+ *       {@link com.yubico.webauthn.data.AuthenticatorAttestationResponse#getAttestationObject()
+ *       attestation object}.
  *   <li>If you care about authenticator attestation, it is recommended to also store the raw {@link
  *       com.yubico.webauthn.data.AuthenticatorAttestationResponse#getAttestationObject()
  *       attestation object} as part of the credential. This enables you to retroactively inspect
@@ -170,8 +171,6 @@
  *       com.yubico.webauthn.AssertionResult#getCredentialId() credentialId} result) to equal the
  *       value returned in the {@link com.yubico.webauthn.AssertionResult#getSignatureCount()
  *       signatureCount} result.
- *   <li>Inspect the {@link com.yubico.webauthn.RegistrationResult#getWarnings() warnings} - ideally
- *       there should of course be none.
  * </ul>
  */
 package com.yubico.webauthn;

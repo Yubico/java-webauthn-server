@@ -24,18 +24,15 @@
 
 package com.yubico.webauthn.meta;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.yubico.internal.util.json.JsonStringSerializable;
-import com.yubico.internal.util.json.JsonStringSerializer;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
 /** A representation of Web Authentication specification document statuses. */
-@JsonSerialize(using = JsonStringSerializer.class)
 @AllArgsConstructor
-public enum DocumentStatus implements JsonStringSerializable {
+public enum DocumentStatus {
   /** An editor's draft is a changing work in progress. */
   EDITORS_DRAFT("editors-draft"),
 
@@ -51,16 +48,9 @@ public enum DocumentStatus implements JsonStringSerializable {
   /** A recommendation is a finished and released specification. */
   RECOMMENDATION("recommendation");
 
-  private final String id;
+  @JsonValue private final String id;
 
   static Optional<DocumentStatus> fromString(@NonNull String id) {
     return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
-  }
-
-  @Override
-  @Deprecated
-  /** @deprecated This will be removed in the next major version release. */
-  public String toJsonString() {
-    return id;
   }
 }

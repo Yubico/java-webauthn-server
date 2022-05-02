@@ -1,7 +1,6 @@
 package com.yubico.webauthn;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import COSE.CoseException;
 import com.yubico.webauthn.data.AttestationObject;
@@ -70,21 +69,5 @@ public class CryptoAlgorithmsTest {
                 .get()
                 .getCredentialPublicKey());
     assertEquals(key.getAlgorithm(), "EC");
-  }
-
-  @Test
-  public void importEddsa()
-      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
-    PublicKey key =
-        WebAuthnCodecs.importCosePublicKey(
-            new AttestationObject(
-                    RegistrationTestData.Packed$.MODULE$
-                        .BasicAttestationEdDsa()
-                        .attestationObject())
-                .getAuthenticatorData()
-                .getAttestedCredentialData()
-                .get()
-                .getCredentialPublicKey());
-    assertTrue("EdDSA".equals(key.getAlgorithm()) || "Ed25519".equals(key.getAlgorithm()));
   }
 }

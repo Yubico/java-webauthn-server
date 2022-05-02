@@ -14,6 +14,19 @@ for a server to support Web Authentication. This includes registering
 authenticators and authenticating registered authenticators.
 
 
+[WARNING]
+.*Psychic signatures in Java*
+==========
+In April 2022, link:https://neilmadden.blog/2022/04/19/psychic-signatures-in-java/[CVE-2022-21449]
+was disclosed in Oracle's OpenJDK (and other JVMs derived from it) which can impact applications using java-webauthn-server.
+The impact is that for the most common type of WebAuthn credential, invalid signatures are accepted as valid,
+allowing authentication bypass for users with such a credential.
+Please read link:https://openjdk.java.net/groups/vulnerability/advisories/2022-04-19[Oracle's advisory]
+and make sure you are not using one of the impacted OpenJDK versions.
+If you are, we urge you to upgrade your Java deployment to a version that is safe.
+==========
+
+
 toc::[]
 
 
@@ -25,7 +38,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>1.12.4</version>
+  <version>2.0.0</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -33,8 +46,13 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:1.12.4'
+compile 'com.yubico:webauthn-server-core:2.0.0'
 ----------
+
+NOTE: You may need additional dependencies with JCA providers to support some signature algorithms.
+In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms.
+The library will log warnings if you try to configure it for algorithms with no JCA provider available.
+
 
 === Semantic versioning
 
@@ -50,16 +68,11 @@ Breaking changes to these will NOT be reflected in version numbers.
 
 === Additional modules
 
-In addition to the main `webauthn-server-core` module, there are also:
+In addition to the main `webauthn-server-core` module, there is also:
 
-- `webauthn-server-attestation`: A simple implementation of the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/attestation/MetadataService.html[`MetadataService`]
-  interface, which by default comes preloaded with attestation metadata for Yubico devices.
-
-- `webauthn-server-core-minimal`: Alternative distribution of `webauthn-server-core`,
-  not dependent on BouncyCastle.
-  Using it means you may have to add your own JCA providers to support some signature algorithms.
-  In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms.
+- `webauthn-server-attestation`: Integration with the https://fidoalliance.org/metadata/[FIDO Metadata Service]
+  for retrieving and selecting trust roots to use for verifying
+  https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation statements].
 
 
 == Features
@@ -70,9 +83,8 @@ In addition to the main `webauthn-server-core` module, there are also:
   https://www.w3.org/TR/webauthn/#sctn-rp-operations[validation logic] on the
   response from the client
 - No mutable state or side effects - everything (except builders) is thread safe
-- Optionally integrates with a "metadata service" to verify
+- Optionally integrates with an "attestation trust source" to verify
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
-  and annotate responses with additional authenticator metadata
 - Reproducible builds: release signatures match fresh builds from source. See
   link:#reproducible-builds[Reproducible builds] below.
 
@@ -91,6 +103,11 @@ but the authentication mechanism alone does not make a security system.
 See the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/package-summary.html[Javadoc]
 for in-depth API documentation.
+
+
+== Migrating from version `1.x`
+
+See link:doc/Migrating_from_v1.adoc[the migration guide].
 
 
 == Getting started
@@ -555,6 +572,19 @@ credentials.
   counter stored in the database for the credential.
 
 . Finally, the application reports success and resumes its business logic.
+
+
+== Using attestation
+
+WebAuthn supports
+link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[authenticator attestation],
+which provides a way for the web service
+to request cryptographic proof of what authenticator the user is using.
+Most services do not need this, and it is disabled by default.
+
+The link:webauthn-server-attestation[`webauthn-server-attestation` module]
+provides optional additional features for working with attestation.
+See the module documentation for more details.
 
 
 == Building
