@@ -95,10 +95,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>This class is NOT THREAD SAFE since it reads and writes caches. However, it has no internal
  * mutable state, so instances MAY be reused in single-threaded or externally synchronized contexts.
- * See also the {@link #loadBlob()} method.
+ * See also the {@link #loadCachedBlob()} method.
  *
- * <p>Use the {@link #builder() builder} to configure settings, then use the {@link #loadBlob()}
- * method to load the metadata BLOB.
+ * <p>Use the {@link #builder() builder} to configure settings, then use the {@link
+ * #loadCachedBlob()} method to load the metadata BLOB.
  */
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -675,7 +675,7 @@ public final class FidoMetadataDownloader {
    *     expectLegalHeader(String...)} but is otherwise valid. The downloaded BLOB will not be
    *     written to cache in this case.
    */
-  public MetadataBLOB loadBlob()
+  public MetadataBLOB loadCachedBlob()
       throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
           CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
           InvalidKeyException, UnexpectedLegalHeader, DigestException,

@@ -309,7 +309,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
         blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
           trustRootDistinguishedName
@@ -372,7 +372,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
         blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
           newTrustRootDistinguishedName
@@ -421,7 +421,7 @@ class FidoMetadataDownloaderSpec
           .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
         blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
           trustRootDistinguishedName
@@ -475,7 +475,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
         blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
           trustRootDistinguishedName
@@ -545,7 +545,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
         blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
           newTrustRootDistinguishedName
@@ -589,7 +589,7 @@ class FidoMetadataDownloaderSpec
           .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .useCrls(crls.asJava)
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
         blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
           trustRootDistinguishedName
@@ -629,7 +629,7 @@ class FidoMetadataDownloaderSpec
             .trustHttpsCerts(httpsCert)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
-            .loadBlob
+            .loadCachedBlob
         }
 
         val goodHash =
@@ -659,7 +659,7 @@ class FidoMetadataDownloaderSpec
             .useBlob(blobJwt)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
-            .loadBlob()
+            .loadCachedBlob()
         }
         thrown.getReason should equal(
           BasicReason.UNDETERMINED_REVOCATION_STATUS
@@ -685,7 +685,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .build()
-          .loadBlob()
+          .loadCachedBlob()
         blob should not be null
       }
 
@@ -717,7 +717,7 @@ class FidoMetadataDownloaderSpec
               .useBlob(blobJwt)
               .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
               .build()
-              .loadBlob()
+              .loadCachedBlob()
           }
           thrown.getReason should equal(
             BasicReason.UNDETERMINED_REVOCATION_STATUS
@@ -742,7 +742,7 @@ class FidoMetadataDownloaderSpec
               .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
               .useCrls(List[CRL](rootCrl).asJava)
               .build()
-              .loadBlob()
+              .loadCachedBlob()
           }
           thrown2.getReason should equal(
             BasicReason.UNDETERMINED_REVOCATION_STATUS
@@ -767,7 +767,7 @@ class FidoMetadataDownloaderSpec
               .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
               .useCrls(List[CRL](intermediateCrl).asJava)
               .build()
-              .loadBlob()
+              .loadCachedBlob()
           }
           thrown3.getReason should equal(
             BasicReason.UNDETERMINED_REVOCATION_STATUS
@@ -781,7 +781,7 @@ class FidoMetadataDownloaderSpec
             .useCrls(List[CRL](rootCrl, intermediateCrl).asJava)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
-            .loadBlob()
+            .loadCachedBlob()
           blob should not be null
         }
 
@@ -814,7 +814,7 @@ class FidoMetadataDownloaderSpec
               .useCrls(crls.asJava)
               .clock(Clock.fixed(CertValidFrom.plusSeconds(1), ZoneOffset.UTC))
               .build()
-              .loadBlob()
+              .loadCachedBlob()
           }
           thrown.getReason should equal(
             BasicReason.REVOKED
@@ -864,7 +864,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob()
+          .loadCachedBlob()
           .getPayload
         blob should not be null
         blob.getLegalHeader should equal(blobLegalHeader)
@@ -921,7 +921,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob()
+          .loadCachedBlob()
           .getPayload
         blob should not be null
         blob.getNo should equal(newBlobNo)
@@ -979,7 +979,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob()
+          .loadCachedBlob()
           .getPayload
         blob should not be null
         blob.getNo should equal(oldBlobNo)
@@ -1046,7 +1046,7 @@ class FidoMetadataDownloaderSpec
               .useCrls(crls.asJava)
               .trustHttpsCerts(httpsCert)
               .build()
-              .loadBlob
+              .loadCachedBlob
           }
           thrown should not be null
         }
@@ -1100,7 +1100,7 @@ class FidoMetadataDownloaderSpec
             .trustHttpsCerts(httpsCert)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
-            .loadBlob
+            .loadCachedBlob
           blob should not be null
         }
 
@@ -1156,7 +1156,7 @@ class FidoMetadataDownloaderSpec
               .trustHttpsCerts(httpsCert)
               .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
               .build()
-              .loadBlob
+              .loadCachedBlob
           }
           thrown should not be null
           thrown.getReason should be(
@@ -1217,7 +1217,7 @@ class FidoMetadataDownloaderSpec
             .trustHttpsCerts(httpsCert)
             .clock(clock)
             .build()
-            .loadBlob
+            .loadCachedBlob
           blob should not be null
 
           for { i <- certChain.indices } {
@@ -1235,7 +1235,7 @@ class FidoMetadataDownloaderSpec
                 .trustHttpsCerts(httpsCert)
                 .clock(clock)
                 .build()
-                .loadBlob
+                .loadCachedBlob
             }
             thrown should not be null
             thrown.getReason should be(
@@ -1299,7 +1299,7 @@ class FidoMetadataDownloaderSpec
             .trustHttpsCerts(httpsCert)
             .clock(clock)
             .build()
-            .loadBlob
+            .loadCachedBlob
           blob should not be null
 
           for { i <- certChain.indices } {
@@ -1325,7 +1325,7 @@ class FidoMetadataDownloaderSpec
                 .trustHttpsCerts(httpsCert)
                 .clock(clock)
                 .build()
-                .loadBlob
+                .loadCachedBlob
             }
             thrown should not be null
             thrown.getReason should be(BasicReason.REVOKED)
@@ -1372,7 +1372,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
       }
 
@@ -1419,7 +1419,7 @@ class FidoMetadataDownloaderSpec
             .useCrls(crls.asJava)
             .clock(clock)
             .build()
-            .loadBlob
+            .loadCachedBlob
         )
         blob should not be null
         blob shouldBe a[Success[_]]
@@ -1438,7 +1438,7 @@ class FidoMetadataDownloaderSpec
               .useCrls(splicedCrls.asJava)
               .clock(clock)
               .build()
-              .loadBlob
+              .loadCachedBlob
           }
           thrown should not be null
           thrown.getReason should be(
@@ -1479,7 +1479,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
           .build()
-          .loadBlob
+          .loadCachedBlob
         blob should not be null
       }
     }
@@ -1530,7 +1530,7 @@ class FidoMetadataDownloaderSpec
             .useBlob(badBlobJwt)
             .useCrls(crls.asJava)
             .build()
-            .loadBlob
+            .loadCachedBlob
         }
         thrown.getReason should be(Reason.BAD_SIGNATURE)
       }
@@ -1585,7 +1585,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
           .getPayload
         blob should not be null
         blob.getNo should equal(oldBlobNo)
@@ -1661,7 +1661,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
           .getPayload
         blob should not be null
         blob.getNo should equal(oldBlobNo)
@@ -1703,7 +1703,7 @@ class FidoMetadataDownloaderSpec
           .useCrls(crls.asJava)
           .trustHttpsCerts(httpsCert)
           .build()
-          .loadBlob
+          .loadCachedBlob
           .getPayload
         blob should not be null
         writtenCache should equal(
@@ -1765,7 +1765,7 @@ class FidoMetadataDownloaderSpec
             .trustHttpsCerts(httpsCert)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
-            .loadBlob
+            .loadCachedBlob
             .getPayload
           blob should not be null
           blob.getNo should be(2)
@@ -1800,7 +1800,7 @@ class FidoMetadataDownloaderSpec
             .trustHttpsCerts(httpsCert)
             .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
             .build()
-            .loadBlob
+            .loadCachedBlob
             .getPayload
           blob should not be null
           blob.getNo should be(2)
@@ -1834,7 +1834,7 @@ class FidoMetadataDownloaderSpec
             .useCrls(crls.asJava)
             .trustHttpsCerts(httpsCert)
             .build()
-            .loadBlob
+            .loadCachedBlob
             .getPayload
           blob should not be null
           blob.getNo should be(2)

@@ -222,12 +222,12 @@ public final class FidoMetadataService implements AttestationTrustSource {
       /**
        * Use payload of the given <code>blob</code> as the data source.
        *
-       * <p>The {@link FidoMetadataDownloader#loadBlob()} method returns a value suitable for use
-       * here.
+       * <p>The {@link FidoMetadataDownloader#loadCachedBlob()} method returns a value suitable for
+       * use here.
        *
        * <p>This is an alias of <code>useBlob(blob.getPayload()</code>.
        *
-       * @see FidoMetadataDownloader#loadBlob()
+       * @see FidoMetadataDownloader#loadCachedBlob()
        * @see #useBlob(MetadataBLOBPayload)
        */
       public FidoMetadataServiceBuilder useBlob(@NonNull MetadataBLOB blob) {
@@ -237,10 +237,10 @@ public final class FidoMetadataService implements AttestationTrustSource {
       /**
        * Use the given <code>blobPayload</code> as the data source.
        *
-       * <p>The {@link FidoMetadataDownloader#loadBlob()} method returns a value whose {@link
+       * <p>The {@link FidoMetadataDownloader#loadCachedBlob()} method returns a value whose {@link
        * MetadataBLOB#getPayload() .getPayload()} result is suitable for use here.
        *
-       * @see FidoMetadataDownloader#loadBlob()
+       * @see FidoMetadataDownloader#loadCachedBlob()
        * @see #useBlob(MetadataBLOB)
        */
       public FidoMetadataServiceBuilder useBlob(@NonNull MetadataBLOBPayload blobPayload) {

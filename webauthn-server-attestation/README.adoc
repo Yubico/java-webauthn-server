@@ -28,12 +28,12 @@ Notable *non-features* include:
 - *Scheduled BLOB downloads.*
 +
 The `FidoMetadataDownloader`
-class will attempt to download a new BLOB only when its `loadBlob()` is executed,
+class will attempt to download a new BLOB only when its `loadCachedBlob()` is executed,
 and then only if the cache is empty or if the cached BLOB is invalid or out of date.
 `FidoMetadataService`
 will never re-download a new BLOB once instantiated.
 +
-You should use some external scheduling mechanism to re-run `loadBlob()` periodically
+You should use some external scheduling mechanism to re-run `loadCachedBlob()` periodically
 and rebuild new `FidoMetadataService` instances with the updated metadata contents.
 You can do this with minimal disruption since the `FidoMetadataService` and `RelyingParty`
 classes keep no internal mutable state.
@@ -84,10 +84,10 @@ Using this module consists of 4 major steps:
 [WARNING]
 =====
 Unlike other classes in this module and the core library,
-`FidoMetadataDownloader` is NOT THREAD SAFE since its `loadBlob()` method reads and writes caches.
+`FidoMetadataDownloader` is NOT THREAD SAFE since its `loadCachedBlob()` method reads and writes caches.
 `FidoMetadataService`, on the other hand, is thread safe,
-and `FidoMetadataDownloader` instances can be reused for subsequent `loadBlob()` calls
-as long as only one `loadBlob()` call executes at a time.
+and `FidoMetadataDownloader` instances can be reused for subsequent `loadCachedBlob()` calls
+as long as only one `loadCachedBlob()` call executes at a time.
 =====
 +
 [source,java]
@@ -101,7 +101,7 @@ FidoMetadataDownloader downloader = FidoMetadataDownloader.builder()
   .build();
 
 FidoMetadataService mds = FidoMetadataService.builder()
-  .useBlob(downloader.loadBlob())
+  .useBlob(downloader.loadCachedBlob())
   .build();
 ----------
 
@@ -275,13 +275,13 @@ The library implements these as closely as possible, but with some slight depart
 
  ** Step 3 states "The `nextUpdate` field of the Metadata BLOB specifies a date when the download SHOULD occur at latest".
     `FidoMetadataDownloader` does not automatically re-download the BLOB.
-    Instead, each time its `.loadBlob()` method is executed it checks whether a new BLOB should be downloaded.
+    Instead, each time its `.loadCachedBlob()` method is executed it checks whether a new BLOB should be downloaded.
 +
 If no BLOB exists in cache, or the cached BLOB is invalid, or if the current date is greater than or equal to `nextUpdate`,
 then a new BLOB is downloaded.
 If the new BLOB is valid, has a correct signature, and has a `no` field greater than the cached BLOB,
 then the new BLOB replaces the cached one;
-otherwise, the new BLOB is discarded and the cached one is kept until the next execution of `.loadBlob()`.
+otherwise, the new BLOB is discarded and the cached one is kept until the next execution of `.loadCachedBlob()`.
 
 * Metadata entries are not stored or cached individually, instead the BLOB is cached as a whole.
   In processing rules step 8, neither `FidoMetadataDownloader` nor `FidoMetadataService`

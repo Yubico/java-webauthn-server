@@ -35,7 +35,7 @@ class FidoMetadataDownloaderIntegrationTest
 
     it("downloads and verifies the root cert and BLOB successfully.") {
       // This test requires the system property com.sun.security.enableCRLDP=true
-      val blob = Try(downloader.loadBlob)
+      val blob = Try(downloader.loadCachedBlob)
       blob shouldBe a[Success[_]]
       blob.get should not be null
     }

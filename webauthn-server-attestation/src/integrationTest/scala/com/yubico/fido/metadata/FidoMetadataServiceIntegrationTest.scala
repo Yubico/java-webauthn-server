@@ -49,7 +49,10 @@ class FidoMetadataServiceIntegrationTest
         .build()
       val fidoMds =
         Try(
-          FidoMetadataService.builder().useBlob(downloader.loadBlob()).build()
+          FidoMetadataService
+            .builder()
+            .useBlob(downloader.loadCachedBlob())
+            .build()
         )
 
       val attachmentHintsUsb =

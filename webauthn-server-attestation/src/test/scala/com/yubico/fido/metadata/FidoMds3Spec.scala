@@ -207,7 +207,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
         )(filter: MetadataBLOBPayloadEntry => Boolean): FidoMetadataService =
           FidoMetadataService
             .builder()
-            .useBlob(makeDownloader(blobTuple).loadBlob())
+            .useBlob(makeDownloader(blobTuple).loadCachedBlob())
             .prefilter(filter.asJava)
             .certStore(
               CertStore.getInstance(
@@ -425,7 +425,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
           ): FidoMetadataService =
             FidoMetadataService
               .builder()
-              .useBlob(makeDownloader(blobTuple).loadBlob())
+              .useBlob(makeDownloader(blobTuple).loadCachedBlob())
               .build()
 
           val mds = makeMds(makeBlob(s"""{
@@ -528,7 +528,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
       .useCrls(crls)
       .build()
     val mds =
-      FidoMetadataService.builder().useBlob(downloader.loadBlob()).build()
+      FidoMetadataService.builder().useBlob(downloader.loadCachedBlob()).build()
     mds should not be null
 
     val entries = mds
@@ -591,7 +591,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
     ): FidoMetadataService =
       FidoMetadataService
         .builder()
-        .useBlob(makeDownloader(blobTuple).loadBlob())
+        .useBlob(makeDownloader(blobTuple).loadCachedBlob())
         .build()
 
     it("A metadata statement with UPDATE_AVAILABLE with authenticatorVersion greater than top-level authenticatorVersion is ignored.") {
