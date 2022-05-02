@@ -319,8 +319,13 @@ public class RelyingParty {
    *
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-extensions">§9. WebAuthn
    *     Extensions</a>
+   * @deprecated The <code>false</code> setting (default) is not compatible with WebAuthn Level 2
+   *     since authenticators are now always allowed to add unsolicited extensions. The next major
+   *     version release will remove this option and always behave as if the option had been set to
+   *     <code>
+   *     true</code>.
    */
-  @Builder.Default private final boolean allowUnrequestedExtensions = false;
+  @Deprecated @Builder.Default private final boolean allowUnrequestedExtensions = false;
 
   /**
    * If <code>false</code>, {@link #finishRegistration(FinishRegistrationOptions)

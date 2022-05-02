@@ -114,7 +114,9 @@ public enum AttestationType {
    * @see <a href=
    *     "https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-ecdaa-algorithm-v2.0-id-20180227.html">FIDO
    *     ECDAA Algorithm</a>
+   * @deprecated ECDAA was removed in WebAuthn Level 2.
    */
+  @Deprecated
   ECDAA,
 
   /**

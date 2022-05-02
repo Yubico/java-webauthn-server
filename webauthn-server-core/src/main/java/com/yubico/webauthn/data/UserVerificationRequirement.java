@@ -31,6 +31,7 @@ import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -66,25 +67,27 @@ public enum UserVerificationRequirement implements JsonStringSerializable {
    */
   REQUIRED("required");
 
-  @NonNull private final String id;
+  @Getter @NonNull private final String value;
 
-  private static Optional<UserVerificationRequirement> fromString(@NonNull String id) {
-    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  private static Optional<UserVerificationRequirement> fromString(@NonNull String value) {
+    return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
   }
 
   @JsonCreator
-  private static UserVerificationRequirement fromJsonString(@NonNull String id) {
-    return fromString(id)
+  private static UserVerificationRequirement fromJsonString(@NonNull String value) {
+    return fromString(value)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
                         "Unknown %s value: %s",
-                        UserVerificationRequirement.class.getSimpleName(), id)));
+                        UserVerificationRequirement.class.getSimpleName(), value)));
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getValue()} instead. */
   public String toJsonString() {
-    return id;
+    return value;
   }
 }

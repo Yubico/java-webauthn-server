@@ -31,6 +31,7 @@ import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -51,7 +52,7 @@ import lombok.NonNull;
 public enum PublicKeyCredentialType implements JsonStringSerializable {
   PUBLIC_KEY("public-key");
 
-  @NonNull private final String id;
+  @Getter @NonNull private final String id;
 
   private static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
     return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
@@ -69,6 +70,8 @@ public enum PublicKeyCredentialType implements JsonStringSerializable {
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getId()} instead. */
   public String toJsonString() {
     return id;
   }

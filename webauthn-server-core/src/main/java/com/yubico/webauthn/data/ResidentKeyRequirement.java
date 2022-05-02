@@ -31,6 +31,7 @@ import com.yubico.internal.util.json.JsonStringSerializer;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NonNull;
 
 /**
@@ -96,24 +97,27 @@ public enum ResidentKeyRequirement implements JsonStringSerializable {
    */
   REQUIRED("required");
 
-  @NonNull private final String id;
+  @Getter @NonNull private final String value;
 
-  private static Optional<ResidentKeyRequirement> fromString(@NonNull String id) {
-    return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
+  private static Optional<ResidentKeyRequirement> fromString(@NonNull String value) {
+    return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
   }
 
   @JsonCreator
-  private static ResidentKeyRequirement fromJsonString(@NonNull String id) {
-    return fromString(id)
+  private static ResidentKeyRequirement fromJsonString(@NonNull String value) {
+    return fromString(value)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     String.format(
-                        "Unknown %s value: %s", ResidentKeyRequirement.class.getSimpleName(), id)));
+                        "Unknown %s value: %s",
+                        ResidentKeyRequirement.class.getSimpleName(), value)));
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getValue()} instead. */
   public String toJsonString() {
-    return id;
+    return value;
   }
 }

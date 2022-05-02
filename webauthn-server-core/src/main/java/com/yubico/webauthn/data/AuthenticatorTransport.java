@@ -152,6 +152,8 @@ public class AuthenticatorTransport
   }
 
   @Override
+  @Deprecated
+  /** @deprecated Use {@link #getId()} instead. */
   public String toJsonString() {
     return id;
   }

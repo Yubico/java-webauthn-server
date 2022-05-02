@@ -57,8 +57,9 @@ public enum DocumentStatus implements JsonStringSerializable {
     return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
   }
 
-  /** Used by JSON serializer. */
   @Override
+  @Deprecated
+  /** @deprecated This will be removed in the next major version release. */
   public String toJsonString() {
     return id;
   }
