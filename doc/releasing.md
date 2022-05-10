@@ -46,10 +46,10 @@ Release candidate versions
     ```
 
     If the README still accurately reflects the latest non-pre-release version,
-    you can simply push to master instead:
+    you can simply push to main instead:
 
     ```
-    $ git push origin master 1.4.0-RC1
+    $ git push origin main 1.4.0-RC1
     ```
 
  8. Make GitHub release.
@@ -79,7 +79,7 @@ Release versions
     ```
     $ git checkout 1.3.0
     $ git checkout -b release-1.4.0
-    $ git merge --no-ff master
+    $ git merge --no-ff main
     ```
 
     Copy the release notes for this version from `NEWS` into the merge commit
@@ -90,7 +90,7 @@ Release versions
     commits for examples.
 
     ```
-    $ git checkout master
+    $ git checkout main
     $ git merge --ff-only release-1.4.0
     $ git branch -d release-1.4.0
     ```
@@ -135,7 +135,7 @@ Release versions
 11. Push to GitHub:
 
     ```
-    $ git push origin master 1.4.0
+    $ git push origin main 1.4.0
     ```
 
 12. Make GitHub release.

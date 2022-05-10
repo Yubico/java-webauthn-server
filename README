@@ -139,7 +139,7 @@ link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
 The link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core-minimal/latest/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`] interface
 abstracts your database in a database-agnostic way.
 The concrete implementation will be different for every project, but you can use
-link:https://github.com/Yubico/java-webauthn-server/blob/master/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
 as a simple example.
 
 === 2. Instantiate a `RelyingParty`
@@ -478,14 +478,14 @@ effects, and does not directly interact with any database. This means it is
 database agnostic and thread safe. The following diagram illustrates an example
 architecture for an application using the library.
 
-image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/master/docs/img/demo-architecture.svg?sanitize=true["Example application architecture",align="center"]
+image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/main/docs/img/demo-architecture.svg?sanitize=true["Example application architecture",align="center"]
 
 The application manages all state and database access, and communicates with the
 library via POJO representations of requests and responses. The following
 diagram illustrates the data flow during a WebAuthn registration or
 authentication ceremony.
 
-image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/master/docs/img/demo-sequence-diagram.svg?sanitize=true["WebAuthn ceremony sequence diagram",align="center"]
+image::https://raw.githubusercontent.com/Yubico/java-webauthn-server/main/docs/img/demo-sequence-diagram.svg?sanitize=true["WebAuthn ceremony sequence diagram",align="center"]
 
 In this diagram, the *Client* is the user's browser and the application's
 client-side scripts. The *Server* is the application and its business logic, the
