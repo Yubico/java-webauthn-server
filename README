@@ -6,6 +6,7 @@ java-webauthn-server
 
 image:https://github.com/Yubico/java-webauthn-server/workflows/build/badge.svg["Build Status", link="https://github.com/Yubico/java-webauthn-server/actions"]
 image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
+image:https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml/badge.svg["Binary reproducibility", link="https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml"]
 
 Server-side https://www.w3.org/TR/webauthn/[Web Authentication] library for
 Java. Provides implementations of the

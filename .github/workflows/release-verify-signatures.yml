@@ -1,4 +1,4 @@
-name: Verify release signatures
+name: Reproducible binary
 
 on:
   release:
