@@ -69,7 +69,7 @@ link:../webauthn-server-core/src/main/java/com/yubico/webauthn/CredentialReposit
 interface to use for looking up stored public keys, user handles and signature
 counters.
 ** The library user can optionally provide an instance of the
-link:../webauthn-server-core/src/main/java/com/yubico/webauthn/attestation/MetadataService.java[MetadataService]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[AttestationTrustSource]
 interface to enable identification and validation of authenticator models. This
 instance is then used to look up trusted attestation root certificates. The
 link:../webauthn-server-attestation/[`webauthn-server-attestation`]
