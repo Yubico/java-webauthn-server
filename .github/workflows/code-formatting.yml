@@ -1,7 +1,13 @@
 # This name is shown in the status badge in the README
 name: code-formatting
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'tmp**'
+  pull_request:
+    branches-ignore:
+      - 'tmp**'
 
 jobs:
   test:
