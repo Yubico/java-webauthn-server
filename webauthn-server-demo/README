@@ -40,7 +40,7 @@ layer.
 This layer manages the general architecture of the system, and is where most
 business logic and integration code would go. The demo server implements the
 "persistent" storage of users and credential registrations - the
-link:../webauthn-server-core/src/main/java/com/yubico/webauthn/CredentialRepository.java[CredentialRepository]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/CredentialRepository.html[CredentialRepository]
 integration point - as the
 link:src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[InMemoryRegistrationStorage]
 class, which simply keeps them stored in memory for a limited time. The
@@ -54,7 +54,7 @@ would be specific to a particular Relying Party (RP) would go in this layer.
 - The server layer in turn calls the *library layer*, which is where the
   link:../webauthn-server-core/[`webauthn-server-core`]
   library gets involved. The entry point into the library is the
-  link:../webauthn-server-core/src/main/java/com/yubico/webauthn/RelyingParty.java[RelyingParty]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[RelyingParty]
   class.
 +
 This layer implements the Web Authentication
