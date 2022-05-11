@@ -133,17 +133,12 @@ class RelyingPartyRegistrationSpec
       attestationTrustSource: Option[AttestationTrustSource] = None,
       origins: Option[Set[String]] = None,
       preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
-      rp: RelyingPartyIdentity = RelyingPartyIdentity
-        .builder()
-        .id("localhost")
-        .name("Test party")
-        .build(),
       testData: RegistrationTestData,
       clock: Clock = Clock.systemUTC(),
   ): FinishRegistrationSteps = {
     var builder = RelyingParty
       .builder()
-      .identity(rp)
+      .identity(testData.rpId)
       .credentialRepository(credentialRepository)
       .preferredPubkeyParams(preferredPubkeyParams.asJava)
       .allowOriginPort(allowOriginPort)
@@ -2088,7 +2083,6 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(
                 testData = defaultTestData,
                 allowUntrustedAttestation = false,
-                rp = defaultTestData.rpId,
               )
               val step: FinishRegistrationSteps#Step19 =
                 steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2224,8 +2218,7 @@ class RelyingPartyRegistrationSpec
               describe("5. If successful, return implementation-specific values representing attestation type Basic and attestation trust path x5c.") {
                 it("The real example succeeds.") {
                   val steps = finishRegistration(
-                    testData = testDataContainer.RealExample,
-                    rp = testDataContainer.RealExample.rpId,
+                    testData = testDataContainer.RealExample
                   )
                   val step: FinishRegistrationSteps#Step19 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2256,12 +2249,7 @@ class RelyingPartyRegistrationSpec
 
           it("The android-safetynet statement format is supported.") {
             val steps = finishRegistration(
-              testData = RegistrationTestData.AndroidSafetynet.RealExample,
-              rp = RelyingPartyIdentity
-                .builder()
-                .id("demo.yubico.com")
-                .name("")
-                .build(),
+              testData = RegistrationTestData.AndroidSafetynet.RealExample
             )
             val step: FinishRegistrationSteps#Step19 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2272,9 +2260,7 @@ class RelyingPartyRegistrationSpec
 
           it("The apple statement format is supported.") {
             val steps = finishRegistration(
-              testData =
-                RealExamples.AppleAttestationIos.asRegistrationTestData,
-              rp = RealExamples.AppleAttestationIos.rp,
+              testData = RealExamples.AppleAttestationIos.asRegistrationTestData
             )
             val step: FinishRegistrationSteps#Step19 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2352,7 +2338,6 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(
               testData = testData,
               attestationTrustSource = Some(attestationTrustSource),
-              rp = testData.rpId,
             )
             val step: FinishRegistrationSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2372,7 +2357,6 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(
               testData = testData,
               attestationTrustSource = None,
-              rp = testData.rpId,
             )
             val step: FinishRegistrationSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2546,7 +2530,6 @@ class RelyingPartyRegistrationSpec
                   allowUntrustedAttestation = false,
                   testData = testData,
                   attestationTrustSource = Some(emptyTrustSource),
-                  rp = testData.rpId,
                   clock = clock,
                 )
                 val step: FinishRegistrationSteps#Step21 =
@@ -2562,7 +2545,6 @@ class RelyingPartyRegistrationSpec
                   allowUntrustedAttestation = true,
                   testData = testData,
                   attestationTrustSource = Some(emptyTrustSource),
-                  rp = testData.rpId,
                   clock = clock,
                 )
                 val step: FinishRegistrationSteps#Step21 =
@@ -2599,7 +2581,6 @@ class RelyingPartyRegistrationSpec
                 val steps = finishRegistration(
                   testData = testData,
                   attestationTrustSource = attestationTrustSource,
-                  rp = testData.rpId,
                   clock = clock,
                 )
                 val step: FinishRegistrationSteps#Step21 =
@@ -2650,7 +2631,6 @@ class RelyingPartyRegistrationSpec
                   val steps = finishRegistration(
                     testData = testData,
                     attestationTrustSource = Some(attestationTrustSource),
-                    rp = testData.rpId,
                     clock = clock,
                   )
                   val step: FinishRegistrationSteps#Step21 =
@@ -2678,7 +2658,6 @@ class RelyingPartyRegistrationSpec
                   val steps = finishRegistration(
                     testData = testData,
                     attestationTrustSource = Some(attestationTrustSource),
-                    rp = testData.rpId,
                     clock = clock,
                   )
                   val step: FinishRegistrationSteps#Step21 =
