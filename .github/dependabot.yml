@@ -6,3 +6,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+
+    ignore:
+      # Spotless patch updates are too noisy
+      - dependency-name: "spotless-plugin-gradle"
+        update-types: ["version-update:semver-patch"]
