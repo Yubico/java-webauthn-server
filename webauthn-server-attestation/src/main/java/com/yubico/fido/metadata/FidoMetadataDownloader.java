@@ -642,12 +642,12 @@ public final class FidoMetadataDownloader {
    *       Consumer} (see {@link FidoMetadataDownloaderBuilder.Step5}).
    * </ol>
    *
-   * No internal mutable state is maintained between invocations of <code>loadBlob()</code>; each
-   * invocation will reload/rewrite caches, perform downloads and check the <code>"legalHeader"
+   * No internal mutable state is maintained between invocations of this method; each invocation
+   * will reload/rewrite caches, perform downloads and check the <code>"legalHeader"
    * </code> as necessary. You may therefore reuse a {@link FidoMetadataDownloader} instance and,
-   * for example, call <code>loadBlob()</code> periodically to refresh the BLOB when appropriate.
-   * Each call will return a new {@link MetadataBLOB} instance; ones already returned will not be
-   * updated by subsequent <code>loadBlob()</code> calls.
+   * for example, call this method periodically to refresh the BLOB when appropriate. Each call will
+   * return a new {@link MetadataBLOB} instance; ones already returned will not be updated by
+   * subsequent calls.
    *
    * @return the successfully retrieved and validated metadata BLOB.
    * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact

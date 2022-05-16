@@ -49,12 +49,12 @@ FidoMetadataService metadataService = FidoMetadataService.builder()
         .useDefaultBlob()
         .useBlobCacheFile(new File("fido-mds-blob-cache.bin"))
         .build()
-        .loadBlob()
+        .loadCachedBlob()
     )
     .build();
 ----------
 
-You may also need to add external logic to occasionally re-run `loadBlob()`
+You may also need to add external logic to occasionally re-run `loadCachedBlob()`
 and reconstruct the `FidoMetadataService`,
 as `FidoMetadataService` will not automatically update the BLOB on its own.
 
