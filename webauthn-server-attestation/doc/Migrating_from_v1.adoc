@@ -11,18 +11,28 @@ link:https://github.com/Yubico/java-webauthn-server/issues/new[let us know!]
 Here is a high-level outline of what needs to be updated:
 
 - Replace uses of `StandardMetadataService` and its related classes
-  with `FidoMetadataService` and `FidoMetadataDownloader`.
-- Update the name of the `RelyingParty` integration point
-  from `metadataService` to `attestationTrustSource`.
-- `RegistrationResult` no longer includes attestation metadata,
+  with
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+  and
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`].
+- Update the name of the
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  integration point from `metadataService` to
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`].
+- link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+  no longer includes attestation metadata,
   instead you'll need to retrieve it separately after a successful registration.
-- Replace uses of the `Attestation` result type with `MetadataBLOBPayloadEntry`.
+- Replace uses of the `Attestation` result type with
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/MetadataBLOBPayloadEntry.html[`MetadataBLOBPayloadEntry`].
 
 
 == Replace `StandardMetadataService`
 
 `StandardMetadataService` and its constituent classes have been removed
-in favour of `FidoMetadataService` and `FidoMetadataDownloader`.
+in favour of
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`].
 See the link:../#getting-started[Getting started] documentation
 for details on how to configure and construct them.
 
@@ -54,14 +64,18 @@ FidoMetadataService metadataService = FidoMetadataService.builder()
     .build();
 ----------
 
-You may also need to add external logic to occasionally re-run `loadCachedBlob()`
+You may also need to add external logic to occasionally re-run
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
 and reconstruct the `FidoMetadataService`,
 as `FidoMetadataService` will not automatically update the BLOB on its own.
 
 
 == Update `RelyingParty` integration point
 
-`FidoMetadataService` integrates with `RelyingParty` in much the same way as `StandardMetadataService`,
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+integrates with
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+in much the same way as `StandardMetadataService`,
 although the name of the setting has changed.
 
 Example `1.x` code:
@@ -93,11 +107,17 @@ Example `2.0` code:
 
 == Retrieve attestation metadata separately
 
-In `1.x`, `RegistrationResult` could include an `Attestation` object with attestation metadata,
+In `1.x`,
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+could include an `Attestation` object with attestation metadata,
 if a metadata service was configured and the authenticator matched anything in the metadata service.
-In order to keep `RelyingParty` and the new `AttestationTrustSource` interface
-decoupled from any particular format of attestation metadata, this result field has been removed.
-Instead, use the `findEntries` methods of `FidoMetadataService`
+In order to keep
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+and the new
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
+interface decoupled from any particular format of attestation metadata, this result field has been removed.
+Instead, use the `findEntries` methods of
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
 to retrieve attestation metadata after a successful registration, if needed.
 
 Example `1.x` code:
@@ -128,7 +148,9 @@ Optional<String> authenticatorName = mds.findEntries(result)
 
 This ties in with the previous step, and much of it will likely be done already.
 However if your front-end accesses and/or displays contents of an `Attestation` object,
-it will need to be updated to work with `MetadataBLOBPayloadEntry` or similar types instead.
+it will need to be updated to work with
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/MetadataBLOBPayloadEntry.html[`MetadataBLOBPayloadEntry`]
+or similar types instead.
 
 
 Example `1.x` code:
