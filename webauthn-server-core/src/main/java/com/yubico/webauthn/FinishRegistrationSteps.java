@@ -373,6 +373,8 @@ final class FinishRegistrationSteps {
           return Optional.of(new AndroidSafetynetAttestationStatementVerifier());
         case "apple":
           return Optional.of(new AppleAttestationStatementVerifier());
+        case "tpm":
+          return Optional.of(new TpmAttestationStatementVerifier());
         default:
           return Optional.empty();
       }
@@ -411,9 +413,6 @@ final class FinishRegistrationSteps {
             case "android-key":
               // TODO delete this once android-key attestation verification is implemented
               return AttestationType.BASIC;
-            case "tpm":
-              // TODO delete this once tpm attestation verification is implemented
-              return AttestationType.ATTESTATION_CA;
             default:
               return AttestationType.UNKNOWN;
           }

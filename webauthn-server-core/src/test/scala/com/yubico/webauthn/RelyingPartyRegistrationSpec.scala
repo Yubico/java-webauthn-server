@@ -1108,9 +1108,9 @@ class RelyingPartyRegistrationSpec
           checkKnown("fido-u2f")
           checkKnown("none")
           checkKnown("packed")
+          checkKnown("tpm")
 
           checkUnknown("android-key")
-          checkUnknown("tpm")
 
           checkUnknown("FIDO-U2F")
           checkUnknown("Fido-U2F")
@@ -2053,9 +2053,15 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          ignore("The tpm statement format is supported.") {
+          it("The tpm statement format is supported.") {
+            val testData = RegistrationTestData.Tpm.RealExample
             val steps =
-              finishRegistration(testData = RegistrationTestData.Tpm.PrivacyCa)
+              finishRegistration(
+                testData = testData,
+                origins =
+                  Some(Set("https://dev.d2urpypvrhb05x.amplifyapp.com")),
+                credentialRepository = Helpers.CredentialRepository.empty,
+              )
             val step: FinishRegistrationSteps#Step19 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
 
@@ -2883,7 +2889,7 @@ class RelyingPartyRegistrationSpec
           testUntrusted(RegistrationTestData.AndroidSafetynet.BasicAttestation)
           testUntrusted(RegistrationTestData.FidoU2f.BasicAttestation)
           testUntrusted(RegistrationTestData.NoneAttestation.Default)
-          testUntrusted(RegistrationTestData.Tpm.PrivacyCa)
+          testUntrusted(RegistrationTestData.Tpm.RealExample)
         }
       }
     }
@@ -2974,17 +2980,24 @@ class RelyingPartyRegistrationSpec
       }
 
       it("accept TPM attestations but report they're untrusted.") {
-        val result = rp.finishRegistration(
-          FinishRegistrationOptions
-            .builder()
-            .request(request)
-            .response(RegistrationTestData.Tpm.PrivacyCa.response)
-            .build()
-        )
+        val testData = RegistrationTestData.Tpm.RealExample
+        val result = rp.toBuilder
+          .identity(testData.rpId)
+          .origins(Set("https://dev.d2urpypvrhb05x.amplifyapp.com").asJava)
+          .build()
+          .finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(
+                request.toBuilder.challenge(testData.responseChallenge).build()
+              )
+              .response(testData.response)
+              .build()
+          )
 
         result.isAttestationTrusted should be(false)
         result.getKeyId.getId should equal(
-          RegistrationTestData.Tpm.PrivacyCa.response.getId
+          RegistrationTestData.Tpm.RealExample.response.getId
         )
       }
 
@@ -3500,40 +3513,65 @@ class RelyingPartyRegistrationSpec
         }
       }
 
-      it("exposes getAttestationTrustPath() with the attestation trust path, if any.") {
-        val testData = RegistrationTestData.FidoU2f.BasicAttestation
-        val steps = finishRegistration(
-          testData = testData,
-          attestationTrustSource = Some(
-            trustSourceWith(
-              testData.attestationCertChain.last._1,
-              crls = Some(
-                testData.attestationCertChain
-                  .map({
-                    case (cert, key) =>
-                      TestAuthenticator.buildCrl(
-                        JcaX500NameUtil.getSubject(cert),
-                        key,
-                        "SHA256withECDSA",
-                        TestAuthenticator.Defaults.certValidFrom,
-                        TestAuthenticator.Defaults.certValidTo,
-                      )
-                  })
-                  .toSet
-              ),
-            )
-          ),
-          credentialRepository = Helpers.CredentialRepository.empty,
-          clock = Clock.fixed(
-            TestAuthenticator.Defaults.certValidFrom,
-            ZoneOffset.UTC,
-          ),
-        )
-        val result = steps.run()
-        result.isAttestationTrusted should be(true)
-        result.getAttestationTrustPath.toScala.map(_.asScala) should equal(
-          Some(testData.attestationCertChain.init.map(_._1))
-        )
+      describe(
+        "exposes getAttestationTrustPath() with the attestation trust path"
+      ) {
+        it("for a fido-u2f attestation.") {
+          val testData = RegistrationTestData.FidoU2f.BasicAttestation
+          val steps = finishRegistration(
+            testData = testData,
+            attestationTrustSource = Some(
+              trustSourceWith(
+                testData.attestationCertChain.last._1,
+                crls = Some(
+                  testData.attestationCertChain
+                    .map({
+                      case (cert, key) =>
+                        TestAuthenticator.buildCrl(
+                          JcaX500NameUtil.getSubject(cert),
+                          key,
+                          "SHA256withECDSA",
+                          TestAuthenticator.Defaults.certValidFrom,
+                          TestAuthenticator.Defaults.certValidTo,
+                        )
+                    })
+                    .toSet
+                ),
+              )
+            ),
+            credentialRepository = Helpers.CredentialRepository.empty,
+            clock = Clock.fixed(
+              TestAuthenticator.Defaults.certValidFrom,
+              ZoneOffset.UTC,
+            ),
+          )
+          val result = steps.run()
+          result.isAttestationTrusted should be(true)
+          result.getAttestationTrustPath.toScala.map(_.asScala) should equal(
+            Some(testData.attestationCertChain.init.map(_._1))
+          )
+        }
+
+        it("for a tpm attestation.") {
+          val testData = RegistrationTestData.Tpm.RealExample
+          val steps = finishRegistration(
+            testData = testData,
+            origins = Some(Set("https://dev.d2urpypvrhb05x.amplifyapp.com")),
+            attestationTrustSource = Some(
+              trustSourceWith(
+                CertificateParser.parsePem("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"),
+                enableRevocationChecking = false,
+              )
+            ),
+            credentialRepository = Helpers.CredentialRepository.empty,
+            clock = Clock.fixed(
+              Instant.parse("2022-05-11T12:34:50Z"),
+              ZoneOffset.UTC,
+            ),
+          )
+          val result = steps.run()
+          result.isAttestationTrusted should be(true)
+        }
       }
 
       it("exposes getAaguid() with the authenticator AAGUID.") {
