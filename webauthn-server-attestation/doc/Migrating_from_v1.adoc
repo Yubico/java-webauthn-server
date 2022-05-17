@@ -66,6 +66,8 @@ FidoMetadataService metadataService = FidoMetadataService.builder()
 
 You may also need to add external logic to occasionally re-run
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
+and/or
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.1.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
 and reconstruct the `FidoMetadataService`,
 as `FidoMetadataService` will not automatically update the BLOB on its own.
 
