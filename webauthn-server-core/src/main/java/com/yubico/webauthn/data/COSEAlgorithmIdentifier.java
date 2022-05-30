@@ -51,6 +51,16 @@ public enum COSEAlgorithmIdentifier {
     this.id = id;
   }
 
+  /**
+   * Attempt to parse an integer as a {@link COSEAlgorithmIdentifier}.
+   *
+   * @param id an integer equal to the {@link #getId() id} of a constant in {@link
+   *     COSEAlgorithmIdentifier}
+   * @return The {@link COSEAlgorithmIdentifier} instance whose {@link #getId() id} equals <code>id
+   *     </code>, if any.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">§5.8.5.
+   *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
+   */
   public static Optional<COSEAlgorithmIdentifier> fromId(long id) {
     return Stream.of(values()).filter(v -> v.id == id).findAny();
   }
