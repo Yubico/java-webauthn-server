@@ -1781,8 +1781,8 @@ class RelyingPartyRegistrationSpec
                   it("Succeeds for an RS1 test case.") {
                     val testData =
                       RegistrationTestData.Packed.SelfAttestationRs1
-                    val alg = WebAuthnCodecs
-                      .getCoseKeyAlg(
+                    val alg = COSEAlgorithmIdentifier
+                      .fromPublicKey(
                         testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
                       )
                       .get

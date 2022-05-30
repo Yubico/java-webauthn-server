@@ -490,7 +490,7 @@ final class FinishAssertionSteps {
       }
 
       final COSEAlgorithmIdentifier alg =
-          WebAuthnCodecs.getCoseKeyAlg(cose)
+          COSEAlgorithmIdentifier.fromPublicKey(cose)
               .orElseThrow(
                   () ->
                       new IllegalArgumentException(

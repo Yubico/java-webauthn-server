@@ -42,7 +42,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 final class WebAuthnCodecs {
 
@@ -138,12 +137,6 @@ final class WebAuthnCodecs {
 
     KeyFactory kFact = KeyFactory.getInstance("EdDSA");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
-  }
-
-  static Optional<COSEAlgorithmIdentifier> getCoseKeyAlg(ByteArray key) {
-    CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
-    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
-    return COSEAlgorithmIdentifier.fromId(alg);
   }
 
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {

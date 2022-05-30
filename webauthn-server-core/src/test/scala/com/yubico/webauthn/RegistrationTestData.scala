@@ -642,8 +642,8 @@ case class RegistrationTestData(
     })
 
   protected def validate(): Unit = {
-    val alg = WebAuthnCodecs
-      .getCoseKeyAlg(
+    val alg = COSEAlgorithmIdentifier
+      .fromPublicKey(
         response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
       )
       .get
@@ -785,7 +785,7 @@ case class RegistrationTestData(
       val pubkey = WebAuthnCodecs.importCosePublicKey(pubKeyCoseBytes)
       val prikey = WebAuthnTestCodecs.importPrivateKey(
         privateKey,
-        WebAuthnCodecs.getCoseKeyAlg(pubKeyCoseBytes).get,
+        COSEAlgorithmIdentifier.fromPublicKey(pubKeyCoseBytes).get,
       )
       new KeyPair(pubkey, prikey)
     }
