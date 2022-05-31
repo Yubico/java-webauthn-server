@@ -503,11 +503,14 @@ final class FinishAssertionSteps {
   class Step21 implements Step<Finished> {
     private final String username;
     private final RegisteredCredential credential;
+    private final long assertionSignatureCount;
     private final long storedSignatureCountBefore;
 
     public Step21(String username, RegisteredCredential credential) {
       this.username = username;
       this.credential = credential;
+      this.assertionSignatureCount =
+          response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
       this.storedSignatureCountBefore = credential.getSignatureCount();
     }
 
@@ -515,22 +518,18 @@ final class FinishAssertionSteps {
     public void validate() throws InvalidSignatureCountException {
       if (validateSignatureCounter && !signatureCounterValid()) {
         throw new InvalidSignatureCountException(
-            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount());
+            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount);
       }
     }
 
     private boolean signatureCounterValid() {
-      return (assertionSignatureCount() == 0 && storedSignatureCountBefore == 0)
-          || assertionSignatureCount() > storedSignatureCountBefore;
+      return (assertionSignatureCount == 0 && storedSignatureCountBefore == 0)
+          || assertionSignatureCount > storedSignatureCountBefore;
     }
 
     @Override
     public Finished nextStep() {
-      return new Finished(credential, username, assertionSignatureCount(), signatureCounterValid());
-    }
-
-    private long assertionSignatureCount() {
-      return response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
+      return new Finished(credential, username, assertionSignatureCount, signatureCounterValid());
     }
   }
 
