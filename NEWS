@@ -2,7 +2,7 @@
 
 New features:
 
-- Added method `FidoMetadataDownloader.refreshBlob()`.
+* Added method `FidoMetadataDownloader.refreshBlob()`.
 
 
 == Version 2.0.0 ==
