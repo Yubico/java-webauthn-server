@@ -26,6 +26,7 @@ package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
@@ -46,24 +47,16 @@ public class AssertionResult {
   private final boolean success;
 
   /**
-   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
-   * ID</a> of the credential used for the assertion.
+   * The {@link RegisteredCredential} that was returned by {@link
+   * CredentialRepository#lookup(ByteArray, ByteArray)} and whose public key was used to
+   * successfully verify the assertion signature.
    *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
-   *     ID</a>
-   * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
+   * <p>NOTE: The {@link RegisteredCredential#getSignatureCount() signature count} in this object
+   * will reflect the signature counter state <i>before</i> the assertion operation, not the new
+   * counter value. When updating your database state, use the signature counter from {@link
+   * #getSignatureCount()} instead.
    */
-  @NonNull private final ByteArray credentialId;
-
-  /**
-   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
-   * of the authenticated user.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
-   * @see UserIdentity#getId()
-   * @see #getUsername()
-   */
-  @NonNull private final ByteArray userHandle;
+  private final RegisteredCredential credential;
 
   /**
    * The username of the authenticated user.
@@ -107,12 +100,33 @@ public class AssertionResult {
 
   private final AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs;
 
+  private AssertionResult(
+      boolean success,
+      @NonNull @JsonProperty("credential") RegisteredCredential credential,
+      @NonNull String username,
+      long signatureCount,
+      boolean signatureCounterValid,
+      ClientAssertionExtensionOutputs clientExtensionOutputs,
+      AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
+    this(
+        success,
+        credential,
+        username,
+        null,
+        null,
+        signatureCount,
+        signatureCounterValid,
+        clientExtensionOutputs,
+        authenticatorExtensionOutputs);
+  }
+
   @JsonCreator
   private AssertionResult(
       @JsonProperty("success") boolean success,
-      @NonNull @JsonProperty("credentialId") ByteArray credentialId,
-      @NonNull @JsonProperty("userHandle") ByteArray userHandle,
+      @NonNull @JsonProperty("credential") RegisteredCredential credential,
       @NonNull @JsonProperty("username") String username,
+      @JsonProperty("credentialId") ByteArray credentialId, // TODO: Delete in next major release
+      @JsonProperty("userHandle") ByteArray userHandle, // TODO: Delete in next major release
       @JsonProperty("signatureCount") long signatureCount,
       @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
       @JsonProperty("clientExtensionOutputs")
@@ -120,9 +134,20 @@ public class AssertionResult {
       @JsonProperty("authenticatorExtensionOutputs")
           AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
     this.success = success;
-    this.credentialId = credentialId;
-    this.userHandle = userHandle;
+    this.credential = credential;
     this.username = username;
+
+    if (credentialId != null) {
+      ExceptionUtil.assure(
+          credential.getCredentialId().equals(credentialId),
+          "Legacy credentialId is present and does not equal credential.credentialId");
+    }
+    if (userHandle != null) {
+      ExceptionUtil.assure(
+          credential.getUserHandle().equals(userHandle),
+          "Legacy userHandle is present and does not equal credential.userHandle");
+    }
+
     this.signatureCount = signatureCount;
     this.signatureCounterValid = signatureCounterValid;
     this.clientExtensionOutputs =
@@ -130,6 +155,36 @@ public class AssertionResult {
             ? null
             : clientExtensionOutputs;
     this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
+  }
+
+  /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> of the credential used for the assertion.
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
+   * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
+   * @deprecated Use {@link #getCredential()}.{@link RegisteredCredential#getCredentialId()
+   *     getCredentialId()} instead.
+   */
+  @Deprecated
+  public ByteArray getCredentialId() {
+    return credential.getCredentialId();
+  }
+
+  /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
+   * of the authenticated user.
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
+   * @see UserIdentity#getId()
+   * @see #getUsername()
+   * @deprecated Use {@link #getCredential()}.{@link RegisteredCredential#getUserHandle()} ()
+   *     getUserHandle()} instead.
+   */
+  @Deprecated
+  public ByteArray getUserHandle() {
+    return credential.getUserHandle();
   }
 
   /**
@@ -180,49 +235,42 @@ public class AssertionResult {
       }
 
       public class Step2 {
-        public Step3 credentialId(ByteArray credentialId) {
-          builder.credentialId(credentialId);
+        public Step3 credential(RegisteredCredential credential) {
+          builder.credential(credential);
           return new Step3();
         }
       }
 
       public class Step3 {
-        public Step4 userHandle(ByteArray userHandle) {
-          builder.userHandle(userHandle);
+        public Step4 username(String username) {
+          builder.username(username);
           return new Step4();
         }
       }
 
       public class Step4 {
-        public Step5 username(String username) {
-          builder.username(username);
+        public Step5 signatureCount(long signatureCount) {
+          builder.signatureCount(signatureCount);
           return new Step5();
         }
       }
 
       public class Step5 {
-        public Step6 signatureCount(long signatureCount) {
-          builder.signatureCount(signatureCount);
+        public Step6 signatureCounterValid(boolean signatureCounterValid) {
+          builder.signatureCounterValid(signatureCounterValid);
           return new Step6();
         }
       }
 
       public class Step6 {
-        public Step7 signatureCounterValid(boolean signatureCounterValid) {
-          builder.signatureCounterValid(signatureCounterValid);
+        public Step7 clientExtensionOutputs(
+            ClientAssertionExtensionOutputs clientExtensionOutputs) {
+          builder.clientExtensionOutputs(clientExtensionOutputs);
           return new Step7();
         }
       }
 
       public class Step7 {
-        public Step8 clientExtensionOutputs(
-            ClientAssertionExtensionOutputs clientExtensionOutputs) {
-          builder.clientExtensionOutputs(clientExtensionOutputs);
-          return new Step8();
-        }
-      }
-
-      public class Step8 {
         public AssertionResultBuilder assertionExtensionOutputs(
             AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
           return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);

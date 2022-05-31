@@ -1,9 +1,17 @@
 == Version 2.1.0 (unreleased) ==
 
+Deprecations:
+
+* Deprecated method `AssertionResult.getCredentialId(): ByteArray`. Use
+  `.getCredential().getCredentialId()` instead.
+* Deprecated method `AssertionResult.getUserHandle(): ByteArray`. Use
+  `.getCredential().getUserHandle()` instead.
+
 New features:
 
 * Added method `FidoMetadataDownloader.refreshBlob()`.
 * Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
+* Added method `AssertionResult.getCredential(): RegisteredCredential`.
 
 
 == Version 2.0.0 ==
