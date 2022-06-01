@@ -3,7 +3,7 @@ name: Test coverage
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   test:
