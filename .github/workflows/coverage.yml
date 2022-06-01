@@ -11,6 +11,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
     - name: Check out code
       uses: actions/checkout@v1
@@ -21,9 +24,45 @@ jobs:
         java-version: 11
 
     - name: Run mutation test
-      run: ./gradlew pitest
+      run: ./gradlew pitestMerge
 
-    - name: Report to Coveralls
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: ./gradlew coveralls
+    - name: Collect HTML reports
+      run: |
+        mkdir -p mutation-coverage-reports
+        for sp in webauthn-server-attestation webauthn-server-core; do
+          cp -a "${sp}"/build/reports/pitest mutation-coverage-reports/"${sp}"
+        done
+        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage-index.html > index.html
+
+    - name: Create coverage badge
+      # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
+      # which we can then include in the project README.
+      run: |
+        KILLED=$(grep -c -E 'status="(KILLED|TIMED_OUT)"' build/reports/pitest/mutations.xml)
+        MUTATIONS=$(grep -c 'status=' build/reports/pitest/mutations.xml)
+        COVERAGE_PERCENT=$(( $KILLED * 100 / $MUTATIONS ))
+        COVERAGE_HUE=$(( $KILLED * 120 / $MUTATIONS ))
+        cat > coverage-badge.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "mutation coverage",
+          "message": "${COVERAGE_PERCENT}%",
+          "color": "hsl(${COVERAGE_HUE}, 100%, 40%)",
+          "cacheSeconds": 3600
+        }
+        EOF
+
+    - name: Check out GitHub Pages branch
+      uses: actions/checkout@v3
+      with:
+        ref: gh-pages
+        clean: false
+
+    - name: Push to GitHub Pages
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git rm --cached -rf -- .
+        git add coverage-badge.json index.html mutation-coverage-reports
+        git commit --amend --reset-author -m "Generate GitHub Pages content"
+        git push -f

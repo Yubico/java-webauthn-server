@@ -5,7 +5,7 @@ java-webauthn-server
 :toc-title:
 
 image:https://github.com/Yubico/java-webauthn-server/workflows/build/badge.svg["Build Status", link="https://github.com/Yubico/java-webauthn-server/actions"]
-image:https://coveralls.io/repos/github/Yubico/java-webauthn-server/badge.svg["Coverage Status", link="https://coveralls.io/github/Yubico/java-webauthn-server"]
+image:https://img.shields.io/endpoint?url=https%3A%2F%2FYubico.github.io%2Fjava-webauthn-server%2Fcoverage-badge.json["Mutation test coverage", link="https://Yubico.github.io/java-webauthn-server/"]
 image:https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml/badge.svg["Binary reproducibility", link="https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml"]
 
 Server-side https://www.w3.org/TR/webauthn/[Web Authentication] library for
