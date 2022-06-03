@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
+      contents: write  # For push to GitHub Pages
 
     steps:
     - name: Check out code
