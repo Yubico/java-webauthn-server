@@ -35,7 +35,7 @@ jobs:
         for sp in webauthn-server-attestation webauthn-server-core yubico-util; do
           cp -a "${sp}"/build/reports/pitest build/gh-pages/mutation-coverage-reports/"${sp}"
         done
-        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage-index.html > build/gh-pages/index.html
+        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflow-resources/coverage-index.html > build/gh-pages/index.html
 
     - name: Create coverage badge
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
