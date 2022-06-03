@@ -39,7 +39,7 @@ jobs:
         for sp in webauthn-server-attestation webauthn-server-core yubico-util; do
           cp -a "${sp}"/build/reports/pitest build/gh-pages/mutation-coverage-reports/"${sp}"
         done
-        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflow-resources/coverage-index.html > build/gh-pages/index.html
+        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage/index.html.template > build/gh-pages/index.html
 
     - name: Create coverage badge
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
@@ -63,12 +63,35 @@ jobs:
         ref: gh-pages
         clean: false
 
+    - name: Post mutation test results as commit comment
+      run: |
+        git checkout "${GITHUB_SHA}" -- .github/workflows/coverage
+
+        ./.github/workflows/coverage/compute-stats.sh build/reports/pitest/mutations.xml > new-stats.json
+
+        if [[ -f prev-mutations.xml ]]; then
+          ./.github/workflows/coverage/compute-stats.sh prev-mutations.xml > prev-stats.json
+        else
+          cp new-stats.json prev-stats.json
+        fi
+
+        touch prev-commit.txt
+
+        ./.github/workflows/coverage/stats-to-comment.sh prev-stats.json new-stats.json $(cat prev-commit.txt) > build/results-comment.json
+
+        curl -X POST \
+           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+           ${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments -d @build/results-comment.json
+        mv new-stats.json prev-stats.json
+
     - name: Push to GitHub Pages
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
         git rm -rf -- .
         mv build/gh-pages/* .
-        git add coverage-badge.json index.html mutation-coverage-reports
+        cp build/reports/pitest/mutations.xml prev-mutations.xml
+        echo "${GITHUB_SHA}" > prev-commit.txt
+        git add coverage-badge.json index.html mutation-coverage-reports prev-mutations.xml prev-commit.txt
         git commit --amend --reset-author -m "Generate GitHub Pages content"
         git push -f
