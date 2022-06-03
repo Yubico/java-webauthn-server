@@ -41,10 +41,10 @@ jobs:
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
       # which we can then include in the project README.
       run: |
-        KILLED=$(grep -c -E 'status="(KILLED|TIMED_OUT)"' build/reports/pitest/mutations.xml)
-        MUTATIONS=$(grep -c 'status=' build/reports/pitest/mutations.xml)
-        COVERAGE_PERCENT=$(( $KILLED * 100 / $MUTATIONS ))
-        COVERAGE_HUE=$(( $KILLED * 120 / $MUTATIONS ))
+        DETECTED=$(grep -c -E "detected=['\"]true['\"]" build/reports/pitest/mutations.xml)
+        MUTATIONS=$(grep -c "detected=" build/reports/pitest/mutations.xml)
+        COVERAGE_PERCENT=$(( $DETECTED * 100 / $MUTATIONS ))
+        COVERAGE_HUE=$(( $DETECTED * 120 / $MUTATIONS ))
         cat > build/gh-pages/coverage-badge.json << EOF
         {
           "schemaVersion": 1,
