@@ -26,6 +26,10 @@ jobs:
     - name: Run mutation test
       run: ./gradlew pitestMerge
 
+    - name: Install yq (and xq)
+      run: |
+        pip install yq
+
     - name: Create output directory
       run: mkdir -p build/gh-pages
 
@@ -41,19 +45,17 @@ jobs:
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
       # which we can then include in the project README.
       run: |
-        DETECTED=$(grep -c -E "detected=['\"]true['\"]" build/reports/pitest/mutations.xml)
-        MUTATIONS=$(grep -c "detected=" build/reports/pitest/mutations.xml)
-        COVERAGE_PERCENT=$(( $DETECTED * 100 / $MUTATIONS ))
-        COVERAGE_HUE=$(( $DETECTED * 120 / $MUTATIONS ))
-        cat > build/gh-pages/coverage-badge.json << EOF
-        {
-          "schemaVersion": 1,
-          "label": "mutation coverage",
-          "message": "${COVERAGE_PERCENT}%",
-          "color": "hsl(${COVERAGE_HUE}, 100%, 40%)",
-          "cacheSeconds": 3600
-        }
-        EOF
+        cat build/reports/pitest/mutations.xml \
+        | xq '.mutations.mutation
+          | (map(select(.["@detected"] == "true")) | length) / length
+          | {
+              schemaVersion: 1,
+              label: "mutation coverage",
+              message: "\(. * 100 | floor | tostring) %",
+              color: "hsl(\(. * 120 | floor | tostring), 100%, 40%",
+              cacheSeconds: 3600,
+            }' \
+        > build/gh-pages/coverage-badge.json
 
     - name: Check out GitHub Pages branch
       uses: actions/checkout@v3
