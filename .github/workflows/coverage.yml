@@ -26,13 +26,16 @@ jobs:
     - name: Run mutation test
       run: ./gradlew pitestMerge
 
+    - name: Create output directory
+      run: mkdir -p build/gh-pages
+
     - name: Collect HTML reports
       run: |
-        mkdir -p mutation-coverage-reports
+        mkdir -p build/gh-pages/mutation-coverage-reports
         for sp in webauthn-server-attestation webauthn-server-core; do
-          cp -a "${sp}"/build/reports/pitest mutation-coverage-reports/"${sp}"
+          cp -a "${sp}"/build/reports/pitest build/gh-pages/mutation-coverage-reports/"${sp}"
         done
-        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage-index.html > index.html
+        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage-index.html > build/gh-pages/index.html
 
     - name: Create coverage badge
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
@@ -42,7 +45,7 @@ jobs:
         MUTATIONS=$(grep -c 'status=' build/reports/pitest/mutations.xml)
         COVERAGE_PERCENT=$(( $KILLED * 100 / $MUTATIONS ))
         COVERAGE_HUE=$(( $KILLED * 120 / $MUTATIONS ))
-        cat > coverage-badge.json << EOF
+        cat > build/gh-pages/coverage-badge.json << EOF
         {
           "schemaVersion": 1,
           "label": "mutation coverage",
@@ -62,7 +65,8 @@ jobs:
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
-        git rm --cached -rf -- .
+        git rm -rf -- .
+        mv build/gh-pages/* .
         git add coverage-badge.json index.html mutation-coverage-reports
         git commit --amend --reset-author -m "Generate GitHub Pages content"
         git push -f
