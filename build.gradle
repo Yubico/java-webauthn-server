@@ -4,7 +4,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.6.1'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.7.0'
     classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
