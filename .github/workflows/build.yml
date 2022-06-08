@@ -55,6 +55,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ always() && github.event_name == 'pull_request' }}
 
+    permissions:
+      checks: write
+      issues: write
+
     steps:
     - name: Download artifacts
       uses: actions/download-artifact@v3
