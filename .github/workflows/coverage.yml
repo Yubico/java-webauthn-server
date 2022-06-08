@@ -33,10 +33,6 @@ jobs:
         name: pitest-reports-${{ github.sha }}
         path: "*/build/reports/pitest/**"
 
-    - name: Install yq (and xq)
-      run: |
-        pip install yq
-
     - name: Create output directory
       run: mkdir -p build/gh-pages
 
@@ -51,18 +47,9 @@ jobs:
     - name: Create coverage badge
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
       # which we can then include in the project README.
-      run: |
-        cat build/reports/pitest/mutations.xml \
-        | xq '.mutations.mutation
-          | (map(select(.["@detected"] == "true")) | length) / length
-          | {
-              schemaVersion: 1,
-              label: "mutation coverage",
-              message: "\(. * 100 | floor | tostring) %",
-              color: "hsl(\(. * 120 | floor | tostring), 100%, 40%",
-              cacheSeconds: 3600,
-            }' \
-        > build/gh-pages/coverage-badge.json
+      uses: ./.github/actions/pit-results-badge
+      with:
+        output-file: build/gh-pages/coverage-badge.json
 
     - name: Check out GitHub Pages branch
       uses: actions/checkout@v3

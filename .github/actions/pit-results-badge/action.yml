@@ -1,0 +1,49 @@
+name: Create Shields.io badge from PIT mutation test results
+author: Emil Lundberg <emil@yubico.com>
+description: |
+  Parses a [PIT][pitest] report file and outputs a [Shields.io][shields]
+  [endpoint badge][endpoint] definition file.
+
+  [endpoint]: https://shields.io/endpoint
+  [pitest]: https://pitest.org/
+  [shields]: https://shields.io/
+
+inputs:
+  cache-seconds:
+    default: 3600
+    description: Passed through as cacheSeconds to Shields.io.
+
+  label:
+    default: "mutation coverage"
+    description: Label for the left side of the badge.
+
+  mutations-file:
+    default: build/reports/pitest/mutations.xml
+    description: Path to the PIT report XML file.
+
+  output-file:
+    required: true
+    description: Path to write output file to.
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Install yq (and xq)
+      shell: bash
+      run: pip install yq
+
+    - name: Create coverage badge
+      shell: bash
+      run: |
+        cat ${{ inputs.mutations-file }} \
+        | xq '.mutations.mutation
+          | (map(select(.["@detected"] == "true")) | length) / length
+          | {
+              schemaVersion: 1,
+              label: "${{ inputs.label }}",
+              message: "\(. * 100 | floor | tostring) %",
+              color: "hsl(\(. * 120 | floor | tostring), 100%, 40%",
+              cacheSeconds: ${{ inputs.cache-seconds }},
+            }' \
+        > ${{ inputs.output-file }}
