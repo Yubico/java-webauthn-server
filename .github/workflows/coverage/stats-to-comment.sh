@@ -47,8 +47,16 @@ EOF
     | { ("**Overall**"): .overall } + .packages
     | to_entries
     | .[]
-    | def difficon: if . > 0 then ":green_circle:" else if . < 0 then ":small_red_triangle_down:" else ":small_blue_diamond:" end end;
-      def triangles: if . > 0 then ":small_red_triangle:" else if . < 0 then ":small_red_triangle_down:" else ":small_blue_diamond:" end end;
+    | def difficon:
+        if . > 0 then ":green_circle:"
+        else if . < 0 then ":small_red_triangle_down:"
+        else ":small_blue_diamond:"
+        end end;
+      def triangles:
+        if . > 0 then ":small_red_triangle:"
+        else if . < 0 then ":small_red_triangle_down:"
+        else ":small_blue_diamond:"
+        end end;
       "\(.key) | **\(.value.after.detected / .value.after.mutations * 100 | floor) %** \(.value.percentage_diff | difficon) | \(.value.after.detected) \(.value.after.detected - .value.before.detected | triangles) / \(.value.after.mutations) \(.value.after.mutations - .value.before.mutations | triangles)| \(.value.before.detected / .value.before.mutations * 100 | floor) % | \(.value.before.detected) / \(.value.before.mutations)"
   ' \
     "${1}" "${2}" --raw-output
