@@ -48,8 +48,9 @@ EOF
     | to_entries
     | .[]
     | def difficon:
-        if . > 0 then ":green_circle:"
-        elif . < 0 then ":small_red_triangle_down:"
+        if .after.detected == .after.mutations then ":trophy:"
+        elif .percentage_diff > 0 then ":green_circle:"
+        elif .percentage_diff < 0 then ":small_red_triangle_down:"
         else ":small_blue_diamond:"
         end;
       def triangles:
@@ -57,7 +58,7 @@ EOF
         elif . < 0 then ":small_red_triangle_down:"
         else ":small_blue_diamond:"
         end;
-      "\(.key) | **\(.value.after.detected / .value.after.mutations * 100 | floor) %** \(.value.percentage_diff | difficon) | \(.value.after.detected) \(.value.after.detected - .value.before.detected | triangles) / \(.value.after.mutations) \(.value.after.mutations - .value.before.mutations | triangles)| \(.value.before.detected / .value.before.mutations * 100 | floor) % | \(.value.before.detected) / \(.value.before.mutations)"
+      "\(.key) | **\(.value.after.detected / .value.after.mutations * 100 | floor) %** \(.value | difficon) | \(.value.after.detected) \(.value.after.detected - .value.before.detected | triangles) / \(.value.after.mutations) \(.value.after.mutations - .value.before.mutations | triangles)| \(.value.before.detected / .value.before.mutations * 100 | floor) % | \(.value.before.detected) / \(.value.before.mutations)"
   ' \
     "${1}" "${2}" --raw-output
 
