@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         java: [8, 11, 16]
+        distribution: [zulu]
 
     steps:
     - name: Check out code
@@ -26,6 +27,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: ${{ matrix.java }}
+        distribution: ${{ matrix.distribution }}
 
     - name: Run tests
       run: ./gradlew cleanTest test
