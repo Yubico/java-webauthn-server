@@ -55,7 +55,7 @@ jobs:
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v1
