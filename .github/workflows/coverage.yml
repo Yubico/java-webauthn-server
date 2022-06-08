@@ -70,25 +70,16 @@ jobs:
         ref: gh-pages
         clean: false
 
-    - name: Post mutation test results as commit comment
+    - name: Prepare metadata for pit-results-comment action
       run: |
-        git checkout "${GITHUB_SHA}" -- .github/workflows/coverage
+        git checkout "${GITHUB_SHA}" -- .github/workflows/coverage .github/actions
+        echo PREV_COMMIT=$(cat prev-commit.txt) >> "${GITHUB_ENV}"
 
-        ./.github/workflows/coverage/compute-stats.sh build/reports/pitest/mutations.xml > new-stats.json
-
-        if [[ -f prev-mutations.xml ]]; then
-          ./.github/workflows/coverage/compute-stats.sh prev-mutations.xml > prev-stats.json
-        else
-          cp new-stats.json prev-stats.json
-        fi
-
-        touch prev-commit.txt
-
-        ./.github/workflows/coverage/stats-to-comment.sh prev-stats.json new-stats.json $(cat prev-commit.txt) > build/results-comment.json
-
-        curl -X POST \
-           -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-           ${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments -d @build/results-comment.json
+    - name: Post mutation test results as commit comment
+      uses: ./.github/actions/pit-results-comment
+      with:
+        prev-commit: ${{ env.PREV_COMMIT }}
+        prev-mutations-file: prev-mutations.xml
 
     - name: Push to GitHub Pages
       run: |
