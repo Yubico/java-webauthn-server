@@ -11,13 +11,18 @@ on:
 
 jobs:
   test:
-    name: JDK ${{matrix.java}}
+    name: JDK ${{ matrix.java }} ${{ matrix.distribution }}
 
     runs-on: ubuntu-latest
     strategy:
       matrix:
         java: [8, 11, 17, 18]
-        distribution: [zulu]
+        distribution: [temurin]
+        include:
+          - java: 17
+            distribution: zulu
+          - java: 17
+            distribution: microsoft
 
     steps:
     - name: Check out code
@@ -36,14 +41,14 @@ jobs:
       if: ${{ always() }}
       uses: actions/upload-artifact@v3
       with:
-        name: test-reports-java${{ matrix.java }}-html
+        name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-html
         path: "*/build/reports/**"
 
     - name: Archive JUnit test report
       if: ${{ always() }}
       uses: actions/upload-artifact@v3
       with:
-        name: test-reports-java${{ matrix.java }}-xml
+        name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
         path: "*/build/test-results/**/*.xml"
 
     - name: Build JavaDoc
