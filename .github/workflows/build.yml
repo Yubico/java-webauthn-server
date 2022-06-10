@@ -24,6 +24,10 @@ jobs:
           - java: 17
             distribution: microsoft
 
+    outputs:
+        report-java: 17
+        report-dist: temurin
+
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -67,6 +71,8 @@ jobs:
     steps:
     - name: Download artifacts
       uses: actions/download-artifact@v3
+      with:
+        name: test-reports-java${{ needs.test.outputs.report-java }}-${{ needs.test.outputs.report-dist }}-xml
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v1
