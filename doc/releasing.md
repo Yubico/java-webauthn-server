@@ -6,7 +6,7 @@ Release candidate versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Make sure you're running Gradle in JDK 11.
+ 2. Make sure you're running Gradle in JDK 17.
 
  3. Run the tests one more time:
 
@@ -71,7 +71,7 @@ Release versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Make sure you're running Gradle in JDK 11.
+ 2. Make sure you're running Gradle in JDK 17.
 
  3. Make a no-fast-forward merge from the last (non release candidate) release
     to the commit to be released:

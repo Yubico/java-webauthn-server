@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [11]
-        distribution: [zulu]
+        java: [17]
+        distribution: [temurin, zulu, microsoft]
 
     steps:
     - name: check out code
