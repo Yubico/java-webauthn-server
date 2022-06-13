@@ -27,6 +27,12 @@ jobs:
     - name: Run mutation test
       run: ./gradlew pitestMerge
 
+    - name: Archive test reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: pitest-reports-${{ github.sha }}
+        path: "*/build/reports/pitest/**"
+
     - name: Install yq (and xq)
       run: |
         pip install yq
