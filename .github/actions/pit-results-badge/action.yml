@@ -43,7 +43,7 @@ runs:
               schemaVersion: 1,
               label: "${{ inputs.label }}",
               message: "\(. * 100 | floor | tostring) %",
-              color: "hsl(\(. * 120 | floor | tostring), 100%, 40%",
+              color: "hsl(\(. * 120 | floor | tostring), 100%, 40%)",
               cacheSeconds: ${{ inputs.cache-seconds }},
             }' \
         > ${{ inputs.output-file }}
