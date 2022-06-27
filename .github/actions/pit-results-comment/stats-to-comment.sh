@@ -67,6 +67,11 @@ EOF
 
 Previous run: ${3}
 EOF
+
+    cat << EOF
+
+Detailed reports: [workflow run #${GITHUB_RUN_NUMBER}](/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})
+EOF
   fi
 
 }
