@@ -60,7 +60,6 @@ import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
-import com.yubico.webauthn.extension.appid.AppId;
 import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import demo.webauthn.data.AssertionRequestWrapper;
 import demo.webauthn.data.AssertionResponse;
@@ -123,8 +122,7 @@ public class WebAuthnServer {
         newCache(),
         newCache(),
         Config.getRpIdentity(),
-        Config.getOrigins(),
-        Config.getAppId());
+        Config.getOrigins());
   }
 
   public WebAuthnServer(
@@ -132,8 +130,7 @@ public class WebAuthnServer {
       Cache<ByteArray, RegistrationRequest> registerRequestStorage,
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
-      Set<String> origins,
-      Optional<AppId> appId)
+      Set<String> origins)
       throws InvalidAppIdException, CertificateException, CertPathValidatorException,
           InvalidAlgorithmParameterException, Base64UrlException, DigestException,
           FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
@@ -153,7 +150,6 @@ public class WebAuthnServer {
             .allowOriginSubdomain(false)
             .allowUntrustedAttestation(true)
             .validateSignatureCounter(true)
-            .appId(appId)
             .build();
   }
 
