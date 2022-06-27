@@ -152,3 +152,5 @@ correct environment.
     https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP name]
     the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
     Authentication demo'`
+
+  - `YUBICO_WEBAUTHN_U2F_APPID`: The https://developers.yubico.com/U2F/App_ID.html[U2F App ID] (single-facet). Example: `YUBICO_WEBAUTHN_U2F_APPID=https://demo.yubico.com:8443`. If not specified, defaults to https://localhost:8443.
