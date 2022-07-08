@@ -535,6 +535,8 @@ final class FinishRegistrationSteps {
                         .collect(Collectors.toSet()));
             pathParams.setDate(Date.from(clock.instant()));
             pathParams.setRevocationEnabled(trustRoots.get().isEnableRevocationChecking());
+            pathParams.setPolicyQualifiersRejected(
+                false); // TODO: Add parameter to configure policy qualifier processor
             trustRoots.get().getCertStore().ifPresent(pathParams::addCertStore);
             cpv.validate(certPath, pathParams);
             return true;
