@@ -88,11 +88,7 @@ final class TpmAttestationStatementVerifier
 
   @Override
   public AttestationType getAttestationType(AttestationObject attestation) {
-    if (attestation.getAttestationStatement().hasNonNull("x5c")) {
-      return AttestationType.BASIC;
-    } else {
-      return AttestationType.SELF_ATTESTATION;
-    }
+    return AttestationType.ATTESTATION_CA;
   }
 
   @Override
