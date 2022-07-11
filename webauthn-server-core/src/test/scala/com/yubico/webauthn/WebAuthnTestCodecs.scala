@@ -96,4 +96,10 @@ object WebAuthnTestCodecs {
     }
   }
 
+  def getCoseKty(encodedPublicKey: ByteArray): Int = {
+    val cose = CBORObject.DecodeFromBytes(encodedPublicKey.getBytes)
+    val kty = cose.get(CBORObject.FromObject(1)).AsInt32
+    kty
+  }
+
 }

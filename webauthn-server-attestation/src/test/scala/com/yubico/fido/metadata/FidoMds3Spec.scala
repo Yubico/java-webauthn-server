@@ -312,7 +312,7 @@ class FidoMds3Spec extends FunSpec with Matchers {
               attestationMaker = AttestationMaker.packed(
                 AttestationSigner.ca(
                   COSEAlgorithmIdentifier.ES256,
-                  aaguid = aaguidA.asBytes,
+                  aaguid = Some(aaguidA.asBytes),
                   validFrom = CertValidFrom,
                   validTo = CertValidTo,
                 )

@@ -5,6 +5,11 @@ Changes:
 * Log messages on attestation certificate path validation failure now include
   the attestation object.
 
+New features:
+
+* Added support for the `"tpm"` attestation statement format.
+* Added support for ES384 and ES512 signature algorithms.
+
 Fixes:
 
 * Fixed various typos and mistakes in JavaDocs.

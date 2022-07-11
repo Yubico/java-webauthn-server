@@ -59,10 +59,10 @@ final class TpmAttestationStatementVerifier
     implements AttestationStatementVerifier, X5cAttestationStatementVerifier {
 
   private static final String TPM_VER = "2.0";
-  private static final ByteArray TPM_GENERATED_VALUE = ByteArray.fromBase64("/1RDRw==");
-  private static final ByteArray TPM_ST_ATTEST_CERTIFY = ByteArray.fromBase64("gBc=");
+  static final ByteArray TPM_GENERATED_VALUE = ByteArray.fromBase64("/1RDRw==");
+  static final ByteArray TPM_ST_ATTEST_CERTIFY = ByteArray.fromBase64("gBc=");
 
-  private static final int TPM_ALG_NULL = 0x0010;
+  static final int TPM_ALG_NULL = 0x0010;
 
   private static final String OID_TCG_AT_TPM_MANUFACTURER = "2.23.133.2.1";
   private static final String OID_TCG_AT_TPM_MODEL = "2.23.133.2.2";
@@ -74,7 +74,7 @@ final class TpmAttestationStatementVerifier
    * <p>see section 8.3 of
    * https://www.trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
    */
-  private static final class Attributes {
+  static final class Attributes {
     public static final int SIGN_ENCRYPT = 1 << 18;
 
     private static final int SHALL_BE_ZERO =
@@ -359,7 +359,7 @@ final class TpmAttestationStatementVerifier
     }
   }
 
-  private static final class TpmAlgAsym {
+  static final class TpmAlgAsym {
     public static final int RSA = 0x0001;
     public static final int ECC = 0x0023;
   }
@@ -463,7 +463,7 @@ final class TpmAttestationStatementVerifier
     }
   }
 
-  private static class TpmAlgHash {
+  static class TpmAlgHash {
     public static final int SHA1 = 0x0004;
     public static final int SHA256 = 0x000B;
     public static final int SHA384 = 0x000C;
@@ -528,7 +528,7 @@ final class TpmAttestationStatementVerifier
             });
   }
 
-  private static final class TpmRsaScheme {
+  static final class TpmRsaScheme {
     public static final int RSASSA = 0x0014;
   }
 

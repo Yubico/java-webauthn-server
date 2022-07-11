@@ -25,6 +25,7 @@
 package com.yubico.webauthn
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.upokecenter.cbor.CBORObject
@@ -33,10 +34,15 @@ import com.yubico.internal.util.CertificateParser
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.TestAuthenticator.AttestationCert
 import com.yubico.webauthn.TestAuthenticator.AttestationMaker
+import com.yubico.webauthn.TestAuthenticator.AttestationSigner
+import com.yubico.webauthn.TpmAttestationStatementVerifier.Attributes
+import com.yubico.webauthn.TpmAttestationStatementVerifier.TPM_ALG_NULL
+import com.yubico.webauthn.TpmAttestationStatementVerifier.TpmRsaScheme
 import com.yubico.webauthn.attestation.AttestationTrustSource
 import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
@@ -63,11 +69,21 @@ import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import com.yubico.webauthn.test.Util.toStepWithUtilities
+import org.bouncycastle.asn1.ASN1Encodable
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERSequence
+import org.bouncycastle.asn1.DERUTF8String
+import org.bouncycastle.asn1.x500.AttributeTypeAndValue
+import org.bouncycastle.asn1.x500.RDN
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.asn1.x509.GeneralName
+import org.bouncycastle.asn1.x509.GeneralNamesBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.junit.runner.RunWith
 import org.mockito.Mockito
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
@@ -75,6 +91,7 @@ import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.io.IOException
+import java.math.BigInteger
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
@@ -86,6 +103,7 @@ import java.security.cert.CRL
 import java.security.cert.CertStore
 import java.security.cert.CollectionCertStoreParameters
 import java.security.cert.X509Certificate
+import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.time.Clock
 import java.time.Instant
@@ -132,7 +150,7 @@ class RelyingPartyRegistrationSpec
         Helpers.CredentialRepository.unimplemented,
       attestationTrustSource: Option[AttestationTrustSource] = None,
       origins: Option[Set[String]] = None,
-      preferredPubkeyParams: List[PublicKeyCredentialParameters] = Nil,
+      pubkeyCredParams: Option[List[PublicKeyCredentialParameters]] = None,
       testData: RegistrationTestData,
       clock: Clock = Clock.systemUTC(),
   ): FinishRegistrationSteps = {
@@ -140,7 +158,6 @@ class RelyingPartyRegistrationSpec
       .builder()
       .identity(testData.rpId)
       .credentialRepository(credentialRepository)
-      .preferredPubkeyParams(preferredPubkeyParams.asJava)
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(allowUntrustedAttestation)
@@ -155,7 +172,11 @@ class RelyingPartyRegistrationSpec
     builder
       .build()
       ._finishRegistration(
-        testData.request,
+        pubkeyCredParams
+          .map(pkcp =>
+            testData.request.toBuilder.pubKeyCredParams(pkcp.asJava).build()
+          )
+          .getOrElse(testData.request),
         testData.response,
         callerTokenBindingId.toJava,
       )
@@ -2053,29 +2074,832 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          it("The tpm statement format is supported.") {
-            val testData = RegistrationTestData.Tpm.RealExample
-            val steps =
-              finishRegistration(
-                testData = testData,
-                origins =
-                  Some(Set("https://dev.d2urpypvrhb05x.amplifyapp.com")),
-                credentialRepository = Helpers.CredentialRepository.empty,
-                attestationTrustSource = Some(
-                  trustSourceWith(
-                    testData.attestationRootCertificate.get,
-                    enableRevocationChecking = false,
-                  )
-                ),
-              )
-            val step: FinishRegistrationSteps#Step19 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+          describe("The tpm statement format") {
 
-            step.validations shouldBe a[Success[_]]
-            step.tryNext shouldBe a[Success[_]]
-            step.run.getAttestationType should be(
-              AttestationType.ATTESTATION_CA
-            )
+            it("is supported.") {
+              val testData = RegistrationTestData.Tpm.RealExample
+              val steps =
+                finishRegistration(
+                  testData = testData,
+                  origins =
+                    Some(Set("https://dev.d2urpypvrhb05x.amplifyapp.com")),
+                  credentialRepository = Helpers.CredentialRepository.empty,
+                  attestationTrustSource = Some(
+                    trustSourceWith(
+                      testData.attestationRootCertificate.get,
+                      enableRevocationChecking = false,
+                    )
+                  ),
+                )
+              val step: FinishRegistrationSteps#Step19 =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a[Success[_]]
+              step.tryNext shouldBe a[Success[_]]
+              step.run.getAttestationType should be(
+                AttestationType.ATTESTATION_CA
+              )
+            }
+
+            describe("is supported and accepts test-generated values:") {
+
+              val emptySubject = new X500Name(Array.empty[RDN])
+              val tcgAtTpmManufacturer = new AttributeTypeAndValue(
+                new ASN1ObjectIdentifier("2.23.133.2.1"),
+                new DERUTF8String("id:00000000"),
+              )
+              val tcgAtTpmModel = new AttributeTypeAndValue(
+                new ASN1ObjectIdentifier("2.23.133.2.2"),
+                new DERUTF8String("TEST_Yubico_java-webauthn-server"),
+              )
+              val tcgAtTpmVersion = new AttributeTypeAndValue(
+                new ASN1ObjectIdentifier("2.23.133.2.3"),
+                new DERUTF8String("id:00000000"),
+              )
+              val tcgKpAikCertificate = new ASN1ObjectIdentifier("2.23.133.8.3")
+
+              def makeCred(
+                  authDataAndKeypair: Option[(ByteArray, KeyPair)] = None,
+                  clientDataJson: Option[String] = None,
+                  subject: X500Name = emptySubject,
+                  rdn: Array[AttributeTypeAndValue] =
+                    Array(tcgAtTpmManufacturer, tcgAtTpmModel, tcgAtTpmVersion),
+                  extendedKeyUsage: Array[ASN1Encodable] =
+                    Array(tcgKpAikCertificate),
+                  ver: Option[String] = Some("2.0"),
+                  magic: ByteArray =
+                    TpmAttestationStatementVerifier.TPM_GENERATED_VALUE,
+                  `type`: ByteArray =
+                    TpmAttestationStatementVerifier.TPM_ST_ATTEST_CERTIFY,
+                  modifyAttestedName: ByteArray => ByteArray = an => an,
+                  overrideCosePubkey: Option[ByteArray] = None,
+                  aaguidInCert: Option[ByteArray] = None,
+                  attributes: Option[Long] = None,
+                  symmetric: Option[Int] = None,
+                  scheme: Option[Int] = None,
+              ): (
+                  PublicKeyCredential[
+                    AuthenticatorAttestationResponse,
+                    ClientRegistrationExtensionOutputs,
+                  ],
+                  KeyPair,
+                  List[(X509Certificate, PrivateKey)],
+              ) = {
+                val (authData, credentialKeypair) =
+                  authDataAndKeypair.getOrElse(
+                    TestAuthenticator.createAuthenticatorData(keyAlgorithm =
+                      COSEAlgorithmIdentifier.ES256
+                    )
+                  )
+
+                TestAuthenticator.createCredential(
+                  authDataBytes = authData,
+                  credentialKeypair = credentialKeypair,
+                  clientDataJson = clientDataJson.getOrElse(
+                    TestAuthenticator.createClientData()
+                  ),
+                  attestationMaker = AttestationMaker.tpm(
+                    cert = AttestationSigner.ca(
+                      alg = COSEAlgorithmIdentifier.ES256,
+                      certSubject = subject,
+                      aaguid = aaguidInCert,
+                      certExtensions = List(
+                        (
+                          Extension.subjectAlternativeName.getId,
+                          true,
+                          new GeneralNamesBuilder()
+                            .addName(
+                              new GeneralName(new X500Name(Array(new RDN(rdn))))
+                            )
+                            .build(),
+                        ),
+                        (
+                          Extension.extendedKeyUsage.getId,
+                          true,
+                          new DERSequence(extendedKeyUsage),
+                        ),
+                      ),
+                      validFrom = Instant.now(),
+                      validTo = Instant.now().plusSeconds(600),
+                    ),
+                    ver = ver,
+                    magic = magic,
+                    `type` = `type`,
+                    modifyAttestedName = modifyAttestedName,
+                    overrideCosePubkey = overrideCosePubkey,
+                    attributes = attributes,
+                    symmetric = symmetric,
+                    scheme = scheme,
+                  ),
+                )
+              }
+
+              def init(
+                  testData: RegistrationTestData
+              ): FinishRegistrationSteps#Step19 = {
+                val steps =
+                  finishRegistration(
+                    credentialRepository = Helpers.CredentialRepository.empty,
+                    testData = testData,
+                    attestationTrustSource = Some(
+                      trustSourceWith(
+                        testData.attestationCertChain.last._1,
+                        enableRevocationChecking = false,
+                      )
+                    ),
+                  )
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+              }
+
+              def check(
+                  testData: RegistrationTestData,
+                  pubKeyCredParams: Option[
+                    List[PublicKeyCredentialParameters]
+                  ] = None,
+              ) = {
+                val steps =
+                  finishRegistration(
+                    testData = testData,
+                    credentialRepository = Helpers.CredentialRepository.empty,
+                    attestationTrustSource = Some(
+                      trustSourceWith(
+                        testData.attestationRootCertificate.getOrElse(
+                          testData.attestationCertChain.last._1
+                        ),
+                        enableRevocationChecking = false,
+                      )
+                    ),
+                    pubkeyCredParams = pubKeyCredParams,
+                    clock = Clock.fixed(
+                      TestAuthenticator.Defaults.certValidFrom,
+                      ZoneOffset.UTC,
+                    ),
+                  )
+                val step: FinishRegistrationSteps#Step19 =
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+                step.run.getAttestationType should be(
+                  AttestationType.ATTESTATION_CA
+                )
+              }
+
+              it("ES256.") {
+                check(RegistrationTestData.Tpm.ValidEs256)
+              }
+              it("ES384.") {
+                check(RegistrationTestData.Tpm.ValidEs384)
+              }
+              it("ES512.") {
+                check(RegistrationTestData.Tpm.ValidEs512)
+              }
+              it("RS256.") {
+                check(RegistrationTestData.Tpm.ValidRs256)
+              }
+              it("RS1.") {
+                check(
+                  RegistrationTestData.Tpm.ValidRs1,
+                  pubKeyCredParams =
+                    Some(List(PublicKeyCredentialParameters.RS1)),
+                )
+              }
+
+              it("Default cert generator settings.") {
+                val testData = (RegistrationTestData.from _).tupled(makeCred())
+                val step = init(testData)
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+                step.run.getAttestationType should be(
+                  AttestationType.ATTESTATION_CA
+                )
+              }
+
+              describe("Verify that the public key specified by the parameters and unique fields of pubArea is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData.") {
+                it("Fails when EC key is unrelated but on the same curve.") {
+                  val testData = (RegistrationTestData.from _).tupled(
+                    makeCred(
+                      overrideCosePubkey = Some(
+                        WebAuthnTestCodecs.ecPublicKeyToCose(
+                          TestAuthenticator
+                            .generateEcKeypair()
+                            .getPublic
+                            .asInstanceOf[ECPublicKey]
+                        )
+                      )
+                    )
+                  )
+                  val step = init(testData)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.tryNext shouldBe a[Failure[_]]
+                  step.validations.failed.get.getMessage should include(
+                    "EC X coordinate differs"
+                  )
+                }
+
+                it("Fails when EC key is on a different curve.") {
+                  val testData = (RegistrationTestData.from _).tupled(
+                    makeCred(
+                      overrideCosePubkey = Some(
+                        WebAuthnTestCodecs.ecPublicKeyToCose(
+                          TestAuthenticator
+                            .generateEcKeypair("secp384r1")
+                            .getPublic
+                            .asInstanceOf[ECPublicKey]
+                        )
+                      )
+                    )
+                  )
+                  val step = init(testData)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.tryNext shouldBe a[Failure[_]]
+                  step.validations.failed.get.getMessage should include(
+                    "elliptic curve differs"
+                  )
+                }
+
+                it("Fails when EC key has an inverted Y coordinate.") {
+                  val (authData, keypair) =
+                    TestAuthenticator.createAuthenticatorData(keyAlgorithm =
+                      COSEAlgorithmIdentifier.ES256
+                    )
+
+                  val cose = CBORObject.DecodeFromBytes(
+                    WebAuthnTestCodecs
+                      .ecPublicKeyToCose(
+                        keypair.getPublic.asInstanceOf[ECPublicKey]
+                      )
+                      .getBytes
+                  )
+                  cose.Set(
+                    -3,
+                    TestAuthenticator.Es256PrimeModulus
+                      .subtract(
+                        new BigInteger(1, cose.get(-3).GetByteString())
+                      ), // Setting to BigInteger seems to work, but Array[Byte] does not
+                  )
+                  val testData = (RegistrationTestData.from _).tupled(
+                    makeCred(
+                      authDataAndKeypair = Some((authData, keypair)),
+                      overrideCosePubkey =
+                        Some(new ByteArray(cose.EncodeToBytes())),
+                    )
+                  )
+                  val step = init(testData)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.tryNext shouldBe a[Failure[_]]
+                  step.validations.failed.get.getMessage should include(
+                    "EC Y coordinate differs"
+                  )
+                }
+
+                it("Fails when RSA key is unrelated.") {
+                  val (authData, keypair) =
+                    TestAuthenticator.createAuthenticatorData(keyAlgorithm =
+                      COSEAlgorithmIdentifier.RS256
+                    )
+                  val testData = (RegistrationTestData.from _).tupled(
+                    makeCred(
+                      authDataAndKeypair = Some((authData, keypair)),
+                      overrideCosePubkey = Some(
+                        WebAuthnTestCodecs.rsaPublicKeyToCose(
+                          TestAuthenticator
+                            .generateRsaKeypair()
+                            .getPublic
+                            .asInstanceOf[RSAPublicKey],
+                          COSEAlgorithmIdentifier.RS256,
+                        )
+                      ),
+                    )
+                  )
+                  val step = init(testData)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.tryNext shouldBe a[Failure[_]]
+                }
+              }
+
+              it("""The "ver" property must equal "2.0".""") {
+                forAll(
+                  Gen.option(
+                    Gen.oneOf(
+                      Gen.numStr,
+                      for {
+                        major <- arbitrary[Int]
+                        minor <- arbitrary[Int]
+                      } yield s"${major}.${minor}",
+                      arbitrary[String],
+                    )
+                  )
+                ) { ver: Option[String] =>
+                  whenever(!ver.contains("2.0")) {
+                    val testData =
+                      (RegistrationTestData.from _).tupled(makeCred(ver = ver))
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+              }
+
+              it("""Verify that magic is set to TPM_GENERATED_VALUE.""") {
+                forAll(byteArray(4)) { magic =>
+                  whenever(
+                    magic != TpmAttestationStatementVerifier.TPM_GENERATED_VALUE
+                  ) {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(magic = magic)
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+              }
+
+              it("""Verify that type is set to TPM_ST_ATTEST_CERTIFY.""") {
+                forAll(
+                  Gen.oneOf(
+                    byteArray(2),
+                    flipOneBit(
+                      TpmAttestationStatementVerifier.TPM_ST_ATTEST_CERTIFY
+                    ),
+                  )
+                ) { `type` =>
+                  whenever(
+                    `type` != TpmAttestationStatementVerifier.TPM_ST_ATTEST_CERTIFY
+                  ) {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(`type` = `type`)
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+              }
+
+              it("""Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg".""") {
+                val testData = (RegistrationTestData.from _).tupled(makeCred())
+                val json = JacksonCodecs.json()
+                val clientData = json
+                  .readTree(testData.clientDataJson)
+                  .asInstanceOf[ObjectNode]
+                clientData.set(
+                  "challenge",
+                  jsonFactory.textNode(
+                    Crypto
+                      .sha256(
+                        ByteArray.fromBase64Url(
+                          clientData.get("challenge").textValue
+                        )
+                      )
+                      .getBase64Url
+                  ),
+                )
+                val mutatedTestData = testData.copy(clientDataJson =
+                  json.writeValueAsString(clientData)
+                )
+                val step = init(mutatedTestData)
+
+                step.validations shouldBe a[Failure[_]]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it("Verify that attested contains a TPMS_CERTIFY_INFO structure as specified in [TPMv2-Part2] section 10.12.3, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea using the procedure specified in [TPMv2-Part1] section 16.") {
+                forAll(
+                  Gen.oneOf(
+                    for {
+                      flipBitIndex: Int <-
+                        Gen.oneOf(Gen.const(0), Gen.posNum[Int])
+                    } yield (an: ByteArray) =>
+                      flipBit(flipBitIndex % (8 * an.size()))(an),
+                    for {
+                      attestedName <- arbitrary[ByteArray]
+                    } yield (_: ByteArray) => attestedName,
+                  )
+                ) { (modifyAttestedName: ByteArray => ByteArray) =>
+                  val testData = (RegistrationTestData.from _).tupled(
+                    makeCred(modifyAttestedName = modifyAttestedName)
+                  )
+                  val step = init(testData)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.tryNext shouldBe a[Failure[_]]
+                }
+              }
+
+              it("Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.") {
+                val testData = (RegistrationTestData.from _).tupled(makeCred())
+                forAll(
+                  flipOneBit(
+                    new ByteArray(
+                      new AttestationObject(
+                        testData.attestationObject
+                      ).getAttestationStatement.get("sig").binaryValue()
+                    )
+                  )
+                ) { sig =>
+                  val mutatedTestData = testData.updateAttestationObject(
+                    "attStmt",
+                    attStmt =>
+                      attStmt
+                        .asInstanceOf[ObjectNode]
+                        .set[ObjectNode](
+                          "sig",
+                          jsonFactory.binaryNode(sig.getBytes),
+                        ),
+                  )
+                  val step = init(mutatedTestData)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.tryNext shouldBe a[Failure[_]]
+                }
+              }
+
+              describe("Verify that aikCert meets the requirements in §8.3.1 TPM Attestation Statement Certificate Requirements.") {
+                it("Version MUST be set to 3.") {
+                  val testData =
+                    (RegistrationTestData.from _).tupled(makeCred())
+                  forAll(arbitrary[Byte] suchThat { _ != 2 }) { version =>
+                    val mutatedTestData = testData.updateAttestationObject(
+                      "attStmt",
+                      attStmt => {
+                        val origAikCert = attStmt
+                          .get("x5c")
+                          .get(0)
+                          .binaryValue
+
+                        val x509VerOffset = 12
+                        attStmt
+                          .get("x5c")
+                          .asInstanceOf[ArrayNode]
+                          .set(0, origAikCert.updated(x509VerOffset, version))
+                        attStmt
+                      },
+                    )
+                    val step = init(mutatedTestData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                describe("Subject field MUST be set to empty.") {
+                  it("Fails if a subject is set.") {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(subject =
+                        new X500Name(
+                          Array(
+                            new RDN(
+                              Array(
+                                tcgAtTpmManufacturer,
+                                tcgAtTpmModel,
+                                tcgAtTpmVersion,
+                              )
+                            )
+                          )
+                        )
+                      )
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                describe("The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.") {
+                  it("Fails when manufacturer is absent.") {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(rdn = Array(tcgAtTpmModel, tcgAtTpmVersion))
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+
+                  it("Fails when model is absent.") {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(rdn =
+                        Array(tcgAtTpmManufacturer, tcgAtTpmVersion)
+                      )
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+
+                  it("Fails when version is absent.") {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(rdn = Array(tcgAtTpmManufacturer, tcgAtTpmModel))
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                describe("The Extended Key Usage extension MUST contain the OID 2.23.133.8.3 (\"joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)\").") {
+                  it("Fails when extended key usage is empty.") {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(extendedKeyUsage = Array.empty)
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+
+                  it("""Fails when extended key usage contains only "serverAuth".""") {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(extendedKeyUsage =
+                        Array(new ASN1ObjectIdentifier("1.3.6.1.5.5.7.3.1"))
+                      )
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                describe("The Basic Constraints extension MUST have the CA component set to false.") {
+                  it(
+                    "Fails when the attestation cert is a self-signed CA cert."
+                  ) {
+                    val testData = (RegistrationTestData.from _).tupled(
+                      TestAuthenticator.createBasicAttestedCredential(
+                        keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                        attestationMaker = AttestationMaker.tpm(
+                          AttestationSigner.selfsigned(
+                            alg = COSEAlgorithmIdentifier.ES256,
+                            certSubject = emptySubject,
+                            issuerSubject =
+                              Some(TestAuthenticator.Defaults.caCertSubject),
+                            certExtensions = List(
+                              (
+                                Extension.subjectAlternativeName.getId,
+                                true,
+                                new GeneralNamesBuilder()
+                                  .addName(
+                                    new GeneralName(
+                                      new X500Name(
+                                        Array(
+                                          new RDN(
+                                            Array(
+                                              tcgAtTpmManufacturer,
+                                              tcgAtTpmModel,
+                                              tcgAtTpmVersion,
+                                            )
+                                          )
+                                        )
+                                      )
+                                    )
+                                  )
+                                  .build(),
+                              ),
+                              (
+                                Extension.extendedKeyUsage.getId,
+                                true,
+                                new DERSequence(tcgKpAikCertificate),
+                              ),
+                            ),
+                            validFrom = Instant.now(),
+                            validTo = Instant.now().plusSeconds(600),
+                            isCa = true,
+                          )
+                        ),
+                      )
+                    )
+                    val step = init(testData)
+                    testData.attestationCertChain.head._1.getBasicConstraints should not be (-1)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                describe("An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] are both OPTIONAL as the status of many attestation certificates is available through metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].") {
+                  it("Nothing to test.") {}
+                }
+              }
+
+              describe("If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData.") {
+                it("Succeeds if the cert does not have the extension.") {
+                  val testData = (RegistrationTestData.from _).tupled(
+                    makeCred(aaguidInCert = None)
+                  )
+                  val step = init(testData)
+
+                  step.validations shouldBe a[Success[_]]
+                  step.tryNext shouldBe a[Success[_]]
+                }
+
+                it(
+                  "Succeeds if the cert has the extension with the right value."
+                ) {
+                  forAll(byteArray(16)) { aaguid =>
+                    val (authData, keypair) =
+                      TestAuthenticator.createAuthenticatorData(
+                        aaguid = aaguid,
+                        keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                      )
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(
+                        authDataAndKeypair = Some((authData, keypair)),
+                        aaguidInCert = Some(aaguid),
+                      )
+                    )
+                    val step = init(testData)
+
+                    step.validations shouldBe a[Success[_]]
+                    step.tryNext shouldBe a[Success[_]]
+                  }
+                }
+
+                it(
+                  "Fails if the cert has the extension with the wrong value."
+                ) {
+                  forAll(byteArray(16), byteArray(16)) {
+                    (aaguidInCred, aaguidInCert) =>
+                      whenever(aaguidInCred != aaguidInCert) {
+                        val (authData, keypair) =
+                          TestAuthenticator.createAuthenticatorData(
+                            aaguid = aaguidInCred,
+                            keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                          )
+                        val testData = (RegistrationTestData.from _).tupled(
+                          makeCred(
+                            authDataAndKeypair = Some((authData, keypair)),
+                            aaguidInCert = Some(aaguidInCert),
+                          )
+                        )
+                        val step = init(testData)
+
+                        step.validations shouldBe a[Failure[_]]
+                        step.tryNext shouldBe a[Failure[_]]
+                      }
+                  }
+                }
+              }
+
+              describe("Other requirements:") {
+                it("RSA keys must have the SIGN_ENCRYPT attribute.") {
+                  forAll(Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1)) {
+                    attributes: Long =>
+                      val testData = (RegistrationTestData.from _).tupled(
+                        makeCred(
+                          authDataAndKeypair = Some(
+                            TestAuthenticator
+                              .createAuthenticatorData(keyAlgorithm =
+                                COSEAlgorithmIdentifier.RS256
+                              )
+                          ),
+                          attributes =
+                            Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                        )
+                      )
+                      val step = init(testData)
+                      testData.alg should be(COSEAlgorithmIdentifier.RS256)
+
+                      step.validations shouldBe a[Failure[_]]
+                      step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                it("""RSA keys must have "symmetric" set to TPM_ALG_NULL""") {
+                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
+                    symmetric: Int =>
+                      whenever(symmetric != TPM_ALG_NULL) {
+                        val testData = (RegistrationTestData.from _).tupled(
+                          makeCred(
+                            authDataAndKeypair = Some(
+                              TestAuthenticator
+                                .createAuthenticatorData(keyAlgorithm =
+                                  COSEAlgorithmIdentifier.RS256
+                                )
+                            ),
+                            symmetric = Some(symmetric),
+                          )
+                        )
+                        val step = init(testData)
+                        testData.alg should be(COSEAlgorithmIdentifier.RS256)
+
+                        step.validations shouldBe a[Failure[_]]
+                        step.tryNext shouldBe a[Failure[_]]
+                      }
+                  }
+                }
+
+                it("""RSA keys must have "scheme" set to TPM_ALG_RSASSA or TPM_ALG_NULL""") {
+                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
+                    scheme: Int =>
+                      whenever(
+                        scheme != TpmRsaScheme.RSASSA && scheme != TPM_ALG_NULL
+                      ) {
+                        val testData = (RegistrationTestData.from _).tupled(
+                          makeCred(
+                            authDataAndKeypair = Some(
+                              TestAuthenticator
+                                .createAuthenticatorData(keyAlgorithm =
+                                  COSEAlgorithmIdentifier.RS256
+                                )
+                            ),
+                            scheme = Some(scheme),
+                          )
+                        )
+                        val step = init(testData)
+                        testData.alg should be(COSEAlgorithmIdentifier.RS256)
+
+                        step.validations shouldBe a[Failure[_]]
+                        step.tryNext shouldBe a[Failure[_]]
+                      }
+                  }
+                }
+
+                it("ECC keys must have the SIGN_ENCRYPT attribute.") {
+                  forAll(Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1)) {
+                    attributes: Long =>
+                      val testData = (RegistrationTestData.from _).tupled(
+                        makeCred(
+                          authDataAndKeypair = Some(
+                            TestAuthenticator
+                              .createAuthenticatorData(keyAlgorithm =
+                                COSEAlgorithmIdentifier.ES256
+                              )
+                          ),
+                          attributes =
+                            Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                        )
+                      )
+                      val step = init(testData)
+                      testData.alg should be(COSEAlgorithmIdentifier.ES256)
+
+                      step.validations shouldBe a[Failure[_]]
+                      step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                it("""ECC keys must have "symmetric" set to TPM_ALG_NULL""") {
+                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
+                    symmetric: Int =>
+                      whenever(symmetric != TPM_ALG_NULL) {
+                        val testData = (RegistrationTestData.from _).tupled(
+                          makeCred(
+                            authDataAndKeypair = Some(
+                              TestAuthenticator
+                                .createAuthenticatorData(keyAlgorithm =
+                                  COSEAlgorithmIdentifier.ES256
+                                )
+                            ),
+                            symmetric = Some(symmetric),
+                          )
+                        )
+                        val step = init(testData)
+                        testData.alg should be(COSEAlgorithmIdentifier.ES256)
+
+                        step.validations shouldBe a[Failure[_]]
+                        step.tryNext shouldBe a[Failure[_]]
+                      }
+                  }
+                }
+
+                it("""ECC keys must have "scheme" set to TPM_ALG_NULL""") {
+                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
+                    scheme: Int =>
+                      whenever(scheme != TPM_ALG_NULL) {
+                        val testData = (RegistrationTestData.from _).tupled(
+                          makeCred(
+                            authDataAndKeypair = Some(
+                              TestAuthenticator
+                                .createAuthenticatorData(keyAlgorithm =
+                                  COSEAlgorithmIdentifier.ES256
+                                )
+                            ),
+                            scheme = Some(scheme),
+                          )
+                        )
+                        val step = init(testData)
+                        testData.alg should be(COSEAlgorithmIdentifier.ES256)
+
+                        step.validations shouldBe a[Failure[_]]
+                        step.tryNext shouldBe a[Failure[_]]
+                      }
+                  }
+                }
+              }
+            }
           }
 
           ignore("The android-key statement format is supported.") {
@@ -2539,6 +3363,7 @@ class RelyingPartyRegistrationSpec
                 clock: Clock,
                 trustedRootCert: Option[X509Certificate] = None,
                 enableRevocationChecking: Boolean = true,
+                origins: Option[Set[String]] = None,
             ): Unit = {
               it("is rejected if untrusted attestation is not allowed and the trust source does not trust it.") {
                 val steps = finishRegistration(
@@ -2546,6 +3371,7 @@ class RelyingPartyRegistrationSpec
                   testData = testData,
                   attestationTrustSource = Some(emptyTrustSource),
                   clock = clock,
+                  origins = origins,
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2561,6 +3387,7 @@ class RelyingPartyRegistrationSpec
                   testData = testData,
                   attestationTrustSource = Some(emptyTrustSource),
                   clock = clock,
+                  origins = origins,
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2597,6 +3424,7 @@ class RelyingPartyRegistrationSpec
                   testData = testData,
                   attestationTrustSource = attestationTrustSource,
                   clock = clock,
+                  origins = origins,
                 )
                 val step: FinishRegistrationSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2647,6 +3475,7 @@ class RelyingPartyRegistrationSpec
                     testData = testData,
                     attestationTrustSource = Some(attestationTrustSource),
                     clock = clock,
+                    origins = origins,
                   )
                   val step: FinishRegistrationSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2674,6 +3503,7 @@ class RelyingPartyRegistrationSpec
                     testData = testData,
                     attestationTrustSource = Some(attestationTrustSource),
                     clock = clock,
+                    origins = origins,
                   )
                   val step: FinishRegistrationSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -2731,8 +3561,21 @@ class RelyingPartyRegistrationSpec
                 ),
               )
             }
-          }
 
+            describe("A tpm attestation") {
+              val testData = RegistrationTestData.Tpm.RealExample
+              generateTests(
+                testData = testData,
+                clock = Clock.fixed(
+                  Instant.parse("2022-08-25T16:00:00Z"),
+                  ZoneOffset.UTC,
+                ),
+                origins = Some(Set(testData.clientData.getOrigin)),
+                trustedRootCert = Some(testData.attestationRootCertificate.get),
+                enableRevocationChecking = false,
+              )
+            }
+          }
         }
 
         describe("22. Check that the credentialId is not yet registered to any other user. If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.") {
