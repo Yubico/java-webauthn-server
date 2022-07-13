@@ -3553,8 +3553,57 @@ class RelyingPartyRegistrationSpec
   }
 
   describe("RelyingParty.finishRegistration") {
-    it("throws RegistrationFailedException in case of errors.") {
+    it("supports 1023 bytes long credential IDs.") {
+      val rp = RelyingParty
+        .builder()
+        .identity(
+          RelyingPartyIdentity
+            .builder()
+            .id("localhost")
+            .name("Test party")
+            .build()
+        )
+        .credentialRepository(Helpers.CredentialRepository.empty)
+        .build()
 
+      val pkcco = rp.startRegistration(
+        StartRegistrationOptions
+          .builder()
+          .user(
+            UserIdentity
+              .builder()
+              .name("test")
+              .displayName("Test Testsson")
+              .id(new ByteArray(Array()))
+              .build()
+          )
+          .build()
+      )
+
+      forAll(byteArray(1023)) { credId =>
+        val credential = TestAuthenticator
+          .createUnattestedCredential(challenge = pkcco.getChallenge)
+          ._1
+          .toBuilder()
+          .id(credId)
+          .build()
+
+        val result = Try(
+          rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(pkcco)
+              .response(credential)
+              .build()
+          )
+        )
+        result shouldBe a[Success[_]]
+        result.get.getKeyId.getId should equal(credId)
+        result.get.getKeyId.getId.size should be(1023)
+      }
+    }
+
+    it("throws RegistrationFailedException in case of errors.") {
       val rp = RelyingParty
         .builder()
         .identity(
