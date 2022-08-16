@@ -302,28 +302,50 @@ object TestAuthenticator {
     }
   }
 
-  private def createCredential(
+  private def createAuthenticatorData(
       aaguid: ByteArray = Defaults.aaguid,
-      attestationMaker: AttestationMaker,
       authenticatorExtensions: Option[JsonNode] = None,
-      challenge: ByteArray = Defaults.challenge,
-      clientData: Option[JsonNode] = None,
-      clientExtensions: ClientRegistrationExtensionOutputs =
-        ClientRegistrationExtensionOutputs.builder().build(),
       credentialKeypair: Option[KeyPair] = None,
       keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
+  ): (
+      ByteArray,
+      KeyPair,
+  ) = {
+    val keypair =
+      credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
+    val publicKeyCose = keypair.getPublic match {
+      case pub: ECPublicKey      => WebAuthnTestCodecs.ecPublicKeyToCose(pub)
+      case pub: BCEdDSAPublicKey => WebAuthnTestCodecs.eddsaPublicKeyToCose(pub)
+      case pub: RSAPublicKey =>
+        WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm)
+    }
+
+    val authDataBytes: ByteArray = makeAuthDataBytes(
+      rpId = Defaults.rpId,
+      attestedCredentialDataBytes = Some(
+        makeAttestedCredentialDataBytes(
+          aaguid = aaguid,
+          publicKeyCose = publicKeyCose,
+        )
+      ),
+      extensionsCborBytes = authenticatorExtensions map (ext =>
+        new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(ext))
+      ),
+    )
+
+    (
+      authDataBytes,
+      keypair,
+    )
+  }
+
+  private def createClientData(
+      challenge: ByteArray = Defaults.challenge,
+      clientData: Option[JsonNode] = None,
       origin: String = Defaults.origin,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
-  ): (
-      data.PublicKeyCredential[
-        data.AuthenticatorAttestationResponse,
-        ClientRegistrationExtensionOutputs,
-      ],
-      KeyPair,
-      List[(X509Certificate, PrivateKey)],
-  ) = {
-
+  ): String = {
     val clientDataJson: String =
       JacksonCodecs.json.writeValueAsString(clientData getOrElse {
         val json: ObjectNode = jsonFactory.objectNode()
@@ -349,29 +371,27 @@ object TestAuthenticator {
 
         json
       })
+
+    clientDataJson
+  }
+
+  private def createCredential(
+      authDataBytes: ByteArray,
+      clientDataJson: String,
+      credentialKeypair: KeyPair,
+      attestationMaker: AttestationMaker,
+      clientExtensions: ClientRegistrationExtensionOutputs =
+        ClientRegistrationExtensionOutputs.builder().build(),
+  ): (
+      data.PublicKeyCredential[
+        data.AuthenticatorAttestationResponse,
+        ClientRegistrationExtensionOutputs,
+      ],
+      KeyPair,
+      List[(X509Certificate, PrivateKey)],
+  ) = {
+
     val clientDataJsonBytes = toBytes(clientDataJson)
-
-    val keypair =
-      credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
-    val publicKeyCose = keypair.getPublic match {
-      case pub: ECPublicKey      => WebAuthnTestCodecs.ecPublicKeyToCose(pub)
-      case pub: BCEdDSAPublicKey => WebAuthnTestCodecs.eddsaPublicKeyToCose(pub)
-      case pub: RSAPublicKey =>
-        WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm)
-    }
-
-    val authDataBytes: ByteArray = makeAuthDataBytes(
-      rpId = Defaults.rpId,
-      attestedCredentialDataBytes = Some(
-        makeAttestedCredentialDataBytes(
-          aaguid = aaguid,
-          publicKeyCose = publicKeyCose,
-        )
-      ),
-      extensionsCborBytes = authenticatorExtensions map (ext =>
-        new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(ext))
-      ),
-    )
 
     val attestationObjectBytes =
       attestationMaker.makeAttestationObjectBytes(authDataBytes, clientDataJson)
@@ -391,7 +411,7 @@ object TestAuthenticator {
         .response(response)
         .clientExtensionResults(clientExtensions)
         .build(),
-      keypair,
+      credentialKeypair,
       attestationMaker.certChain,
     )
   }
@@ -407,12 +427,19 @@ object TestAuthenticator {
       ],
       KeyPair,
       List[(X509Certificate, PrivateKey)],
-  ) =
-    createCredential(
+  ) = {
+    val (authData, credentialKeypair) = createAuthenticatorData(
       aaguid = aaguid,
-      attestationMaker = attestationMaker,
       keyAlgorithm = keyAlgorithm,
     )
+
+    createCredential(
+      authDataBytes = authData,
+      credentialKeypair = credentialKeypair,
+      clientDataJson = createClientData(),
+      attestationMaker = attestationMaker,
+    )
+  }
 
   def createSelfAttestedCredential(
       attestationMaker: SelfAttestation => AttestationMaker,
@@ -425,12 +452,15 @@ object TestAuthenticator {
       KeyPair,
       List[(X509Certificate, PrivateKey)],
   ) = {
-    val keypair = generateKeypair(keyAlgorithm)
+    val (authData, keypair) = createAuthenticatorData(credentialKeypair =
+      Some(generateKeypair(keyAlgorithm))
+    )
     val signer = SelfAttestation(keypair, keyAlgorithm)
     createCredential(
+      authDataBytes = authData,
+      clientDataJson = createClientData(),
+      credentialKeypair = keypair,
       attestationMaker = attestationMaker(signer),
-      credentialKeypair = Some(keypair),
-      keyAlgorithm = keyAlgorithm,
     )
   }
 
@@ -444,12 +474,17 @@ object TestAuthenticator {
       ],
       KeyPair,
       List[(X509Certificate, PrivateKey)],
-  ) =
-    createCredential(
-      attestationMaker = AttestationMaker.none(),
-      authenticatorExtensions = authenticatorExtensions,
-      challenge = challenge,
+  ) = {
+    val (authData, keypair) = createAuthenticatorData(
+      authenticatorExtensions = authenticatorExtensions
     )
+    createCredential(
+      authDataBytes = authData,
+      clientDataJson = createClientData(challenge = challenge),
+      credentialKeypair = keypair,
+      attestationMaker = AttestationMaker.none(),
+    )
+  }
 
   def createAssertionFromTestData(
       testData: RegistrationTestData,
