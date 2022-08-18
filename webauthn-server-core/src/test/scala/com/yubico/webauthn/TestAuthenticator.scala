@@ -874,7 +874,9 @@ object TestAuthenticator {
   def generateKeypair(algorithm: COSEAlgorithmIdentifier): KeyPair =
     algorithm match {
       case COSEAlgorithmIdentifier.EdDSA => generateEddsaKeypair()
-      case COSEAlgorithmIdentifier.ES256 => generateEcKeypair()
+      case COSEAlgorithmIdentifier.ES256 => generateEcKeypair("secp256r1")
+      case COSEAlgorithmIdentifier.ES384 => generateEcKeypair("secp384r1")
+      case COSEAlgorithmIdentifier.ES512 => generateEcKeypair("secp521r1")
       case COSEAlgorithmIdentifier.RS256 => generateRsaKeypair()
       case COSEAlgorithmIdentifier.RS1   => generateRsaKeypair()
     }

@@ -779,6 +779,8 @@ case class RegistrationTestData(
         List(
           PublicKeyCredentialParameters.ES256,
           PublicKeyCredentialParameters.EdDSA,
+          PublicKeyCredentialParameters.ES384,
+          PublicKeyCredentialParameters.ES512,
           PublicKeyCredentialParameters.RS256,
         ).asJava
       )

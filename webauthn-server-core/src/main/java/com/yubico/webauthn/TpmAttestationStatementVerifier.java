@@ -216,6 +216,14 @@ final class TpmAttestationStatementVerifier
         expectedExtraData = Crypto.sha256(attToBeSigned);
         break;
 
+      case ES384:
+        expectedExtraData = Crypto.sha384(attToBeSigned);
+        break;
+
+      case ES512:
+        expectedExtraData = Crypto.sha512(attToBeSigned);
+        break;
+
       case RS1:
         try {
           expectedExtraData = Crypto.sha1(attToBeSigned);
@@ -310,6 +318,14 @@ final class TpmAttestationStatementVerifier
           switch (params.curve_id) {
             case TpmEccCurve.NIST_P256:
               tpmAlgId = COSEAlgorithmIdentifier.ES256;
+              break;
+
+            case TpmEccCurve.NIST_P384:
+              tpmAlgId = COSEAlgorithmIdentifier.ES384;
+              break;
+
+            case TpmEccCurve.NIST_P521:
+              tpmAlgId = COSEAlgorithmIdentifier.ES512;
               break;
 
             default:
