@@ -328,9 +328,11 @@ public final class FidoMetadataService implements AttestationTrustSource {
 
   /**
    * Preconfigured filters and utilities for combining filters. See the {@link
-   * FidoMetadataServiceBuilder#prefilter(Predicate) filter} setting.
+   * FidoMetadataServiceBuilder#prefilter(Predicate) prefilter} and {@link
+   * FidoMetadataServiceBuilder#filter(Predicate) filter} settings.
    *
    * @see FidoMetadataServiceBuilder#prefilter(Predicate)
+   * @see FidoMetadataServiceBuilder#filter(Predicate)
    */
   public static class Filters {
 
