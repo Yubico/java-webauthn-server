@@ -1,5 +1,10 @@
 == Version 2.1.0 (unreleased) ==
 
+Changes:
+
+* Log messages on attestation certificate path validation failure now include
+  the attestation object.
+
 Fixes:
 
 * Fixed various typos and mistakes in JavaDocs.
