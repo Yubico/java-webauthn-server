@@ -411,7 +411,7 @@ public final class FidoMetadataDownloader {
        * nextUpdate</code> property of the cached BLOB is the current date or earlier.
        *
        * <p>If the BLOB is downloaded, it is also written to the cache {@link File} or {@link
-       * Consumer} configured in the previous step.
+       * Consumer} configured in the next step.
        *
        * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
        */
