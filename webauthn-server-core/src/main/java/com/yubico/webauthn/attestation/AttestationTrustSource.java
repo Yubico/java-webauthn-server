@@ -27,10 +27,12 @@ package com.yubico.webauthn.attestation;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.CertStore;
+import java.security.cert.PolicyNode;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -60,11 +62,21 @@ public interface AttestationTrustSource {
       List<X509Certificate> attestationCertificateChain, Optional<ByteArray> aaguid);
 
   /**
-   * A result of looking up attestation trust roots for a particular attestation statement. This
-   * primarily consists of a set of trust root certificates, but may also include a {@link
-   * CertStore} of additional CRLs and/or intermediate certificate to use during certificate path
-   * validation, and may also disable certificate revocation checking for the relevant attestation
-   * statement.
+   * A result of looking up attestation trust roots for a particular attestation statement.
+   *
+   * <p>This primarily consists of a set of trust root certificates - see {@link
+   * TrustRootsResultBuilder#trustRoots(Set) trustRoots(Set)} - but may also:
+   *
+   * <ul>
+   *   <li>include a {@link CertStore} of additional CRLs and/or intermediate certificates to use
+   *       during certificate path validation - see {@link
+   *       TrustRootsResultBuilder#certStore(CertStore) certStore(CertStore)};
+   *   <li>disable certificate revocation checking for the relevant attestation statement - see
+   *       {@link TrustRootsResultBuilder#enableRevocationChecking(boolean)
+   *       enableRevocationChecking(boolean)}; and/or
+   *   <li>define a policy tree validator for the PKIX policy tree result - see {@link
+   *       TrustRootsResultBuilder#policyTreeValidator(Predicate) policyTreeValidator(Predicate)}.
+   * </ul>
    */
   @Value
   @Builder(toBuilder = true)
@@ -97,17 +109,45 @@ public interface AttestationTrustSource {
      */
     @Builder.Default private final boolean enableRevocationChecking = true;
 
+    /**
+     * If non-null, the PolicyQualifiersRejected flag will be set to false during certificate path
+     * validation. See {@link
+     * java.security.cert.PKIXParameters#setPolicyQualifiersRejected(boolean)}.
+     *
+     * <p>The given {@link Predicate} will be used to validate the policy tree. The {@link
+     * Predicate} should return <code>true</code> if the policy tree is acceptable, and <code>false
+     * </code> otherwise.
+     *
+     * <p>This may be required if any certificate in the certificate path contains a certificate
+     * policies extension marked critical. If this is not set, then such a certificate will be
+     * rejected by the certificate path validator.
+     *
+     * <p>Consult the <a
+     * href="https://docs.oracle.com/en/java/javase/17/security/java-pki-programmers-guide.html#GUID-3AD41382-E729-469B-83EE-CB2FE66D71D8">Java
+     * PKI Programmer's Guide</a> for how to use the {@link PolicyNode} argument of the {@link
+     * Predicate}.
+     *
+     * <p>The default is <code>null</code>.
+     */
+    @Builder.Default private final Predicate<PolicyNode> policyTreeValidator = null;
+
     private TrustRootsResult(
         @NonNull Set<X509Certificate> trustRoots,
         CertStore certStore,
-        boolean enableRevocationChecking) {
+        boolean enableRevocationChecking,
+        Predicate<PolicyNode> policyTreeValidator) {
       this.trustRoots = CollectionUtil.immutableSet(trustRoots);
       this.certStore = certStore;
       this.enableRevocationChecking = enableRevocationChecking;
+      this.policyTreeValidator = policyTreeValidator;
     }
 
     public Optional<CertStore> getCertStore() {
       return Optional.ofNullable(certStore);
+    }
+
+    public Optional<Predicate<PolicyNode>> getPolicyTreeValidator() {
+      return Optional.ofNullable(policyTreeValidator);
     }
 
     public static TrustRootsResultBuilder.Step1 builder() {

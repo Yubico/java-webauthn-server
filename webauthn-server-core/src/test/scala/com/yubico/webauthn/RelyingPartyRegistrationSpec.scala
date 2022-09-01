@@ -81,6 +81,7 @@ import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNamesBuilder
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.scalacheck.Arbitrary.arbitrary
@@ -98,10 +99,12 @@ import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
+import java.security.Security
 import java.security.SignatureException
 import java.security.cert.CRL
 import java.security.cert.CertStore
 import java.security.cert.CollectionCertStoreParameters
+import java.security.cert.PolicyNode
 import java.security.cert.X509Certificate
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
@@ -111,6 +114,7 @@ import java.time.ZoneOffset
 import java.util
 import java.util.Collections
 import java.util.Optional
+import java.util.function.Predicate
 import javax.security.auth.x500.X500Principal
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters.RichOption
@@ -193,6 +197,7 @@ class RelyingPartyRegistrationSpec
       trustedCert: X509Certificate,
       crls: Option[Set[CRL]] = None,
       enableRevocationChecking: Boolean = true,
+      policyTreeValidator: Option[Predicate[PolicyNode]] = None,
   ): AttestationTrustSource =
     (_: util.List[X509Certificate], _: Optional[ByteArray]) => {
       TrustRootsResult
@@ -209,6 +214,7 @@ class RelyingPartyRegistrationSpec
             .orNull
         )
         .enableRevocationChecking(enableRevocationChecking)
+        .policyTreeValidator(policyTreeValidator.orNull)
         .build()
     }
 
@@ -2088,6 +2094,7 @@ class RelyingPartyRegistrationSpec
                     trustSourceWith(
                       testData.attestationRootCertificate.get,
                       enableRevocationChecking = false,
+                      policyTreeValidator = Some(_ => true),
                     )
                   ),
                 )
@@ -3364,6 +3371,7 @@ class RelyingPartyRegistrationSpec
                 trustedRootCert: Option[X509Certificate] = None,
                 enableRevocationChecking: Boolean = true,
                 origins: Option[Set[String]] = None,
+                policyTreeValidator: Option[Predicate[PolicyNode]] = None,
             ): Unit = {
               it("is rejected if untrusted attestation is not allowed and the trust source does not trust it.") {
                 val steps = finishRegistration(
@@ -3418,6 +3426,7 @@ class RelyingPartyRegistrationSpec
                               )
                           }),
                         enableRevocationChecking = enableRevocationChecking,
+                        policyTreeValidator = policyTreeValidator,
                       )
                     )
                 val steps = finishRegistration(
@@ -3469,6 +3478,7 @@ class RelyingPartyRegistrationSpec
                         .trustRoots(Collections.emptySet())
                         .certStore(certStore)
                         .enableRevocationChecking(enableRevocationChecking)
+                        .policyTreeValidator(policyTreeValidator.orNull)
                         .build()
                   }
                   val steps = finishRegistration(
@@ -3497,6 +3507,7 @@ class RelyingPartyRegistrationSpec
                         .trustRoots(Collections.singleton(rootCert))
                         .certStore(certStore)
                         .enableRevocationChecking(enableRevocationChecking)
+                        .policyTreeValidator(policyTreeValidator.orNull)
                         .build()
                   }
                   val steps = finishRegistration(
@@ -3573,7 +3584,66 @@ class RelyingPartyRegistrationSpec
                 origins = Some(Set(testData.clientData.getOrigin)),
                 trustedRootCert = Some(testData.attestationRootCertificate.get),
                 enableRevocationChecking = false,
+                policyTreeValidator = Some(_ => true),
               )
+            }
+
+            describe("Critical certificate policy extensions") {
+              def init(
+                  policyTreeValidator: Option[Predicate[PolicyNode]]
+              ): FinishRegistrationSteps#Step21 = {
+                val testData = RegistrationTestData.Tpm.RealExample
+                val clock = Clock.fixed(
+                  Instant.parse("2022-08-25T16:00:00Z"),
+                  ZoneOffset.UTC,
+                )
+                val steps = finishRegistration(
+                  allowUntrustedAttestation = false,
+                  origins = Some(Set(testData.clientData.getOrigin)),
+                  testData = testData,
+                  attestationTrustSource = Some(
+                    trustSourceWith(
+                      testData.attestationRootCertificate.get,
+                      enableRevocationChecking = false,
+                      policyTreeValidator = policyTreeValidator,
+                    )
+                  ),
+                  clock = clock,
+                )
+
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              }
+
+              it("are rejected if no policy tree validator is set.") {
+                // BouncyCastle provider does not reject critical policy extensions
+                // TODO Mark test as ignored instead of just skipping (assume() and cancel() currently break pitest)
+                if (
+                  !Security.getProviders
+                    .exists(p => p.isInstanceOf[BouncyCastleProvider])
+                ) {
+                  val step = init(policyTreeValidator = None)
+
+                  step.validations shouldBe a[Failure[_]]
+                  step.attestationTrusted should be(false)
+                  step.tryNext shouldBe a[Failure[_]]
+                }
+              }
+
+              it("are accepted if a policy tree validator is set and accepts the policy tree.") {
+                val step = init(policyTreeValidator = Some(_ => true))
+
+                step.validations shouldBe a[Success[_]]
+                step.attestationTrusted should be(true)
+                step.tryNext shouldBe a[Success[_]]
+              }
+
+              it("are rejected if a policy tree validator is set and does not accept the policy tree.") {
+                val step = init(policyTreeValidator = Some(_ => false))
+
+                step.validations shouldBe a[Failure[_]]
+                step.attestationTrusted should be(false)
+                step.tryNext shouldBe a[Failure[_]]
+              }
             }
           }
         }
@@ -4413,6 +4483,7 @@ class RelyingPartyRegistrationSpec
               trustSourceWith(
                 testData.attestationRootCertificate.get,
                 enableRevocationChecking = false,
+                policyTreeValidator = Some(_ => true),
               )
             ),
             credentialRepository = Helpers.CredentialRepository.empty,
