@@ -18,10 +18,10 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3
 
-    - name: Set up JDK 11
+    - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        java-version: 17
+        java-version: 11
         distribution: temurin
 
     - name: Run mutation test
