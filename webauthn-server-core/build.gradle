@@ -31,6 +31,7 @@ dependencies {
   )
 
   testImplementation(
+    platform(project(":test-platform")),
     project(':yubico-util-scala'),
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
     'junit:junit',

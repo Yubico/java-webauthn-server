@@ -44,6 +44,7 @@ dependencies {
   )
 
   testImplementation(
+    platform(project(":test-platform")),
     project(':webauthn-server-core').sourceSets.test.output,
     project(':yubico-util-scala'),
     'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',

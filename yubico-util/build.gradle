@@ -16,6 +16,7 @@ targetCompatibility = 1.8
 
 dependencies {
   api(platform(rootProject))
+  api(platform(project(":test-platform")))
 
   api(
     'com.fasterxml.jackson.core:jackson-databind',

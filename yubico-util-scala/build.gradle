@@ -10,6 +10,7 @@ targetCompatibility = 1.8
 
 dependencies {
   implementation(platform(rootProject))
+  implementation(platform(project(":test-platform")))
 
   implementation(
     'org.scala-lang:scala-library',
