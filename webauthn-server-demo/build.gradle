@@ -28,7 +28,7 @@ dependencies {
   )
 
   runtimeOnly(
-    'ch.qos.logback:logback-classic:[1.2.3,2)',
+    'ch.qos.logback:logback-classic:1.3.0',
     'org.glassfish.jersey.containers:jersey-container-servlet',
     'org.glassfish.jersey.inject:jersey-hk2',
   )
