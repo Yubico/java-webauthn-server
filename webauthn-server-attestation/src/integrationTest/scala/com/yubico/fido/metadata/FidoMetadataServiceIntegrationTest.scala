@@ -186,7 +186,7 @@ class FidoMetadataServiceIntegrationTest
         }
 
         it("a YubiKey 5Ci.") {
-          check("YubiKey 5Ci", RealExamples.YubiKey5Ci, attachmentHintsUsb)
+          check("YubiKey 5 .*Lightning", RealExamples.YubiKey5Ci, attachmentHintsUsb)
         }
 
         ignore("a Security Key by Yubico.") { // TODO: Investigate why this fails
@@ -223,7 +223,7 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey 5.4 Ci FIPS.") {
           check(
-            "YubiKey 5Ci FIPS",
+            "YubiKey 5 .*FIPS .*Lightning",
             RealExamples.Yubikey5ciFips,
             attachmentHintsUsb,
           )
