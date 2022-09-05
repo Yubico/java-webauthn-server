@@ -118,9 +118,10 @@ public interface AttestationTrustSource {
      * Predicate} should return <code>true</code> if the policy tree is acceptable, and <code>false
      * </code> otherwise.
      *
-     * <p>This may be required if any certificate in the certificate path contains a certificate
-     * policies extension marked critical. If this is not set, then such a certificate will be
-     * rejected by the certificate path validator.
+     * <p>Depending on your <code>"PKIX"</code> JCA provider configuration, this may be required if
+     * any certificate in the certificate path contains a certificate policies extension marked
+     * critical. If this is not set, then such a certificate will be rejected by the certificate
+     * path validator from the default provider.
      *
      * <p>Consult the <a
      * href="https://docs.oracle.com/en/java/javase/17/security/java-pki-programmers-guide.html#GUID-3AD41382-E729-469B-83EE-CB2FE66D71D8">Java
