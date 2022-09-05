@@ -3,6 +3,7 @@ plugins {
   id 'scala'
   id 'maven-publish'
   id 'signing'
+  id 'com.diffplug.spotless'
   id 'info.solidsoft.pitest'
   id 'io.github.cosmicsilence.scalafix'
 }

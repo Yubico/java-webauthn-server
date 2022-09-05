@@ -91,8 +91,7 @@ subprojects {
     mavenCentral()
   }
 
-  if (project !== project(':test-platform')) {
-    apply plugin: 'com.diffplug.spotless'
+  if (project.plugins.hasPlugin('com.diffplug.spotless')) {
     spotless {
       java {
         googleJavaFormat()
@@ -130,7 +129,7 @@ String getGitCommitOrUnknown() {
 
 subprojects { project ->
 
-  if (project.plugins.hasPlugin('scala')) {
+  if (project.plugins.hasPlugin('scala') && project.plugins.hasPlugin('com.diffplug.spotless')) {
     project.scalafix {
       configFile = rootProject.file('scalafix.conf')
 
