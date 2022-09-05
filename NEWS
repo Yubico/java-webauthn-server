@@ -8,6 +8,8 @@ Changes:
 Fixes:
 
 * Fixed various typos and mistakes in JavaDocs.
+* Moved version constraints for test dependencies from meta-module
+  `webauthn-server-parent` to unpublished test meta-module.
 
 
 == Version 2.0.0 ==

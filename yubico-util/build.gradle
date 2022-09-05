@@ -16,7 +16,6 @@ targetCompatibility = 1.8
 
 dependencies {
   api(platform(rootProject))
-  api(platform(project(":test-platform")))
 
   api(
     'com.fasterxml.jackson.core:jackson-databind',
@@ -32,6 +31,7 @@ dependencies {
   )
 
   testImplementation(
+    platform(project(":test-platform")),
     project(':yubico-util-scala'),
     'junit:junit',
     'org.scala-lang:scala-library',
