@@ -51,6 +51,7 @@ dependencies {
     api('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:[2.13.2,3)')
     api('com.google.guava:guava:[24.1.1,31)')
     api('com.upokecenter:cbor:[4.5.1,5)')
+    api('org.apache.httpcomponents:httpclient:[4.5.2,5)')
     api('org.bouncycastle:bcpkix-jdk15on:[1.62,2)')
     api('org.bouncycastle:bcprov-jdk15on:[1.62,2)')
     api('org.slf4j:slf4j-api:[1.7.25,2)')
