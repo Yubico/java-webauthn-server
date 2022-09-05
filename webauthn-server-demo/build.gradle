@@ -24,7 +24,7 @@ dependencies {
   )
 
   implementation(
-    'org.eclipse.jetty:jetty-servlet:9.4.9.v20180320',
+    'org.eclipse.jetty:jetty-servlet:11.0.11',
     'org.glassfish.jersey.containers:jersey-container-servlet-core:2.36',
     'javax.ws.rs:javax.ws.rs-api:2.1.1',
   )
