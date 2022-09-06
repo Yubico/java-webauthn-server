@@ -69,8 +69,8 @@ import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.scalacheck.Gen
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -103,7 +103,7 @@ import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyRegistrationSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with TestWithEachProvider {

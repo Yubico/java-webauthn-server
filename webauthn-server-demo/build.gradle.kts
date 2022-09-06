@@ -43,6 +43,8 @@ dependencies {
   testImplementation("org.scala-lang:scala-library")
   testImplementation("org.scalacheck:scalacheck_2.13")
   testImplementation("org.scalatest:scalatest_2.13")
+  testImplementation("org.scalatestplus:junit-4-13_2.13")
+  testImplementation("org.scalatestplus:scalacheck-1-16_2.13")
 
   modules {
     module("javax.servlet:servlet-api") {

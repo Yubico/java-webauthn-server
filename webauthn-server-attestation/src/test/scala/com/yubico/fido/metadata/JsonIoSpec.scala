@@ -29,14 +29,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.yubico.fido.metadata.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
 class JsonIoSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
