@@ -32,8 +32,8 @@ import com.yubico.webauthn.TestAuthenticator.AttestationMaker
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 import java.nio.charset.StandardCharsets
@@ -43,7 +43,7 @@ import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class PackedAttestationStatementVerifierSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with TestWithEachProvider {
 

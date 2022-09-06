@@ -3,14 +3,14 @@ package com.yubico.webauthn.data
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.yubico.internal.util.JacksonCodecs
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 import scala.jdk.CollectionConverters.MapHasAsJava
 
 @RunWith(classOf[JUnitRunner])
-class AttestationObjectSpec extends FunSpec with Matchers {
+class AttestationObjectSpec extends AnyFunSpec with Matchers {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 

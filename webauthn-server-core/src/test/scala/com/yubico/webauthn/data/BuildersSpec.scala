@@ -32,8 +32,8 @@ import com.yubico.webauthn.RegistrationResult
 import com.yubico.webauthn.data.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -41,7 +41,7 @@ import scala.language.reflectiveCalls
 
 @RunWith(classOf[JUnitRunner])
 class BuildersSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
