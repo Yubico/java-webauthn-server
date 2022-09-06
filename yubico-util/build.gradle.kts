@@ -52,7 +52,7 @@ tasks.jar {
 }
 
 pitest {
-  pitestVersion.set("1.4.11")
+  pitestVersion.set("1.9.5")
   timestampedReports.set(false)
 
   outputFormats.set(listOf("XML", "HTML"))
