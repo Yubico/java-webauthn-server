@@ -18,6 +18,7 @@ plugins {
 
 import io.franzbecker.gradle.lombok.LombokPlugin
 import io.franzbecker.gradle.lombok.task.DelombokTask
+import com.yubico.gradle.GitUtils;
 
 rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
 
@@ -116,19 +117,6 @@ task assembleJavadoc(type: Sync) {
   destinationDir = file("${rootProject.buildDir}/javadoc")
 }
 
-String getGitCommit() {
-  def proc = "git rev-parse HEAD".execute(null, projectDir)
-  proc.waitFor()
-  if (proc.exitValue() != 0) {
-    return null
-  }
-  return proc.text.trim()
-}
-
-String getGitCommitOrUnknown() {
-  return getGitCommit() ?: 'UNKNOWN'
-}
-
 subprojects { project ->
 
   if (project.plugins.hasPlugin('scala') && project.plugins.hasPlugin('com.diffplug.spotless')) {
@@ -207,7 +195,7 @@ subprojects { project ->
 
   if (project.hasProperty('publishMe') && project.publishMe) {
 
-    if (getGitCommit() == null) {
+    if (GitUtils.getGitCommit(projectDir) == null) {
       throw new RuntimeException("Failed to get git commit ID");
     }
 
