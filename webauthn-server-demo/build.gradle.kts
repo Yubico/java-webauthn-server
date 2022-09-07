@@ -23,7 +23,7 @@ dependencies {
   implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("com.google.guava:guava")
   implementation("com.upokecenter:cbor")
-  implementation("org.bouncycastle:bcprov-jdk15on")
+  implementation("org.bouncycastle:bcprov-jdk18on")
   implementation("org.slf4j:slf4j-api")
 
   implementation("org.eclipse.jetty:jetty-servlet:9.4.9.v20180320")
