@@ -57,7 +57,7 @@ dependencies {
     api('org.apache.httpcomponents:httpclient:[4.5.2,5)')
     api('org.bouncycastle:bcpkix-jdk18on:[1.62,2)')
     api('org.bouncycastle:bcprov-jdk18on:[1.62,2)')
-    api('org.slf4j:slf4j-api:[1.7.25,2)')
+    api('org.slf4j:slf4j-api:[1.7.25,3)')
   }
 }
 
