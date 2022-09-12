@@ -14,7 +14,6 @@ it.
 == Unimplemented features
 
 * Attestation statement formats:
- ** https://www.w3.org/TR/webauthn/#sctn-tpm-attestation[`tpm`]
  ** https://www.w3.org/TR/webauthn/#sctn-android-key-attestation[`android-key`]
 
 
