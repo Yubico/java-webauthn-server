@@ -17,6 +17,13 @@ New features:
 * Added method `FidoMetadataDownloader.refreshBlob()`.
 * Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
 * Added method `AssertionResult.getCredential(): RegisteredCredential`.
+* Added support for the `"tpm"` attestation statement format.
+* Added support for ES384 and ES512 signature algorithms.
+* Added property `policyTreeValidator` to `TrustRootsResult`. If set, the given
+  predicate function will be used to validate the certificate policy tree after
+  successful attestation certificate path validation. This may be required for
+  some JCA providers to accept attestation certificates with critical
+  certificate policy extensions.
 
 Fixes:
 

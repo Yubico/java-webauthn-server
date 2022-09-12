@@ -50,6 +50,7 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
@@ -373,6 +374,8 @@ final class FinishRegistrationSteps {
           return Optional.of(new AndroidSafetynetAttestationStatementVerifier());
         case "apple":
           return Optional.of(new AppleAttestationStatementVerifier());
+        case "tpm":
+          return Optional.of(new TpmAttestationStatementVerifier());
         default:
           return Optional.empty();
       }
@@ -411,9 +414,6 @@ final class FinishRegistrationSteps {
             case "android-key":
               // TODO delete this once android-key attestation verification is implemented
               return AttestationType.BASIC;
-            case "tpm":
-              // TODO delete this once tpm attestation verification is implemented
-              return AttestationType.ATTESTATION_CA;
             default:
               return AttestationType.UNKNOWN;
           }
@@ -536,9 +536,26 @@ final class FinishRegistrationSteps {
                         .collect(Collectors.toSet()));
             pathParams.setDate(Date.from(clock.instant()));
             pathParams.setRevocationEnabled(trustRoots.get().isEnableRevocationChecking());
+            pathParams.setPolicyQualifiersRejected(
+                !trustRoots.get().getPolicyTreeValidator().isPresent());
             trustRoots.get().getCertStore().ifPresent(pathParams::addCertStore);
-            cpv.validate(certPath, pathParams);
-            return true;
+            final PKIXCertPathValidatorResult result =
+                (PKIXCertPathValidatorResult) cpv.validate(certPath, pathParams);
+            return trustRoots
+                .get()
+                .getPolicyTreeValidator()
+                .map(
+                    policyNodePredicate -> {
+                      if (policyNodePredicate.test(result.getPolicyTree())) {
+                        return true;
+                      } else {
+                        log.info(
+                            "Failed to derive trust in attestation statement: Certificate path policy tree does not satisfy policy tree validator. Attestation object: {}",
+                            response.getResponse().getAttestationObject());
+                        return false;
+                      }
+                    })
+                .orElse(true);
           }
 
         } catch (CertPathValidatorException e) {

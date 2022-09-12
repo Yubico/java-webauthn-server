@@ -10,6 +10,7 @@ import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
@@ -104,9 +105,11 @@ object RealExamples {
 
     def asRegistrationTestData: RegistrationTestData =
       RegistrationTestData(
-        alg = WebAuthnTestCodecs.getCoseAlgId(
-          attestation.attestationObject.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
-        ),
+        alg = COSEAlgorithmIdentifier
+          .fromPublicKey(
+            attestation.attestationObject.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+          )
+          .get,
         attestationObject = attestation.attestationObjectBytes,
         clientDataJson = attestation.clientData,
         privateKey = None,

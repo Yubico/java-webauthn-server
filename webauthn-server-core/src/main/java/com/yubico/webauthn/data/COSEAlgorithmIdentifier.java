@@ -45,6 +45,8 @@ import lombok.NonNull;
 public enum COSEAlgorithmIdentifier {
   EdDSA(-8),
   ES256(-7),
+  ES384(-35),
+  ES512(-36),
   RS256(-257),
   RS1(-65535);
 
