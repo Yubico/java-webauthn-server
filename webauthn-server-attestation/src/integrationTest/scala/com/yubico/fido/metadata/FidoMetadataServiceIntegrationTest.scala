@@ -60,10 +60,6 @@ class FidoMetadataServiceIntegrationTest
       val attachmentHintsNfc =
         attachmentHintsUsb ++ Set(ATTACHMENT_HINT_WIRELESS, ATTACHMENT_HINT_NFC)
 
-      describe("by AAGUID") {
-        describe("correctly identifies") {}
-      }
-
       describe("correctly identifies") {
         def check(
             expectedDescriptionRegex: String,
