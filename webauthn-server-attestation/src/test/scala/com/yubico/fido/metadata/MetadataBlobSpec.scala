@@ -2,12 +2,12 @@ package com.yubico.fido.metadata
 
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.ByteArray
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 class MetadataBlobSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 

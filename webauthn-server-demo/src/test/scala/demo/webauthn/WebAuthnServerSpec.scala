@@ -38,13 +38,12 @@ import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.ResidentKeyRequirement
-import com.yubico.webauthn.extension.appid.AppId
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -59,7 +58,7 @@ import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class WebAuthnServerSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
@@ -72,7 +71,6 @@ class WebAuthnServerSpec
   private val rpId =
     RelyingPartyIdentity.builder().id("localhost").name("Test party").build()
   private val origins = Set("localhost").asJava
-  private val appId = Optional.empty[AppId]
 
   describe("WebAuthnServer") {
 
@@ -176,7 +174,6 @@ class WebAuthnServerSpec
           newCache(),
           rpId,
           Set("https://localhost").asJava,
-          appId,
         )
 
         val (cred, keypair) = {
@@ -292,7 +289,6 @@ class WebAuthnServerSpec
           assertionRequests,
           rpId,
           origins,
-          appId,
         )
       }
     }
@@ -340,7 +336,6 @@ class WebAuthnServerSpec
       newCache(),
       rpId,
       origins,
-      appId,
     )
   }
 
@@ -400,7 +395,6 @@ class WebAuthnServerSpec
       newCache(),
       rpId,
       origins,
-      appId,
     )
   }
 

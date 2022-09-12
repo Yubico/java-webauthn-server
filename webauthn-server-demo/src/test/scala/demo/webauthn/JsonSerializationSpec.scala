@@ -29,12 +29,12 @@ import com.yubico.webauthn.RegistrationTestData
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import demo.webauthn.data.RegistrationResponse
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class JsonSerializationSpec extends FunSpec with Matchers {
+class JsonSerializationSpec extends AnyFunSpec with Matchers {
 
   private val jsonMapper = JacksonCodecs.json()
 

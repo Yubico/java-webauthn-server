@@ -44,7 +44,7 @@ public interface AttestationTrustSource {
    * <p>Note that it is possible for the same trust root to be used for different certificate
    * chains. For example, an authenticator vendor may make two different authenticator models, each
    * with its own attestation leaf certificate but both signed by the same attestation root
-   * certificate. If a Relying Party trusts one of those authenticators models but not the other,
+   * certificate. If a Relying Party trusts one of those authenticator models but not the other,
    * then its implementation of this method MUST return an empty set for the untrusted certificate
    * chain.
    *

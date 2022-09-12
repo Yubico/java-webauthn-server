@@ -26,14 +26,14 @@ package com.yubico.internal.util
 
 import org.junit.runner.RunWith
 import org.scalacheck.Gen
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
 class BinaryUtilSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 

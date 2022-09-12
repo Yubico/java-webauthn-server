@@ -10,8 +10,8 @@ import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.tags.Network
 import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
@@ -30,7 +30,7 @@ import scala.util.Try
 @Network
 @RunWith(classOf[JUnitRunner])
 class FidoMetadataServiceIntegrationTest
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with BeforeAndAfter {
 
@@ -186,7 +186,7 @@ class FidoMetadataServiceIntegrationTest
         }
 
         it("a YubiKey 5Ci.") {
-          check("YubiKey 5Ci", RealExamples.YubiKey5Ci, attachmentHintsUsb)
+          check("YubiKey 5 .*Lightning", RealExamples.YubiKey5Ci, attachmentHintsUsb)
         }
 
         ignore("a Security Key by Yubico.") { // TODO: Investigate why this fails
@@ -223,7 +223,7 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey 5.4 Ci FIPS.") {
           check(
-            "YubiKey 5Ci FIPS",
+            "YubiKey 5 .*FIPS .*Lightning",
             RealExamples.Yubikey5ciFips,
             attachmentHintsUsb,
           )

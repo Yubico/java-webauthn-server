@@ -1,0 +1,15 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN" "http://www.w3.org/TR/html4/frameset.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Mutation test report index - java-webauthn-server {shortcommit}</title>
+  </head>
+  <body style="padding: 1em 2em">
+    <h2>Mutation test reports for java-webauthn-server <a href="{repo}/commit/{commit}">{shortcommit}</a>:</h2>
+    <ul>
+      <li><a href="mutation-coverage-reports/webauthn-server-attestation/">webauthn-server-attestation</a></li>
+      <li><a href="mutation-coverage-reports/webauthn-server-core/">webauthn-server-core</a></li>
+      <li><a href="mutation-coverage-reports/yubico-util/">yubico-util</a></li>
+    </ul>
+  </body>
+</html>

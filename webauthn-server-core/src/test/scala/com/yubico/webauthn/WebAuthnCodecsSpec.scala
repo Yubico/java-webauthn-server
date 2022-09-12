@@ -29,8 +29,8 @@ import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -39,7 +39,7 @@ import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class WebAuthnCodecsSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with TestWithEachProvider {

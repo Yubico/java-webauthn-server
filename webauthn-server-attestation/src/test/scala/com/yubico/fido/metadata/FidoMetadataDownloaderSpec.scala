@@ -21,8 +21,8 @@ import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.tags.Network
 import org.scalatestplus.junit.JUnitRunner
 
@@ -55,7 +55,7 @@ import scala.util.Try
 @Network
 @RunWith(classOf[JUnitRunner])
 class FidoMetadataDownloaderSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with BeforeAndAfter {
 

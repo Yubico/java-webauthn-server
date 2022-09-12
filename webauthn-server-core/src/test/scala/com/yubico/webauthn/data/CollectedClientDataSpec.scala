@@ -28,12 +28,12 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.JacksonCodecs
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class CollectedClientDataSpec extends FunSpec with Matchers {
+class CollectedClientDataSpec extends AnyFunSpec with Matchers {
 
   def parse(json: JsonNode): CollectedClientData =
     new CollectedClientData(

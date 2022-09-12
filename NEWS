@@ -1,5 +1,10 @@
 == Version 2.1.0 (unreleased) ==
 
+Changes:
+
+* Log messages on attestation certificate path validation failure now include
+  the attestation object.
+
 Deprecations:
 
 * Deprecated method `AssertionResult.getCredentialId(): ByteArray`. Use
@@ -12,6 +17,12 @@ New features:
 * Added method `FidoMetadataDownloader.refreshBlob()`.
 * Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
 * Added method `AssertionResult.getCredential(): RegisteredCredential`.
+
+Fixes:
+
+* Fixed various typos and mistakes in JavaDocs.
+* Moved version constraints for test dependencies from meta-module
+  `webauthn-server-parent` to unpublished test meta-module.
 
 
 == Version 2.0.0 ==

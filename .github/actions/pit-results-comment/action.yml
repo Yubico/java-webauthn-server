@@ -1,0 +1,56 @@
+name: Post PIT mutation test results comment
+author: Emil Lundberg <emil@yubico.com>
+description: |
+  Parses a [PIT][pitest] report file, compares it to a previous report,
+  and posts a summary as a commit comment to the commit that triggered the workflow.
+
+  [pitest]: https://pitest.org/
+
+inputs:
+  mutations-file:
+    default: build/reports/pitest/mutations.xml
+    description: Path to the PIT report XML file.
+
+  prev-commit:
+    default: ''
+    description: |
+      The full commit SHA of the previous run of this action.
+      If set, the comment will include a link to the previous commit.
+
+  prev-mutations-file:
+    required: true
+    description: Path to the PIT report XML file from the previous run of this action.
+
+  token:
+    default: ${{ github.token }}
+    description: GITHUB_TOKEN or a PAT with permission to write commit comments.
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Install yq (and xq)
+      shell: bash
+      run: pip install yq
+
+    - name: Post results comment
+      shell: bash
+      run: |
+        RESULTS_COMMENT_FILE=$(mktemp)
+        NEW_STATS_FILE=$(mktemp)
+        PREV_STATS_FILE=$(mktemp)
+
+        ./.github/actions/pit-results-comment/compute-stats.sh "${{ inputs.mutations-file }}" > "${NEW_STATS_FILE}"
+
+        if [[ -f "${{ inputs.prev-mutations-file }}" ]]; then
+          ./.github/actions/pit-results-comment/compute-stats.sh "${{ inputs.prev-mutations-file }}" > "${PREV_STATS_FILE}"
+        else
+          echo 'Previous mutations file not found, using current as placeholder.'
+          cp "${NEW_STATS_FILE}" "${PREV_STATS_FILE}"
+        fi
+
+        ./.github/actions/pit-results-comment/stats-to-comment.sh "${PREV_STATS_FILE}" "${NEW_STATS_FILE}" "${{ inputs.prev-commit }}" > "${RESULTS_COMMENT_FILE}"
+
+        curl -X POST \
+           -H "Authorization: Bearer ${{ inputs.token }}" \
+           ${{ github.api_url }}/repos/${{ github.repository }}/commits/${{ github.sha }}/comments -d @"${RESULTS_COMMENT_FILE}"

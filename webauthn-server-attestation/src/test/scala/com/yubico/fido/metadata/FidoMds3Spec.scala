@@ -22,8 +22,8 @@ import com.yubico.webauthn.test.Helpers
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.cert.jcajce.JcaX500NameUtil
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.tags.Network
 import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
@@ -49,7 +49,7 @@ import scala.jdk.OptionConverters.RichOptional
 @Slow
 @Network
 @RunWith(classOf[JUnitRunner])
-class FidoMds3Spec extends FunSpec with Matchers {
+class FidoMds3Spec extends AnyFunSpec with Matchers {
 
   private val CertValidFrom = Instant.parse("2022-02-15T17:00:00Z")
   private val CertValidTo = Instant.parse("2022-03-15T17:00:00Z")

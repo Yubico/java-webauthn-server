@@ -261,7 +261,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
      *
      * @param prefilter a {@link Predicate} which returns <code>true</code> for metadata entries to
      *     include in the data source.
-     * @see #filter
+     * @see #filter(Predicate)
      * @see Filters#allOf(Predicate[])
      */
     public FidoMetadataServiceBuilder prefilter(
@@ -328,9 +328,11 @@ public final class FidoMetadataService implements AttestationTrustSource {
 
   /**
    * Preconfigured filters and utilities for combining filters. See the {@link
-   * FidoMetadataServiceBuilder#prefilter(Predicate) filter} setting.
+   * FidoMetadataServiceBuilder#prefilter(Predicate) prefilter} and {@link
+   * FidoMetadataServiceBuilder#filter(Predicate) filter} settings.
    *
    * @see FidoMetadataServiceBuilder#prefilter(Predicate)
+   * @see FidoMetadataServiceBuilder#filter(Predicate)
    */
   public static class Filters {
 

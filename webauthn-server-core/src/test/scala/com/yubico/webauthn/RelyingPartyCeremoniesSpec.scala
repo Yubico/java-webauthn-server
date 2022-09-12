@@ -29,15 +29,15 @@ import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 import scala.jdk.CollectionConverters._
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyCeremoniesSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with TestWithEachProvider {
 

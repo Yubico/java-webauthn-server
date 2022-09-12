@@ -543,14 +543,18 @@ final class FinishRegistrationSteps {
 
         } catch (CertPathValidatorException e) {
           log.info(
-              "Failed to derive trust in attestation statement: {} at cert index {}: {}",
+              "Failed to derive trust in attestation statement: {} at cert index {}: {}. Attestation object: {}",
+              response.getResponse().getAttestationObject(),
               e.getReason(),
               e.getIndex(),
               e.getMessage());
           return false;
 
         } catch (CertificateException e) {
-          log.warn("Failed to build attestation certificate path.", e);
+          log.warn(
+              "Failed to build attestation certificate path. Attestation object: {}",
+              response.getResponse().getAttestationObject(),
+              e);
           return false;
 
         } catch (NoSuchAlgorithmException e) {
