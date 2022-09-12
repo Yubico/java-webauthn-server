@@ -2085,7 +2085,7 @@ class RelyingPartyRegistrationSpec
           describe("The tpm statement format") {
 
             it("is supported.") {
-              val testData = RegistrationTestData.Tpm.RealExample
+              val testData = RealExamples.WindowsHelloTpm.asRegistrationTestData
               val steps =
                 finishRegistration(
                   testData = testData,
@@ -3576,7 +3576,7 @@ class RelyingPartyRegistrationSpec
             }
 
             describe("A tpm attestation") {
-              val testData = RegistrationTestData.Tpm.RealExample
+              val testData = RealExamples.WindowsHelloTpm.asRegistrationTestData
               generateTests(
                 testData = testData,
                 clock = Clock.fixed(
@@ -3594,7 +3594,8 @@ class RelyingPartyRegistrationSpec
               def init(
                   policyTreeValidator: Option[Predicate[PolicyNode]]
               ): FinishRegistrationSteps#Step21 = {
-                val testData = RegistrationTestData.Tpm.RealExample
+                val testData =
+                  RealExamples.WindowsHelloTpm.asRegistrationTestData
                 val clock = Clock.fixed(
                   Instant.parse("2022-08-25T16:00:00Z"),
                   ZoneOffset.UTC,
@@ -3813,7 +3814,7 @@ class RelyingPartyRegistrationSpec
           testUntrusted(RegistrationTestData.AndroidSafetynet.BasicAttestation)
           testUntrusted(RegistrationTestData.FidoU2f.BasicAttestation)
           testUntrusted(RegistrationTestData.NoneAttestation.Default)
-          testUntrusted(RegistrationTestData.Tpm.RealExample)
+          testUntrusted(RealExamples.WindowsHelloTpm.asRegistrationTestData)
         }
       }
     }
@@ -3904,7 +3905,7 @@ class RelyingPartyRegistrationSpec
       }
 
       it("accept TPM attestations but report they're untrusted.") {
-        val testData = RegistrationTestData.Tpm.RealExample
+        val testData = RealExamples.WindowsHelloTpm.asRegistrationTestData
         val result = rp.toBuilder
           .identity(testData.rpId)
           .origins(Set("https://dev.d2urpypvrhb05x.amplifyapp.com").asJava)
@@ -3921,7 +3922,7 @@ class RelyingPartyRegistrationSpec
 
         result.isAttestationTrusted should be(false)
         result.getKeyId.getId should equal(
-          RegistrationTestData.Tpm.RealExample.response.getId
+          RealExamples.WindowsHelloTpm.asRegistrationTestData.response.getId
         )
       }
 
@@ -4477,7 +4478,7 @@ class RelyingPartyRegistrationSpec
         }
 
         it("for a tpm attestation.") {
-          val testData = RegistrationTestData.Tpm.RealExample
+          val testData = RealExamples.WindowsHelloTpm.asRegistrationTestData
           val steps = finishRegistration(
             testData = testData,
             origins = Some(Set("https://dev.d2urpypvrhb05x.amplifyapp.com")),
