@@ -77,7 +77,7 @@ import lombok.extern.slf4j.Slf4j;
  * policyTreeValidator} to accept any policy tree, because a Windows Hello attestation certificate
  * is known to include a critical certificate policies extension.
  *
- * <p>The metadata service may be configured with a two stages of filters to select trusted
+ * <p>The metadata service may be configured with two stages of filters to select trusted
  * authenticators. The first stage is the {@link FidoMetadataServiceBuilder#prefilter(Predicate)
  * prefilter} setting, which is executed once when the {@link FidoMetadataService} instance is
  * constructed. The second stage is the {@link FidoMetadataServiceBuilder#filter(Predicate) filter}
