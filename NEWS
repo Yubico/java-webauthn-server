@@ -27,6 +27,7 @@ New features:
   some JCA providers to accept attestation certificates with critical
   certificate policy extensions. See the JavaDoc for
   `TrustRootsResultBuilder.policyTreeValidator(Predicate)` for more information.
+* (Experimental) Added constant `AuthenticatorTransport.HYBRID`.
 
 Fixes:
 
