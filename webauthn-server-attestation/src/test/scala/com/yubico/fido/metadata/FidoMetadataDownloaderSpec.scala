@@ -449,7 +449,14 @@ class FidoMetadataDownloaderSpec
               .expectLegalHeader(
                 "Kom ihåg att du aldrig får snyta dig i mattan!"
               )
-              .useDefaultTrustRoot()
+              .downloadTrustRoot(
+                new URL("https://localhost:12345/nonexistent.dev.null"),
+                Set(
+                  TestAuthenticator.sha256(
+                    new ByteArray(trustRootCert.getEncoded)
+                  )
+                ).asJava,
+              )
               .useTrustRootCacheFile(cacheFile)
               .useBlob(blobJwt)
               .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
@@ -626,7 +633,14 @@ class FidoMetadataDownloaderSpec
               .expectLegalHeader(
                 "Kom ihåg att du aldrig får snyta dig i mattan!"
               )
-              .useDefaultTrustRoot()
+              .downloadTrustRoot(
+                new URL("https://localhost:12345/nonexistent.dev.null"),
+                Set(
+                  TestAuthenticator.sha256(
+                    new ByteArray(trustRootCert.getEncoded)
+                  )
+                ).asJava,
+              )
               .useTrustRootCache(
                 () => Optional.of(new ByteArray(trustRootCert.getEncoded)),
                 newCache => {
@@ -692,6 +706,115 @@ class FidoMetadataDownloaderSpec
           }
           testWithHashes(Set(goodHash)) should not be null
           testWithHashes(Set(badHash, goodHash)) should not be null
+        }
+
+        it("The cached trust root cert must match one of the expected SHA256 hashes.") {
+          val (cachedTrustRootCert, cachedCaKeypair, cachedCaName) =
+            makeTrustRootCert()
+          val (cachedRootBlobCert, cachedRootBlobKeypair, _) =
+            makeCert(cachedCaKeypair, cachedCaName)
+          val cachedRootBlobJwt = makeBlob(
+            List(cachedRootBlobCert),
+            cachedRootBlobKeypair,
+            LocalDate.now(),
+          )
+          val cachedRootCrls = List[CRL](
+            TestAuthenticator.buildCrl(
+              cachedCaName,
+              cachedCaKeypair.getPrivate,
+              "SHA256withECDSA",
+              CertValidFrom,
+              CertValidTo,
+            )
+          )
+
+          val (downloadedTrustRootCert, downloadedCaKeypair, downloadedCaName) =
+            makeTrustRootCert()
+          val (downloadedRootBlobCert, downloadedRootBlobKeypair, _) =
+            makeCert(downloadedCaKeypair, downloadedCaName)
+          val downloadedRootBlobJwt = makeBlob(
+            List(downloadedRootBlobCert),
+            downloadedRootBlobKeypair,
+            LocalDate.now(),
+          )
+          val downloadedRootCrls = List[CRL](
+            TestAuthenticator.buildCrl(
+              downloadedCaName,
+              downloadedCaKeypair.getPrivate,
+              "SHA256withECDSA",
+              CertValidFrom,
+              CertValidTo,
+            )
+          )
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer(
+              "/trust-root.der",
+              downloadedTrustRootCert.getEncoded,
+            )
+          startServer(server)
+
+          def testWithHashes(
+              hashes: Set[ByteArray],
+              blobJwt: String,
+              crls: List[CRL],
+          ): (MetadataBLOB, Option[ByteArray]) = {
+            var writtenCache: Option[ByteArray] = None
+
+            val blob = load(
+              FidoMetadataDownloader
+                .builder()
+                .expectLegalHeader(
+                  "Kom ihåg att du aldrig får snyta dig i mattan!"
+                )
+                .downloadTrustRoot(
+                  new URL(s"${serverUrl}/trust-root.der"),
+                  hashes.asJava,
+                )
+                .useTrustRootCache(
+                  () =>
+                    Optional.of(new ByteArray(cachedTrustRootCert.getEncoded)),
+                  downloaded => { writtenCache = Some(downloaded) },
+                )
+                .useBlob(blobJwt)
+                .useCrls(crls.asJava)
+                .trustHttpsCerts(httpsCert)
+                .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
+                .build()
+            )
+
+            (blob, writtenCache)
+          }
+
+          {
+            val (blob, writtenCache) = testWithHashes(
+              Set(
+                TestAuthenticator.sha256(
+                  new ByteArray(cachedTrustRootCert.getEncoded)
+                )
+              ),
+              cachedRootBlobJwt,
+              cachedRootCrls,
+            )
+            blob should not be null
+            writtenCache should be(None)
+          }
+
+          {
+            val (blob, writtenCache) = testWithHashes(
+              Set(
+                TestAuthenticator.sha256(
+                  new ByteArray(downloadedTrustRootCert.getEncoded)
+                )
+              ),
+              downloadedRootBlobJwt,
+              downloadedRootCrls,
+            )
+            blob should not be null
+            writtenCache should be(
+              Some(new ByteArray(downloadedTrustRootCert.getEncoded))
+            )
+          }
         }
       }
 

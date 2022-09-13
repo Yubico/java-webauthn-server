@@ -867,13 +867,16 @@ public final class FidoMetadataDownloader {
 
       X509Certificate cert = null;
       if (cachedContents.isPresent()) {
-        try {
-          final X509Certificate cachedCert =
-              CertificateParser.parseDer(cachedContents.get().getBytes());
-          cachedCert.checkValidity(Date.from(clock.instant()));
-          cert = cachedCert;
-        } catch (CertificateException e) {
-          // Fall through
+        final ByteArray verifiedCachedContents = verifyHash(cachedContents.get(), trustRootSha256);
+        if (verifiedCachedContents != null) {
+          try {
+            final X509Certificate cachedCert =
+                CertificateParser.parseDer(verifiedCachedContents.getBytes());
+            cachedCert.checkValidity(Date.from(clock.instant()));
+            cert = cachedCert;
+          } catch (CertificateException e) {
+            // Fall through
+          }
         }
       }
 

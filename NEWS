@@ -1,5 +1,7 @@
 == Version 2.1.0 (unreleased) ==
 
+`webauthn-server-core`:
+
 Changes:
 
 * Log messages on attestation certificate path validation failure now include
@@ -31,6 +33,16 @@ Fixes:
 * Fixed various typos and mistakes in JavaDocs.
 * Moved version constraints for test dependencies from meta-module
   `webauthn-server-parent` to unpublished test meta-module.
+
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* Fixed various typos and mistakes in JavaDocs.
+* `FidoMetadataDownloader` now verifies the SHA-256 hash of the cached trust
+  root certificate, as promised in the JavaDoc of `useTrustRootCacheFile` and
+  `useTrustRootCache`.
 
 
 == Version 2.0.0 ==
