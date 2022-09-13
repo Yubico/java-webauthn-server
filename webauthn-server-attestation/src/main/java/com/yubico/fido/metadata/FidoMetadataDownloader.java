@@ -822,7 +822,9 @@ public final class FidoMetadataDownloader {
 
       log.debug("Writing new BLOB to cache...");
       if (blobCacheFile != null) {
-        new FileOutputStream(blobCacheFile).write(downloadedBytes.getBytes());
+        try (FileOutputStream f = new FileOutputStream(blobCacheFile)) {
+          f.write(downloadedBytes.getBytes());
+        }
       }
 
       if (blobCacheConsumer != null) {
@@ -886,7 +888,9 @@ public final class FidoMetadataDownloader {
         cert.checkValidity(Date.from(clock.instant()));
 
         if (trustRootCacheFile != null) {
-          new FileOutputStream(trustRootCacheFile).write(downloaded.getBytes());
+          try (FileOutputStream f = new FileOutputStream(trustRootCacheFile)) {
+            f.write(downloaded.getBytes());
+          }
         }
 
         if (trustRootCacheConsumer != null) {
@@ -955,8 +959,8 @@ public final class FidoMetadataDownloader {
 
   private Optional<ByteArray> readCacheFile(File cacheFile) throws IOException {
     if (cacheFile.exists() && cacheFile.canRead() && cacheFile.isFile()) {
-      try {
-        return Optional.of(readAll(new FileInputStream(cacheFile)));
+      try (FileInputStream f = new FileInputStream(cacheFile)) {
+        return Optional.of(readAll(f));
       } catch (FileNotFoundException e) {
         throw new RuntimeException(
             "This exception should be impossible, please file a bug report.", e);
