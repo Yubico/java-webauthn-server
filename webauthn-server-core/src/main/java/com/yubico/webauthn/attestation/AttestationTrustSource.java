@@ -143,10 +143,42 @@ public interface AttestationTrustSource {
       this.policyTreeValidator = policyTreeValidator;
     }
 
+    /**
+     * A {@link CertStore} of additional CRLs and/or intermediate certificates to use during
+     * certificate path validation, if any. This will not be used if {@link
+     * TrustRootsResultBuilder#trustRoots(Set) trustRoots} is empty.
+     *
+     * <p>Any certificates included in this {@link CertStore} are NOT considered trusted; they will
+     * be trusted only if they chain to any of the {@link TrustRootsResultBuilder#trustRoots(Set)
+     * trustRoots}.
+     *
+     * <p>The default is <code>null</code>.
+     */
     public Optional<CertStore> getCertStore() {
       return Optional.ofNullable(certStore);
     }
 
+    /**
+     * If non-null, the PolicyQualifiersRejected flag will be set to false during certificate path
+     * validation. See {@link
+     * java.security.cert.PKIXParameters#setPolicyQualifiersRejected(boolean)}.
+     *
+     * <p>The given {@link Predicate} will be used to validate the policy tree. The {@link
+     * Predicate} should return <code>true</code> if the policy tree is acceptable, and <code>false
+     * </code> otherwise.
+     *
+     * <p>Depending on your <code>"PKIX"</code> JCA provider configuration, this may be required if
+     * any certificate in the certificate path contains a certificate policies extension marked
+     * critical. If this is not set, then such a certificate will be rejected by the certificate
+     * path validator from the default provider.
+     *
+     * <p>Consult the <a
+     * href="https://docs.oracle.com/en/java/javase/17/security/java-pki-programmers-guide.html#GUID-3AD41382-E729-469B-83EE-CB2FE66D71D8">Java
+     * PKI Programmer's Guide</a> for how to use the {@link PolicyNode} argument of the {@link
+     * Predicate}.
+     *
+     * <p>The default is <code>null</code>.
+     */
     public Optional<Predicate<PolicyNode>> getPolicyTreeValidator() {
       return Optional.ofNullable(policyTreeValidator);
     }
@@ -157,6 +189,11 @@ public interface AttestationTrustSource {
 
     public static class TrustRootsResultBuilder {
       public static class Step1 {
+        /**
+         * A set of attestation root certificates trusted to certify the relevant attestation
+         * statement. If the attestation statement is not trusted, or if no trust roots were found,
+         * this should be an empty set.
+         */
         public TrustRootsResultBuilder trustRoots(@NonNull Set<X509Certificate> trustRoots) {
           return new TrustRootsResultBuilder().trustRoots(trustRoots);
         }
