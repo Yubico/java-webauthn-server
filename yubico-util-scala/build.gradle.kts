@@ -1,6 +1,5 @@
 plugins {
   scala
-  id("com.diffplug.spotless")
   id("io.github.cosmicsilence.scalafix")
 }
 
