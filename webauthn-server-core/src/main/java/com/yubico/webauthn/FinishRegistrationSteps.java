@@ -561,10 +561,10 @@ final class FinishRegistrationSteps {
         } catch (CertPathValidatorException e) {
           log.info(
               "Failed to derive trust in attestation statement: {} at cert index {}: {}. Attestation object: {}",
-              response.getResponse().getAttestationObject(),
               e.getReason(),
               e.getIndex(),
-              e.getMessage());
+              e.getMessage(),
+              response.getResponse().getAttestationObject());
           return false;
 
         } catch (CertificateException e) {
