@@ -616,6 +616,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
                 .collect(Collectors.toSet()))
         .certStore(certStore)
         .enableRevocationChecking(false)
+        .policyTreeValidator(policyNode -> true)
         .build();
   }
 }

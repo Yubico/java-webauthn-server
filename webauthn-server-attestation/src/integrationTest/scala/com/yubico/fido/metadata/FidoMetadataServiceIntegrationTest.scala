@@ -2,6 +2,7 @@ package com.yubico.fido.metadata
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_EXTERNAL
+import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_INTERNAL
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_NFC
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_WIRED
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_WIRELESS
@@ -265,6 +266,14 @@ class FidoMetadataServiceIntegrationTest
             "YubiKey Bio Series",
             RealExamples.YubikeyBio_5_5_5,
             attachmentHintsUsb,
+          )
+        }
+
+        it("a Windows Hello attestation.") {
+          check(
+            "Windows Hello.*",
+            RealExamples.WindowsHelloTpm,
+            Set(ATTACHMENT_HINT_INTERNAL),
           )
         }
       }
