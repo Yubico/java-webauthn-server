@@ -624,6 +624,21 @@ The link:webauthn-server-attestation[`webauthn-server-attestation` module]
 provides optional additional features for working with attestation.
 See the module documentation for more details.
 
+Alternatively, you can use the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
+interface to implement your own source of attestation root certificates
+and set it as the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
+for your
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+instance.
+Note that depending on your JCA provider configuration, you may need to set the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#enableRevocationChecking(boolean)[`enableRevocationChecking`]
+and/or
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#policyTreeValidator(java.util.function.Predicate)[`policyTreeValidator`]
+settings for compatibility with some authenticators' attestation certificates.
+See the JavaDoc for these settings for more information.
+
 
 == Building
 

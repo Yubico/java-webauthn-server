@@ -69,7 +69,13 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>This class implements {@link AttestationTrustSource}, so it can be configured as the {@link
  * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
- * setting in {@link RelyingParty}.
+ * setting in {@link RelyingParty}. This implementation always sets {@link
+ * com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder#enableRevocationChecking(boolean)
+ * enableRevocationChecking(false)}, because the FIDO MDS has its own revocation procedures and not
+ * all attestation certificates provide CRLs; and always sets {@link
+ * com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder#policyTreeValidator(Predicate)
+ * policyTreeValidator} to accept any policy tree, because a Windows Hello attestation certificate
+ * is known to include a critical certificate policies extension.
  *
  * <p>The metadata service may be configured with a two stages of filters to select trusted
  * authenticators. The first stage is the {@link FidoMetadataServiceBuilder#prefilter(Predicate)

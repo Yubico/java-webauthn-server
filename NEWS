@@ -23,7 +23,8 @@ New features:
   predicate function will be used to validate the certificate policy tree after
   successful attestation certificate path validation. This may be required for
   some JCA providers to accept attestation certificates with critical
-  certificate policy extensions.
+  certificate policy extensions. See the JavaDoc for
+  `TrustRootsResultBuilder.policyTreeValidator(Predicate)` for more information.
 
 Fixes:
 
