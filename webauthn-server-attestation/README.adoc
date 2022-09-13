@@ -84,6 +84,38 @@ but we recommend that you do not _require_ a trusted attestation unless you have
 See link:doc/Migrating_from_v1.adoc[the migration guide].
 
 
+== Dependency configuration
+
+Maven:
+
+----------
+<dependency>
+  <groupId>com.yubico</groupId>
+  <artifactId>webauthn-server-attestation</artifactId>
+  <version>2.0.0</version>
+  <scope>compile</scope>
+</dependency>
+----------
+
+Gradle:
+
+----------
+compile 'com.yubico:webauthn-server-attestation:2.0.0'
+----------
+
+
+=== Semantic versioning
+
+This library uses link:https://semver.org/[semantic versioning].
+The public API consists of all public classes, methods and fields in the `com.yubico.fido.metadata` package and its subpackages,
+i.e., everything covered by the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/package-summary.html[Javadoc].
+
+Package-private classes and methods are NOT part of the public API.
+The `com.yubico:yubico-util` module is NOT part of the public API.
+Breaking changes to these will NOT be reflected in version numbers.
+
+
 == Getting started
 
 Using this module consists of 4 major steps:
