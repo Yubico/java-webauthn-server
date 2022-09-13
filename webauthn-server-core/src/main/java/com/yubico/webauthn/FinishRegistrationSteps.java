@@ -30,6 +30,7 @@ import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 import COSE.CoseException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
+import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
@@ -52,6 +53,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
+import java.security.cert.PKIXReason;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -565,6 +567,12 @@ final class FinishRegistrationSteps {
               e.getIndex(),
               e.getMessage(),
               response.getResponse().getAttestationObject());
+          if (PKIXReason.INVALID_POLICY.equals(e.getReason())) {
+            log.info(
+                "You may need to set the policyTreeValidator property on the {} returned by your {}.",
+                TrustRootsResult.class.getSimpleName(),
+                AttestationTrustSource.class.getSimpleName());
+          }
           return false;
 
         } catch (CertificateException e) {
