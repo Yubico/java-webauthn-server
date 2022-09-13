@@ -499,7 +499,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
         certSubjectKeyIdentifiers,
         aaguid);
 
-    if (!nonzeroAaguid.isPresent()) {
+    if (aaguid.isPresent() && !nonzeroAaguid.isPresent()) {
       log.debug("findEntries: ignoring zero AAGUID");
     }
 
