@@ -410,7 +410,7 @@ class FidoMetadataDownloaderSpec
         }
 
         it(
-          "The trust root is not downloaded if there's a valid one in file cache."
+          "The trust root is not downloaded and not written to cache if there's a valid one in file cache."
         ) {
           val random = new SecureRandom()
           val trustRootDistinguishedName =
@@ -438,6 +438,10 @@ class FidoMetadataDownloaderSpec
           f.write(trustRootCert.getEncoded)
           f.close()
           cacheFile.deleteOnExit()
+          cacheFile.setLastModified(
+            cacheFile.lastModified() - 1000
+          ) // Set mtime in the past to ensure any write will change it
+          val initialModTime = cacheFile.lastModified
 
           val blob = load(
             FidoMetadataDownloader
@@ -456,6 +460,7 @@ class FidoMetadataDownloaderSpec
           blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
             trustRootDistinguishedName
           )
+          cacheFile.lastModified should equal(initialModTime)
         }
 
         it(
