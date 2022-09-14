@@ -22,6 +22,34 @@ class EnumsSpec
 
   describe("AttestationConveyancePreference") {
     describe("can be parsed from JSON") {
+      it("""value: "none"""") {
+        json.readValue(
+          "\"none\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.NONE
+      }
+
+      it("""value: "indirect"""") {
+        json.readValue(
+          "\"indirect\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.INDIRECT
+      }
+
+      it("""value: "direct"""") {
+        json.readValue(
+          "\"direct\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.DIRECT
+      }
+
+      it("""value: "enterprise"""") {
+        json.readValue(
+          "\"enterprise\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.ENTERPRISE
+      }
+
       it("but throws IllegalArgumentException for unknown values.") {
         val result = Try(
           json.readValue("\"foo\"", classOf[AttestationConveyancePreference])
