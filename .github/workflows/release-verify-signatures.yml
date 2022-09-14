@@ -6,7 +6,7 @@ on:
 
 jobs:
   verify:
-    name: Verify signatures (JDK ${{matrix.java}})
+    name: Verify signatures (JDK ${{ matrix.java }} ${{ matrix.distribution }})
 
     runs-on: ubuntu-latest
     strategy:
