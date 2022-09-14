@@ -24,7 +24,7 @@ import java.util.List;
 import javax.net.ssl.SSLException;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
 
 @Slf4j
 class AndroidSafetynetAttestationStatementVerifier
