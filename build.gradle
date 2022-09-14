@@ -18,7 +18,7 @@ plugins {
 
 import io.franzbecker.gradle.lombok.LombokPlugin
 import io.franzbecker.gradle.lombok.task.DelombokTask
-import com.yubico.gradle.GitUtils;
+import com.yubico.gradle.GitUtils
 
 rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
 
@@ -201,7 +201,7 @@ subprojects { project ->
   if (project.hasProperty('publishMe') && project.publishMe) {
 
     if (GitUtils.getGitCommit(projectDir) == null) {
-      throw new RuntimeException("Failed to get git commit ID");
+      throw new RuntimeException("Failed to get git commit ID")
     }
 
     publishing {

@@ -30,6 +30,7 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.HexException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -37,7 +38,7 @@ import org.bouncycastle.asn1.DEROctetString;
 
 @Slf4j
 public final class ExtensionMatcher implements DeviceMatcher {
-  private static final Charset CHARSET = Charset.forName("UTF-8");
+  private static final Charset CHARSET = StandardCharsets.UTF_8;
 
   public static final String SELECTOR_TYPE = "x509Extension";
 

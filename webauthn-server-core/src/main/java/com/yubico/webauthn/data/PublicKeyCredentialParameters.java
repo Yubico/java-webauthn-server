@@ -106,7 +106,7 @@ public class PublicKeyCredentialParameters {
 
   public static class PublicKeyCredentialParametersBuilder {
     public static class MandatoryStages {
-      private PublicKeyCredentialParametersBuilder builder =
+      private final PublicKeyCredentialParametersBuilder builder =
           new PublicKeyCredentialParametersBuilder();
 
       /**

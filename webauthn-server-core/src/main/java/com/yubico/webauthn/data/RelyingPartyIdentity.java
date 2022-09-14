@@ -79,7 +79,7 @@ public class RelyingPartyIdentity implements PublicKeyCredentialEntity {
   public static class RelyingPartyIdentityBuilder {
 
     public static class MandatoryStages {
-      private RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
+      private final RelyingPartyIdentityBuilder builder = new RelyingPartyIdentityBuilder();
 
       /**
        * A unique identifier for the Relying Party, which sets the <a

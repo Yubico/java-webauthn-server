@@ -1,4 +1,5 @@
-import com.yubico.gradle.GitUtils;
+import com.yubico.gradle.GitUtils
+
 plugins {
   `java-library`
   scala

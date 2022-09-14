@@ -1,4 +1,4 @@
-package com.yubico.gradle;
+package com.yubico.gradle
 
 public class GitUtils {
 

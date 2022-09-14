@@ -238,7 +238,7 @@ public class PublicKeyCredentialCreationOptions {
     private AuthenticatorSelectionCriteria authenticatorSelection = null;
 
     public static class MandatoryStages {
-      private PublicKeyCredentialCreationOptionsBuilder builder =
+      private final PublicKeyCredentialCreationOptionsBuilder builder =
           new PublicKeyCredentialCreationOptionsBuilder();
 
       /**

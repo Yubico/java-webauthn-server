@@ -1,4 +1,5 @@
-import com.yubico.gradle.GitUtils;
+import com.yubico.gradle.GitUtils
+
 plugins {
   `java-library`
   scala
@@ -67,7 +68,7 @@ tasks.jar {
       "Implementation-Version" to project.version,
       "Implementation-Vendor" to "Yubico",
       "Implementation-Source-Url" to "https://github.com/Yubico/java-webauthn-server",
-      "Git-Commit" to com.yubico.gradle.GitUtils.getGitCommitOrUnknown(projectDir),
+      "Git-Commit" to GitUtils.getGitCommitOrUnknown(projectDir),
     ))
   }
 }

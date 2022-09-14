@@ -113,7 +113,7 @@ public final class RegisteredCredential {
 
   public static class RegisteredCredentialBuilder {
     public static class MandatoryStages {
-      private RegisteredCredentialBuilder builder = new RegisteredCredentialBuilder();
+      private final RegisteredCredentialBuilder builder = new RegisteredCredentialBuilder();
 
       /**
        * {@link RegisteredCredentialBuilder#credentialId(ByteArray) credentialId} is a required
