@@ -204,11 +204,11 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
         def makeMds(
             blobTuple: (String, X509Certificate, java.util.Set[CRL]),
             attestationCrls: Set[CRL] = Set.empty,
-        )(filter: MetadataBLOBPayloadEntry => Boolean): FidoMetadataService =
+        )(prefilter: MetadataBLOBPayloadEntry => Boolean): FidoMetadataService =
           FidoMetadataService
             .builder()
             .useBlob(makeDownloader(blobTuple).loadCachedBlob())
-            .prefilter(filter.asJava)
+            .prefilter(prefilter.asJava)
             .certStore(
               CertStore.getInstance(
                 "Collection",
@@ -239,8 +239,8 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
         }""")
 
         it("Filtering in getFilteredEntries works as expected.") {
-          def count(filter: MetadataBLOBPayloadEntry => Boolean): Long =
-            makeMds(blobTuple)(filter).findEntries(_ => true).size
+          def count(prefilter: MetadataBLOBPayloadEntry => Boolean): Long =
+            makeMds(blobTuple)(prefilter).findEntries(_ => true).size
 
           implicit class MetadataBLOBPayloadEntryWithAbbreviatedAttestationCertificateKeyIdentifiers(
               entry: MetadataBLOBPayloadEntry
@@ -384,10 +384,10 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
             .build()
 
           def finishRegistration(
-              filter: MetadataBLOBPayloadEntry => Boolean
+              prefilter: MetadataBLOBPayloadEntry => Boolean
           ): RegistrationResult = {
             val mds =
-              makeMds(blobTuple, attestationCrls = attestationCrls)(filter)
+              makeMds(blobTuple, attestationCrls = attestationCrls)(prefilter)
             RelyingParty
               .builder()
               .identity(rpIdentity)
