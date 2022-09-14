@@ -14,6 +14,7 @@ val coreTestsOutput = project(":webauthn-server-core").extensions.getByType(Sour
 
 dependencies {
   implementation(platform(rootProject))
+  implementation(platform(project(":test-platform")))
 
   implementation(project(":webauthn-server-attestation"))
   implementation(project(":webauthn-server-core"))
@@ -33,7 +34,6 @@ dependencies {
   runtimeOnly("org.glassfish.jersey.containers:jersey-container-servlet:2.36")
   runtimeOnly("org.glassfish.jersey.inject:jersey-hk2:2.36")
 
-  testImplementation(platform(project(":test-platform")))
   testImplementation(coreTestsOutput)
   testImplementation(project(":yubico-util-scala"))
 
