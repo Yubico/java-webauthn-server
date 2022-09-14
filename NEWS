@@ -35,6 +35,7 @@ Fixes:
 * Fixed various typos and mistakes in JavaDocs.
 * Moved version constraints for test dependencies from meta-module
   `webauthn-server-parent` to unpublished test meta-module.
+* `yubico-util` dependency removed from downstream compile scope.
 
 
 `webauthn-server-attestation`:
@@ -50,6 +51,8 @@ Fixes:
 * `FidoMetadataDownloader` now verifies the SHA-256 hash of the cached trust
   root certificate, as promised in the JavaDoc of `useTrustRootCacheFile` and
   `useTrustRootCache`.
+* BouncyCastle dependency dropped.
+* Guava dependency dropped (but still remains in core module).
 
 
 == Version 2.0.0 ==

@@ -20,8 +20,7 @@ java {
 dependencies {
   api(platform(rootProject))
 
-  api(project(":yubico-util"))
-
+  implementation(project(":yubico-util"))
   implementation("com.augustcellars.cose:cose-java")
   implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("com.google.guava:guava")

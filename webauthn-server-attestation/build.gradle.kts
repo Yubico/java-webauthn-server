@@ -37,9 +37,7 @@ dependencies {
   api(project(":webauthn-server-core"))
 
   implementation(project(":yubico-util"))
-  implementation("com.google.guava:guava")
   implementation("com.fasterxml.jackson.core:jackson-databind")
-  implementation("org.bouncycastle:bcprov-jdk18on")
   implementation("org.slf4j:slf4j-api")
 
   testImplementation(platform(project(":test-platform")))
