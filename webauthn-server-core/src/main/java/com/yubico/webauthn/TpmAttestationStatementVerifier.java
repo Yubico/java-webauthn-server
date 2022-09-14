@@ -75,7 +75,7 @@ final class TpmAttestationStatementVerifier
    * https://www.trustedcomputinggroup.org/wp-content/uploads/TPM-Rev-2.0-Part-2-Structures-01.38.pdf
    */
   static final class Attributes {
-    public static final int SIGN_ENCRYPT = 1 << 18;
+    static final int SIGN_ENCRYPT = 1 << 18;
 
     private static final int SHALL_BE_ZERO =
         (1 << 0) // 0 Reserved
@@ -360,8 +360,8 @@ final class TpmAttestationStatementVerifier
   }
 
   static final class TpmAlgAsym {
-    public static final int RSA = 0x0001;
-    public static final int ECC = 0x0023;
+    static final int RSA = 0x0001;
+    static final int ECC = 0x0023;
   }
 
   private interface Parameters {}
@@ -376,7 +376,7 @@ final class TpmAttestationStatementVerifier
     Unique unique;
     ByteArray rawBytes;
 
-    public static TpmtPublic parse(byte[] pubArea) throws IOException {
+    private static TpmtPublic parse(byte[] pubArea) throws IOException {
       try (ByteInputStream reader = new ByteInputStream(pubArea)) {
         final int signAlg = reader.readUnsignedShort();
         final int nameAlg = reader.readUnsignedShort();
@@ -433,7 +433,7 @@ final class TpmAttestationStatementVerifier
      * nvPublicArea contents of the TPMS_NV_PUBLIC associated with handle
      * </pre>
      */
-    public ByteArray name() {
+    private ByteArray name() {
       final ByteArray hash;
       switch (this.nameAlg) {
         case TpmAlgHash.SHA1:
@@ -464,13 +464,13 @@ final class TpmAttestationStatementVerifier
   }
 
   static class TpmAlgHash {
-    public static final int SHA1 = 0x0004;
-    public static final int SHA256 = 0x000B;
-    public static final int SHA384 = 0x000C;
-    public static final int SHA512 = 0x000D;
+    static final int SHA1 = 0x0004;
+    static final int SHA256 = 0x000B;
+    static final int SHA384 = 0x000C;
+    static final int SHA512 = 0x000D;
   }
 
-  public void verifyX5cRequirements(X509Certificate cert, ByteArray aaguid)
+  private void verifyX5cRequirements(X509Certificate cert, ByteArray aaguid)
       throws CertificateParsingException {
     ExceptionUtil.assure(
         cert.getVersion() == 3,
@@ -529,7 +529,7 @@ final class TpmAttestationStatementVerifier
   }
 
   static final class TpmRsaScheme {
-    public static final int RSASSA = 0x0014;
+    static final int RSASSA = 0x0014;
   }
 
   /**
@@ -542,7 +542,7 @@ final class TpmAttestationStatementVerifier
 
     long exponent;
 
-    public static TpmsRsaParms parse(ByteInputStream reader) throws IOException {
+    private static TpmsRsaParms parse(ByteInputStream reader) throws IOException {
       final int symmetric = reader.readUnsignedShort();
       ExceptionUtil.assure(
           symmetric == TPM_ALG_NULL,
@@ -573,7 +573,7 @@ final class TpmAttestationStatementVerifier
   private static class Tpm2bPublicKeyRsa implements Unique {
     ByteArray bytes;
 
-    public static Tpm2bPublicKeyRsa parse(ByteInputStream reader) throws IOException {
+    private static Tpm2bPublicKeyRsa parse(ByteInputStream reader) throws IOException {
       return new Tpm2bPublicKeyRsa(new ByteArray(reader.read(reader.readUnsignedShort())));
     }
   }
@@ -582,7 +582,7 @@ final class TpmAttestationStatementVerifier
   private static class TpmsEccParms implements Parameters {
     int curve_id;
 
-    public static TpmsEccParms parse(ByteInputStream reader) throws IOException {
+    private static TpmsEccParms parse(ByteInputStream reader) throws IOException {
       final int symmetric = reader.readUnsignedShort();
       final int scheme = reader.readUnsignedShort();
       ExceptionUtil.assure(
@@ -614,7 +614,7 @@ final class TpmAttestationStatementVerifier
     ByteArray x;
     ByteArray y;
 
-    public static TpmsEccPoint parse(ByteInputStream reader) throws IOException {
+    private static TpmsEccPoint parse(ByteInputStream reader) throws IOException {
       final ByteArray x = new ByteArray(reader.read(reader.readUnsignedShort()));
       final ByteArray y = new ByteArray(reader.read(reader.readUnsignedShort()));
 
@@ -630,10 +630,10 @@ final class TpmAttestationStatementVerifier
    */
   private static class TpmEccCurve {
 
-    public static final int NONE = 0x0000;
-    public static final int NIST_P256 = 0x0003;
-    public static final int NIST_P384 = 0x0004;
-    public static final int NIST_P521 = 0x0005;
+    private static final int NONE = 0x0000;
+    private static final int NIST_P256 = 0x0003;
+    private static final int NIST_P384 = 0x0004;
+    private static final int NIST_P521 = 0x0005;
   }
 
   /**
