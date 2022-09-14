@@ -432,6 +432,9 @@ public final class FidoMetadataService implements AttestationTrustSource {
        * The AAGUID from the <a
        * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attested-credential-data">attested
        * credential data</a> of a credential about ot be registered.
+       *
+       * <p>This will not be present if the attested credential data contained an AAGUID of all
+       * zeroes.
        */
       public Optional<AAGUID> getAaguid() {
         return Optional.ofNullable(aaguid);
@@ -522,7 +525,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
                         new AuthenticatorToBeFiltered(
                             attestationCertificateChain,
                             metadataBLOBPayloadEntry,
-                            aaguid.orElse(null))))
+                            nonzeroAaguid.orElse(null))))
             .collect(Collectors.toSet());
 
     log.debug(

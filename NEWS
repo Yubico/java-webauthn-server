@@ -39,6 +39,11 @@ Fixes:
 
 `webauthn-server-attestation`:
 
+Changes:
+
+* The `AuthenticatorToBeFiltered` argument of the `FidoMetadataService` runtime
+  filter now omits zero AAGUIDs.
+
 Fixes:
 
 * Fixed various typos and mistakes in JavaDocs.
