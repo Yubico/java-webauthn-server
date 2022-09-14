@@ -49,7 +49,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
 import java.util.List;
 import javax.naming.InvalidNameException;
-import javax.naming.directory.Attributes;
 import javax.naming.ldap.LdapName;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
