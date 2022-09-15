@@ -44,6 +44,8 @@ Changes:
 
 * The `AuthenticatorToBeFiltered` argument of the `FidoMetadataService` runtime
   filter now omits zero AAGUIDs.
+* Promoted log messages in `FidoMetadataDownloader` about BLOB signature failure
+  and cache corruption from DEBUG level to WARN level.
 
 Fixes:
 

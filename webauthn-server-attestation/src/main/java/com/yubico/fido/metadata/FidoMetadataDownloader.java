@@ -834,7 +834,7 @@ public final class FidoMetadataDownloader {
       return Optional.of(downloadedBlob);
     } catch (FidoMetadataDownloaderException e) {
       if (e.getReason() == Reason.BAD_SIGNATURE && cached.isPresent()) {
-        log.debug("New BLOB has bad signature - falling back to cached BLOB.");
+        log.warn("New BLOB has bad signature - falling back to cached BLOB.");
         return cached;
       } else {
         throw e;
@@ -954,7 +954,7 @@ public final class FidoMetadataDownloader {
           try {
             return parseAndVerifyBlob(cached, trustRootCertificate);
           } catch (Exception e) {
-            log.debug("Failed to read or parse cached BLOB.", e);
+            log.warn("Failed to read or parse cached BLOB.", e);
             return null;
           }
         });
