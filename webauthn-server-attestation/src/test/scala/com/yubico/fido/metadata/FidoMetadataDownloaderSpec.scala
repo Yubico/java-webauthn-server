@@ -9,6 +9,7 @@ import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import org.bouncycastle.asn1.x500.X500Name
+import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.server.HttpConfiguration
 import org.eclipse.jetty.server.HttpConnectionFactory
 import org.eclipse.jetty.server.Request
@@ -198,14 +199,16 @@ class FidoMetadataDownloaderSpec
       path: String,
       response: String,
   ): (Server, String, X509Certificate) =
-    makeHttpServer(Map(path -> response.getBytes(StandardCharsets.UTF_8)))
+    makeHttpServer(
+      Map(path -> (200, response.getBytes(StandardCharsets.UTF_8)))
+    )
   private def makeHttpServer(
       path: String,
       response: Array[Byte],
   ): (Server, String, X509Certificate) =
-    makeHttpServer(Map(path -> response))
+    makeHttpServer(Map(path -> (200, response)))
   private def makeHttpServer(
-      responses: Map[String, Array[Byte]]
+      responses: Map[String, (Int, Array[Byte])]
   ): (Server, String, X509Certificate) = {
     val tlsKey = TestAuthenticator.generateEcKeypair()
     val tlsCert = TestAuthenticator.buildCertificate(
@@ -248,9 +251,9 @@ class FidoMetadataDownloaderSpec
           response: HttpServletResponse,
       ): Unit = {
         responses.get(target) match {
-          case Some(responseBody) => {
+          case Some((status, responseBody)) => {
             response.getOutputStream.write(responseBody)
-            response.setStatus(200)
+            response.setStatus(status)
           }
           case None => response.setStatus(404)
         }
@@ -1062,7 +1065,7 @@ class FidoMetadataDownloaderSpec
           blob.getNo should equal(blobNo)
         }
 
-        it("The BLOB is downloaded if the cached one is out of date.") {
+        it("The cache is used if the BLOB download fails.") {
           val oldBlobNo = 1
           val newBlobNo = 2
 
@@ -1093,7 +1096,12 @@ class FidoMetadataDownloaderSpec
           )
 
           val (server, serverUrl, httpsCert) =
-            makeHttpServer("/blob.jwt", newBlobJwt)
+            makeHttpServer(
+              Map(
+                "/blob.jwt" -> (HttpStatus.TOO_MANY_REQUESTS_429, newBlobJwt
+                  .getBytes(StandardCharsets.UTF_8))
+              )
+            )
           startServer(server)
 
           val blob = load(
@@ -1117,7 +1125,7 @@ class FidoMetadataDownloaderSpec
               .build()
           ).getPayload
           blob should not be null
-          blob.getNo should equal(newBlobNo)
+          blob.getNo should equal(oldBlobNo)
         }
       }
 
@@ -1152,8 +1160,10 @@ class FidoMetadataDownloaderSpec
             val (server, _, httpsCert) =
               makeHttpServer(
                 Map(
-                  "/chain.pem" -> certChainPem.getBytes(StandardCharsets.UTF_8),
-                  "/blob.jwt" -> blobJwt.getBytes(StandardCharsets.UTF_8),
+                  "/chain.pem" -> (200, certChainPem.getBytes(
+                    StandardCharsets.UTF_8
+                  )),
+                  "/blob.jwt" -> (200, blobJwt.getBytes(StandardCharsets.UTF_8)),
                 )
               )
             startServer(server)

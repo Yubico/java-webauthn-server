@@ -55,6 +55,8 @@ Fixes:
   `useTrustRootCache`.
 * BouncyCastle dependency dropped.
 * Guava dependency dropped (but still remains in core module).
+* If BLOB download fails, `FidoMetadataDownloader` now correctly falls back to
+  cache if available.
 
 
 == Version 2.0.0 ==

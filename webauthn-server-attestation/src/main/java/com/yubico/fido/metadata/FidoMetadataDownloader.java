@@ -839,6 +839,13 @@ public final class FidoMetadataDownloader {
       } else {
         throw e;
       }
+    } catch (Exception e) {
+      if (cached.isPresent()) {
+        log.warn("Failed to download new BLOB - falling back to cached BLOB.", e);
+        return cached;
+      } else {
+        throw e;
+      }
     }
   }
 
