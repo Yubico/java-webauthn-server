@@ -18,7 +18,7 @@ jobs:
     - name: check out code
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.ref }}
+        ref: ${{ github.ref_name }}
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -36,20 +36,16 @@ jobs:
 
     - name: Verify signatures from GitHub release
       run: |
-        export TAGNAME=${GITHUB_REF#refs/tags/}
+        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ github.ref_name }}/webauthn-server-attestation-${{ github.ref_name }}.jar.asc
+        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ github.ref_name }}/webauthn-server-core-${{ github.ref_name }}.jar.asc
 
-        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAGNAME}/webauthn-server-attestation-${TAGNAME}.jar.asc
-        wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAGNAME}/webauthn-server-core-${TAGNAME}.jar.asc
-
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${TAGNAME}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${TAGNAME}.jar
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${TAGNAME}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${TAGNAME}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${{ github.ref_name }}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${{ github.ref_name }}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
 
     - name: Verify signatures from Maven Central
       run: |
-        export TAGNAME=${GITHUB_REF#refs/tags/}
+        wget -O webauthn-server-core-${{ github.ref_name }}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/${{ github.ref_name }}/webauthn-server-core-${{ github.ref_name }}.jar.asc
+        wget -O webauthn-server-attestation-${{ github.ref_name }}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-attestation/${{ github.ref_name }}/webauthn-server-attestation-${{ github.ref_name }}.jar.asc
 
-        wget -O webauthn-server-core-${TAGNAME}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/${TAGNAME}/webauthn-server-core-${TAGNAME}.jar.asc
-        wget -O webauthn-server-attestation-${TAGNAME}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-attestation/${TAGNAME}/webauthn-server-attestation-${TAGNAME}.jar.asc
-
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${TAGNAME}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${TAGNAME}.jar
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${TAGNAME}.jar.mavencentral.asc webauthn-server-core/build/libs/webauthn-server-core-${TAGNAME}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${{ github.ref_name }}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
+        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${{ github.ref_name }}.jar.mavencentral.asc webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
