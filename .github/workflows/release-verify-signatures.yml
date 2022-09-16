@@ -32,20 +32,20 @@ jobs:
         ./gradlew jar
 
     - name: Fetch keys
-      run: gpg --no-default-keyring --keyring yubico --keyserver hkps://keys.openpgp.org --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E
+      run: gpg --no-default-keyring --keyring ./yubico.keyring --keyserver hkps://keys.openpgp.org --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E
 
     - name: Verify signatures from GitHub release
       run: |
         wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ github.ref_name }}/webauthn-server-attestation-${{ github.ref_name }}.jar.asc
         wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${{ github.ref_name }}/webauthn-server-core-${{ github.ref_name }}.jar.asc
 
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${{ github.ref_name }}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${{ github.ref_name }}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
+        gpg --no-default-keyring --keyring ./yubico.keyring --verify webauthn-server-attestation-${{ github.ref_name }}.jar.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
+        gpg --no-default-keyring --keyring ./yubico.keyring --verify webauthn-server-core-${{ github.ref_name }}.jar.asc webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
 
     - name: Verify signatures from Maven Central
       run: |
         wget -O webauthn-server-core-${{ github.ref_name }}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/${{ github.ref_name }}/webauthn-server-core-${{ github.ref_name }}.jar.asc
         wget -O webauthn-server-attestation-${{ github.ref_name }}.jar.mavencentral.asc https://repo1.maven.org/maven2/com/yubico/webauthn-server-attestation/${{ github.ref_name }}/webauthn-server-attestation-${{ github.ref_name }}.jar.asc
 
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-attestation-${{ github.ref_name }}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
-        gpg --no-default-keyring --keyring yubico --verify webauthn-server-core-${{ github.ref_name }}.jar.mavencentral.asc webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
+        gpg --no-default-keyring --keyring ./yubico.keyring --verify webauthn-server-attestation-${{ github.ref_name }}.jar.mavencentral.asc webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
+        gpg --no-default-keyring --keyring ./yubico.keyring --verify webauthn-server-core-${{ github.ref_name }}.jar.mavencentral.asc webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
