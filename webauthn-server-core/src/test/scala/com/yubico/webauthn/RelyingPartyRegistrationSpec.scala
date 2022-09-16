@@ -2343,13 +2343,16 @@ class RelyingPartyRegistrationSpec
                       )
                       .getBytes
                   )
+                  val yneg = TestAuthenticator.Es256PrimeModulus
+                    .subtract(
+                      new BigInteger(1, cose.get(-3).GetByteString())
+                    )
+                  val ynegBytes = yneg.toByteArray.dropWhile(_ == 0)
                   cose.Set(
                     -3,
-                    TestAuthenticator.Es256PrimeModulus
-                      .subtract(
-                        new BigInteger(1, cose.get(-3).GetByteString())
-                      ), // Setting to BigInteger seems to work, but Array[Byte] does not
+                    Array.fill[Byte](32 - ynegBytes.length)(0) ++ ynegBytes,
                   )
+
                   val testData = (RegistrationTestData.from _).tupled(
                     makeCred(
                       authDataAndKeypair = Some((authData, keypair)),
