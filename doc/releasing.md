@@ -6,15 +6,13 @@ Release candidate versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Make sure you're running Gradle in JDK 17.
-
- 3. Run the tests one more time:
+ 2. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 4. Tag the head commit with an `X.Y.Z-RCN` tag:
+ 3. Tag the head commit with an `X.Y.Z-RCN` tag:
 
     ```
     $ git tag -a -s 1.4.0-RC1 -m "Pre-release 1.4.0-RC1"
@@ -22,13 +20,13 @@ Release candidate versions
 
     No tag body needed.
 
- 5. Publish to Sonatype Nexus:
+ 4. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
- 6. Push to GitHub.
+ 5. Push to GitHub.
 
     If the pre-release makes significant changes to the project README, such
     that the README does not accurately reflect the latest non-pre-release
@@ -46,7 +44,7 @@ Release candidate versions
     $ git push origin main 1.4.0-RC1
     ```
 
- 7. Make GitHub release.
+ 6. Make GitHub release.
 
     - Use the new tag as the release tag
     - Check the pre-release checkbox
@@ -55,7 +53,7 @@ Release candidate versions
       changes/additions since the previous release or pre-release.
     - Note which JDK version was used to build the artifacts.
 
- 8. Check that the ["Reproducible binary"
+ 7. Check that the ["Reproducible binary"
     workflow](/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
     runs and succeeds.
 
@@ -65,9 +63,7 @@ Release versions
 
  1. Make sure release notes in `NEWS` are up to date.
 
- 2. Make sure you're running Gradle in JDK 17.
-
- 3. Make a no-fast-forward merge from the last (non release candidate) release
+ 2. Make a no-fast-forward merge from the last (non release candidate) release
     to the commit to be released:
 
     ```
@@ -89,26 +85,26 @@ Release versions
     $ git branch -d release-1.4.0
     ```
 
- 4. Remove the "(unreleased)" tag from `NEWS`.
+ 3. Remove the "(unreleased)" tag from `NEWS`.
 
- 5. Update the version in the dependency snippets in the README.
+ 4. Update the version in the dependency snippets in the README.
 
- 6. Update the version in JavaDoc links in the READMEs.
+ 5. Update the version in JavaDoc links in the READMEs.
 
- 7. Amend these changes into the merge commit:
+ 6. Amend these changes into the merge commit:
 
     ```
     $ git add NEWS
     $ git commit --amend --reset-author
     ```
 
- 8. Run the tests one more time:
+ 7. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 9. Tag the merge commit with an `X.Y.Z` tag:
+ 8. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -116,19 +112,19 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
-10. Publish to Sonatype Nexus:
+ 9. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
-11. Push to GitHub:
+10. Push to GitHub:
 
     ```
     $ git push origin main 1.4.0
     ```
 
-12. Make GitHub release.
+11. Make GitHub release.
 
     - Use the new tag as the release tag
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
@@ -136,6 +132,6 @@ Release versions
       the previous release (not just changes since the previous pre-release).
     - Note which JDK version was used to build the artifacts.
 
-13. Check that the ["Reproducible binary"
+12. Check that the ["Reproducible binary"
     workflow](/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
     runs and succeeds.
