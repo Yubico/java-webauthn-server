@@ -64,11 +64,10 @@ final class WebAuthnCodecs {
     return new ByteArray(
         Bytes.concat(
             new byte[] {0x04},
-            Bytes.concat(
-                xPadding, Arrays.copyOfRange(x, Math.max(0, x.length - fieldSizeBytes), x.length)),
-            Bytes.concat(
-                yPadding,
-                Arrays.copyOfRange(y, Math.max(0, y.length - fieldSizeBytes), y.length))));
+            xPadding,
+            Arrays.copyOfRange(x, Math.max(0, x.length - fieldSizeBytes), x.length),
+            yPadding,
+            Arrays.copyOfRange(y, Math.max(0, y.length - fieldSizeBytes), y.length)));
   }
 
   static ByteArray rawEcKeyToCose(ByteArray key) {
