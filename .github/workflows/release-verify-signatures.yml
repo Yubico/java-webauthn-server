@@ -2,7 +2,7 @@ name: Reproducible binary
 
 on:
   release:
-    types: [published, created, edited, prereleased]
+    types: [published, edited]
 
 jobs:
   verify:
