@@ -28,13 +28,7 @@ Release candidate versions
     $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
- 6. Wait for the artifacts to become downloadable at
-    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
-    needed for one of the GitHub Actions release workflows and usually takes
-    less than 30 minutes (long before the artifacts become searchable on the
-    main Maven Central website).
-
- 7. Push to GitHub.
+ 6. Push to GitHub.
 
     If the pre-release makes significant changes to the project README, such
     that the README does not accurately reflect the latest non-pre-release
@@ -52,18 +46,18 @@ Release candidate versions
     $ git push origin main 1.4.0-RC1
     ```
 
- 8. Make GitHub release.
+ 7. Make GitHub release.
 
     - Use the new tag as the release tag
     - Check the pre-release checkbox
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
       from ASCIIdoc to Markdown and remove line wraps. Include only
       changes/additions since the previous release or pre-release.
-    - Attach the signature files from
-      `build/dist/webauthn-server-attestation-X.Y.Z-RCN.jar.asc`
-      and
-      `build/dist/webauthn-server-core-X.Y.Z-RCN.jar.asc`.
     - Note which JDK version was used to build the artifacts.
+
+ 8. Check that the ["Reproducible binary"
+    workflow](/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
+    runs and succeeds.
 
 
 Release versions
@@ -128,27 +122,20 @@ Release versions
     $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
-11. Wait for the artifacts to become downloadable at
-    https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/ . This is
-    needed for one of the GitHub Actions release workflows and usually takes
-    less than 30 minutes (long before the artifacts become searchable on the
-    main Maven Central website).
-
-12. Push to GitHub:
+11. Push to GitHub:
 
     ```
     $ git push origin main 1.4.0
     ```
 
-13. Make GitHub release.
+12. Make GitHub release.
 
     - Use the new tag as the release tag
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
       from ASCIIdoc to Markdown and remove line wraps. Include all changes since
       the previous release (not just changes since the previous pre-release).
-    - Attach the signature files from
-      `build/dist/webauthn-server-attestation-X.Y.Z.jar.asc`
-      and
-      `build/dist/webauthn-server-core-X.Y.Z.jar.asc`.
-
     - Note which JDK version was used to build the artifacts.
+
+13. Check that the ["Reproducible binary"
+    workflow](/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
+    runs and succeeds.
