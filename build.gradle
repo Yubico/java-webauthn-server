@@ -116,10 +116,12 @@ task assembleJavadoc(type: Sync) {
   destinationDir = file("${rootProject.buildDir}/javadoc")
 }
 
-task collectSignatures(type: Sync) {
-  destinationDir = file("${rootProject.buildDir}/dist")
-  duplicatesStrategy DuplicatesStrategy.FAIL
-  include '*.jar', '*.jar.asc'
+task checkJavaVersionBeforeRelease {
+  doFirst {
+    if (JavaVersion.current() != JavaVersion.VERSION_17) {
+      throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
+    }
+  }
 }
 
 subprojects { project ->
@@ -154,14 +156,17 @@ subprojects { project ->
     reproducibleFileOrder = true
   }
 
-  tasks.withType(Sign) {
-    it.dependsOn check
-  }
-
   tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild
     }
+  }
+
+  tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
+  tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
+  tasks.withType(Sign) {
+    it.dependsOn check
+    dependsOn checkJavaVersionBeforeRelease
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
@@ -246,14 +251,6 @@ subprojects { project ->
       signing {
         useGpgCmd()
         sign publishing.publications.jars
-      }
-
-      tasks.withType(Sign) { Sign signTask ->
-        rootProject.tasks.collectSignatures {
-          from signTask.inputs.files
-          from signTask.outputs.files
-        }
-        signTask.finalizedBy rootProject.tasks.collectSignatures
       }
     }
   }
