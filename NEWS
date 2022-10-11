@@ -36,6 +36,7 @@ Fixes:
 * Moved version constraints for test dependencies from meta-module
   `webauthn-server-parent` to unpublished test meta-module.
 * `yubico-util` dependency removed from downstream compile scope.
+* Fixed missing JavaDoc on `TrustRootsResult` getters and builder setters.
 
 
 `webauthn-server-attestation`:
