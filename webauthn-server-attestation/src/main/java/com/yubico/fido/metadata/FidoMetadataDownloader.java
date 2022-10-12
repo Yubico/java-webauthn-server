@@ -95,10 +95,10 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>This class is NOT THREAD SAFE since it reads and writes caches. However, it has no internal
  * mutable state, so instances MAY be reused in single-threaded or externally synchronized contexts.
- * See also the {@link #loadCachedBlob()} method.
+ * See also the {@link #loadCachedBlob()} and {@link #refreshBlob()} methods.
  *
  * <p>Use the {@link #builder() builder} to configure settings, then use the {@link
- * #loadCachedBlob()} method to load the metadata BLOB.
+ * #loadCachedBlob()} and {@link #refreshBlob()} methods to load the metadata BLOB.
  */
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -650,17 +650,17 @@ public final class FidoMetadataDownloader {
    * subsequent calls.
    *
    * @return the successfully retrieved and validated metadata BLOB.
-   * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact
-   *     serialization.
-   * @throws CertPathValidatorException if the downloaded or explicitly configured BLOB fails
+   * @throws Base64UrlException if the explicitly configured or newly downloaded BLOB is not a
+   *     well-formed JWT in compact serialization.
+   * @throws CertPathValidatorException if the explicitly configured or newly downloaded BLOB fails
    *     certificate path validation.
    * @throws CertificateException if the trust root certificate was downloaded and passed the
    *     SHA-256 integrity check, but does not contain a currently valid X.509 DER certificate; or
    *     if the BLOB signing certificate chain fails to parse.
    * @throws DigestException if the trust root certificate was downloaded but failed the SHA-256
    *     integrity check.
-   * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
-   *     signature.
+   * @throws FidoMetadataDownloaderException if the explicitly configured or newly downloaded BLOB
+   *     (if any) has a bad signature and there is no cached BLOB to fall back to.
    * @throws IOException if any of the following fails: downloading the trust root certificate,
    *     downloading the BLOB, reading or writing any cache file (if any), or parsing the BLOB
    *     contents.
@@ -680,8 +680,173 @@ public final class FidoMetadataDownloader {
           CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
           InvalidKeyException, UnexpectedLegalHeader, DigestException,
           FidoMetadataDownloaderException {
-    X509Certificate trustRoot = retrieveTrustRootCert();
-    return retrieveBlob(trustRoot);
+    final X509Certificate trustRoot = retrieveTrustRootCert();
+
+    final Optional<MetadataBLOB> explicit = loadExplicitBlobOnly(trustRoot);
+    if (explicit.isPresent()) {
+      log.debug("Explicit BLOB is set - disregarding cache and download.");
+      return explicit.get();
+    }
+
+    final Optional<MetadataBLOB> cached = loadCachedBlobOnly(trustRoot);
+    if (cached.isPresent()) {
+      log.debug("Cached BLOB exists, checking expiry date...");
+      if (cached
+          .get()
+          .getPayload()
+          .getNextUpdate()
+          .atStartOfDay()
+          .atZone(clock.getZone())
+          .isAfter(clock.instant().atZone(clock.getZone()))) {
+        log.debug("Cached BLOB has not yet expired - using cached BLOB.");
+        return cached.get();
+      } else {
+        log.debug("Cached BLOB has expired.");
+      }
+
+    } else {
+      log.debug("Cached BLOB does not exist or is invalid.");
+    }
+
+    return refreshBlobInternal(trustRoot, cached).get();
+  }
+
+  /**
+   * Download and cache a fresh metadata BLOB, or read it from cache if the downloaded BLOB is not
+   * up to date.
+   *
+   * <p>This method is NOT THREAD SAFE since it reads and writes caches.
+   *
+   * <p>On each execution this will, in order:
+   *
+   * <ol>
+   *   <li>Download the trust root certificate, if necessary: if the cache is empty, the cache fails
+   *       to load, or the cached cert is not valid at the current time (as determined by the {@link
+   *       FidoMetadataDownloaderBuilder#clock(Clock) clock} setting).
+   *   <li>If downloaded, cache the trust root certificate using the configured {@link File} or
+   *       {@link Consumer} (see {@link FidoMetadataDownloaderBuilder.Step3})
+   *   <li>Download the metadata BLOB.
+   *   <li>Check the <code>"no"</code> property of the downloaded BLOB and compare it with the
+   *       <code>"no"</code> of the cached BLOB, if any. The one with a greater <code>"no"
+   *       </code> overrides the other, even if its <code>"nextUpdate"</code> is in the past.
+   *   <li>If the downloaded BLOB has a newer <code>"no"</code>, or if no BLOB was cached, verify
+   *       that the value of the downloaded BLOB's <code>"legalHeader"</code> appears in the
+   *       configured {@link FidoMetadataDownloaderBuilder.Step1#expectLegalHeader(String...)
+   *       expectLegalHeader} setting. If not, throw an {@link UnexpectedLegalHeader} exception
+   *       containing the cached BLOB, if any, and the downloaded BLOB.
+   *   <li>If the downloaded BLOB has an expected <code>
+   *       "legalHeader"</code>, cache it using the configured {@link File} or {@link Consumer} (see
+   *       {@link FidoMetadataDownloaderBuilder.Step5}).
+   * </ol>
+   *
+   * No internal mutable state is maintained between invocations of this method; each invocation
+   * will reload/rewrite caches, perform downloads and check the <code>"legalHeader"
+   * </code> as necessary. You may therefore reuse a {@link FidoMetadataDownloader} instance and,
+   * for example, call this method periodically to refresh the BLOB. Each call will return a new
+   * {@link MetadataBLOB} instance; ones already returned will not be updated by subsequent calls.
+   *
+   * @return the successfully retrieved and validated metadata BLOB.
+   * @throws Base64UrlException if the explicitly configured or newly downloaded BLOB is not a
+   *     well-formed JWT in compact serialization.
+   * @throws CertPathValidatorException if the explicitly configured or newly downloaded BLOB fails
+   *     certificate path validation.
+   * @throws CertificateException if the trust root certificate was downloaded and passed the
+   *     SHA-256 integrity check, but does not contain a currently valid X.509 DER certificate; or
+   *     if the BLOB signing certificate chain fails to parse.
+   * @throws DigestException if the trust root certificate was downloaded but failed the SHA-256
+   *     integrity check.
+   * @throws FidoMetadataDownloaderException if the explicitly configured or newly downloaded BLOB
+   *     (if any) has a bad signature and there is no cached BLOB to fall back to.
+   * @throws IOException if any of the following fails: downloading the trust root certificate,
+   *     downloading the BLOB, reading or writing any cache file (if any), or parsing the BLOB
+   *     contents.
+   * @throws InvalidAlgorithmParameterException if certificate path validation fails.
+   * @throws InvalidKeyException if signature verification fails.
+   * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
+   *     is not available.
+   * @throws SignatureException if signature verification fails.
+   * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
+   *     </code> value not configured in {@link
+   *     FidoMetadataDownloaderBuilder.Step1#expectLegalHeader(String...)
+   *     expectLegalHeader(String...)} but is otherwise valid. The downloaded BLOB will not be
+   *     written to cache in this case.
+   */
+  public MetadataBLOB refreshBlob()
+      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
+          CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
+          InvalidKeyException, UnexpectedLegalHeader, DigestException,
+          FidoMetadataDownloaderException {
+    final X509Certificate trustRoot = retrieveTrustRootCert();
+
+    final Optional<MetadataBLOB> explicit = loadExplicitBlobOnly(trustRoot);
+    if (explicit.isPresent()) {
+      log.debug("Explicit BLOB is set - disregarding cache and download.");
+      return explicit.get();
+    }
+
+    final Optional<MetadataBLOB> cached = loadCachedBlobOnly(trustRoot);
+    if (cached.isPresent()) {
+      log.debug("Cached BLOB exists, proceeding to compare against fresh BLOB...");
+    } else {
+      log.debug("Cached BLOB does not exist or is invalid.");
+    }
+
+    return refreshBlobInternal(trustRoot, cached).get();
+  }
+
+  private Optional<MetadataBLOB> refreshBlobInternal(
+      @NonNull X509Certificate trustRoot, @NonNull Optional<MetadataBLOB> cached)
+      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
+          CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
+          InvalidKeyException, UnexpectedLegalHeader, FidoMetadataDownloaderException {
+
+    try {
+      log.debug("Attempting to download new BLOB...");
+      final ByteArray downloadedBytes = download(blobUrl);
+      final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloadedBytes, trustRoot);
+      log.debug("New BLOB downloaded.");
+
+      if (cached.isPresent()) {
+        log.debug("Cached BLOB exists - checking if new BLOB has a higher \"no\"...");
+        if (downloadedBlob.getPayload().getNo() <= cached.get().getPayload().getNo()) {
+          log.debug("New BLOB does not have a higher \"no\" - using cached BLOB instead.");
+          return cached;
+        }
+        log.debug("New BLOB has a higher \"no\" - proceeding with new BLOB.");
+      }
+
+      log.debug("Checking legalHeader in new BLOB...");
+      if (!expectedLegalHeaders.contains(downloadedBlob.getPayload().getLegalHeader())) {
+        throw new UnexpectedLegalHeader(cached.orElse(null), downloadedBlob);
+      }
+
+      log.debug("Writing new BLOB to cache...");
+      if (blobCacheFile != null) {
+        try (FileOutputStream f = new FileOutputStream(blobCacheFile)) {
+          f.write(downloadedBytes.getBytes());
+        }
+      }
+
+      if (blobCacheConsumer != null) {
+        blobCacheConsumer.accept(downloadedBytes);
+      }
+
+      return Optional.of(downloadedBlob);
+    } catch (FidoMetadataDownloaderException e) {
+      if (e.getReason() == Reason.BAD_SIGNATURE && cached.isPresent()) {
+        log.warn("New BLOB has bad signature - falling back to cached BLOB.");
+        return cached;
+      } else {
+        throw e;
+      }
+    } catch (Exception e) {
+      if (cached.isPresent()) {
+        log.warn("Failed to download new BLOB - falling back to cached BLOB.", e);
+        return cached;
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**
@@ -709,13 +874,16 @@ public final class FidoMetadataDownloader {
 
       X509Certificate cert = null;
       if (cachedContents.isPresent()) {
-        try {
-          final X509Certificate cachedCert =
-              CertificateParser.parseDer(cachedContents.get().getBytes());
-          cachedCert.checkValidity(Date.from(clock.instant()));
-          cert = cachedCert;
-        } catch (CertificateException e) {
-          // Fall through
+        final ByteArray verifiedCachedContents = verifyHash(cachedContents.get(), trustRootSha256);
+        if (verifiedCachedContents != null) {
+          try {
+            final X509Certificate cachedCert =
+                CertificateParser.parseDer(verifiedCachedContents.getBytes());
+            cachedCert.checkValidity(Date.from(clock.instant()));
+            cert = cachedCert;
+          } catch (CertificateException e) {
+            // Fall through
+          }
         }
       }
 
@@ -730,7 +898,9 @@ public final class FidoMetadataDownloader {
         cert.checkValidity(Date.from(clock.instant()));
 
         if (trustRootCacheFile != null) {
-          new FileOutputStream(trustRootCacheFile).write(downloaded.getBytes());
+          try (FileOutputStream f = new FileOutputStream(trustRootCacheFile)) {
+            f.write(downloaded.getBytes());
+          }
         }
 
         if (trustRootCacheConsumer != null) {
@@ -745,101 +915,62 @@ public final class FidoMetadataDownloader {
   /**
    * @throws Base64UrlException if the metadata BLOB is not a well-formed JWT in compact
    *     serialization.
-   * @throws CertPathValidatorException if the downloaded or explicitly configured BLOB fails
-   *     certificate path validation.
+   * @throws CertPathValidatorException if the explicitly configured BLOB fails certificate path
+   *     validation.
    * @throws CertificateException if the BLOB signing certificate chain fails to parse.
-   * @throws IOException if any of the following fails: downloading the BLOB, reading or writing the
-   *     cache file (if any), or parsing the BLOB contents.
+   * @throws IOException on failure to parse the BLOB contents.
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
-   * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
-   *     </code> value not configured in {@link
-   *     FidoMetadataDownloaderBuilder.Step1#expectLegalHeader(String...)
-   *     expectLegalHeader(String...)} but is otherwise valid. The downloaded BLOB will not be
-   *     written to cache in this case.
    * @throws NoSuchAlgorithmException if signature verification fails.
    * @throws SignatureException if signature verification fails.
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
    */
-  private MetadataBLOB retrieveBlob(X509Certificate trustRootCertificate)
+  private Optional<MetadataBLOB> loadExplicitBlobOnly(X509Certificate trustRootCertificate)
       throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
-          InvalidAlgorithmParameterException, InvalidKeyException, UnexpectedLegalHeader,
-          NoSuchAlgorithmException, SignatureException, FidoMetadataDownloaderException {
+          InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException,
+          SignatureException, FidoMetadataDownloaderException {
     if (blobJwt != null) {
-      return parseAndVerifyBlob(
-          new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate);
+      return Optional.of(
+          parseAndVerifyBlob(
+              new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate));
 
     } else {
-
-      final Optional<ByteArray> cachedContents;
-      if (blobCacheFile != null) {
-        cachedContents = readCacheFile(blobCacheFile);
-      } else {
-        cachedContents = blobCacheSupplier.get();
-      }
-
-      final MetadataBLOB cachedBlob =
-          cachedContents
-              .map(
-                  cached -> {
-                    try {
-                      return parseAndVerifyBlob(cached, trustRootCertificate);
-                    } catch (Exception e) {
-                      return null;
-                    }
-                  })
-              .orElse(null);
-
-      if (cachedBlob != null
-          && cachedBlob
-              .getPayload()
-              .getNextUpdate()
-              .atStartOfDay()
-              .atZone(clock.getZone())
-              .isAfter(clock.instant().atZone(clock.getZone()))) {
-        return cachedBlob;
-
-      } else {
-        final ByteArray downloaded = download(blobUrl);
-        try {
-          final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloaded, trustRootCertificate);
-
-          if (cachedBlob == null
-              || downloadedBlob.getPayload().getNo() > cachedBlob.getPayload().getNo()) {
-            if (expectedLegalHeaders.contains(downloadedBlob.getPayload().getLegalHeader())) {
-              if (blobCacheFile != null) {
-                new FileOutputStream(blobCacheFile).write(downloaded.getBytes());
-              }
-
-              if (blobCacheConsumer != null) {
-                blobCacheConsumer.accept(downloaded);
-              }
-
-              return downloadedBlob;
-            } else {
-              throw new UnexpectedLegalHeader(cachedBlob, downloadedBlob);
-            }
-
-          } else {
-            return cachedBlob;
-          }
-        } catch (FidoMetadataDownloaderException e) {
-          if (e.getReason() == FidoMetadataDownloaderException.Reason.BAD_SIGNATURE
-              && cachedBlob != null) {
-            return cachedBlob;
-          } else {
-            throw e;
-          }
-        }
-      }
+      return Optional.empty();
     }
+  }
+
+  private Optional<MetadataBLOB> loadCachedBlobOnly(X509Certificate trustRootCertificate) {
+
+    final Optional<ByteArray> cachedContents;
+    if (blobCacheFile != null) {
+      log.debug("Attempting to read BLOB from cache file...");
+
+      try {
+        cachedContents = readCacheFile(blobCacheFile);
+      } catch (IOException e) {
+        return Optional.empty();
+      }
+    } else {
+      log.debug("Attempting to read BLOB from cache Supplier...");
+      cachedContents = blobCacheSupplier.get();
+    }
+
+    return cachedContents.map(
+        cached -> {
+          try {
+            return parseAndVerifyBlob(cached, trustRootCertificate);
+          } catch (Exception e) {
+            log.warn("Failed to read or parse cached BLOB.", e);
+            return null;
+          }
+        });
   }
 
   private Optional<ByteArray> readCacheFile(File cacheFile) throws IOException {
     if (cacheFile.exists() && cacheFile.canRead() && cacheFile.isFile()) {
-      try {
-        return Optional.of(readAll(new FileInputStream(cacheFile)));
+      try (FileInputStream f = new FileInputStream(cacheFile)) {
+        return Optional.of(readAll(f));
       } catch (FileNotFoundException e) {
         throw new RuntimeException(
             "This exception should be impossible, please file a bug report.", e);

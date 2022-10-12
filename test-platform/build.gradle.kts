@@ -13,5 +13,7 @@ dependencies {
     api("org.scalatestplus:junit-4-13_2.13:3.2.13.0")
     api("org.scalatestplus:scalacheck-1-16_2.13:3.2.13.0")
     api("uk.org.lidalia:slf4j-test:1.2.0")
+    api("org.bouncycastle:bcpkix-jdk18on:[1.62,2)")
+    api("org.bouncycastle:bcprov-jdk18on:[1.62,2)")
   }
 }

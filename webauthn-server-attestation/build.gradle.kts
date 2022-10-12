@@ -1,10 +1,10 @@
-import com.yubico.gradle.GitUtils;
+import com.yubico.gradle.GitUtils
+
 plugins {
   `java-library`
   scala
   `maven-publish`
   signing
-  id("com.diffplug.spotless")
   id("info.solidsoft.pitest")
   id("io.github.cosmicsilence.scalafix")
 }
@@ -38,9 +38,7 @@ dependencies {
   api(project(":webauthn-server-core"))
 
   implementation(project(":yubico-util"))
-  implementation("com.google.guava:guava")
   implementation("com.fasterxml.jackson.core:jackson-databind")
-  implementation("org.bouncycastle:bcprov-jdk15on")
   implementation("org.slf4j:slf4j-api")
 
   testImplementation(platform(project(":test-platform")))
@@ -48,7 +46,7 @@ dependencies {
   testImplementation(project(":yubico-util-scala"))
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
   testImplementation("junit:junit")
-  testImplementation("org.bouncycastle:bcpkix-jdk15on")
+  testImplementation("org.bouncycastle:bcpkix-jdk18on")
   testImplementation("org.eclipse.jetty:jetty-server:[9.4.9.v20180320,10)")
   testImplementation("org.mockito:mockito-core")
   testImplementation("org.scala-lang:scala-library")

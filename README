@@ -60,7 +60,8 @@ The library will log warnings if you try to configure it for algorithms with no 
 This library uses link:https://semver.org/[semantic versioning].
 The public API consists of all public classes, methods and fields in the `com.yubico.webauthn` package and its subpackages,
 i.e., everything covered by the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/package-summary.html[Javadoc].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/package-summary.html[Javadoc],
+*with the exception* of things annotated with `@Deprecated`.
 
 Package-private classes and methods are NOT part of the public API.
 The `com.yubico:yubico-util` module is NOT part of the public API.
@@ -623,6 +624,21 @@ Most services do not need this, and it is disabled by default.
 The link:webauthn-server-attestation[`webauthn-server-attestation` module]
 provides optional additional features for working with attestation.
 See the module documentation for more details.
+
+Alternatively, you can use the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
+interface to implement your own source of attestation root certificates
+and set it as the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
+for your
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+instance.
+Note that depending on your JCA provider configuration, you may need to set the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#enableRevocationChecking(boolean)[`enableRevocationChecking`]
+and/or
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#policyTreeValidator(java.util.function.Predicate)[`policyTreeValidator`]
+settings for compatibility with some authenticators' attestation certificates.
+See the JavaDoc for these settings for more information.
 
 
 == Building

@@ -31,12 +31,19 @@ The
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
 class will attempt to download a new BLOB only when its
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
-is executed,
-and then only if the cache is empty or if the cached BLOB is invalid or out of date.
+or
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.1.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
+method is executed.
+As the names suggest,
+`loadCachedBlob()` downloads a new BLOB only if the cache is empty
+or the cached BLOB is invalid or out of date,
+while `refreshBlob()` always downloads a new BLOB and falls back
+to the cached BLOB only when the new BLOB is invalid in some way.
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
 will never re-download a new BLOB once instantiated.
 +
-You should use some external scheduling mechanism to re-run `loadCachedBlob()` periodically
+You should use some external scheduling mechanism to re-run `loadCachedBlob()`
+and/or `refreshBlob()` periodically
 and rebuild new `FidoMetadataService` instances with the updated metadata contents.
 You can do this with minimal disruption since the `FidoMetadataService` and `RelyingParty`
 classes keep no internal mutable state.
@@ -77,6 +84,39 @@ but we recommend that you do not _require_ a trusted attestation unless you have
 See link:doc/Migrating_from_v1.adoc[the migration guide].
 
 
+== Dependency configuration
+
+Maven:
+
+----------
+<dependency>
+  <groupId>com.yubico</groupId>
+  <artifactId>webauthn-server-attestation</artifactId>
+  <version>2.0.0</version>
+  <scope>compile</scope>
+</dependency>
+----------
+
+Gradle:
+
+----------
+compile 'com.yubico:webauthn-server-attestation:2.0.0'
+----------
+
+
+=== Semantic versioning
+
+This library uses link:https://semver.org/[semantic versioning].
+The public API consists of all public classes, methods and fields in the `com.yubico.fido.metadata` package and its subpackages,
+i.e., everything covered by the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/package-summary.html[Javadoc],
+*with the exception* of things annotated with `@Deprecated`.
+
+Package-private classes and methods are NOT part of the public API.
+The `com.yubico:yubico-util` module is NOT part of the public API.
+Breaking changes to these will NOT be reflected in version numbers.
+
+
 == Getting started
 
 Using this module consists of 4 major steps:
@@ -95,11 +135,14 @@ Unlike other classes in this module and the core library,
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
 is NOT THREAD SAFE since its
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
-method reads and writes caches.
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.1.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
+methods read and write caches.
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`],
 on the other hand, is thread safe,
-and `FidoMetadataDownloader` instances can be reused for subsequent `loadCachedBlob()` calls
-as long as only one `loadCachedBlob()` call executes at a time.
+and `FidoMetadataDownloader` instances can be reused
+for subsequent `loadCachedBlob()` and `refreshBlob()` calls
+as long as only one call executes at a time.
 =====
 +
 [source,java]
@@ -323,15 +366,19 @@ The library implements these as closely as possible, but with some slight depart
 
  ** Step 3 states "The `nextUpdate` field of the Metadata BLOB specifies a date when the download SHOULD occur at latest".
     `FidoMetadataDownloader` does not automatically re-download the BLOB.
-    Instead, each time its
+    Instead, each time the
     link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
     method is executed it checks whether a new BLOB should be downloaded.
+    The
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.1.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
+    method always attempts to download a new BLOB when executed,
+    but also does not trigger re-downloads automatically.
 +
-If no BLOB exists in cache, or the cached BLOB is invalid, or if the current date is greater than or equal to `nextUpdate`,
-then a new BLOB is downloaded.
-If the new BLOB is valid, has a correct signature, and has a `no` field greater than the cached BLOB,
+Whenever a newly downloaded BLOB is valid, has a correct signature,
+and has a `no` field greater than the cached BLOB (if any),
 then the new BLOB replaces the cached one;
-otherwise, the new BLOB is discarded and the cached one is kept until the next execution of `.loadCachedBlob()`.
+otherwise, the new BLOB is discarded and the cached one is kept
+until the next execution of `.loadCachedBlob()` or `.refreshBlob()`.
 
 * Metadata entries are not stored or cached individually, instead the BLOB is cached as a whole.
   In processing rules step 8, neither `FidoMetadataDownloader` nor

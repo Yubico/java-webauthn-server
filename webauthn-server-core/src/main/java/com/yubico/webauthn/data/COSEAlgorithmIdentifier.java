@@ -26,9 +26,12 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.upokecenter.cbor.CBORException;
+import com.upokecenter.cbor.CBORObject;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.NonNull;
 
 /**
  * A number identifying a cryptographic algorithm. The algorithm identifiers SHOULD be values
@@ -42,6 +45,8 @@ import lombok.Getter;
 public enum COSEAlgorithmIdentifier {
   EdDSA(-8),
   ES256(-7),
+  ES384(-35),
+  ES512(-36),
   RS256(-257),
   RS1(-65535);
 
@@ -51,8 +56,48 @@ public enum COSEAlgorithmIdentifier {
     this.id = id;
   }
 
+  /**
+   * Attempt to parse an integer as a {@link COSEAlgorithmIdentifier}.
+   *
+   * @param id an integer equal to the {@link #getId() id} of a constant in {@link
+   *     COSEAlgorithmIdentifier}
+   * @return The {@link COSEAlgorithmIdentifier} instance whose {@link #getId() id} equals <code>id
+   *     </code>, if any.
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">§5.8.5.
+   *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
+   */
   public static Optional<COSEAlgorithmIdentifier> fromId(long id) {
     return Stream.of(values()).filter(v -> v.id == id).findAny();
+  }
+
+  /**
+   * Read the {@link COSEAlgorithmIdentifier} from a public key in COSE_Key format.
+   *
+   * @param publicKeyCose a public key in COSE_Key format.
+   * @return The <code>alg</code> of the <code>publicKeyCose</code> parsed as a {@link
+   *     COSEAlgorithmIdentifier}, if possible. Returns empty if the {@link COSEAlgorithmIdentifier}
+   *     enum has no constant matching the <code>alg</code> value.
+   * @throws IllegalArgumentException if <code>publicKeyCose</code> is not a well-formed COSE_Key.
+   */
+  public static Optional<COSEAlgorithmIdentifier> fromPublicKey(@NonNull ByteArray publicKeyCose) {
+    final CBORObject ALG = CBORObject.FromObject(3);
+    final int alg;
+    try {
+      CBORObject cose = CBORObject.DecodeFromBytes(publicKeyCose.getBytes());
+      if (!cose.ContainsKey(ALG)) {
+        throw new IllegalArgumentException(
+            "Public key does not contain an \"alg\"(3) value: " + publicKeyCose);
+      }
+      CBORObject algCbor = cose.get(ALG);
+      if (!(algCbor.isNumber() && algCbor.AsNumber().IsInteger())) {
+        throw new IllegalArgumentException(
+            "Public key has non-integer \"alg\"(3) value: " + publicKeyCose);
+      }
+      alg = algCbor.AsInt32();
+    } catch (CBORException e) {
+      throw new IllegalArgumentException("Failed to parse public key", e);
+    }
+    return fromId(alg);
   }
 
   @JsonCreator

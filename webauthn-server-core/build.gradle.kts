@@ -1,10 +1,10 @@
-import com.yubico.gradle.GitUtils;
+import com.yubico.gradle.GitUtils
+
 plugins {
   `java-library`
   scala
   `maven-publish`
   signing
-  id("com.diffplug.spotless")
   id("info.solidsoft.pitest")
   id("io.github.cosmicsilence.scalafix")
 }
@@ -21,13 +21,12 @@ java {
 dependencies {
   api(platform(rootProject))
 
-  api(project(":yubico-util"))
-
+  implementation(project(":yubico-util"))
   implementation("com.augustcellars.cose:cose-java")
   implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("com.google.guava:guava")
   implementation("com.upokecenter:cbor")
-  implementation("org.apache.httpcomponents:httpclient")
+  implementation("org.apache.httpcomponents.client5:httpclient5")
   implementation("org.slf4j:slf4j-api")
 
   testImplementation(platform(project(":test-platform")))
@@ -35,8 +34,8 @@ dependencies {
   testImplementation("com.fasterxml.jackson.core:jackson-databind")
   testImplementation("com.upokecenter:cbor")
   testImplementation("junit:junit")
-  testImplementation("org.bouncycastle:bcpkix-jdk15on")
-  testImplementation("org.bouncycastle:bcprov-jdk15on")
+  testImplementation("org.bouncycastle:bcpkix-jdk18on")
+  testImplementation("org.bouncycastle:bcprov-jdk18on")
   testImplementation("org.mockito:mockito-core")
   testImplementation("org.scala-lang:scala-library")
   testImplementation("org.scalacheck:scalacheck_2.13")
@@ -69,7 +68,7 @@ tasks.jar {
       "Implementation-Version" to project.version,
       "Implementation-Vendor" to "Yubico",
       "Implementation-Source-Url" to "https://github.com/Yubico/java-webauthn-server",
-      "Git-Commit" to com.yubico.gradle.GitUtils.getGitCommitOrUnknown(projectDir),
+      "Git-Commit" to GitUtils.getGitCommitOrUnknown(projectDir),
     ))
   }
 }

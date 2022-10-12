@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.yubico.fido.metadata.FidoMetadataService.Filters.AuthenticatorToBeFiltered
 import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RegistrationResult
@@ -204,18 +205,23 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
         def makeMds(
             blobTuple: (String, X509Certificate, java.util.Set[CRL]),
             attestationCrls: Set[CRL] = Set.empty,
-        )(filter: MetadataBLOBPayloadEntry => Boolean): FidoMetadataService =
-          FidoMetadataService
+        )(
+            prefilter: MetadataBLOBPayloadEntry => Boolean,
+            filter: Option[AuthenticatorToBeFiltered => Boolean] = None,
+        ): FidoMetadataService = {
+          val builder = FidoMetadataService
             .builder()
             .useBlob(makeDownloader(blobTuple).loadCachedBlob())
-            .prefilter(filter.asJava)
+            .prefilter(prefilter.asJava)
             .certStore(
               CertStore.getInstance(
                 "Collection",
                 new CollectionCertStoreParameters(attestationCrls.asJava),
               )
             )
-            .build()
+          filter.foreach(f => builder.filter(f.asJava))
+          builder.build()
+        }
 
         val blobTuple = makeBlob(s"""{
           "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
@@ -239,8 +245,8 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
         }""")
 
         it("Filtering in getFilteredEntries works as expected.") {
-          def count(filter: MetadataBLOBPayloadEntry => Boolean): Long =
-            makeMds(blobTuple)(filter).findEntries(_ => true).size
+          def count(prefilter: MetadataBLOBPayloadEntry => Boolean): Long =
+            makeMds(blobTuple)(prefilter).findEntries(_ => true).size
 
           implicit class MetadataBLOBPayloadEntryWithAbbreviatedAttestationCertificateKeyIdentifiers(
               entry: MetadataBLOBPayloadEntry
@@ -312,7 +318,7 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
               attestationMaker = AttestationMaker.packed(
                 AttestationSigner.ca(
                   COSEAlgorithmIdentifier.ES256,
-                  aaguid = aaguidA.asBytes,
+                  aaguid = Some(aaguidA.asBytes),
                   validFrom = CertValidFrom,
                   validTo = CertValidTo,
                 )
@@ -384,10 +390,10 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
             .build()
 
           def finishRegistration(
-              filter: MetadataBLOBPayloadEntry => Boolean
+              prefilter: MetadataBLOBPayloadEntry => Boolean
           ): RegistrationResult = {
             val mds =
-              makeMds(blobTuple, attestationCrls = attestationCrls)(filter)
+              makeMds(blobTuple, attestationCrls = attestationCrls)(prefilter)
             RelyingParty
               .builder()
               .identity(rpIdentity)
@@ -405,6 +411,66 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
             _.getAaguid.toScala.contains(aaguidB)
           ).isAttestationTrusted should be(false)
         }
+
+        describe("Zero AAGUIDs") {
+          val zeroAaguid =
+            new AAGUID(ByteArray.fromHex("00000000000000000000000000000000"))
+
+          it("are not used to find metadata entries.") {
+            aaguidA should not equal zeroAaguid
+
+            val blobTuple = makeBlob(s"""{
+              "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "nextUpdate" : "2022-12-01",
+              "no" : 0,
+              "entries": [
+                ${makeEntry(aaguid = Some(aaguidA))},
+                ${makeEntry(aaguid = Some(zeroAaguid))}
+              ]
+            }""")
+            var filterRan = false
+            val mds = makeMds(blobTuple)(
+              _ => true,
+              filter = Some({ _ =>
+                filterRan = true
+                true
+              }),
+            )
+
+            mds.findEntries(zeroAaguid) shouldBe empty
+            filterRan should be(false)
+          }
+
+          it("are omitted in the argument to the runtime filter.") {
+            aaguidA should not equal zeroAaguid
+
+            val (cert, _) = TestAuthenticator.generateAttestationCertificate()
+            val acki: String = new ByteArray(
+              CertificateParser.computeSubjectKeyIdentifier(cert)
+            ).getHex
+            val blobTuple = makeBlob(s"""{
+              "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",
+              "nextUpdate" : "2022-12-01",
+              "no" : 0,
+              "entries": [
+                ${makeEntry(acki = Some(Set(acki)), aaguid = Some(aaguidA))}
+              ]
+            }""")
+            var filterRan = false
+            val mds = makeMds(blobTuple)(
+              _ => true,
+              filter = Some({ authenticatorToBeFiltered =>
+                filterRan = true
+                authenticatorToBeFiltered.getAaguid.toScala should be(None)
+                true
+              }),
+            )
+
+            mds.findEntries(List(cert).asJava, zeroAaguid).size should be(1)
+            filterRan should be(true)
+          }
+        }
+
       }
 
       describe("2.1. Check whether the status report of the authenticator model has changed compared to the cached entry by looking at the fields timeOfLastStatusChange and statusReport.") {

@@ -42,7 +42,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 final class WebAuthnCodecs {
 
@@ -50,10 +49,14 @@ final class WebAuthnCodecs {
       new ByteArray(new byte[] {0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
 
   static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
+
+    final int fieldSizeBytes =
+        Math.toIntExact(
+            Math.round(Math.ceil(key.getParams().getCurve().getField().getFieldSize() / 8.0)));
     byte[] x = key.getW().getAffineX().toByteArray();
     byte[] y = key.getW().getAffineY().toByteArray();
-    byte[] xPadding = new byte[Math.max(0, 32 - x.length)];
-    byte[] yPadding = new byte[Math.max(0, 32 - y.length)];
+    byte[] xPadding = new byte[Math.max(0, fieldSizeBytes - x.length)];
+    byte[] yPadding = new byte[Math.max(0, fieldSizeBytes - y.length)];
 
     Arrays.fill(xPadding, (byte) 0);
     Arrays.fill(yPadding, (byte) 0);
@@ -61,28 +64,57 @@ final class WebAuthnCodecs {
     return new ByteArray(
         Bytes.concat(
             new byte[] {0x04},
-            Bytes.concat(xPadding, Arrays.copyOfRange(x, Math.max(0, x.length - 32), x.length)),
-            Bytes.concat(yPadding, Arrays.copyOfRange(y, Math.max(0, y.length - 32), y.length))));
+            xPadding,
+            Arrays.copyOfRange(x, Math.max(0, x.length - fieldSizeBytes), x.length),
+            yPadding,
+            Arrays.copyOfRange(y, Math.max(0, y.length - fieldSizeBytes), y.length)));
   }
 
   static ByteArray rawEcKeyToCose(ByteArray key) {
     final byte[] keyBytes = key.getBytes();
-    if (!(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes[0] == 0x04))) {
+    final int len = keyBytes.length;
+    final int lenSub1 = keyBytes.length - 1;
+    if (!(len == 64
+        || len == 96
+        || len == 132
+        || (keyBytes[0] == 0x04 && (lenSub1 == 64 || lenSub1 == 96 || lenSub1 == 132)))) {
       throw new IllegalArgumentException(
           String.format(
-              "Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was %d bytes starting with %02x",
+              "Raw key must be 64, 96 or 132 bytes long, or start with 0x04 and be 65, 97 or 133 bytes long; was %d bytes starting with %02x",
               keyBytes.length, keyBytes[0]));
     }
-    final int start = (keyBytes.length == 64) ? 0 : 1;
+    final int start = (len == 64 || len == 96 || len == 132) ? 0 : 1;
+    final int coordinateLength = (len - start) / 2;
 
     final Map<Long, Object> coseKey = new HashMap<>();
     coseKey.put(1L, 2L); // Key type: EC
 
-    coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId());
-    coseKey.put(-1L, 1L); // Curve: P-256
+    final COSEAlgorithmIdentifier coseAlg;
+    final int coseCrv;
+    switch (len - start) {
+      case 64:
+        coseAlg = COSEAlgorithmIdentifier.ES256;
+        coseCrv = 1;
+        break;
+      case 96:
+        coseAlg = COSEAlgorithmIdentifier.ES384;
+        coseCrv = 2;
+        break;
+      case 132:
+        coseAlg = COSEAlgorithmIdentifier.ES512;
+        coseCrv = 3;
+        break;
+      default:
+        throw new RuntimeException(
+            "Failed to determine COSE EC algorithm. This should not be possible, please file a bug report.");
+    }
+    coseKey.put(3L, coseAlg.getId());
+    coseKey.put(-1L, coseCrv);
 
-    coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + 32)); // x
-    coseKey.put(-3L, Arrays.copyOfRange(keyBytes, start + 32, start + 64)); // y
+    coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + coordinateLength)); // x
+    coseKey.put(
+        -3L,
+        Arrays.copyOfRange(keyBytes, start + coordinateLength, start + 2 * coordinateLength)); // y
 
     return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
   }
@@ -140,18 +172,16 @@ final class WebAuthnCodecs {
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
   }
 
-  static Optional<COSEAlgorithmIdentifier> getCoseKeyAlg(ByteArray key) {
-    CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
-    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
-    return COSEAlgorithmIdentifier.fromId(alg);
-  }
-
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
     switch (alg) {
       case EdDSA:
         return "EDDSA";
       case ES256:
         return "SHA256withECDSA";
+      case ES384:
+        return "SHA384withECDSA";
+      case ES512:
+        return "SHA512withECDSA";
       case RS256:
         return "SHA256withRSA";
       case RS1:

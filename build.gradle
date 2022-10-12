@@ -18,7 +18,7 @@ plugins {
 
 import io.franzbecker.gradle.lombok.LombokPlugin
 import io.franzbecker.gradle.lombok.task.DelombokTask
-import com.yubico.gradle.GitUtils;
+import com.yubico.gradle.GitUtils
 
 rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
 
@@ -52,12 +52,10 @@ dependencies {
     api('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:[2.13.2,3)')
     api('com.fasterxml.jackson.datatype:jackson-datatype-jdk8:[2.13.2,3)')
     api('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:[2.13.2,3)')
-    api('com.google.guava:guava:[24.1.1,31)')
+    api('com.google.guava:guava:[24.1.1,32)')
     api('com.upokecenter:cbor:[4.5.1,5)')
-    api('org.apache.httpcomponents:httpclient:[4.5.2,5)')
-    api('org.bouncycastle:bcpkix-jdk15on:[1.62,2)')
-    api('org.bouncycastle:bcprov-jdk15on:[1.62,2)')
-    api('org.slf4j:slf4j-api:[1.7.25,2)')
+    api('org.apache.httpcomponents.client5:httpclient5:[5.0.0,6)')
+    api('org.slf4j:slf4j-api:[1.7.25,3)')
   }
 }
 
@@ -94,7 +92,8 @@ subprojects {
     mavenCentral()
   }
 
-  if (project.plugins.hasPlugin('com.diffplug.spotless')) {
+  if (project !== project(':test-platform')) {
+    apply plugin: 'com.diffplug.spotless'
     spotless {
       java {
         googleJavaFormat()
@@ -117,9 +116,17 @@ task assembleJavadoc(type: Sync) {
   destinationDir = file("${rootProject.buildDir}/javadoc")
 }
 
+task checkJavaVersionBeforeRelease {
+  doFirst {
+    if (JavaVersion.current() != JavaVersion.VERSION_17) {
+      throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
+    }
+  }
+}
+
 subprojects { project ->
 
-  if (project.plugins.hasPlugin('scala') && project.plugins.hasPlugin('com.diffplug.spotless')) {
+  if (project.plugins.hasPlugin('scala')) {
     project.scalafix {
       configFile = rootProject.file('scalafix.conf')
 
@@ -149,14 +156,17 @@ subprojects { project ->
     reproducibleFileOrder = true
   }
 
-  tasks.withType(Sign) {
-    it.dependsOn check
-  }
-
   tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild
     }
+  }
+
+  tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
+  tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
+  tasks.withType(Sign) {
+    it.dependsOn check
+    dependsOn checkJavaVersionBeforeRelease
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
@@ -196,7 +206,7 @@ subprojects { project ->
   if (project.hasProperty('publishMe') && project.publishMe) {
 
     if (GitUtils.getGitCommit(projectDir) == null) {
-      throw new RuntimeException("Failed to get git commit ID");
+      throw new RuntimeException("Failed to get git commit ID")
     }
 
     publishing {

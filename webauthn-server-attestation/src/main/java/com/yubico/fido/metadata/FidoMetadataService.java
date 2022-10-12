@@ -69,9 +69,15 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>This class implements {@link AttestationTrustSource}, so it can be configured as the {@link
  * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
- * setting in {@link RelyingParty}.
+ * setting in {@link RelyingParty}. This implementation always sets {@link
+ * com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder#enableRevocationChecking(boolean)
+ * enableRevocationChecking(false)}, because the FIDO MDS has its own revocation procedures and not
+ * all attestation certificates provide CRLs; and always sets {@link
+ * com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder#policyTreeValidator(Predicate)
+ * policyTreeValidator} to accept any policy tree, because a Windows Hello attestation certificate
+ * is known to include a critical certificate policies extension.
  *
- * <p>The metadata service may be configured with a two stages of filters to select trusted
+ * <p>The metadata service may be configured with two stages of filters to select trusted
  * authenticators. The first stage is the {@link FidoMetadataServiceBuilder#prefilter(Predicate)
  * prefilter} setting, which is executed once when the {@link FidoMetadataService} instance is
  * constructed. The second stage is the {@link FidoMetadataServiceBuilder#filter(Predicate) filter}
@@ -426,6 +432,9 @@ public final class FidoMetadataService implements AttestationTrustSource {
        * The AAGUID from the <a
        * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attested-credential-data">attested
        * credential data</a> of a credential about ot be registered.
+       *
+       * <p>This will not be present if the attested credential data contained an AAGUID of all
+       * zeroes.
        */
       public Optional<AAGUID> getAaguid() {
         return Optional.ofNullable(aaguid);
@@ -493,7 +502,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
         certSubjectKeyIdentifiers,
         aaguid);
 
-    if (!nonzeroAaguid.isPresent()) {
+    if (aaguid.isPresent() && !nonzeroAaguid.isPresent()) {
       log.debug("findEntries: ignoring zero AAGUID");
     }
 
@@ -516,7 +525,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
                         new AuthenticatorToBeFiltered(
                             attestationCertificateChain,
                             metadataBLOBPayloadEntry,
-                            aaguid.orElse(null))))
+                            nonzeroAaguid.orElse(null))))
             .collect(Collectors.toSet());
 
     log.debug(
@@ -616,6 +625,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
                 .collect(Collectors.toSet()))
         .certStore(certStore)
         .enableRevocationChecking(false)
+        .policyTreeValidator(policyNode -> true)
         .build();
   }
 }

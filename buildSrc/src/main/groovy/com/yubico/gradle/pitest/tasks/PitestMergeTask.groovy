@@ -14,7 +14,7 @@ import org.gradle.api.tasks.TaskAction
 class PitestMergeTask extends DefaultTask {
 
   @OutputFile
-  def File destinationFile = project.file("${project.buildDir}/reports/pitest/mutations.xml")
+  File destinationFile = project.file("${project.buildDir}/reports/pitest/mutations.xml")
 
   PitestMergeTask() {
     project.subprojects.each { subproject ->
@@ -24,7 +24,7 @@ class PitestMergeTask extends DefaultTask {
     }
   }
 
-  def Set<File> findMutationsXmlFiles(File f, Set<File> found) {
+  Set<File> findMutationsXmlFiles(File f, Set<File> found) {
     if (f.isDirectory()) {
       Set<File> result = found
       for (File child : f.listFiles()) {

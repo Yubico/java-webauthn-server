@@ -1829,6 +1829,13 @@ class RelyingPartyAssertionSpec
           step.result.get.isSuccess should be(true)
           step.result.get.getCredentialId should equal(Defaults.credentialId)
           step.result.get.getUserHandle should equal(Defaults.userHandle)
+          step.result.get.getCredential.getCredentialId should equal(
+            step.result.get.getCredentialId
+          )
+          step.result.get.getCredential.getUserHandle should equal(
+            step.result.get.getUserHandle
+          )
+          step.result.get.getCredential.getPublicKeyCose should not be null
         }
       }
     }

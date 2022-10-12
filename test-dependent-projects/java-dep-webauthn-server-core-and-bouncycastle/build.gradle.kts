@@ -6,7 +6,7 @@ val coreTestsOutput = project(":webauthn-server-core").extensions.getByType(Sour
 
 dependencies {
     implementation(project(":webauthn-server-core"))
-    implementation("org.bouncycastle:bcprov-jdk15on:[1.62,2)")
+    implementation("org.bouncycastle:bcprov-jdk18on:[1.62,2)")
 
     testImplementation(coreTestsOutput)
     testImplementation("junit:junit:4.12")

@@ -10,6 +10,24 @@ import java.security.Security
 trait TestWithEachProvider extends Matchers {
   this: AnyFunSpec =>
 
+  /** Run the `body` in a context with the given JCA [[Security]] providers,
+    * then reset the providers to their state before.
+    */
+  def withProviderContext(
+      providers: List[Provider]
+  )(
+      body: => Any
+  ): Unit = {
+    val originalProviders = Security.getProviders.toList
+    Security.getProviders.foreach(prov => Security.removeProvider(prov.getName))
+    providers.foreach(Security.addProvider)
+
+    body
+
+    Security.getProviders.foreach(prov => Security.removeProvider(prov.getName))
+    originalProviders.foreach(Security.addProvider)
+  }
+
   def wrapItFunctionWithProviderContext(
       providerSetName: String,
       providers: List[Provider],
@@ -29,18 +47,7 @@ trait TestWithEachProvider extends Matchers {
       */
     def it(testName: String)(testFun: => Any): Unit = {
       this.it.apply(testName) {
-        val originalProviders = Security.getProviders.toList
-        Security.getProviders.foreach(prov =>
-          Security.removeProvider(prov.getName)
-        )
-        providers.foreach(Security.addProvider)
-
-        testFun
-
-        Security.getProviders.foreach(prov =>
-          Security.removeProvider(prov.getName)
-        )
-        originalProviders.foreach(Security.addProvider)
+        withProviderContext(providers)(testFun)
       }
     }
 
