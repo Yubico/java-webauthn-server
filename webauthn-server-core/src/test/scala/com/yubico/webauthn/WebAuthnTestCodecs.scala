@@ -88,12 +88,10 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
-  def getCoseAlgId(encodedPublicKey: ByteArray): COSEAlgorithmIdentifier = {
-    importCosePublicKey(encodedPublicKey).getAlgorithm match {
-      case "EC" => COSEAlgorithmIdentifier.ES256
-      case other =>
-        throw new UnsupportedOperationException("Unknown algorithm: " + other)
-    }
+  def getCoseKty(encodedPublicKey: ByteArray): Int = {
+    val cose = CBORObject.DecodeFromBytes(encodedPublicKey.getBytes)
+    val kty = cose.get(CBORObject.FromObject(1)).AsInt32
+    kty
   }
 
 }

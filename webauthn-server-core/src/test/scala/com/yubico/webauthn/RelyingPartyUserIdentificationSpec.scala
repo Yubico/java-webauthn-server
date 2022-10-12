@@ -33,8 +33,8 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 import java.security.KeyPair
@@ -47,7 +47,7 @@ import scala.util.Success
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyUserIdentificationSpec extends FunSpec with Matchers {
+class RelyingPartyUserIdentificationSpec extends AnyFunSpec with Matchers {
 
   private object Defaults {
 

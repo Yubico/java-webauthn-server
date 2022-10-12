@@ -58,8 +58,8 @@ import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -78,7 +78,7 @@ import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyAssertionSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
     with TestWithEachProvider {
@@ -1829,6 +1829,13 @@ class RelyingPartyAssertionSpec
           step.result.get.isSuccess should be(true)
           step.result.get.getCredentialId should equal(Defaults.credentialId)
           step.result.get.getUserHandle should equal(Defaults.userHandle)
+          step.result.get.getCredential.getCredentialId should equal(
+            step.result.get.getCredentialId
+          )
+          step.result.get.getCredential.getUserHandle should equal(
+            step.result.get.getUserHandle
+          )
+          step.result.get.getCredential.getPublicKeyCose should not be null
         }
       }
     }

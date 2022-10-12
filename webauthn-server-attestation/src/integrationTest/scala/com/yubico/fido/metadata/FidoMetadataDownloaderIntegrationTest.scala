@@ -2,8 +2,8 @@ package com.yubico.fido.metadata
 
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfter
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.tags.Network
 import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
@@ -16,7 +16,7 @@ import scala.util.Try
 @Network
 @RunWith(classOf[JUnitRunner])
 class FidoMetadataDownloaderIntegrationTest
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with BeforeAndAfter {
 

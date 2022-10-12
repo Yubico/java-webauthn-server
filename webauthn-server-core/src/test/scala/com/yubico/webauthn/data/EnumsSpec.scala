@@ -5,8 +5,8 @@ import com.yubico.webauthn.extension.uvm.KeyProtectionType
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -14,7 +14,7 @@ import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
 class EnumsSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
@@ -22,6 +22,34 @@ class EnumsSpec
 
   describe("AttestationConveyancePreference") {
     describe("can be parsed from JSON") {
+      it("""value: "none"""") {
+        json.readValue(
+          "\"none\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.NONE
+      }
+
+      it("""value: "indirect"""") {
+        json.readValue(
+          "\"indirect\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.INDIRECT
+      }
+
+      it("""value: "direct"""") {
+        json.readValue(
+          "\"direct\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.DIRECT
+      }
+
+      it("""value: "enterprise"""") {
+        json.readValue(
+          "\"enterprise\"",
+          classOf[AttestationConveyancePreference],
+        ) should be theSameInstanceAs AttestationConveyancePreference.ENTERPRISE
+      }
+
       it("but throws IllegalArgumentException for unknown values.") {
         val result = Try(
           json.readValue("\"foo\"", classOf[AttestationConveyancePreference])

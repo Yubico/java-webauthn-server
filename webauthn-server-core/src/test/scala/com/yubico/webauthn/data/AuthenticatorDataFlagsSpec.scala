@@ -26,12 +26,12 @@ package com.yubico.webauthn.data
 
 import com.yubico.internal.util.BinaryUtil
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
-class AuthenticatorDataFlagsSpec extends FunSpec with Matchers {
+class AuthenticatorDataFlagsSpec extends AnyFunSpec with Matchers {
 
   describe("AuthenticatorDataFlags") {
 

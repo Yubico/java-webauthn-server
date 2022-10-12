@@ -118,7 +118,7 @@ public class UserIdentity implements PublicKeyCredentialEntity {
   public static class UserIdentityBuilder {
 
     public static class MandatoryStages {
-      private UserIdentityBuilder builder = new UserIdentityBuilder();
+      private final UserIdentityBuilder builder = new UserIdentityBuilder();
 
       /**
        * {@link UserIdentityBuilder#name(String) name} is a required parameter.

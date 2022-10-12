@@ -73,6 +73,20 @@ public class PublicKeyCredentialParameters {
       builder().alg(COSEAlgorithmIdentifier.ES256).build();
 
   /**
+   * Algorithm {@link COSEAlgorithmIdentifier#ES384} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters ES384 =
+      builder().alg(COSEAlgorithmIdentifier.ES384).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#ES512} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters ES512 =
+      builder().alg(COSEAlgorithmIdentifier.ES512).build();
+
+  /**
    * Algorithm {@link COSEAlgorithmIdentifier#RS1} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
    */
@@ -92,7 +106,7 @@ public class PublicKeyCredentialParameters {
 
   public static class PublicKeyCredentialParametersBuilder {
     public static class MandatoryStages {
-      private PublicKeyCredentialParametersBuilder builder =
+      private final PublicKeyCredentialParametersBuilder builder =
           new PublicKeyCredentialParametersBuilder();
 
       /**

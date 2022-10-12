@@ -25,17 +25,15 @@ object Generators {
       authenticatorExtensionOutputs <-
         arbitrary[Option[AuthenticatorAssertionExtensionOutputs]]
       clientExtensionOutputs <- arbitrary[ClientAssertionExtensionOutputs]
-      credentialId <- arbitrary[ByteArray]
+      credential <- arbitrary[RegisteredCredential]
       signatureCount <- arbitrary[Long]
       signatureCounterValid <- arbitrary[Boolean]
       success <- arbitrary[Boolean]
-      userHandle <- arbitrary[ByteArray]
       username <- arbitrary[String]
     } yield AssertionResult
       .builder()
       .success(success)
-      .credentialId(credentialId)
-      .userHandle(userHandle)
+      .credential(credential)
       .username(username)
       .signatureCount(signatureCount)
       .signatureCounterValid(signatureCounterValid)

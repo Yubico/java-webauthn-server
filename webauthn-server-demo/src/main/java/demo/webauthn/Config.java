@@ -26,13 +26,10 @@ package demo.webauthn;
 
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
-import com.yubico.webauthn.extension.appid.AppId;
-import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,14 +46,11 @@ public class Config {
   private final Set<String> origins;
   private final int port;
   private final RelyingPartyIdentity rpIdentity;
-  private final Optional<AppId> appId;
 
-  private Config(
-      Set<String> origins, int port, RelyingPartyIdentity rpIdentity, Optional<AppId> appId) {
+  private Config(Set<String> origins, int port, RelyingPartyIdentity rpIdentity) {
     this.origins = CollectionUtil.immutableSet(origins);
     this.port = port;
     this.rpIdentity = rpIdentity;
-    this.appId = appId;
   }
 
   private static Config instance;
@@ -64,10 +58,8 @@ public class Config {
   private static Config getInstance() {
     if (instance == null) {
       try {
-        instance = new Config(computeOrigins(), computePort(), computeRpIdentity(), computeAppId());
+        instance = new Config(computeOrigins(), computePort(), computeRpIdentity());
       } catch (MalformedURLException e) {
-        throw new RuntimeException(e);
-      } catch (InvalidAppIdException e) {
         throw new RuntimeException(e);
       }
     }
@@ -84,10 +76,6 @@ public class Config {
 
   public static RelyingPartyIdentity getRpIdentity() {
     return getInstance().rpIdentity;
-  }
-
-  public static Optional<AppId> getAppId() {
-    return getInstance().appId;
   }
 
   private static Set<String> computeOrigins() {
@@ -142,15 +130,5 @@ public class Config {
     final RelyingPartyIdentity result = resultBuilder.build();
     logger.info("RP identity: {}", result);
     return result;
-  }
-
-  private static Optional<AppId> computeAppId() throws InvalidAppIdException {
-    final String appId = System.getenv("YUBICO_WEBAUTHN_U2F_APPID");
-    logger.debug("YUBICO_WEBAUTHN_U2F_APPID: {}", appId);
-
-    AppId result = appId == null ? new AppId("https://localhost:8443") : new AppId(appId);
-
-    logger.debug("U2F AppId: {}", result.getId());
-    return Optional.of(result);
   }
 }

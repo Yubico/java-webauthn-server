@@ -3,7 +3,7 @@ name: Test coverage
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   test:
@@ -11,19 +11,71 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # For push to GitHub Pages
+
     steps:
     - name: Check out code
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
 
-    - name: Set up JDK 11
-      uses: actions/setup-java@v1
+    - name: Set up JDK
+      uses: actions/setup-java@v3
       with:
-        java-version: 11
+        java-version: 17
+        distribution: temurin
 
     - name: Run mutation test
-      run: ./gradlew pitest
+      run: ./gradlew pitestMerge
 
-    - name: Report to Coveralls
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-      run: ./gradlew coveralls
+    - name: Archive test reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: pitest-reports-${{ github.sha }}
+        path: "*/build/reports/pitest/**"
+
+    - name: Create output directory
+      run: mkdir -p build/gh-pages
+
+    - name: Collect HTML reports
+      run: |
+        mkdir -p build/gh-pages/mutation-coverage-reports
+        for sp in webauthn-server-attestation webauthn-server-core yubico-util; do
+          cp -a "${sp}"/build/reports/pitest build/gh-pages/mutation-coverage-reports/"${sp}"
+        done
+        sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage/index.html.template > build/gh-pages/index.html
+
+    - name: Create coverage badge
+      # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
+      # which we can then include in the project README.
+      uses: ./.github/actions/pit-results-badge
+      with:
+        output-file: build/gh-pages/coverage-badge.json
+
+    - name: Check out GitHub Pages branch
+      uses: actions/checkout@v3
+      with:
+        ref: gh-pages
+        clean: false
+
+    - name: Prepare metadata for pit-results-comment action
+      run: |
+        git checkout "${GITHUB_SHA}" -- .github/workflows/coverage .github/actions
+        echo PREV_COMMIT=$(cat prev-commit.txt) >> "${GITHUB_ENV}"
+
+    - name: Post mutation test results as commit comment
+      uses: ./.github/actions/pit-results-comment
+      with:
+        prev-commit: ${{ env.PREV_COMMIT }}
+        prev-mutations-file: prev-mutations.xml
+
+    - name: Push to GitHub Pages
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git rm -rf -- .
+        mv build/gh-pages/* .
+        cp build/reports/pitest/mutations.xml prev-mutations.xml
+        echo "${GITHUB_SHA}" > prev-commit.txt
+        git add coverage-badge.json index.html mutation-coverage-reports prev-mutations.xml prev-commit.txt
+        git commit --amend --reset-author -m "Generate GitHub Pages content"
+        git push -f

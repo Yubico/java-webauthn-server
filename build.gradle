@@ -4,19 +4,21 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.5.1'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.11.0'
     classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
 plugins {
   id 'java-platform'
-  id 'com.github.kt3k.coveralls' version '2.12.0'
+  id 'maven-publish'
+  id 'signing'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
   id 'io.franzbecker.gradle-lombok' version '5.0.0'
 }
 
 import io.franzbecker.gradle.lombok.LombokPlugin
 import io.franzbecker.gradle.lombok.task.DelombokTask
+import com.yubico.gradle.GitUtils
 
 rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
 
@@ -40,7 +42,7 @@ if (publishEnabled) {
 }
 
 wrapper {
-  gradleVersion = '7.3'
+  gradleVersion = '7.5.1'
 }
 
 dependencies {
@@ -50,30 +52,10 @@ dependencies {
     api('com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:[2.13.2,3)')
     api('com.fasterxml.jackson.datatype:jackson-datatype-jdk8:[2.13.2,3)')
     api('com.fasterxml.jackson.datatype:jackson-datatype-jsr310:[2.13.2,3)')
-    api('com.fasterxml.jackson:jackson-bom') {
-      version {
-        strictly '[2.13.2.1,3)'
-        reject '2.13.2.1'
-      }
-      because 'jackson-databind 2.13.2.1 references nonexistent BOM'
-    }
-    api('com.google.guava:guava:[24.1.1,31)')
+    api('com.google.guava:guava:[24.1.1,32)')
     api('com.upokecenter:cbor:[4.5.1,5)')
-    api('javax.ws.rs:javax.ws.rs-api:[2.1,3)')
-    api('javax.xml.bind:jaxb-api:[2.3.0,3)')
-    api('junit:junit:[4.12,5)')
-    api('org.apache.httpcomponents:httpclient:[4.5.2,5)')
-    api('org.bouncycastle:bcpkix-jdk15on:[1.62,2)')
-    api('org.bouncycastle:bcprov-jdk15on:[1.62,2)')
-    api('org.eclipse.jetty:jetty-servlet:[9.4.9.v20180320,10)')
-    api('org.glassfish.jersey.containers:jersey-container-servlet-core:[2.33,3)')
-    api('org.glassfish.jersey.containers:jersey-container-servlet:[2.33,3)')
-    api('org.glassfish.jersey.inject:jersey-hk2:[2.33,3)')
-    api('org.mockito:mockito-core:[2.27.0,3)')
-    api('org.scalacheck:scalacheck_2.13:[1.14.0,2)')
-    api('org.scalatest:scalatest_2.13:[3.0.8,3.1)')
-    api('org.slf4j:slf4j-api:[1.7.25,2)')
-    api('uk.org.lidalia:slf4j-test:[1.1.0,2)')
+    api('org.apache.httpcomponents.client5:httpclient5:[5.0.0,6)')
+    api('org.slf4j:slf4j-api:[1.7.25,3)')
   }
 }
 
@@ -82,7 +64,6 @@ allprojects {
   ext.dirtyMarker = "-DIRTY"
 
   apply plugin: 'com.cinnober.gradle.semver-git'
-  apply plugin: 'com.diffplug.spotless'
   apply plugin: 'idea'
 
   group = 'com.yubico'
@@ -97,8 +78,8 @@ subprojects {
   apply plugin: LombokPlugin
 
   lombok {
-    version '1.18.20'
-    sha256 = 'ce947be6c2fbe759fbbe8ef3b42b6825f814c98c8853f1013f2d9630cedf74b0'
+    version '1.18.24'
+    sha256 = 'd3584bc2db03f059f984fb0a9c119aac1fa0da578a448e69fc3f68b36584c749'
   }
   tasks.withType(AbstractCompile) {
     if (tasks.findByName('verifyLombok')) {
@@ -111,12 +92,15 @@ subprojects {
     mavenCentral()
   }
 
-  spotless {
-    java {
-      googleJavaFormat()
-    }
-    scala {
-      scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
+  if (project !== project(':test-platform')) {
+    apply plugin: 'com.diffplug.spotless'
+    spotless {
+      java {
+        googleJavaFormat()
+      }
+      scala {
+        scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
+      }
     }
   }
 }
@@ -132,17 +116,12 @@ task assembleJavadoc(type: Sync) {
   destinationDir = file("${rootProject.buildDir}/javadoc")
 }
 
-String getGitCommit() {
-  def proc = "git rev-parse HEAD".execute(null, projectDir)
-  proc.waitFor()
-  if (proc.exitValue() != 0) {
-    return null
+task checkJavaVersionBeforeRelease {
+  doFirst {
+    if (JavaVersion.current() != JavaVersion.VERSION_17) {
+      throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
+    }
   }
-  return proc.text.trim()
-}
-
-String getGitCommitOrUnknown() {
-  return getGitCommit() ?: 'UNKNOWN'
 }
 
 subprojects { project ->
@@ -177,14 +156,17 @@ subprojects { project ->
     reproducibleFileOrder = true
   }
 
-  tasks.withType(Sign) {
-    it.dependsOn check
-  }
-
   tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild
     }
+  }
+
+  tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
+  tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
+  tasks.withType(Sign) {
+    it.dependsOn check
+    dependsOn checkJavaVersionBeforeRelease
   }
 
   if (project.hasProperty('publishMe') && project.publishMe) {
@@ -223,8 +205,8 @@ subprojects { project ->
 
   if (project.hasProperty('publishMe') && project.publishMe) {
 
-    if (getGitCommit() == null) {
-      throw new RuntimeException("Failed to get git commit ID");
+    if (GitUtils.getGitCommit(projectDir) == null) {
+      throw new RuntimeException("Failed to get git commit ID")
     }
 
     publishing {
@@ -278,9 +260,6 @@ subprojects { project ->
 // The root project has no sources, but the dependency platform also needs to be published as an artifact
 // See https://docs.gradle.org/current/userguide/java_platform_plugin.html
 // See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-
 publishing {
   publications {
     jars(MavenPublication) {
@@ -325,10 +304,3 @@ if (publishEnabled) {
 }
 
 task pitestMerge(type: com.yubico.gradle.pitest.tasks.PitestMergeTask)
-
-coveralls {
-  sourceDirs = subprojects.findAll({ project.hasProperty('sourceSets') }).sourceSets.main.allSource.srcDirs.flatten()
-}
-tasks.coveralls {
-  inputs.files pitestMerge.outputs.files
-}

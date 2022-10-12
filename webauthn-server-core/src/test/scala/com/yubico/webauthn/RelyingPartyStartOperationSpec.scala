@@ -44,8 +44,8 @@ import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -56,7 +56,7 @@ import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyStartOperationSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 

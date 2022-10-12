@@ -285,7 +285,7 @@ public class RegistrationResult {
 
   static class RegistrationResultBuilder {
     static class MandatoryStages {
-      private RegistrationResultBuilder builder = new RegistrationResultBuilder();
+      private final RegistrationResultBuilder builder = new RegistrationResultBuilder();
 
       Step2 keyId(PublicKeyCredentialDescriptor keyId) {
         builder.keyId(keyId);

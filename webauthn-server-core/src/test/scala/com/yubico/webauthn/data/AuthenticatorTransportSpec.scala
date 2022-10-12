@@ -25,14 +25,14 @@
 package com.yubico.webauthn.data
 
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 @RunWith(classOf[JUnitRunner])
 class AuthenticatorTransportSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
@@ -48,13 +48,16 @@ class AuthenticatorTransportSpec
       it("BLE.") {
         AuthenticatorTransport.BLE.getId should equal("ble")
       }
+      it("HYBRID.") {
+        AuthenticatorTransport.HYBRID.getId should equal("hybrid")
+      }
       it("INTERNAL.") {
         AuthenticatorTransport.INTERNAL.getId should equal("internal")
       }
     }
 
     it("has a values() function.") {
-      AuthenticatorTransport.values().length should equal(4)
+      AuthenticatorTransport.values().length should equal(5)
       AuthenticatorTransport.values() should not be theSameInstanceAs(
         AuthenticatorTransport.values()
       )
@@ -70,6 +73,9 @@ class AuthenticatorTransportSpec
       AuthenticatorTransport.valueOf(
         "BLE"
       ) should be theSameInstanceAs AuthenticatorTransport.BLE
+      AuthenticatorTransport.valueOf(
+        "HYBRID"
+      ) should be theSameInstanceAs AuthenticatorTransport.HYBRID
       AuthenticatorTransport.valueOf(
         "INTERNAL"
       ) should be theSameInstanceAs AuthenticatorTransport.INTERNAL

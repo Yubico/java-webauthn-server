@@ -203,7 +203,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step8 nextStep() {
-      return new Step8(username, userHandle, credential.get());
+      return new Step8(username, credential.get());
     }
 
     @Override
@@ -220,7 +220,6 @@ final class FinishAssertionSteps {
   class Step8 implements Step<Step10> {
 
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -232,7 +231,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step10 nextStep() {
-      return new Step10(username, userHandle, credential);
+      return new Step10(username, credential);
     }
 
     public ByteArray authenticatorData() {
@@ -253,7 +252,6 @@ final class FinishAssertionSteps {
   @Value
   class Step10 implements Step<Step11> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -263,7 +261,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step11 nextStep() {
-      return new Step11(username, userHandle, credential, clientData());
+      return new Step11(username, credential, clientData());
     }
 
     public CollectedClientData clientData() {
@@ -274,7 +272,6 @@ final class FinishAssertionSteps {
   @Value
   class Step11 implements Step<Step12> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
     private final CollectedClientData clientData;
 
@@ -289,14 +286,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step12 nextStep() {
-      return new Step12(username, userHandle, credential);
+      return new Step12(username, credential);
     }
   }
 
   @Value
   class Step12 implements Step<Step13> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -311,14 +307,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step13 nextStep() {
-      return new Step13(username, userHandle, credential);
+      return new Step13(username, credential);
     }
   }
 
   @Value
   class Step13 implements Step<Step14> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -331,14 +326,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step14 nextStep() {
-      return new Step14(username, userHandle, credential);
+      return new Step14(username, credential);
     }
   }
 
   @Value
   class Step14 implements Step<Step15> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -349,14 +343,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step15 nextStep() {
-      return new Step15(username, userHandle, credential);
+      return new Step15(username, credential);
     }
   }
 
   @Value
   class Step15 implements Step<Step16> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -382,14 +375,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step16 nextStep() {
-      return new Step16(username, userHandle, credential);
+      return new Step16(username, credential);
     }
   }
 
   @Value
   class Step16 implements Step<Step17> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -401,14 +393,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step17 nextStep() {
-      return new Step17(username, userHandle, credential);
+      return new Step17(username, credential);
     }
   }
 
   @Value
   class Step17 implements Step<Step18> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -425,14 +416,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step18 nextStep() {
-      return new Step18(username, userHandle, credential);
+      return new Step18(username, credential);
     }
   }
 
   @Value
   class Step18 implements Step<Step19> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -440,14 +430,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step19 nextStep() {
-      return new Step19(username, userHandle, credential);
+      return new Step19(username, credential);
     }
   }
 
   @Value
   class Step19 implements Step<Step20> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -457,7 +446,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step20 nextStep() {
-      return new Step20(username, userHandle, credential, clientDataJsonHash());
+      return new Step20(username, credential, clientDataJsonHash());
     }
 
     public ByteArray clientDataJsonHash() {
@@ -468,7 +457,6 @@ final class FinishAssertionSteps {
   @Value
   class Step20 implements Step<Step21> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
     private final ByteArray clientDataJsonHash;
 
@@ -490,7 +478,7 @@ final class FinishAssertionSteps {
       }
 
       final COSEAlgorithmIdentifier alg =
-          WebAuthnCodecs.getCoseKeyAlg(cose)
+          COSEAlgorithmIdentifier.fromPublicKey(cose)
               .orElseThrow(
                   () ->
                       new IllegalArgumentException(
@@ -503,7 +491,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step21 nextStep() {
-      return new Step21(username, userHandle, credential);
+      return new Step21(username, credential);
     }
 
     public ByteArray signedBytes() {
@@ -514,14 +502,15 @@ final class FinishAssertionSteps {
   @Value
   class Step21 implements Step<Finished> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
+    private final long assertionSignatureCount;
     private final long storedSignatureCountBefore;
 
-    public Step21(String username, ByteArray userHandle, RegisteredCredential credential) {
+    public Step21(String username, RegisteredCredential credential) {
       this.username = username;
-      this.userHandle = userHandle;
       this.credential = credential;
+      this.assertionSignatureCount =
+          response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
       this.storedSignatureCountBefore = credential.getSignatureCount();
     }
 
@@ -529,29 +518,25 @@ final class FinishAssertionSteps {
     public void validate() throws InvalidSignatureCountException {
       if (validateSignatureCounter && !signatureCounterValid()) {
         throw new InvalidSignatureCountException(
-            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount());
+            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount);
       }
     }
 
     private boolean signatureCounterValid() {
-      return (assertionSignatureCount() == 0 && storedSignatureCountBefore == 0)
-          || assertionSignatureCount() > storedSignatureCountBefore;
+      return (assertionSignatureCount == 0 && storedSignatureCountBefore == 0)
+          || assertionSignatureCount > storedSignatureCountBefore;
     }
 
     @Override
     public Finished nextStep() {
-      return new Finished(username, userHandle, assertionSignatureCount(), signatureCounterValid());
-    }
-
-    private long assertionSignatureCount() {
-      return response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
+      return new Finished(credential, username, assertionSignatureCount, signatureCounterValid());
     }
   }
 
   @Value
   class Finished implements Step<Finished> {
+    private final RegisteredCredential credential;
     private final String username;
-    private final ByteArray userHandle;
     private final long assertionSignatureCount;
     private final boolean signatureCounterValid;
 
@@ -570,8 +555,7 @@ final class FinishAssertionSteps {
       return Optional.of(
           AssertionResult.builder()
               .success(true)
-              .credentialId(response.getId())
-              .userHandle(userHandle)
+              .credential(credential)
               .username(username)
               .signatureCount(assertionSignatureCount)
               .signatureCounterValid(signatureCounterValid)

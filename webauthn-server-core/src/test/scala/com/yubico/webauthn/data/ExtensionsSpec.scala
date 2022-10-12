@@ -16,8 +16,8 @@ import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -28,7 +28,7 @@ import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class ExtensionsSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
@@ -321,7 +321,7 @@ class ExtensionsSpec
     it("can deserialize a real largeBlob write example.") {
       val testData = RealExamples.LargeBlobWrite
       val registrationCred = testData.attestation.credential
-      val assertionCred = testData.assertion.credential
+      val assertionCred = testData.assertion.get.credential
 
       registrationCred.getClientExtensionResults.getExtensionIds.asScala should equal(
         Set("largeBlob")
@@ -341,7 +341,7 @@ class ExtensionsSpec
     it("can deserialize a real largeBlob read example.") {
       val testData = RealExamples.LargeBlobRead
       val registrationCred = testData.attestation.credential
-      val assertionCred = testData.assertion.credential
+      val assertionCred = testData.assertion.get.credential
 
       registrationCred.getClientExtensionResults.getExtensionIds.asScala should equal(
         Set("largeBlob")

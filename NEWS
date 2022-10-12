@@ -1,3 +1,65 @@
+== Version 2.1.0 ==
+
+`webauthn-server-core`:
+
+Changes:
+
+* Log messages on attestation certificate path validation failure now include
+  the attestation object.
+
+Deprecations:
+
+* Deprecated method `AssertionResult.getCredentialId(): ByteArray`. Use
+  `.getCredential().getCredentialId()` instead.
+* Deprecated method `AssertionResult.getUserHandle(): ByteArray`. Use
+  `.getCredential().getUserHandle()` instead.
+
+New features:
+
+* Added method `FidoMetadataDownloader.refreshBlob()`.
+* Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
+* Added method `AssertionResult.getCredential(): RegisteredCredential`.
+* Added support for the `"tpm"` attestation statement format.
+* Added support for ES384 and ES512 signature algorithms.
+* Added property `policyTreeValidator` to `TrustRootsResult`. If set, the given
+  predicate function will be used to validate the certificate policy tree after
+  successful attestation certificate path validation. This may be required for
+  some JCA providers to accept attestation certificates with critical
+  certificate policy extensions. See the JavaDoc for
+  `TrustRootsResultBuilder.policyTreeValidator(Predicate)` for more information.
+* Added enum value `AttestationConveyancePreference.ENTERPRISE`.
+* (Experimental) Added constant `AuthenticatorTransport.HYBRID`.
+
+Fixes:
+
+* Fixed various typos and mistakes in JavaDocs.
+* Moved version constraints for test dependencies from meta-module
+  `webauthn-server-parent` to unpublished test meta-module.
+* `yubico-util` dependency removed from downstream compile scope.
+* Fixed missing JavaDoc on `TrustRootsResult` getters and builder setters.
+
+
+`webauthn-server-attestation`:
+
+Changes:
+
+* The `AuthenticatorToBeFiltered` argument of the `FidoMetadataService` runtime
+  filter now omits zero AAGUIDs.
+* Promoted log messages in `FidoMetadataDownloader` about BLOB signature failure
+  and cache corruption from DEBUG level to WARN level.
+
+Fixes:
+
+* Fixed various typos and mistakes in JavaDocs.
+* `FidoMetadataDownloader` now verifies the SHA-256 hash of the cached trust
+  root certificate, as promised in the JavaDoc of `useTrustRootCacheFile` and
+  `useTrustRootCache`.
+* BouncyCastle dependency dropped.
+* Guava dependency dropped (but still remains in core module).
+* If BLOB download fails, `FidoMetadataDownloader` now correctly falls back to
+  cache if available.
+
+
 == Version 2.0.0 ==
 
 This release removes deprecated APIs and changes some defaults to better align

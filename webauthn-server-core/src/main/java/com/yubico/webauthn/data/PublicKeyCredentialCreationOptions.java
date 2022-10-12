@@ -238,7 +238,7 @@ public class PublicKeyCredentialCreationOptions {
     private AuthenticatorSelectionCriteria authenticatorSelection = null;
 
     public static class MandatoryStages {
-      private PublicKeyCredentialCreationOptionsBuilder builder =
+      private final PublicKeyCredentialCreationOptionsBuilder builder =
           new PublicKeyCredentialCreationOptionsBuilder();
 
       /**
@@ -376,6 +376,8 @@ public class PublicKeyCredentialCreationOptions {
                         break;
 
                       case ES256:
+                      case ES384:
+                      case ES512:
                         KeyFactory.getInstance("EC");
                         break;
 
@@ -403,6 +405,14 @@ public class PublicKeyCredentialCreationOptions {
 
                       case ES256:
                         Signature.getInstance("SHA256withECDSA");
+                        break;
+
+                      case ES384:
+                        Signature.getInstance("SHA384withECDSA");
+                        break;
+
+                      case ES512:
+                        Signature.getInstance("SHA512withECDSA");
                         break;
 
                       case RS256:

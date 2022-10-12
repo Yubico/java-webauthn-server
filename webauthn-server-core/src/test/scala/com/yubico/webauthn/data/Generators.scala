@@ -317,15 +317,20 @@ object Generators {
       len <- Gen.chooseNum(minSize, maxSize)
     } yield new ByteArray(nums.take(len).toArray)
 
-  def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
-    for {
-      byteIndex: Int <- Gen.choose(0, bytes.size() - 1)
-      bitIndex: Int <- Gen.choose(0, 7)
-      flipMask: Byte = (1 << bitIndex).toByte
-    } yield new ByteArray(
+  def flipBit(bitIndex: Int)(bytes: ByteArray): ByteArray = {
+    val byteIndex: Int = bitIndex / 8
+    val bitIndexInByte: Int = bitIndex % 8
+    val flipMask: Byte = (1 << bitIndexInByte).toByte
+    new ByteArray(
       bytes.getBytes
         .updated(byteIndex, (bytes.getBytes()(byteIndex) ^ flipMask).toByte)
     )
+  }
+
+  def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
+    for {
+      bitIndex <- Gen.choose(0, 8 * bytes.size() - 1)
+    } yield flipBit(bitIndex)(bytes)
 
   object Extensions {
     private val RegistrationExtensionIds: Set[String] =

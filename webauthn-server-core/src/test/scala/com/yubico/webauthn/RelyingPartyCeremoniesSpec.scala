@@ -29,15 +29,15 @@ import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import org.junit.runner.RunWith
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 import scala.jdk.CollectionConverters._
 
 @RunWith(classOf[JUnitRunner])
 class RelyingPartyCeremoniesSpec
-    extends FunSpec
+    extends AnyFunSpec
     with Matchers
     with TestWithEachProvider {
 
@@ -91,12 +91,12 @@ class RelyingPartyCeremoniesSpec
             .publicKeyCredentialRequestOptions(
               PublicKeyCredentialRequestOptions
                 .builder()
-                .challenge(testData.assertion.challenge)
+                .challenge(testData.assertion.get.challenge)
                 .allowCredentials(
                   List(
                     PublicKeyCredentialDescriptor
                       .builder()
-                      .id(testData.assertion.id)
+                      .id(testData.assertion.get.id)
                       .build()
                   ).asJava
                 )
@@ -105,12 +105,12 @@ class RelyingPartyCeremoniesSpec
             .username(testData.user.getName)
             .build()
         )
-        .response(testData.assertion.credential)
+        .response(testData.assertion.get.credential)
         .build()
     )
 
     assertionResult.isSuccess should be(true)
-    assertionResult.getCredentialId should equal(testData.assertion.id)
+    assertionResult.getCredentialId should equal(testData.assertion.get.id)
     assertionResult.getUserHandle should equal(testData.user.getId)
     assertionResult.getUsername should equal(testData.user.getName)
     assertionResult.getSignatureCount should be >= testData.attestation.authenticatorData.getSignatureCounter

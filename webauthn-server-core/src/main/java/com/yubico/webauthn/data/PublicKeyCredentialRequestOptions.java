@@ -170,7 +170,7 @@ public class PublicKeyCredentialRequestOptions {
     private List<PublicKeyCredentialDescriptor> allowCredentials = null;
 
     public static class MandatoryStages {
-      private PublicKeyCredentialRequestOptionsBuilder builder =
+      private final PublicKeyCredentialRequestOptionsBuilder builder =
           new PublicKeyCredentialRequestOptionsBuilder();
 
       /**
