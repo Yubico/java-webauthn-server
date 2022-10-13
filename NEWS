@@ -16,7 +16,6 @@ Deprecations:
 
 New features:
 
-* Added method `FidoMetadataDownloader.refreshBlob()`.
 * Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
 * Added method `AssertionResult.getCredential(): RegisteredCredential`.
 * Added support for the `"tpm"` attestation statement format.
@@ -47,6 +46,10 @@ Changes:
   filter now omits zero AAGUIDs.
 * Promoted log messages in `FidoMetadataDownloader` about BLOB signature failure
   and cache corruption from DEBUG level to WARN level.
+
+New features:
+
+* Added method `FidoMetadataDownloader.refreshBlob()`.
 
 Fixes:
 
