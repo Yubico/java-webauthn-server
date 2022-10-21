@@ -420,7 +420,7 @@ AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
 ----------
 
 Then
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.fininshAssertion(...)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.fishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
 will enforce that user verification was performed.
 However, there is no guarantee that the user's authenticator will support this
 unless the user has some credential created with the
