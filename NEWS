@@ -1,3 +1,13 @@
+== Version 2.1.1 (unreleased) ==
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+- Improved documentation of guaranteed provided by `FidoMetadataDownloader` and
+  required of its parameters.
+
+
 == Version 2.1.0 ==
 
 `webauthn-server-core`:
