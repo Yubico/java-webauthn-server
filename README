@@ -62,6 +62,9 @@ The public API consists of all public classes, methods and fields in the `com.yu
 i.e., everything covered by the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/package-summary.html[Javadoc],
 *with the exception* of things annotated with `@Deprecated`.
+In particular, features with a `@deprecated EXPERIMENTAL:` tag in JavaDoc are
+considered unstable and may receive breaking changes without a major version
+increase.
 
 Package-private classes and methods are NOT part of the public API.
 The `com.yubico:yubico-util` module is NOT part of the public API.
