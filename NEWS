@@ -1,5 +1,16 @@
 == Version 2.1.1 (unreleased) ==
 
+`webauthn-server-core`:
+
+Fixes:
+
+* Fixed TPM attestation verification rejecting attestation certificates with TPM
+  Device Attributes split between multiple RelativeDistinguishedName structures
+  in the Subject Alternative Names extension.
+ ** Thanks to Oussama Zgheb for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/241
+
+
 `webauthn-server-attestation`:
 
 Fixes:
