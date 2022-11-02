@@ -1114,7 +1114,7 @@ public final class FidoMetadataDownloader {
       throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
     final ByteArray hash = new ByteArray(digest.digest(contents.getBytes()));
-    if (acceptedCertSha256.stream().anyMatch(acceptableHash -> acceptableHash.equals(hash))) {
+    if (acceptedCertSha256.stream().anyMatch(hash::equals)) {
       return contents;
     } else {
       return null;
