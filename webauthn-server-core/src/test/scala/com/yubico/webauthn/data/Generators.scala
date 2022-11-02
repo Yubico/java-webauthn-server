@@ -207,10 +207,15 @@ object Generators {
           )
     } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj))
 
-  implicit val arbitraryAuthenticatorDataFlags
-      : Arbitrary[AuthenticatorDataFlags] = Arbitrary(for {
+  val authenticatorDataFlagsByte: Gen[Byte] = for {
     value <- arbitrary[Byte]
-  } yield new AuthenticatorDataFlags(value))
+    bsMask = (((value & 0x08) << 1) & 0xef).toByte // Bit 0x10 cannot be set unless 0x08 is
+  } yield (value & bsMask).toByte
+
+  implicit val arbitraryAuthenticatorDataFlags
+      : Arbitrary[AuthenticatorDataFlags] = Arbitrary(
+    authenticatorDataFlagsByte.map(new AuthenticatorDataFlags(_))
+  )
 
   implicit val arbitraryAuthenticatorAssertionResponse
       : Arbitrary[AuthenticatorAssertionResponse] = Arbitrary(
@@ -258,7 +263,9 @@ object Generators {
     )
 
   def authenticatorDataBytes(
-      extensionsGen: Gen[Option[CBORObject]]
+      extensionsGen: Gen[Option[CBORObject]],
+      backupFlagsGen: Gen[(Boolean, Boolean)] =
+        arbitrary[(Boolean, Boolean)].map({ case (be, bs) => (be, be && bs) }),
   ): Gen[ByteArray] =
     for {
       fixedBytes <- byteArray(37)
@@ -270,11 +277,16 @@ object Generators {
           exts.EncodeToBytes(CBOREncodeOptions.DefaultCtap2Canonical)
         )
       }
+      (beFlag, bsFlag) <- backupFlagsGen
       atFlag = attestedCredentialDataBytes.isDefined
       edFlag = extensionsBytes.isDefined
       flagsByte: Byte = setFlag(0x40, atFlag)(
         setFlag(BinaryUtil.singleFromHex("80"), edFlag)(
-          fixedBytes.getBytes()(32)
+          setFlag(0x08, beFlag)(
+            setFlag(0x10, bsFlag)(
+              fixedBytes.getBytes()(32)
+            )
+          )
         )
       )
     } yield new ByteArray(

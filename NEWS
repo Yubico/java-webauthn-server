@@ -1,4 +1,4 @@
-== Version 2.1.1 (unreleased) ==
+== Version 2.2.0 (unreleased) ==
 
 `webauthn-server-core`:
 
@@ -11,6 +11,11 @@ Changes:
 * Removed methods `RegistrationResult.toBuilder()` and
   `AssertionResult.toBuilder()`. Both had package-private return types, and thus
   were not usable by outside callers.
+
+New features:
+
+* (Experimental) Added `AuthenticatorDataFlags` properties for the new `BE`
+  (backup eligible) and `BS` (backup state) flags (bits 0x08 and 0x10).
 
 Fixes:
 

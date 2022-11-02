@@ -46,6 +46,30 @@ public final class AuthenticatorDataFlags {
   public final boolean UV;
 
   /**
+   * Backup eligible: the credential can and is allowed to be backed up.
+   *
+   * <p>NOTE that this is only a hint and not a guarantee, unless backed by a trusted authenticator
+   * attestation.
+   *
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-be">§6.1. Authenticator Data</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated public final boolean BE;
+
+  /**
+   * Backup status: the credential is currently backed up.
+   *
+   * <p>NOTE that this is only a hint and not a guarantee, unless backed by a trusted authenticator
+   * attestation.
+   *
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">§6.1. Authenticator Data</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated public final boolean BS;
+
+  /**
    * Attested credential data present.
    *
    * <p>Users of this library should not need to inspect this value directly.
@@ -68,20 +92,27 @@ public final class AuthenticatorDataFlags {
 
     UP = (value & Bitmasks.UP) != 0;
     UV = (value & Bitmasks.UV) != 0;
+    BE = (value & Bitmasks.BE) != 0;
+    BS = (value & Bitmasks.BS) != 0;
     AT = (value & Bitmasks.AT) != 0;
     ED = (value & Bitmasks.ED) != 0;
+
+    if (BS && !BE) {
+      throw new IllegalArgumentException(
+          String.format("Flag combination is invalid: BE=0, BS=1 in flags: 0x%02x", value));
+    }
   }
 
   private static final class Bitmasks {
     static final byte UP = 0x01;
     static final byte UV = 0x04;
+    static final byte BE = 0x08;
+    static final byte BS = 0x10;
     static final byte AT = 0x40;
     static final byte ED = -0x80;
 
     /* Reserved bits */
-    // final boolean RFU1 = (value & 0x02) > 0;
-    // final boolean RFU2_1 = (value & 0x08) > 0;
-    // final boolean RFU2_2 = (value & 0x10) > 0;
-    // static final boolean RFU2_3 = (value & 0x20) > 0;
+    // static final byte RFU1 = 0x02;
+    // static final byte RFU2 = 0x20;
   }
 }
