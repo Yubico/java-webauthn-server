@@ -489,8 +489,7 @@ final class TpmAttestationStatementVerifier
       if ((Integer) n.get(0) == 4) { // GeneralNames CHOICE 4: directoryName
         if (n.get(1) instanceof String) {
           try {
-            List<Rdn> rdns = new LdapName((String) n.get(1)).getRdns();
-            for (Rdn rdn : rdns) {
+            for (final Rdn rdn : new LdapName((String) n.get(1)).getRdns()) {
               javax.naming.directory.Attributes attrs = rdn.toAttributes();
               foundManufacturer = foundManufacturer || attrs.get(OID_TCG_AT_TPM_MANUFACTURER) != null;
               foundModel = foundModel || attrs.get(OID_TCG_AT_TPM_MODEL) != null;
