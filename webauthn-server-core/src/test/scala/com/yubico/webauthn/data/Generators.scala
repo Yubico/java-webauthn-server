@@ -63,7 +63,7 @@ object Generators {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
-  private def setFlag(flags: Byte, mask: Byte, value: Boolean): Byte =
+  private def setFlag(mask: Byte, value: Boolean)(flags: Byte): Byte =
     if (value)
       (flags | (mask & (-0x01).toByte)).toByte
     else
@@ -272,10 +272,10 @@ object Generators {
       }
       atFlag = attestedCredentialDataBytes.isDefined
       edFlag = extensionsBytes.isDefined
-      flagsByte: Byte = setFlag(
-        setFlag(fixedBytes.getBytes()(32), 0x40, atFlag),
-        BinaryUtil.singleFromHex("80"),
-        edFlag,
+      flagsByte: Byte = setFlag(0x40, atFlag)(
+        setFlag(BinaryUtil.singleFromHex("80"), edFlag)(
+          fixedBytes.getBytes()(32)
+        )
       )
     } yield new ByteArray(
       fixedBytes.getBytes.updated(32, flagsByte)
