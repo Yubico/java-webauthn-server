@@ -491,7 +491,8 @@ final class TpmAttestationStatementVerifier
           try {
             for (final Rdn rdn : new LdapName((String) n.get(1)).getRdns()) {
               javax.naming.directory.Attributes attrs = rdn.toAttributes();
-              foundManufacturer = foundManufacturer || attrs.get(OID_TCG_AT_TPM_MANUFACTURER) != null;
+              foundManufacturer =
+                  foundManufacturer || attrs.get(OID_TCG_AT_TPM_MANUFACTURER) != null;
               foundModel = foundModel || attrs.get(OID_TCG_AT_TPM_MODEL) != null;
               foundVersion = foundVersion || attrs.get(OID_TCG_AT_TPM_VERSION) != null;
             }
