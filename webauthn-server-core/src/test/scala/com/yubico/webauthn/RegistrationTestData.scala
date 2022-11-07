@@ -146,6 +146,7 @@ object RegistrationTestDataGenerator extends App {
         td.Packed.SelfAttestation,
         td.Packed.SelfAttestationRs1,
         td.Tpm.ValidEs256,
+        td.Tpm.ValidEs256Alt,
         td.Tpm.ValidEs384,
         td.Tpm.ValidEs512,
         td.Tpm.ValidRs256,
@@ -180,6 +181,7 @@ object RegistrationTestData {
       Packed.BasicAttestationRsaReal,
       Packed.SelfAttestation,
       Tpm.ValidEs256,
+      Tpm.ValidEs256Alt,
       Tpm.ValidEs384,
       Tpm.ValidEs512,
       Tpm.ValidRs256,
@@ -607,6 +609,7 @@ object RegistrationTestData {
 
   object Tpm {
 
+    // Subject Alternative Names all in one RDN structure
     private val tpmCertExtensions = List(
       (
         Extension.subjectAlternativeName.getId,
@@ -634,6 +637,55 @@ object RegistrationTestData {
                       ), // tcg-at-tpmVersion
                     )
                   )
+                )
+              )
+            )
+          )
+          .build(),
+      ),
+      (
+        Extension.extendedKeyUsage.getId,
+        true,
+        new DERSequence(new ASN1ObjectIdentifier("2.23.133.8.3")),
+      ),
+    )
+
+    // Subject Alternative Names as separate RDNs in the directoryName array
+    private val tpmCertExtensionsAlt = List(
+      (
+        Extension.subjectAlternativeName.getId,
+        true,
+        new GeneralNamesBuilder()
+          .addName(
+            new GeneralName(
+              new X500Name(
+                Array(
+                  new RDN(
+                    Array(
+                      new AttributeTypeAndValue(
+                        new ASN1ObjectIdentifier("2.23.133.2.1"),
+                        new DERUTF8String("id:00000000"),
+                      ) // tcg-at-tpmManufacturer
+                    )
+                  ),
+                  new RDN(
+                    Array(
+                      new AttributeTypeAndValue(
+                        new ASN1ObjectIdentifier("2.23.133.2.2"),
+                        new DERUTF8String(
+                          "TEST_Yubico_java-webauthn-server"
+                        ),
+                      ) // tcg-at-tpmModel
+                    )
+                  ),
+                  new RDN(
+                    Array(
+                      new AttributeTypeAndValue(
+                        new ASN1ObjectIdentifier("2.23.133.2.3"),
+                        new DERUTF8String("id:00000000"),
+                      ) // tcg-at-tpmVersion
+                    )
+                  ),
                 )
               )
             )
@@ -676,6 +728,39 @@ object RegistrationTestData {
               alg = COSEAlgorithmIdentifier.ES256,
               certSubject = new X500Name(Array.empty[RDN]),
               certExtensions = tpmCertExtensions,
+            )
+          ),
+        )
+    }
+    val ValidEs256Alt: RegistrationTestData = new RegistrationTestData(
+      alg = COSEAlgorithmIdentifier.ES256,
+      attestationObject =
+        ByteArray.fromHex("bf68617574684461746158a449960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020ca2933119efb256f49457f3765eab3830921b568d03bc1f80a6a66d4d568a832a501020326200121582044d1ed1946286c4bc3d65842e614b193ad305d5ef8401fa3d3c59547bd9844232258206e958ddcb5d5ae2078e0ddea6f382a8fd923e6708b2bb2b96a1be8cd53eafee363666d746374706d6761747453746d74bf63616c67266373696758473045022100b8805fb727a766ce37148ee85ff67694af359acad32078e99a5a0b399ab9c8e60220722786a43945dad83b933036015371bab1b39031fd6745e4c690013ecf358953637835638259020930820205308201aba00302010202021b1a300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303931333137343230305a30003059301306072a8648ce3d020106082a8648ce3d03010703420004fe0d950c492eda7173aefdc62348b5fc6e10317f728229f65fbfe287839a39e31d245cf67e774711cd36685b242ef7825076f6b0a6f96cdb840d0b2d567b0b2ea381aa3081a73021060b2b0601040182e51c01010404120410000102030405060708090a0b0c0d0e0f306d0603551d110101ff04633061a45f305d31163014060567810502010c0b69643a3030303030303030312b3029060567810502020c20544553545f59756269636f5f6a6176612d776562617574686e2d73657276657231163014060567810502030c0b69643a303030303030303030130603551d250101ff0409300706056781050803300a06082a8648ce3d040302034800304502210091983bb3d65b6c717414102b2077a6f5e92d97c27721fb29085cf20d5f763a600220061fca51356836e0c0d11bfda238dcd4182fc201021d7cd94e2088f1c405d1fa5901da308201d63082017da0030201020202225c300a06082a8648ce3d040302306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303931333137343230305a306a3126302406035504030c1d59756269636f20576562417574686e20756e6974207465737473204341310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200047ece9126ad51236ecd9b6dbdaa9e3db579f829495919eec1ca04b7bf8297d57ca657af2f26b004eb7f0f0f0a0eb2844cdc38812ae856b5865b885ac84c012e97a3133011300f0603551d130101ff040530030101ff300a06082a8648ce3d040302034700304402206a892191268972b5427fa7563a189054f3d6b92575a6cb2b790e32974a5e9a4702203eae61a72362e10a1378a26c3e72dc06f7c034d8b51e11106f58c19737fc3ed46863657274496e666f5869ff5443478017000000206a2c7c05d7f346523fd86bf9b762308c50592d4c450f75fd371b215916ce12ca000000000000000011111111222222223300000000000000000022000b68bd0d928c28dd2905ce93b0a2fff089bc2c2b254471b00be47540f2c1c8882700006376657263322e30677075624172656158560023000b0004000000000010001000030010002044d1ed1946286c4bc3d65842e614b193ad305d5ef8401fa3d3c59547bd98442300206e958ddcb5d5ae2078e0ddea6f382a8fd923e6708b2bb2b96a1be8cd53eafee3ffff"),
+      clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}""",
+      privateKey = Some(
+        ByteArray.fromHex("308193020100301306072a8648ce3d020106082a8648ce3d030107047930770201010420cfd4337e005cf56bcf1bb0711abd25bec5e04878e67a55e5a0cec7df2844bab5a00a06082a8648ce3d030107a1440342000444d1ed1946286c4bc3d65842e614b193ad305d5ef8401fa3d3c59547bd9844236e958ddcb5d5ae2078e0ddea6f382a8fd923e6708b2bb2b96a1be8cd53eafee3")
+      ),
+      attestationCertChain = List(
+        RegistrationTestDataGenerator.importAttestationCa(
+          "MIICBTCCAaugAwIBAgICGxowCgYIKoZIzj0EAwIwajEmMCQGA1UEAwwdWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMgQ0ExDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjAAMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/g2VDEku2nFzrv3GI0i1/G4QMX9ygin2X7/ih4OaOeMdJFz2fndHEc02aFskLveCUHb2sKb5bNuEDQstVnsLLqOBqjCBpzAhBgsrBgEEAYLlHAEBBAQSBBAAAQIDBAUGBwgJCgsMDQ4PMG0GA1UdEQEB/wRjMGGkXzBdMRYwFAYFZ4EFAgEMC2lkOjAwMDAwMDAwMSswKQYFZ4EFAgIMIFRFU1RfWXViaWNvX2phdmEtd2ViYXV0aG4tc2VydmVyMRYwFAYFZ4EFAgMMC2lkOjAwMDAwMDAwMBMGA1UdJQEB/wQJMAcGBWeBBQgDMAoGCCqGSM49BAMCA0gAMEUCIQCRmDuz1ltscXQUECsgd6b16S2Xwnch+ykIXPINX3Y6YAIgBh/KUTVoNuDA0Rv9ojjc1BgvwgECHXzZTiCI8cQF0fo=",
+          "EC",
+          "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg7Ooe4PmpWnmeojAaoObiG1uXPtE/7+zHMf7F3tMyqrigCgYIKoZIzj0DAQehRANCAAT+DZUMSS7acXOu/cYjSLX8bhAxf3KCKfZfv+KHg5o54x0kXPZ+d0cRzTZoWyQu94JQdvawpvls24QNCy1Wewsu",
+        ),
+        RegistrationTestDataGenerator.importAttestationCa(
+          "MIIB1jCCAX2gAwIBAgICIlwwCgYIKoZIzj0EAwIwajEmMCQGA1UEAwwdWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMgQ0ExDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABH7OkSatUSNuzZttvaqePbV5+ClJWRnuwcoEt7+Cl9V8plevLyawBOt/Dw8KDrKETNw4gSroVrWGW4hayEwBLpejEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIgaokhkSaJcrVCf6dWOhiQVPPWuSV1pssreQ4yl0pemkcCID6uYacjYuEKE3iibD5y3Ab3wDTYtR4REG9YwZc3/D7U",
+          "EC",
+          "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgVPeLUGhilXkCGWXyEFvnhvzVvvrDm86NwQ/FM0EyPpagCgYIKoZIzj0DAQehRANCAAR+zpEmrVEjbs2bbb2qnj21efgpSVkZ7sHKBLe/gpfVfKZXry8msATrfw8PCg6yhEzcOIEq6Fa1hluIWshMAS6X",
+        ),
+      ),
+    ) {
+      override def regenerate() =
+        TestAuthenticator.createBasicAttestedCredential(
+          keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+          attestationMaker = AttestationMaker.tpm(
+            AttestationSigner.ca(
+              alg = COSEAlgorithmIdentifier.ES256,
+              certSubject = new X500Name(Array.empty[RDN]),
+              certExtensions = tpmCertExtensionsAlt,
             )
           ),
         )
