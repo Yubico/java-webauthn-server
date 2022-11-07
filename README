@@ -231,6 +231,11 @@ object in temporary storage
 so you can also pass it into
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.fininshRegistration(...)`]
 later.
+If needed, you can use the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#toJson()[toJson()]
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#fromJson(java.lang.String)[fromJson(String)]
+methods to serialize and deserialize the value for storage.
 
 Now call the WebAuthn API on the client side:
 
@@ -317,6 +322,11 @@ object in temporary storage
 so you can also pass it into
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.fininshAssertion(...)`]
 later.
+If needed, you can use the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/AssertionRequest.html#toJson()[toJson()]
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/AssertionRequest.html#fromJson(java.lang.String)[fromJson(String)]
+methods to serialize and deserialize the value for storage.
 
 Now call the WebAuthn API on the client side:
 
