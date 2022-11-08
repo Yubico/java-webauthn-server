@@ -186,6 +186,7 @@ object RegistrationTestData {
       Tpm.ValidEs512,
       Tpm.ValidRs256,
       RealExamples.WindowsHelloTpm.asRegistrationTestData,
+      RealExamples.ThinkpadTpm.asRegistrationTestData,
     )
 
   object AndroidKey {
