@@ -9,7 +9,7 @@ Fixes:
   in the Subject Alternative Names extension.
  ** Thanks to Oussama Zgheb for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/241
-* Fixed various link syntax errors in JavaDocs.
+* Fixed various errors in JavaDoc.
 
 
 `webauthn-server-attestation`:

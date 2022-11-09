@@ -89,9 +89,9 @@ public class RegistrationResult {
   private final boolean attestationTrusted;
 
   /**
-   * The attestation type <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">§6.4.3.
-   * Attestation Types</a> that was used for the created credential.
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation-types">attestation
+   * type</a> that was used for the created credential.
    *
    * <p>You can ignore this if authenticator attestation is not relevant to your application.
    *
@@ -101,21 +101,7 @@ public class RegistrationResult {
    */
   @NonNull private final AttestationType attestationType;
 
-  /**
-   * The <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">attestation
-   * trust path</a> for the created credential, if any.
-   *
-   * <p>If present, this may be useful for looking up attestation metadata from external sources.
-   * The attestation trust path has been successfully verified as trusted if and only if {@link
-   * #isAttestationTrusted()} is <code>true</code>.
-   *
-   * <p>You can ignore this if authenticator attestation is not relevant to your application.
-   *
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">Attestation
-   *     trust path</a>
-   */
+  // JavaDoc on getter
   private final List<X509Certificate> attestationTrustPath;
 
   /**
@@ -200,6 +186,21 @@ public class RegistrationResult {
         authenticatorExtensionOutputs);
   }
 
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">attestation
+   * trust path</a> for the created credential, if any.
+   *
+   * <p>If present, this may be useful for looking up attestation metadata from external sources.
+   * The attestation trust path has been successfully verified as trusted if and only if {@link
+   * #isAttestationTrusted()} is <code>true</code>.
+   *
+   * <p>You can ignore this if authenticator attestation is not relevant to your application.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#attestation-trust-path">Attestation
+   *     trust path</a>
+   */
   @JsonIgnore
   public Optional<List<X509Certificate>> getAttestationTrustPath() {
     return Optional.ofNullable(attestationTrustPath);
