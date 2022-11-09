@@ -264,35 +264,46 @@ object Generators {
 
   def authenticatorDataBytes(
       extensionsGen: Gen[Option[CBORObject]],
+      rpIdHashGen: Gen[ByteArray] = byteArray(32),
+      upFlagGen: Gen[Boolean] = Gen.const(true),
+      uvFlagGen: Gen[Boolean] = arbitrary[Boolean],
       backupFlagsGen: Gen[(Boolean, Boolean)] =
         arbitrary[(Boolean, Boolean)].map({ case (be, bs) => (be, be && bs) }),
+      signatureCountGen: Gen[ByteArray] = byteArray(4),
   ): Gen[ByteArray] =
     for {
-      fixedBytes <- byteArray(37)
+      rpIdHash <- rpIdHashGen
+      signatureCount <- signatureCountGen
       attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
-      extensions <- extensionsGen
 
+      extensions <- extensionsGen
       extensionsBytes = extensions map { exts =>
         new ByteArray(
           exts.EncodeToBytes(CBOREncodeOptions.DefaultCtap2Canonical)
         )
       }
+
+      flagsBase <- arbitrary[Byte]
+      upFlag <- upFlagGen
+      uvFlag <- uvFlagGen
       (beFlag, bsFlag) <- backupFlagsGen
       atFlag = attestedCredentialDataBytes.isDefined
       edFlag = extensionsBytes.isDefined
-      flagsByte: Byte = setFlag(0x40, atFlag)(
-        setFlag(BinaryUtil.singleFromHex("80"), edFlag)(
-          setFlag(0x08, beFlag)(
-            setFlag(0x10, bsFlag)(
-              fixedBytes.getBytes()(32)
+      flagsByte: Byte = setFlag(0x01, upFlag)(
+        setFlag(0x03, uvFlag)(
+          setFlag(0x40, atFlag)(
+            setFlag(BinaryUtil.singleFromHex("80"), edFlag)(
+              setFlag(0x08, beFlag)(setFlag(0x10, bsFlag)(flagsBase))
             )
           )
         )
       )
     } yield new ByteArray(
-      fixedBytes.getBytes.updated(32, flagsByte)
-        ++ attestedCredentialDataBytes.map(_.getBytes).getOrElse(Array.empty)
-        ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
+      rpIdHash.getBytes
+        :+ flagsByte
+        :++ signatureCount.getBytes
+          ++ attestedCredentialDataBytes.map(_.getBytes).getOrElse(Array.empty)
+          ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
     )
 
   implicit val arbitraryAuthenticatorSelectionCriteria

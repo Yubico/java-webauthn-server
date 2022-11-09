@@ -38,6 +38,7 @@ import com.yubico.webauthn.TpmAttestationStatementVerifier.TpmRsaScheme
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
@@ -378,6 +379,7 @@ object TestAuthenticator {
       authenticatorExtensions: Option[JsonNode] = None,
       credentialKeypair: Option[KeyPair] = None,
       keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
+      flags: Option[AuthenticatorDataFlags] = None,
   ): (
       ByteArray,
       KeyPair,
@@ -393,6 +395,7 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
       rpId = Defaults.rpId,
+      flags = flags,
       attestedCredentialDataBytes = Some(
         makeAttestedCredentialDataBytes(
           aaguid = aaguid,
@@ -538,6 +541,7 @@ object TestAuthenticator {
   def createUnattestedCredential(
       authenticatorExtensions: Option[JsonNode] = None,
       challenge: ByteArray = Defaults.challenge,
+      flags: Option[AuthenticatorDataFlags] = None,
   ): (
       PublicKeyCredential[
         AuthenticatorAttestationResponse,
@@ -547,7 +551,8 @@ object TestAuthenticator {
       List[(X509Certificate, PrivateKey)],
   ) = {
     val (authData, keypair) = createAuthenticatorData(
-      authenticatorExtensions = authenticatorExtensions
+      authenticatorExtensions = authenticatorExtensions,
+      flags = flags,
     )
     createCredential(
       authDataBytes = authData,
@@ -593,6 +598,7 @@ object TestAuthenticator {
         ClientAssertionExtensionOutputs.builder().build(),
       credentialId: ByteArray = Defaults.credentialId,
       credentialKey: KeyPair = Defaults.credentialKey,
+      flags: Option[AuthenticatorDataFlags] = None,
       origin: String = Defaults.origin,
       signatureCount: Option[Int] = None,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
@@ -632,6 +638,7 @@ object TestAuthenticator {
 
     val authDataBytes: ByteArray =
       makeAuthDataBytes(
+        flags = flags,
         signatureCount = signatureCount,
         rpId = Defaults.rpId,
         extensionsCborBytes = authenticatorExtensions map (ext =>
@@ -1046,17 +1053,20 @@ object TestAuthenticator {
 
   def makeAuthDataBytes(
       rpId: String = Defaults.rpId,
+      flags: Option[AuthenticatorDataFlags] = None,
       signatureCount: Option[Int] = None,
       attestedCredentialDataBytes: Option[ByteArray] = None,
       extensionsCborBytes: Option[ByteArray] = None,
-  ): ByteArray =
+  ): ByteArray = {
+    val atFlag = if (attestedCredentialDataBytes.isDefined) 0x40 else 0x00
+    val edFlag = if (extensionsCborBytes.isDefined) 0x80 else 0x00
     new ByteArray(
       (Vector[Byte]()
         ++ sha256(rpId).getBytes.toVector
         ++ Some[Byte](
-          (0x01 | (if (attestedCredentialDataBytes.isDefined) 0x40
-                   else 0x00) | (if (extensionsCborBytes.isDefined) 0x80
-                                 else 0x00)).toByte
+          (flags
+            .map(_.value)
+            .getOrElse(0x00.toByte) | 0x01 | atFlag | edFlag).toByte
         )
         ++ BinaryUtil
           .encodeUint32(signatureCount.getOrElse(1337).toLong)
@@ -1068,6 +1078,7 @@ object TestAuthenticator {
           _.getBytes.toVector
         } getOrElse Nil)).toArray
     )
+  }
 
   def makeAttestedCredentialDataBytes(
       publicKeyCose: ByteArray,

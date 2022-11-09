@@ -14,8 +14,19 @@ Changes:
 
 New features:
 
-* (Experimental) Added `AuthenticatorDataFlags` properties for the new `BE`
-  (backup eligible) and `BS` (backup state) flags (bits 0x08 and 0x10).
+* (Experimental) Added support for the new `BE` (backup eligible) and `BS`
+  (backup state) flags in authenticator data:
+ ** Added `BE` and `BS` properties to `AuthenticatorDataFlags`, reflecting the
+    respective flags (bits 0x08 and 0x10).
+ ** Added methods `isBackupEligible()` and `isBackedUp()` to
+    `RegistrationResult` and `AssertionResult`, reflecting respectively the `BE`
+    and `BS` flags.
+ ** Added properties `backupEligible` and `backupState`, getters
+    `isBackupEligible()` and `isBackedUp()`, and corresponding builder methods
+    to `RegisteredCredential`. `RelyingParty.finishAssertion(...)` will now
+    validate that if `RegisteredCredential.isBackupEligible()` is present, then
+    the `BE` flag of any assertion of that credential must match the stored
+    value.
 
 Fixes:
 

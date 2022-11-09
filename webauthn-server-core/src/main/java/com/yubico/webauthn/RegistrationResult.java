@@ -125,6 +125,57 @@ public class RegistrationResult {
   }
 
   /**
+   * Check whether the created credential is <a
+   * href="https://w3c.github.io/webauthn/#backup-eligible">backup eligible</a>, using the <a
+   * href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> in the authenticator data.
+   *
+   * <p>You SHOULD store this value in your representation of a {@link RegisteredCredential}. {@link
+   * CredentialRepository} implementations SHOULD set this value as the {@link
+   * RegisteredCredential.RegisteredCredentialBuilder#backupEligible(Boolean)
+   * backupEligible(Boolean)} value when reconstructing that {@link RegisteredCredential}.
+   *
+   * @return <code>true</code> if and only if the created credential is backup eligible. NOTE that
+   *     this is only a hint and not a guarantee, unless backed by a trusted authenticator
+   *     attestation.
+   * @see <a href="https://w3c.github.io/webauthn/#backup-eligible">Backup Eligible in §4.
+   *     Terminology</a>
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag in §6.1. Authenticator
+   *     Data</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public boolean isBackupEligible() {
+    return credential.getResponse().getParsedAuthenticatorData().getFlags().BE;
+  }
+
+  /**
+   * Get the current <a href="https://w3c.github.io/webauthn/#backup-state">backup state</a> of the
+   * created credential, using the <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">BS
+   * flag</a> in the authenticator data.
+   *
+   * <p>You SHOULD store this value in your representation of a {@link RegisteredCredential}. {@link
+   * CredentialRepository} implementations SHOULD set this value as the {@link
+   * RegisteredCredential.RegisteredCredentialBuilder#backupState(Boolean) backupState(Boolean)}
+   * value when reconstructing that {@link RegisteredCredential}.
+   *
+   * @return <code>true</code> if and only if the created credential is believed to currently be
+   *     backed up. NOTE that this is only a hint and not a guarantee, unless backed by a trusted
+   *     authenticator attestation.
+   * @see <a href="https://w3c.github.io/webauthn/#backup-state">Backup State in §4. Terminology</a>
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">BS flag in §6.1. Authenticator
+   *     Data</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public boolean isBackedUp() {
+    return credential.getResponse().getParsedAuthenticatorData().getFlags().BS;
+  }
+
+  /**
    * The signature count returned with the created credential.
    *
    * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the

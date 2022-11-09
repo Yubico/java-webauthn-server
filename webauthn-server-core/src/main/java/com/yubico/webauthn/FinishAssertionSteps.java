@@ -397,7 +397,7 @@ final class FinishAssertionSteps {
   }
 
   @Value
-  class Step17 implements Step<Step18> {
+  class Step17 implements Step<PendingStep16> {
     private final String username;
     private final RegisteredCredential credential;
 
@@ -411,6 +411,31 @@ final class FinishAssertionSteps {
             response.getResponse().getParsedAuthenticatorData().getFlags().UV,
             "User Verification is required.");
       }
+    }
+
+    @Override
+    public PendingStep16 nextStep() {
+      return new PendingStep16(username, credential);
+    }
+  }
+
+  @Value
+  // Step 16 in editor's draft as of 2022-11-09 https://w3c.github.io/webauthn/
+  // TODO: Finalize this when spec matures
+  class PendingStep16 implements Step<Step18> {
+    private final String username;
+    private final RegisteredCredential credential;
+
+    @Override
+    public void validate() {
+      assure(
+          !credential.isBackupEligible().isPresent()
+              || response.getResponse().getParsedAuthenticatorData().getFlags().BE
+                  == credential.isBackupEligible().get(),
+          "Backup eligibility must not change; Stored: BE=%s, received: BE=%s for credential: %s",
+          credential.isBackupEligible(),
+          response.getResponse().getParsedAuthenticatorData().getFlags().BE,
+          credential.getCredentialId());
     }
 
     @Override
