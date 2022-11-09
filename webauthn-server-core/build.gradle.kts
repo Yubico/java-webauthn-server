@@ -7,6 +7,7 @@ plugins {
   signing
   id("info.solidsoft.pitest")
   id("io.github.cosmicsilence.scalafix")
+  id("me.champeau.jmh") version "0.6.8"
 }
 
 description = "Yubico WebAuthn server core API"
@@ -49,6 +50,13 @@ dependencies {
       strictly("[1.7.25,1.8-a)") // Pre-1.8 version required by slf4j-test
     }
   }
+
+  jmhImplementation(platform(project(":test-platform")))
+  jmhRuntimeOnly("org.slf4j:slf4j-nop")
+}
+
+configurations.jmhRuntimeClasspath {
+  exclude(module = "slf4j-test")
 }
 
 tasks.jar {
