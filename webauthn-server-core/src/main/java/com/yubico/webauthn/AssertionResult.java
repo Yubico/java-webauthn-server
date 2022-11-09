@@ -25,26 +25,33 @@
 package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import java.util.Optional;
-import lombok.Builder;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
 /** The result of a call to {@link RelyingParty#finishAssertion(FinishAssertionOptions)}. */
 @Value
-@Builder(toBuilder = true)
 public class AssertionResult {
 
   /** <code>true</code> if the assertion was verified successfully. */
   private final boolean success;
+
+  @JsonProperty
+  @Getter(AccessLevel.NONE)
+  private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
+      credentialResponse;
 
   /**
    * The {@link RegisteredCredential} that was returned by {@link
@@ -64,16 +71,6 @@ public class AssertionResult {
    * @see #getUserHandle()
    */
   @NonNull private final String username;
-
-  /**
-   * The new <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
-   * count</a> of the credential used for the assertion.
-   *
-   * <p>You should update this value in your database.
-   *
-   * @see AuthenticatorData#getSignatureCounter()
-   */
-  private final long signatureCount;
 
   /**
    * <code>true</code> if and only if at least one of the following is true:
@@ -96,65 +93,20 @@ public class AssertionResult {
    */
   private final boolean signatureCounterValid;
 
-  private final ClientAssertionExtensionOutputs clientExtensionOutputs;
-
-  private final AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs;
-
-  private AssertionResult(
-      boolean success,
-      @NonNull @JsonProperty("credential") RegisteredCredential credential,
-      @NonNull String username,
-      long signatureCount,
-      boolean signatureCounterValid,
-      ClientAssertionExtensionOutputs clientExtensionOutputs,
-      AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
-    this(
-        success,
-        credential,
-        username,
-        null,
-        null,
-        signatureCount,
-        signatureCounterValid,
-        clientExtensionOutputs,
-        authenticatorExtensionOutputs);
-  }
-
   @JsonCreator
-  private AssertionResult(
+  AssertionResult(
       @JsonProperty("success") boolean success,
+      @NonNull @JsonProperty("credentialResponse")
+          PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
+              credentialResponse,
       @NonNull @JsonProperty("credential") RegisteredCredential credential,
       @NonNull @JsonProperty("username") String username,
-      @JsonProperty("credentialId") ByteArray credentialId, // TODO: Delete in next major release
-      @JsonProperty("userHandle") ByteArray userHandle, // TODO: Delete in next major release
-      @JsonProperty("signatureCount") long signatureCount,
-      @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
-      @JsonProperty("clientExtensionOutputs")
-          ClientAssertionExtensionOutputs clientExtensionOutputs,
-      @JsonProperty("authenticatorExtensionOutputs")
-          AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
+      @JsonProperty("signatureCounterValid") boolean signatureCounterValid) {
     this.success = success;
+    this.credentialResponse = credentialResponse;
     this.credential = credential;
     this.username = username;
-
-    if (credentialId != null) {
-      ExceptionUtil.assure(
-          credential.getCredentialId().equals(credentialId),
-          "Legacy credentialId is present and does not equal credential.credentialId");
-    }
-    if (userHandle != null) {
-      ExceptionUtil.assure(
-          credential.getUserHandle().equals(userHandle),
-          "Legacy userHandle is present and does not equal credential.userHandle");
-    }
-
-    this.signatureCount = signatureCount;
     this.signatureCounterValid = signatureCounterValid;
-    this.clientExtensionOutputs =
-        clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
-            ? null
-            : clientExtensionOutputs;
-    this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
   }
 
   /**
@@ -168,6 +120,7 @@ public class AssertionResult {
    *     getCredentialId()} instead.
    */
   @Deprecated
+  @JsonIgnore
   public ByteArray getCredentialId() {
     return credential.getCredentialId();
   }
@@ -183,8 +136,22 @@ public class AssertionResult {
    *     getUserHandle()} instead.
    */
   @Deprecated
+  @JsonIgnore
   public ByteArray getUserHandle() {
     return credential.getUserHandle();
+  }
+
+  /**
+   * The new <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
+   * count</a> of the credential used for the assertion.
+   *
+   * <p>You should update this value in your database.
+   *
+   * @see AuthenticatorData#getSignatureCounter()
+   */
+  @JsonIgnore
+  public long getSignatureCount() {
+    return credentialResponse.getResponse().getParsedAuthenticatorData().getSignatureCounter();
   }
 
   /**
@@ -200,8 +167,10 @@ public class AssertionResult {
    * @see ClientAssertionExtensionOutputs
    * @see #getAuthenticatorExtensionOutputs() ()
    */
+  @JsonIgnore
   public Optional<ClientAssertionExtensionOutputs> getClientExtensionOutputs() {
-    return Optional.ofNullable(clientExtensionOutputs);
+    return Optional.of(credentialResponse.getClientExtensionResults())
+        .filter(ceo -> !ceo.getExtensionIds().isEmpty());
   }
 
   /**
@@ -217,65 +186,9 @@ public class AssertionResult {
    * @see AuthenticatorAssertionExtensionOutputs
    * @see #getClientExtensionOutputs()
    */
+  @JsonIgnore
   public Optional<AuthenticatorAssertionExtensionOutputs> getAuthenticatorExtensionOutputs() {
-    return Optional.ofNullable(authenticatorExtensionOutputs);
-  }
-
-  static AssertionResultBuilder.MandatoryStages builder() {
-    return new AssertionResultBuilder.MandatoryStages();
-  }
-
-  static class AssertionResultBuilder {
-    public static class MandatoryStages {
-      private final AssertionResultBuilder builder = new AssertionResultBuilder();
-
-      public Step2 success(boolean success) {
-        builder.success(success);
-        return new Step2();
-      }
-
-      public class Step2 {
-        public Step3 credential(RegisteredCredential credential) {
-          builder.credential(credential);
-          return new Step3();
-        }
-      }
-
-      public class Step3 {
-        public Step4 username(String username) {
-          builder.username(username);
-          return new Step4();
-        }
-      }
-
-      public class Step4 {
-        public Step5 signatureCount(long signatureCount) {
-          builder.signatureCount(signatureCount);
-          return new Step5();
-        }
-      }
-
-      public class Step5 {
-        public Step6 signatureCounterValid(boolean signatureCounterValid) {
-          builder.signatureCounterValid(signatureCounterValid);
-          return new Step6();
-        }
-      }
-
-      public class Step6 {
-        public Step7 clientExtensionOutputs(
-            ClientAssertionExtensionOutputs clientExtensionOutputs) {
-          builder.clientExtensionOutputs(clientExtensionOutputs);
-          return new Step7();
-        }
-      }
-
-      public class Step7 {
-        public AssertionResultBuilder assertionExtensionOutputs(
-            AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
-          return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
-        }
-      }
-    }
+    return AuthenticatorAssertionExtensionOutputs.fromAuthenticatorData(
+        credentialResponse.getResponse().getParsedAuthenticatorData());
   }
 }

@@ -2,6 +2,16 @@
 
 `webauthn-server-core`:
 
+Changes:
+
+* Changed internal structure of `RegistrationResult` and `AssertionResult`. This
+  may affect you if you use Jackson or similar tools to serialize these values
+  to JSON, for example. This is not an officially supported use case and thus
+  does not warrant a major version bump.
+* Removed methods `RegistrationResult.toBuilder()` and
+  `AssertionResult.toBuilder()`. Both had package-private return types, and thus
+  were not usable by outside callers.
+
 Fixes:
 
 * Fixed TPM attestation verification rejecting attestation certificates with TPM

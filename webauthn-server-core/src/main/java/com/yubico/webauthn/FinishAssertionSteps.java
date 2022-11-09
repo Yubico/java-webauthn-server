@@ -31,7 +31,6 @@ import com.yubico.webauthn.FinishRegistrationSteps.Step18;
 import com.yubico.webauthn.FinishRegistrationSteps.Step19;
 import com.yubico.webauthn.FinishRegistrationSteps.Step20;
 import com.yubico.webauthn.FinishRegistrationSteps.Step21;
-import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
@@ -553,18 +552,7 @@ final class FinishAssertionSteps {
     @Override
     public Optional<AssertionResult> result() {
       return Optional.of(
-          AssertionResult.builder()
-              .success(true)
-              .credential(credential)
-              .username(username)
-              .signatureCount(assertionSignatureCount)
-              .signatureCounterValid(signatureCounterValid)
-              .clientExtensionOutputs(response.getClientExtensionResults())
-              .assertionExtensionOutputs(
-                  AuthenticatorAssertionExtensionOutputs.fromAuthenticatorData(
-                          response.getResponse().getParsedAuthenticatorData())
-                      .orElse(null))
-              .build());
+          new AssertionResult(true, response, credential, username, signatureCounterValid));
     }
   }
 }

@@ -31,6 +31,7 @@ import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
@@ -42,39 +43,20 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.Builder;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
 /** The result of a call to {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}. */
 @Value
-@Builder(toBuilder = true)
 public class RegistrationResult {
 
-  /**
-   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
-   * ID</a> and <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>
-   * of the created credential.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
-   *     ID</a>
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-credential-descriptor">5.8.3.
-   *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
-   * @see PublicKeyCredential#getId()
-   */
-  @NonNull private final PublicKeyCredentialDescriptor keyId;
-
-  /**
-   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#aaguid"><code>aaguid</code>
-   * </a> reported in the <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">of the
-   * created credential.</a>
-   *
-   * <p>This MAY be an AAGUID consisting of only zeroes.
-   */
-  @NonNull private final ByteArray aaguid;
+  @JsonProperty
+  @Getter(AccessLevel.NONE)
+  private final PublicKeyCredential<
+          AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
+      credential;
 
   /**
    * <code>true</code> if and only if the attestation signature was successfully linked to a trusted
@@ -104,15 +86,43 @@ public class RegistrationResult {
   // JavaDoc on getter
   private final List<X509Certificate> attestationTrustPath;
 
-  /**
-   * The public key of the created credential.
-   *
-   * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
-   * authentication signatures.
-   *
-   * @see RegisteredCredential#getPublicKeyCose()
-   */
-  @NonNull private final ByteArray publicKeyCose;
+  RegistrationResult(
+      PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
+          credential,
+      boolean attestationTrusted,
+      @NonNull AttestationType attestationType,
+      Optional<List<X509Certificate>> attestationTrustPath) {
+    this.credential = credential;
+    this.attestationTrusted = attestationTrusted;
+    this.attestationType = attestationType;
+    this.attestationTrustPath = attestationTrustPath.orElse(null);
+  }
+
+  @JsonCreator
+  private static RegistrationResult fromJson(
+      @NonNull @JsonProperty("credential")
+          PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
+              credential,
+      @JsonProperty("attestationTrusted") boolean attestationTrusted,
+      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
+      @NonNull @JsonProperty("attestationTrustPath") Optional<List<String>> attestationTrustPath) {
+    return new RegistrationResult(
+        credential,
+        attestationTrusted,
+        attestationType,
+        attestationTrustPath.map(
+            atp ->
+                atp.stream()
+                    .map(
+                        pem -> {
+                          try {
+                            return CertificateParser.parsePem(pem);
+                          } catch (CertificateException e) {
+                            throw new RuntimeException(e);
+                          }
+                        })
+                    .collect(Collectors.toList())));
+  }
 
   /**
    * The signature count returned with the created credential.
@@ -122,68 +132,131 @@ public class RegistrationResult {
    *
    * @see RegisteredCredential#getSignatureCount()
    */
-  private final long signatureCount;
-
-  private final ClientRegistrationExtensionOutputs clientExtensionOutputs;
-
-  private final AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs;
-
-  private RegistrationResult(
-      @NonNull PublicKeyCredentialDescriptor keyId,
-      @NonNull ByteArray aaguid,
-      boolean attestationTrusted,
-      @NonNull AttestationType attestationType,
-      List<X509Certificate> attestationTrustPath,
-      @NonNull ByteArray publicKeyCose,
-      Long signatureCount,
-      ClientRegistrationExtensionOutputs clientExtensionOutputs,
-      AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
-    this.keyId = keyId;
-    this.aaguid = aaguid;
-    this.attestationTrusted = attestationTrusted;
-    this.attestationType = attestationType;
-    this.attestationTrustPath = attestationTrustPath;
-    this.publicKeyCose = publicKeyCose;
-    this.signatureCount = signatureCount == null ? 0 : signatureCount;
-    this.clientExtensionOutputs =
-        clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
-            ? null
-            : clientExtensionOutputs;
-    this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
+  @JsonIgnore
+  public long getSignatureCount() {
+    return credential.getResponse().getParsedAuthenticatorData().getSignatureCounter();
   }
 
-  @JsonCreator
-  private static RegistrationResult fromJson(
-      @NonNull @JsonProperty("keyId") PublicKeyCredentialDescriptor keyId,
-      @NonNull @JsonProperty("aaguid") ByteArray aaguid,
-      @JsonProperty("attestationTrusted") boolean attestationTrusted,
-      @NonNull @JsonProperty("attestationType") AttestationType attestationType,
-      @JsonProperty("attestationTrustPath") List<String> attestationTrustPath,
-      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
-      @JsonProperty("signatureCount") Long signatureCount,
-      @JsonProperty("clientExtensionOutputs")
-          ClientRegistrationExtensionOutputs clientExtensionOutputs,
-      @JsonProperty("authenticatorExtensionOutputs")
-          AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
-    return new RegistrationResult(
-        keyId,
-        aaguid,
-        attestationTrusted,
-        attestationType,
-        attestationTrustPath.stream()
-            .map(
-                pem -> {
-                  try {
-                    return CertificateParser.parsePem(pem);
-                  } catch (CertificateException e) {
-                    throw new RuntimeException(e);
-                  }
-                })
-            .collect(Collectors.toList()),
-        publicKeyCose,
-        signatureCount,
-        clientExtensionOutputs,
-        authenticatorExtensionOutputs);
+  /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> and <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports</a>
+   * of the created credential.
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-credential-descriptor">5.8.3.
+   *     Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
+   * @see PublicKeyCredential#getId()
+   */
+  @JsonIgnore
+  public PublicKeyCredentialDescriptor getKeyId() {
+    return PublicKeyCredentialDescriptor.builder()
+        .id(credential.getId())
+        .type(credential.getType())
+        .transports(credential.getResponse().getTransports())
+        .build();
+  }
+
+  /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#aaguid"><code>aaguid</code>
+   * </a> reported in the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-data">of the
+   * created credential.</a>
+   *
+   * <p>This MAY be an AAGUID consisting of only zeroes.
+   */
+  @JsonIgnore
+  public ByteArray getAaguid() {
+    return credential
+        .getResponse()
+        .getAttestation()
+        .getAuthenticatorData()
+        .getAttestedCredentialData()
+        .get()
+        .getAaguid();
+  }
+
+  /**
+   * The public key of the created credential.
+   *
+   * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
+   * authentication signatures.
+   *
+   * @see RegisteredCredential#getPublicKeyCose()
+   */
+  @JsonIgnore
+  public ByteArray getPublicKeyCose() {
+    return credential
+        .getResponse()
+        .getAttestation()
+        .getAuthenticatorData()
+        .getAttestedCredentialData()
+        .get()
+        .getCredentialPublicKey();
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-client-extension-processing">§9.4.
+   *     Client Extension Processing</a>
+   * @see ClientRegistrationExtensionOutputs
+   * @see #getAuthenticatorExtensionOutputs() ()
+   */
+  @JsonIgnore
+  public Optional<ClientRegistrationExtensionOutputs> getClientExtensionOutputs() {
+    return Optional.ofNullable(credential.getClientExtensionResults())
+        .filter(ceo -> !ceo.getExtensionIds().isEmpty());
+  }
+
+  /**
+   * The <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   * extension outputs</a>, if any.
+   *
+   * <p>This is present if and only if at least one extension output is present in the return value.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-extension-processing">§9.5.
+   *     Authenticator Extension Processing</a>
+   * @see AuthenticatorRegistrationExtensionOutputs
+   * @see #getClientExtensionOutputs()
+   */
+  @JsonIgnore
+  public Optional<AuthenticatorRegistrationExtensionOutputs> getAuthenticatorExtensionOutputs() {
+    return AuthenticatorRegistrationExtensionOutputs.fromAuthenticatorData(
+        credential.getResponse().getParsedAuthenticatorData());
+  }
+
+  /**
+   * Try to determine whether the created credential is a <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">discoverable
+   * credential</a>, using the output from the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
+   * <code>credProps</code></a> extension.
+   *
+   * @return A present <code>true</code> if the created credential is discoverable. A present <code>
+   *     false</code> if the created credential is not discoverable. An empty value if it is not
+   *     known whether the created credential is discoverable.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-credentialpropertiesoutput-rk">§10.4.
+   *     Credential Properties Extension (credProps), "rk" output</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">Discoverable
+   *     Credential</a>
+   */
+  @JsonIgnore
+  public Optional<Boolean> isDiscoverable() {
+    return getClientExtensionOutputs()
+        .flatMap(outputs -> outputs.getCredProps())
+        .flatMap(credProps -> credProps.getRk());
   }
 
   /**
@@ -221,126 +294,5 @@ public class RegistrationResult {
                           }
                         })
                     .collect(Collectors.toList()));
-  }
-
-  /**
-   * The <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-extension-output">client
-   * extension outputs</a>, if any.
-   *
-   * <p>This is present if and only if at least one extension output is present in the return value.
-   *
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-client-extension-processing">§9.4.
-   *     Client Extension Processing</a>
-   * @see ClientRegistrationExtensionOutputs
-   * @see #getAuthenticatorExtensionOutputs() ()
-   */
-  public Optional<ClientRegistrationExtensionOutputs> getClientExtensionOutputs() {
-    return Optional.ofNullable(clientExtensionOutputs);
-  }
-
-  /**
-   * The <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
-   * extension outputs</a>, if any.
-   *
-   * <p>This is present if and only if at least one extension output is present in the return value.
-   *
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-extension-processing">§9.5.
-   *     Authenticator Extension Processing</a>
-   * @see AuthenticatorRegistrationExtensionOutputs
-   * @see #getClientExtensionOutputs()
-   */
-  public Optional<AuthenticatorRegistrationExtensionOutputs> getAuthenticatorExtensionOutputs() {
-    return Optional.ofNullable(authenticatorExtensionOutputs);
-  }
-
-  /**
-   * Try to determine whether the created credential is a <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">discoverable
-   * credential</a>, using the output from the <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
-   * <code>credProps</code></a> extension.
-   *
-   * @return A present <code>true</code> if the created credential is discoverable. A present <code>
-   *     false</code> if the created credential is not discoverable. An empty value if it is not
-   *     known whether the created credential is discoverable.
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-credentialpropertiesoutput-rk">§10.4.
-   *     Credential Properties Extension (credProps), "rk" output</a>
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">Discoverable
-   *     Credential</a>
-   */
-  public Optional<Boolean> isDiscoverable() {
-    return getClientExtensionOutputs()
-        .flatMap(outputs -> outputs.getCredProps())
-        .flatMap(credProps -> credProps.getRk());
-  }
-
-  static RegistrationResultBuilder.MandatoryStages builder() {
-    return new RegistrationResultBuilder.MandatoryStages();
-  }
-
-  static class RegistrationResultBuilder {
-    static class MandatoryStages {
-      private final RegistrationResultBuilder builder = new RegistrationResultBuilder();
-
-      Step2 keyId(PublicKeyCredentialDescriptor keyId) {
-        builder.keyId(keyId);
-        return new Step2();
-      }
-
-      class Step2 {
-        Step3 aaguid(ByteArray aaguid) {
-          builder.aaguid(aaguid);
-          return new Step3();
-        }
-      }
-
-      class Step3 {
-        Step4 attestationTrusted(boolean attestationTrusted) {
-          builder.attestationTrusted(attestationTrusted);
-          return new Step4();
-        }
-      }
-
-      class Step4 {
-        Step5 attestationType(AttestationType attestationType) {
-          builder.attestationType(attestationType);
-          return new Step5();
-        }
-      }
-
-      class Step5 {
-        Step6 publicKeyCose(ByteArray publicKeyCose) {
-          builder.publicKeyCose(publicKeyCose);
-          return new Step6();
-        }
-      }
-
-      class Step6 {
-        Step7 signatureCount(long signatureCount) {
-          builder.signatureCount(signatureCount);
-          return new Step7();
-        }
-      }
-
-      class Step7 {
-        Step8 clientExtensionOutputs(ClientRegistrationExtensionOutputs clientExtensionOutputs) {
-          builder.clientExtensionOutputs(clientExtensionOutputs);
-          return new Step8();
-        }
-      }
-
-      class Step8 {
-        RegistrationResultBuilder authenticatorExtensionOutputs(
-            AuthenticatorRegistrationExtensionOutputs authenticatorExtensionOutputs) {
-          return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
-        }
-      }
-    }
   }
 }
