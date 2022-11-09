@@ -179,7 +179,7 @@ public class AssertionResult {
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
    * @see UserIdentity#getId()
    * @see #getUsername()
-   * @deprecated Use {@link #getCredential()}.{@link RegisteredCredential#getUserHandle()} ()
+   * @deprecated Use {@link #getCredential()}.{@link RegisteredCredential#getUserHandle()
    *     getUserHandle()} instead.
    */
   @Deprecated
