@@ -9,6 +9,8 @@ Fixes:
   in the Subject Alternative Names extension.
  ** Thanks to Oussama Zgheb for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/241
+* Fixed typo in "see also" section of `RegistrationResult.getSignatureCount()`
+  JavaDoc.
 
 
 `webauthn-server-attestation`:

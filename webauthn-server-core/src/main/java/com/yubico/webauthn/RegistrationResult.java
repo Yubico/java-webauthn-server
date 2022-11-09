@@ -134,7 +134,7 @@ public class RegistrationResult {
    * <p>This is used in {@link RelyingParty#finishAssertion(FinishAssertionOptions)} to verify the
    * validity of future signature counter values.
    *
-   * @see RegisteredCredential#getSignatureCount() ()
+   * @see RegisteredCredential#getSignatureCount()
    */
   private final long signatureCount;
 
