@@ -113,6 +113,14 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
     this.clientData = new CollectedClientData(clientDataJSON);
   }
 
+  // The default getter in AuthenticatorResponse re-parses the authenticator data on every
+  // invocation. This "optimization" override has no measurable impact on performance, but it seems
+  // rude to obviously waste cycles for nothing.
+  @Override
+  public AuthenticatorData getParsedAuthenticatorData() {
+    return attestation.getAuthenticatorData();
+  }
+
   public static AuthenticatorAttestationResponseBuilder.MandatoryStages builder() {
     return new AuthenticatorAttestationResponseBuilder.MandatoryStages();
   }
