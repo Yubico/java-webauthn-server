@@ -34,14 +34,12 @@ import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
-import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -640,43 +638,8 @@ final class FinishRegistrationSteps {
     @Override
     public Optional<RegistrationResult> result() {
       return Optional.of(
-          RegistrationResult.builder()
-              .keyId(keyId())
-              .aaguid(
-                  response
-                      .getResponse()
-                      .getAttestation()
-                      .getAuthenticatorData()
-                      .getAttestedCredentialData()
-                      .get()
-                      .getAaguid())
-              .attestationTrusted(attestationTrusted)
-              .attestationType(attestationType)
-              .publicKeyCose(
-                  response
-                      .getResponse()
-                      .getAttestation()
-                      .getAuthenticatorData()
-                      .getAttestedCredentialData()
-                      .get()
-                      .getCredentialPublicKey())
-              .signatureCount(
-                  response.getResponse().getParsedAuthenticatorData().getSignatureCounter())
-              .clientExtensionOutputs(response.getClientExtensionResults())
-              .authenticatorExtensionOutputs(
-                  AuthenticatorRegistrationExtensionOutputs.fromAuthenticatorData(
-                          response.getResponse().getParsedAuthenticatorData())
-                      .orElse(null))
-              .attestationTrustPath(attestationTrustPath.orElse(null))
-              .build());
-    }
-
-    private PublicKeyCredentialDescriptor keyId() {
-      return PublicKeyCredentialDescriptor.builder()
-          .id(response.getId())
-          .type(response.getType())
-          .transports(response.getResponse().getTransports())
-          .build();
+          new RegistrationResult(
+              response, attestationTrusted, attestationType, attestationTrustPath));
     }
   }
 }

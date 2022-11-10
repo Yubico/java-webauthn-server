@@ -71,6 +71,8 @@ public class RelyingPartyBenchmark {
       throws RegistrationFailedException {
     final RegistrationResult result = state.rp.finishRegistration(state.fro);
     bh.consume(result.getKeyId());
+    bh.consume(result.isBackupEligible());
+    bh.consume(result.isBackedUp());
     bh.consume(result.getSignatureCount());
     bh.consume(result.getAaguid());
     bh.consume(result.getPublicKeyCose());
@@ -80,6 +82,8 @@ public class RelyingPartyBenchmark {
   @Benchmark
   public void finishAssertion(Blackhole bh, AssertionState state) throws AssertionFailedException {
     final AssertionResult result = state.rp.finishAssertion(state.fao);
+    bh.consume(result.isBackupEligible());
+    bh.consume(result.isBackedUp());
     bh.consume(result.getSignatureCount());
     bh.consume(result.getAuthenticatorExtensionOutputs());
     bh.consume(result.getCredential().getCredentialId());

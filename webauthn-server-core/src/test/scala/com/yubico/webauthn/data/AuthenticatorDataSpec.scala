@@ -27,6 +27,8 @@ package com.yubico.webauthn.data
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.webauthn.WebAuthnTestCodecs
+import com.yubico.webauthn.data.Generators.authenticatorDataBytes
+import com.yubico.webauthn.data.Generators.authenticatorDataFlagsByte
 import com.yubico.webauthn.data.Generators.byteArray
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary.arbitrary
@@ -61,10 +63,11 @@ class AuthenticatorDataSpec
     }
 
     it("with attested credential data must be at least 55 bytes.") {
-      forAll(byteArray(37, 54)) { bytes =>
-        val authData = new ByteArray(
-          bytes.getBytes.updated(32, (bytes.getBytes.apply(32) | 0x40).toByte)
-        )
+      forAll(
+        byteArray(37, 54),
+        authenticatorDataFlagsByte.map(flags => (flags | 0x40).toByte),
+      ) { (bytes, flags) =>
+        val authData = new ByteArray(bytes.getBytes.updated(32, flags))
         val result = Try(new AuthenticatorData(authData))
         result shouldBe a[Failure[_]]
         result.failed.get.getMessage should include(
@@ -78,11 +81,12 @@ class AuthenticatorDataSpec
         prefix <- Gen.infiniteLazyList(arbitrary[Byte]).map(_.take(53).toArray)
         credIdLen <- Gen.chooseNum(1, 2048)
         credId <- Gen.listOfN(credIdLen - 1, arbitrary[Byte])
-      } yield (prefix, credIdLen, credId)) {
+        flags <- authenticatorDataFlagsByte.map(flags => (flags | 0x40).toByte)
+      } yield (prefix.updated(32, flags), credIdLen, credId)) {
         case (prefix, credIdLen, credId) =>
-          val bytes = prefix ++ BinaryUtil.encodeUint16(credIdLen) ++ credId
-          val authData =
-            new ByteArray(bytes.updated(32, (bytes(32) | 0x40).toByte))
+          val authData = new ByteArray(
+            prefix ++ BinaryUtil.encodeUint16(credIdLen) ++ credId
+          )
           val result = Try(new AuthenticatorData(authData))
           result shouldBe a[Failure[_]]
           result.failed.get.getMessage should include(
@@ -93,6 +97,8 @@ class AuthenticatorDataSpec
 
     def generateTests(
         authDataHex: String,
+        backupEligible: Boolean = false,
+        backupState: Boolean = false,
         hasAttestation: Boolean = false,
         hasExtensions: Boolean = false,
     ): Unit = {
@@ -108,6 +114,8 @@ class AuthenticatorDataSpec
       it("gets the correct flags from the raw bytes.") {
         authData.getFlags.UP should be(true)
         authData.getFlags.UV should be(false)
+        authData.getFlags.BE should be(backupEligible)
+        authData.getFlags.BS should be(backupState)
         authData.getFlags.AT should equal(hasAttestation)
         authData.getFlags.ED should equal(hasExtensions)
       }
@@ -164,6 +172,63 @@ class AuthenticatorDataSpec
           + "01" // Flags
           + "00000539" // Signature count
       )
+    }
+
+    describe("with BE=1") {
+      generateTests(
+        "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763" // RP ID hash
+          + "09" // Flags
+          + "00000539", // Signature count
+        backupEligible = true,
+        backupState = false,
+      )
+    }
+
+    describe("with BE=1 and BS=1") {
+      generateTests(
+        "49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d9763" // RP ID hash
+          + "19" // Flags
+          + "00000539", // Signature count
+        backupEligible = true,
+        backupState = true,
+      )
+    }
+
+    it("with BE=0 and BS=1 is invalid.") {
+      forAll(
+        authenticatorDataBytes(
+          Gen.option(Generators.Extensions.anyAssertionExtensions.map({
+            case (_, _, ext) => ext
+          })),
+          backupFlagsGen = Gen.const((false, true)),
+        )
+      ) { authDataBytes =>
+        val neitherFlag = new AuthenticatorData(
+          new ByteArray(
+            authDataBytes.getBytes
+              .updated(32, (authDataBytes.getBytes()(32) & ~0x10).toByte)
+          )
+        )
+        neitherFlag should not be null
+        neitherFlag.getFlags.BE should be(false)
+        neitherFlag.getFlags.BS should be(false)
+
+        val onlyBe = new AuthenticatorData(
+          new ByteArray(
+            authDataBytes.getBytes.updated(
+              32,
+              ((authDataBytes.getBytes()(32) | 0x08) & ~0x10).toByte,
+            )
+          )
+        )
+        onlyBe should not be null
+        onlyBe.getFlags.BE should be(true)
+        onlyBe.getFlags.BS should be(false)
+
+        an[IllegalArgumentException] should be thrownBy {
+          new AuthenticatorData(authDataBytes)
+        }
+      }
     }
 
     describe("with only attestation data") {

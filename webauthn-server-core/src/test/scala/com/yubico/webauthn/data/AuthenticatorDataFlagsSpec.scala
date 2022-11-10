@@ -43,6 +43,8 @@ class AuthenticatorDataFlagsSpec extends AnyFunSpec with Matchers {
         val flags = decode("01")
         flags.UP should be(true)
         flags.UV should be(false)
+        flags.BE should be(false)
+        flags.BS should be(false)
         flags.AT should be(false)
         flags.ED should be(false)
       }
@@ -51,6 +53,28 @@ class AuthenticatorDataFlagsSpec extends AnyFunSpec with Matchers {
         val flags = decode("04")
         flags.UP should be(false)
         flags.UV should be(true)
+        flags.BE should be(false)
+        flags.BS should be(false)
+        flags.AT should be(false)
+        flags.ED should be(false)
+      }
+
+      it("0x08 to BE.") {
+        val flags = decode("08")
+        flags.UP should be(false)
+        flags.UV should be(false)
+        flags.BE should be(true)
+        flags.BS should be(false)
+        flags.AT should be(false)
+        flags.ED should be(false)
+      }
+
+      it("0x10 to BS.") {
+        val flags = decode("18")
+        flags.UP should be(false)
+        flags.UV should be(false)
+        flags.BE should be(true)
+        flags.BS should be(true)
         flags.AT should be(false)
         flags.ED should be(false)
       }
@@ -59,6 +83,8 @@ class AuthenticatorDataFlagsSpec extends AnyFunSpec with Matchers {
         val flags = decode("40")
         flags.UP should be(false)
         flags.UV should be(false)
+        flags.BE should be(false)
+        flags.BS should be(false)
         flags.AT should be(true)
         flags.ED should be(false)
       }
@@ -67,6 +93,8 @@ class AuthenticatorDataFlagsSpec extends AnyFunSpec with Matchers {
         val flags = decode("80")
         flags.UP should be(false)
         flags.UV should be(false)
+        flags.BE should be(false)
+        flags.BS should be(false)
         flags.AT should be(false)
         flags.ED should be(true)
       }
