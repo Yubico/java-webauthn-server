@@ -1,4 +1,4 @@
-= v1.x to v2.0 migration guide
+= v1.x to v2.1 migration guide
 
 The `2.0` release of the `webauthn-server-attestation` module
 makes lots of breaking changes compared to the `1.x` versions.
@@ -24,6 +24,11 @@ Here is a high-level outline of what needs to be updated:
   instead you'll need to retrieve it separately after a successful registration.
 - Replace uses of the `Attestation` result type with
   link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.1.0/com/yubico/fido/metadata/MetadataBLOBPayloadEntry.html[`MetadataBLOBPayloadEntry`].
+
+This migration guide is written for version `2.1.0` of the
+`webauthn-server-attestation` module. Later `2.x` versions may introduce new
+features but should remain compatible without further changes; consult the
+release notes for a full list of new features.
 
 
 == Replace `StandardMetadataService`
