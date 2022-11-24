@@ -44,7 +44,7 @@ Fixes:
 
 Fixes:
 
-- Improved documentation of guaranteed provided by `FidoMetadataDownloader` and
+* Improved documentation of guaranteed provided by `FidoMetadataDownloader` and
   required of its parameters.
 
 
