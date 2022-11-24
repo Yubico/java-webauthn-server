@@ -16,6 +16,8 @@ New features:
 
 * (Experimental) Added support for the new `BE` (backup eligible) and `BS`
   (backup state) flags in authenticator data:
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
  ** Added `BE` and `BS` properties to `AuthenticatorDataFlags`, reflecting the
     respective flags (bits 0x08 and 0x10).
  ** Added methods `isBackupEligible()` and `isBackedUp()` to
