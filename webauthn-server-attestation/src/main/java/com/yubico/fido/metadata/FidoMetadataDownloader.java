@@ -351,10 +351,11 @@ public final class FidoMetadataDownloader {
        * writeCachedTrustRootCert</code>.
        *
        * @param getCachedTrustRootCert a {@link Supplier} that fetches the cached trust root
-       *     certificate if it exists. The returned value, if any, should be the trust root
-       *     certificate in X.509 DER format.
+       *     certificate if it exists. MUST NOT return <code>null</code>. The returned value, if
+       *     present, MUST be the trust root certificate in X.509 DER format.
        * @param writeCachedTrustRootCert a {@link Consumer} that accepts the trust root certificate
-       *     in X.509 DER format and writes it to the cache.
+       *     in X.509 DER format and writes it to the cache. Its argument will never be <code>null
+       *     </code>.
        */
       public Step4 useTrustRootCache(
           @NonNull Supplier<Optional<ByteArray>> getCachedTrustRootCert,
@@ -429,8 +430,7 @@ public final class FidoMetadataDownloader {
        *
        * @param blobJwt the Metadata BLOB in JWT format as defined in <a
        *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob">FIDO
-       *     Metadata Service §3.1.7. Metadata BLOB</a>. The byte array should not be
-       *     Base64-decoded.
+       *     Metadata Service §3.1.7. Metadata BLOB</a>. The byte array MUST NOT be Base64-decoded.
        * @see <a
        *     href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob">FIDO
        *     Metadata Service §3.1.7. Metadata BLOB</a>
@@ -468,7 +468,7 @@ public final class FidoMetadataDownloader {
        *
        * <p>Otherwise, the metadata BLOB will be downloaded and written to this file.
        *
-       * @param cacheFile a {@link File} which may or may not exist. If it exists, it should contain
+       * @param cacheFile a {@link File} which may or may not exist. If it exists, it MUST contain
        *     the metadata BLOB in JWS compact serialization format <a
        *     href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">[RFC7515]</a>.
        */
@@ -487,12 +487,13 @@ public final class FidoMetadataDownloader {
        * </code>.
        *
        * @param getCachedBlob a {@link Supplier} that fetches the cached metadata BLOB if it exists.
-       *     The returned value, if any, should be in JWS compact serialization format <a
+       *     MUST NOT return <code>null</code>. The returned value, if present, MUST be in JWS
+       *     compact serialization format <a
        *     href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">[RFC7515]</a>.
        * @param writeCachedBlob a {@link Consumer} that accepts the metadata BLOB in JWS compact
        *     serialization format <a
        *     href="https://datatracker.ietf.org/doc/html/rfc7515#section-3.1">[RFC7515]</a> and
-       *     writes it to the cache.
+       *     writes it to the cache. Its argument will never be <code>null</code>.
        */
       public FidoMetadataDownloaderBuilder useBlobCache(
           @NonNull Supplier<Optional<ByteArray>> getCachedBlob,
@@ -1113,7 +1114,7 @@ public final class FidoMetadataDownloader {
       throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
     final ByteArray hash = new ByteArray(digest.digest(contents.getBytes()));
-    if (acceptedCertSha256.stream().anyMatch(acceptableHash -> acceptableHash.equals(hash))) {
+    if (acceptedCertSha256.stream().anyMatch(hash::equals)) {
       return contents;
     } else {
       return null;

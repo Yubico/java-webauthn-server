@@ -63,7 +63,7 @@ object Generators {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
-  private def setFlag(flags: Byte, mask: Byte, value: Boolean): Byte =
+  private def setFlag(mask: Byte, value: Boolean)(flags: Byte): Byte =
     if (value)
       (flags | (mask & (-0x01).toByte)).toByte
     else
@@ -207,10 +207,15 @@ object Generators {
           )
     } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj))
 
-  implicit val arbitraryAuthenticatorDataFlags
-      : Arbitrary[AuthenticatorDataFlags] = Arbitrary(for {
+  val authenticatorDataFlagsByte: Gen[Byte] = for {
     value <- arbitrary[Byte]
-  } yield new AuthenticatorDataFlags(value))
+    bsMask = (((value & 0x08) << 1) & 0xef).toByte // Bit 0x10 cannot be set unless 0x08 is
+  } yield (value & bsMask).toByte
+
+  implicit val arbitraryAuthenticatorDataFlags
+      : Arbitrary[AuthenticatorDataFlags] = Arbitrary(
+    authenticatorDataFlagsByte.map(new AuthenticatorDataFlags(_))
+  )
 
   implicit val arbitraryAuthenticatorAssertionResponse
       : Arbitrary[AuthenticatorAssertionResponse] = Arbitrary(
@@ -258,29 +263,47 @@ object Generators {
     )
 
   def authenticatorDataBytes(
-      extensionsGen: Gen[Option[CBORObject]]
+      extensionsGen: Gen[Option[CBORObject]],
+      rpIdHashGen: Gen[ByteArray] = byteArray(32),
+      upFlagGen: Gen[Boolean] = Gen.const(true),
+      uvFlagGen: Gen[Boolean] = arbitrary[Boolean],
+      backupFlagsGen: Gen[(Boolean, Boolean)] =
+        arbitrary[(Boolean, Boolean)].map({ case (be, bs) => (be, be && bs) }),
+      signatureCountGen: Gen[ByteArray] = byteArray(4),
   ): Gen[ByteArray] =
     for {
-      fixedBytes <- byteArray(37)
+      rpIdHash <- rpIdHashGen
+      signatureCount <- signatureCountGen
       attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
-      extensions <- extensionsGen
 
+      extensions <- extensionsGen
       extensionsBytes = extensions map { exts =>
         new ByteArray(
           exts.EncodeToBytes(CBOREncodeOptions.DefaultCtap2Canonical)
         )
       }
+
+      flagsBase <- arbitrary[Byte]
+      upFlag <- upFlagGen
+      uvFlag <- uvFlagGen
+      (beFlag, bsFlag) <- backupFlagsGen
       atFlag = attestedCredentialDataBytes.isDefined
       edFlag = extensionsBytes.isDefined
-      flagsByte: Byte = setFlag(
-        setFlag(fixedBytes.getBytes()(32), 0x40, atFlag),
-        BinaryUtil.singleFromHex("80"),
-        edFlag,
+      flagsByte: Byte = setFlag(0x01, upFlag)(
+        setFlag(0x03, uvFlag)(
+          setFlag(0x40, atFlag)(
+            setFlag(BinaryUtil.singleFromHex("80"), edFlag)(
+              setFlag(0x08, beFlag)(setFlag(0x10, bsFlag)(flagsBase))
+            )
+          )
+        )
       )
     } yield new ByteArray(
-      fixedBytes.getBytes.updated(32, flagsByte)
-        ++ attestedCredentialDataBytes.map(_.getBytes).getOrElse(Array.empty)
-        ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
+      rpIdHash.getBytes
+        :+ flagsByte
+        :++ signatureCount.getBytes
+          ++ attestedCredentialDataBytes.map(_.getBytes).getOrElse(Array.empty)
+          ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
     )
 
   implicit val arbitraryAuthenticatorSelectionCriteria

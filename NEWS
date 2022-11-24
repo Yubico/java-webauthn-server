@@ -1,3 +1,53 @@
+== Version 2.2.0 ==
+
+`webauthn-server-core`:
+
+Changes:
+
+* Changed internal structure of `RegistrationResult` and `AssertionResult`. This
+  may affect you if you use Jackson or similar tools to serialize these values
+  to JSON, for example. This is not an officially supported use case and thus
+  does not warrant a major version bump.
+* Removed methods `RegistrationResult.toBuilder()` and
+  `AssertionResult.toBuilder()`. Both had package-private return types, and thus
+  were not usable by outside callers.
+
+New features:
+
+* (Experimental) Added support for the new `BE` (backup eligible) and `BS`
+  (backup state) flags in authenticator data:
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+ ** Added `BE` and `BS` properties to `AuthenticatorDataFlags`, reflecting the
+    respective flags (bits 0x08 and 0x10).
+ ** Added methods `isBackupEligible()` and `isBackedUp()` to
+    `RegistrationResult` and `AssertionResult`, reflecting respectively the `BE`
+    and `BS` flags.
+ ** Added properties `backupEligible` and `backupState`, getters
+    `isBackupEligible()` and `isBackedUp()`, and corresponding builder methods
+    to `RegisteredCredential`. `RelyingParty.finishAssertion(...)` will now
+    validate that if `RegisteredCredential.isBackupEligible()` is present, then
+    the `BE` flag of any assertion of that credential must match the stored
+    value.
+
+Fixes:
+
+* Fixed TPM attestation verification rejecting attestation certificates with TPM
+  Device Attributes split between multiple RelativeDistinguishedName structures
+  in the Subject Alternative Names extension.
+ ** Thanks to Oussama Zgheb for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/241
+* Fixed various errors in JavaDoc.
+
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* Improved documentation of guaranteed provided by `FidoMetadataDownloader` and
+  required of its parameters.
+
+
 == Version 2.1.0 ==
 
 `webauthn-server-core`:
@@ -16,7 +66,6 @@ Deprecations:
 
 New features:
 
-* Added method `FidoMetadataDownloader.refreshBlob()`.
 * Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
 * Added method `AssertionResult.getCredential(): RegisteredCredential`.
 * Added support for the `"tpm"` attestation statement format.
@@ -47,6 +96,10 @@ Changes:
   filter now omits zero AAGUIDs.
 * Promoted log messages in `FidoMetadataDownloader` about BLOB signature failure
   and cache corruption from DEBUG level to WARN level.
+
+New features:
+
+* Added method `FidoMetadataDownloader.refreshBlob()`.
 
 Fixes:
 

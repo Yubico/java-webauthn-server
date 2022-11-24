@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -488,11 +489,13 @@ final class TpmAttestationStatementVerifier
       if ((Integer) n.get(0) == 4) { // GeneralNames CHOICE 4: directoryName
         if (n.get(1) instanceof String) {
           try {
-            javax.naming.directory.Attributes attrs =
-                new LdapName((String) n.get(1)).getRdns().get(0).toAttributes();
-            foundManufacturer = foundManufacturer || attrs.get(OID_TCG_AT_TPM_MANUFACTURER) != null;
-            foundModel = foundModel || attrs.get(OID_TCG_AT_TPM_MODEL) != null;
-            foundVersion = foundVersion || attrs.get(OID_TCG_AT_TPM_VERSION) != null;
+            for (final Rdn rdn : new LdapName((String) n.get(1)).getRdns()) {
+              javax.naming.directory.Attributes attrs = rdn.toAttributes();
+              foundManufacturer =
+                  foundManufacturer || attrs.get(OID_TCG_AT_TPM_MANUFACTURER) != null;
+              foundModel = foundModel || attrs.get(OID_TCG_AT_TPM_MODEL) != null;
+              foundVersion = foundVersion || attrs.get(OID_TCG_AT_TPM_VERSION) != null;
+            }
           } catch (InvalidNameException e) {
             throw new RuntimeException(
                 "Failed to decode subject alternative name in TPM attestation cert", e);

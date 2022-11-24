@@ -44,6 +44,7 @@ import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
+import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
@@ -4514,6 +4515,110 @@ class RelyingPartyRegistrationSpec
         result.getAaguid should equal(
           testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getAaguid
         )
+      }
+
+      {
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity
+              .builder()
+              .id("localhost")
+              .name("Example RP")
+              .build()
+          )
+          .credentialRepository(Helpers.CredentialRepository.empty)
+          .build()
+        val user = UserIdentity.builder
+          .name("foo")
+          .displayName("Foo User")
+          .id(new ByteArray(Array(0, 1, 2, 3)))
+          .build()
+
+        val request = PublicKeyCredentialCreationOptions
+          .builder()
+          .rp(rp.getIdentity)
+          .user(user)
+          .challenge(ByteArray.fromBase64Url("Y2hhbGxlbmdl"))
+          .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
+          .build()
+
+        it("exposes isBackupEligible() with the BE flag value in authenticator data.") {
+          val (pkcWithoutBackup, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x00.toByte)),
+              challenge = request.getChallenge,
+            )
+          val (pkcWithBackup, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x08.toByte)),
+              challenge = request.getChallenge,
+            )
+
+          val resultWithoutBackup = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithoutBackup)
+              .build()
+          )
+          val resultWithBackup = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithBackup)
+              .build()
+          )
+
+          resultWithoutBackup.isBackupEligible should be(false)
+          resultWithBackup.isBackupEligible should be(true)
+        }
+
+        it(
+          "exposes isBackedUp() with the BS flag value in authenticator data."
+        ) {
+          val (pkcWithoutBackup, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x00.toByte)),
+              challenge = request.getChallenge,
+            )
+          val (pkcWithBeOnly, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x08.toByte)),
+              challenge = request.getChallenge,
+            )
+          val (pkcWithBackup, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x18.toByte)),
+              challenge = request.getChallenge,
+            )
+
+          val resultWithBackup = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithBackup)
+              .build()
+          )
+          val resultWithBeOnly = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithBeOnly)
+              .build()
+          )
+          val resultWithoutBackup = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithoutBackup)
+              .build()
+          )
+
+          resultWithoutBackup.isBackedUp should be(false)
+          resultWithBeOnly.isBackedUp should be(false)
+          resultWithBackup.isBackedUp should be(true)
+        }
       }
     }
 

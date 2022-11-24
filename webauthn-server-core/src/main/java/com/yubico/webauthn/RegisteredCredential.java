@@ -33,7 +33,10 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
+import java.util.Optional;
+import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -95,16 +98,116 @@ public final class RegisteredCredential {
    */
   @Builder.Default private final long signatureCount = 0;
 
+  /**
+   * The state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> when
+   * this credential was registered, if known.
+   *
+   * <p>If absent, it is not known whether or not this credential is backup eligible.
+   *
+   * <p>If present and <code>true</code>, the credential is backup eligible: it can be backed up in
+   * some way, most commonly by syncing the private key to a cloud account.
+   *
+   * <p>If present and <code>false</code>, the credential is not backup eligible: it cannot be
+   * backed up in any way.
+   *
+   * <p>{@link CredentialRepository} implementations SHOULD set this to the first known value
+   * returned by {@link RegistrationResult#isBackupEligible()} or {@link
+   * AssertionResult#isBackupEligible()}, if known. If unknown, {@link CredentialRepository}
+   * implementations SHOULD set this to <code>null</code> or not set this value.
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @Getter(AccessLevel.NONE)
+  @Builder.Default
+  private final Boolean backupEligible = null;
+
+  /**
+   * The last known state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">BS
+   * flag</a> for this credential, if known.
+   *
+   * <p>If absent, the backup state of the credential is not known.
+   *
+   * <p>If present and <code>true</code>, the credential is believed to be currently backed up.
+   *
+   * <p>If present and <code>false</code>, the credential is believed to not be currently backed up.
+   *
+   * <p>{@link CredentialRepository} implementations SHOULD set this to the most recent value
+   * returned by {@link AssertionResult#isBackedUp()} or {@link RegistrationResult#isBackedUp()}, if
+   * known. If unknown, {@link CredentialRepository} implementations SHOULD set this to <code>null
+   * </code> or not set this value.
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @Getter(AccessLevel.NONE)
+  @Builder.Default
+  private final Boolean backupState = null;
+
   @JsonCreator
   private RegisteredCredential(
       @NonNull @JsonProperty("credentialId") ByteArray credentialId,
       @NonNull @JsonProperty("userHandle") ByteArray userHandle,
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
-      @JsonProperty("signatureCount") long signatureCount) {
+      @JsonProperty("signatureCount") long signatureCount,
+      @JsonProperty("backupEligible") Boolean backupEligible,
+      @JsonProperty("backupState") Boolean backupState) {
     this.credentialId = credentialId;
     this.userHandle = userHandle;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount;
+    this.backupEligible = backupEligible;
+    this.backupState = backupState;
+  }
+
+  /**
+   * The state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> when
+   * this credential was registered, if known.
+   *
+   * <p>If absent, it is not known whether or not this credential is backup eligible.
+   *
+   * <p>If present and <code>true</code>, the credential is backup eligible: it can be backed up in
+   * some way, most commonly by syncing the private key to a cloud account.
+   *
+   * <p>If present and <code>false</code>, the credential is not backup eligible: it cannot be
+   * backed up in any way.
+   *
+   * <p>{@link CredentialRepository} implementations SHOULD set this to the first known value
+   * returned by {@link RegistrationResult#isBackupEligible()} or {@link
+   * AssertionResult#isBackupEligible()}, if known. If unknown, {@link CredentialRepository}
+   * implementations SHOULD set this to <code>null</code> or not set this value.
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  public Optional<Boolean> isBackupEligible() {
+    return Optional.ofNullable(backupEligible);
+  }
+
+  /**
+   * The last known state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">BS
+   * flag</a> for this credential, if known.
+   *
+   * <p>If absent, the backup state of the credential is not known.
+   *
+   * <p>If present and <code>true</code>, the credential is believed to be currently backed up.
+   *
+   * <p>If present and <code>false</code>, the credential is believed to not be currently backed up.
+   *
+   * <p>{@link CredentialRepository} implementations SHOULD set this to the most recent value
+   * returned by {@link AssertionResult#isBackedUp()} or {@link RegistrationResult#isBackedUp()}, if
+   * known. If unknown, {@link CredentialRepository} implementations SHOULD set this to <code>null
+   * </code> or not set this value.
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  public Optional<Boolean> isBackedUp() {
+    return Optional.ofNullable(backupState);
   }
 
   public static RegisteredCredentialBuilder.MandatoryStages builder() {

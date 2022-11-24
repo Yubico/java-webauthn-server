@@ -6,7 +6,7 @@ name: Reproducible binary
 
 on:
   release:
-    types: [published, edited]
+    types: [published]
 
 jobs:
   download:

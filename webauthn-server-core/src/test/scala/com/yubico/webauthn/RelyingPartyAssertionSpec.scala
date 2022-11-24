@@ -31,6 +31,7 @@ import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
@@ -1468,7 +1469,10 @@ class RelyingPartyAssertionSpec
                 .toArray
             )
             val (checkFails, checkSucceeds) =
-              checks[FinishAssertionSteps#Step18, FinishAssertionSteps#Step17](
+              checks[
+                FinishAssertionSteps#PendingStep16,
+                FinishAssertionSteps#Step17,
+              ](
                 _.begin.next.next.next.next.next.next.next.next.next.next.next
               )
 
@@ -1498,6 +1502,80 @@ class RelyingPartyAssertionSpec
           }
         }
 
+        describe("(NOT YET MATURE) 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData. Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.") {
+          it(
+            "Fails if BE=0 in the stored credential and BE=1 in the assertion."
+          ) {
+            forAll(
+              authenticatorDataBytes(
+                Gen.option(Extensions.authenticatorAssertionExtensionOutputs()),
+                rpIdHashGen = Gen.const(sha256(Defaults.rpId.getId)),
+                backupFlagsGen = arbitrary[Boolean].map(bs => (true, bs)),
+              )
+            ) { authData =>
+              val step: FinishAssertionSteps#PendingStep16 = finishAssertion(
+                authenticatorData = authData,
+                credentialRepository = Some(
+                  Helpers.CredentialRepository.withUser(
+                    Defaults.user,
+                    RegisteredCredential
+                      .builder()
+                      .credentialId(Defaults.credentialId)
+                      .userHandle(Defaults.userHandle)
+                      .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
+                      .backupEligible(false)
+                      .backupState(false)
+                      .build(),
+                  )
+                ),
+              ).begin.next.next.next.next.next.next.next.next.next.next.next.next
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+              step.tryNext shouldBe a[Failure[_]]
+            }
+          }
+
+          it(
+            "Fails if BE=1 in the stored credential and BE=0 in the assertion."
+          ) {
+            forAll(
+              authenticatorDataBytes(
+                Gen.option(Extensions.authenticatorAssertionExtensionOutputs()),
+                rpIdHashGen = Gen.const(sha256(Defaults.rpId.getId)),
+                backupFlagsGen = Gen.const((false, false)),
+              ),
+              arbitrary[Boolean],
+            ) {
+              case (authData, storedBs) =>
+                val step: FinishAssertionSteps#PendingStep16 = finishAssertion(
+                  authenticatorData = authData,
+                  credentialRepository = Some(
+                    Helpers.CredentialRepository.withUser(
+                      Defaults.user,
+                      RegisteredCredential
+                        .builder()
+                        .credentialId(Defaults.credentialId)
+                        .userHandle(Defaults.userHandle)
+                        .publicKeyCose(
+                          getPublicKeyBytes(Defaults.credentialKey)
+                        )
+                        .backupEligible(true)
+                        .backupState(storedBs)
+                        .build(),
+                    )
+                  ),
+                ).begin.next.next.next.next.next.next.next.next.next.next.next.next
+
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+            }
+          }
+        }
+
         describe("18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
           it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
             forAll(Extensions.unrequestedClientAssertionExtensions) {
@@ -1507,7 +1585,7 @@ class RelyingPartyAssertionSpec
                   clientExtensionResults = clientExtensionOutputs,
                 )
                 val step: FinishAssertionSteps#Step18 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
@@ -1522,7 +1600,7 @@ class RelyingPartyAssertionSpec
                   clientExtensionResults = clientExtensionOutputs,
                 )
                 val step: FinishAssertionSteps#Step18 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
@@ -1547,7 +1625,7 @@ class RelyingPartyAssertionSpec
                   ),
                 )
                 val step: FinishAssertionSteps#Step18 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
@@ -1572,7 +1650,7 @@ class RelyingPartyAssertionSpec
                   ),
                 )
                 val step: FinishAssertionSteps#Step18 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
@@ -1583,7 +1661,7 @@ class RelyingPartyAssertionSpec
         it("19. Let hash be the result of computing a hash over the cData using SHA-256.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Step19 =
-            steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+            steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
           step.tryNext shouldBe a[Success[_]]
@@ -1600,7 +1678,7 @@ class RelyingPartyAssertionSpec
           it("The default test case succeeds.") {
             val steps = finishAssertion()
             val step: FinishAssertionSteps#Step20 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -1617,7 +1695,7 @@ class RelyingPartyAssertionSpec
               )
             )
             val step: FinishAssertionSteps#Step20 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -1636,7 +1714,7 @@ class RelyingPartyAssertionSpec
               origins = Some(Set("https://localhost")),
             )
             val step: FinishAssertionSteps#Step20 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -1656,7 +1734,7 @@ class RelyingPartyAssertionSpec
               )
             )
             val step: FinishAssertionSteps#Step20 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -1672,7 +1750,7 @@ class RelyingPartyAssertionSpec
               )
             )
             val step: FinishAssertionSteps#Step20 =
-              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -1719,7 +1797,7 @@ class RelyingPartyAssertionSpec
                   validateSignatureCounter = true,
                 )
                 val step: FinishAssertionSteps#Step21 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
@@ -1736,7 +1814,7 @@ class RelyingPartyAssertionSpec
                   validateSignatureCounter = true,
                 )
                 val step: FinishAssertionSteps#Step21 =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
                 step.tryNext shouldBe a[Failure[_]]
@@ -1758,7 +1836,7 @@ class RelyingPartyAssertionSpec
                     validateSignatureCounter = true,
                   )
                   val step: FinishAssertionSteps#Step21 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -1778,7 +1856,7 @@ class RelyingPartyAssertionSpec
                     validateSignatureCounter = false,
                   )
                   val step: FinishAssertionSteps#Step21 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
@@ -1792,7 +1870,7 @@ class RelyingPartyAssertionSpec
                     validateSignatureCounter = true,
                   )
                   val step: FinishAssertionSteps#Step21 =
-                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+                    steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
                   val result = Try(step.run())
 
                   step.validations shouldBe a[Failure[_]]
@@ -1821,7 +1899,7 @@ class RelyingPartyAssertionSpec
         it("22. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
           val steps = finishAssertion()
           val step: FinishAssertionSteps#Finished =
-            steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
+            steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
           Try(steps.run) shouldBe a[Success[_]]
@@ -2375,6 +2453,145 @@ class RelyingPartyAssertionSpec
               ).asJava
             )
           )
+        }
+      }
+
+      describe("returns AssertionResponse which") {
+        {
+          val user = UserIdentity.builder
+            .name("foo")
+            .displayName("Foo User")
+            .id(new ByteArray(Array(0, 1, 2, 3)))
+            .build()
+          val (credential, credentialKeypair, _) =
+            TestAuthenticator.createUnattestedCredential()
+          val rp = RelyingParty
+            .builder()
+            .identity(
+              RelyingPartyIdentity
+                .builder()
+                .id("localhost")
+                .name("Example RP")
+                .build()
+            )
+            .credentialRepository(
+              Helpers.CredentialRepository.withUser(
+                user,
+                RegisteredCredential
+                  .builder()
+                  .credentialId(credential.getId)
+                  .userHandle(user.getId)
+                  .publicKeyCose(
+                    credential.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+                  )
+                  .build(),
+              )
+            )
+            .build()
+
+          val request = AssertionRequest
+            .builder()
+            .publicKeyCredentialRequestOptions(
+              PublicKeyCredentialRequestOptions
+                .builder()
+                .challenge(ByteArray.fromBase64Url("Y2hhbGxlbmdl"))
+                .rpId("localhost")
+                .build()
+            )
+            .username(user.getName)
+            .build()
+
+          it("exposes isBackupEligible() with the BE flag value in authenticator data.") {
+            val pkcWithoutBackup =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x00.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+            val pkcWithBackup =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x08.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+
+            val resultWithoutBackup = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithoutBackup)
+                .build()
+            )
+            val resultWithBackup = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithBackup)
+                .build()
+            )
+
+            resultWithoutBackup.isBackupEligible should be(false)
+            resultWithBackup.isBackupEligible should be(true)
+          }
+
+          it(
+            "exposes isBackedUp() with the BS flag value in authenticator data."
+          ) {
+            val pkcWithoutBackup =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x00.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+            val pkcWithBeOnly =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x08.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+            val pkcWithBackup =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x18.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+
+            val resultWithBackup = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithBackup)
+                .build()
+            )
+            val resultWithBeOnly = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithBeOnly)
+                .build()
+            )
+            val resultWithoutBackup = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithoutBackup)
+                .build()
+            )
+
+            resultWithoutBackup.isBackedUp should be(false)
+            resultWithBeOnly.isBackedUp should be(false)
+            resultWithBackup.isBackedUp should be(true)
+          }
         }
       }
     }
