@@ -21,10 +21,15 @@ Here is a high-level outline of what needs to be updated:
 - Remove uses of removed features.
 - Update uses of renamed and replaced features.
 - Replace any implementations of `MetadataService` with
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`].
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`].
 - Rename imports of classes in `com.yubico.fido.metadata`.
 - Update `getUserVerification()` and `getResidentKey()` calls
   to expect `Optional` values.
+
+This migration guide is written for version `2.0.0` of the
+`webauthn-server-core` module. Later `2.x` versions may introduce new features
+but should remain compatible without further changes; consult the release notes
+for a full list of new features.
 
 
 == Replace dependency on `webauthn-server-core-minimal`
@@ -41,7 +46,7 @@ Maven example:
 -  <artifactId>webauthn-server-core-minimal</artifactId>
 -  <version>1.12.2</version>
 +  <artifactId>webauthn-server-core</artifactId>
-+  <version>2.1.0</version>
++  <version>2.0.0</version>
    <scope>compile</scope>
  </dependency>
 ----------
@@ -51,7 +56,7 @@ Gradle:
 [source,diff]
 ----------
 -compile 'com.yubico:webauthn-server-core-minimal:1.12.2'
-+compile 'com.yubico:webauthn-server-core:2.1.0'
++compile 'com.yubico:webauthn-server-core:2.0.0'
 ----------
 
 
@@ -85,7 +90,7 @@ implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
 ----------
 
 Then set up the provider. This should be done before instantiating
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`].
 
 Example:
 
@@ -102,9 +107,9 @@ Security.addProvider(new BouncyCastleProvider());
 Several fields, methods and settings have been removed:
 
 - The `icon` field in
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/RelyingPartyIdentity.html[`RelyingPartyIdentity`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/RelyingPartyIdentity.html[`RelyingPartyIdentity`]
   and
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/UserIdentity.html[`UserIdentity`],
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/UserIdentity.html[`UserIdentity`],
   and its associated methods.
   They were removed in WebAuthn Level 2 and have no replacement.
 +
@@ -127,7 +132,7 @@ Example:
 ----------
 
 - The setting `allowUnrequestedExtensions(boolean)` in
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`].
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`].
 +
 WebAuthn Level 2 now recommends that unrequested extensions should be allowed,
 so this setting has been removed and is now always enabled.
@@ -207,11 +212,11 @@ Example:
 == Update uses of renamed and replaced features
 
 - Methods `requireResidentKey(boolean)` and `isRequireResidentKey()` in
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.html[`AuthenticatorSelectionCriteria`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.html[`AuthenticatorSelectionCriteria`]
   have been replaced by
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey(ResidentKeyRequirement)`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey(ResidentKeyRequirement)`]
   and
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.html#getResidentKey()[`getResidentKey()`],
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.html#getResidentKey()[`getResidentKey()`],
   respectively.
 +
 Replace `requireResidentKey(false)`
@@ -262,7 +267,7 @@ Example:
 == Replace implementations of `MetadataService`
 
 The `MetadataService` interface has been replaced with
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`].
 The new interface has some key differences:
 
 - `MetadataService` implementations were expected to validate
@@ -270,9 +275,9 @@ The new interface has some key differences:
   `AttestationTrustSource` implementations are not;
   instead they only need to retrieve the trust root certificates.
   The
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration`]
   method will perform certificate path validation internally and report the result via
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/RegistrationResult.html#isAttestationTrusted()[`RegistrationResult.isAttestationTrusted()`].
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/RegistrationResult.html#isAttestationTrusted()[`RegistrationResult.isAttestationTrusted()`].
   The `AttestationTrustSource` may also return a `CertStore`
   of untrusted certificates and CRLs that may be needed
   for certificate path validation,
@@ -286,10 +291,10 @@ The new interface has some key differences:
   but `RelyingParty` will not integrate them in the core result types.
 
 See the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[JavaDoc
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[JavaDoc
 for `AttestationTrustSource`] for details on how to implement it,
 and see the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.1.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.0.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
 class in the
 link:../webauthn-server-attestation[`webauthn-server-attestation` module]
 for a reference implementation.
@@ -323,16 +328,16 @@ link:https://github.com/w3c/webauthn/issues/1253[turned out to cause confusion].
 Therefore, browsers have started issuing console warnings
 when `userVerification` is not set explicitly.
 This library has mirrored the defaults for
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder.html#userVerification(com.yubico.webauthn.data.UserVerificationRequirement)[`PublicKeyCredentialRequestOptions.userVerification`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder.html#userVerification(com.yubico.webauthn.data.UserVerificationRequirement)[`PublicKeyCredentialRequestOptions.userVerification`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#userVerification(com.yubico.webauthn.data.UserVerificationRequirement)[`AuthenticatorSelectionCriteria.userVerification`],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#userVerification(com.yubico.webauthn.data.UserVerificationRequirement)[`AuthenticatorSelectionCriteria.userVerification`],
 but this inadvertently suppresses any browser console warnings
 since the library emits parameter objects with an explicit value set,
 even if the value was not explicitly set at the library level.
 The defaults have therefore been removed,
 and the corresponding getters now return `Optional` values.
 For consistency, the same change applies to
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.1.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`AuthenticatorSelectionCriteria.residentKey`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.0.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`AuthenticatorSelectionCriteria.residentKey`]
 as well.
 
 The setters for these settings remain unchanged,
