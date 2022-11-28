@@ -7,5 +7,5 @@ repositories {
 }
 
 dependencies {
-  implementation("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.9.0")
+  implementation("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.9.11")
 }
