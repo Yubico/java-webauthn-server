@@ -31,6 +31,7 @@ import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
+import com.yubico.webauthn.data.AuthenticatorAttachment;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.ByteArray;
@@ -173,6 +174,20 @@ public class RegistrationResult {
   @JsonIgnore
   public boolean isBackedUp() {
     return credential.getResponse().getParsedAuthenticatorData().getFlags().BS;
+  }
+
+  /**
+   * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
+   * attachment modality</a> in effect at the time the credential was created.
+   *
+   * @see PublicKeyCredential#getAuthenticatorAttachment()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+    return credential.getAuthenticatorAttachment();
   }
 
   /**

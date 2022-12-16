@@ -31,6 +31,7 @@ import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
+import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorDataFlags
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
@@ -2591,6 +2592,36 @@ class RelyingPartyAssertionSpec
             resultWithoutBackup.isBackedUp should be(false)
             resultWithBeOnly.isBackedUp should be(false)
             resultWithBackup.isBackedUp should be(true)
+          }
+
+          it(
+            "exposes getAuthenticatorAttachment() with the authenticatorAttachment value from the PublicKeyCredential."
+          ) {
+            val pkcTemplate =
+              TestAuthenticator.createAssertion(
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+
+            forAll { authenticatorAttachment: Option[AuthenticatorAttachment] =>
+              val pkc = pkcTemplate.toBuilder
+                .authenticatorAttachment(authenticatorAttachment.orNull)
+                .build()
+
+              val result = rp.finishAssertion(
+                FinishAssertionOptions
+                  .builder()
+                  .request(request)
+                  .response(pkc)
+                  .build()
+              )
+
+              result.getAuthenticatorAttachment should equal(
+                pkc.getAuthenticatorAttachment
+              )
+            }
           }
         }
       }

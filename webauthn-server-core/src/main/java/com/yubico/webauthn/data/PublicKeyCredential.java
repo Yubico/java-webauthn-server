@@ -25,11 +25,16 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.yubico.internal.util.JacksonCodecs;
+import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.FinishAssertionOptions;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RegistrationResult;
+import com.yubico.webauthn.RelyingParty;
 import java.io.IOException;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
@@ -46,7 +51,6 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-@JsonIgnoreProperties({"authenticatorAttachment"})
 public class PublicKeyCredential<
     A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
 
@@ -68,6 +72,8 @@ public class PublicKeyCredential<
    */
   @NonNull private final A response;
 
+  private final AuthenticatorAttachment authenticatorAttachment;
+
   /**
    * A map containing extension identifier → client extension output entries produced by the
    * extension’s client extension processing.
@@ -83,6 +89,7 @@ public class PublicKeyCredential<
       @JsonProperty("id") ByteArray id,
       @JsonProperty("rawId") ByteArray rawId,
       @NonNull @JsonProperty("response") A response,
+      @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
       @NonNull @JsonProperty("clientExtensionResults") B clientExtensionResults,
       @NonNull @JsonProperty("type") PublicKeyCredentialType type) {
     if (id == null && rawId == null) {
@@ -95,6 +102,7 @@ public class PublicKeyCredential<
 
     this.id = id == null ? rawId : id;
     this.response = response;
+    this.authenticatorAttachment = authenticatorAttachment;
     this.clientExtensionResults = clientExtensionResults;
     this.type = type;
   }
@@ -102,9 +110,33 @@ public class PublicKeyCredential<
   private PublicKeyCredential(
       ByteArray id,
       @NonNull A response,
+      AuthenticatorAttachment authenticatorAttachment,
       @NonNull B clientExtensionResults,
       @NonNull PublicKeyCredentialType type) {
-    this(id, null, response, clientExtensionResults, type);
+    this(id, null, response, authenticatorAttachment, clientExtensionResults, type);
+  }
+
+  /**
+   * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
+   * attachment modality</a> in effect at the time the credential was created or used.
+   *
+   * <p>If parsed from JSON, this will be present if and only if the input was a valid value of
+   * {@link AuthenticatorAttachment}.
+   *
+   * <p>The same value will also be available via {@link
+   * RegistrationResult#getAuthenticatorAttachment()} or {@link
+   * AssertionResult#getAuthenticatorAttachment()} on the result from {@link
+   * RelyingParty#finishRegistration(FinishRegistrationOptions)} or {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)}.
+   *
+   * @see RegistrationResult#getAuthenticatorAttachment()
+   * @see AssertionResult#getAuthenticatorAttachment()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+    return Optional.ofNullable(authenticatorAttachment);
   }
 
   public static <A extends AuthenticatorResponse, B extends ClientExtensionOutputs>

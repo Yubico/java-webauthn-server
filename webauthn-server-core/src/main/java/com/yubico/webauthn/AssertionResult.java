@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.AuthenticatorAttachment;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
@@ -193,6 +194,20 @@ public class AssertionResult {
   @JsonIgnore
   public boolean isBackedUp() {
     return credentialResponse.getResponse().getParsedAuthenticatorData().getFlags().BS;
+  }
+
+  /**
+   * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
+   * attachment modality</a> in effect at the time the asserted credential was used.
+   *
+   * @see PublicKeyCredential#getAuthenticatorAttachment()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+    return credentialResponse.getAuthenticatorAttachment();
   }
 
   /**

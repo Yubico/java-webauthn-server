@@ -42,6 +42,7 @@ import com.yubico.webauthn.attestation.AttestationTrustSource
 import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult
 import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.data.AttestationType
+import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse
 import com.yubico.webauthn.data.AuthenticatorData
 import com.yubico.webauthn.data.AuthenticatorDataFlags
@@ -4618,6 +4619,33 @@ class RelyingPartyRegistrationSpec
           resultWithoutBackup.isBackedUp should be(false)
           resultWithBeOnly.isBackedUp should be(false)
           resultWithBackup.isBackedUp should be(true)
+        }
+
+        it(
+          "exposes getAuthenticatorAttachment() with the authenticatorAttachment value from the PublicKeyCredential."
+        ) {
+          val (pkcTemplate, _, _) =
+            TestAuthenticator.createUnattestedCredential(challenge =
+              request.getChallenge
+            )
+
+          forAll { authenticatorAttachment: Option[AuthenticatorAttachment] =>
+            val pkc = pkcTemplate.toBuilder
+              .authenticatorAttachment(authenticatorAttachment.orNull)
+              .build()
+
+            val result = rp.finishRegistration(
+              FinishRegistrationOptions
+                .builder()
+                .request(request)
+                .response(pkc)
+                .build()
+            )
+
+            result.getAuthenticatorAttachment should equal(
+              pkc.getAuthenticatorAttachment
+            )
+          }
         }
       }
     }
