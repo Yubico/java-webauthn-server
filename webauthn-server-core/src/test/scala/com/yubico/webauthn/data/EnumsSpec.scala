@@ -61,11 +61,10 @@ class EnumsSpec
 
   describe("AuthenticatorAttachment") {
     describe("can be parsed from JSON") {
-      it("but throws IllegalArgumentException for unknown values.") {
-        val result = Try(
+      it("and ignores for unknown values.") {
+        val result =
           json.readValue("\"foo\"", classOf[AuthenticatorAttachment])
-        )
-        result.failed.get.getCause shouldBe an[IllegalArgumentException]
+        result should be(null)
       }
     }
   }
