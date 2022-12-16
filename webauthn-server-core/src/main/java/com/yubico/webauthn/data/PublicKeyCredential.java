@@ -28,6 +28,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.yubico.internal.util.JacksonCodecs;
+import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.FinishAssertionOptions;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RegistrationResult;
+import com.yubico.webauthn.RelyingParty;
 import java.io.IOException;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -113,8 +118,19 @@ public class PublicKeyCredential<
 
   /**
    * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
-   * attachment modality</a> in effect at the time the credential was used.
+   * attachment modality</a> in effect at the time the credential was created or used.
    *
+   * <p>If parsed from JSON, this will be present if and only if the input was a valid value of
+   * {@link AuthenticatorAttachment}.
+   *
+   * <p>The same value will also be available via {@link
+   * RegistrationResult#getAuthenticatorAttachment()} or {@link
+   * AssertionResult#getAuthenticatorAttachment()} on the result from {@link
+   * RelyingParty#finishRegistration(FinishRegistrationOptions)} or {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)}.
+   *
+   * @see RegistrationResult#getAuthenticatorAttachment()
+   * @see AssertionResult#getAuthenticatorAttachment()
    * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
    *     the standard matures.
    */

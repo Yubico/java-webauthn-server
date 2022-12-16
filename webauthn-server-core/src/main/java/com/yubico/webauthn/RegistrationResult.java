@@ -180,6 +180,7 @@ public class RegistrationResult {
    * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
    * attachment modality</a> in effect at the time the credential was created.
    *
+   * @see PublicKeyCredential#getAuthenticatorAttachment()
    * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
    *     the standard matures.
    */

@@ -200,6 +200,7 @@ public class AssertionResult {
    * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
    * attachment modality</a> in effect at the time the asserted credential was used.
    *
+   * @see PublicKeyCredential#getAuthenticatorAttachment()
    * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
    *     the standard matures.
    */
