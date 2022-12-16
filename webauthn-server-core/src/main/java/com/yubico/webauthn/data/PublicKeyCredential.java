@@ -25,11 +25,11 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.yubico.internal.util.JacksonCodecs;
 import java.io.IOException;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
@@ -46,7 +46,6 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-@JsonIgnoreProperties({"authenticatorAttachment"})
 public class PublicKeyCredential<
     A extends AuthenticatorResponse, B extends ClientExtensionOutputs> {
 
@@ -68,6 +67,8 @@ public class PublicKeyCredential<
    */
   @NonNull private final A response;
 
+  private final AuthenticatorAttachment authenticatorAttachment;
+
   /**
    * A map containing extension identifier → client extension output entries produced by the
    * extension’s client extension processing.
@@ -83,6 +84,7 @@ public class PublicKeyCredential<
       @JsonProperty("id") ByteArray id,
       @JsonProperty("rawId") ByteArray rawId,
       @NonNull @JsonProperty("response") A response,
+      @JsonProperty("authenticatorAttachment") AuthenticatorAttachment authenticatorAttachment,
       @NonNull @JsonProperty("clientExtensionResults") B clientExtensionResults,
       @NonNull @JsonProperty("type") PublicKeyCredentialType type) {
     if (id == null && rawId == null) {
@@ -95,6 +97,7 @@ public class PublicKeyCredential<
 
     this.id = id == null ? rawId : id;
     this.response = response;
+    this.authenticatorAttachment = authenticatorAttachment;
     this.clientExtensionResults = clientExtensionResults;
     this.type = type;
   }
@@ -102,9 +105,22 @@ public class PublicKeyCredential<
   private PublicKeyCredential(
       ByteArray id,
       @NonNull A response,
+      AuthenticatorAttachment authenticatorAttachment,
       @NonNull B clientExtensionResults,
       @NonNull PublicKeyCredentialType type) {
-    this(id, null, response, clientExtensionResults, type);
+    this(id, null, response, authenticatorAttachment, clientExtensionResults, type);
+  }
+
+  /**
+   * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
+   * attachment modality</a> in effect at the time the credential was used.
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+    return Optional.ofNullable(authenticatorAttachment);
   }
 
   public static <A extends AuthenticatorResponse, B extends ClientExtensionOutputs>
