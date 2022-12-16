@@ -1,3 +1,20 @@
+== Version 2.3.0 (unreleased) ==
+
+New features:
+
+* (Experimental) Added `authenticatorAttachment` property to response objects:
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+ ** Added method `getAuthenticatorAttachment()` to `PublicKeyCredential` and
+    corresponding builder method
+    `authenticatorAttachment(AuthenticatorAttachment)`.
+ ** Added method `getAuthenticatorAttachment()` to `RegistrationResult` and
+    `AssertionResult`, which echo `getAuthenticatorAttachment()` from the
+    corresponding `PublicKeyCredential`.
+ ** Thanks to GitHub user luisgoncalves for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/250
+
+
 == Version 2.2.0 ==
 
 `webauthn-server-core`:
