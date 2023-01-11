@@ -4,7 +4,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.11.0'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.12.1'
     classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
@@ -255,6 +255,19 @@ subprojects { project ->
     }
   }
 
+}
+
+// Configure cross-links from webauthn-server-attestation JavaDoc to core JavaDoc
+project(':webauthn-server-attestation').tasks.javadoc {
+  var coreProj = project(':webauthn-server-core')
+  var coreJavadoc = coreProj.tasks.javadoc
+  inputs.files coreJavadoc.outputs.files
+
+  // These links won't work locally, but they will work on developers.yubico.com
+  options.linksOffline("../../webauthn-server-core/${coreProj.version}", "${coreJavadoc.destinationDir}")
+
+  // Use this instead for local testing
+  //options.linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
 }
 
 // The root project has no sources, but the dependency platform also needs to be published as an artifact
