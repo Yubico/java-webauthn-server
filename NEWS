@@ -14,6 +14,12 @@ New features:
  ** Thanks to GitHub user luisgoncalves for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/250
 
+Other:
+
+* Fixed the README description of SemVer exceptions: `@Deprecated` features are
+  still part of the public API unless they also have an `EXPERIMENTAL:` tag in
+  JavaDoc.
+
 
 == Version 2.2.0 ==
 

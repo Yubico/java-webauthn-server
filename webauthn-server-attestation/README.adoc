@@ -109,8 +109,7 @@ compile 'com.yubico:webauthn-server-attestation:2.2.0'
 This library uses link:https://semver.org/[semantic versioning].
 The public API consists of all public classes, methods and fields in the `com.yubico.fido.metadata` package and its subpackages,
 i.e., everything covered by the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.2.0/com/yubico/fido/metadata/package-summary.html[Javadoc],
-*with the exception* of things annotated with `@Deprecated`.
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.2.0/com/yubico/fido/metadata/package-summary.html[Javadoc].
 
 Package-private classes and methods are NOT part of the public API.
 The `com.yubico:yubico-util` module is NOT part of the public API.
