@@ -33,6 +33,29 @@ If you are, we urge you to upgrade your Java deployment to a version that is saf
 toc::[]
 
 
+== Features
+
+- Generates request objects suitable as parameters to
+  `navigator.credentials.create()` and `.get()`
+- Performs all necessary
+  https://www.w3.org/TR/webauthn/#sctn-rp-operations[validation logic] on the
+  response from the client
+- No mutable state or side effects - everything (except builders) is thread safe
+- Optionally integrates with an "attestation trust source" to verify
+  https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
+- Reproducible builds: release signatures match fresh builds from source. See
+  link:#reproducible-builds[Reproducible builds] below.
+
+
+=== Non-features
+
+This library has no concept of accounts, sessions, permissions or identity
+federation, and it is not an authentication framework; it only deals with
+executing the WebAuthn authentication mechanism. Sessions, account management
+and other higher level concepts can make use of this authentication mechanism,
+but the authentication mechanism alone does not make a security system.
+
+
 == Dependency configuration
 
 Maven:
@@ -80,29 +103,6 @@ In addition to the main `webauthn-server-core` module, there is also:
 - link:webauthn-server-attestation[`webauthn-server-attestation`]: Integration with the https://fidoalliance.org/metadata/[FIDO Metadata Service]
   for retrieving and selecting trust roots to use for verifying
   https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation statements].
-
-
-== Features
-
-- Generates request objects suitable as parameters to
-  `navigator.credentials.create()` and `.get()`
-- Performs all necessary
-  https://www.w3.org/TR/webauthn/#sctn-rp-operations[validation logic] on the
-  response from the client
-- No mutable state or side effects - everything (except builders) is thread safe
-- Optionally integrates with an "attestation trust source" to verify
-  https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
-- Reproducible builds: release signatures match fresh builds from source. See
-  link:#reproducible-builds[Reproducible builds] below.
-
-
-=== Non-features
-
-This library has no concept of accounts, sessions, permissions or identity
-federation, and it is not an authentication framework; it only deals with
-executing the WebAuthn authentication mechanism. Sessions, account management
-and other higher level concepts can make use of this authentication mechanism,
-but the authentication mechanism alone does not make a security system.
 
 
 == Documentation
