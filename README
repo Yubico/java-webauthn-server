@@ -112,11 +112,6 @@ link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-
 for in-depth API documentation.
 
 
-== Migrating from version `1.x`
-
-See link:doc/Migrating_from_v1.adoc[the migration guide].
-
-
 == Getting started
 
 Using this library comes in two parts: the server side and the client side.
@@ -452,6 +447,11 @@ PublicKeyCredentialCreationOptions request = rp.startRegistration(
         .build())
     .build());
 ----------
+
+
+== Migrating from version `1.x`
+
+See link:doc/Migrating_from_v1.adoc[the migration guide].
 
 
 == Migrating from U2F
