@@ -311,7 +311,7 @@ link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-
 settings in
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.2.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`].
 The filters are predicate functions;
-each metadata entry will be trusted if and only if the prefilter predicate returns `true` for that entry.
+each metadata entry will be included in the data source if and only if the prefilter predicate returns `true` for that entry.
 Similarly during registration or metadata lookup, the authenticator will be matched with each metadata entry
 only if the registration-time filter returns `true` for that pair of authenticator and metadata entry.
 You can also use the
