@@ -9,6 +9,8 @@ https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation
 by interfacing with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
 
 
+*Table of contents*
+
 toc::[]
 
 == Features
