@@ -237,9 +237,9 @@ class FidoMetadataServiceIntegrationTest
           )
         }
 
-        ignore("a Security Key NFC by Yubico.") { // TODO: Investigate why this fails
+        it("a Security Key NFC by Yubico.") {
           check(
-            "Security Key NFC by Yubico",
+            "Security Key by Yubico with NFC",
             RealExamples.SecurityKeyNfc,
             attachmentHintsNfc,
           )
