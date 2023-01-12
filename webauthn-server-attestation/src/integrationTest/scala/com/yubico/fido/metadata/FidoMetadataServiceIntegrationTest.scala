@@ -206,7 +206,7 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey 5 Nano.") {
           check(
-            "YubiKey  ?5 Series",
+            "YubiKey 5 Series",
             RealExamples.YubiKey5Nano,
             attachmentHintsUsb,
           )
@@ -257,7 +257,7 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey 5.4 Ci FIPS.") {
           check(
-            "YubiKey 5 .*FIPS .*Lightning",
+            "YubiKey 5 FIPS .*Lightning",
             RealExamples.Yubikey5ciFips,
             attachmentHintsUsb,
           )
