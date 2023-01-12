@@ -1,3 +1,15 @@
+== Version 2.3.1 (unreleased) ==
+
+`webauthn-server-core`:
+
+Fixes:
+
+* During `RelyingParty.finishRegistration()` if an `attestationTrustSource` is
+  configured, if the `aaguid` in the attestation data is zero, the call to
+  `AttestationTrustSource.findTrustRoots` will fall back to reading the AAGUID
+  from the attestation certificate if possible.
+
+
 == Version 2.3.0 ==
 
 New features:

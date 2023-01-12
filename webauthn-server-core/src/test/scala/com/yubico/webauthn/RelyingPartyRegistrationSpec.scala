@@ -3204,6 +3204,53 @@ class RelyingPartyRegistrationSpec
             step.tryNext shouldBe a[Success[_]]
           }
 
+          it("When the AAGUID in authenticator data is zero, the AAGUID in the attestation certificate is used instead, if possible.") {
+            val example = RealExamples.SecurityKeyNfc
+            val testData = example.asRegistrationTestData
+            testData.aaguid should equal(
+              ByteArray.fromHex("00000000000000000000000000000000")
+            )
+            val certAaguid = new ByteArray(
+              CertificateParser
+                .parseFidoAaguidExtension(
+                  CertificateParser.parseDer(example.attestationCert.getBytes)
+                )
+                .get
+            )
+
+            val attestationTrustSource = new AttestationTrustSource {
+              override def findTrustRoots(
+                  attestationCertificateChain: util.List[X509Certificate],
+                  aaguid: Optional[ByteArray],
+              ): TrustRootsResult = {
+                TrustRootsResult
+                  .builder()
+                  .trustRoots(
+                    if (aaguid == Optional.of(certAaguid)) {
+                      Set(attestationRootCert).asJava
+                    } else {
+                      Set.empty[X509Certificate].asJava
+                    }
+                  )
+                  .build()
+              }
+            }
+            val steps = finishRegistration(
+              testData = testData,
+              attestationTrustSource = Some(attestationTrustSource),
+            )
+            val step: FinishRegistrationSteps#Step20 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a[Success[_]]
+            step.getTrustRoots.toScala.map(
+              _.getTrustRoots.asScala
+            ) should equal(
+              Some(Set(attestationRootCert))
+            )
+            step.tryNext shouldBe a[Success[_]]
+          }
+
           it(
             "If an attestation trust source is not set, no trust anchors are returned."
           ) {
