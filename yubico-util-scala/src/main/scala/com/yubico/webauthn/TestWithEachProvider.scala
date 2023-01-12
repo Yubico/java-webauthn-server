@@ -87,7 +87,6 @@ trait TestWithEachProvider extends Matchers {
       registerTests,
     )
 
-    // TODO: Delete this in the next major version
     it should behave like wrapItFunctionWithProviderContext(
       "default and BouncyCastle",
       defaultProviders.appended(new BouncyCastleProvider()),

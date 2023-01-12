@@ -95,8 +95,6 @@ final class Crypto {
   }
 
   public static ByteArray sha256(ByteArray bytes) {
-    //noinspection UnstableApiUsage
-    // TODO remove noinspection
     return new ByteArray(Hashing.sha256().hashBytes(bytes.getBytes()).asBytes());
   }
 
