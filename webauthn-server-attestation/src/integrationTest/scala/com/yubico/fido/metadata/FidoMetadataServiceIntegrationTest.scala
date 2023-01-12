@@ -159,7 +159,8 @@ class FidoMetadataServiceIntegrationTest
             .toSet should equal(attachmentHints)
         }
 
-        ignore("a YubiKey NEO.") { // TODO: Investigate why this fails
+        ignore("a YubiKey NEO.") {
+          // TODO: Cert key identifier is missing from MDS: 8e16186d1843a956625e5db37dc77dc74c21904c
           check("YubiKey NEO", RealExamples.YubiKeyNeo, attachmentHintsNfc)
         }
 
@@ -219,7 +220,8 @@ class FidoMetadataServiceIntegrationTest
           )
         }
 
-        ignore("a Security Key by Yubico.") { // TODO: Investigate why this fails
+        ignore("a Security Key by Yubico.") {
+          // TODO: Cert key identifier is missing from MDS: 8e16186d1843a956625e5db37dc77dc74c21904c
           check(
             "Security Key by Yubico",
             RealExamples.SecurityKey,
