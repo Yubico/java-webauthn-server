@@ -456,7 +456,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
    *             <li><code>aaguid</code> is present and equals the {@link
    *                 MetadataBLOBPayloadEntry#getAaguid() AAGUID} of the metadata entry.
    *             <li><code>aaguid</code> is present and equals the {@link
-   *                 MetadataBLOBPayloadEntry#getAaguid() AAGUID} of the {@link
+   *                 MetadataStatement#getAaguid() AAGUID} of the {@link
    *                 MetadataBLOBPayloadEntry#getMetadataStatement() metadata statement}, if any, in
    *                 the metadata entry.
    *             <li>The certificate subject key identifier of any certificate in <code>
@@ -593,7 +593,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
    *
    * @param filter a {@link Predicate} which returns <code>true</code> for metadata entries to
    *     include in the result.
-   * @return All metadata entries which which satisfy the {@link
+   * @return All metadata entries which satisfy the {@link
    *     FidoMetadataServiceBuilder#prefilter(Predicate) prefilter} AND for which the <code>filter
    *     </code> returns <code>true</code>.
    * @see #findEntries(List, Optional)
