@@ -444,7 +444,8 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
           it("are omitted in the argument to the runtime filter.") {
             aaguidA should not equal zeroAaguid
 
-            val (cert, _) = TestAuthenticator.generateAttestationCertificate()
+            val (cert, _) =
+              TestAuthenticator.generateAttestationCertificate(extensions = Nil)
             val acki: String = new ByteArray(
               CertificateParser.computeSubjectKeyIdentifier(cert)
             ).getHex

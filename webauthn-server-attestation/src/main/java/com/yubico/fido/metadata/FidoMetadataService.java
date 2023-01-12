@@ -453,9 +453,9 @@ public final class FidoMetadataService implements AttestationTrustSource {
    *       <li>It satisfies the {@link FidoMetadataServiceBuilder#prefilter(Predicate) prefilter}.
    *       <li>It satisfies AT LEAST ONE of the following:
    *           <ul>
-   *             <li><code>aaguid</code> is present and equals the {@link
+   *             <li><code>_aaguid</code> is present and equals the {@link
    *                 MetadataBLOBPayloadEntry#getAaguid() AAGUID} of the metadata entry.
-   *             <li><code>aaguid</code> is present and equals the {@link
+   *             <li><code>_aaguid</code> is present and equals the {@link
    *                 MetadataStatement#getAaguid() AAGUID} of the {@link
    *                 MetadataBLOBPayloadEntry#getMetadataStatement() metadata statement}, if any, in
    *                 the metadata entry.
@@ -471,15 +471,23 @@ public final class FidoMetadataService implements AttestationTrustSource {
    *                 the metadata entry.
    *           </ul>
    *       <li>It satisfies the {@link FidoMetadataServiceBuilder#filter(Predicate) filter} together
-   *           with <code>attestationCertificateChain</code> and <code>aaguid</code>.
+   *           with <code>attestationCertificateChain</code> and <code>_aaguid</code>.
+   *     </ul>
+   *     In the above, <code>_aaguid</code> is the first of the following that is {@link
+   *     Optional#isPresent() present} and not {@link AAGUID#isZero() zero}, or empty otherwise:
+   *     <ul>
+   *       <li>The <code>aaguid</code> argument.
+   *       <li>The value of the X.509 extension with OID 1.3.6.1.4.1.45724.1.1.4
+   *           (id-fido-gen-ce-aaguid), if any, in the first certificate in <code>
+   *                             attestationCertificateChain</code>, if any.
    *     </ul>
    *
    * @see #findEntries(List)
    * @see #findEntries(List, AAGUID)
    */
   public Set<MetadataBLOBPayloadEntry> findEntries(
-      @NonNull List<X509Certificate> attestationCertificateChain,
-      @NonNull Optional<AAGUID> aaguid) {
+      @NonNull final List<X509Certificate> attestationCertificateChain,
+      @NonNull final Optional<AAGUID> aaguid) {
 
     final Set<String> certSubjectKeyIdentifiers =
         attestationCertificateChain.stream()
@@ -495,16 +503,29 @@ public final class FidoMetadataService implements AttestationTrustSource {
                 })
             .collect(Collectors.toSet());
 
-    final Optional<AAGUID> nonzeroAaguid = aaguid.filter(a -> !a.isZero());
+    final Optional<AAGUID> nonzeroAaguid =
+        Optional.ofNullable(
+            aaguid
+                .filter(a -> !a.isZero())
+                .orElseGet(
+                    () -> {
+                      log.debug("findEntries: attempting to look up AAGUID from certificate");
+                      if (!attestationCertificateChain.isEmpty()) {
+                        return CertificateParser.parseFidoAaguidExtension(
+                                attestationCertificateChain.get(0))
+                            .map(ByteArray::new)
+                            .map(AAGUID::new)
+                            .orElse(null);
+                      } else {
+                        return null;
+                      }
+                    }));
 
     log.debug(
-        "findEntries(certSubjectKeyIdentifiers = {}, aaguid = {})",
+        "findEntries(certSubjectKeyIdentifiers = {}, aaguid = {}, nonzeroAaguid= {})",
         certSubjectKeyIdentifiers,
-        aaguid);
-
-    if (aaguid.isPresent() && !nonzeroAaguid.isPresent()) {
-      log.debug("findEntries: ignoring zero AAGUID");
-    }
+        aaguid,
+        nonzeroAaguid);
 
     final Set<MetadataBLOBPayloadEntry> result =
         Stream.concat(
