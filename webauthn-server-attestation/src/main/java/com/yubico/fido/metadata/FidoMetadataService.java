@@ -351,6 +351,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
      * @return A filter which only accepts inputs that satisfy ALL of the given <code>
      *     filters</code>.
      */
+    @SafeVarargs
     public static <T> Predicate<T> allOf(Predicate<T>... filters) {
       return (entry) -> Stream.of(filters).allMatch(filter -> filter.test(entry));
     }
