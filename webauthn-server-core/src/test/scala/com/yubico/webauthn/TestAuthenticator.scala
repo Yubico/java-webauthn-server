@@ -917,7 +917,8 @@ object TestAuthenticator {
         (TpmAlgHash.SHA512, TpmAlgAsym.ECC)
       case COSEAlgorithmIdentifier.RS256 =>
         (TpmAlgHash.SHA256, TpmAlgAsym.RSA)
-      case COSEAlgorithmIdentifier.RS1 => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.RS1   => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.EdDSA => ???
     }
     val hashFunc = hashId match {
       case TpmAlgHash.SHA256 => Crypto.sha256(_: ByteArray)
@@ -972,6 +973,10 @@ object TestAuthenticator {
                 case COSEAlgorithmIdentifier.ES256 => 0x0003
                 case COSEAlgorithmIdentifier.ES384 => 0x0004
                 case COSEAlgorithmIdentifier.ES512 => 0x0005
+                case COSEAlgorithmIdentifier.RS1 |
+                    COSEAlgorithmIdentifier.RS256 |
+                    COSEAlgorithmIdentifier.EdDSA =>
+                  ???
               }))
             )
             .concat(
