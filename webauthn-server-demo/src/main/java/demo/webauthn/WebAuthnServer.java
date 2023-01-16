@@ -464,7 +464,7 @@ public class WebAuthnServer {
                   response,
                   userStorage.getRegistrationsByUsername(result.getUsername()),
                   result.getUsername(),
-                  sessions.createSession(result.getUserHandle())));
+                  sessions.createSession(result.getCredential().getUserHandle())));
         } else {
           return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));
         }

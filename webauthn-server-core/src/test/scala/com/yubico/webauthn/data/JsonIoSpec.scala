@@ -372,7 +372,7 @@ class JsonIoSpec
           val encoded = json.writeValueAsString(tree)
           println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
-          decoded.getAuthenticatorAttachment.asScala should be(None)
+          decoded.getAuthenticatorAttachment.toScala should be(None)
         }
 
         forAll(
@@ -388,7 +388,7 @@ class JsonIoSpec
           println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
 
-          decoded.getAuthenticatorAttachment.asScala should equal(
+          decoded.getAuthenticatorAttachment.toScala should equal(
             Some(authenticatorAttachment)
           )
         }
@@ -402,7 +402,7 @@ class JsonIoSpec
           val encoded = json.writeValueAsString(tree)
           val decoded = json.readValue(encoded, tpe)
 
-          decoded.getAuthenticatorAttachment.asScala should be(None)
+          decoded.getAuthenticatorAttachment.toScala should be(None)
         }
       }
 

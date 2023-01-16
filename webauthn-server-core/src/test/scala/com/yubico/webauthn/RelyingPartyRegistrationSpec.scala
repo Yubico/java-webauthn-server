@@ -1714,7 +1714,7 @@ class RelyingPartyRegistrationSpec
                         ).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes
                       )
                       .get(CBORObject.FromObject(3))
-                      .AsInt64 should equal(-7)
+                      .AsInt64Value should equal(-7)
                     new AttestationObject(
                       testDataBase.attestationObject
                     ).getAttestationStatement.get("alg").longValue should equal(
@@ -1791,7 +1791,7 @@ class RelyingPartyRegistrationSpec
                         attObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes
                       )
                       .get(CBORObject.FromObject(3))
-                      .AsInt64 should equal(-257)
+                      .AsInt64Value should equal(-257)
                     attObj.getAttestationStatement
                       .get("alg")
                       .longValue should equal(-65535)

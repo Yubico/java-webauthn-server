@@ -418,9 +418,15 @@ class RelyingPartyAssertionSpec
         )
 
         result.isSuccess should be(true)
-        result.getUserHandle should equal(registrationTestData.userId.getId)
-        result.getCredentialId should equal(registrationTestData.response.getId)
-        result.getCredentialId should equal(testData.response.getId)
+        result.getCredential.getUserHandle should equal(
+          registrationTestData.userId.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          registrationTestData.response.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          testData.response.getId
+        )
         credRepo.lookupCount should equal(1)
       }
 
@@ -1906,8 +1912,12 @@ class RelyingPartyAssertionSpec
           Try(steps.run) shouldBe a[Success[_]]
 
           step.result.get.isSuccess should be(true)
-          step.result.get.getCredentialId should equal(Defaults.credentialId)
-          step.result.get.getUserHandle should equal(Defaults.userHandle)
+          step.result.get.getCredential.getCredentialId should equal(
+            Defaults.credentialId
+          )
+          step.result.get.getCredential.getUserHandle should equal(
+            Defaults.userHandle
+          )
           step.result.get.getCredential.getCredentialId should equal(
             step.result.get.getCredentialId
           )
@@ -2001,8 +2011,8 @@ class RelyingPartyAssertionSpec
         )
 
         result.isSuccess should be(true)
-        result.getUserHandle should equal(testData.userId.getId)
-        result.getCredentialId should equal(credId)
+        result.getCredential.getUserHandle should equal(testData.userId.getId)
+        result.getCredential.getCredentialId should equal(credId)
       }
 
       it("an Ed25519 key.") {
@@ -2133,8 +2143,10 @@ class RelyingPartyAssertionSpec
         )
 
         result.isSuccess should be(true)
-        result.getUserHandle should equal(registrationRequest.getUser.getId)
-        result.getCredentialId should equal(credId)
+        result.getCredential.getUserHandle should equal(
+          registrationRequest.getUser.getId
+        )
+        result.getCredential.getCredentialId should equal(credId)
       }
 
       it("a generated Ed25519 key.") {
@@ -2172,9 +2184,15 @@ class RelyingPartyAssertionSpec
         )
 
         result.isSuccess should be(true)
-        result.getUserHandle should equal(registrationTestData.userId.getId)
-        result.getCredentialId should equal(registrationTestData.response.getId)
-        result.getCredentialId should equal(testData.response.getId)
+        result.getCredential.getUserHandle should equal(
+          registrationTestData.userId.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          registrationTestData.response.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          testData.response.getId
+        )
       }
 
       describe("an RS1 key") {
@@ -2215,11 +2233,15 @@ class RelyingPartyAssertionSpec
           )
 
           result.isSuccess should be(true)
-          result.getUserHandle should equal(registrationTestData.userId.getId)
-          result.getCredentialId should equal(
+          result.getCredential.getUserHandle should equal(
+            registrationTestData.userId.getId
+          )
+          result.getCredential.getCredentialId should equal(
             registrationTestData.response.getId
           )
-          result.getCredentialId should equal(testData.response.getId)
+          result.getCredential.getCredentialId should equal(
+            testData.response.getId
+          )
         }
 
         it("with basic attestation.") {
@@ -2275,8 +2297,10 @@ class RelyingPartyAssertionSpec
           )
 
           result.isSuccess should be(true)
-          result.getUserHandle should equal(testData.userId.getId)
-          result.getCredentialId should equal(testData.response.getId)
+          result.getCredential.getUserHandle should equal(testData.userId.getId)
+          result.getCredential.getCredentialId should equal(
+            testData.response.getId
+          )
         }
       }
     }

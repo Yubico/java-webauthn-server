@@ -1,9 +1,8 @@
 package com.yubico.fido.metadata;
 
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.Value;
 
-@Value
 public class FidoMetadataDownloaderException extends Exception {
 
   public enum Reason {
@@ -16,19 +15,20 @@ public class FidoMetadataDownloaderException extends Exception {
     }
   }
 
-  @NonNull
+  @NonNull @Getter
   /** The reason why this exception was thrown. */
   private final Reason reason;
 
   /** A {@link Throwable} that caused this exception. May be null. */
-  private final Throwable cause;
+  @Getter private final Throwable cause;
 
-  FidoMetadataDownloaderException(Reason reason, Throwable cause) {
+  FidoMetadataDownloaderException(@NonNull Reason reason, Throwable cause) {
+    super(cause);
     this.reason = reason;
     this.cause = cause;
   }
 
-  FidoMetadataDownloaderException(Reason reason) {
+  FidoMetadataDownloaderException(@NonNull Reason reason) {
     this(reason, null);
   }
 

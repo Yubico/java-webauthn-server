@@ -74,7 +74,7 @@ public class CertificateParser {
         (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(is);
     // Some known certs have an incorrect "unused bits" value, which causes problems on newer
     // versions of BouncyCastle.
-    if (FIXSIG.contains(cert.getSubjectDN().getName())) {
+    if (FIXSIG.contains(cert.getSubjectX500Principal().getName())) {
       byte[] encoded = cert.getEncoded();
 
       if (encoded.length >= UNUSED_BITS_BYTE_INDEX_FROM_END) {

@@ -106,7 +106,7 @@ final class PackedAttestationStatementVerifier
       throw new RuntimeException(e);
     }
 
-    final Long keyAlgId =
+    final long keyAlgId =
         CBORObject.DecodeFromBytes(
                 attestationObject
                     .getAuthenticatorData()
@@ -115,7 +115,8 @@ final class PackedAttestationStatementVerifier
                     .getCredentialPublicKey()
                     .getBytes())
             .get(CBORObject.FromObject(3))
-            .AsInt64();
+            .AsNumber()
+            .ToInt64IfExact();
     final COSEAlgorithmIdentifier keyAlg =
         COSEAlgorithmIdentifier.fromId(keyAlgId)
             .orElseThrow(
@@ -123,7 +124,7 @@ final class PackedAttestationStatementVerifier
                     new IllegalArgumentException(
                         "Unsupported COSE algorithm identifier: " + keyAlgId));
 
-    final Long sigAlgId = attestationObject.getAttestationStatement().get("alg").asLong();
+    final long sigAlgId = attestationObject.getAttestationStatement().get("alg").asLong();
     final COSEAlgorithmIdentifier sigAlg =
         COSEAlgorithmIdentifier.fromId(sigAlgId)
             .orElseThrow(
