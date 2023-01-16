@@ -622,7 +622,7 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
     def makeStatusReportsBlob(
         statusReports: String,
         timeOfLastStatusChange: String,
-        authenticatorVersion: Int = 1,
+        authenticatorVersion: Int,
     ): (String, X509Certificate, java.util.Set[CRL]) =
       makeBlob(s"""{
         "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",

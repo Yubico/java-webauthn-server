@@ -360,8 +360,6 @@ object Generators {
       Set("appidExclude", "credProps", "largeBlob", "uvm")
     private val AuthenticationExtensionIds: Set[String] =
       Set("appid", "largeBlob", "uvm")
-    private val ExtensionIds: Set[String] =
-      RegistrationExtensionIds ++ AuthenticationExtensionIds
 
     private val ClientRegistrationExtensionOutputIds: Set[String] =
       RegistrationExtensionIds - "uvm"
@@ -445,12 +443,16 @@ object Generators {
       )
 
     def authenticatorRegistrationExtensionOutputs(
-        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput)
+        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput),
+        includeUnknown: Boolean = true,
     ): Gen[CBORObject] =
       for {
+        base <-
+          if (includeUnknown) unknownAuthenticatorRegistrationExtensionOutput
+          else Gen.const(CBORObject.NewMap())
         uvm: Option[CBORObject] <- uvmGen
       } yield {
-        val result = CBORObject.NewMap()
+        val result = base
         uvm.foreach(result.set("uvm", _))
         result
       }
@@ -511,12 +513,16 @@ object Generators {
       }
 
     def authenticatorAssertionExtensionOutputs(
-        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput)
+        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput),
+        includeUnknown: Boolean = true,
     ): Gen[CBORObject] =
       for {
+        base <-
+          if (includeUnknown) unknownAuthenticatorAssertionExtensionOutput
+          else Gen.const(CBORObject.NewMap())
         uvm: Option[CBORObject] <- uvmGen
       } yield {
-        val result = CBORObject.NewMap()
+        val result = base
         uvm.foreach(result.set("uvm", _))
         result
       }

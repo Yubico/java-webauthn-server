@@ -235,19 +235,13 @@ class RelyingPartyRegistrationSpec
 
         describe("3. Let response be credential.response.") {
           it("If response is not an instance of AuthenticatorAttestationResponse, abort the ceremony with a user-visible error.") {
+            val testData = RegistrationTestData.Packed.BasicAttestationEdDsa
             val frob = FinishRegistrationOptions
               .builder()
-              .request(
-                RegistrationTestData.Packed.BasicAttestationEdDsa.request
-              )
-            val testData =
-              RegistrationTestData.Packed.BasicAttestationEdDsa.assertion.get
-            "frob.response(testData.response)" shouldNot compile
-            frob
-              .response(
-                RegistrationTestData.Packed.BasicAttestationEdDsa.response
-              )
-              .build() should not be null
+              .request(testData.request)
+            "frob.response(testData.response)" should compile
+            "frob.response(testData.assertion.get.response)" shouldNot compile
+            frob.response(testData.response).build() should not be null
           }
         }
 
