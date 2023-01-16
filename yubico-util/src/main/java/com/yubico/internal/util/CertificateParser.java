@@ -40,8 +40,6 @@ import java.util.Optional;
 
 public class CertificateParser {
   public static final String ID_FIDO_GEN_CE_AAGUID = "1.3.6.1.4.1.45724.1.1.4";
-
-  //    private static final Provider BC_PROVIDER = new BouncyCastleProvider();
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
   private static final List<String> FIXSIG =
