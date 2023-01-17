@@ -69,9 +69,7 @@ public final class ExtensionMatcher implements DeviceMatcher {
           }
         } catch (IOException e) {
           log.error(
-              "Failed to parse extension value as ASN1: {}",
-              new ByteArray(extensionValue),
-              e);
+              "Failed to parse extension value as ASN1: {}", new ByteArray(extensionValue), e);
         }
       }
     }

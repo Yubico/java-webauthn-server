@@ -25,7 +25,6 @@ dependencies {
   implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-  implementation("com.google.guava:guava")
   implementation("com.upokecenter:cbor")
   implementation("org.slf4j:slf4j-api")
 
