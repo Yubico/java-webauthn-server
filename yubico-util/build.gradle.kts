@@ -5,6 +5,7 @@ plugins {
   signing
   id("info.solidsoft.pitest")
   id("io.github.cosmicsilence.scalafix")
+  id("me.champeau.jmh") version "0.6.8"
 }
 
 description = "Yubico internal utilities"
@@ -36,6 +37,13 @@ dependencies {
   testImplementation("org.scalatest:scalatest_2.13")
   testImplementation("org.scalatestplus:junit-4-13_2.13")
   testImplementation("org.scalatestplus:scalacheck-1-16_2.13")
+
+  jmhImplementation(platform(project(":test-platform")))
+  jmhRuntimeOnly("org.slf4j:slf4j-nop")
+}
+
+configurations.jmhRuntimeClasspath {
+  exclude(module = "slf4j-test")
 }
 
 
