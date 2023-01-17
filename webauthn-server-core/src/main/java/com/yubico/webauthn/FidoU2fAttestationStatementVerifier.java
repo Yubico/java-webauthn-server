@@ -87,7 +87,7 @@ final class FidoU2fAttestationStatementVerifier
     try {
       pubkey = WebAuthnCodecs.importCosePublicKey(pubkeyCose);
     } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-      throw ExceptionUtil.wrapAndLog(log, "Failed to decode public key: " + pubkeyCose.getHex(), e);
+      throw ExceptionUtil.wrapAndLog(log, "Failed to decode public key: " + pubkeyCose, e);
     }
 
     final ECPublicKey ecPubkey;

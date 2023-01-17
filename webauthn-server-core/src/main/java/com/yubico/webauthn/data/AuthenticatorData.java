@@ -155,7 +155,7 @@ public class AuthenticatorData {
         "Attested credential data must contain at least %d bytes, was %d: %s",
         CREDENTIAL_ID_LENGTH_END,
         bytes.length,
-        new ByteArray(bytes).getHex());
+        new ByteArray(bytes));
 
     byte[] credentialIdLengthBytes =
         Arrays.copyOfRange(bytes, CREDENTIAL_ID_LENGTH_INDEX, CREDENTIAL_ID_LENGTH_END);
@@ -179,7 +179,7 @@ public class AuthenticatorData {
         "Expected credential ID of length %d, but attested credential data and extension data is only %d bytes: %s",
         CREDENTIAL_ID_END,
         bytes.length,
-        new ByteArray(bytes).getHex());
+        new ByteArray(bytes));
 
     ByteArrayInputStream indefiniteLengthBytes =
         new ByteArrayInputStream(
