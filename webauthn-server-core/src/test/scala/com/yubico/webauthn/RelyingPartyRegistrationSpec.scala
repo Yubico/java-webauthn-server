@@ -2762,8 +2762,35 @@ class RelyingPartyRegistrationSpec
 
               describe("Other requirements:") {
                 it("RSA keys must have the SIGN_ENCRYPT attribute.") {
-                  forAll(Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1)) {
-                    attributes: Long =>
+                  forAll(
+                    Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1),
+                    minSuccessful(5),
+                  ) { attributes: Long =>
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(
+                        authDataAndKeypair = Some(
+                          TestAuthenticator
+                            .createAuthenticatorData(keyAlgorithm =
+                              COSEAlgorithmIdentifier.RS256
+                            )
+                        ),
+                        attributes = Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                      )
+                    )
+                    val step = init(testData)
+                    testData.alg should be(COSEAlgorithmIdentifier.RS256)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                it("""RSA keys must have "symmetric" set to TPM_ALG_NULL""") {
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { symmetric: Int =>
+                    whenever(symmetric != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
                           authDataAndKeypair = Some(
@@ -2772,8 +2799,7 @@ class RelyingPartyRegistrationSpec
                                 COSEAlgorithmIdentifier.RS256
                               )
                           ),
-                          attributes =
-                            Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                          symmetric = Some(symmetric),
                         )
                       )
                       val step = init(testData)
@@ -2781,62 +2807,68 @@ class RelyingPartyRegistrationSpec
 
                       step.validations shouldBe a[Failure[_]]
                       step.tryNext shouldBe a[Failure[_]]
-                  }
-                }
-
-                it("""RSA keys must have "symmetric" set to TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    symmetric: Int =>
-                      whenever(symmetric != TPM_ALG_NULL) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.RS256
-                                )
-                            ),
-                            symmetric = Some(symmetric),
-                          )
-                        )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.RS256)
-
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                    }
                   }
                 }
 
                 it("""RSA keys must have "scheme" set to TPM_ALG_RSASSA or TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    scheme: Int =>
-                      whenever(
-                        scheme != TpmRsaScheme.RSASSA && scheme != TPM_ALG_NULL
-                      ) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.RS256
-                                )
-                            ),
-                            scheme = Some(scheme),
-                          )
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { scheme: Int =>
+                    whenever(
+                      scheme != TpmRsaScheme.RSASSA && scheme != TPM_ALG_NULL
+                    ) {
+                      val testData = (RegistrationTestData.from _).tupled(
+                        makeCred(
+                          authDataAndKeypair = Some(
+                            TestAuthenticator
+                              .createAuthenticatorData(keyAlgorithm =
+                                COSEAlgorithmIdentifier.RS256
+                              )
+                          ),
+                          scheme = Some(scheme),
                         )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.RS256)
+                      )
+                      val step = init(testData)
+                      testData.alg should be(COSEAlgorithmIdentifier.RS256)
 
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                      step.validations shouldBe a[Failure[_]]
+                      step.tryNext shouldBe a[Failure[_]]
+                    }
                   }
                 }
 
                 it("ECC keys must have the SIGN_ENCRYPT attribute.") {
-                  forAll(Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1)) {
-                    attributes: Long =>
+                  forAll(
+                    Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1),
+                    minSuccessful(5),
+                  ) { attributes: Long =>
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(
+                        authDataAndKeypair = Some(
+                          TestAuthenticator
+                            .createAuthenticatorData(keyAlgorithm =
+                              COSEAlgorithmIdentifier.ES256
+                            )
+                        ),
+                        attributes = Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                      )
+                    )
+                    val step = init(testData)
+                    testData.alg should be(COSEAlgorithmIdentifier.ES256)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                it("""ECC keys must have "symmetric" set to TPM_ALG_NULL""") {
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { symmetric: Int =>
+                    whenever(symmetric != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
                           authDataAndKeypair = Some(
@@ -2845,8 +2877,7 @@ class RelyingPartyRegistrationSpec
                                 COSEAlgorithmIdentifier.ES256
                               )
                           ),
-                          attributes =
-                            Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                          symmetric = Some(symmetric),
                         )
                       )
                       val step = init(testData)
@@ -2854,54 +2885,33 @@ class RelyingPartyRegistrationSpec
 
                       step.validations shouldBe a[Failure[_]]
                       step.tryNext shouldBe a[Failure[_]]
-                  }
-                }
-
-                it("""ECC keys must have "symmetric" set to TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    symmetric: Int =>
-                      whenever(symmetric != TPM_ALG_NULL) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.ES256
-                                )
-                            ),
-                            symmetric = Some(symmetric),
-                          )
-                        )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.ES256)
-
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                    }
                   }
                 }
 
                 it("""ECC keys must have "scheme" set to TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    scheme: Int =>
-                      whenever(scheme != TPM_ALG_NULL) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.ES256
-                                )
-                            ),
-                            scheme = Some(scheme),
-                          )
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { scheme: Int =>
+                    whenever(scheme != TPM_ALG_NULL) {
+                      val testData = (RegistrationTestData.from _).tupled(
+                        makeCred(
+                          authDataAndKeypair = Some(
+                            TestAuthenticator
+                              .createAuthenticatorData(keyAlgorithm =
+                                COSEAlgorithmIdentifier.ES256
+                              )
+                          ),
+                          scheme = Some(scheme),
                         )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.ES256)
+                      )
+                      val step = init(testData)
+                      testData.alg should be(COSEAlgorithmIdentifier.ES256)
 
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                      step.validations shouldBe a[Failure[_]]
+                      step.tryNext shouldBe a[Failure[_]]
+                    }
                   }
                 }
               }
