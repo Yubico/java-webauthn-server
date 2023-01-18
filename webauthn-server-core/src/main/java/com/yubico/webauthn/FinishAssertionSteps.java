@@ -28,10 +28,6 @@ import static com.yubico.internal.util.ExceptionUtil.assure;
 
 import COSE.CoseException;
 import com.yubico.internal.util.CollectionUtil;
-import com.yubico.webauthn.FinishRegistrationSteps.Step18;
-import com.yubico.webauthn.FinishRegistrationSteps.Step19;
-import com.yubico.webauthn.FinishRegistrationSteps.Step20;
-import com.yubico.webauthn.FinishRegistrationSteps.Step21;
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
