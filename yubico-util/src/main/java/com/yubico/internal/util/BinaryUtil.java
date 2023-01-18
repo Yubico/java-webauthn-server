@@ -74,7 +74,7 @@ public class BinaryUtil {
    * @param hex String of hexadecimal digits to decode as bytes.
    */
   public static byte singleFromHex(String hex) {
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         hex.length() == 2, "Argument must be exactly 2 hexadecimal characters, was: %s", hex);
     return fromHex(hex)[0];
   }
@@ -128,8 +128,9 @@ public class BinaryUtil {
   }
 
   public static byte[] encodeUint16(int value) {
-    ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
-    ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^16=65536, was: %d", value);
+    ExceptionUtil.assertTrue(value >= 0, "Argument must be non-negative, was: %d", value);
+    ExceptionUtil.assertTrue(
+        value < 65536, "Argument must be smaller than 2^16=65536, was: %d", value);
 
     ByteBuffer b = ByteBuffer.allocate(4);
     b.order(ByteOrder.BIG_ENDIAN);
@@ -139,8 +140,8 @@ public class BinaryUtil {
   }
 
   public static byte[] encodeUint32(long value) {
-    ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(value >= 0, "Argument must be non-negative, was: %d", value);
+    ExceptionUtil.assertTrue(
         value < 4294967296L, "Argument must be smaller than 2^32=4294967296, was: %d", value);
 
     ByteBuffer b = ByteBuffer.allocate(8);

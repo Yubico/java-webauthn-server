@@ -24,7 +24,7 @@
 
 package com.yubico.webauthn.data;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -56,12 +56,12 @@ public class TokenBindingInfo {
       @NonNull @JsonProperty("status") TokenBindingStatus status,
       @NonNull @JsonProperty("id") Optional<ByteArray> id) {
     if (status == TokenBindingStatus.PRESENT) {
-      assure(
+      assertTrue(
           id.isPresent(),
           "Token binding ID must be present if status is \"%s\".",
           TokenBindingStatus.PRESENT);
     } else {
-      assure(
+      assertTrue(
           !id.isPresent(),
           "Token binding ID must not be present if status is not \"%s\".",
           TokenBindingStatus.PRESENT);

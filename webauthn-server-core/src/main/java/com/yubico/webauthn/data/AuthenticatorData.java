@@ -100,7 +100,7 @@ public class AuthenticatorData {
   /** Decode an {@link AuthenticatorData} object from a raw authenticator data byte array. */
   @JsonCreator
   public AuthenticatorData(@NonNull ByteArray bytes) {
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         bytes.size() >= FIXED_LENGTH_PART_END_INDEX,
         "%s byte array must be at least %d bytes, was %d: %s",
         AuthenticatorData.class.getSimpleName(),
@@ -150,7 +150,7 @@ public class AuthenticatorData {
     final int CREDENTIAL_ID_LENGTH_INDEX = AAGUID_END;
     final int CREDENTIAL_ID_LENGTH_END = CREDENTIAL_ID_LENGTH_INDEX + 2;
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         bytes.length >= CREDENTIAL_ID_LENGTH_END,
         "Attested credential data must contain at least %d bytes, was %d: %s",
         CREDENTIAL_ID_LENGTH_END,
@@ -174,7 +174,7 @@ public class AuthenticatorData {
     final int CREDENTIAL_PUBLIC_KEY_INDEX = CREDENTIAL_ID_END;
     final int CREDENTIAL_PUBLIC_KEY_AND_EXTENSION_DATA_END = bytes.length;
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         bytes.length >= CREDENTIAL_ID_END,
         "Expected credential ID of length %d, but attested credential data and extension data is only %d bytes: %s",
         CREDENTIAL_ID_END,

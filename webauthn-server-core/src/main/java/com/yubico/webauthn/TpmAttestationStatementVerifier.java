@@ -101,14 +101,14 @@ final class TpmAttestationStatementVerifier
     ObjectNode attStmt = attestationObject.getAttestationStatement();
 
     JsonNode verNode = attStmt.get("ver");
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         verNode != null && verNode.isTextual() && verNode.textValue().equals(TPM_VER),
         "attStmt.ver must equal \"%s\", was: %s",
         TPM_VER,
         verNode);
 
     JsonNode algNode = attStmt.get("alg");
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         algNode != null && algNode.canConvertToLong(),
         "attStmt.alg must be set to an integer value, was: %s",
         algNode);
@@ -119,7 +119,7 @@ final class TpmAttestationStatementVerifier
                     new IllegalArgumentException("Unknown COSE algorithm identifier: " + algNode));
 
     JsonNode x5cNode = attStmt.get("x5c");
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         x5cNode != null && x5cNode.isArray(),
         "attStmt.x5c must be set to an array value, was: %s",
         x5cNode);
@@ -137,7 +137,7 @@ final class TpmAttestationStatementVerifier
     final X509Certificate aikCert = x5c.get(0);
 
     JsonNode sigNode = attStmt.get("sig");
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         sigNode != null && sigNode.isBinary(),
         "attStmt.sig must be set to a binary value, was: %s",
         sigNode);
@@ -149,13 +149,13 @@ final class TpmAttestationStatementVerifier
     }
 
     JsonNode certInfoNode = attStmt.get("certInfo");
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         certInfoNode != null && certInfoNode.isBinary(),
         "attStmt.certInfo must be set to a binary value, was: %s",
         certInfoNode);
 
     JsonNode pubAreaNode = attStmt.get("pubArea");
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         pubAreaNode != null && pubAreaNode.isBinary(),
         "attStmt.pubArea must be set to a binary value, was: %s",
         pubAreaNode);
@@ -235,14 +235,14 @@ final class TpmAttestationStatementVerifier
       default:
         throw new UnsupportedOperationException("Signing algorithm not implemented: " + alg);
     }
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         certInfo.extraData.equals(expectedExtraData), "Incorrect certInfo.extraData.");
 
     // Sub-step 4: Verify that attested contains a TPMS_CERTIFY_INFO structure as specified in
     // [TPMv2-Part2] section 10.12.3, whose name field contains a valid Name for pubArea, as
     // computed using the algorithm in the nameAlg field of pubArea using the procedure specified in
     // [TPMv2-Part1] section 16.
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         certInfo.attestedName.equals(pubArea.name()), "Incorrect certInfo.attestedName.");
 
     // Sub-step 5 handled by parsing above
@@ -250,7 +250,7 @@ final class TpmAttestationStatementVerifier
 
     // Sub-step 7: Verify the sig is a valid signature over certInfo using the attestation public
     // key in aikCert with the algorithm specified in alg.
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         Crypto.verifySignature(aikCert, certInfo.getRawBytes(), sig, alg),
         "Incorrect TPM attestation signature.");
 
@@ -287,7 +287,7 @@ final class TpmAttestationStatementVerifier
           signedCredentialPublicKey = kf.generatePublic(spec);
         }
 
-        ExceptionUtil.assure(
+        ExceptionUtil.assertTrue(
             Arrays.equals(credentialPubKey.getEncoded(), signedCredentialPublicKey.getEncoded()),
             "Signed public key in TPM attestation is not identical to credential public key in authData.");
         break;
@@ -333,19 +333,19 @@ final class TpmAttestationStatementVerifier
                   "Unsupported elliptic curve: " + params.curve_id);
           }
 
-          ExceptionUtil.assure(
+          ExceptionUtil.assertTrue(
               algId.equals(tpmAlgId),
               "Signed public key in TPM attestation is not identical to credential public key in authData; elliptic curve differs: %s != %s",
               tpmAlgId,
               algId);
           byte[] cosePubkeyX = cosePubkey.get(CBORObject.FromObject(-2)).GetByteString();
           byte[] cosePubkeyY = cosePubkey.get(CBORObject.FromObject(-3)).GetByteString();
-          ExceptionUtil.assure(
+          ExceptionUtil.assertTrue(
               new BigInteger(1, unique.x.getBytes()).equals(new BigInteger(1, cosePubkeyX)),
               "Signed public key in TPM attestation is not identical to credential public key in authData; EC X coordinate differs: %s != %s",
               unique.x,
               new ByteArray(cosePubkeyX));
-          ExceptionUtil.assure(
+          ExceptionUtil.assertTrue(
               new BigInteger(1, unique.y.getBytes()).equals(new BigInteger(1, cosePubkeyY)),
               "Signed public key in TPM attestation is not identical to credential public key in authData; EC Y coordinate differs: %s != %s",
               unique.y,
@@ -382,7 +382,7 @@ final class TpmAttestationStatementVerifier
         final int nameAlg = reader.readUnsignedShort();
 
         final int attributes = reader.readInt();
-        ExceptionUtil.assure(
+        ExceptionUtil.assertTrue(
             (attributes & Attributes.SHALL_BE_ZERO) == 0,
             "Attributes contains 1 bits in reserved position(s): 0x%08x",
             attributes);
@@ -393,7 +393,7 @@ final class TpmAttestationStatementVerifier
         final Parameters parameters;
         final Unique unique;
 
-        ExceptionUtil.assure(
+        ExceptionUtil.assertTrue(
             (attributes & Attributes.SIGN_ENCRYPT) == Attributes.SIGN_ENCRYPT,
             "Public key is expected to have the SIGN_ENCRYPT attribute set, attributes were: 0x%08x",
             attributes);
@@ -408,7 +408,7 @@ final class TpmAttestationStatementVerifier
           throw new UnsupportedOperationException("Signing algorithm not implemented: " + signAlg);
         }
 
-        ExceptionUtil.assure(
+        ExceptionUtil.assertTrue(
             reader.available() == 0,
             "%d remaining bytes in TPMT_PUBLIC buffer",
             reader.available());
@@ -472,12 +472,12 @@ final class TpmAttestationStatementVerifier
 
   private void verifyX5cRequirements(X509Certificate cert, ByteArray aaguid)
       throws CertificateParsingException {
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         cert.getVersion() == 3,
         "Invalid TPM attestation certificate: Version MUST be 3, but was: %s",
         cert.getVersion());
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         cert.getSubjectX500Principal().getName().isEmpty(),
         "Invalid TPM attestation certificate: subject MUST be empty, but was: %s",
         cert.getSubjectX500Principal());
@@ -505,26 +505,26 @@ final class TpmAttestationStatementVerifier
         }
       }
     }
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         foundManufacturer && foundModel && foundVersion,
         "Invalid TPM attestation certificate: The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.%s%s%s",
         foundManufacturer ? "" : " Missing TPM manufacturer.",
         foundModel ? "" : " Missing TPM model.",
         foundVersion ? "" : " Missing TPM version.");
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         cert.getExtendedKeyUsage() != null && cert.getExtendedKeyUsage().contains("2.23.133.8.3"),
         "Invalid TPM attestation certificate: extended key usage extension MUST contain the OID 2.23.133.8.3, but was: %s",
         cert.getExtendedKeyUsage());
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         cert.getBasicConstraints() == -1,
         "Invalid TPM attestation certificate: MUST NOT be a CA certificate, but was.");
 
     CertificateParser.parseFidoAaguidExtension(cert)
         .ifPresent(
             extensionAaguid -> {
-              ExceptionUtil.assure(
+              ExceptionUtil.assertTrue(
                   Arrays.equals(aaguid.getBytes(), extensionAaguid),
                   "Invalid TPM attestation certificate: X.509 extension \"id-fido-gen-ce-aaguid\" is present but does not match the authenticator AAGUID.");
             });
@@ -546,13 +546,13 @@ final class TpmAttestationStatementVerifier
 
     private static TpmsRsaParms parse(ByteInputStream reader) throws IOException {
       final int symmetric = reader.readUnsignedShort();
-      ExceptionUtil.assure(
+      ExceptionUtil.assertTrue(
           symmetric == TPM_ALG_NULL,
           "RSA key is expected to have \"symmetric\" set to TPM_ALG_NULL, was: 0x%04x",
           symmetric);
 
       final int scheme = reader.readUnsignedShort();
-      ExceptionUtil.assure(
+      ExceptionUtil.assertTrue(
           scheme == TpmRsaScheme.RSASSA || scheme == TPM_ALG_NULL,
           "RSA key is expected to have \"scheme\" set to TPM_ALG_RSASSA or TPM_ALG_NULL, was: 0x%04x",
           scheme);
@@ -560,7 +560,7 @@ final class TpmAttestationStatementVerifier
       reader.skipBytes(2); // key_bits is not used by this implementation
 
       int exponent = reader.readInt();
-      ExceptionUtil.assure(
+      ExceptionUtil.assertTrue(
           exponent >= 0, "Exponent is too large and wrapped around to negative: %d", exponent);
       if (exponent == 0) {
         // When zero,  indicates  that  the  exponent  is  the  default  of 2^16 + 1
@@ -587,11 +587,11 @@ final class TpmAttestationStatementVerifier
     private static TpmsEccParms parse(ByteInputStream reader) throws IOException {
       final int symmetric = reader.readUnsignedShort();
       final int scheme = reader.readUnsignedShort();
-      ExceptionUtil.assure(
+      ExceptionUtil.assertTrue(
           symmetric == TPM_ALG_NULL,
           "ECC key is expected to have \"symmetric\" set to TPM_ALG_NULL, was: 0x%04x",
           symmetric);
-      ExceptionUtil.assure(
+      ExceptionUtil.assertTrue(
           scheme == TPM_ALG_NULL,
           "ECC key is expected to have \"scheme\" set to TPM_ALG_NULL, was: 0x%04x",
           scheme);
@@ -663,14 +663,15 @@ final class TpmAttestationStatementVerifier
         // Verify that magic is set to TPM_GENERATED_VALUE.
         // see https://w3c.github.io/webauthn/#sctn-tpm-attestation
         // verification procedure
-        ExceptionUtil.assure(
+        ExceptionUtil.assertTrue(
             magic.equals(TPM_GENERATED_VALUE), "magic field is invalid: %s", magic);
 
         // Verify that type is set to TPM_ST_ATTEST_CERTIFY.
         // see https://w3c.github.io/webauthn/#sctn-tpm-attestation
         // verification procedure
         final ByteArray type = new ByteArray(reader.read(2));
-        ExceptionUtil.assure(type.equals(TPM_ST_ATTEST_CERTIFY), "type field is invalid: %s", type);
+        ExceptionUtil.assertTrue(
+            type.equals(TPM_ST_ATTEST_CERTIFY), "type field is invalid: %s", type);
 
         // qualifiedSigner is not used by this implementation
         reader.skipBytes(reader.readUnsignedShort());

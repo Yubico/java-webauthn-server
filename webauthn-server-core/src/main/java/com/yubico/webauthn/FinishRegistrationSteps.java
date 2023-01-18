@@ -24,7 +24,7 @@
 
 package com.yubico.webauthn;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 
 import COSE.CoseException;
@@ -129,7 +129,7 @@ final class FinishRegistrationSteps {
   class Step6 implements Step<Step7> {
     @Override
     public void validate() {
-      assure(clientData() != null, "Client data must not be null.");
+      assertTrue(clientData() != null, "Client data must not be null.");
     }
 
     @Override
@@ -148,7 +148,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           CLIENT_DATA_TYPE.equals(clientData.getType()),
           "The \"type\" in the client data must be exactly \"%s\", was: %s",
           CLIENT_DATA_TYPE,
@@ -167,7 +167,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(request.getChallenge().equals(clientData.getChallenge()), "Incorrect challenge.");
+      assertTrue(request.getChallenge().equals(clientData.getChallenge()), "Incorrect challenge.");
     }
 
     @Override
@@ -183,7 +183,7 @@ final class FinishRegistrationSteps {
     @Override
     public void validate() {
       final String responseOrigin = clientData.getOrigin();
-      assure(
+      assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
           "Incorrect origin: " + responseOrigin);
     }
@@ -213,7 +213,7 @@ final class FinishRegistrationSteps {
   class Step11 implements Step<Step12> {
     @Override
     public void validate() {
-      assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
+      assertTrue(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
     }
 
     @Override
@@ -232,7 +232,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(attestation() != null, "Malformed attestation object.");
+      assertTrue(attestation() != null, "Malformed attestation object.");
     }
 
     @Override
@@ -252,7 +252,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           Crypto.sha256(rpId)
               .equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
           "Wrong RP ID hash.");
@@ -271,7 +271,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           response.getResponse().getParsedAuthenticatorData().getFlags().UP,
           "User Presence is required.");
     }
@@ -294,7 +294,7 @@ final class FinishRegistrationSteps {
               .flatMap(AuthenticatorSelectionCriteria::getUserVerification)
               .orElse(UserVerificationRequirement.PREFERRED)
           == UserVerificationRequirement.REQUIRED) {
-        assure(
+        assertTrue(
             response.getResponse().getParsedAuthenticatorData().getFlags().UV,
             "User Verification is required.");
       }
@@ -323,7 +323,7 @@ final class FinishRegistrationSteps {
               .getCredentialPublicKey();
       CBORObject publicKeyCbor = CBORObject.DecodeFromBytes(publicKeyCose.getBytes());
       final int alg = publicKeyCbor.get(CBORObject.FromObject(3)).AsInt32();
-      assure(
+      assertTrue(
           request.getPubKeyCredParams().stream()
               .anyMatch(pkcparam -> pkcparam.getAlg().getId() == alg),
           "Unrequested credential key algorithm: got %d, expected one of: %s",
@@ -393,12 +393,12 @@ final class FinishRegistrationSteps {
     public void validate() {
       attestationStatementVerifier.ifPresent(
           verifier -> {
-            assure(
+            assertTrue(
                 verifier.verifyAttestationSignature(attestation, clientDataJsonHash),
                 "Invalid attestation signature.");
           });
 
-      assure(attestationType() != null, "Failed to determine attestation type");
+      assertTrue(attestationType() != null, "Failed to determine attestation type");
     }
 
     @Override
@@ -522,7 +522,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           allowUntrustedAttestation || attestationTrusted,
           "Failed to derive trust for attestation key.");
     }
@@ -617,7 +617,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           credentialRepository.lookupAll(response.getId()).isEmpty(),
           "Credential ID is already registered: %s",
           response.getId());

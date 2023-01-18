@@ -24,7 +24,7 @@
 
 package com.yubico.webauthn;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 
 import COSE.CoseException;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
@@ -112,7 +112,7 @@ final class FinishAssertionSteps {
           .getAllowCredentials()
           .ifPresent(
               allowed -> {
-                assure(
+                assertTrue(
                     allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId())),
                     "Unrequested credential ID: %s",
                     response.getId());
@@ -153,25 +153,25 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
           "At least one of username and user handle must be given; none was.");
 
-      assure(
+      assertTrue(
           userHandle.isPresent(),
           "User handle not found for username: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
 
-      assure(
+      assertTrue(
           username.isPresent(),
           "Username not found for userHandle: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
 
-      assure(registration.isPresent(), "Unknown credential: %s", response.getId());
+      assertTrue(registration.isPresent(), "Unknown credential: %s", response.getId());
 
-      assure(
+      assertTrue(
           userHandle.get().equals(registration.get().getUserHandle()),
           "User handle %s does not own credential %s",
           userHandle.get(),
@@ -180,7 +180,7 @@ final class FinishAssertionSteps {
       final Optional<String> usernameFromRequest = request.getUsername();
       final Optional<ByteArray> userHandleFromResponse = response.getResponse().getUserHandle();
       if (usernameFromRequest.isPresent() && userHandleFromResponse.isPresent()) {
-        assure(
+        assertTrue(
             userHandleFromResponse.equals(
                 credentialRepository.getUserHandleForUsername(usernameFromRequest.get())),
             "User handle %s in response does not match username %s in request",
@@ -203,7 +203,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           credential.isPresent(),
           "Unknown credential. Credential ID: %s, user handle: %s",
           response.getId(),
@@ -219,9 +219,9 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(clientData() != null, "Missing client data.");
-      assure(authenticatorData() != null, "Missing authenticator data.");
-      assure(signature() != null, "Missing signature.");
+      assertTrue(clientData() != null, "Missing client data.");
+      assertTrue(authenticatorData() != null, "Missing authenticator data.");
+      assertTrue(signature() != null, "Missing signature.");
     }
 
     @Override
@@ -251,7 +251,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(clientData() != null, "Missing client data.");
+      assertTrue(clientData() != null, "Missing client data.");
     }
 
     @Override
@@ -272,7 +272,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           CLIENT_DATA_TYPE.equals(clientData.getType()),
           "The \"type\" in the client data must be exactly \"%s\", was: %s",
           CLIENT_DATA_TYPE,
@@ -292,7 +292,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           request
               .getPublicKeyCredentialRequestOptions()
               .getChallenge()
@@ -314,7 +314,7 @@ final class FinishAssertionSteps {
     @Override
     public void validate() {
       final String responseOrigin = response.getResponse().getClientData().getOrigin();
-      assure(
+      assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
           "Incorrect origin: " + responseOrigin);
     }
@@ -350,7 +350,7 @@ final class FinishAssertionSteps {
     @Override
     public void validate() {
       try {
-        assure(
+        assertTrue(
             Crypto.sha256(rpId)
                 .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
             "Wrong RP ID hash.");
@@ -358,7 +358,7 @@ final class FinishAssertionSteps {
         Optional<AppId> appid =
             request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
         if (appid.isPresent()) {
-          assure(
+          assertTrue(
               Crypto.sha256(appid.get().getId())
                   .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
               "Wrong RP ID hash.");
@@ -381,7 +381,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           response.getResponse().getParsedAuthenticatorData().getFlags().UP,
           "User Presence is required.");
     }
@@ -403,7 +403,7 @@ final class FinishAssertionSteps {
           .getPublicKeyCredentialRequestOptions()
           .getUserVerification()
           .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
-        assure(
+        assertTrue(
             response.getResponse().getParsedAuthenticatorData().getFlags().UV,
             "User Verification is required.");
       }
@@ -424,7 +424,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           !credential.isBackupEligible().isPresent()
               || response.getResponse().getParsedAuthenticatorData().getFlags().BE
                   == credential.isBackupEligible().get(),
@@ -461,7 +461,7 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
+      assertTrue(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
     }
 
     @Override

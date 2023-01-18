@@ -50,7 +50,7 @@ public class AAGUID {
    * @param value a {@link ByteArray} of length exactly 16.
    */
   public AAGUID(ByteArray value) {
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         value.size() == 16,
         "AAGUID as bytes must be exactly 16 bytes long, was %d: %s",
         value.size(),
