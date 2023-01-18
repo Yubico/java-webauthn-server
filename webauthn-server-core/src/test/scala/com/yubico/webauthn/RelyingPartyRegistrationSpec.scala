@@ -2160,9 +2160,7 @@ class RelyingPartyRegistrationSpec
                 TestAuthenticator.createCredential(
                   authDataBytes = authData,
                   credentialKeypair = credentialKeypair,
-                  clientDataJson = clientDataJson.getOrElse(
-                    TestAuthenticator.createClientData()
-                  ),
+                  clientDataJson = clientDataJson,
                   attestationMaker = AttestationMaker.tpm(
                     cert = AttestationSigner.ca(
                       alg = COSEAlgorithmIdentifier.ES256,
