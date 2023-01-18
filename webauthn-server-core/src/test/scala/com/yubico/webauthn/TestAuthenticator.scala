@@ -181,6 +181,7 @@ object TestAuthenticator {
         ): JsonNode =
           makePackedAttestationStatement(authDataBytes, clientDataJson, signer)
       }
+
     def fidoU2f(signer: AttestationSigner): AttestationMaker =
       new AttestationMaker {
         override val format = "fido-u2f"
@@ -191,6 +192,7 @@ object TestAuthenticator {
         ): JsonNode =
           makeU2fAttestationStatement(authDataBytes, clientDataJson, signer)
       }
+
     def androidSafetynet(
         cert: AttestationCert,
         ctsProfileMatch: Boolean = true,
@@ -209,6 +211,7 @@ object TestAuthenticator {
             ctsProfileMatch = ctsProfileMatch,
           )
       }
+
     def apple(
         addNonceExtension: Boolean = true,
         nonceValue: Option[ByteArray] = None,
@@ -243,6 +246,7 @@ object TestAuthenticator {
         caKey,
       )
     }
+
     def tpm(
         cert: AttestationCert,
         ver: Option[String] = Some("2.0"),
@@ -294,6 +298,7 @@ object TestAuthenticator {
     def cert: X509Certificate
     def certChain: List[(X509Certificate, PrivateKey)]
   }
+
   case class SelfAttestation(keypair: KeyPair, alg: COSEAlgorithmIdentifier)
       extends AttestationSigner {
     override def key: PrivateKey = keypair.getPrivate
@@ -302,6 +307,7 @@ object TestAuthenticator {
     }
     override def certChain = Nil
   }
+
   case class AttestationCert(
       override val cert: X509Certificate,
       override val key: PrivateKey,
@@ -313,6 +319,7 @@ object TestAuthenticator {
         keypair: (X509Certificate, PrivateKey),
     ) = this(keypair._1, keypair._2, alg, Nil)
   }
+
   object AttestationSigner {
     def ca(
         alg: COSEAlgorithmIdentifier,
