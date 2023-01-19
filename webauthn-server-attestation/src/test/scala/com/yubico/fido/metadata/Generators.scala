@@ -31,7 +31,7 @@ object Generators {
         typ <- Gen.option(Gen.const("JWT"))
         x5u <- arbitrary[Option[URL]]
         x5c <- maxSized(
-          4,
+          2,
           Gen.option(
             Gen.listOf(TestAuthenticator.generateAttestationCertificate()._1)
           ),
@@ -151,7 +151,7 @@ object Generators {
         tcDisplayPNGCharacteristics <-
           arbitrary[Option[List[DisplayPNGCharacteristicsDescriptor]]]
         attestationRootCertificates <- maxSized(
-          4,
+          2,
           Gen.containerOf[Set, X509Certificate](
             TestAuthenticator.generateAttestationCaCertificate()._1
           ),
