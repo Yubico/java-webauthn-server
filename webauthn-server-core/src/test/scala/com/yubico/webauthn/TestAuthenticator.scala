@@ -125,6 +125,20 @@ object TestAuthenticator {
     )
     val certValidFrom: Instant = Instant.parse("2018-09-06T17:42:00Z")
     val certValidTo: Instant = certValidFrom.plusSeconds(7 * 24 * 3600)
+
+    private var defaultKeypairs: Map[COSEAlgorithmIdentifier, KeyPair] =
+      Map.empty
+    def defaultKeypair(
+        algorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm
+    ): KeyPair = {
+      defaultKeypairs.get(algorithm) match {
+        case Some(keypair) => keypair
+        case None =>
+          val keypair = generateKeypair(algorithm)
+          defaultKeypairs = defaultKeypairs + (algorithm -> keypair)
+          keypair
+      }
+    }
   }
   val RsaKeySizeBits = 2048
   val Es256PrimeModulus: BigInteger = new BigInteger(

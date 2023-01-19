@@ -2125,6 +2125,8 @@ class RelyingPartyRegistrationSpec
 
               def makeCred(
                   authDataAndKeypair: Option[(ByteArray, KeyPair)] = None,
+                  credKeyAlgorithm: COSEAlgorithmIdentifier =
+                    TestAuthenticator.Defaults.keyAlgorithm,
                   clientDataJson: Option[String] = None,
                   subject: X500Name = emptySubject,
                   rdn: Array[AttributeTypeAndValue] =
@@ -2152,8 +2154,13 @@ class RelyingPartyRegistrationSpec
               ) = {
                 val (authData, credentialKeypair) =
                   authDataAndKeypair.getOrElse(
-                    TestAuthenticator.createAuthenticatorData(keyAlgorithm =
-                      COSEAlgorithmIdentifier.ES256
+                    TestAuthenticator.createAuthenticatorData(
+                      credentialKeypair = Some(
+                        TestAuthenticator.Defaults.defaultKeypair(
+                          credKeyAlgorithm
+                        )
+                      ),
+                      keyAlgorithm = credKeyAlgorithm,
                     )
                   )
 
@@ -2719,7 +2726,11 @@ class RelyingPartyRegistrationSpec
                     val (authData, keypair) =
                       TestAuthenticator.createAuthenticatorData(
                         aaguid = aaguid,
-                        keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                        credentialKeypair = Some(
+                          TestAuthenticator.Defaults.defaultKeypair(
+                            COSEAlgorithmIdentifier.ES256
+                          )
+                        ),
                       )
                     val testData = (RegistrationTestData.from _).tupled(
                       makeCred(
@@ -2743,7 +2754,11 @@ class RelyingPartyRegistrationSpec
                         val (authData, keypair) =
                           TestAuthenticator.createAuthenticatorData(
                             aaguid = aaguidInCred,
-                            keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                            credentialKeypair = Some(
+                              TestAuthenticator.Defaults.defaultKeypair(
+                                COSEAlgorithmIdentifier.ES256
+                              )
+                            ),
                           )
                         val testData = (RegistrationTestData.from _).tupled(
                           makeCred(
@@ -2768,12 +2783,7 @@ class RelyingPartyRegistrationSpec
                   ) { attributes: Long =>
                     val testData = (RegistrationTestData.from _).tupled(
                       makeCred(
-                        authDataAndKeypair = Some(
-                          TestAuthenticator
-                            .createAuthenticatorData(keyAlgorithm =
-                              COSEAlgorithmIdentifier.RS256
-                            )
-                        ),
+                        credKeyAlgorithm = COSEAlgorithmIdentifier.RS256,
                         attributes = Some(attributes & ~Attributes.SIGN_ENCRYPT),
                       )
                     )
@@ -2793,12 +2803,7 @@ class RelyingPartyRegistrationSpec
                     whenever(symmetric != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
-                          authDataAndKeypair = Some(
-                            TestAuthenticator
-                              .createAuthenticatorData(keyAlgorithm =
-                                COSEAlgorithmIdentifier.RS256
-                              )
-                          ),
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.RS256,
                           symmetric = Some(symmetric),
                         )
                       )
@@ -2821,12 +2826,7 @@ class RelyingPartyRegistrationSpec
                     ) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
-                          authDataAndKeypair = Some(
-                            TestAuthenticator
-                              .createAuthenticatorData(keyAlgorithm =
-                                COSEAlgorithmIdentifier.RS256
-                              )
-                          ),
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.RS256,
                           scheme = Some(scheme),
                         )
                       )
@@ -2846,12 +2846,7 @@ class RelyingPartyRegistrationSpec
                   ) { attributes: Long =>
                     val testData = (RegistrationTestData.from _).tupled(
                       makeCred(
-                        authDataAndKeypair = Some(
-                          TestAuthenticator
-                            .createAuthenticatorData(keyAlgorithm =
-                              COSEAlgorithmIdentifier.ES256
-                            )
-                        ),
+                        credKeyAlgorithm = COSEAlgorithmIdentifier.ES256,
                         attributes = Some(attributes & ~Attributes.SIGN_ENCRYPT),
                       )
                     )
@@ -2871,12 +2866,7 @@ class RelyingPartyRegistrationSpec
                     whenever(symmetric != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
-                          authDataAndKeypair = Some(
-                            TestAuthenticator
-                              .createAuthenticatorData(keyAlgorithm =
-                                COSEAlgorithmIdentifier.ES256
-                              )
-                          ),
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.ES256,
                           symmetric = Some(symmetric),
                         )
                       )
@@ -2897,12 +2887,7 @@ class RelyingPartyRegistrationSpec
                     whenever(scheme != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
-                          authDataAndKeypair = Some(
-                            TestAuthenticator
-                              .createAuthenticatorData(keyAlgorithm =
-                                COSEAlgorithmIdentifier.ES256
-                              )
-                          ),
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.ES256,
                           scheme = Some(scheme),
                         )
                       )
