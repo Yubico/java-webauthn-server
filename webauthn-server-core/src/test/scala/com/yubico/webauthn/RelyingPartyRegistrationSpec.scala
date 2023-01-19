@@ -4110,6 +4110,24 @@ class RelyingPartyRegistrationSpec
             )
           }
 
+          it("ES384.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.ES384
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.ES384
+            )
+          }
+
+          it("ES512.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.ES512
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.ES512
+            )
+          }
+
           it("EdDSA, when available.") {
             // The RelyingParty constructor call needs to be here inside the `it` call in order to have the right JCA provider environment
             val rp = RelyingParty
