@@ -4050,21 +4050,30 @@ class RelyingPartyRegistrationSpec
           .foreach {
             case (testData, i) =>
               it(s"Succeeds for example index ${i} (${testData.alg}, ${testData.attestationStatementFormat}).") {
-                val rp = {
-                  val builder = RelyingParty
-                    .builder()
-                    .identity(testData.rpId)
-                    .credentialRepository(
-                      Helpers.CredentialRepository.empty
-                    )
-                  builder.origins(Set(testData.clientData.getOrigin).asJava)
-                  builder.build()
-                }
+                val rp = RelyingParty
+                  .builder()
+                  .identity(testData.rpId)
+                  .credentialRepository(
+                    Helpers.CredentialRepository.empty
+                  )
+                  .origins(Set(testData.clientData.getOrigin).asJava)
+                  .build()
+
+                val request = rp
+                  .startRegistration(
+                    StartRegistrationOptions
+                      .builder()
+                      .user(testData.userId)
+                      .build()
+                  )
+                  .toBuilder
+                  .challenge(testData.request.getChallenge)
+                  .build()
 
                 val result = rp.finishRegistration(
                   FinishRegistrationOptions
                     .builder()
-                    .request(testData.request)
+                    .request(request)
                     .response(testData.response)
                     .build()
                 )
