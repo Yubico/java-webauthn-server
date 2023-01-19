@@ -887,12 +887,9 @@ object Generators {
 
       def authenticatorOutput: Gen[CBORObject] =
         for {
-          entry1 <- uvmEntry
-          entry23 <- Gen.listOfN(2, uvmEntry)
+          entries <- Gen.resize(3, Gen.nonEmptyListOf(uvmEntry))
         } yield {
-          CBORObject.FromObject(
-            Array(encodeUvmEntry(entry1)) ++ (entry23.map(encodeUvmEntry))
-          )
+          CBORObject.FromObject(entries.map(encodeUvmEntry).toArray)
         }
     }
   }
