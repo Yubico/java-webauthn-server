@@ -336,7 +336,7 @@ object Generators {
 
   def byteArray(minSize: Int, maxSize: Int): Gen[ByteArray] =
     for {
-      nums <- Gen.infiniteLazyList(arbitrary[Byte]).map(_.take(minSize))
+      nums <- Gen.infiniteLazyList(arbitrary[Byte])
       len <- Gen.chooseNum(minSize, maxSize)
     } yield new ByteArray(nums.take(len).toArray)
 
