@@ -40,7 +40,8 @@ object WebAuthnTestCodecs {
       alg: COSEAlgorithmIdentifier,
   ): PrivateKey =
     alg match {
-      case COSEAlgorithmIdentifier.ES256 =>
+      case COSEAlgorithmIdentifier.ES256 | COSEAlgorithmIdentifier.ES384 |
+          COSEAlgorithmIdentifier.ES512 =>
         val keyFactory: KeyFactory = KeyFactory.getInstance("EC")
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)
@@ -88,12 +89,10 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
-  def getCoseAlgId(encodedPublicKey: ByteArray): COSEAlgorithmIdentifier = {
-    importCosePublicKey(encodedPublicKey).getAlgorithm match {
-      case "EC" => COSEAlgorithmIdentifier.ES256
-      case other =>
-        throw new UnsupportedOperationException("Unknown algorithm: " + other)
-    }
+  def getCoseKty(encodedPublicKey: ByteArray): Int = {
+    val cose = CBORObject.DecodeFromBytes(encodedPublicKey.getBytes)
+    val kty = cose.get(CBORObject.FromObject(1)).AsInt32
+    kty
   }
 
 }

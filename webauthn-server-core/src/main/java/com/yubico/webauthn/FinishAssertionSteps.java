@@ -24,14 +24,9 @@
 
 package com.yubico.webauthn;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 
 import COSE.CoseException;
-import com.yubico.webauthn.FinishRegistrationSteps.Step18;
-import com.yubico.webauthn.FinishRegistrationSteps.Step19;
-import com.yubico.webauthn.FinishRegistrationSteps.Step20;
-import com.yubico.webauthn.FinishRegistrationSteps.Step21;
-import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
@@ -117,7 +112,7 @@ final class FinishAssertionSteps {
           .getAllowCredentials()
           .ifPresent(
               allowed -> {
-                assure(
+                assertTrue(
                     allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId())),
                     "Unrequested credential ID: %s",
                     response.getId());
@@ -158,25 +153,25 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           request.getUsername().isPresent() || response.getResponse().getUserHandle().isPresent(),
           "At least one of username and user handle must be given; none was.");
 
-      assure(
+      assertTrue(
           userHandle.isPresent(),
           "User handle not found for username: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
 
-      assure(
+      assertTrue(
           username.isPresent(),
           "Username not found for userHandle: %s",
           request.getUsername(),
           response.getResponse().getUserHandle());
 
-      assure(registration.isPresent(), "Unknown credential: %s", response.getId());
+      assertTrue(registration.isPresent(), "Unknown credential: %s", response.getId());
 
-      assure(
+      assertTrue(
           userHandle.get().equals(registration.get().getUserHandle()),
           "User handle %s does not own credential %s",
           userHandle.get(),
@@ -185,7 +180,7 @@ final class FinishAssertionSteps {
       final Optional<String> usernameFromRequest = request.getUsername();
       final Optional<ByteArray> userHandleFromResponse = response.getResponse().getUserHandle();
       if (usernameFromRequest.isPresent() && userHandleFromResponse.isPresent()) {
-        assure(
+        assertTrue(
             userHandleFromResponse.equals(
                 credentialRepository.getUserHandleForUsername(usernameFromRequest.get())),
             "User handle %s in response does not match username %s in request",
@@ -203,12 +198,12 @@ final class FinishAssertionSteps {
 
     @Override
     public Step8 nextStep() {
-      return new Step8(username, userHandle, credential.get());
+      return new Step8(username, credential.get());
     }
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           credential.isPresent(),
           "Unknown credential. Credential ID: %s, user handle: %s",
           response.getId(),
@@ -220,19 +215,18 @@ final class FinishAssertionSteps {
   class Step8 implements Step<Step10> {
 
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
-      assure(clientData() != null, "Missing client data.");
-      assure(authenticatorData() != null, "Missing authenticator data.");
-      assure(signature() != null, "Missing signature.");
+      assertTrue(clientData() != null, "Missing client data.");
+      assertTrue(authenticatorData() != null, "Missing authenticator data.");
+      assertTrue(signature() != null, "Missing signature.");
     }
 
     @Override
     public Step10 nextStep() {
-      return new Step10(username, userHandle, credential);
+      return new Step10(username, credential);
     }
 
     public ByteArray authenticatorData() {
@@ -253,17 +247,16 @@ final class FinishAssertionSteps {
   @Value
   class Step10 implements Step<Step11> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
-      assure(clientData() != null, "Missing client data.");
+      assertTrue(clientData() != null, "Missing client data.");
     }
 
     @Override
     public Step11 nextStep() {
-      return new Step11(username, userHandle, credential, clientData());
+      return new Step11(username, credential, clientData());
     }
 
     public CollectedClientData clientData() {
@@ -274,13 +267,12 @@ final class FinishAssertionSteps {
   @Value
   class Step11 implements Step<Step12> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
     private final CollectedClientData clientData;
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           CLIENT_DATA_TYPE.equals(clientData.getType()),
           "The \"type\" in the client data must be exactly \"%s\", was: %s",
           CLIENT_DATA_TYPE,
@@ -289,19 +281,18 @@ final class FinishAssertionSteps {
 
     @Override
     public Step12 nextStep() {
-      return new Step12(username, userHandle, credential);
+      return new Step12(username, credential);
     }
   }
 
   @Value
   class Step12 implements Step<Step13> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           request
               .getPublicKeyCredentialRequestOptions()
               .getChallenge()
@@ -311,34 +302,32 @@ final class FinishAssertionSteps {
 
     @Override
     public Step13 nextStep() {
-      return new Step13(username, userHandle, credential);
+      return new Step13(username, credential);
     }
   }
 
   @Value
   class Step13 implements Step<Step14> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
       final String responseOrigin = response.getResponse().getClientData().getOrigin();
-      assure(
+      assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
           "Incorrect origin: " + responseOrigin);
     }
 
     @Override
     public Step14 nextStep() {
-      return new Step14(username, userHandle, credential);
+      return new Step14(username, credential);
     }
   }
 
   @Value
   class Step14 implements Step<Step15> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -349,20 +338,19 @@ final class FinishAssertionSteps {
 
     @Override
     public Step15 nextStep() {
-      return new Step15(username, userHandle, credential);
+      return new Step15(username, credential);
     }
   }
 
   @Value
   class Step15 implements Step<Step16> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
       try {
-        assure(
+        assertTrue(
             Crypto.sha256(rpId)
                 .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
             "Wrong RP ID hash.");
@@ -370,7 +358,7 @@ final class FinishAssertionSteps {
         Optional<AppId> appid =
             request.getPublicKeyCredentialRequestOptions().getExtensions().getAppid();
         if (appid.isPresent()) {
-          assure(
+          assertTrue(
               Crypto.sha256(appid.get().getId())
                   .equals(response.getResponse().getParsedAuthenticatorData().getRpIdHash()),
               "Wrong RP ID hash.");
@@ -382,33 +370,31 @@ final class FinishAssertionSteps {
 
     @Override
     public Step16 nextStep() {
-      return new Step16(username, userHandle, credential);
+      return new Step16(username, credential);
     }
   }
 
   @Value
   class Step16 implements Step<Step17> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           response.getResponse().getParsedAuthenticatorData().getFlags().UP,
           "User Presence is required.");
     }
 
     @Override
     public Step17 nextStep() {
-      return new Step17(username, userHandle, credential);
+      return new Step17(username, credential);
     }
   }
 
   @Value
-  class Step17 implements Step<Step18> {
+  class Step17 implements Step<PendingStep16> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -417,22 +403,46 @@ final class FinishAssertionSteps {
           .getPublicKeyCredentialRequestOptions()
           .getUserVerification()
           .equals(Optional.of(UserVerificationRequirement.REQUIRED))) {
-        assure(
+        assertTrue(
             response.getResponse().getParsedAuthenticatorData().getFlags().UV,
             "User Verification is required.");
       }
     }
 
     @Override
+    public PendingStep16 nextStep() {
+      return new PendingStep16(username, credential);
+    }
+  }
+
+  @Value
+  // Step 16 in editor's draft as of 2022-11-09 https://w3c.github.io/webauthn/
+  // TODO: Finalize this when spec matures
+  class PendingStep16 implements Step<Step18> {
+    private final String username;
+    private final RegisteredCredential credential;
+
+    @Override
+    public void validate() {
+      assertTrue(
+          !credential.isBackupEligible().isPresent()
+              || response.getResponse().getParsedAuthenticatorData().getFlags().BE
+                  == credential.isBackupEligible().get(),
+          "Backup eligibility must not change; Stored: BE=%s, received: BE=%s for credential: %s",
+          credential.isBackupEligible(),
+          response.getResponse().getParsedAuthenticatorData().getFlags().BE,
+          credential.getCredentialId());
+    }
+
+    @Override
     public Step18 nextStep() {
-      return new Step18(username, userHandle, credential);
+      return new Step18(username, credential);
     }
   }
 
   @Value
   class Step18 implements Step<Step19> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
@@ -440,24 +450,23 @@ final class FinishAssertionSteps {
 
     @Override
     public Step19 nextStep() {
-      return new Step19(username, userHandle, credential);
+      return new Step19(username, credential);
     }
   }
 
   @Value
   class Step19 implements Step<Step20> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
 
     @Override
     public void validate() {
-      assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
+      assertTrue(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
     }
 
     @Override
     public Step20 nextStep() {
-      return new Step20(username, userHandle, credential, clientDataJsonHash());
+      return new Step20(username, credential, clientDataJsonHash());
     }
 
     public ByteArray clientDataJsonHash() {
@@ -468,7 +477,6 @@ final class FinishAssertionSteps {
   @Value
   class Step20 implements Step<Step21> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
     private final ByteArray clientDataJsonHash;
 
@@ -490,7 +498,7 @@ final class FinishAssertionSteps {
       }
 
       final COSEAlgorithmIdentifier alg =
-          WebAuthnCodecs.getCoseKeyAlg(cose)
+          COSEAlgorithmIdentifier.fromPublicKey(cose)
               .orElseThrow(
                   () ->
                       new IllegalArgumentException(
@@ -503,7 +511,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step21 nextStep() {
-      return new Step21(username, userHandle, credential);
+      return new Step21(username, credential);
     }
 
     public ByteArray signedBytes() {
@@ -514,14 +522,15 @@ final class FinishAssertionSteps {
   @Value
   class Step21 implements Step<Finished> {
     private final String username;
-    private final ByteArray userHandle;
     private final RegisteredCredential credential;
+    private final long assertionSignatureCount;
     private final long storedSignatureCountBefore;
 
-    public Step21(String username, ByteArray userHandle, RegisteredCredential credential) {
+    public Step21(String username, RegisteredCredential credential) {
       this.username = username;
-      this.userHandle = userHandle;
       this.credential = credential;
+      this.assertionSignatureCount =
+          response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
       this.storedSignatureCountBefore = credential.getSignatureCount();
     }
 
@@ -529,29 +538,25 @@ final class FinishAssertionSteps {
     public void validate() throws InvalidSignatureCountException {
       if (validateSignatureCounter && !signatureCounterValid()) {
         throw new InvalidSignatureCountException(
-            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount());
+            response.getId(), storedSignatureCountBefore + 1, assertionSignatureCount);
       }
     }
 
     private boolean signatureCounterValid() {
-      return (assertionSignatureCount() == 0 && storedSignatureCountBefore == 0)
-          || assertionSignatureCount() > storedSignatureCountBefore;
+      return (assertionSignatureCount == 0 && storedSignatureCountBefore == 0)
+          || assertionSignatureCount > storedSignatureCountBefore;
     }
 
     @Override
     public Finished nextStep() {
-      return new Finished(username, userHandle, assertionSignatureCount(), signatureCounterValid());
-    }
-
-    private long assertionSignatureCount() {
-      return response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
+      return new Finished(credential, username, assertionSignatureCount, signatureCounterValid());
     }
   }
 
   @Value
   class Finished implements Step<Finished> {
+    private final RegisteredCredential credential;
     private final String username;
-    private final ByteArray userHandle;
     private final long assertionSignatureCount;
     private final boolean signatureCounterValid;
 
@@ -568,19 +573,7 @@ final class FinishAssertionSteps {
     @Override
     public Optional<AssertionResult> result() {
       return Optional.of(
-          AssertionResult.builder()
-              .success(true)
-              .credentialId(response.getId())
-              .userHandle(userHandle)
-              .username(username)
-              .signatureCount(assertionSignatureCount)
-              .signatureCounterValid(signatureCounterValid)
-              .clientExtensionOutputs(response.getClientExtensionResults())
-              .assertionExtensionOutputs(
-                  AuthenticatorAssertionExtensionOutputs.fromAuthenticatorData(
-                          response.getResponse().getParsedAuthenticatorData())
-                      .orElse(null))
-              .build());
+          new AssertionResult(true, response, credential, username, signatureCounterValid));
     }
   }
 }

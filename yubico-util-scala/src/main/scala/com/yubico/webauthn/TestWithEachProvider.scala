@@ -6,9 +6,29 @@ import org.scalatest.matchers.should.Matchers
 
 import java.security.Provider
 import java.security.Security
+import java.security.Signature
+import scala.util.Try
 
 trait TestWithEachProvider extends Matchers {
   this: AnyFunSpec =>
+
+  /** Run the `body` in a context with the given JCA [[Security]] providers,
+    * then reset the providers to their state before.
+    */
+  def withProviderContext(
+      providers: List[Provider]
+  )(
+      body: => Any
+  ): Unit = {
+    val originalProviders = Security.getProviders.toList
+    Security.getProviders.foreach(prov => Security.removeProvider(prov.getName))
+    providers.foreach(Security.addProvider)
+
+    body
+
+    Security.getProviders.foreach(prov => Security.removeProvider(prov.getName))
+    originalProviders.foreach(Security.addProvider)
+  }
 
   def wrapItFunctionWithProviderContext(
       providerSetName: String,
@@ -29,18 +49,7 @@ trait TestWithEachProvider extends Matchers {
       */
     def it(testName: String)(testFun: => Any): Unit = {
       this.it.apply(testName) {
-        val originalProviders = Security.getProviders.toList
-        Security.getProviders.foreach(prov =>
-          Security.removeProvider(prov.getName)
-        )
-        providers.foreach(Security.addProvider)
-
-        testFun
-
-        Security.getProviders.foreach(prov =>
-          Security.removeProvider(prov.getName)
-        )
-        originalProviders.foreach(Security.addProvider)
+        withProviderContext(providers)(testFun)
       }
     }
 
@@ -71,19 +80,25 @@ trait TestWithEachProvider extends Matchers {
   ): Unit = {
     val defaultProviders: List[Provider] = Security.getProviders.toList
 
-    // TODO: Uncomment this in the next major version
-    //it should behave like wrapItFunctionWithProviderContext("default", defaultProviders, registerTests)
+    if (Try(Signature.getInstance("EdDSA", "SunEC")).isSuccess) {
+      // Test with only stock providers for JDK >= 14
+      it should behave like wrapItFunctionWithProviderContext(
+        "default",
+        defaultProviders,
+        registerTests,
+      )
+    } else {
+      // JDK < 14 doesn't have EdDSA providers
+      it should behave like wrapItFunctionWithProviderContext(
+        "default and BouncyCastle",
+        defaultProviders.appended(new BouncyCastleProvider()),
+        registerTests,
+      )
+    }
 
     it should behave like wrapItFunctionWithProviderContext(
       "BouncyCastle",
       List(new BouncyCastleProvider()),
-      registerTests,
-    )
-
-    // TODO: Delete this in the next major version
-    it should behave like wrapItFunctionWithProviderContext(
-      "default and BouncyCastle",
-      defaultProviders.appended(new BouncyCastleProvider()),
       registerTests,
     )
   }

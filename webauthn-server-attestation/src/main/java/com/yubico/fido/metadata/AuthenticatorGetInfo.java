@@ -1,7 +1,6 @@
 package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -360,7 +359,7 @@ public class AuthenticatorGetInfo {
       extends JsonDeserializer<Set<UserVerificationMethod>> {
     @Override
     public Set<UserVerificationMethod> deserialize(JsonParser p, DeserializationContext ctxt)
-        throws IOException, JacksonException {
+        throws IOException {
       final int bitset = p.getNumberValue().intValue();
       return Arrays.stream(UserVerificationMethod.values())
           .filter(uvm -> (uvm.getValue() & bitset) != 0)

@@ -428,8 +428,10 @@ public class Extensions {
                     uvmEntry ->
                         new UvmEntry(
                             UserVerificationMethod.fromValue(uvmEntry.get(0).AsInt32Value()),
-                            KeyProtectionType.fromValue(uvmEntry.get(1).AsInt16()),
-                            MatcherProtectionType.fromValue(uvmEntry.get(2).AsInt16())))
+                            KeyProtectionType.fromValue(
+                                uvmEntry.get(1).AsNumber().ToInt16IfExact()),
+                            MatcherProtectionType.fromValue(
+                                uvmEntry.get(2).AsNumber().ToInt16IfExact())))
                 .collect(Collectors.toList()));
       } else {
         return Optional.empty();
@@ -470,7 +472,7 @@ public class Extensions {
         }
 
         for (CBORObject i : entry.getValues()) {
-          if (!i.isIntegral()) {
+          if (!(i.isNumber() && i.AsNumber().IsInteger())) {
             log.debug("Invalid type for uvmEntry element: expected integer, was: {}", i.getType());
             return false;
           }

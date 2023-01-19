@@ -25,45 +25,48 @@
 package com.yubico.webauthn;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AuthenticatorAssertionExtensionOutputs;
+import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.AuthenticatorAttachment;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import java.util.Optional;
-import lombok.Builder;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
 /** The result of a call to {@link RelyingParty#finishAssertion(FinishAssertionOptions)}. */
 @Value
-@Builder(toBuilder = true)
 public class AssertionResult {
 
   /** <code>true</code> if the assertion was verified successfully. */
   private final boolean success;
 
-  /**
-   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
-   * ID</a> of the credential used for the assertion.
-   *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
-   *     ID</a>
-   * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
-   */
-  @NonNull private final ByteArray credentialId;
+  @JsonProperty
+  @Getter(AccessLevel.NONE)
+  private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
+      credentialResponse;
 
   /**
-   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
-   * of the authenticated user.
+   * The {@link RegisteredCredential} that was returned by {@link
+   * CredentialRepository#lookup(ByteArray, ByteArray)} and whose public key was used to
+   * successfully verify the assertion signature.
    *
-   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
-   * @see UserIdentity#getId()
-   * @see #getUsername()
+   * <p>NOTE: The {@link RegisteredCredential#getSignatureCount() signature count}, {@link
+   * RegisteredCredential#isBackupEligible() backup eligibility} and {@link
+   * RegisteredCredential#isBackedUp() backup state} properties in this object will reflect the
+   * state <i>before</i> the assertion operation, not the new state. When updating your database
+   * state, use the signature counter and backup state from {@link #getSignatureCount()}, {@link
+   * #isBackupEligible()} and {@link #isBackedUp()} instead.
    */
-  @NonNull private final ByteArray userHandle;
+  private final RegisteredCredential credential;
 
   /**
    * The username of the authenticated user.
@@ -71,16 +74,6 @@ public class AssertionResult {
    * @see #getUserHandle()
    */
   @NonNull private final String username;
-
-  /**
-   * The new <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
-   * count</a> of the credential used for the assertion.
-   *
-   * <p>You should update this value in your database.
-   *
-   * @see AuthenticatorData#getSignatureCounter()
-   */
-  private final long signatureCount;
 
   /**
    * <code>true</code> if and only if at least one of the following is true:
@@ -103,33 +96,131 @@ public class AssertionResult {
    */
   private final boolean signatureCounterValid;
 
-  private final ClientAssertionExtensionOutputs clientExtensionOutputs;
-
-  private final AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs;
-
   @JsonCreator
-  private AssertionResult(
+  AssertionResult(
       @JsonProperty("success") boolean success,
-      @NonNull @JsonProperty("credentialId") ByteArray credentialId,
-      @NonNull @JsonProperty("userHandle") ByteArray userHandle,
+      @NonNull @JsonProperty("credentialResponse")
+          PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
+              credentialResponse,
+      @NonNull @JsonProperty("credential") RegisteredCredential credential,
       @NonNull @JsonProperty("username") String username,
-      @JsonProperty("signatureCount") long signatureCount,
-      @JsonProperty("signatureCounterValid") boolean signatureCounterValid,
-      @JsonProperty("clientExtensionOutputs")
-          ClientAssertionExtensionOutputs clientExtensionOutputs,
-      @JsonProperty("authenticatorExtensionOutputs")
-          AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
+      @JsonProperty("signatureCounterValid") boolean signatureCounterValid) {
     this.success = success;
-    this.credentialId = credentialId;
-    this.userHandle = userHandle;
+    this.credentialResponse = credentialResponse;
+    this.credential = credential;
     this.username = username;
-    this.signatureCount = signatureCount;
     this.signatureCounterValid = signatureCounterValid;
-    this.clientExtensionOutputs =
-        clientExtensionOutputs == null || clientExtensionOutputs.getExtensionIds().isEmpty()
-            ? null
-            : clientExtensionOutputs;
-    this.authenticatorExtensionOutputs = authenticatorExtensionOutputs;
+  }
+
+  /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential
+   * ID</a> of the credential used for the assertion.
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">Credential
+   *     ID</a>
+   * @see PublicKeyCredentialRequestOptions#getAllowCredentials()
+   * @deprecated Use {@link #getCredential()}.{@link RegisteredCredential#getCredentialId()
+   *     getCredentialId()} instead.
+   */
+  @Deprecated
+  @JsonIgnore
+  public ByteArray getCredentialId() {
+    return credential.getCredentialId();
+  }
+
+  /**
+   * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">user handle</a>
+   * of the authenticated user.
+   *
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
+   * @see UserIdentity#getId()
+   * @see #getUsername()
+   * @deprecated Use {@link #getCredential()}.{@link RegisteredCredential#getUserHandle()
+   *     getUserHandle()} instead.
+   */
+  @Deprecated
+  @JsonIgnore
+  public ByteArray getUserHandle() {
+    return credential.getUserHandle();
+  }
+
+  /**
+   * Check whether the asserted credential is <a
+   * href="https://w3c.github.io/webauthn/#backup-eligible">backup eligible</a>, using the <a
+   * href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> in the authenticator data.
+   *
+   * <p>You SHOULD store this value in your representation of the corresponding {@link
+   * RegisteredCredential} if no value is stored yet. {@link CredentialRepository} implementations
+   * SHOULD set this value as the {@link
+   * RegisteredCredential.RegisteredCredentialBuilder#backupEligible(Boolean)
+   * backupEligible(Boolean)} value when reconstructing that {@link RegisteredCredential}.
+   *
+   * @return <code>true</code> if and only if the created credential is backup eligible. NOTE that
+   *     this is only a hint and not a guarantee, unless backed by a trusted authenticator
+   *     attestation.
+   * @see <a href="https://w3c.github.io/webauthn/#backup-eligible">Backup Eligible in §4.
+   *     Terminology</a>
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag in §6.1. Authenticator
+   *     Data</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public boolean isBackupEligible() {
+    return credentialResponse.getResponse().getParsedAuthenticatorData().getFlags().BE;
+  }
+
+  /**
+   * Get the current <a href="https://w3c.github.io/webauthn/#backup-state">backup state</a> of the
+   * asserted credential, using the <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">BS
+   * flag</a> in the authenticator data.
+   *
+   * <p>You SHOULD update this value in your representation of a {@link RegisteredCredential}.
+   * {@link CredentialRepository} implementations SHOULD set this value as the {@link
+   * RegisteredCredential.RegisteredCredentialBuilder#backupState(Boolean) backupState(Boolean)}
+   * value when reconstructing that {@link RegisteredCredential}.
+   *
+   * @return <code>true</code> if and only if the created credential is believed to currently be
+   *     backed up. NOTE that this is only a hint and not a guarantee, unless backed by a trusted
+   *     authenticator attestation.
+   * @see <a href="https://w3c.github.io/webauthn/#backup-state">Backup State in §4. Terminology</a>
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-bs">BS flag in §6.1. Authenticator
+   *     Data</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public boolean isBackedUp() {
+    return credentialResponse.getResponse().getParsedAuthenticatorData().getFlags().BS;
+  }
+
+  /**
+   * The <a href="https://w3c.github.io/webauthn/#authenticator-attachment-modality">authenticator
+   * attachment modality</a> in effect at the time the asserted credential was used.
+   *
+   * @see PublicKeyCredential#getAuthenticatorAttachment()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  @JsonIgnore
+  public Optional<AuthenticatorAttachment> getAuthenticatorAttachment() {
+    return credentialResponse.getAuthenticatorAttachment();
+  }
+
+  /**
+   * The new <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
+   * count</a> of the credential used for the assertion.
+   *
+   * <p>You should update this value in your database.
+   *
+   * @see AuthenticatorData#getSignatureCounter()
+   */
+  @JsonIgnore
+  public long getSignatureCount() {
+    return credentialResponse.getResponse().getParsedAuthenticatorData().getSignatureCounter();
   }
 
   /**
@@ -145,8 +236,10 @@ public class AssertionResult {
    * @see ClientAssertionExtensionOutputs
    * @see #getAuthenticatorExtensionOutputs() ()
    */
+  @JsonIgnore
   public Optional<ClientAssertionExtensionOutputs> getClientExtensionOutputs() {
-    return Optional.ofNullable(clientExtensionOutputs);
+    return Optional.of(credentialResponse.getClientExtensionResults())
+        .filter(ceo -> !ceo.getExtensionIds().isEmpty());
   }
 
   /**
@@ -162,72 +255,9 @@ public class AssertionResult {
    * @see AuthenticatorAssertionExtensionOutputs
    * @see #getClientExtensionOutputs()
    */
+  @JsonIgnore
   public Optional<AuthenticatorAssertionExtensionOutputs> getAuthenticatorExtensionOutputs() {
-    return Optional.ofNullable(authenticatorExtensionOutputs);
-  }
-
-  static AssertionResultBuilder.MandatoryStages builder() {
-    return new AssertionResultBuilder.MandatoryStages();
-  }
-
-  static class AssertionResultBuilder {
-    public static class MandatoryStages {
-      private final AssertionResultBuilder builder = new AssertionResultBuilder();
-
-      public Step2 success(boolean success) {
-        builder.success(success);
-        return new Step2();
-      }
-
-      public class Step2 {
-        public Step3 credentialId(ByteArray credentialId) {
-          builder.credentialId(credentialId);
-          return new Step3();
-        }
-      }
-
-      public class Step3 {
-        public Step4 userHandle(ByteArray userHandle) {
-          builder.userHandle(userHandle);
-          return new Step4();
-        }
-      }
-
-      public class Step4 {
-        public Step5 username(String username) {
-          builder.username(username);
-          return new Step5();
-        }
-      }
-
-      public class Step5 {
-        public Step6 signatureCount(long signatureCount) {
-          builder.signatureCount(signatureCount);
-          return new Step6();
-        }
-      }
-
-      public class Step6 {
-        public Step7 signatureCounterValid(boolean signatureCounterValid) {
-          builder.signatureCounterValid(signatureCounterValid);
-          return new Step7();
-        }
-      }
-
-      public class Step7 {
-        public Step8 clientExtensionOutputs(
-            ClientAssertionExtensionOutputs clientExtensionOutputs) {
-          builder.clientExtensionOutputs(clientExtensionOutputs);
-          return new Step8();
-        }
-      }
-
-      public class Step8 {
-        public AssertionResultBuilder assertionExtensionOutputs(
-            AuthenticatorAssertionExtensionOutputs authenticatorExtensionOutputs) {
-          return builder.authenticatorExtensionOutputs(authenticatorExtensionOutputs);
-        }
-      }
-    }
+    return AuthenticatorAssertionExtensionOutputs.fromAuthenticatorData(
+        credentialResponse.getResponse().getParsedAuthenticatorData());
   }
 }

@@ -24,23 +24,23 @@
 
 package com.yubico.webauthn;
 
-import static com.yubico.internal.util.ExceptionUtil.assure;
+import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 
 import COSE.CoseException;
 import com.upokecenter.cbor.CBORObject;
+import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
+import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
-import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -50,7 +50,9 @@ import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
+import java.security.cert.PKIXReason;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -127,7 +129,7 @@ final class FinishRegistrationSteps {
   class Step6 implements Step<Step7> {
     @Override
     public void validate() {
-      assure(clientData() != null, "Client data must not be null.");
+      assertTrue(clientData() != null, "Client data must not be null.");
     }
 
     @Override
@@ -146,7 +148,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           CLIENT_DATA_TYPE.equals(clientData.getType()),
           "The \"type\" in the client data must be exactly \"%s\", was: %s",
           CLIENT_DATA_TYPE,
@@ -165,7 +167,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(request.getChallenge().equals(clientData.getChallenge()), "Incorrect challenge.");
+      assertTrue(request.getChallenge().equals(clientData.getChallenge()), "Incorrect challenge.");
     }
 
     @Override
@@ -181,7 +183,7 @@ final class FinishRegistrationSteps {
     @Override
     public void validate() {
       final String responseOrigin = clientData.getOrigin();
-      assure(
+      assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
           "Incorrect origin: " + responseOrigin);
     }
@@ -211,7 +213,7 @@ final class FinishRegistrationSteps {
   class Step11 implements Step<Step12> {
     @Override
     public void validate() {
-      assure(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
+      assertTrue(clientDataJsonHash().size() == 32, "Failed to compute hash of client data");
     }
 
     @Override
@@ -230,7 +232,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(attestation() != null, "Malformed attestation object.");
+      assertTrue(attestation() != null, "Malformed attestation object.");
     }
 
     @Override
@@ -250,7 +252,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           Crypto.sha256(rpId)
               .equals(response.getResponse().getAttestation().getAuthenticatorData().getRpIdHash()),
           "Wrong RP ID hash.");
@@ -269,7 +271,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           response.getResponse().getParsedAuthenticatorData().getFlags().UP,
           "User Presence is required.");
     }
@@ -292,7 +294,7 @@ final class FinishRegistrationSteps {
               .flatMap(AuthenticatorSelectionCriteria::getUserVerification)
               .orElse(UserVerificationRequirement.PREFERRED)
           == UserVerificationRequirement.REQUIRED) {
-        assure(
+        assertTrue(
             response.getResponse().getParsedAuthenticatorData().getFlags().UV,
             "User Verification is required.");
       }
@@ -321,7 +323,7 @@ final class FinishRegistrationSteps {
               .getCredentialPublicKey();
       CBORObject publicKeyCbor = CBORObject.DecodeFromBytes(publicKeyCose.getBytes());
       final int alg = publicKeyCbor.get(CBORObject.FromObject(3)).AsInt32();
-      assure(
+      assertTrue(
           request.getPubKeyCredParams().stream()
               .anyMatch(pkcparam -> pkcparam.getAlg().getId() == alg),
           "Unrequested credential key algorithm: got %d, expected one of: %s",
@@ -373,6 +375,8 @@ final class FinishRegistrationSteps {
           return Optional.of(new AndroidSafetynetAttestationStatementVerifier());
         case "apple":
           return Optional.of(new AppleAttestationStatementVerifier());
+        case "tpm":
+          return Optional.of(new TpmAttestationStatementVerifier());
         default:
           return Optional.empty();
       }
@@ -389,12 +393,12 @@ final class FinishRegistrationSteps {
     public void validate() {
       attestationStatementVerifier.ifPresent(
           verifier -> {
-            assure(
+            assertTrue(
                 verifier.verifyAttestationSignature(attestation, clientDataJsonHash),
                 "Invalid attestation signature.");
           });
 
-      assure(attestationType() != null, "Failed to determine attestation type");
+      assertTrue(attestationType() != null, "Failed to determine attestation type");
     }
 
     @Override
@@ -411,9 +415,6 @@ final class FinishRegistrationSteps {
             case "android-key":
               // TODO delete this once android-key attestation verification is implemented
               return AttestationType.BASIC;
-            case "tpm":
-              // TODO delete this once tpm attestation verification is implemented
-              return AttestationType.ATTESTATION_CA;
             default:
               return AttestationType.UNKNOWN;
           }
@@ -475,13 +476,25 @@ final class FinishRegistrationSteps {
                   atp ->
                       attestationTrustSource.findTrustRoots(
                           atp,
-                          Optional.of(
-                                  attestation
-                                      .getAuthenticatorData()
-                                      .getAttestedCredentialData()
-                                      .get()
-                                      .getAaguid())
-                              .filter(aaguid -> !aaguid.equals(ZERO_AAGUID)))));
+                          Optional.ofNullable(
+                              Optional.of(
+                                      attestation
+                                          .getAuthenticatorData()
+                                          .getAttestedCredentialData()
+                                          .get()
+                                          .getAaguid())
+                                  .filter(aaguid -> !aaguid.equals(ZERO_AAGUID))
+                                  .orElseGet(
+                                      () -> {
+                                        if (!atp.isEmpty()) {
+                                          return CertificateParser.parseFidoAaguidExtension(
+                                                  atp.get(0))
+                                              .map(ByteArray::new)
+                                              .orElse(null);
+                                        } else {
+                                          return null;
+                                        }
+                                      })))));
     }
   }
 
@@ -509,7 +522,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           allowUntrustedAttestation || attestationTrusted,
           "Failed to derive trust for attestation key.");
     }
@@ -536,18 +549,41 @@ final class FinishRegistrationSteps {
                         .collect(Collectors.toSet()));
             pathParams.setDate(Date.from(clock.instant()));
             pathParams.setRevocationEnabled(trustRoots.get().isEnableRevocationChecking());
+            pathParams.setPolicyQualifiersRejected(
+                !trustRoots.get().getPolicyTreeValidator().isPresent());
             trustRoots.get().getCertStore().ifPresent(pathParams::addCertStore);
-            cpv.validate(certPath, pathParams);
-            return true;
+            final PKIXCertPathValidatorResult result =
+                (PKIXCertPathValidatorResult) cpv.validate(certPath, pathParams);
+            return trustRoots
+                .get()
+                .getPolicyTreeValidator()
+                .map(
+                    policyNodePredicate -> {
+                      if (policyNodePredicate.test(result.getPolicyTree())) {
+                        return true;
+                      } else {
+                        log.info(
+                            "Failed to derive trust in attestation statement: Certificate path policy tree does not satisfy policy tree validator. Attestation object: {}",
+                            response.getResponse().getAttestationObject());
+                        return false;
+                      }
+                    })
+                .orElse(true);
           }
 
         } catch (CertPathValidatorException e) {
           log.info(
               "Failed to derive trust in attestation statement: {} at cert index {}: {}. Attestation object: {}",
-              response.getResponse().getAttestationObject(),
               e.getReason(),
               e.getIndex(),
-              e.getMessage());
+              e.getMessage(),
+              response.getResponse().getAttestationObject());
+          if (PKIXReason.INVALID_POLICY.equals(e.getReason())) {
+            log.info(
+                "You may need to set the policyTreeValidator property on the {} returned by your {}.",
+                TrustRootsResult.class.getSimpleName(),
+                AttestationTrustSource.class.getSimpleName());
+          }
           return false;
 
         } catch (CertificateException e) {
@@ -581,7 +617,7 @@ final class FinishRegistrationSteps {
 
     @Override
     public void validate() {
-      assure(
+      assertTrue(
           credentialRepository.lookupAll(response.getId()).isEmpty(),
           "Credential ID is already registered: %s",
           response.getId());
@@ -615,43 +651,8 @@ final class FinishRegistrationSteps {
     @Override
     public Optional<RegistrationResult> result() {
       return Optional.of(
-          RegistrationResult.builder()
-              .keyId(keyId())
-              .aaguid(
-                  response
-                      .getResponse()
-                      .getAttestation()
-                      .getAuthenticatorData()
-                      .getAttestedCredentialData()
-                      .get()
-                      .getAaguid())
-              .attestationTrusted(attestationTrusted)
-              .attestationType(attestationType)
-              .publicKeyCose(
-                  response
-                      .getResponse()
-                      .getAttestation()
-                      .getAuthenticatorData()
-                      .getAttestedCredentialData()
-                      .get()
-                      .getCredentialPublicKey())
-              .signatureCount(
-                  response.getResponse().getParsedAuthenticatorData().getSignatureCounter())
-              .clientExtensionOutputs(response.getClientExtensionResults())
-              .authenticatorExtensionOutputs(
-                  AuthenticatorRegistrationExtensionOutputs.fromAuthenticatorData(
-                          response.getResponse().getParsedAuthenticatorData())
-                      .orElse(null))
-              .attestationTrustPath(attestationTrustPath.orElse(null))
-              .build());
-    }
-
-    private PublicKeyCredentialDescriptor keyId() {
-      return PublicKeyCredentialDescriptor.builder()
-          .id(response.getId())
-          .type(response.getType())
-          .transports(response.getResponse().getTransports())
-          .build();
+          new RegistrationResult(
+              response, attestationTrusted, attestationType, attestationTrustPath));
     }
   }
 }

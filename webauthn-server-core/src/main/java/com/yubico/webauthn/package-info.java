@@ -1,5 +1,5 @@
 /**
- * This package makes up the public API of the webauthn-server-core library.
+ * This package and its subpackages make up the public API of the webauthn-server-core library.
  *
  * <p>The main entry point is the {@link com.yubico.webauthn.RelyingParty} class. It provides
  * methods for generating inputs to the <code>navigator.credentials.create()</code> and <code>
@@ -82,15 +82,22 @@
  * com.yubico.webauthn.data.PublicKeyCredentialCreationOptions} which can be serialized to JSON and
  * passed as the <code>publicKey</code> argument to <code>navigator.credentials.create()</code>. You
  * can use the {@link com.yubico.webauthn.data.PublicKeyCredentialCreationOptions#toBuilder()
- * toBuilder()} method to make any modifications you need. You should store this in temporary
- * storage so that it can later be passed as an argument to {@link
- * com.yubico.webauthn.RelyingParty#finishRegistration(FinishRegistrationOptions)}.
+ * toBuilder()} method to make any modifications you need, then the {@link
+ * com.yubico.webauthn.data.PublicKeyCredentialCreationOptions#toCredentialsCreateJson()} method is
+ * suitable for converting the value to JSON to send to the client.
  *
- * <p>After receiving the response from the client, construct a {@link
- * com.yubico.webauthn.data.PublicKeyCredential}&lt;{@link
- * com.yubico.webauthn.data.AuthenticatorAttestationResponse}, {@link
- * com.yubico.webauthn.data.ClientRegistrationExtensionOutputs}&gt; from the response and wrap that
- * in a {@link com.yubico.webauthn.FinishRegistrationOptions} along with the {@link
+ * <p>You should also store the {@link com.yubico.webauthn.data.PublicKeyCredentialCreationOptions}
+ * object in temporary storage so that it can later be passed as an argument to {@link
+ * com.yubico.webauthn.RelyingParty#finishRegistration(FinishRegistrationOptions)}. If you need to
+ * serialize the object for storage, the {@link
+ * com.yubico.webauthn.data.PublicKeyCredentialCreationOptions#toJson()} and {@link
+ * com.yubico.webauthn.data.PublicKeyCredentialCreationOptions#fromJson(java.lang.String)} methods
+ * are suitable for serializing to and from a string value.
+ *
+ * <p>After receiving the response from the client, use the {@link
+ * com.yubico.webauthn.data.PublicKeyCredential#parseRegistrationResponseJson(java.lang.String)}
+ * function to parse the response and wrap it in a {@link
+ * com.yubico.webauthn.FinishRegistrationOptions} along with the {@link
  * com.yubico.webauthn.data.PublicKeyCredentialCreationOptions} used to initiate the request. Pass
  * that as the argument to {@link
  * com.yubico.webauthn.RelyingParty#finishRegistration(FinishRegistrationOptions)}, which will
@@ -107,14 +114,19 @@
  *       com.yubico.webauthn.RegistrationResult#getPublicKeyCose() publicKeyCose} as a new
  *       credential for the user. The {@link com.yubico.webauthn.CredentialRepository} will need to
  *       look these up for authentication.
+ *   <li>Store the {@link com.yubico.webauthn.RegistrationResult#getSignatureCount() signature
+ *       counter} value in the new credential. If available, this will be used in future
+ *       authentication ceremonies do detect authenticator cloning.
+ *   <li>Optionally, store the {@link com.yubico.webauthn.RegistrationResult#isDiscoverable()
+ *       isDiscoverable} flag, if present, in the new credential. This may help you determine which
+ *       user interaction flows are possible with which credential.
  *   <li>If you care about authenticator attestation, check that the {@link
  *       com.yubico.webauthn.RegistrationResult#isAttestationTrusted() attestationTrusted} field
  *       satisfies your attestation policy. For this you will likely need to configure the {@link
  *       com.yubico.webauthn.RelyingParty.RelyingPartyBuilder#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)
  *       attestationTrustSource} setting on your {@link com.yubico.webauthn.RelyingParty} instance.
- *       You may also want to consult some external data source to verify the authenticity of the
- *       {@link com.yubico.webauthn.data.AuthenticatorAttestationResponse#getAttestationObject()
- *       attestation object}.
+ *       See also the <code>webauthn-server-attestation</code> for an implementation of such an
+ *       attestation trust and metadata source.
  *   <li>If you care about authenticator attestation, it is recommended to also store the raw {@link
  *       com.yubico.webauthn.data.AuthenticatorAttestationResponse#getAttestationObject()
  *       attestation object} as part of the credential. This enables you to retroactively inspect
@@ -130,11 +142,13 @@
  * com.yubico.webauthn.RelyingParty#startAssertion(StartAssertionOptions)}. The main parameter you
  * need to set here is the {@link
  * com.yubico.webauthn.StartAssertionOptions.StartAssertionOptionsBuilder#username(java.util.Optional)
- * username} of the user to authenticate, but even this parameter is optional. If the username is
- * not set, then the {@link
+ * username} or {@link
+ * com.yubico.webauthn.StartAssertionOptions.StartAssertionOptionsBuilder#userHandle(java.util.Optional)
+ * user handle} of the user to authenticate, but even these parameters are optional. If neither is
+ * set, then the {@link
  * com.yubico.webauthn.data.PublicKeyCredentialRequestOptions#getAllowCredentials()
- * allowCredentials} parameter will not be set. This which means the user must use a <a
- * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
+ * allowCredentials} parameter will not be set. This means the user must use a <a
+ * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
  * credential</a> to authenticate; also known as "first-factor authentication". This use case has
  * both advantages and disadvantages; see the Web Authentication specification for an extended
  * discussion of this.
@@ -143,18 +157,21 @@
  * startAssertion} method returns an {@link com.yubico.webauthn.AssertionRequest} containing the
  * username, if any, and a {@link com.yubico.webauthn.data.PublicKeyCredentialRequestOptions}
  * instance which can be serialized to JSON and passed as the <code>publicKey</code> argument to
- * <code>navigator.credentials.get()</code>. Again, store the {@link
- * com.yubico.webauthn.AssertionRequest} in temporary storage so it can be passed as an argument to
- * {@link
+ * <code>navigator.credentials.get()</code>. Again, use {@link
+ * com.yubico.webauthn.AssertionRequest#toBuilder()} to make any necessary changes, {@link
+ * com.yubico.webauthn.AssertionRequest#toCredentialsGetJson()} to convert it to JSON for sending to
+ * the client, and store the {@link com.yubico.webauthn.AssertionRequest} in temporary storage so it
+ * can be passed as an argument to {@link
  * com.yubico.webauthn.RelyingParty#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)}.
+ * Again, {@link com.yubico.webauthn.AssertionRequest#toJson()} and {@link
+ * com.yubico.webauthn.AssertionRequest#fromJson(java.lang.String)} can be used to convert to and
+ * from JSON for storage.
  *
- * <p>After receiving the response from the client, construct a {@link
- * com.yubico.webauthn.data.PublicKeyCredential}&lt;{@link
- * com.yubico.webauthn.data.AuthenticatorAssertionResponse}, {@link
- * com.yubico.webauthn.data.ClientAssertionExtensionOutputs}&gt; from the response and wrap that in
- * a {@link com.yubico.webauthn.FinishAssertionOptions} along with the {@link
- * com.yubico.webauthn.AssertionRequest} used to initiate the request. Pass that as the argument to
- * {@link
+ * <p>After receiving the response from the client, use {@link
+ * com.yubico.webauthn.data.PublicKeyCredential#parseAssertionResponseJson(java.lang.String)} to
+ * parse the response, then wrap that in a {@link com.yubico.webauthn.FinishAssertionOptions} along
+ * with the {@link com.yubico.webauthn.AssertionRequest} used to initiate the request. Pass that as
+ * the argument to {@link
  * com.yubico.webauthn.RelyingParty#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)},
  * which will return an {@link com.yubico.webauthn.AssertionResult} if successful and throw an
  * exception if not. Regardless of whether it succeeds, you should remove the {@link

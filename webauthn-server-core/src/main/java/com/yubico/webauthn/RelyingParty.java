@@ -210,11 +210,13 @@ public class RelyingParty {
    * <p>This is a list of acceptable public key algorithms and their parameters, ordered from most
    * to least preferred.
    *
-   * <p>The default is the following list:
+   * <p>The default is the following list, in order:
    *
    * <ol>
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#EdDSA EdDSA}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES384}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES512}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
    * </ol>
    *
@@ -228,6 +230,8 @@ public class RelyingParty {
           Arrays.asList(
               PublicKeyCredentialParameters.ES256,
               PublicKeyCredentialParameters.EdDSA,
+              PublicKeyCredentialParameters.ES384,
+              PublicKeyCredentialParameters.ES512,
               PublicKeyCredentialParameters.RS256));
 
   /**
@@ -417,6 +421,8 @@ public class RelyingParty {
                         break;
 
                       case ES256:
+                      case ES384:
+                      case ES512:
                         KeyFactory.getInstance("EC");
                         break;
 

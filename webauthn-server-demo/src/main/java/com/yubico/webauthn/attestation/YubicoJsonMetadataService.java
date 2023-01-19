@@ -31,7 +31,6 @@ import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
-import com.yubico.webauthn.attestation.matcher.FingerprintMatcher;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -55,9 +54,7 @@ public final class YubicoJsonMetadataService implements AttestationTrustSource {
   private static final String SELECTOR_PARAMETERS = "parameters";
 
   private static final Map<String, DeviceMatcher> DEFAULT_DEVICE_MATCHERS =
-      ImmutableMap.of(
-          ExtensionMatcher.SELECTOR_TYPE, new ExtensionMatcher(),
-          FingerprintMatcher.SELECTOR_TYPE, new FingerprintMatcher());
+      ImmutableMap.of(ExtensionMatcher.SELECTOR_TYPE, new ExtensionMatcher());
 
   private final Collection<MetadataObject> metadataObjects;
   private final Map<String, DeviceMatcher> matchers;

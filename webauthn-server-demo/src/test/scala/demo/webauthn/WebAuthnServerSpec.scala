@@ -251,7 +251,7 @@ class WebAuthnServerSpec
 
       def newServerWithAuthenticationRequest(
           testData: RegistrationTestData,
-          signatureCount: Option[Long] = None,
+          signatureCount: Option[Long],
       ) = {
         val assertionRequests: Cache[ByteArray, AssertionRequestWrapper] =
           newCache()

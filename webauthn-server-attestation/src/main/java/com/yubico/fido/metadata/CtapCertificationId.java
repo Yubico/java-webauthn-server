@@ -57,7 +57,7 @@ public enum CtapCertificationId {
    */
   FIDO("FIDO");
 
-  @JsonValue private String id;
+  @JsonValue private final String id;
 
   CtapCertificationId(String id) {
     this.id = id;

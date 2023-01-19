@@ -1,15 +1,162 @@
-== Version 2.1.0 (unreleased) ==
+== Version 2.3.1 (unreleased) ==
+
+`webauthn-server-core`:
+
+Fixes:
+
+* During `RelyingParty.finishRegistration()` if an `attestationTrustSource` is
+  configured, if the `aaguid` in the attestation data is zero, the call to
+  `AttestationTrustSource.findTrustRoots` will fall back to reading the AAGUID
+  from the attestation certificate if possible.
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* `findEntries` and `findTrustRoots` methods in `FidoMetadataService` now
+  attempt to read AAGUID from the attestation certificate if the `aaguid`
+  argument is absent or zero.
+* Method `FidoMetadataService.Filters.allOf` now has `@SafeVarargs` annotation.
+
+
+== Version 2.3.0 ==
+
+New features:
+
+* (Experimental) Added `authenticatorAttachment` property to response objects:
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+ ** Added method `getAuthenticatorAttachment()` to `PublicKeyCredential` and
+    corresponding builder method
+    `authenticatorAttachment(AuthenticatorAttachment)`.
+ ** Added method `getAuthenticatorAttachment()` to `RegistrationResult` and
+    `AssertionResult`, which echo `getAuthenticatorAttachment()` from the
+    corresponding `PublicKeyCredential`.
+ ** Thanks to GitHub user luisgoncalves for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/250
+
+Other:
+
+* Fixed the README description of SemVer exceptions: `@Deprecated` features are
+  still part of the public API unless they also have an `EXPERIMENTAL:` tag in
+  JavaDoc.
+* Brought `com.yubico.webauthn` package JavaDoc up to date with new library
+  features.
+
+
+== Version 2.2.0 ==
+
+`webauthn-server-core`:
+
+Changes:
+
+* Changed internal structure of `RegistrationResult` and `AssertionResult`. This
+  may affect you if you use Jackson or similar tools to serialize these values
+  to JSON, for example. This is not an officially supported use case and thus
+  does not warrant a major version bump.
+* Removed methods `RegistrationResult.toBuilder()` and
+  `AssertionResult.toBuilder()`. Both had package-private return types, and thus
+  were not usable by outside callers.
+
+New features:
+
+* (Experimental) Added support for the new `BE` (backup eligible) and `BS`
+  (backup state) flags in authenticator data:
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+ ** Added `BE` and `BS` properties to `AuthenticatorDataFlags`, reflecting the
+    respective flags (bits 0x08 and 0x10).
+ ** Added methods `isBackupEligible()` and `isBackedUp()` to
+    `RegistrationResult` and `AssertionResult`, reflecting respectively the `BE`
+    and `BS` flags.
+ ** Added properties `backupEligible` and `backupState`, getters
+    `isBackupEligible()` and `isBackedUp()`, and corresponding builder methods
+    to `RegisteredCredential`. `RelyingParty.finishAssertion(...)` will now
+    validate that if `RegisteredCredential.isBackupEligible()` is present, then
+    the `BE` flag of any assertion of that credential must match the stored
+    value.
+
+Fixes:
+
+* Fixed TPM attestation verification rejecting attestation certificates with TPM
+  Device Attributes split between multiple RelativeDistinguishedName structures
+  in the Subject Alternative Names extension.
+ ** Thanks to Oussama Zgheb for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/241
+* Fixed various errors in JavaDoc.
+
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* Improved documentation of guarantees provided by `FidoMetadataDownloader` and
+  required of its parameters.
+
+
+== Version 2.1.0 ==
+
+`webauthn-server-core`:
 
 Changes:
 
 * Log messages on attestation certificate path validation failure now include
   the attestation object.
 
+Deprecations:
+
+* Deprecated method `AssertionResult.getCredentialId(): ByteArray`. Use
+  `.getCredential().getCredentialId()` instead.
+* Deprecated method `AssertionResult.getUserHandle(): ByteArray`. Use
+  `.getCredential().getUserHandle()` instead.
+
+New features:
+
+* Added function `COSEAlgorithmIdentifier.fromPublicKey(ByteArray)`.
+* Added method `AssertionResult.getCredential(): RegisteredCredential`.
+* Added support for the `"tpm"` attestation statement format.
+* Added support for ES384 and ES512 signature algorithms.
+* Added property `policyTreeValidator` to `TrustRootsResult`. If set, the given
+  predicate function will be used to validate the certificate policy tree after
+  successful attestation certificate path validation. This may be required for
+  some JCA providers to accept attestation certificates with critical
+  certificate policy extensions. See the JavaDoc for
+  `TrustRootsResultBuilder.policyTreeValidator(Predicate)` for more information.
+* Added enum value `AttestationConveyancePreference.ENTERPRISE`.
+* (Experimental) Added constant `AuthenticatorTransport.HYBRID`.
+
 Fixes:
 
 * Fixed various typos and mistakes in JavaDocs.
 * Moved version constraints for test dependencies from meta-module
   `webauthn-server-parent` to unpublished test meta-module.
+* `yubico-util` dependency removed from downstream compile scope.
+* Fixed missing JavaDoc on `TrustRootsResult` getters and builder setters.
+
+
+`webauthn-server-attestation`:
+
+Changes:
+
+* The `AuthenticatorToBeFiltered` argument of the `FidoMetadataService` runtime
+  filter now omits zero AAGUIDs.
+* Promoted log messages in `FidoMetadataDownloader` about BLOB signature failure
+  and cache corruption from DEBUG level to WARN level.
+
+New features:
+
+* Added method `FidoMetadataDownloader.refreshBlob()`.
+
+Fixes:
+
+* Fixed various typos and mistakes in JavaDocs.
+* `FidoMetadataDownloader` now verifies the SHA-256 hash of the cached trust
+  root certificate, as promised in the JavaDoc of `useTrustRootCacheFile` and
+  `useTrustRootCache`.
+* BouncyCastle dependency dropped.
+* Guava dependency dropped (but still remains in core module).
+* If BLOB download fails, `FidoMetadataDownloader` now correctly falls back to
+  cache if available.
 
 
 == Version 2.0.0 ==

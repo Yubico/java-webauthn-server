@@ -29,7 +29,7 @@ public enum CtapPinUvAuthProtocolVersion {
    */
   TWO(2);
 
-  @JsonValue private int value;
+  @JsonValue private final int value;
 
   CtapPinUvAuthProtocolVersion(int value) {
     this.value = value;

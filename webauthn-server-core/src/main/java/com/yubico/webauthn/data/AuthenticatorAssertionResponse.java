@@ -72,6 +72,11 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
    */
   private final ByteArray userHandle;
 
+  // This overrides the default getter in AuthenticatorResponse which re-parses the authenticator
+  // data on every invocation. This "optimization" has no measurable impact on performance, but it
+  // seems rude to obviously waste cycles for nothing.
+  private final transient AuthenticatorData parsedAuthenticatorData;
+
   @NonNull
   @Getter(onMethod = @__({@Override}))
   private final transient CollectedClientData clientData;
@@ -85,6 +90,7 @@ public class AuthenticatorAssertionResponse implements AuthenticatorResponse {
       @JsonProperty("userHandle") final ByteArray userHandle)
       throws IOException, Base64UrlException {
     this.authenticatorData = authenticatorData;
+    this.parsedAuthenticatorData = new AuthenticatorData(authenticatorData);
     this.clientDataJSON = clientDataJSON;
     this.signature = signature;
     this.userHandle = userHandle;

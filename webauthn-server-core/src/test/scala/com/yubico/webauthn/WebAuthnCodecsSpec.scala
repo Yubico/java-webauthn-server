@@ -48,7 +48,7 @@ class WebAuthnCodecsSpec
     Arbitrary(
       for {
         ySign: Byte <- Gen.oneOf(0x02: Byte, 0x03: Byte)
-        rawBytes: Seq[Byte] <- Gen.listOfN[Byte](32, Arbitrary.arbitrary[Byte])
+        rawBytes <- Gen.listOfN[Byte](32, Arbitrary.arbitrary[Byte])
         key = Try(
           Util
             .decodePublicKey(new ByteArray((ySign +: rawBytes).toArray))

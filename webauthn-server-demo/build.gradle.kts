@@ -3,7 +3,6 @@ plugins {
   war
   application
   scala
-  id("com.diffplug.spotless")
   id("io.github.cosmicsilence.scalafix")
 }
 
@@ -15,6 +14,7 @@ val coreTestsOutput = project(":webauthn-server-core").extensions.getByType(Sour
 
 dependencies {
   implementation(platform(rootProject))
+  implementation(platform(project(":test-platform")))
 
   implementation(project(":webauthn-server-attestation"))
   implementation(project(":webauthn-server-core"))
@@ -23,7 +23,7 @@ dependencies {
   implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("com.google.guava:guava")
   implementation("com.upokecenter:cbor")
-  implementation("org.bouncycastle:bcprov-jdk15on")
+  implementation("org.bouncycastle:bcprov-jdk18on")
   implementation("org.slf4j:slf4j-api")
 
   implementation("org.eclipse.jetty:jetty-servlet:9.4.9.v20180320")
@@ -34,7 +34,6 @@ dependencies {
   runtimeOnly("org.glassfish.jersey.containers:jersey-container-servlet:2.36")
   runtimeOnly("org.glassfish.jersey.inject:jersey-hk2:2.36")
 
-  testImplementation(platform(project(":test-platform")))
   testImplementation(coreTestsOutput)
   testImplementation(project(":yubico-util-scala"))
 

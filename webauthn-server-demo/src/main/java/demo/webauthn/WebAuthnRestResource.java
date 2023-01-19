@@ -378,7 +378,7 @@ public class WebAuthnRestResource {
   }
 
   private String writeJson(Object o) throws JsonProcessingException {
-    if (uriInfo.getQueryParameters().keySet().contains("pretty")) {
+    if (uriInfo.getQueryParameters().containsKey("pretty")) {
       return jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
     } else {
       return jsonMapper.writeValueAsString(o);

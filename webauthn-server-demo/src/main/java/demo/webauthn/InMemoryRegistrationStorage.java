@@ -154,13 +154,14 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
 
   public void updateSignatureCount(AssertionResult result) {
     CredentialRegistration registration =
-        getRegistrationByUsernameAndCredentialId(result.getUsername(), result.getCredentialId())
+        getRegistrationByUsernameAndCredentialId(
+                result.getUsername(), result.getCredential().getCredentialId())
             .orElseThrow(
                 () ->
                     new NoSuchElementException(
                         String.format(
                             "Credential \"%s\" is not registered to user \"%s\"",
-                            result.getCredentialId(), result.getUsername())));
+                            result.getCredential().getCredentialId(), result.getUsername())));
 
     Set<CredentialRegistration> regs = storage.getIfPresent(result.getUsername());
     regs.remove(registration);

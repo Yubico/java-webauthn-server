@@ -112,7 +112,7 @@ public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCreden
     private Set<AuthenticatorTransport> transports = null;
 
     public static class MandatoryStages {
-      private PublicKeyCredentialDescriptorBuilder builder =
+      private final PublicKeyCredentialDescriptorBuilder builder =
           new PublicKeyCredentialDescriptorBuilder();
 
       /**

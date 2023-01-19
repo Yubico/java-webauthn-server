@@ -26,9 +26,6 @@ package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.yubico.webauthn.AssertionRequest
-import com.yubico.webauthn.AssertionResult
-import com.yubico.webauthn.Generators._
-import com.yubico.webauthn.RegistrationResult
 import com.yubico.webauthn.data.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -65,7 +62,6 @@ class BuildersSpec
 
     test(new TypeReference[AssertionExtensionInputs]() {})
     test(new TypeReference[AssertionRequest]() {})
-    test(new TypeReference[AssertionResult]() {})
     test(new TypeReference[AttestedCredentialData]() {})
     test(new TypeReference[AuthenticatorAssertionResponse]() {})
     test(new TypeReference[AuthenticatorAttestationResponse]() {})
@@ -89,7 +85,6 @@ class BuildersSpec
     test(new TypeReference[PublicKeyCredentialParameters]() {})
     test(new TypeReference[PublicKeyCredentialRequestOptions]() {})
     test(new TypeReference[RegistrationExtensionInputs]() {})
-    test(new TypeReference[RegistrationResult]() {})
     test(new TypeReference[RelyingPartyIdentity]() {})
     test(new TypeReference[UserIdentity]() {})
   }

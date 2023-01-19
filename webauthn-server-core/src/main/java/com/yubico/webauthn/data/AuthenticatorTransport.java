@@ -58,23 +58,54 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
 
   @JsonValue @NonNull private final String id;
 
-  /** Indicates the respective authenticator can be contacted over removable USB. */
+  /**
+   * Indicates the respective authenticator can be contacted over removable USB.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatortransport-usb">5.8.4.
+   *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
+   */
   public static final AuthenticatorTransport USB = new AuthenticatorTransport("usb");
 
   /**
    * Indicates the respective authenticator can be contacted over Near Field Communication (NFC).
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatortransport-nfc">5.8.4.
+   *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
    */
   public static final AuthenticatorTransport NFC = new AuthenticatorTransport("nfc");
 
   /**
    * Indicates the respective authenticator can be contacted over Bluetooth Smart (Bluetooth Low
    * Energy / BLE).
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatortransport-ble">5.8.4.
+   *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
    */
   public static final AuthenticatorTransport BLE = new AuthenticatorTransport("ble");
 
   /**
+   * Indicates the respective authenticator can be contacted using a combination of (often separate)
+   * data-transport and proximity mechanisms. This supports, for example, authentication on a
+   * desktop computer using a smartphone.
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   * @see <a href="https://w3c.github.io/webauthn/#dom-authenticatortransport-hybrid">5.8.4.
+   *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
+   */
+  @Deprecated
+  public static final AuthenticatorTransport HYBRID = new AuthenticatorTransport("hybrid");
+
+  /**
    * Indicates the respective authenticator is contacted using a client device-specific transport.
    * These authenticators are not removable from the client device.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatortransport-internal">5.8.4.
+   *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
    */
   public static final AuthenticatorTransport INTERNAL = new AuthenticatorTransport("internal");
 
@@ -83,13 +114,13 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
    *     this implementation.
    */
   public static AuthenticatorTransport[] values() {
-    return new AuthenticatorTransport[] {USB, NFC, BLE, INTERNAL};
+    return new AuthenticatorTransport[] {USB, NFC, BLE, HYBRID, INTERNAL};
   }
 
   /**
    * @return If <code>id</code> is the same as that of any of {@link #USB}, {@link #NFC}, {@link
-   *     #BLE} or {@link #INTERNAL}, returns that constant instance. Otherwise returns a new
-   *     instance containing <code>id</code>.
+   *     #BLE}, {@link #HYBRID} or {@link #INTERNAL}, returns that constant instance. Otherwise
+   *     returns a new instance containing <code>id</code>.
    * @see #valueOf(String)
    */
   @JsonCreator
@@ -101,8 +132,8 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
   }
 
   /**
-   * @return If <code>name</code> equals <code>"USB"</code>, <code>"NFC"</code>, <code>"BLE"</code>
-   *     or <code>"INTERNAL"</code>, returns the constant by that name.
+   * @return If <code>name</code> equals <code>"USB"</code>, <code>"NFC"</code>, <code>"BLE"</code>,
+   *     <code>"HYBRID"</code> or <code>"INTERNAL"</code>, returns the constant by that name.
    * @throws IllegalArgumentException if <code>name</code> is anything else.
    * @see #of(String)
    */
@@ -114,6 +145,8 @@ public class AuthenticatorTransport implements Comparable<AuthenticatorTransport
         return NFC;
       case "BLE":
         return BLE;
+      case "HYBRID":
+        return HYBRID;
       case "INTERNAL":
         return INTERNAL;
       default:

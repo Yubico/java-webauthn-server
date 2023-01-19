@@ -26,7 +26,6 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -73,18 +72,8 @@ public enum AuthenticatorAttachment {
 
   @JsonValue @Getter @NonNull private final String value;
 
-  private static Optional<AuthenticatorAttachment> fromString(@NonNull String value) {
-    return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
-  }
-
   @JsonCreator
   private static AuthenticatorAttachment fromJsonString(@NonNull String value) {
-    return fromString(value)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format(
-                        "Unknown %s value: %s",
-                        AuthenticatorAttachment.class.getSimpleName(), value)));
+    return Stream.of(values()).filter(v -> v.value.equals(value)).findAny().orElse(null);
   }
 }

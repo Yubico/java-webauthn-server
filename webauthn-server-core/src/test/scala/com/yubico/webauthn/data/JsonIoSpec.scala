@@ -41,11 +41,12 @@ import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
+import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
 class JsonIoSpec
@@ -60,32 +61,20 @@ class JsonIoSpec
     def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
       val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
-        it("can be serialized to JSON.") {
-          forAll { value: A =>
-            val encoded: String = json.writeValueAsString(value)
-
-            encoded should not be empty
-          }
-        }
-
-        it("can be deserialized from JSON.") {
-          forAll { value: A =>
-            val encoded: String = json.writeValueAsString(value)
-            val decoded: A = json.readValue(encoded, tpe)
-
-            decoded should equal(value)
-          }
-        }
-
         it("is identical after multiple serialization round-trips..") {
-          forAll { value: A =>
+          forAll(minSuccessful(10)) { value: A =>
             val encoded: String = json.writeValueAsString(value)
-            val decoded: A = json.readValue(encoded, tpe)
-            val recoded: String = json.writeValueAsString(decoded)
 
+            val decoded: A = json.readValue(encoded, tpe)
             decoded should equal(value)
+
+            val recoded: String = json.writeValueAsString(decoded)
             recoded should equal(encoded)
+
+            val redecoded: A = json.readValue(recoded, tpe)
+            redecoded should equal(value)
           }
+
         }
       }
     }
@@ -351,15 +340,16 @@ class JsonIoSpec
       )
     }
 
-    it("allows and ignores an authenticatorAttachment attribute.") {
+    it(
+      "allows an authenticatorAttachment attribute, but ignores unknown values."
+    ) {
       def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
           a: Arbitrary[P]
       ): Unit = {
         forAll(
           a.arbitrary,
-          Gen.oneOf(
-            arbitrary[AuthenticatorAttachment].map(_.getValue),
-            arbitrary[String],
+          arbitrary[String].suchThat(s =>
+            !AuthenticatorAttachment.values.map(_.getValue).contains(s)
           ),
         ) { (value: P, authenticatorAttachment: String) =>
           val tree: ObjectNode = json.valueToTree(value)
@@ -370,8 +360,37 @@ class JsonIoSpec
           val encoded = json.writeValueAsString(tree)
           println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
+          decoded.getAuthenticatorAttachment.toScala should be(None)
+        }
 
-          decoded should equal(value)
+        forAll(
+          a.arbitrary,
+          arbitrary[AuthenticatorAttachment],
+        ) { (value: P, authenticatorAttachment: AuthenticatorAttachment) =>
+          val tree: ObjectNode = json.valueToTree(value)
+          tree.set(
+            "authenticatorAttachment",
+            new TextNode(authenticatorAttachment.getValue),
+          )
+          val encoded = json.writeValueAsString(tree)
+          println(authenticatorAttachment)
+          val decoded = json.readValue(encoded, tpe)
+
+          decoded.getAuthenticatorAttachment.toScala should equal(
+            Some(authenticatorAttachment)
+          )
+        }
+
+        forAll(
+          a.arbitrary
+        ) { (value: P) =>
+          val tree: ObjectNode = json.valueToTree(
+            value.toBuilder.authenticatorAttachment(null).build()
+          )
+          val encoded = json.writeValueAsString(tree)
+          val decoded = json.readValue(encoded, tpe)
+
+          decoded.getAuthenticatorAttachment.toScala should be(None)
         }
       }
 

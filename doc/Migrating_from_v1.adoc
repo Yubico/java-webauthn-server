@@ -26,6 +26,11 @@ Here is a high-level outline of what needs to be updated:
 - Update `getUserVerification()` and `getResidentKey()` calls
   to expect `Optional` values.
 
+This migration guide is written for version `2.0.0` of the
+`webauthn-server-core` module. Later `2.x` versions may introduce new features
+but should remain compatible without further changes; consult the release notes
+for a full list of new features.
+
 
 == Replace dependency on `webauthn-server-core-minimal`
 

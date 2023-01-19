@@ -30,6 +30,7 @@ import com.upokecenter.cbor.CBOREncodeOptions
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
+import com.yubico.scalacheck.gen.GenUtil.halfsized
 import com.yubico.scalacheck.gen.JacksonGenerators
 import com.yubico.scalacheck.gen.JacksonGenerators._
 import com.yubico.scalacheck.gen.JavaGenerators._
@@ -63,7 +64,7 @@ object Generators {
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
 
-  private def setFlag(flags: Byte, mask: Byte, value: Boolean): Byte =
+  private def setFlag(mask: Byte, value: Boolean)(flags: Byte): Byte =
     if (value)
       (flags | (mask & (-0x01).toByte)).toByte
     else
@@ -81,38 +82,42 @@ object Generators {
 
   implicit val arbitraryAssertionRequest: Arbitrary[AssertionRequest] =
     Arbitrary(
-      for {
-        publicKeyCredentialRequestOptions <-
-          arbitrary[PublicKeyCredentialRequestOptions]
-        username <- arbitrary[Optional[String]]
-      } yield AssertionRequest
-        .builder()
-        .publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions)
-        .username(username)
-        .build()
+      halfsized(
+        for {
+          publicKeyCredentialRequestOptions <-
+            arbitrary[PublicKeyCredentialRequestOptions]
+          username <- arbitrary[Optional[String]]
+        } yield AssertionRequest
+          .builder()
+          .publicKeyCredentialRequestOptions(publicKeyCredentialRequestOptions)
+          .username(username)
+          .build()
+      )
     )
 
   implicit val arbitraryAttestedCredentialData
       : Arbitrary[AttestedCredentialData] = Arbitrary(
-    for {
-      aaguid <- byteArray(16)
-      credentialId <- arbitrary[ByteArray]
-      credentialPublicKey <- Gen.delay(
-        Gen.const(
-          TestAuthenticator
-            .generateEcKeypair()
-            .getPublic
-            .asInstanceOf[ECPublicKey]
+    halfsized(
+      for {
+        aaguid <- byteArray(16)
+        credentialId <- arbitrary[ByteArray]
+        credentialPublicKey <- Gen.delay(
+          Gen.const(
+            TestAuthenticator
+              .generateEcKeypair()
+              .getPublic
+              .asInstanceOf[ECPublicKey]
+          )
         )
-      )
-      credentialPublicKeyCose =
-        WebAuthnTestCodecs.ecPublicKeyToCose(credentialPublicKey)
-    } yield AttestedCredentialData
-      .builder()
-      .aaguid(aaguid)
-      .credentialId(credentialId)
-      .credentialPublicKey(credentialPublicKeyCose)
-      .build()
+        credentialPublicKeyCose =
+          WebAuthnTestCodecs.ecPublicKeyToCose(credentialPublicKey)
+      } yield AttestedCredentialData
+        .builder()
+        .aaguid(aaguid)
+        .credentialId(credentialId)
+        .credentialPublicKey(credentialPublicKeyCose)
+        .build()
+    )
   )
   def attestedCredentialDataBytes: Gen[ByteArray] =
     for {
@@ -143,7 +148,7 @@ object Generators {
       extensionOutputsGen: Gen[Option[CBORObject]] =
         Gen.option(Extensions.authenticatorAssertionExtensionOutputs())
   ): Gen[ByteArray] =
-    for {
+    halfsized(for {
       authData <- authenticatorDataBytes(extensionOutputsGen)
       alg <- arbitrary[COSEAlgorithmIdentifier]
       sig <- arbitrary[ByteArray]
@@ -172,13 +177,13 @@ object Generators {
               "attStmt" -> attStmt,
             ).asJava
           )
-    } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj))
+    } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj)))
 
   def fidoU2fAttestationObject(
       extensionOutputsGen: Gen[Option[CBORObject]] =
         Gen.option(Extensions.authenticatorAssertionExtensionOutputs())
   ): Gen[ByteArray] =
-    for {
+    halfsized(for {
       authData <- authenticatorDataBytes(extensionOutputsGen)
       sig <- arbitrary[ByteArray]
       x5c <- arbitrary[List[ByteArray]]
@@ -205,12 +210,17 @@ object Generators {
               "attStmt" -> attStmt,
             ).asJava
           )
-    } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj))
+    } yield new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(attObj)))
+
+  val authenticatorDataFlagsByte: Gen[Byte] = for {
+    value <- arbitrary[Byte]
+    bsMask = (((value & 0x08) << 1) & 0xef).toByte // Bit 0x10 cannot be set unless 0x08 is
+  } yield (value & bsMask).toByte
 
   implicit val arbitraryAuthenticatorDataFlags
-      : Arbitrary[AuthenticatorDataFlags] = Arbitrary(for {
-    value <- arbitrary[Byte]
-  } yield new AuthenticatorDataFlags(value))
+      : Arbitrary[AuthenticatorDataFlags] = Arbitrary(
+    authenticatorDataFlagsByte.map(new AuthenticatorDataFlags(_))
+  )
 
   implicit val arbitraryAuthenticatorAssertionResponse
       : Arbitrary[AuthenticatorAssertionResponse] = Arbitrary(
@@ -220,67 +230,95 @@ object Generators {
       extensionOutputsGen: Gen[Option[CBORObject]] =
         Gen.option(Extensions.authenticatorAssertionExtensionOutputs())
   ): Gen[AuthenticatorAssertionResponse] =
-    for {
-      authenticatorData <- authenticatorDataBytes(extensionOutputsGen)
-      clientDataJson <- clientDataJsonBytes
-      signature <- arbitrary[ByteArray]
-      userHandle <- arbitrary[Option[ByteArray]]
-    } yield AuthenticatorAssertionResponse
-      .builder()
-      .authenticatorData(authenticatorData)
-      .clientDataJSON(clientDataJson)
-      .signature(signature)
-      .userHandle(userHandle.toJava)
-      .build()
+    halfsized(
+      for {
+        authenticatorData <- authenticatorDataBytes(extensionOutputsGen)
+        clientDataJson <- clientDataJsonBytes
+        signature <- arbitrary[ByteArray]
+        userHandle <- arbitrary[Option[ByteArray]]
+      } yield AuthenticatorAssertionResponse
+        .builder()
+        .authenticatorData(authenticatorData)
+        .clientDataJSON(clientDataJson)
+        .signature(signature)
+        .userHandle(userHandle.toJava)
+        .build()
+    )
 
   implicit val arbitraryAuthenticatorAttestationResponse
       : Arbitrary[AuthenticatorAttestationResponse] = Arbitrary(
-    for {
-      attestationObject <- attestationObjectBytes()
-      clientDataJSON <- clientDataJsonBytes
-    } yield AuthenticatorAttestationResponse
-      .builder()
-      .attestationObject(attestationObject)
-      .clientDataJSON(clientDataJSON)
-      .build()
+    halfsized(
+      for {
+        attestationObject <- attestationObjectBytes()
+        clientDataJSON <- clientDataJsonBytes
+      } yield AuthenticatorAttestationResponse
+        .builder()
+        .attestationObject(attestationObject)
+        .clientDataJSON(clientDataJSON)
+        .build()
+    )
   )
 
   implicit val arbitraryAuthenticatorData: Arbitrary[AuthenticatorData] =
     Arbitrary(
-      authenticatorDataBytes(extensionsGen =
-        Gen.option(
-          Gen.oneOf(
-            Extensions.authenticatorRegistrationExtensionOutputs(),
-            Extensions.authenticatorAssertionExtensionOutputs(),
+      halfsized(
+        authenticatorDataBytes(extensionsGen =
+          Gen.option(
+            Gen.oneOf(
+              Extensions.authenticatorRegistrationExtensionOutputs(),
+              Extensions.authenticatorAssertionExtensionOutputs(),
+            )
           )
-        )
-      ) map (new AuthenticatorData(_))
+        ) map (new AuthenticatorData(_))
+      )
     )
 
   def authenticatorDataBytes(
-      extensionsGen: Gen[Option[CBORObject]]
+      extensionsGen: Gen[Option[CBORObject]],
+      rpIdHashGen: Gen[ByteArray] = byteArray(32),
+      upFlagGen: Gen[Boolean] = Gen.const(true),
+      uvFlagGen: Gen[Boolean] = arbitrary[Boolean],
+      backupFlagsGen: Gen[(Boolean, Boolean)] =
+        arbitrary[(Boolean, Boolean)].map({ case (be, bs) => (be, be && bs) }),
+      signatureCountGen: Gen[ByteArray] = byteArray(4),
   ): Gen[ByteArray] =
-    for {
-      fixedBytes <- byteArray(37)
-      attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
-      extensions <- extensionsGen
+    halfsized(
+      for {
+        rpIdHash <- rpIdHashGen
+        signatureCount <- signatureCountGen
+        attestedCredentialDataBytes <- Gen.option(attestedCredentialDataBytes)
 
-      extensionsBytes = extensions map { exts =>
-        new ByteArray(
-          exts.EncodeToBytes(CBOREncodeOptions.DefaultCtap2Canonical)
+        extensions <- extensionsGen
+        extensionsBytes = extensions map { exts =>
+          new ByteArray(
+            exts.EncodeToBytes(CBOREncodeOptions.DefaultCtap2Canonical)
+          )
+        }
+
+        flagsBase <- arbitrary[Byte]
+        upFlag <- upFlagGen
+        uvFlag <- uvFlagGen
+        (beFlag, bsFlag) <- backupFlagsGen
+        atFlag = attestedCredentialDataBytes.isDefined
+        edFlag = extensionsBytes.isDefined
+        flagsByte: Byte = setFlag(0x01, upFlag)(
+          setFlag(0x03, uvFlag)(
+            setFlag(0x40, atFlag)(
+              setFlag(BinaryUtil.singleFromHex("80"), edFlag)(
+                setFlag(0x08, beFlag)(setFlag(0x10, bsFlag)(flagsBase))
+              )
+            )
+          )
         )
-      }
-      atFlag = attestedCredentialDataBytes.isDefined
-      edFlag = extensionsBytes.isDefined
-      flagsByte: Byte = setFlag(
-        setFlag(fixedBytes.getBytes()(32), 0x40, atFlag),
-        BinaryUtil.singleFromHex("80"),
-        edFlag,
+      } yield new ByteArray(
+        rpIdHash.getBytes
+          :+ flagsByte
+          :++ signatureCount.getBytes
+            ++ attestedCredentialDataBytes
+              .map(_.getBytes)
+              .getOrElse(Array.empty)
+            ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
       )
-    } yield new ByteArray(
-      fixedBytes.getBytes.updated(32, flagsByte)
-        ++ attestedCredentialDataBytes.map(_.getBytes).getOrElse(Array.empty)
-        ++ extensionsBytes.map(_.getBytes).getOrElse(Array.empty)
     )
 
   implicit val arbitraryAuthenticatorSelectionCriteria
@@ -313,27 +351,30 @@ object Generators {
 
   def byteArray(minSize: Int, maxSize: Int): Gen[ByteArray] =
     for {
-      nums <- Gen.infiniteLazyList(arbitrary[Byte]).map(_.take(minSize))
+      nums <- Gen.infiniteLazyList(arbitrary[Byte])
       len <- Gen.chooseNum(minSize, maxSize)
     } yield new ByteArray(nums.take(len).toArray)
 
-  def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
-    for {
-      byteIndex: Int <- Gen.choose(0, bytes.size() - 1)
-      bitIndex: Int <- Gen.choose(0, 7)
-      flipMask: Byte = (1 << bitIndex).toByte
-    } yield new ByteArray(
+  def flipBit(bitIndex: Int)(bytes: ByteArray): ByteArray = {
+    val byteIndex: Int = bitIndex / 8
+    val bitIndexInByte: Int = bitIndex % 8
+    val flipMask: Byte = (1 << bitIndexInByte).toByte
+    new ByteArray(
       bytes.getBytes
         .updated(byteIndex, (bytes.getBytes()(byteIndex) ^ flipMask).toByte)
     )
+  }
+
+  def flipOneBit(bytes: ByteArray): Gen[ByteArray] =
+    for {
+      bitIndex <- Gen.choose(0, 8 * bytes.size() - 1)
+    } yield flipBit(bitIndex)(bytes)
 
   object Extensions {
     private val RegistrationExtensionIds: Set[String] =
       Set("appidExclude", "credProps", "largeBlob", "uvm")
     private val AuthenticationExtensionIds: Set[String] =
       Set("appid", "largeBlob", "uvm")
-    private val ExtensionIds: Set[String] =
-      RegistrationExtensionIds ++ AuthenticationExtensionIds
 
     private val ClientRegistrationExtensionOutputIds: Set[String] =
       RegistrationExtensionIds - "uvm"
@@ -356,7 +397,7 @@ object Generators {
       for {
         appidExclude <- appidExcludeGen
         credProps <- credPropsGen
-        largeBlob <- largeBlobGen
+        largeBlob <- halfsized(largeBlobGen)
         uvm <- uvmGen
       } yield {
         val b = RegistrationExtensionInputs.builder()
@@ -374,7 +415,7 @@ object Generators {
     ): Gen[ObjectNode] =
       for {
         base <- gen
-        extra <- genExtra
+        extra <- halfsized(genExtra)
       } yield {
         val result = extra
         result.setAll(JacksonCodecs.json().valueToTree[ObjectNode](base))
@@ -393,7 +434,7 @@ object Generators {
       for {
         appidExclude <- appidExcludeGen
         credProps <- credPropsGen
-        largeBlob <- largeBlobGen
+        largeBlob <- halfsized(largeBlobGen)
       } yield {
         val b = ClientRegistrationExtensionOutputs.builder()
         appidExclude.foreach(appidExclude => b.appidExclude(appidExclude))
@@ -417,12 +458,17 @@ object Generators {
       )
 
     def authenticatorRegistrationExtensionOutputs(
-        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput)
+        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput),
+        includeUnknown: Boolean = true,
     ): Gen[CBORObject] =
       for {
-        uvm: Option[CBORObject] <- uvmGen
+        base <-
+          if (includeUnknown)
+            halfsized(unknownAuthenticatorRegistrationExtensionOutput)
+          else Gen.const(CBORObject.NewMap())
+        uvm: Option[CBORObject] <- halfsized(uvmGen)
       } yield {
-        val result = CBORObject.NewMap()
+        val result = base
         uvm.foreach(result.set("uvm", _))
         result
       }
@@ -445,7 +491,7 @@ object Generators {
     ): Gen[AssertionExtensionInputs] =
       for {
         appid <- appidGen
-        largeBlob <- largeBlobGen
+        largeBlob <- halfsized(largeBlobGen)
         uvm <- uvmGen
       } yield {
         val b = AssertionExtensionInputs.builder()
@@ -461,7 +507,7 @@ object Generators {
     ): Gen[ObjectNode] =
       for {
         base <- gen
-        extra <- genExtra
+        extra <- halfsized(genExtra)
       } yield {
         val result = extra
         result.setAll(JacksonCodecs.json().valueToTree[ObjectNode](base))
@@ -474,7 +520,7 @@ object Generators {
         ] = LargeBlob.largeBlobAuthenticationOutput
     ): Gen[ClientAssertionExtensionOutputs] =
       for {
-        largeBlob <- largeBlobGen
+        largeBlob <- halfsized(largeBlobGen)
       } yield {
         val b = ClientAssertionExtensionOutputs.builder()
         b.appid(true)
@@ -483,12 +529,17 @@ object Generators {
       }
 
     def authenticatorAssertionExtensionOutputs(
-        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput)
+        uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput),
+        includeUnknown: Boolean = true,
     ): Gen[CBORObject] =
       for {
-        uvm: Option[CBORObject] <- uvmGen
+        base <-
+          if (includeUnknown)
+            halfsized(unknownAuthenticatorAssertionExtensionOutput)
+          else Gen.const(CBORObject.NewMap())
+        uvm: Option[CBORObject] <- halfsized(uvmGen)
       } yield {
-        val result = CBORObject.NewMap()
+        val result = base
         uvm.foreach(result.set("uvm", _))
         result
       }
@@ -599,21 +650,23 @@ object Generators {
           CBORObject,
       )
     ] =
-      for {
-        inputs <- arbitrary[RegistrationExtensionInputs]
-        clientOutputs <- allClientRegistrationExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[RegistrationExtensionInputs]
+          clientOutputs <- allClientRegistrationExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
 
-        requestedExtensionIds <-
-          Gen.someOf(inputs.getExtensionIds.asScala).map(_.toSet)
-        returnedExtensionIds <- Gen.oneOf(
-          Gen.const(requestedExtensionIds),
-          Gen.someOf(requestedExtensionIds).map(_.toSet),
+          requestedExtensionIds <-
+            Gen.someOf(inputs.getExtensionIds.asScala).map(_.toSet)
+          returnedExtensionIds <- Gen.oneOf(
+            Gen.const(requestedExtensionIds),
+            Gen.someOf(requestedExtensionIds).map(_.toSet),
+          )
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, returnedExtensionIds),
+          filter(authenticatorOutputs, returnedExtensionIds),
         )
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, returnedExtensionIds),
-        filter(authenticatorOutputs, returnedExtensionIds),
       )
 
     def unrequestedClientRegistrationExtensions: Gen[
@@ -623,27 +676,29 @@ object Generators {
           CBORObject,
       )
     ] =
-      for {
-        inputs <- arbitrary[RegistrationExtensionInputs]
-        clientOutputs <- allClientRegistrationExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[RegistrationExtensionInputs]
+          clientOutputs <- allClientRegistrationExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
 
-        unrequestedClientExtensionIds: Set[String] <-
-          Gen.nonEmptyContainerOf[Set, String](
-            Gen.oneOf(ClientRegistrationExtensionOutputIds)
-          )
-        requestedExtensionIds: Set[String] <-
-          Gen
-            .someOf(inputs.getExtensionIds.asScala)
-            .map(_.toSet -- unrequestedClientExtensionIds)
-        returnedExtensionIds: Set[String] <-
-          Gen
-            .someOf(requestedExtensionIds)
-            .map(_.toSet ++ unrequestedClientExtensionIds)
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, returnedExtensionIds),
-        filter(authenticatorOutputs, requestedExtensionIds),
+          unrequestedClientExtensionIds: Set[String] <-
+            Gen.nonEmptyContainerOf[Set, String](
+              Gen.oneOf(ClientRegistrationExtensionOutputIds)
+            )
+          requestedExtensionIds: Set[String] <-
+            Gen
+              .someOf(inputs.getExtensionIds.asScala)
+              .map(_.toSet -- unrequestedClientExtensionIds)
+          returnedExtensionIds: Set[String] <-
+            Gen
+              .someOf(requestedExtensionIds)
+              .map(_.toSet ++ unrequestedClientExtensionIds)
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, returnedExtensionIds),
+          filter(authenticatorOutputs, requestedExtensionIds),
+        )
       )
 
     def unrequestedAuthenticatorRegistrationExtensions: Gen[
@@ -653,27 +708,29 @@ object Generators {
           CBORObject,
       )
     ] =
-      for {
-        inputs <- arbitrary[RegistrationExtensionInputs]
-        clientOutputs <- allClientRegistrationExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[RegistrationExtensionInputs]
+          clientOutputs <- allClientRegistrationExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
 
-        unrequestedAuthenticatorExtensionIds: Set[String] <-
-          Gen.nonEmptyContainerOf[Set, String](
-            Gen.oneOf(AuthenticatorRegistrationExtensionOutputIds)
-          )
-        requestedExtensionIds: Set[String] <-
-          Gen
-            .someOf(inputs.getExtensionIds.asScala)
-            .map(_.toSet -- unrequestedAuthenticatorExtensionIds)
-        returnedExtensionIds: Set[String] <-
-          Gen
-            .someOf(requestedExtensionIds)
-            .map(_.toSet ++ unrequestedAuthenticatorExtensionIds)
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, requestedExtensionIds),
-        filter(authenticatorOutputs, returnedExtensionIds),
+          unrequestedAuthenticatorExtensionIds: Set[String] <-
+            Gen.nonEmptyContainerOf[Set, String](
+              Gen.oneOf(AuthenticatorRegistrationExtensionOutputIds)
+            )
+          requestedExtensionIds: Set[String] <-
+            Gen
+              .someOf(inputs.getExtensionIds.asScala)
+              .map(_.toSet -- unrequestedAuthenticatorExtensionIds)
+          returnedExtensionIds: Set[String] <-
+            Gen
+              .someOf(requestedExtensionIds)
+              .map(_.toSet ++ unrequestedAuthenticatorExtensionIds)
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, requestedExtensionIds),
+          filter(authenticatorOutputs, returnedExtensionIds),
+        )
       )
 
     def anyRegistrationExtensions: Gen[
@@ -683,113 +740,125 @@ object Generators {
           CBORObject,
       )
     ] =
-      for {
-        inputs <- arbitrary[RegistrationExtensionInputs]
-        clientOutputs <- allClientRegistrationExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[RegistrationExtensionInputs]
+          clientOutputs <- allClientRegistrationExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorRegistrationExtensionOutputs()
 
-        requestedExtensionIds <-
-          Gen.someOf(RegistrationExtensionIds).map(_.toSet)
-        returnedClientExtensionIds <-
-          Gen.someOf(ClientRegistrationExtensionOutputIds).map(_.toSet)
-        returnedAuthenticatorExtensionIds <-
-          Gen.someOf(AuthenticatorRegistrationExtensionOutputIds).map(_.toSet)
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, returnedClientExtensionIds),
-        filter(authenticatorOutputs, returnedAuthenticatorExtensionIds),
+          requestedExtensionIds <-
+            Gen.someOf(RegistrationExtensionIds).map(_.toSet)
+          returnedClientExtensionIds <-
+            Gen.someOf(ClientRegistrationExtensionOutputIds).map(_.toSet)
+          returnedAuthenticatorExtensionIds <-
+            Gen.someOf(AuthenticatorRegistrationExtensionOutputIds).map(_.toSet)
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, returnedClientExtensionIds),
+          filter(authenticatorOutputs, returnedAuthenticatorExtensionIds),
+        )
       )
 
     def subsetAssertionExtensions: Gen[
       (AssertionExtensionInputs, ClientAssertionExtensionOutputs, CBORObject)
     ] =
-      for {
-        inputs <- arbitrary[AssertionExtensionInputs]
-        clientOutputs <- allClientAssertionExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[AssertionExtensionInputs]
+          clientOutputs <- allClientAssertionExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
 
-        requestedExtensionIds <-
-          Gen.someOf(inputs.getExtensionIds.asScala).map(_.toSet)
-        returnedExtensionIds <- Gen.oneOf(
-          Gen.const(requestedExtensionIds),
-          Gen.someOf(requestedExtensionIds).map(_.toSet),
+          requestedExtensionIds <-
+            Gen.someOf(inputs.getExtensionIds.asScala).map(_.toSet)
+          returnedExtensionIds <- Gen.oneOf(
+            Gen.const(requestedExtensionIds),
+            Gen.someOf(requestedExtensionIds).map(_.toSet),
+          )
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, returnedExtensionIds),
+          filter(authenticatorOutputs, returnedExtensionIds),
         )
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, returnedExtensionIds),
-        filter(authenticatorOutputs, returnedExtensionIds),
       )
 
     def unrequestedClientAssertionExtensions: Gen[
       (AssertionExtensionInputs, ClientAssertionExtensionOutputs, CBORObject)
     ] =
-      for {
-        inputs <- arbitrary[AssertionExtensionInputs]
-        clientOutputs <- allClientAssertionExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[AssertionExtensionInputs]
+          clientOutputs <- allClientAssertionExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
 
-        unrequestedClientExtensionIds: Set[String] <-
-          Gen.nonEmptyContainerOf[Set, String](
-            Gen.oneOf(ClientAuthenticationExtensionOutputIds)
-          )
-        requestedExtensionIds: Set[String] <-
-          Gen
-            .someOf(inputs.getExtensionIds.asScala)
-            .map(_.toSet -- unrequestedClientExtensionIds)
-        returnedExtensionIds: Set[String] <-
-          Gen
-            .someOf(requestedExtensionIds)
-            .map(_.toSet ++ unrequestedClientExtensionIds)
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, returnedExtensionIds),
-        filter(authenticatorOutputs, requestedExtensionIds),
+          unrequestedClientExtensionIds: Set[String] <-
+            Gen.nonEmptyContainerOf[Set, String](
+              Gen.oneOf(ClientAuthenticationExtensionOutputIds)
+            )
+          requestedExtensionIds: Set[String] <-
+            Gen
+              .someOf(inputs.getExtensionIds.asScala)
+              .map(_.toSet -- unrequestedClientExtensionIds)
+          returnedExtensionIds: Set[String] <-
+            Gen
+              .someOf(requestedExtensionIds)
+              .map(_.toSet ++ unrequestedClientExtensionIds)
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, returnedExtensionIds),
+          filter(authenticatorOutputs, requestedExtensionIds),
+        )
       )
 
     def unrequestedAuthenticatorAssertionExtensions: Gen[
       (AssertionExtensionInputs, ClientAssertionExtensionOutputs, CBORObject)
     ] =
-      for {
-        inputs <- arbitrary[AssertionExtensionInputs]
-        clientOutputs <- allClientAssertionExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[AssertionExtensionInputs]
+          clientOutputs <- allClientAssertionExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
 
-        unrequestedAuthenticatorExtensionIds: Set[String] <-
-          Gen.nonEmptyContainerOf[Set, String](
-            Gen.oneOf(AuthenticatorAuthenticationExtensionOutputIds)
-          )
-        requestedExtensionIds: Set[String] <-
-          Gen
-            .someOf(inputs.getExtensionIds.asScala)
-            .map(_.toSet -- unrequestedAuthenticatorExtensionIds)
-        returnedExtensionIds: Set[String] <-
-          Gen
-            .someOf(requestedExtensionIds)
-            .map(_.toSet ++ unrequestedAuthenticatorExtensionIds)
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, requestedExtensionIds),
-        filter(authenticatorOutputs, returnedExtensionIds),
+          unrequestedAuthenticatorExtensionIds: Set[String] <-
+            Gen.nonEmptyContainerOf[Set, String](
+              Gen.oneOf(AuthenticatorAuthenticationExtensionOutputIds)
+            )
+          requestedExtensionIds: Set[String] <-
+            Gen
+              .someOf(inputs.getExtensionIds.asScala)
+              .map(_.toSet -- unrequestedAuthenticatorExtensionIds)
+          returnedExtensionIds: Set[String] <-
+            Gen
+              .someOf(requestedExtensionIds)
+              .map(_.toSet ++ unrequestedAuthenticatorExtensionIds)
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, requestedExtensionIds),
+          filter(authenticatorOutputs, returnedExtensionIds),
+        )
       )
 
     def anyAssertionExtensions: Gen[
       (AssertionExtensionInputs, ClientAssertionExtensionOutputs, CBORObject)
     ] =
-      for {
-        inputs <- arbitrary[AssertionExtensionInputs]
-        clientOutputs <- allClientAssertionExtensionOutputs()
-        authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
+      halfsized(
+        for {
+          inputs <- arbitrary[AssertionExtensionInputs]
+          clientOutputs <- allClientAssertionExtensionOutputs()
+          authenticatorOutputs <- allAuthenticatorAssertionExtensionOutputs()
 
-        requestedExtensionIds <-
-          Gen.someOf(AuthenticationExtensionIds).map(_.toSet)
-        returnedClientExtensionIds <-
-          Gen.someOf(ClientAuthenticationExtensionOutputIds).map(_.toSet)
-        returnedAuthenticatorExtensionIds <-
-          Gen.someOf(AuthenticatorAuthenticationExtensionOutputIds).map(_.toSet)
-      } yield (
-        filter(inputs, requestedExtensionIds),
-        filter(clientOutputs, returnedClientExtensionIds),
-        filter(authenticatorOutputs, returnedAuthenticatorExtensionIds),
+          requestedExtensionIds <-
+            Gen.someOf(AuthenticationExtensionIds).map(_.toSet)
+          returnedClientExtensionIds <-
+            Gen.someOf(ClientAuthenticationExtensionOutputIds).map(_.toSet)
+          returnedAuthenticatorExtensionIds <-
+            Gen
+              .someOf(AuthenticatorAuthenticationExtensionOutputIds)
+              .map(_.toSet)
+        } yield (
+          filter(inputs, requestedExtensionIds),
+          filter(clientOutputs, returnedClientExtensionIds),
+          filter(authenticatorOutputs, returnedAuthenticatorExtensionIds),
+        )
       )
 
     object CredProps {
@@ -814,22 +883,22 @@ object Generators {
         } yield new LargeBlobRegistrationOutput(supported)
 
       def largeBlobAuthenticationInput: Gen[LargeBlobAuthenticationInput] =
-        arbitrary[ByteArray] flatMap { write =>
+        halfsized(
           Gen.oneOf(
-            LargeBlobAuthenticationInput.read(),
-            LargeBlobAuthenticationInput.write(write),
+            Gen.const(LargeBlobAuthenticationInput.read()),
+            arbitrary[ByteArray].map(LargeBlobAuthenticationInput.write),
           )
-        }
+        )
 
       def largeBlobAuthenticationOutput: Gen[LargeBlobAuthenticationOutput] =
-        for {
+        halfsized(for {
           blob <- arbitrary[ByteArray]
           written <- arbitrary[Boolean]
           result <- Gen.oneOf(
             new LargeBlobAuthenticationOutput(blob, null),
             new LargeBlobAuthenticationOutput(null, written),
           )
-        } yield result
+        } yield result)
     }
 
     object Uvm {
@@ -852,14 +921,9 @@ object Generators {
         )
 
       def authenticatorOutput: Gen[CBORObject] =
-        for {
-          entry1 <- uvmEntry
-          entry23 <- Gen.listOfN(2, uvmEntry)
-        } yield {
-          CBORObject.FromObject(
-            Array(encodeUvmEntry(entry1)) ++ (entry23.map(encodeUvmEntry))
-          )
-        }
+        halfsized(for {
+          entries <- Gen.resize(3, Gen.nonEmptyListOf(uvmEntry))
+        } yield CBORObject.FromObject(entries.map(encodeUvmEntry).toArray))
     }
   }
 
@@ -891,7 +955,7 @@ object Generators {
   implicit val arbitraryCollectedClientData: Arbitrary[CollectedClientData] =
     Arbitrary(clientDataJsonBytes map (new CollectedClientData(_)))
   def clientDataJsonBytes: Gen[ByteArray] =
-    for {
+    halfsized(for {
       jsonBase <- arbitrary[ObjectNode]
       challenge <- arbitrary[ByteArray]
       origin <- arbitrary[URL]
@@ -937,7 +1001,7 @@ object Generators {
 
         json
       }
-    } yield new ByteArray(JacksonCodecs.json().writeValueAsBytes(json))
+    } yield new ByteArray(JacksonCodecs.json().writeValueAsBytes(json)))
 
   implicit val arbitraryCOSEAlgorithmIdentifier
       : Arbitrary[COSEAlgorithmIdentifier] = Arbitrary(
@@ -949,17 +1013,19 @@ object Generators {
         AuthenticatorAssertionResponse,
         ClientAssertionExtensionOutputs,
       ]] = Arbitrary(
-    for {
-      id <- arbitrary[ByteArray]
-      (_, clientExtensionResults, authenticatorExtensionOutputs) <-
-        Extensions.anyAssertionExtensions
-      response <- arbitrary[AuthenticatorAssertionResponse]
-    } yield PublicKeyCredential
-      .builder()
-      .id(id)
-      .response(response)
-      .clientExtensionResults(clientExtensionResults)
-      .build()
+    halfsized(
+      for {
+        id <- arbitrary[ByteArray]
+        (_, clientExtensionResults, authenticatorExtensionOutputs) <-
+          Extensions.anyAssertionExtensions
+        response <- arbitrary[AuthenticatorAssertionResponse]
+      } yield PublicKeyCredential
+        .builder()
+        .id(id)
+        .response(response)
+        .clientExtensionResults(clientExtensionResults)
+        .build()
+    )
   )
 
   implicit val arbitraryPublicKeyCredentialWithAttestation
@@ -967,92 +1033,102 @@ object Generators {
         AuthenticatorAttestationResponse,
         ClientRegistrationExtensionOutputs,
       ]] = Arbitrary(
-    for {
-      id <- arbitrary[ByteArray]
-      response <- arbitrary[AuthenticatorAttestationResponse]
-      clientExtensionResults <- arbitrary[ClientRegistrationExtensionOutputs]
-    } yield PublicKeyCredential
-      .builder()
-      .id(id)
-      .response(response)
-      .clientExtensionResults(clientExtensionResults)
-      .build()
+    halfsized(
+      for {
+        id <- arbitrary[ByteArray]
+        response <- arbitrary[AuthenticatorAttestationResponse]
+        clientExtensionResults <- arbitrary[ClientRegistrationExtensionOutputs]
+      } yield PublicKeyCredential
+        .builder()
+        .id(id)
+        .response(response)
+        .clientExtensionResults(clientExtensionResults)
+        .build()
+    )
   )
 
   implicit val arbitraryPublicKeyCredentialCreationOptions
       : Arbitrary[PublicKeyCredentialCreationOptions] = Arbitrary(
-    for {
-      attestation <- arbitrary[AttestationConveyancePreference]
-      authenticatorSelection <-
-        arbitrary[Optional[AuthenticatorSelectionCriteria]]
-      challenge <- arbitrary[ByteArray]
-      excludeCredentials <-
-        arbitrary[Optional[java.util.Set[PublicKeyCredentialDescriptor]]]
-      extensions <- arbitrary[RegistrationExtensionInputs]
-      pubKeyCredParams <-
-        arbitrary[java.util.List[PublicKeyCredentialParameters]]
-      rp <- arbitrary[RelyingPartyIdentity]
-      timeout <- arbitrary[Optional[java.lang.Long]]
-      user <- arbitrary[UserIdentity]
-    } yield PublicKeyCredentialCreationOptions
-      .builder()
-      .rp(rp)
-      .user(user)
-      .challenge(challenge)
-      .pubKeyCredParams(pubKeyCredParams)
-      .attestation(attestation)
-      .authenticatorSelection(authenticatorSelection)
-      .excludeCredentials(excludeCredentials)
-      .extensions(extensions)
-      .timeout(timeout)
-      .build()
+    halfsized(
+      for {
+        attestation <- arbitrary[AttestationConveyancePreference]
+        authenticatorSelection <-
+          arbitrary[Optional[AuthenticatorSelectionCriteria]]
+        challenge <- arbitrary[ByteArray]
+        excludeCredentials <-
+          arbitrary[Optional[java.util.Set[PublicKeyCredentialDescriptor]]]
+        extensions <- arbitrary[RegistrationExtensionInputs]
+        pubKeyCredParams <-
+          arbitrary[java.util.List[PublicKeyCredentialParameters]]
+        rp <- arbitrary[RelyingPartyIdentity]
+        timeout <- arbitrary[Optional[java.lang.Long]]
+        user <- arbitrary[UserIdentity]
+      } yield PublicKeyCredentialCreationOptions
+        .builder()
+        .rp(rp)
+        .user(user)
+        .challenge(challenge)
+        .pubKeyCredParams(pubKeyCredParams)
+        .attestation(attestation)
+        .authenticatorSelection(authenticatorSelection)
+        .excludeCredentials(excludeCredentials)
+        .extensions(extensions)
+        .timeout(timeout)
+        .build()
+    )
   )
 
   implicit val arbitraryPublicKeyCredentialDescriptor
       : Arbitrary[PublicKeyCredentialDescriptor] = Arbitrary(
-    for {
-      id <- arbitrary[ByteArray]
-      transports <- arbitrary[Optional[java.util.Set[AuthenticatorTransport]]]
-      tpe <- arbitrary[PublicKeyCredentialType]
-    } yield PublicKeyCredentialDescriptor
-      .builder()
-      .id(id)
-      .transports(transports)
-      .`type`(tpe)
-      .build()
+    halfsized(
+      for {
+        id <- arbitrary[ByteArray]
+        transports <- arbitrary[Optional[java.util.Set[AuthenticatorTransport]]]
+        tpe <- arbitrary[PublicKeyCredentialType]
+      } yield PublicKeyCredentialDescriptor
+        .builder()
+        .id(id)
+        .transports(transports)
+        .`type`(tpe)
+        .build()
+    )
   )
 
   implicit val arbitraryPublicKeyCredentialParameters
       : Arbitrary[PublicKeyCredentialParameters] = Arbitrary(
-    for {
-      alg <- arbitrary[COSEAlgorithmIdentifier]
-      tpe <- arbitrary[PublicKeyCredentialType]
-    } yield PublicKeyCredentialParameters
-      .builder()
-      .alg(alg)
-      .`type`(tpe)
-      .build()
+    halfsized(
+      for {
+        alg <- arbitrary[COSEAlgorithmIdentifier]
+        tpe <- arbitrary[PublicKeyCredentialType]
+      } yield PublicKeyCredentialParameters
+        .builder()
+        .alg(alg)
+        .`type`(tpe)
+        .build()
+    )
   )
 
   implicit val arbitraryPublicKeyCredentialRequestOptions
       : Arbitrary[PublicKeyCredentialRequestOptions] = Arbitrary(
-    for {
-      allowCredentials <-
-        arbitrary[Optional[java.util.List[PublicKeyCredentialDescriptor]]]
-      challenge <- arbitrary[ByteArray]
-      extensions <- arbitrary[AssertionExtensionInputs]
-      rpId <- arbitrary[Optional[String]]
-      timeout <- arbitrary[Optional[java.lang.Long]]
-      userVerification <- arbitrary[UserVerificationRequirement]
-    } yield PublicKeyCredentialRequestOptions
-      .builder()
-      .challenge(challenge)
-      .allowCredentials(allowCredentials)
-      .extensions(extensions)
-      .rpId(rpId)
-      .timeout(timeout)
-      .userVerification(userVerification)
-      .build()
+    halfsized(
+      for {
+        allowCredentials <-
+          arbitrary[Optional[java.util.List[PublicKeyCredentialDescriptor]]]
+        challenge <- arbitrary[ByteArray]
+        extensions <- arbitrary[AssertionExtensionInputs]
+        rpId <- arbitrary[Optional[String]]
+        timeout <- arbitrary[Optional[java.lang.Long]]
+        userVerification <- arbitrary[UserVerificationRequirement]
+      } yield PublicKeyCredentialRequestOptions
+        .builder()
+        .challenge(challenge)
+        .allowCredentials(allowCredentials)
+        .extensions(extensions)
+        .rpId(rpId)
+        .timeout(timeout)
+        .userVerification(userVerification)
+        .build()
+    )
   )
 
   implicit val arbitraryRegistrationExtensionInputs
@@ -1062,14 +1138,16 @@ object Generators {
 
   implicit val arbitraryRelyingPartyIdentity: Arbitrary[RelyingPartyIdentity] =
     Arbitrary(
-      for {
-        id <- arbitrary[String]
-        name <- arbitrary[String]
-      } yield RelyingPartyIdentity
-        .builder()
-        .id(id)
-        .name(name)
-        .build()
+      halfsized(
+        for {
+          id <- arbitrary[String]
+          name <- arbitrary[String]
+        } yield RelyingPartyIdentity
+          .builder()
+          .id(id)
+          .name(name)
+          .build()
+      )
     )
 
   implicit val arbitraryTokenBindingInfo: Arbitrary[TokenBindingInfo] =
@@ -1081,16 +1159,18 @@ object Generators {
     )
 
   implicit val arbitraryUserIdentity: Arbitrary[UserIdentity] = Arbitrary(
-    for {
-      displayName <- arbitrary[String]
-      name <- arbitrary[String]
-      id <- arbitrary[ByteArray]
-    } yield UserIdentity
-      .builder()
-      .name(name)
-      .displayName(displayName)
-      .id(id)
-      .build()
+    halfsized(
+      for {
+        displayName <- arbitrary[String]
+        name <- arbitrary[String]
+        id <- arbitrary[ByteArray]
+      } yield UserIdentity
+        .builder()
+        .name(name)
+        .displayName(displayName)
+        .id(id)
+        .build()
+    )
   )
 
 }

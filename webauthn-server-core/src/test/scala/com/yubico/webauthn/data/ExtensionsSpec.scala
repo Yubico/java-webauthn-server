@@ -321,7 +321,7 @@ class ExtensionsSpec
     it("can deserialize a real largeBlob write example.") {
       val testData = RealExamples.LargeBlobWrite
       val registrationCred = testData.attestation.credential
-      val assertionCred = testData.assertion.credential
+      val assertionCred = testData.assertion.get.credential
 
       registrationCred.getClientExtensionResults.getExtensionIds.asScala should equal(
         Set("largeBlob")
@@ -341,7 +341,7 @@ class ExtensionsSpec
     it("can deserialize a real largeBlob read example.") {
       val testData = RealExamples.LargeBlobRead
       val registrationCred = testData.attestation.credential
-      val assertionCred = testData.assertion.credential
+      val assertionCred = testData.assertion.get.credential
 
       registrationCred.getClientExtensionResults.getExtensionIds.asScala should equal(
         Set("largeBlob")
