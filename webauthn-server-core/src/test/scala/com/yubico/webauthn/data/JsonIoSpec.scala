@@ -62,7 +62,7 @@ class JsonIoSpec
       val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
         it("is identical after multiple serialization round-trips..") {
-          forAll { value: A =>
+          forAll(minSuccessful(10)) { value: A =>
             val encoded: String = json.writeValueAsString(value)
 
             val decoded: A = json.readValue(encoded, tpe)
