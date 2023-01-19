@@ -1,5 +1,6 @@
 package com.yubico.webauthn
 
+import com.yubico.scalacheck.gen.GenUtil.halfsized
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationType
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -22,78 +23,86 @@ import scala.jdk.OptionConverters.RichOption
 object Generators {
 
   implicit val arbitraryAssertionResult: Arbitrary[AssertionResult] = Arbitrary(
-    for {
-      credentialResponse <-
-        arbitrary[PublicKeyCredential[
-          AuthenticatorAssertionResponse,
-          ClientAssertionExtensionOutputs,
-        ]]
-      credential <- arbitrary[RegisteredCredential]
-      signatureCounterValid <- arbitrary[Boolean]
-      success <- arbitrary[Boolean]
-      username <- arbitrary[String]
-    } yield new AssertionResult(
-      success,
-      credentialResponse,
-      credential,
-      username,
-      signatureCounterValid,
+    halfsized(
+      for {
+        credentialResponse <-
+          arbitrary[PublicKeyCredential[
+            AuthenticatorAssertionResponse,
+            ClientAssertionExtensionOutputs,
+          ]]
+        credential <- arbitrary[RegisteredCredential]
+        signatureCounterValid <- arbitrary[Boolean]
+        success <- arbitrary[Boolean]
+        username <- arbitrary[String]
+      } yield new AssertionResult(
+        success,
+        credentialResponse,
+        credential,
+        username,
+        signatureCounterValid,
+      )
     )
   )
 
   implicit val arbitraryRegistrationResult: Arbitrary[RegistrationResult] =
     Arbitrary(
-      for {
-        credential <-
-          arbitrary[PublicKeyCredential[
-            AuthenticatorAttestationResponse,
-            ClientRegistrationExtensionOutputs,
-          ]]
-        attestationTrusted <- arbitrary[Boolean]
-        attestationTrustPath <- generateAttestationCertificateChain
-        attestationType <- arbitrary[AttestationType]
-      } yield new RegistrationResult(
-        credential,
-        attestationTrusted,
-        attestationType,
-        Some(attestationTrustPath.asJava).toJava,
+      halfsized(
+        for {
+          credential <-
+            arbitrary[PublicKeyCredential[
+              AuthenticatorAttestationResponse,
+              ClientRegistrationExtensionOutputs,
+            ]]
+          attestationTrusted <- arbitrary[Boolean]
+          attestationTrustPath <- generateAttestationCertificateChain
+          attestationType <- arbitrary[AttestationType]
+        } yield new RegistrationResult(
+          credential,
+          attestationTrusted,
+          attestationType,
+          Some(attestationTrustPath.asJava).toJava,
+        )
       )
     )
 
   implicit val arbitraryRegisteredCredential: Arbitrary[RegisteredCredential] =
     Arbitrary(
-      for {
-        credentialId <- arbitrary[ByteArray]
-        userHandle <- arbitrary[ByteArray]
-        publicKeyCose <- arbitrary[ByteArray]
-        signatureCount <- arbitrary[Int]
-      } yield RegisteredCredential
-        .builder()
-        .credentialId(credentialId)
-        .userHandle(userHandle)
-        .publicKeyCose(publicKeyCose)
-        .signatureCount(signatureCount)
-        .build()
+      halfsized(
+        for {
+          credentialId <- arbitrary[ByteArray]
+          userHandle <- arbitrary[ByteArray]
+          publicKeyCose <- arbitrary[ByteArray]
+          signatureCount <- arbitrary[Int]
+        } yield RegisteredCredential
+          .builder()
+          .credentialId(credentialId)
+          .userHandle(userHandle)
+          .publicKeyCose(publicKeyCose)
+          .signatureCount(signatureCount)
+          .build()
+      )
     )
 
   implicit val arbitraryStartAssertionOptions
       : Arbitrary[StartAssertionOptions] = Arbitrary(
-    for {
-      extensions <- arbitrary[Option[AssertionExtensionInputs]]
-      timeout <- Gen.option(Gen.posNum[Long])
-      usernameOrUserHandle <- arbitrary[Option[Either[String, ByteArray]]]
-      userVerification <- arbitrary[Option[UserVerificationRequirement]]
-    } yield {
-      val b = StartAssertionOptions.builder()
-      extensions.foreach(b.extensions)
-      timeout.foreach(b.timeout)
-      usernameOrUserHandle.foreach {
-        case Left(username)    => b.username(username)
-        case Right(userHandle) => b.userHandle(userHandle)
+    halfsized(
+      for {
+        extensions <- arbitrary[Option[AssertionExtensionInputs]]
+        timeout <- Gen.option(Gen.posNum[Long])
+        usernameOrUserHandle <- arbitrary[Option[Either[String, ByteArray]]]
+        userVerification <- arbitrary[Option[UserVerificationRequirement]]
+      } yield {
+        val b = StartAssertionOptions.builder()
+        extensions.foreach(b.extensions)
+        timeout.foreach(b.timeout)
+        usernameOrUserHandle.foreach {
+          case Left(username)    => b.username(username)
+          case Right(userHandle) => b.userHandle(userHandle)
+        }
+        userVerification.foreach(b.userVerification)
+        b.build()
       }
-      userVerification.foreach(b.userVerification)
-      b.build()
-    }
+    )
   )
 
   def generateAttestationCertificateChain: Gen[List[X509Certificate]] =

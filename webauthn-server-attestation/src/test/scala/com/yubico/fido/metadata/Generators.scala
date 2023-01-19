@@ -1,10 +1,13 @@
 package com.yubico.fido.metadata
 
+import com.yubico.scalacheck.gen.GenUtil.halfsized
 import com.yubico.scalacheck.gen.GenUtil.maxSized
 import com.yubico.scalacheck.gen.JavaGenerators.arbitraryUrl
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.AuthenticatorTransport
+import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
+import com.yubico.webauthn.data.Generators.arbitraryByteArray
 import com.yubico.webauthn.data.Generators.arbitraryPublicKeyCredentialParameters
 import com.yubico.webauthn.data.Generators.byteArray
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
@@ -26,68 +29,74 @@ object Generators {
 
   implicit val arbitraryMetadataBLOBHeader: Arbitrary[MetadataBLOBHeader] =
     Arbitrary(
-      for {
-        alg <- arbitrary[String]
-        typ <- Gen.option(Gen.const("JWT"))
-        x5u <- arbitrary[Option[URL]]
-        x5c <- maxSized(
-          2,
-          Gen.option(
-            Gen.listOf(TestAuthenticator.generateAttestationCertificate()._1)
-          ),
-        )
-      } yield MetadataBLOBHeader
-        .builder()
-        .alg(alg)
-        .typ(typ.orNull)
-        .x5u(x5u.orNull)
-        .x5c(x5c.map(_.asJava).orNull)
-        .build()
+      halfsized(
+        for {
+          alg <- arbitrary[String]
+          typ <- Gen.option(Gen.const("JWT"))
+          x5u <- arbitrary[Option[URL]]
+          x5c <- maxSized(
+            2,
+            Gen.option(
+              Gen.listOf(TestAuthenticator.generateAttestationCertificate()._1)
+            ),
+          )
+        } yield MetadataBLOBHeader
+          .builder()
+          .alg(alg)
+          .typ(typ.orNull)
+          .x5u(x5u.orNull)
+          .x5c(x5c.map(_.asJava).orNull)
+          .build()
+      )
     )
 
   implicit val arbitraryMetadataBLOBPayload: Arbitrary[MetadataBLOBPayload] =
     Arbitrary(
-      for {
-        legalHeader <- arbitrary[Option[String]]
-        no <- arbitrary[Int]
-        nextUpdate <- arbitrary[LocalDate]
-        entries <- maxSized(4, arbitrary[Set[MetadataBLOBPayloadEntry]])
-      } yield new MetadataBLOBPayload(
-        legalHeader.orNull,
-        no,
-        nextUpdate,
-        entries.asJava,
+      halfsized(
+        for {
+          legalHeader <- arbitrary[Option[String]]
+          no <- arbitrary[Int]
+          nextUpdate <- arbitrary[LocalDate]
+          entries <- arbitrary[Set[MetadataBLOBPayloadEntry]]
+        } yield new MetadataBLOBPayload(
+          legalHeader.orNull,
+          no,
+          nextUpdate,
+          entries.asJava,
+        )
       )
     )
 
   implicit val arbitraryMetadataBLOBPayloadEntry
       : Arbitrary[MetadataBLOBPayloadEntry] = Arbitrary(
-    for {
-      aaid <- arbitrary[Option[AAID]]
-      aaguid <- arbitrary[Option[AAGUID]]
-      attestationCertificateKeyIdentifiers <- Gen.option(
-        Gen.containerOf[Set, String](byteArray(32, 32).map(_.getHex))
-      )
-      metadataStatement <- arbitrary[Option[MetadataStatement]]
-      biometricStatusReports <- arbitrary[Option[List[BiometricStatusReport]]]
-      statusReports <- arbitrary[List[StatusReport]]
-      timeOfLastStatusChange <- arbitrary[LocalDate]
-      rogueListURL <- arbitrary[Option[URL]]
-      rogueListHash <- Gen.option(byteArray(1, 512))
-    } yield MetadataBLOBPayloadEntry
-      .builder()
-      .aaid(aaid.orNull)
-      .aaguid(aaguid.orNull)
-      .attestationCertificateKeyIdentifiers(
-        attestationCertificateKeyIdentifiers.map(_.asJava).orNull
-      )
-      .metadataStatement(metadataStatement.orNull)
-      .biometricStatusReports(biometricStatusReports.map(_.asJava).orNull)
-      .statusReports(statusReports.asJava)
-      .timeOfLastStatusChange(timeOfLastStatusChange)
-      .rogueListURL(rogueListURL.orNull)
-      .rogueListHash(rogueListHash.orNull)
-      .build()
+    halfsized(
+      for {
+        aaid <- arbitrary[Option[AAID]]
+        aaguid <- arbitrary[Option[AAGUID]]
+        attestationCertificateKeyIdentifiers <- Gen.option(
+          Gen.containerOf[Set, String](byteArray(32, 32).map(_.getHex))
+        )
+        metadataStatement <- arbitrary[Option[MetadataStatement]]
+        biometricStatusReports <- arbitrary[Option[List[BiometricStatusReport]]]
+        statusReports <- arbitrary[List[StatusReport]]
+        timeOfLastStatusChange <- arbitrary[LocalDate]
+        rogueListURL <- arbitrary[Option[URL]]
+        rogueListHash <- arbitrary[Option[ByteArray]]
+      } yield MetadataBLOBPayloadEntry
+        .builder()
+        .aaid(aaid.orNull)
+        .aaguid(aaguid.orNull)
+        .attestationCertificateKeyIdentifiers(
+          attestationCertificateKeyIdentifiers.map(_.asJava).orNull
+        )
+        .metadataStatement(metadataStatement.orNull)
+        .biometricStatusReports(biometricStatusReports.map(_.asJava).orNull)
+        .statusReports(statusReports.asJava)
+        .timeOfLastStatusChange(timeOfLastStatusChange)
+        .rogueListURL(rogueListURL.orNull)
+        .rogueListHash(rogueListHash.orNull)
+        .build()
+    )
   )
 
   implicit val arbitraryAaid: Arbitrary[AAID] = Arbitrary(for {
@@ -101,111 +110,119 @@ object Generators {
 
   implicit val arbitraryBiometricStatusReport
       : Arbitrary[BiometricStatusReport] = Arbitrary(
-    for {
-      certLevel <- arbitrary[Int]
-      modality <- arbitrary[UserVerificationMethod]
-      effectiveDate <- arbitrary[Option[LocalDate]]
-      certificationDescriptor <- arbitrary[Option[String]]
-      certificateNumber <- arbitrary[Option[String]]
-      certificationPolicyVersion <- arbitrary[Option[String]]
-      certificationRequirementsVersion <- arbitrary[Option[String]]
-    } yield BiometricStatusReport
-      .builder()
-      .certLevel(certLevel)
-      .modality(modality)
-      .effectiveDate(effectiveDate.orNull)
-      .certificationDescriptor(certificationDescriptor.orNull)
-      .certificateNumber(certificateNumber.orNull)
-      .certificationPolicyVersion(certificationPolicyVersion.orNull)
-      .certificationRequirementsVersion(certificationRequirementsVersion.orNull)
-      .build()
+    halfsized(
+      for {
+        certLevel <- arbitrary[Int]
+        modality <- arbitrary[UserVerificationMethod]
+        effectiveDate <- arbitrary[Option[LocalDate]]
+        certificationDescriptor <- arbitrary[Option[String]]
+        certificateNumber <- arbitrary[Option[String]]
+        certificationPolicyVersion <- arbitrary[Option[String]]
+        certificationRequirementsVersion <- arbitrary[Option[String]]
+      } yield BiometricStatusReport
+        .builder()
+        .certLevel(certLevel)
+        .modality(modality)
+        .effectiveDate(effectiveDate.orNull)
+        .certificationDescriptor(certificationDescriptor.orNull)
+        .certificateNumber(certificateNumber.orNull)
+        .certificationPolicyVersion(certificationPolicyVersion.orNull)
+        .certificationRequirementsVersion(
+          certificationRequirementsVersion.orNull
+        )
+        .build()
+    )
   )
 
   implicit val arbitraryMetadataStatement: Arbitrary[MetadataStatement] =
     Arbitrary(
-      for {
-        legalHeader <- arbitrary[Option[String]]
-        aaid <- arbitrary[Option[AAID]]
-        aaguid <- arbitrary[Option[AAGUID]]
-        attestationCertificateKeyIdentifiers <- arbitrary[Option[Set[String]]]
-        description <- arbitrary[Option[String]]
-        alternativeDescriptions <- arbitrary[Option[AlternativeDescriptions]]
-        authenticatorVersion <- arbitrary[Long]
-        protocolFamily <- arbitrary[ProtocolFamily]
-        schema <- arbitrary[Int]
-        upv <- arbitrary[Set[Version]]
-        authenticationAlgorithms <- arbitrary[Set[AuthenticationAlgorithm]]
-        publicKeyAlgAndEncodings <-
-          arbitrary[Set[PublicKeyRepresentationFormat]]
-        attestationTypes <- arbitrary[Set[AuthenticatorAttestationType]]
-        userVerificationDetails <-
-          arbitrary[Set[Set[VerificationMethodDescriptor]]]
-        keyProtection <- arbitrary[Set[KeyProtectionType]]
-        isKeyRestricted <- arbitrary[Option[Boolean]]
-        isFreshUserVerificationRequired <- arbitrary[Option[Boolean]]
-        matcherProtection <- arbitrary[Set[MatcherProtectionType]]
-        cryptoStrength <- arbitrary[Option[Int]]
-        attachmentHint <- arbitrary[Option[Set[AttachmentHint]]]
-        tcDisplay <- arbitrary[Set[TransactionConfirmationDisplayType]]
-        tcDisplayContentType <- arbitrary[Option[String]]
-        tcDisplayPNGCharacteristics <-
-          arbitrary[Option[List[DisplayPNGCharacteristicsDescriptor]]]
-        attestationRootCertificates <- maxSized(
-          2,
-          Gen.containerOf[Set, X509Certificate](
-            TestAuthenticator.generateAttestationCaCertificate()._1
-          ),
-        )
-        icon <- arbitrary[Option[String]]
-        supportedExtensions <- arbitrary[Option[Set[ExtensionDescriptor]]]
-        authenticatorGetInfo <- arbitrary[Option[AuthenticatorGetInfo]]
-      } yield MetadataStatement
-        .builder()
-        .legalHeader(legalHeader.orNull)
-        .aaid(aaid.orNull)
-        .aaguid(aaguid.orNull)
-        .attestationCertificateKeyIdentifiers(
-          attestationCertificateKeyIdentifiers.map(_.asJava).orNull
-        )
-        .description(description.orNull)
-        .alternativeDescriptions(alternativeDescriptions.orNull)
-        .authenticatorVersion(authenticatorVersion)
-        .protocolFamily(protocolFamily)
-        .schema(schema)
-        .upv(upv.asJava)
-        .authenticationAlgorithms(authenticationAlgorithms.asJava)
-        .publicKeyAlgAndEncodings(publicKeyAlgAndEncodings.asJava)
-        .attestationTypes(attestationTypes.asJava)
-        .userVerificationDetails(userVerificationDetails.map(_.asJava).asJava)
-        .keyProtection(keyProtection.asJava)
-        .isKeyRestricted(isKeyRestricted.map(java.lang.Boolean.valueOf).orNull)
-        .isFreshUserVerificationRequired(
-          isFreshUserVerificationRequired.map(java.lang.Boolean.valueOf).orNull
-        )
-        .matcherProtection(matcherProtection.asJava)
-        .cryptoStrength(cryptoStrength.map(Integer.valueOf).orNull)
-        .attachmentHint(attachmentHint.map(_.asJava).orNull)
-        .tcDisplay(tcDisplay.asJava)
-        .tcDisplayContentType(tcDisplayContentType.orNull)
-        .tcDisplayPNGCharacteristics(
-          tcDisplayPNGCharacteristics.map(_.asJava).orNull
-        )
-        .attestationRootCertificates(attestationRootCertificates.asJava)
-        .icon(icon.orNull)
-        .supportedExtensions(supportedExtensions.map(_.asJava).orNull)
-        .authenticatorGetInfo(authenticatorGetInfo.orNull)
-        .build()
+      halfsized(
+        for {
+          legalHeader <- arbitrary[Option[String]]
+          aaid <- arbitrary[Option[AAID]]
+          aaguid <- arbitrary[Option[AAGUID]]
+          attestationCertificateKeyIdentifiers <- arbitrary[Option[Set[String]]]
+          description <- arbitrary[Option[String]]
+          alternativeDescriptions <- arbitrary[Option[AlternativeDescriptions]]
+          authenticatorVersion <- arbitrary[Long]
+          protocolFamily <- arbitrary[ProtocolFamily]
+          schema <- arbitrary[Int]
+          upv <- arbitrary[Set[Version]]
+          authenticationAlgorithms <- arbitrary[Set[AuthenticationAlgorithm]]
+          publicKeyAlgAndEncodings <-
+            arbitrary[Set[PublicKeyRepresentationFormat]]
+          attestationTypes <- arbitrary[Set[AuthenticatorAttestationType]]
+          userVerificationDetails <-
+            arbitrary[Set[Set[VerificationMethodDescriptor]]]
+          keyProtection <- arbitrary[Set[KeyProtectionType]]
+          isKeyRestricted <- arbitrary[Option[Boolean]]
+          isFreshUserVerificationRequired <- arbitrary[Option[Boolean]]
+          matcherProtection <- arbitrary[Set[MatcherProtectionType]]
+          cryptoStrength <- arbitrary[Option[Int]]
+          attachmentHint <- arbitrary[Option[Set[AttachmentHint]]]
+          tcDisplay <- arbitrary[Set[TransactionConfirmationDisplayType]]
+          tcDisplayContentType <- arbitrary[Option[String]]
+          tcDisplayPNGCharacteristics <-
+            arbitrary[Option[List[DisplayPNGCharacteristicsDescriptor]]]
+          attestationRootCertificates <- maxSized(
+            2,
+            Gen.containerOf[Set, X509Certificate](
+              TestAuthenticator.generateAttestationCaCertificate()._1
+            ),
+          )
+          icon <- arbitrary[Option[String]]
+          supportedExtensions <- arbitrary[Option[Set[ExtensionDescriptor]]]
+          authenticatorGetInfo <- arbitrary[Option[AuthenticatorGetInfo]]
+        } yield MetadataStatement
+          .builder()
+          .legalHeader(legalHeader.orNull)
+          .aaid(aaid.orNull)
+          .aaguid(aaguid.orNull)
+          .attestationCertificateKeyIdentifiers(
+            attestationCertificateKeyIdentifiers.map(_.asJava).orNull
+          )
+          .description(description.orNull)
+          .alternativeDescriptions(alternativeDescriptions.orNull)
+          .authenticatorVersion(authenticatorVersion)
+          .protocolFamily(protocolFamily)
+          .schema(schema)
+          .upv(upv.asJava)
+          .authenticationAlgorithms(authenticationAlgorithms.asJava)
+          .publicKeyAlgAndEncodings(publicKeyAlgAndEncodings.asJava)
+          .attestationTypes(attestationTypes.asJava)
+          .userVerificationDetails(userVerificationDetails.map(_.asJava).asJava)
+          .keyProtection(keyProtection.asJava)
+          .isKeyRestricted(
+            isKeyRestricted.map(java.lang.Boolean.valueOf).orNull
+          )
+          .isFreshUserVerificationRequired(
+            isFreshUserVerificationRequired.map(java.lang.Boolean.valueOf).orNull
+          )
+          .matcherProtection(matcherProtection.asJava)
+          .cryptoStrength(cryptoStrength.map(Integer.valueOf).orNull)
+          .attachmentHint(attachmentHint.map(_.asJava).orNull)
+          .tcDisplay(tcDisplay.asJava)
+          .tcDisplayContentType(tcDisplayContentType.orNull)
+          .tcDisplayPNGCharacteristics(
+            tcDisplayPNGCharacteristics.map(_.asJava).orNull
+          )
+          .attestationRootCertificates(attestationRootCertificates.asJava)
+          .icon(icon.orNull)
+          .supportedExtensions(supportedExtensions.map(_.asJava).orNull)
+          .authenticatorGetInfo(authenticatorGetInfo.orNull)
+          .build()
+      )
     )
 
   implicit val arbitraryAlternativeDescriptions
-      : Arbitrary[AlternativeDescriptions] = Arbitrary(for {
+      : Arbitrary[AlternativeDescriptions] = Arbitrary(halfsized(for {
     entries: Map[String, String] <- Gen.mapOf(for {
       prefix <- Gen.alphaLowerStr.suchThat(_.length >= 2).map(_.take(2))
       suffix <-
         Gen.option(Gen.alphaUpperStr.suchThat(_.length >= 2).map(_.take(2)))
       text <- arbitrary[String]
     } yield (s"${prefix}${suffix.map(s => s"_${s}").getOrElse("")}", text))
-  } yield new AlternativeDescriptions(entries.asJava))
+  } yield new AlternativeDescriptions(entries.asJava)))
 
   implicit val arbitraryVersion: Arbitrary[Version] = Arbitrary(for {
     major <- arbitrary[Int]
@@ -284,7 +301,7 @@ object Generators {
       compression <- arbitrary[Short]
       filter <- arbitrary[Short]
       interlace <- arbitrary[Short]
-      plte <- arbitrary[Option[List[RgbPaletteEntry]]]
+      plte <- halfsized(arbitrary[Option[List[RgbPaletteEntry]]])
     } yield DisplayPNGCharacteristicsDescriptor
       .builder()
       .width(width)
@@ -308,89 +325,93 @@ object Generators {
 
   implicit val arbitraryExtensionDescriptor: Arbitrary[ExtensionDescriptor] =
     Arbitrary(
-      for {
-        id <- arbitrary[String]
-        tag <- arbitrary[Option[Int]]
-        data <- arbitrary[Option[String]]
-        failIfUnknown <- arbitrary[Boolean]
-      } yield ExtensionDescriptor
-        .builder()
-        .id(id)
-        .tag(tag.map(Integer.valueOf).orNull)
-        .data(data.orNull)
-        .failIfUnknown(failIfUnknown)
-        .build()
+      halfsized(
+        for {
+          id <- arbitrary[String]
+          tag <- arbitrary[Option[Int]]
+          data <- arbitrary[Option[String]]
+          failIfUnknown <- arbitrary[Boolean]
+        } yield ExtensionDescriptor
+          .builder()
+          .id(id)
+          .tag(tag.map(Integer.valueOf).orNull)
+          .data(data.orNull)
+          .failIfUnknown(failIfUnknown)
+          .build()
+      )
     )
 
   implicit val arbitraryAuthenticatorGetInfo: Arbitrary[AuthenticatorGetInfo] =
     Arbitrary(
-      for {
-        versions <- arbitrary[Set[CtapVersion]]
-        extensions <- arbitrary[Option[Set[String]]]
-        aaguid <- arbitrary[Option[AAGUID]]
-        options <- arbitrary[Option[SupportedCtapOptions]]
-        maxMsgSize <- arbitrary[Option[Int]]
-        pinUvAuthProtocols <-
-          arbitrary[Option[Set[CtapPinUvAuthProtocolVersion]]]
-        maxCredentialCountInList <- arbitrary[Option[Int]]
-        maxCredentialIdLength <- arbitrary[Option[Int]]
-        transports <- arbitrary[Option[Set[AuthenticatorTransport]]]
-        algorithms <- arbitrary[Option[List[PublicKeyCredentialParameters]]]
-        maxSerializedLargeBlobArray <- arbitrary[Option[Int]]
-        forcePINChange <- arbitrary[Option[Boolean]]
-        minPINLength <- arbitrary[Option[Int]]
-        firmwareVersion <- arbitrary[Option[Int]]
-        maxCredBlobLength <- arbitrary[Option[Int]]
-        maxRPIDsForSetMinPINLength <- arbitrary[Option[Int]]
-        preferredPlatformUvAttempts <- arbitrary[Option[Int]]
-        uvModality <- arbitrary[Option[Set[UserVerificationMethod]]]
-        certifications <- arbitrary[Option[Map[CtapCertificationId, Int]]]
-        remainingDiscoverableCredentials <- arbitrary[Option[Int]]
-        vendorPrototypeConfigCommands <- arbitrary[Option[Set[Int]]]
-      } yield AuthenticatorGetInfo
-        .builder()
-        .versions(versions.asJava)
-        .extensions(extensions.map(_.asJava).orNull)
-        .aaguid(aaguid.orNull)
-        .options(options.orNull)
-        .maxMsgSize(maxMsgSize.map(Integer.valueOf).orNull)
-        .pinUvAuthProtocols(pinUvAuthProtocols.map(_.asJava).orNull)
-        .maxCredentialCountInList(
-          maxCredentialCountInList.map(Integer.valueOf).orNull
-        )
-        .maxCredentialIdLength(
-          maxCredentialIdLength.map(Integer.valueOf).orNull
-        )
-        .transports(transports.map(_.asJava).orNull)
-        .algorithms(algorithms.map(_.asJava).orNull)
-        .maxSerializedLargeBlobArray(
-          maxSerializedLargeBlobArray.map(Integer.valueOf).orNull
-        )
-        .forcePINChange(forcePINChange.map(java.lang.Boolean.valueOf).orNull)
-        .minPINLength(minPINLength.map(Integer.valueOf).orNull)
-        .firmwareVersion(firmwareVersion.map(Integer.valueOf).orNull)
-        .maxCredBlobLength(maxCredBlobLength.map(Integer.valueOf).orNull)
-        .maxRPIDsForSetMinPINLength(
-          maxRPIDsForSetMinPINLength.map(Integer.valueOf).orNull
-        )
-        .preferredPlatformUvAttempts(
-          preferredPlatformUvAttempts.map(Integer.valueOf).orNull
-        )
-        .uvModality(uvModality.map(_.asJava).orNull)
-        .certifications(
-          certifications
-            .map(_.map({ case (k, v) => (k, Integer.valueOf(v)) }).asJava)
-            .orNull
-        )
-        .remainingDiscoverableCredentials(
-          remainingDiscoverableCredentials.map(Integer.valueOf).orNull
-        )
-        .vendorPrototypeConfigCommands(
-          vendorPrototypeConfigCommands
-            .map(_.map(Integer.valueOf).asJava)
-            .orNull
-        )
-        .build()
+      halfsized(
+        for {
+          versions <- arbitrary[Set[CtapVersion]]
+          extensions <- arbitrary[Option[Set[String]]]
+          aaguid <- arbitrary[Option[AAGUID]]
+          options <- arbitrary[Option[SupportedCtapOptions]]
+          maxMsgSize <- arbitrary[Option[Int]]
+          pinUvAuthProtocols <-
+            arbitrary[Option[Set[CtapPinUvAuthProtocolVersion]]]
+          maxCredentialCountInList <- arbitrary[Option[Int]]
+          maxCredentialIdLength <- arbitrary[Option[Int]]
+          transports <- arbitrary[Option[Set[AuthenticatorTransport]]]
+          algorithms <- arbitrary[Option[List[PublicKeyCredentialParameters]]]
+          maxSerializedLargeBlobArray <- arbitrary[Option[Int]]
+          forcePINChange <- arbitrary[Option[Boolean]]
+          minPINLength <- arbitrary[Option[Int]]
+          firmwareVersion <- arbitrary[Option[Int]]
+          maxCredBlobLength <- arbitrary[Option[Int]]
+          maxRPIDsForSetMinPINLength <- arbitrary[Option[Int]]
+          preferredPlatformUvAttempts <- arbitrary[Option[Int]]
+          uvModality <- arbitrary[Option[Set[UserVerificationMethod]]]
+          certifications <- arbitrary[Option[Map[CtapCertificationId, Int]]]
+          remainingDiscoverableCredentials <- arbitrary[Option[Int]]
+          vendorPrototypeConfigCommands <- arbitrary[Option[Set[Int]]]
+        } yield AuthenticatorGetInfo
+          .builder()
+          .versions(versions.asJava)
+          .extensions(extensions.map(_.asJava).orNull)
+          .aaguid(aaguid.orNull)
+          .options(options.orNull)
+          .maxMsgSize(maxMsgSize.map(Integer.valueOf).orNull)
+          .pinUvAuthProtocols(pinUvAuthProtocols.map(_.asJava).orNull)
+          .maxCredentialCountInList(
+            maxCredentialCountInList.map(Integer.valueOf).orNull
+          )
+          .maxCredentialIdLength(
+            maxCredentialIdLength.map(Integer.valueOf).orNull
+          )
+          .transports(transports.map(_.asJava).orNull)
+          .algorithms(algorithms.map(_.asJava).orNull)
+          .maxSerializedLargeBlobArray(
+            maxSerializedLargeBlobArray.map(Integer.valueOf).orNull
+          )
+          .forcePINChange(forcePINChange.map(java.lang.Boolean.valueOf).orNull)
+          .minPINLength(minPINLength.map(Integer.valueOf).orNull)
+          .firmwareVersion(firmwareVersion.map(Integer.valueOf).orNull)
+          .maxCredBlobLength(maxCredBlobLength.map(Integer.valueOf).orNull)
+          .maxRPIDsForSetMinPINLength(
+            maxRPIDsForSetMinPINLength.map(Integer.valueOf).orNull
+          )
+          .preferredPlatformUvAttempts(
+            preferredPlatformUvAttempts.map(Integer.valueOf).orNull
+          )
+          .uvModality(uvModality.map(_.asJava).orNull)
+          .certifications(
+            certifications
+              .map(_.map({ case (k, v) => (k, Integer.valueOf(v)) }).asJava)
+              .orNull
+          )
+          .remainingDiscoverableCredentials(
+            remainingDiscoverableCredentials.map(Integer.valueOf).orNull
+          )
+          .vendorPrototypeConfigCommands(
+            vendorPrototypeConfigCommands
+              .map(_.map(Integer.valueOf).asJava)
+              .orNull
+          )
+          .build()
+      )
     )
 
   implicit val arbitrarySupportedCtapOptions: Arbitrary[SupportedCtapOptions] =
@@ -440,36 +461,40 @@ object Generators {
     )
 
   implicit val arbitraryStatusReport: Arbitrary[StatusReport] = Arbitrary(
-    for {
-      status <- arbitrary[AuthenticatorStatus]
-      effectiveDate <- arbitrary[Option[LocalDate]]
-      authenticatorVersion <- arbitrary[Option[Long]]
-      certificate <- Gen.option(
-        Gen.delay(
-          Gen
-            .const(TestAuthenticator.generateAttestationCertificate())
-            .map(_._1)
+    halfsized(
+      for {
+        status <- arbitrary[AuthenticatorStatus]
+        effectiveDate <- arbitrary[Option[LocalDate]]
+        authenticatorVersion <- arbitrary[Option[Long]]
+        certificate <- Gen.option(
+          Gen.delay(
+            Gen
+              .const(TestAuthenticator.generateAttestationCertificate())
+              .map(_._1)
+          )
         )
-      )
-      url <- arbitrary[Option[String]]
-      certificationDescriptor <- arbitrary[Option[String]]
-      certificateNumber <- arbitrary[Option[String]]
-      certificationPolicyVersion <- arbitrary[Option[String]]
-      certificationRequirementsVersion <- arbitrary[Option[String]]
-    } yield StatusReport
-      .builder()
-      .status(status)
-      .effectiveDate(effectiveDate.orNull)
-      .authenticatorVersion(
-        authenticatorVersion.map(java.lang.Long.valueOf).orNull
-      )
-      .certificate(certificate.orNull)
-      .url(url.orNull)
-      .certificationDescriptor(certificationDescriptor.orNull)
-      .certificateNumber(certificateNumber.orNull)
-      .certificationPolicyVersion(certificationPolicyVersion.orNull)
-      .certificationRequirementsVersion(certificationRequirementsVersion.orNull)
-      .build()
+        url <- arbitrary[Option[String]]
+        certificationDescriptor <- arbitrary[Option[String]]
+        certificateNumber <- arbitrary[Option[String]]
+        certificationPolicyVersion <- arbitrary[Option[String]]
+        certificationRequirementsVersion <- arbitrary[Option[String]]
+      } yield StatusReport
+        .builder()
+        .status(status)
+        .effectiveDate(effectiveDate.orNull)
+        .authenticatorVersion(
+          authenticatorVersion.map(java.lang.Long.valueOf).orNull
+        )
+        .certificate(certificate.orNull)
+        .url(url.orNull)
+        .certificationDescriptor(certificationDescriptor.orNull)
+        .certificateNumber(certificateNumber.orNull)
+        .certificationPolicyVersion(certificationPolicyVersion.orNull)
+        .certificationRequirementsVersion(
+          certificationRequirementsVersion.orNull
+        )
+        .build()
+    )
   )
 
 }
