@@ -1048,6 +1048,13 @@ case class RegistrationTestData(
     )
   }
 
+  def attestationStatementFormat: String =
+    JacksonCodecs.cbor
+      .readTree(attestationObject.getBytes)
+      .asInstanceOf[ObjectNode]
+      .get("fmt")
+      .textValue
+
   def setAttestationStatementFormat(value: String): RegistrationTestData =
     editAttestationObject(
       "fmt",

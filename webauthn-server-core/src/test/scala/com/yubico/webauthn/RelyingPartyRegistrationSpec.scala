@@ -4049,7 +4049,7 @@ class RelyingPartyRegistrationSpec
         RegistrationTestData.defaultSettingsValidExamples.zipWithIndex
           .foreach {
             case (testData, i) =>
-              it(s"Succeeds for example index ${i}.") {
+              it(s"Succeeds for example index ${i} (${testData.alg}, ${testData.attestationStatementFormat}).") {
                 val rp = {
                   val builder = RelyingParty
                     .builder()
