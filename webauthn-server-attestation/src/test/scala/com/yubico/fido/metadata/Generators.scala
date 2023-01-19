@@ -1,5 +1,6 @@
 package com.yubico.fido.metadata
 
+import com.yubico.scalacheck.gen.GenUtil.maxSized
 import com.yubico.scalacheck.gen.JavaGenerators.arbitraryUrl
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.AuthenticatorTransport
@@ -29,15 +30,11 @@ object Generators {
         alg <- arbitrary[String]
         typ <- Gen.option(Gen.const("JWT"))
         x5u <- arbitrary[Option[URL]]
-        x5c <- Gen.option(
-          Gen
-            .chooseNum(0, 4)
-            .flatMap(n =>
-              Gen.listOfN(
-                n,
-                TestAuthenticator.generateAttestationCertificate()._1,
-              )
-            )
+        x5c <- maxSized(
+          4,
+          Gen.option(
+            Gen.listOf(TestAuthenticator.generateAttestationCertificate()._1)
+          ),
         )
       } yield MetadataBLOBHeader
         .builder()
@@ -54,15 +51,7 @@ object Generators {
         legalHeader <- arbitrary[Option[String]]
         no <- arbitrary[Int]
         nextUpdate <- arbitrary[LocalDate]
-        entries <-
-          Gen
-            .chooseNum(0, 4)
-            .flatMap(n =>
-              Gen.containerOfN[Set, MetadataBLOBPayloadEntry](
-                n,
-                arbitrary[MetadataBLOBPayloadEntry],
-              )
-            )
+        entries <- maxSized(4, arbitrary[Set[MetadataBLOBPayloadEntry]])
       } yield new MetadataBLOBPayload(
         legalHeader.orNull,
         no,
@@ -161,15 +150,12 @@ object Generators {
         tcDisplayContentType <- arbitrary[Option[String]]
         tcDisplayPNGCharacteristics <-
           arbitrary[Option[List[DisplayPNGCharacteristicsDescriptor]]]
-        attestationRootCertificates <-
-          Gen
-            .chooseNum(0, 4)
-            .flatMap(n =>
-              Gen.containerOfN[Set, X509Certificate](
-                n,
-                TestAuthenticator.generateAttestationCaCertificate()._1,
-              )
-            )
+        attestationRootCertificates <- maxSized(
+          4,
+          Gen.containerOf[Set, X509Certificate](
+            TestAuthenticator.generateAttestationCaCertificate()._1
+          ),
+        )
         icon <- arbitrary[Option[String]]
         supportedExtensions <- arbitrary[Option[Set[ExtensionDescriptor]]]
         authenticatorGetInfo <- arbitrary[Option[AuthenticatorGetInfo]]
