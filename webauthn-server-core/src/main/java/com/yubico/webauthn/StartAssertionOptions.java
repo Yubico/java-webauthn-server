@@ -96,7 +96,7 @@ public class StartAssertionOptions {
    * <p>The default is empty (absent).
    *
    * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
    *     credential</a>
    */
   public Optional<String> getUsername() {
@@ -122,7 +122,7 @@ public class StartAssertionOptions {
    * @see #getUsername()
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User Handle</a>
    * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
    *     credential</a>
    */
   public Optional<ByteArray> getUserHandle() {
@@ -185,7 +185,7 @@ public class StartAssertionOptions {
      * @see #userHandle(Optional)
      * @see #userHandle(ByteArray)
      * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
      */
     public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
@@ -217,7 +217,7 @@ public class StartAssertionOptions {
      * @see #userHandle(Optional)
      * @see #userHandle(ByteArray)
      * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
      */
     public StartAssertionOptionsBuilder username(String username) {
@@ -247,7 +247,7 @@ public class StartAssertionOptions {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle">User
      *     Handle</a>
      * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
      */
     public StartAssertionOptionsBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
@@ -279,7 +279,7 @@ public class StartAssertionOptions {
      * @see #username(Optional)
      * @see #userHandle(Optional)
      * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-resident
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
      */
     public StartAssertionOptionsBuilder userHandle(ByteArray userHandle) {
