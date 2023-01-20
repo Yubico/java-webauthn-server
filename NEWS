@@ -1,4 +1,4 @@
-== Version 2.3.1 (unreleased) ==
+== Version 2.4.0 (unreleased) ==
 
 `webauthn-server-core`:
 
@@ -8,6 +8,20 @@ Fixes:
   configured, if the `aaguid` in the attestation data is zero, the call to
   `AttestationTrustSource.findTrustRoots` will fall back to reading the AAGUID
   from the attestation certificate if possible.
+* Fixed bug in `RelyingParty.finishAssertion` where if
+  `StartAssertionOptions.userHandle` was set, it did not propagate to
+  `RelyingParty.finishAssertion` and caused an error saying username and user
+  handle are both absent unless a user handle was returned by the authenticator.
+  This was originally released in pre-release `1.12.3-RC3`, but was accidentally
+  left out of the `1.12.3` release.
+
+New features:
+
+* Added `userHandle` field to `AssertionRequest` as part of above bug fix.
+  `userHandle` is mutually exclusive with `username`. This was originally
+  released in pre-release `1.12.3-RC3`, but was accidentally left out of the
+  `1.12.3` release.
+
 
 `webauthn-server-attestation`:
 

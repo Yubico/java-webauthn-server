@@ -555,6 +555,7 @@ public class RelyingParty {
     return AssertionRequest.builder()
         .publicKeyCredentialRequestOptions(pkcro.build())
         .username(startAssertionOptions.getUsername())
+        .userHandle(startAssertionOptions.getUserHandle())
         .build();
   }
 

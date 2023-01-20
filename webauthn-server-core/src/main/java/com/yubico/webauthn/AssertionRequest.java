@@ -37,7 +37,7 @@ import lombok.Value;
 
 /**
  * A combination of a {@link PublicKeyCredentialRequestOptions} and, optionally, a {@link
- * #getUsername() username}.
+ * #getUsername() username} or {@link #getUserHandle() user handle}.
  */
 @Value
 @Builder(toBuilder = true)
@@ -52,32 +52,80 @@ public class AssertionRequest {
   /**
    * The username of the user to authenticate, if the user has already been identified.
    *
-   * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+   * <p>This is mutually exclusive with {@link #getUserHandle() userHandle}; setting this will unset
+   * {@link #getUserHandle() userHandle}. When parsing from JSON, {@link #getUserHandle()
+   * userHandle} takes precedence over this.
+   *
+   * <p>If both this and {@link #getUserHandle() userHandle} are empty, this indicates that this is
+   * a request for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
    * credential</a>, and identification of the user has been deferred until the response is
    * received.
    */
   private final String username;
 
+  /**
+   * The user handle of the user to authenticate, if the user has already been identified.
+   *
+   * <p>This is mutually exclusive with {@link #getUsername() username}; setting this will unset
+   * {@link #getUsername() username}. When parsing from JSON, this takes precedence over {@link
+   * #getUsername() username}.
+   *
+   * <p>If both this and {@link #getUsername() username} are empty, this indicates that this is a
+   * request for an assertion by a <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
+   * credential</a>, and identification of the user has been deferred until the response is
+   * received.
+   */
+  private final ByteArray userHandle;
+
   @JsonCreator
   private AssertionRequest(
       @NonNull @JsonProperty("publicKeyCredentialRequestOptions")
           PublicKeyCredentialRequestOptions publicKeyCredentialRequestOptions,
-      @JsonProperty("username") String username) {
+      @JsonProperty("username") String username,
+      @JsonProperty("userHandle") ByteArray userHandle) {
     this.publicKeyCredentialRequestOptions = publicKeyCredentialRequestOptions;
-    this.username = username;
+
+    if (userHandle != null) {
+      this.username = null;
+      this.userHandle = userHandle;
+    } else {
+      this.username = username;
+      this.userHandle = null;
+    }
   }
 
   /**
    * The username of the user to authenticate, if the user has already been identified.
    *
-   * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+   * <p>This is mutually exclusive with {@link #getUserHandle()}; if this is present, then {@link
+   * #getUserHandle()} will be empty.
+   *
+   * <p>If both this and {@link #getUserHandle()} are empty, this indicates that this is a request
+   * for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
    * credential</a>, and identification of the user has been deferred until the response is
    * received.
    */
   public Optional<String> getUsername() {
     return Optional.ofNullable(username);
+  }
+
+  /**
+   * The user handle of the user to authenticate, if the user has already been identified.
+   *
+   * <p>This is mutually exclusive with {@link #getUsername()}; if this is present, then {@link
+   * #getUsername()} will be empty.
+   *
+   * <p>If both this and {@link #getUsername()} are empty, this indicates that this is a request for
+   * an assertion by a <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
+   * credential</a>, and identification of the user has been deferred until the response is
+   * received.
+   */
+  public Optional<ByteArray> getUserHandle() {
+    return Optional.ofNullable(userHandle);
   }
 
   /**
@@ -140,6 +188,7 @@ public class AssertionRequest {
 
   public static class AssertionRequestBuilder {
     private String username = null;
+    private ByteArray userHandle = null;
 
     public static class MandatoryStages {
       private final AssertionRequestBuilder builder = new AssertionRequestBuilder();
@@ -161,7 +210,10 @@ public class AssertionRequest {
     /**
      * The username of the user to authenticate, if the user has already been identified.
      *
-     * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+     * <p>This is mutually exclusive with {@link #userHandle(ByteArray)}; setting this to non-empty
+     * will unset {@link #userHandle(ByteArray)}.
+     *
+     * <p>If this is empty, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
      * credential</a>, and identification of the user has been deferred until the response is
      * received.
@@ -173,13 +225,55 @@ public class AssertionRequest {
     /**
      * The username of the user to authenticate, if the user has already been identified.
      *
-     * <p>If this is absent, this indicates that this is a request for an assertion by a <a
+     * <p>This is mutually exclusive with {@link #userHandle(ByteArray)}; setting this to non-<code>
+     * null</code> will unset {@link #userHandle(ByteArray)}.
+     *
+     * <p>If this is empty, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
      * credential</a>, and identification of the user has been deferred until the response is
      * received.
      */
     public AssertionRequestBuilder username(String username) {
       this.username = username;
+      if (username != null) {
+        this.userHandle = null;
+      }
+      return this;
+    }
+
+    /**
+     * The user handle of the user to authenticate, if the user has already been identified.
+     *
+     * <p>This is mutually exclusive with {@link #username(String)}; setting this to non-empty will
+     * unset {@link #username(String)}.
+     *
+     * <p>If both this and {@link #username(String)} are empty, this indicates that this is a
+     * request for an assertion by a <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
+     * credential</a>, and identification of the user has been deferred until the response is
+     * received.
+     */
+    public AssertionRequestBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
+      return this.userHandle(userHandle.orElse(null));
+    }
+
+    /**
+     * The user handle of the user to authenticate, if the user has already been identified.
+     *
+     * <p>This is mutually exclusive with {@link #username(String)}; setting this to non-<code>null
+     * </code> will unset {@link #username(String)}.
+     *
+     * <p>If both this and {@link #username(String)} are empty, this indicates that this is a
+     * request for an assertion by a <a
+     * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-resident
+     * credential</a>, and identification of the user has been deferred until the response is
+     * received.
+     */
+    public AssertionRequestBuilder userHandle(ByteArray userHandle) {
+      if (userHandle != null) {
+        this.username = null;
+      }
+      this.userHandle = userHandle;
       return this;
     }
   }
