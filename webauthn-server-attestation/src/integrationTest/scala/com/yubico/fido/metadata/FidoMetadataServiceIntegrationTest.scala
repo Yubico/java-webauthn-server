@@ -232,6 +232,13 @@ class FidoMetadataServiceIntegrationTest
             RealExamples.YubikeyBio_5_5_5,
             attachmentHintsUsb,
           )
+          withProviderContext(List(new BouncyCastleProvider)) { // Needed for JDK<14 because this example uses EdDSA
+            check(
+              "YubiKey Bio Series",
+              RealExamples.YubikeyBio_5_5_6,
+              attachmentHintsUsb,
+            )
+          }
         }
 
         it("a Windows Hello attestation.") {

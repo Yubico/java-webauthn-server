@@ -167,9 +167,11 @@ class RelyingPartyCeremoniesSpec
         it("a YubiKey 5Ci FIPS.") {
           check(RealExamples.Yubikey5ciFips)
         }
+
         it("a YubiKey Bio.") {
           check(RealExamples.YubikeyBio_5_5_4)
           check(RealExamples.YubikeyBio_5_5_5)
+          check(RealExamples.YubikeyBio_5_5_6)
         }
 
         it("an Apple iOS device.") {
