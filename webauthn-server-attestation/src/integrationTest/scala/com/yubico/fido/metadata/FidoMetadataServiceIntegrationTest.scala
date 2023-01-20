@@ -224,6 +224,11 @@ class FidoMetadataServiceIntegrationTest
         it("a YubiKey Bio.") {
           check(
             "YubiKey Bio Series",
+            RealExamples.YubikeyBio_5_5_4,
+            attachmentHintsUsb,
+          )
+          check(
+            "YubiKey Bio Series",
             RealExamples.YubikeyBio_5_5_5,
             attachmentHintsUsb,
           )
