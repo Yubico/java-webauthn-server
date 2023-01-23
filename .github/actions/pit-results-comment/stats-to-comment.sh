@@ -63,10 +63,17 @@ EOF
     "${1}" "${2}" --raw-output
 
   if [[ -n "${3}" ]]; then
-    cat << EOF
+    if [[ -n "${4}" ]]; then
+      cat << EOF
 
 Previous run: ${3}
 EOF
+    else
+      cat << EOF
+
+Previous run: ${3} - [Diff](/${GITHUB_REPOSITORY}/compare/${3}...${4})
+EOF
+    fi
 
     cat << EOF
 
