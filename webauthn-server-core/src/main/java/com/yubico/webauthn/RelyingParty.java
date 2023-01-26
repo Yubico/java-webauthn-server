@@ -218,6 +218,8 @@ public class RelyingParty {
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES384}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES512}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS384 RS384}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
    * </ol>
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
@@ -232,7 +234,9 @@ public class RelyingParty {
               PublicKeyCredentialParameters.EdDSA,
               PublicKeyCredentialParameters.ES384,
               PublicKeyCredentialParameters.ES512,
-              PublicKeyCredentialParameters.RS256));
+              PublicKeyCredentialParameters.RS256,
+              PublicKeyCredentialParameters.RS384,
+              PublicKeyCredentialParameters.RS512));
 
   /**
    * If <code>true</code>, the origin matching rule is relaxed to allow any port number.
@@ -427,6 +431,8 @@ public class RelyingParty {
                         break;
 
                       case RS256:
+                      case RS384:
+                      case RS512:
                       case RS1:
                         KeyFactory.getInstance("RSA");
                         break;

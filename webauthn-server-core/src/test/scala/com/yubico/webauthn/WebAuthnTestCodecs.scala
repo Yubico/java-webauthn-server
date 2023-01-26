@@ -51,7 +51,8 @@ object WebAuthnTestCodecs {
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)
 
-      case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS1 =>
+      case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS384 |
+          COSEAlgorithmIdentifier.RS512 | COSEAlgorithmIdentifier.RS1 =>
         val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)

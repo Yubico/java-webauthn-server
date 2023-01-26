@@ -909,6 +909,10 @@ object TestAuthenticator {
         (TpmAlgHash.SHA512, TpmAlgAsym.ECC)
       case COSEAlgorithmIdentifier.RS256 =>
         (TpmAlgHash.SHA256, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.RS384 =>
+        (TpmAlgHash.SHA384, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.RS512 =>
+        (TpmAlgHash.SHA512, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.RS1   => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.EdDSA => ???
     }
@@ -964,6 +968,8 @@ object TestAuthenticator {
                 case COSEAlgorithmIdentifier.ES512 => 0x0005
                 case COSEAlgorithmIdentifier.RS1 |
                     COSEAlgorithmIdentifier.RS256 |
+                    COSEAlgorithmIdentifier.RS384 |
+                    COSEAlgorithmIdentifier.RS512 |
                     COSEAlgorithmIdentifier.EdDSA =>
                   ???
               }))
@@ -1115,8 +1121,9 @@ object TestAuthenticator {
       case COSEAlgorithmIdentifier.ES256 => generateEcKeypair("secp256r1")
       case COSEAlgorithmIdentifier.ES384 => generateEcKeypair("secp384r1")
       case COSEAlgorithmIdentifier.ES512 => generateEcKeypair("secp521r1")
-      case COSEAlgorithmIdentifier.RS256 => generateRsaKeypair()
-      case COSEAlgorithmIdentifier.RS1   => generateRsaKeypair()
+      case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS384 |
+          COSEAlgorithmIdentifier.RS512 | COSEAlgorithmIdentifier.RS1 =>
+        generateRsaKeypair()
     }
 
   def generateEcKeypair(curve: String = "secp256r1"): KeyPair = {
