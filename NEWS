@@ -2,6 +2,12 @@
 
 `webauthn-server-core`:
 
+New features:
+
+* Added support for RS384 and RS512 signature algorithms.
+ ** Thanks to GitHub user JohnnyJayJay for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/235
+
 Fixes:
 
 * During `RelyingParty.finishRegistration()` if an `attestationTrustSource` is

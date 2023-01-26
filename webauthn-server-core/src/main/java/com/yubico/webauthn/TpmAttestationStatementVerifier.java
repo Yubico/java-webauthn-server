@@ -217,10 +217,12 @@ final class TpmAttestationStatementVerifier
         break;
 
       case ES384:
+      case RS384:
         expectedExtraData = Crypto.sha384(attToBeSigned);
         break;
 
       case ES512:
+      case RS512:
         expectedExtraData = Crypto.sha512(attToBeSigned);
         break;
 

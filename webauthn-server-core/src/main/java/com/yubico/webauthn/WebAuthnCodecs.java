@@ -184,6 +184,10 @@ final class WebAuthnCodecs {
         return "SHA512withECDSA";
       case RS256:
         return "SHA256withRSA";
+      case RS384:
+        return "SHA384withRSA";
+      case RS512:
+        return "SHA512withRSA";
       case RS1:
         return "SHA1withRSA";
       default:

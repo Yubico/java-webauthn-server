@@ -4182,6 +4182,24 @@ class RelyingPartyRegistrationSpec
               COSEAlgorithmIdentifier.RS256
             )
           }
+
+          it("RS384.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.RS384
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.RS384
+            )
+          }
+
+          it("RS512.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.RS512
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.RS512
+            )
+          }
         }
 
         describe("do not include") {
