@@ -66,12 +66,12 @@ EOF
     if [[ -n "${4}" ]]; then
       cat << EOF
 
-Previous run: ${3}
+Previous run: ${3} - [Diff](/${GITHUB_REPOSITORY}/compare/${3}...${4})
 EOF
     else
       cat << EOF
 
-Previous run: ${3} - [Diff](/${GITHUB_REPOSITORY}/compare/${3}...${4})
+Previous run: ${3}
 EOF
     fi
 
