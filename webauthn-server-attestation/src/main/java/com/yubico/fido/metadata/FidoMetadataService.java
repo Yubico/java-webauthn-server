@@ -637,8 +637,7 @@ public final class FidoMetadataService implements AttestationTrustSource {
         .trustRoots(
             findEntries(attestationCertificateChain, aaguid.map(AAGUID::new)).stream()
                 .map(MetadataBLOBPayloadEntry::getMetadataStatement)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .flatMap(OptionalUtil::stream)
                 .flatMap(
                     metadataStatement ->
                         metadataStatement.getAttestationRootCertificates().stream())

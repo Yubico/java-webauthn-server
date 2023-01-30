@@ -30,6 +30,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.CollectionUtil;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
 import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.CertificateException;
@@ -124,8 +125,7 @@ public final class YubicoJsonMetadataService implements AttestationTrustSource {
                               .deviceProperties(deviceProps)
                               .build());
             })
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(OptionalUtil::stream)
         .findAny();
   }
 
