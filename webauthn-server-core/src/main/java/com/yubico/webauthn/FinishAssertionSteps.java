@@ -27,6 +27,7 @@ package com.yubico.webauthn;
 import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 
 import COSE.CoseException;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
@@ -124,20 +125,20 @@ final class FinishAssertionSteps {
   class Step6 implements Step<Step7> {
 
     private final Optional<ByteArray> userHandle =
-        request
-            .getUserHandle()
-            .map(Optional::of)
-            .orElseGet(() -> response.getResponse().getUserHandle())
-            .map(Optional::of)
-            .orElseGet(
-                () ->
-                    request.getUsername().flatMap(credentialRepository::getUserHandleForUsername));
+        OptionalUtil.orElseOptional(
+            request.getUserHandle(),
+            () ->
+                OptionalUtil.orElseOptional(
+                    response.getResponse().getUserHandle(),
+                    () ->
+                        request
+                            .getUsername()
+                            .flatMap(credentialRepository::getUserHandleForUsername)));
 
     private final Optional<String> username =
-        request
-            .getUsername()
-            .map(Optional::of)
-            .orElseGet(() -> userHandle.flatMap(credentialRepository::getUsernameForUserHandle));
+        OptionalUtil.orElseOptional(
+            request.getUsername(),
+            () -> userHandle.flatMap(credentialRepository::getUsernameForUserHandle));
 
     private final Optional<RegisteredCredential> registration =
         userHandle.flatMap(uh -> credentialRepository.lookup(response.getId(), uh));

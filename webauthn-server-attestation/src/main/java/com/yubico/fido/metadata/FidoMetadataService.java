@@ -26,6 +26,7 @@ package com.yubico.fido.metadata;
 
 import com.yubico.fido.metadata.FidoMetadataService.Filters.AuthenticatorToBeFiltered;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
@@ -505,22 +506,19 @@ public final class FidoMetadataService implements AttestationTrustSource {
             .collect(Collectors.toSet());
 
     final Optional<AAGUID> nonzeroAaguid =
-        Optional.ofNullable(
-            aaguid
-                .filter(a -> !a.isZero())
-                .orElseGet(
-                    () -> {
-                      log.debug("findEntries: attempting to look up AAGUID from certificate");
-                      if (!attestationCertificateChain.isEmpty()) {
-                        return CertificateParser.parseFidoAaguidExtension(
-                                attestationCertificateChain.get(0))
-                            .map(ByteArray::new)
-                            .map(AAGUID::new)
-                            .orElse(null);
-                      } else {
-                        return null;
-                      }
-                    }));
+        OptionalUtil.orElseOptional(
+            aaguid.filter(a -> !a.isZero()),
+            () -> {
+              log.debug("findEntries: attempting to look up AAGUID from certificate");
+              if (attestationCertificateChain.isEmpty()) {
+                return Optional.empty();
+              } else {
+                return CertificateParser.parseFidoAaguidExtension(
+                        attestationCertificateChain.get(0))
+                    .map(ByteArray::new)
+                    .map(AAGUID::new);
+              }
+            });
 
     log.debug(
         "findEntries(certSubjectKeyIdentifiers = {}, aaguid = {}, nonzeroAaguid= {})",
