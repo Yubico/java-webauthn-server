@@ -42,6 +42,7 @@ import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -330,7 +331,7 @@ final class FinishRegistrationSteps {
           "Unrequested credential key algorithm: got %d, expected one of: %s",
           alg,
           request.getPubKeyCredParams().stream()
-              .map(pkcparam -> pkcparam.getAlg())
+              .map(PublicKeyCredentialParameters::getAlg)
               .collect(Collectors.toList()));
       try {
         WebAuthnCodecs.importCosePublicKey(publicKeyCose);
