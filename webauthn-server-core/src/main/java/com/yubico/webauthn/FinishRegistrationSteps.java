@@ -30,6 +30,7 @@ import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 import COSE.CoseException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.attestation.AttestationTrustSource.TrustRootsResult;
 import com.yubico.webauthn.data.AttestationObject;
@@ -476,25 +477,22 @@ final class FinishRegistrationSteps {
                   atp ->
                       attestationTrustSource.findTrustRoots(
                           atp,
-                          Optional.ofNullable(
+                          OptionalUtil.orElseOptional(
                               Optional.of(
                                       attestation
                                           .getAuthenticatorData()
                                           .getAttestedCredentialData()
                                           .get()
                                           .getAaguid())
-                                  .filter(aaguid -> !aaguid.equals(ZERO_AAGUID))
-                                  .orElseGet(
-                                      () -> {
-                                        if (!atp.isEmpty()) {
-                                          return CertificateParser.parseFidoAaguidExtension(
-                                                  atp.get(0))
-                                              .map(ByteArray::new)
-                                              .orElse(null);
-                                        } else {
-                                          return null;
-                                        }
-                                      })))));
+                                  .filter(aaguid -> !aaguid.equals(ZERO_AAGUID)),
+                              () -> {
+                                if (!atp.isEmpty()) {
+                                  return CertificateParser.parseFidoAaguidExtension(atp.get(0))
+                                      .map(ByteArray::new);
+                                } else {
+                                  return Optional.empty();
+                                }
+                              }))));
     }
   }
 
