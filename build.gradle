@@ -92,7 +92,7 @@ subprojects {
     mavenCentral()
   }
 
-  if (project !== project(':test-platform')) {
+  if (project !== project(':test-platform') && JavaVersion.current() >= JavaVersion.VERSION_11) {
     apply plugin: 'com.diffplug.spotless'
     spotless {
       java {
@@ -126,7 +126,8 @@ task checkJavaVersionBeforeRelease {
 
 subprojects { project ->
 
-  if (project.plugins.hasPlugin('scala')) {
+  if (project.plugins.hasPlugin('scala') && project.plugins.hasPlugin('com.diffplug.spotless')) {
+    project.apply('io.github.cosmicsilence.scalafix')
     project.scalafix {
       configFile = rootProject.file('scalafix.conf')
 

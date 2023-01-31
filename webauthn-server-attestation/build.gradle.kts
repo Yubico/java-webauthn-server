@@ -6,7 +6,7 @@ plugins {
   `maven-publish`
   signing
   id("info.solidsoft.pitest")
-  id("io.github.cosmicsilence.scalafix")
+  id("io.github.cosmicsilence.scalafix") apply false
 }
 
 description = "Yubico WebAuthn attestation subsystem"

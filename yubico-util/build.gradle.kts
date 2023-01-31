@@ -4,7 +4,7 @@ plugins {
   `maven-publish`
   signing
   id("info.solidsoft.pitest")
-  id("io.github.cosmicsilence.scalafix")
+  id("io.github.cosmicsilence.scalafix") apply false
   id("me.champeau.jmh") version "0.6.8"
 }
 

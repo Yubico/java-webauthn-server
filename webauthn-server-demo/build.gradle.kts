@@ -3,7 +3,7 @@ plugins {
   war
   application
   scala
-  id("io.github.cosmicsilence.scalafix")
+  id("io.github.cosmicsilence.scalafix") apply false
 }
 
 description = "WebAuthn demo"
