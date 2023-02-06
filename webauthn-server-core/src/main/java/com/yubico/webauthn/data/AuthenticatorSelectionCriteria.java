@@ -100,6 +100,14 @@ public class AuthenticatorSelectionCriteria {
    * <p>By default, this is not set. When not set, the default in the browser is {@link
    * ResidentKeyRequirement#DISCOURAGED}.
    *
+   * <p>When this is set, {@link PublicKeyCredentialCreationOptions#toCredentialsCreateJson()} will
+   * also emit a <a
+   * href="https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-requireresidentkey">
+   * <code>requireResidentKey</code></a> member for backwards compatibility with WebAuthn Level 1.
+   * It will be set to <code>true</code> if this is set to {@link ResidentKeyRequirement#REQUIRED
+   * REQUIRED} and <code>false</code> if this is set to anything else. When this is not set, a
+   * <code>requireResidentKey</code> will not be emitted.
+   *
    * @see ResidentKeyRequirement
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
@@ -110,6 +118,19 @@ public class AuthenticatorSelectionCriteria {
    */
   public Optional<ResidentKeyRequirement> getResidentKey() {
     return Optional.ofNullable(residentKey);
+  }
+
+  /**
+   * For backwards compatibility with <code>requireResidentKey</code>.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-requireresidentkey">5.4.4.
+   *     Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria) member
+   *     requireResidentKey</a>
+   */
+  @JsonProperty
+  private Boolean isRequireResidentKey() {
+    return getResidentKey().map(rk -> rk == ResidentKeyRequirement.REQUIRED).orElse(null);
   }
 
   /**

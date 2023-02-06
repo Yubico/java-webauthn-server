@@ -20,6 +20,11 @@ Fixes:
   handle are both absent unless a user handle was returned by the authenticator.
   This was originally released in pre-release `1.12.3-RC3`, but was accidentally
   left out of the `1.12.3` release.
+* Fixed regression in
+  `PublicKeyCredentialCreationOptions.toCredentialsCreateJson()`, which has not
+  been emitting a `requireResidentKey` member since version `2.0.0`. This meant
+  the JSON output was not backwards compatible with browsers that only support
+  the Level 1 version of the WebAuthn spec.
 
 New features:
 

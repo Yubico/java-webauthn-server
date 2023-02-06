@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.Generators._
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AttestationConveyancePreference
@@ -33,6 +34,7 @@ import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.RegistrationExtensionInputs
@@ -454,18 +456,37 @@ class RelyingPartyStartOperationSpec
           .build()
       )
 
+      def jsonRequireResidentKey(
+          pkcco: PublicKeyCredentialCreationOptions
+      ): Option[Boolean] =
+        Option(
+          JacksonCodecs
+            .json()
+            .readTree(pkcco.toCredentialsCreateJson)
+            .get("publicKey")
+            .get("authenticatorSelection")
+            .get("requireResidentKey")
+        ).map(_.booleanValue)
+
       pkccoDiscouraged.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         Some(ResidentKeyRequirement.DISCOURAGED)
       )
+      jsonRequireResidentKey(pkccoDiscouraged) should be(Some(false))
+
       pkccoPreferred.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         Some(ResidentKeyRequirement.PREFERRED)
       )
+      jsonRequireResidentKey(pkccoPreferred) should be(Some(false))
+
       pkccoRequired.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         Some(ResidentKeyRequirement.REQUIRED)
       )
+      jsonRequireResidentKey(pkccoRequired) should be(Some(true))
+
       pkccoUnspecified.getAuthenticatorSelection.get.getResidentKey.toScala should be(
         None
       )
+      jsonRequireResidentKey(pkccoUnspecified) should be(None)
     }
 
     it("respects the authenticatorAttachment parameter.") {
