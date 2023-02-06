@@ -7,6 +7,10 @@ New features:
 * Added support for RS384 and RS512 signature algorithms.
  ** Thanks to GitHub user JohnnyJayJay for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/235
+* Added `userHandle` field to `AssertionRequest` as part of the second bug fix
+  below. `userHandle` is mutually exclusive with `username`. This was originally
+  released in pre-release `1.12.3-RC3`, but was accidentally left out of the
+  `1.12.3` release.
 
 Fixes:
 
@@ -25,13 +29,6 @@ Fixes:
   been emitting a `requireResidentKey` member since version `2.0.0`. This meant
   the JSON output was not backwards compatible with browsers that only support
   the Level 1 version of the WebAuthn spec.
-
-New features:
-
-* Added `userHandle` field to `AssertionRequest` as part of above bug fix.
-  `userHandle` is mutually exclusive with `username`. This was originally
-  released in pre-release `1.12.3-RC3`, but was accidentally left out of the
-  `1.12.3` release.
 
 
 `webauthn-server-attestation`:
