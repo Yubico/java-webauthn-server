@@ -106,7 +106,7 @@ public class AuthenticatorSelectionCriteria {
    * <code>requireResidentKey</code></a> member for backwards compatibility with WebAuthn Level 1.
    * It will be set to <code>true</code> if this is set to {@link ResidentKeyRequirement#REQUIRED
    * REQUIRED} and <code>false</code> if this is set to anything else. When this is not set, a
-   * <code>requireResidentKey</code> will not be emitted.
+   * <code>requireResidentKey</code> member will not be emitted.
    *
    * @see ResidentKeyRequirement
    * @see <a
