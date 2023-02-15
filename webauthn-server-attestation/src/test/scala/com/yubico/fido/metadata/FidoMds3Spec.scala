@@ -444,7 +444,8 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
           it("are omitted in the argument to the runtime filter.") {
             aaguidA should not equal zeroAaguid
 
-            val (cert, _) = TestAuthenticator.generateAttestationCertificate()
+            val (cert, _) =
+              TestAuthenticator.generateAttestationCertificate(extensions = Nil)
             val acki: String = new ByteArray(
               CertificateParser.computeSubjectKeyIdentifier(cert)
             ).getHex
@@ -621,7 +622,7 @@ class FidoMds3Spec extends AnyFunSpec with Matchers {
     def makeStatusReportsBlob(
         statusReports: String,
         timeOfLastStatusChange: String,
-        authenticatorVersion: Int = 1,
+        authenticatorVersion: Int,
     ): (String, X509Certificate, java.util.Set[CRL]) =
       makeBlob(s"""{
         "legalHeader" : "Kom ihåg att du aldrig får snyta dig i mattan!",

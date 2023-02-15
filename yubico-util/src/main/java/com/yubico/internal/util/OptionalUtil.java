@@ -3,6 +3,8 @@ package com.yubico.internal.util;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import lombok.NonNull;
 import lombok.experimental.UtilityClass;
 
 /** Utilities for working with {@link Optional} values. */
@@ -19,6 +21,17 @@ public class OptionalUtil {
     } else {
       return recover.get();
     }
+  }
+
+  /**
+   * Returns a sequential {@link Stream} with this {@link Optional} as its source.
+   *
+   * @param o the {@link Optional} to interpret as a {@link Stream}
+   * @return a sequential {@link Stream} containing the value of this {@link Optional} if present,
+   *     otherwise an empty {@link Stream}.
+   */
+  public static <T> Stream<T> stream(@NonNull Optional<T> o) {
+    return o.map(Stream::of).orElseGet(Stream::empty);
   }
 
   /**

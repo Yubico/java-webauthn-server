@@ -382,6 +382,8 @@ public class PublicKeyCredentialCreationOptions {
                         break;
 
                       case RS256:
+                      case RS384:
+                      case RS512:
                       case RS1:
                         KeyFactory.getInstance("RSA");
                         break;
@@ -417,6 +419,14 @@ public class PublicKeyCredentialCreationOptions {
 
                       case RS256:
                         Signature.getInstance("SHA256withRSA");
+                        break;
+
+                      case RS384:
+                        Signature.getInstance("SHA384withRSA");
+                        break;
+
+                      case RS512:
+                        Signature.getInstance("SHA512withRSA");
                         break;
 
                       case RS1:

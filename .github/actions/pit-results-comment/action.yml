@@ -49,7 +49,7 @@ runs:
           cp "${NEW_STATS_FILE}" "${PREV_STATS_FILE}"
         fi
 
-        ./.github/actions/pit-results-comment/stats-to-comment.sh "${PREV_STATS_FILE}" "${NEW_STATS_FILE}" "${{ inputs.prev-commit }}" > "${RESULTS_COMMENT_FILE}"
+        ./.github/actions/pit-results-comment/stats-to-comment.sh "${PREV_STATS_FILE}" "${NEW_STATS_FILE}" "${{ inputs.prev-commit }}" "${{ github.sha }}" > "${RESULTS_COMMENT_FILE}"
 
         curl -X POST \
            -H "Authorization: Bearer ${{ inputs.token }}" \

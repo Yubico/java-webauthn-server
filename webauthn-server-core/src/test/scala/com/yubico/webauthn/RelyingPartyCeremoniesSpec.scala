@@ -110,8 +110,12 @@ class RelyingPartyCeremoniesSpec
     )
 
     assertionResult.isSuccess should be(true)
-    assertionResult.getCredentialId should equal(testData.assertion.get.id)
-    assertionResult.getUserHandle should equal(testData.user.getId)
+    assertionResult.getCredential.getCredentialId should equal(
+      testData.assertion.get.id
+    )
+    assertionResult.getCredential.getUserHandle should equal(
+      testData.user.getId
+    )
     assertionResult.getUsername should equal(testData.user.getName)
     assertionResult.getSignatureCount should be >= testData.attestation.authenticatorData.getSignatureCounter
     assertionResult.isSignatureCounterValid should be(true)
@@ -163,9 +167,11 @@ class RelyingPartyCeremoniesSpec
         it("a YubiKey 5Ci FIPS.") {
           check(RealExamples.Yubikey5ciFips)
         }
+
         it("a YubiKey Bio.") {
           check(RealExamples.YubikeyBio_5_5_4)
           check(RealExamples.YubikeyBio_5_5_5)
+          check(RealExamples.YubikeyBio_5_5_6)
         }
 
         it("an Apple iOS device.") {

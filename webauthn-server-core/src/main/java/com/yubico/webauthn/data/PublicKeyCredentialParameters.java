@@ -100,6 +100,20 @@ public class PublicKeyCredentialParameters {
   public static final PublicKeyCredentialParameters RS256 =
       builder().alg(COSEAlgorithmIdentifier.RS256).build();
 
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#RS384} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters RS384 =
+      builder().alg(COSEAlgorithmIdentifier.RS384).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#RS512} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   */
+  public static final PublicKeyCredentialParameters RS512 =
+      builder().alg(COSEAlgorithmIdentifier.RS512).build();
+
   public static PublicKeyCredentialParametersBuilder.MandatoryStages builder() {
     return new PublicKeyCredentialParametersBuilder.MandatoryStages();
   }

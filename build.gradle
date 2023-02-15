@@ -4,7 +4,7 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.12.1'
+    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.13.0'
     classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
@@ -144,6 +144,8 @@ subprojects { project ->
   }
 
   tasks.withType(JavaCompile) {
+    options.compilerArgs += '-Xlint:unchecked'
+    options.deprecation = true
     options.encoding = 'UTF-8'
   }
   tasks.withType(ScalaCompile) {

@@ -40,8 +40,6 @@ import java.util.Optional;
 
 public class CertificateParser {
   public static final String ID_FIDO_GEN_CE_AAGUID = "1.3.6.1.4.1.45724.1.1.4";
-
-  //    private static final Provider BC_PROVIDER = new BouncyCastleProvider();
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
   private static final List<String> FIXSIG =
@@ -76,7 +74,7 @@ public class CertificateParser {
         (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(is);
     // Some known certs have an incorrect "unused bits" value, which causes problems on newer
     // versions of BouncyCastle.
-    if (FIXSIG.contains(cert.getSubjectDN().getName())) {
+    if (FIXSIG.contains(cert.getSubjectX500Principal().getName())) {
       byte[] encoded = cert.getEncoded();
 
       if (encoded.length >= UNUSED_BITS_BYTE_INDEX_FROM_END) {

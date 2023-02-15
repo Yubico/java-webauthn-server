@@ -334,7 +334,7 @@ class FidoMetadataDownloaderSpec
           )
 
           blob should not be null
-          blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          blob.getHeader.getX5c.get.asScala.last.getIssuerX500Principal.getName should equal(
             trustRootDistinguishedName
           )
           writtenCache should equal(
@@ -404,7 +404,7 @@ class FidoMetadataDownloaderSpec
               .build()
           )
           blob should not be null
-          blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          blob.getHeader.getX5c.get.asScala.last.getIssuerX500Principal.getName should equal(
             newTrustRootDistinguishedName
           )
           writtenCache should equal(
@@ -467,7 +467,7 @@ class FidoMetadataDownloaderSpec
               .build()
           )
           blob should not be null
-          blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          blob.getHeader.getX5c.get.asScala.last.getIssuerX500Principal.getName should equal(
             trustRootDistinguishedName
           )
           cacheFile.lastModified should equal(initialModTime)
@@ -527,7 +527,7 @@ class FidoMetadataDownloaderSpec
               .build()
           )
           blob should not be null
-          blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          blob.getHeader.getX5c.get.asScala.last.getIssuerX500Principal.getName should equal(
             trustRootDistinguishedName
           )
           cacheFile.exists() should be(true)
@@ -600,7 +600,7 @@ class FidoMetadataDownloaderSpec
               .build()
           )
           blob should not be null
-          blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          blob.getHeader.getX5c.get.asScala.last.getIssuerX500Principal.getName should equal(
             newTrustRootDistinguishedName
           )
           cacheFile.exists() should be(true)
@@ -656,7 +656,7 @@ class FidoMetadataDownloaderSpec
               .build()
           )
           blob should not be null
-          blob.getHeader.getX5c.get.asScala.last.getIssuerDN.getName should equal(
+          blob.getHeader.getX5c.get.asScala.last.getIssuerX500Principal.getName should equal(
             trustRootDistinguishedName
           )
           writtenCache should equal(None)

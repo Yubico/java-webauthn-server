@@ -81,7 +81,7 @@ public class CollectedClientData {
       throws IOException, Base64UrlException {
     JsonNode clientData = JacksonCodecs.json().readTree(clientDataJSON.getBytes());
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         clientData != null && clientData.isObject(), "Collected client data must be JSON object.");
 
     this.clientDataJson = clientDataJSON;

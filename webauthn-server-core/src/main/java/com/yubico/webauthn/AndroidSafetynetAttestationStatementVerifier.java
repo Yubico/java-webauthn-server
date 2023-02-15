@@ -70,13 +70,13 @@ class AndroidSafetynetAttestationStatementVerifier
         attestationObject.getAuthenticatorData().getBytes().concat(clientDataJsonHash);
     ByteArray hashSignedData = Crypto.sha256(signedData);
     ByteArray nonceByteArray = ByteArray.fromBase64(payload.get("nonce").textValue());
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         hashSignedData.equals(nonceByteArray),
         "Nonce does not equal authenticator data + client data. Expected nonce: %s, was nonce: %s",
         hashSignedData.getBase64Url(),
         nonceByteArray.getBase64Url());
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         payload.get("ctsProfileMatch").booleanValue(),
         "Expected ctsProfileMatch to be true, was: %s",
         payload.get("ctsProfileMatch"));
@@ -133,7 +133,7 @@ class AndroidSafetynetAttestationStatementVerifier
     }
 
     // Verify the hostname of the certificate.
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         verifyHostname(attestationCertificate),
         "Certificate isn't issued for the hostname attest.android.com: %s",
         attestationCertificate);

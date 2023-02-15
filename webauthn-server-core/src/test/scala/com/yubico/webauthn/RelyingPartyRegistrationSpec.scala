@@ -235,19 +235,13 @@ class RelyingPartyRegistrationSpec
 
         describe("3. Let response be credential.response.") {
           it("If response is not an instance of AuthenticatorAttestationResponse, abort the ceremony with a user-visible error.") {
+            val testData = RegistrationTestData.Packed.BasicAttestationEdDsa
             val frob = FinishRegistrationOptions
               .builder()
-              .request(
-                RegistrationTestData.Packed.BasicAttestationEdDsa.request
-              )
-            val testData =
-              RegistrationTestData.Packed.BasicAttestationEdDsa.assertion.get
-            "frob.response(testData.response)" shouldNot compile
-            frob
-              .response(
-                RegistrationTestData.Packed.BasicAttestationEdDsa.response
-              )
-              .build() should not be null
+              .request(testData.request)
+            "frob.response(testData.response)" should compile
+            "frob.response(testData.assertion.get.response)" shouldNot compile
+            frob.response(testData.response).build() should not be null
           }
         }
 
@@ -1714,7 +1708,7 @@ class RelyingPartyRegistrationSpec
                         ).getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes
                       )
                       .get(CBORObject.FromObject(3))
-                      .AsInt64 should equal(-7)
+                      .AsInt64Value should equal(-7)
                     new AttestationObject(
                       testDataBase.attestationObject
                     ).getAttestationStatement.get("alg").longValue should equal(
@@ -1791,7 +1785,7 @@ class RelyingPartyRegistrationSpec
                         attObj.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey.getBytes
                       )
                       .get(CBORObject.FromObject(3))
-                      .AsInt64 should equal(-257)
+                      .AsInt64Value should equal(-257)
                     attObj.getAttestationStatement
                       .get("alg")
                       .longValue should equal(-65535)
@@ -2131,6 +2125,8 @@ class RelyingPartyRegistrationSpec
 
               def makeCred(
                   authDataAndKeypair: Option[(ByteArray, KeyPair)] = None,
+                  credKeyAlgorithm: COSEAlgorithmIdentifier =
+                    TestAuthenticator.Defaults.keyAlgorithm,
                   clientDataJson: Option[String] = None,
                   subject: X500Name = emptySubject,
                   rdn: Array[AttributeTypeAndValue] =
@@ -2158,17 +2154,20 @@ class RelyingPartyRegistrationSpec
               ) = {
                 val (authData, credentialKeypair) =
                   authDataAndKeypair.getOrElse(
-                    TestAuthenticator.createAuthenticatorData(keyAlgorithm =
-                      COSEAlgorithmIdentifier.ES256
+                    TestAuthenticator.createAuthenticatorData(
+                      credentialKeypair = Some(
+                        TestAuthenticator.Defaults.defaultKeypair(
+                          credKeyAlgorithm
+                        )
+                      ),
+                      keyAlgorithm = credKeyAlgorithm,
                     )
                   )
 
                 TestAuthenticator.createCredential(
                   authDataBytes = authData,
                   credentialKeypair = credentialKeypair,
-                  clientDataJson = clientDataJson.getOrElse(
-                    TestAuthenticator.createClientData()
-                  ),
+                  clientDataJson = clientDataJson,
                   attestationMaker = AttestationMaker.tpm(
                     cert = AttestationSigner.ca(
                       alg = COSEAlgorithmIdentifier.ES256,
@@ -2727,7 +2726,11 @@ class RelyingPartyRegistrationSpec
                     val (authData, keypair) =
                       TestAuthenticator.createAuthenticatorData(
                         aaguid = aaguid,
-                        keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                        credentialKeypair = Some(
+                          TestAuthenticator.Defaults.defaultKeypair(
+                            COSEAlgorithmIdentifier.ES256
+                          )
+                        ),
                       )
                     val testData = (RegistrationTestData.from _).tupled(
                       makeCred(
@@ -2751,7 +2754,11 @@ class RelyingPartyRegistrationSpec
                         val (authData, keypair) =
                           TestAuthenticator.createAuthenticatorData(
                             aaguid = aaguidInCred,
-                            keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                            credentialKeypair = Some(
+                              TestAuthenticator.Defaults.defaultKeypair(
+                                COSEAlgorithmIdentifier.ES256
+                              )
+                            ),
                           )
                         val testData = (RegistrationTestData.from _).tupled(
                           makeCred(
@@ -2770,18 +2777,34 @@ class RelyingPartyRegistrationSpec
 
               describe("Other requirements:") {
                 it("RSA keys must have the SIGN_ENCRYPT attribute.") {
-                  forAll(Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1)) {
-                    attributes: Long =>
+                  forAll(
+                    Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1),
+                    minSuccessful(5),
+                  ) { attributes: Long =>
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(
+                        credKeyAlgorithm = COSEAlgorithmIdentifier.RS256,
+                        attributes = Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                      )
+                    )
+                    val step = init(testData)
+                    testData.alg should be(COSEAlgorithmIdentifier.RS256)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                it("""RSA keys must have "symmetric" set to TPM_ALG_NULL""") {
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { symmetric: Int =>
+                    whenever(symmetric != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
-                          authDataAndKeypair = Some(
-                            TestAuthenticator
-                              .createAuthenticatorData(keyAlgorithm =
-                                COSEAlgorithmIdentifier.RS256
-                              )
-                          ),
-                          attributes =
-                            Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.RS256,
+                          symmetric = Some(symmetric),
                         )
                       )
                       val step = init(testData)
@@ -2789,72 +2812,62 @@ class RelyingPartyRegistrationSpec
 
                       step.validations shouldBe a[Failure[_]]
                       step.tryNext shouldBe a[Failure[_]]
-                  }
-                }
-
-                it("""RSA keys must have "symmetric" set to TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    symmetric: Int =>
-                      whenever(symmetric != TPM_ALG_NULL) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.RS256
-                                )
-                            ),
-                            symmetric = Some(symmetric),
-                          )
-                        )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.RS256)
-
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                    }
                   }
                 }
 
                 it("""RSA keys must have "scheme" set to TPM_ALG_RSASSA or TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    scheme: Int =>
-                      whenever(
-                        scheme != TpmRsaScheme.RSASSA && scheme != TPM_ALG_NULL
-                      ) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.RS256
-                                )
-                            ),
-                            scheme = Some(scheme),
-                          )
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { scheme: Int =>
+                    whenever(
+                      scheme != TpmRsaScheme.RSASSA && scheme != TPM_ALG_NULL
+                    ) {
+                      val testData = (RegistrationTestData.from _).tupled(
+                        makeCred(
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.RS256,
+                          scheme = Some(scheme),
                         )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.RS256)
+                      )
+                      val step = init(testData)
+                      testData.alg should be(COSEAlgorithmIdentifier.RS256)
 
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                      step.validations shouldBe a[Failure[_]]
+                      step.tryNext shouldBe a[Failure[_]]
+                    }
                   }
                 }
 
                 it("ECC keys must have the SIGN_ENCRYPT attribute.") {
-                  forAll(Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1)) {
-                    attributes: Long =>
+                  forAll(
+                    Gen.chooseNum(0, Int.MaxValue.toLong * 2 + 1),
+                    minSuccessful(5),
+                  ) { attributes: Long =>
+                    val testData = (RegistrationTestData.from _).tupled(
+                      makeCred(
+                        credKeyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                        attributes = Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                      )
+                    )
+                    val step = init(testData)
+                    testData.alg should be(COSEAlgorithmIdentifier.ES256)
+
+                    step.validations shouldBe a[Failure[_]]
+                    step.tryNext shouldBe a[Failure[_]]
+                  }
+                }
+
+                it("""ECC keys must have "symmetric" set to TPM_ALG_NULL""") {
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { symmetric: Int =>
+                    whenever(symmetric != TPM_ALG_NULL) {
                       val testData = (RegistrationTestData.from _).tupled(
                         makeCred(
-                          authDataAndKeypair = Some(
-                            TestAuthenticator
-                              .createAuthenticatorData(keyAlgorithm =
-                                COSEAlgorithmIdentifier.ES256
-                              )
-                          ),
-                          attributes =
-                            Some(attributes & ~Attributes.SIGN_ENCRYPT),
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                          symmetric = Some(symmetric),
                         )
                       )
                       val step = init(testData)
@@ -2862,54 +2875,28 @@ class RelyingPartyRegistrationSpec
 
                       step.validations shouldBe a[Failure[_]]
                       step.tryNext shouldBe a[Failure[_]]
-                  }
-                }
-
-                it("""ECC keys must have "symmetric" set to TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    symmetric: Int =>
-                      whenever(symmetric != TPM_ALG_NULL) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.ES256
-                                )
-                            ),
-                            symmetric = Some(symmetric),
-                          )
-                        )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.ES256)
-
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                    }
                   }
                 }
 
                 it("""ECC keys must have "scheme" set to TPM_ALG_NULL""") {
-                  forAll(Gen.chooseNum(0, Short.MaxValue * 2 + 1)) {
-                    scheme: Int =>
-                      whenever(scheme != TPM_ALG_NULL) {
-                        val testData = (RegistrationTestData.from _).tupled(
-                          makeCred(
-                            authDataAndKeypair = Some(
-                              TestAuthenticator
-                                .createAuthenticatorData(keyAlgorithm =
-                                  COSEAlgorithmIdentifier.ES256
-                                )
-                            ),
-                            scheme = Some(scheme),
-                          )
+                  forAll(
+                    Gen.chooseNum(0, Short.MaxValue * 2 + 1),
+                    minSuccessful(5),
+                  ) { scheme: Int =>
+                    whenever(scheme != TPM_ALG_NULL) {
+                      val testData = (RegistrationTestData.from _).tupled(
+                        makeCred(
+                          credKeyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                          scheme = Some(scheme),
                         )
-                        val step = init(testData)
-                        testData.alg should be(COSEAlgorithmIdentifier.ES256)
+                      )
+                      val step = init(testData)
+                      testData.alg should be(COSEAlgorithmIdentifier.ES256)
 
-                        step.validations shouldBe a[Failure[_]]
-                        step.tryNext shouldBe a[Failure[_]]
-                      }
+                      step.validations shouldBe a[Failure[_]]
+                      step.tryNext shouldBe a[Failure[_]]
+                    }
                   }
                 }
               }
@@ -3187,6 +3174,53 @@ class RelyingPartyRegistrationSpec
                     }
                   )
                   .build()
+            }
+            val steps = finishRegistration(
+              testData = testData,
+              attestationTrustSource = Some(attestationTrustSource),
+            )
+            val step: FinishRegistrationSteps#Step20 =
+              steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
+
+            step.validations shouldBe a[Success[_]]
+            step.getTrustRoots.toScala.map(
+              _.getTrustRoots.asScala
+            ) should equal(
+              Some(Set(attestationRootCert))
+            )
+            step.tryNext shouldBe a[Success[_]]
+          }
+
+          it("When the AAGUID in authenticator data is zero, the AAGUID in the attestation certificate is used instead, if possible.") {
+            val example = RealExamples.SecurityKeyNfc
+            val testData = example.asRegistrationTestData
+            testData.aaguid should equal(
+              ByteArray.fromHex("00000000000000000000000000000000")
+            )
+            val certAaguid = new ByteArray(
+              CertificateParser
+                .parseFidoAaguidExtension(
+                  CertificateParser.parseDer(example.attestationCert.getBytes)
+                )
+                .get
+            )
+
+            val attestationTrustSource = new AttestationTrustSource {
+              override def findTrustRoots(
+                  attestationCertificateChain: util.List[X509Certificate],
+                  aaguid: Optional[ByteArray],
+              ): TrustRootsResult = {
+                TrustRootsResult
+                  .builder()
+                  .trustRoots(
+                    if (aaguid == Optional.of(certAaguid)) {
+                      Set(attestationRootCert).asJava
+                    } else {
+                      Set.empty[X509Certificate].asJava
+                    }
+                  )
+                  .build()
+              }
             }
             val steps = finishRegistration(
               testData = testData,
@@ -4015,22 +4049,31 @@ class RelyingPartyRegistrationSpec
         RegistrationTestData.defaultSettingsValidExamples.zipWithIndex
           .foreach {
             case (testData, i) =>
-              it(s"Succeeds for example index ${i}.") {
-                val rp = {
-                  val builder = RelyingParty
-                    .builder()
-                    .identity(testData.rpId)
-                    .credentialRepository(
-                      Helpers.CredentialRepository.empty
-                    )
-                  builder.origins(Set(testData.clientData.getOrigin).asJava)
-                  builder.build()
-                }
+              it(s"Succeeds for example index ${i} (${testData.alg}, ${testData.attestationStatementFormat}).") {
+                val rp = RelyingParty
+                  .builder()
+                  .identity(testData.rpId)
+                  .credentialRepository(
+                    Helpers.CredentialRepository.empty
+                  )
+                  .origins(Set(testData.clientData.getOrigin).asJava)
+                  .build()
+
+                val request = rp
+                  .startRegistration(
+                    StartRegistrationOptions
+                      .builder()
+                      .user(testData.userId)
+                      .build()
+                  )
+                  .toBuilder
+                  .challenge(testData.request.getChallenge)
+                  .build()
 
                 val result = rp.finishRegistration(
                   FinishRegistrationOptions
                     .builder()
-                    .request(testData.request)
+                    .request(request)
                     .response(testData.response)
                     .build()
                 )
@@ -4064,6 +4107,24 @@ class RelyingPartyRegistrationSpec
             )
             pubKeyCredParams map (_.getAlg) should contain(
               COSEAlgorithmIdentifier.ES256
+            )
+          }
+
+          it("ES384.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.ES384
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.ES384
+            )
+          }
+
+          it("ES512.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.ES512
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.ES512
             )
           }
 
@@ -4119,6 +4180,24 @@ class RelyingPartyRegistrationSpec
             )
             pubKeyCredParams map (_.getAlg) should contain(
               COSEAlgorithmIdentifier.RS256
+            )
+          }
+
+          it("RS384.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.RS384
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.RS384
+            )
+          }
+
+          it("RS512.") {
+            pubKeyCredParams should contain(
+              PublicKeyCredentialParameters.RS512
+            )
+            pubKeyCredParams map (_.getAlg) should contain(
+              COSEAlgorithmIdentifier.RS512
             )
           }
         }

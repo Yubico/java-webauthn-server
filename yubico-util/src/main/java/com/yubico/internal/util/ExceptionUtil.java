@@ -36,7 +36,7 @@ public class ExceptionUtil {
     return err;
   }
 
-  public static void assure(
+  public static void assertTrue(
       boolean condition, String failureMessageTemplate, Object... failureMessageArgs) {
     if (!condition) {
       throw new IllegalArgumentException(String.format(failureMessageTemplate, failureMessageArgs));

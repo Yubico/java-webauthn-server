@@ -24,7 +24,6 @@
 
 package com.yubico.internal.util;
 
-import com.google.common.io.BaseEncoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -40,15 +39,33 @@ public class BinaryUtil {
   /**
    * @param bytes Bytes to encode
    */
-  public static String toHex(byte[] bytes) {
-    return BaseEncoding.base16().encode(bytes).toLowerCase();
+  public static String toHex(final byte[] bytes) {
+    final char[] digits = new char[bytes.length * 2];
+    for (int i = 0; i < bytes.length; ++i) {
+      final int i2 = i * 2;
+      digits[i2] = Character.forDigit((bytes[i] >> 4) & 0x0f, 16);
+      digits[i2 + 1] = Character.forDigit(bytes[i] & 0x0f, 16);
+    }
+    return new String(digits);
   }
 
   /**
    * @param hex String of hexadecimal digits to decode as bytes.
    */
-  public static byte[] fromHex(String hex) {
-    return BaseEncoding.base16().decode(hex.toUpperCase());
+  public static byte[] fromHex(final String hex) {
+    if (hex.length() % 2 != 0) {
+      throw new IllegalArgumentException("Length of hex string is not even: " + hex);
+    }
+
+    final byte[] result = new byte[hex.length() / 2];
+    for (int i = 0; i < hex.length(); ++i) {
+      final int d = Character.digit(hex.charAt(i), 16);
+      if (d < 0) {
+        throw new IllegalArgumentException("Invalid hex digit at index " + i + " in: " + hex);
+      }
+      result[i / 2] |= d << (((i + 1) % 2) * 4);
+    }
+    return result;
   }
 
   /**
@@ -57,7 +74,7 @@ public class BinaryUtil {
    * @param hex String of hexadecimal digits to decode as bytes.
    */
   public static byte singleFromHex(String hex) {
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         hex.length() == 2, "Argument must be exactly 2 hexadecimal characters, was: %s", hex);
     return fromHex(hex)[0];
   }
@@ -111,8 +128,9 @@ public class BinaryUtil {
   }
 
   public static byte[] encodeUint16(int value) {
-    ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
-    ExceptionUtil.assure(value < 65536, "Argument must be smaller than 2^16=65536, was: %d", value);
+    ExceptionUtil.assertTrue(value >= 0, "Argument must be non-negative, was: %d", value);
+    ExceptionUtil.assertTrue(
+        value < 65536, "Argument must be smaller than 2^16=65536, was: %d", value);
 
     ByteBuffer b = ByteBuffer.allocate(4);
     b.order(ByteOrder.BIG_ENDIAN);
@@ -122,8 +140,8 @@ public class BinaryUtil {
   }
 
   public static byte[] encodeUint32(long value) {
-    ExceptionUtil.assure(value >= 0, "Argument must be non-negative, was: %d", value);
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(value >= 0, "Argument must be non-negative, was: %d", value);
+    ExceptionUtil.assertTrue(
         value < 4294967296L, "Argument must be smaller than 2^32=4294967296, was: %d", value);
 
     ByteBuffer b = ByteBuffer.allocate(8);

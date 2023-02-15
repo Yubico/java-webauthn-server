@@ -1,6 +1,5 @@
 package com.yubico.fido.metadata
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_EXTERNAL
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_INTERNAL
 import com.yubico.fido.metadata.AttachmentHint.ATTACHMENT_HINT_NFC
@@ -10,7 +9,6 @@ import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.FinishRegistrationOptions
 import com.yubico.webauthn.RelyingParty
 import com.yubico.webauthn.TestWithEachProvider
-import com.yubico.webauthn.data.AttestationObject
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -22,13 +20,9 @@ import org.scalatest.tags.Network
 import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
 
-import java.io.IOException
-import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.ZoneOffset
-import java.util
 import java.util.Optional
-import scala.jdk.CollectionConverters.IteratorHasAsScala
 import scala.jdk.CollectionConverters.SetHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsScala
 import scala.jdk.OptionConverters.RichOptional
@@ -75,40 +69,6 @@ class FidoMetadataServiceIntegrationTest
             testData: RealExamples.Example,
             attachmentHints: Set[AttachmentHint],
         ): Unit = {
-
-          def getAttestationTrustPath(
-              attestationObject: AttestationObject
-          ): Option[util.List[X509Certificate]] = {
-            val x5cNode: JsonNode = getX5cArray(attestationObject)
-            if (x5cNode != null && x5cNode.isArray) {
-              val certs: util.List[X509Certificate] =
-                new util.ArrayList[X509Certificate](x5cNode.size)
-              for (binary <- x5cNode.elements().asScala) {
-                if (binary.isBinary)
-                  try certs.add(
-                    CertificateParser.parseDer(binary.binaryValue)
-                  )
-                  catch {
-                    case e: IOException =>
-                      throw new RuntimeException(
-                        "binary.isBinary() was true but binary.binaryValue() failed",
-                        e,
-                      )
-                  }
-                else
-                  throw new IllegalArgumentException(
-                    String.format(
-                      "Each element of \"x5c\" property of attestation statement must be a binary value, was: %s",
-                      binary.getNodeType,
-                    )
-                  )
-              }
-              Some(certs)
-            } else None
-          }
-
-          def getX5cArray(attestationObject: AttestationObject): JsonNode =
-            attestationObject.getAttestationStatement.get("x5c")
 
           val rp = RelyingParty
             .builder()
@@ -159,7 +119,7 @@ class FidoMetadataServiceIntegrationTest
             .toSet should equal(attachmentHints)
         }
 
-        ignore("a YubiKey NEO.") { // TODO: Investigate why this fails
+        it("a YubiKey NEO.") {
           check("YubiKey NEO", RealExamples.YubiKeyNeo, attachmentHintsNfc)
         }
 
@@ -205,7 +165,7 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey 5 Nano.") {
           check(
-            "YubiKey  ?5 Series",
+            "YubiKey 5 Series",
             RealExamples.YubiKey5Nano,
             attachmentHintsUsb,
           )
@@ -219,7 +179,7 @@ class FidoMetadataServiceIntegrationTest
           )
         }
 
-        ignore("a Security Key by Yubico.") { // TODO: Investigate why this fails
+        it("a Security Key by Yubico.") {
           check(
             "Security Key by Yubico",
             RealExamples.SecurityKey,
@@ -235,9 +195,9 @@ class FidoMetadataServiceIntegrationTest
           )
         }
 
-        ignore("a Security Key NFC by Yubico.") { // TODO: Investigate why this fails
+        it("a Security Key NFC by Yubico.") {
           check(
-            "Security Key NFC by Yubico",
+            "Security Key by Yubico with NFC",
             RealExamples.SecurityKeyNfc,
             attachmentHintsNfc,
           )
@@ -255,7 +215,7 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey 5.4 Ci FIPS.") {
           check(
-            "YubiKey 5 .*FIPS .*Lightning",
+            "YubiKey 5 FIPS .*Lightning",
             RealExamples.Yubikey5ciFips,
             attachmentHintsUsb,
           )
@@ -264,9 +224,21 @@ class FidoMetadataServiceIntegrationTest
         it("a YubiKey Bio.") {
           check(
             "YubiKey Bio Series",
+            RealExamples.YubikeyBio_5_5_4,
+            attachmentHintsUsb,
+          )
+          check(
+            "YubiKey Bio Series",
             RealExamples.YubikeyBio_5_5_5,
             attachmentHintsUsb,
           )
+          withProviderContext(List(new BouncyCastleProvider)) { // Needed for JDK<14 because this example uses EdDSA
+            check(
+              "YubiKey Bio Series",
+              RealExamples.YubikeyBio_5_5_6,
+              attachmentHintsUsb,
+            )
+          }
         }
 
         it("a Windows Hello attestation.") {

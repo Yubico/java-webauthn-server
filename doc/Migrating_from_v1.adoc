@@ -26,10 +26,12 @@ Here is a high-level outline of what needs to be updated:
 - Update `getUserVerification()` and `getResidentKey()` calls
   to expect `Optional` values.
 
-This migration guide is written for version `2.0.0` of the
+Although the next section references version `2.4.0-RC2` for reasons detailed there,
+this migration guide is written for version `2.0.0` of the
 `webauthn-server-core` module. Later `2.x` versions may introduce new features
-but should remain compatible without further changes; consult the release notes
-for a full list of new features.
+but should remain compatible without further changes; please consult the
+link:https://developers.yubico.com/java-webauthn-server/Release_Notes.html[release notes]
+for an up to date list of new features.
 
 
 == Replace dependency on `webauthn-server-core-minimal`
@@ -46,7 +48,7 @@ Maven example:
 -  <artifactId>webauthn-server-core-minimal</artifactId>
 -  <version>1.12.2</version>
 +  <artifactId>webauthn-server-core</artifactId>
-+  <version>2.0.0</version>
++  <version>2.4.0-RC2</version>
    <scope>compile</scope>
  </dependency>
 ----------
@@ -56,8 +58,28 @@ Gradle:
 [source,diff]
 ----------
 -compile 'com.yubico:webauthn-server-core-minimal:1.12.2'
-+compile 'com.yubico:webauthn-server-core:2.0.0'
++compile 'com.yubico:webauthn-server-core:2.4.0-RC2'
 ----------
+
+
+[WARNING]
+.*Backwards-incompatible regression in versions 2.0.0 to 2.4.0-RC1*
+==========
+Versions in the inclusive range `2.0.0` to `2.4.0-RC1` have
+a backwards-incompatible regression in
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/latest/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#toCredentialsCreateJson()[`PublicKeyCredentialCreationOptions.toCredentialsCreateJson()`]:
+When the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.3.0/com/yubico/webauthn/StartRegistrationOptions.StartRegistrationOptionsBuilder.html#authenticatorSelection(com.yubico.webauthn.data.AuthenticatorSelectionCriteria)[`authenticatorSelection`].link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.3.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
+parameter is set, a corresponding
+link:https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-requireresidentkey[`requireResidentKey`]
+member is not emitted in the JSON output.
+This is not backwards compatible with browsers that only support the
+link:https://www.w3.org/TR/2019/REC-webauthn-1-20190304/#authenticatorSelection[Level 1 version of the WebAuthn spec].
+The regression is fixed in version `2.4.0-RC2` and greater.
+We therefore urge users to upgrade from versions `1.x` directly to `2.4.0-RC2` or greater to maintain backwards compatibility.
+Please consult the link:https://developers.yubico.com/java-webauthn-server/Release_Notes.html[release notes]
+for an up to date list of additional changes and new features added since version `2.0.0`.
+==========
 
 
 == Add JCA provider for EdDSA

@@ -125,6 +125,20 @@ object TestAuthenticator {
     )
     val certValidFrom: Instant = Instant.parse("2018-09-06T17:42:00Z")
     val certValidTo: Instant = certValidFrom.plusSeconds(7 * 24 * 3600)
+
+    private var defaultKeypairs: Map[COSEAlgorithmIdentifier, KeyPair] =
+      Map.empty
+    def defaultKeypair(
+        algorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm
+    ): KeyPair = {
+      defaultKeypairs.get(algorithm) match {
+        case Some(keypair) => keypair
+        case None =>
+          val keypair = generateKeypair(algorithm)
+          defaultKeypairs = defaultKeypairs + (algorithm -> keypair)
+          keypair
+      }
+    }
   }
   val RsaKeySizeBits = 2048
   val Es256PrimeModulus: BigInteger = new BigInteger(
@@ -137,6 +151,13 @@ object TestAuthenticator {
   )
 
   private def jsonFactory: JsonNodeFactory = JsonNodeFactory.instance
+  private def jsonMap[V <: JsonNode](
+      map: JsonNodeFactory => Map[String, V]
+  ): ObjectNode =
+    jsonFactory
+      .objectNode()
+      .setAll[ObjectNode](map.apply(jsonFactory).asJava)
+
   private def toBytes(s: String): ByteArray = new ByteArray(s.getBytes("UTF-8"))
   def sha256(s: String): ByteArray = sha256(toBytes(s))
   def sha256(b: ByteArray): ByteArray =
@@ -146,24 +167,21 @@ object TestAuthenticator {
     val format: String
     def makeAttestationStatement(
         authDataBytes: ByteArray,
-        clientDataJson: String,
+        clientDataJson: ByteArray,
     ): JsonNode
     def certChain: List[(X509Certificate, PrivateKey)] = Nil
 
     def makeAttestationObjectBytes(
         authDataBytes: ByteArray,
-        clientDataJson: String,
+        clientDataJson: ByteArray,
     ): ByteArray = {
-      val f = JsonNodeFactory.instance
-      val attObj = f
-        .objectNode()
-        .setAll[ObjectNode](
-          Map(
-            "authData" -> f.binaryNode(authDataBytes.getBytes),
-            "fmt" -> f.textNode(format),
-            "attStmt" -> makeAttestationStatement(authDataBytes, clientDataJson),
-          ).asJava
+      val attObj = jsonMap { f =>
+        Map(
+          "authData" -> f.binaryNode(authDataBytes.getBytes),
+          "fmt" -> f.textNode(format),
+          "attStmt" -> makeAttestationStatement(authDataBytes, clientDataJson),
         )
+      }
       new ByteArray(JacksonCodecs.cbor.writeValueAsBytes(attObj))
     }
   }
@@ -177,20 +195,22 @@ object TestAuthenticator {
         override def certChain = signer.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
-            clientDataJson: String,
+            clientDataJson: ByteArray,
         ): JsonNode =
           makePackedAttestationStatement(authDataBytes, clientDataJson, signer)
       }
+
     def fidoU2f(signer: AttestationSigner): AttestationMaker =
       new AttestationMaker {
         override val format = "fido-u2f"
         override def certChain = signer.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
-            clientDataJson: String,
+            clientDataJson: ByteArray,
         ): JsonNode =
           makeU2fAttestationStatement(authDataBytes, clientDataJson, signer)
       }
+
     def androidSafetynet(
         cert: AttestationCert,
         ctsProfileMatch: Boolean = true,
@@ -200,7 +220,7 @@ object TestAuthenticator {
         override def certChain = cert.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
-            clientDataJson: String,
+            clientDataJson: ByteArray,
         ): JsonNode =
           makeAndroidSafetynetAttestationStatement(
             authDataBytes,
@@ -209,6 +229,7 @@ object TestAuthenticator {
             ctsProfileMatch = ctsProfileMatch,
           )
       }
+
     def apple(
         addNonceExtension: Boolean = true,
         nonceValue: Option[ByteArray] = None,
@@ -227,7 +248,7 @@ object TestAuthenticator {
           override val format = "apple"
           override def makeAttestationStatement(
               authDataBytes: ByteArray,
-              clientDataJson: String,
+              clientDataJson: ByteArray,
           ): JsonNode =
             makeAppleAttestationStatement(
               caCert,
@@ -243,6 +264,7 @@ object TestAuthenticator {
         caKey,
       )
     }
+
     def tpm(
         cert: AttestationCert,
         ver: Option[String] = Some("2.0"),
@@ -260,7 +282,7 @@ object TestAuthenticator {
         override def certChain = cert.certChain
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
-            clientDataJson: String,
+            clientDataJson: ByteArray,
         ): JsonNode =
           makeTpmAttestationStatement(
             authDataBytes,
@@ -283,7 +305,7 @@ object TestAuthenticator {
         override def certChain = Nil
         override def makeAttestationStatement(
             authDataBytes: ByteArray,
-            clientDataJson: String,
+            clientDataJson: ByteArray,
         ): JsonNode =
           makeNoneAttestationStatement()
       }
@@ -294,6 +316,7 @@ object TestAuthenticator {
     def cert: X509Certificate
     def certChain: List[(X509Certificate, PrivateKey)]
   }
+
   case class SelfAttestation(keypair: KeyPair, alg: COSEAlgorithmIdentifier)
       extends AttestationSigner {
     override def key: PrivateKey = keypair.getPrivate
@@ -302,6 +325,7 @@ object TestAuthenticator {
     }
     override def certChain = Nil
   }
+
   case class AttestationCert(
       override val cert: X509Certificate,
       override val key: PrivateKey,
@@ -313,6 +337,7 @@ object TestAuthenticator {
         keypair: (X509Certificate, PrivateKey),
     ) = this(keypair._1, keypair._2, alg, Nil)
   }
+
   object AttestationSigner {
     def ca(
         alg: COSEAlgorithmIdentifier,
@@ -419,41 +444,31 @@ object TestAuthenticator {
       origin: String = Defaults.origin,
       tokenBindingStatus: String = Defaults.TokenBinding.status,
       tokenBindingId: Option[String] = Defaults.TokenBinding.id,
-  ): String = {
-    val clientDataJson: String =
-      JacksonCodecs.json.writeValueAsString(clientData getOrElse {
-        val json: ObjectNode = jsonFactory.objectNode()
-
-        json.setAll(
+  ): String =
+    JacksonCodecs.json.writeValueAsString(clientData getOrElse {
+      jsonMap {
+        f =>
           Map(
-            "challenge" -> jsonFactory.textNode(challenge.getBase64Url),
-            "origin" -> jsonFactory.textNode(origin),
-            "type" -> jsonFactory.textNode("webauthn.create"),
-          ).asJava
-        )
-
-        json.set(
-          "tokenBinding", {
-            val tokenBinding = jsonFactory.objectNode()
-            tokenBinding.set("status", jsonFactory.textNode(tokenBindingStatus))
-            tokenBindingId foreach { id =>
-              tokenBinding.set("id", jsonFactory.textNode(id))
-            }
-            tokenBinding
-          },
-        )
-
-        json
-      })
-
-    clientDataJson
-  }
+            "challenge" -> f.textNode(challenge.getBase64Url),
+            "origin" -> f.textNode(origin),
+            "type" -> f.textNode("webauthn.create"),
+            "tokenBinding" -> {
+              val tokenBinding = f.objectNode()
+              tokenBinding.set("status", f.textNode(tokenBindingStatus))
+              tokenBindingId foreach { id =>
+                tokenBinding.set("id", f.textNode(id))
+              }
+              tokenBinding
+            },
+          )
+      }
+    })
 
   def createCredential(
       authDataBytes: ByteArray,
-      clientDataJson: String,
       credentialKeypair: KeyPair,
       attestationMaker: AttestationMaker,
+      clientDataJson: Option[String] = None,
       clientExtensions: ClientRegistrationExtensionOutputs =
         ClientRegistrationExtensionOutputs.builder().build(),
   ): (
@@ -465,10 +480,15 @@ object TestAuthenticator {
       List[(X509Certificate, PrivateKey)],
   ) = {
 
-    val clientDataJsonBytes = toBytes(clientDataJson)
+    val clientDataJsonBytes = toBytes(
+      clientDataJson.getOrElse(createClientData())
+    )
 
     val attestationObjectBytes =
-      attestationMaker.makeAttestationObjectBytes(authDataBytes, clientDataJson)
+      attestationMaker.makeAttestationObjectBytes(
+        authDataBytes,
+        clientDataJsonBytes,
+      )
 
     val response = AuthenticatorAttestationResponse
       .builder()
@@ -510,7 +530,6 @@ object TestAuthenticator {
     createCredential(
       authDataBytes = authData,
       credentialKeypair = credentialKeypair,
-      clientDataJson = createClientData(),
       attestationMaker = attestationMaker,
     )
   }
@@ -532,7 +551,6 @@ object TestAuthenticator {
     val signer = SelfAttestation(keypair, keyAlgorithm)
     createCredential(
       authDataBytes = authData,
-      clientDataJson = createClientData(),
       credentialKeypair = keypair,
       attestationMaker = attestationMaker(signer),
     )
@@ -556,7 +574,7 @@ object TestAuthenticator {
     )
     createCredential(
       authDataBytes = authData,
-      clientDataJson = createClientData(challenge = challenge),
+      clientDataJson = Some(createClientData(challenge = challenge)),
       credentialKeypair = keypair,
       attestationMaker = AttestationMaker.none(),
     )
@@ -611,28 +629,22 @@ object TestAuthenticator {
 
     val clientDataJson: String =
       JacksonCodecs.json.writeValueAsString(clientData getOrElse {
-        val json: ObjectNode = jsonFactory.objectNode()
-
-        json.setAll(
-          Map(
-            "challenge" -> jsonFactory.textNode(challenge.getBase64Url),
-            "origin" -> jsonFactory.textNode(origin),
-            "type" -> jsonFactory.textNode("webauthn.get"),
-          ).asJava
-        )
-
-        json.set(
-          "tokenBinding", {
-            val tokenBinding = jsonFactory.objectNode()
-            tokenBinding.set("status", jsonFactory.textNode(tokenBindingStatus))
-            tokenBindingId foreach { id =>
-              tokenBinding.set("id", jsonFactory.textNode(id))
-            }
-            tokenBinding
-          },
-        )
-
-        json
+        jsonMap {
+          f =>
+            Map(
+              "challenge" -> f.textNode(challenge.getBase64Url),
+              "origin" -> f.textNode(origin),
+              "type" -> f.textNode("webauthn.get"),
+              "tokenBinding" -> {
+                val tokenBinding = f.objectNode()
+                tokenBinding.set("status", f.textNode(tokenBindingStatus))
+                tokenBindingId foreach { id =>
+                  tokenBinding.set("id", f.textNode(id))
+                }
+                tokenBinding
+              },
+            )
+        }
       })
     val clientDataJsonBytes = toBytes(clientDataJson)
 
@@ -671,14 +683,14 @@ object TestAuthenticator {
 
   def makeU2fAttestationStatement(
       authDataBytes: ByteArray,
-      clientDataJson: String,
+      clientDataJson: ByteArray,
       signer: AttestationSigner,
   ): JsonNode = {
     val authData = new AuthenticatorData(authDataBytes)
 
     def makeSignedData(
         rpIdHash: ByteArray,
-        clientDataJson: String,
+        clientDataJson: ByteArray,
         credentialId: ByteArray,
         credentialPublicKeyRawBytes: ByteArray,
     ): ByteArray = {
@@ -704,28 +716,25 @@ object TestAuthenticator {
       ),
     )
 
-    val f = JsonNodeFactory.instance
-    f.objectNode()
-      .setAll(
-        Map(
-          "x5c" -> f.arrayNode().add(f.binaryNode(signer.cert.getEncoded)),
-          "sig" -> f.binaryNode(
-            sign(
-              signedData,
-              signer.key,
-              signer.alg,
-            ).getBytes
-          ),
-        ).asJava
+    jsonMap { f =>
+      Map(
+        "x5c" -> f.arrayNode().add(f.binaryNode(signer.cert.getEncoded)),
+        "sig" -> f.binaryNode(
+          sign(
+            signedData,
+            signer.key,
+            signer.alg,
+          ).getBytes
+        ),
       )
+    }
   }
 
-  def makeNoneAttestationStatement(): JsonNode =
-    JsonNodeFactory.instance.objectNode()
+  def makeNoneAttestationStatement(): JsonNode = jsonFactory.objectNode()
 
   def makePackedAttestationStatement(
       authDataBytes: ByteArray,
-      clientDataJson: String,
+      clientDataJson: ByteArray,
       signer: AttestationSigner,
   ): JsonNode = {
     val signedData = new ByteArray(
@@ -737,66 +746,56 @@ object TestAuthenticator {
       case AttestationCert(_, key, alg, _) => sign(signedData, key, alg)
     }
 
-    val f = JsonNodeFactory.instance
-    f.objectNode()
-      .setAll(
-        (
+    jsonMap { f =>
+      Map(
+        "alg" -> f.numberNode(signer.alg.getId),
+        "sig" -> f.binaryNode(signature.getBytes),
+      ) ++ (signer match {
+        case _: SelfAttestation => Map.empty
+        case AttestationCert(cert, _, _, _) =>
           Map(
-            "alg" -> f.numberNode(signer.alg.getId),
-            "sig" -> f.binaryNode(signature.getBytes),
-          ) ++ (signer match {
-            case _: SelfAttestation => Map.empty
-            case AttestationCert(cert, _, _, _) =>
-              Map(
-                "x5c" -> f
-                  .arrayNode()
-                  .add(cert.getEncoded)
-              )
-          })
-        ).asJava
-      )
+            "x5c" -> f
+              .arrayNode()
+              .add(cert.getEncoded)
+          )
+      })
+    }
   }
 
   def makeAndroidSafetynetAttestationStatement(
       authDataBytes: ByteArray,
-      clientDataJson: String,
+      clientDataJson: ByteArray,
       cert: AttestationCert,
       ctsProfileMatch: Boolean = true,
   ): JsonNode = {
     val nonce =
       Crypto.sha256(authDataBytes concat Crypto.sha256(clientDataJson))
 
-    val f = JsonNodeFactory.instance
-
-    val jwsHeader = f
-      .objectNode()
-      .setAll[ObjectNode](
-        Map(
-          "alg" -> f.textNode("RS256"),
-          "x5c" -> f
-            .arrayNode()
-            .add(new ByteArray(cert.cert.getEncoded).getBase64),
-        ).asJava
+    val jwsHeader = jsonMap { f =>
+      Map(
+        "alg" -> f.textNode("RS256"),
+        "x5c" -> f
+          .arrayNode()
+          .add(new ByteArray(cert.cert.getEncoded).getBase64),
       )
+    }
     val jwsHeaderBase64 = new ByteArray(
       JacksonCodecs.json().writeValueAsBytes(jwsHeader)
     ).getBase64Url
 
-    val jwsPayload = f
-      .objectNode()
-      .setAll[ObjectNode](
-        Map(
-          "nonce" -> f.textNode(nonce.getBase64),
-          "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
-          "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
-          "apkDigestSha256" -> f.textNode(Crypto.sha256("foo").getBase64),
-          "ctsProfileMatch" -> f.booleanNode(ctsProfileMatch),
-          "aplCertificateDigestSha256" -> f
-            .arrayNode()
-            .add(f.textNode(Crypto.sha256("foo").getBase64)),
-          "basicIntegrity" -> f.booleanNode(true),
-        ).asJava
+    val jwsPayload = jsonMap { f =>
+      Map(
+        "nonce" -> f.textNode(nonce.getBase64),
+        "timestampMs" -> f.numberNode(Instant.now().toEpochMilli),
+        "apkPackageName" -> f.textNode("com.yubico.webauthn.test"),
+        "apkDigestSha256" -> f.textNode(Crypto.sha256("foo").getBase64),
+        "ctsProfileMatch" -> f.booleanNode(ctsProfileMatch),
+        "aplCertificateDigestSha256" -> f
+          .arrayNode()
+          .add(f.textNode(Crypto.sha256("foo").getBase64)),
+        "basicIntegrity" -> f.booleanNode(true),
       )
+    }
     val jwsPayloadBase64 = new ByteArray(
       JacksonCodecs.json().writeValueAsBytes(jwsPayload)
     ).getBase64Url
@@ -809,16 +808,14 @@ object TestAuthenticator {
 
     val jwsCompact = jwsSignedCompact + "." + jwsSignature.getBase64Url
 
-    val attStmt = f
-      .objectNode()
-      .setAll[ObjectNode](
-        Map(
-          "ver" -> f.textNode("14799021"),
-          "response" -> f.binaryNode(
-            jwsCompact.getBytes(StandardCharsets.UTF_8)
-          ),
-        ).asJava
+    val attStmt = jsonMap { f =>
+      Map(
+        "ver" -> f.textNode("14799021"),
+        "response" -> f.binaryNode(
+          jwsCompact.getBytes(StandardCharsets.UTF_8)
+        ),
       )
+    }
 
     attStmt
   }
@@ -827,15 +824,12 @@ object TestAuthenticator {
       caCert: X509Certificate,
       caKey: PrivateKey,
       authDataBytes: ByteArray,
-      clientDataJson: String,
+      clientDataJson: ByteArray,
       addNonceExtension: Boolean = true,
       nonceValue: Option[ByteArray] = None,
       certSubjectPublicKey: Option[PublicKey] = None,
   ): JsonNode = {
-    val clientDataJSON = new ByteArray(
-      clientDataJson.getBytes(StandardCharsets.UTF_8)
-    )
-    val clientDataJsonHash = Crypto.sha256(clientDataJSON)
+    val clientDataJsonHash = Crypto.sha256(clientDataJson)
     val nonceToHash = authDataBytes.concat(clientDataJsonHash)
     val nonce = Crypto.sha256(nonceToHash)
 
@@ -871,24 +865,22 @@ object TestAuthenticator {
       } else Nil,
     )
 
-    val f = JsonNodeFactory.instance
-    f.objectNode()
-      .setAll(
-        Map(
-          "x5c" -> f
-            .arrayNode()
-            .addAll(
-              List(subjectCert, caCert)
-                .map(crt => f.binaryNode(crt.getEncoded))
-                .asJava
-            )
-        ).asJava
+    jsonMap { f =>
+      Map(
+        "x5c" -> f
+          .arrayNode()
+          .addAll(
+            List(subjectCert, caCert)
+              .map(crt => f.binaryNode(crt.getEncoded))
+              .asJava
+          )
       )
+    }
   }
 
   def makeTpmAttestationStatement(
       authDataBytes: ByteArray,
-      clientDataJson: String,
+      clientDataJson: ByteArray,
       cert: AttestationCert,
       ver: Option[String] = Some("2.0"),
       magic: ByteArray = TpmAttestationStatementVerifier.TPM_GENERATED_VALUE,
@@ -917,7 +909,12 @@ object TestAuthenticator {
         (TpmAlgHash.SHA512, TpmAlgAsym.ECC)
       case COSEAlgorithmIdentifier.RS256 =>
         (TpmAlgHash.SHA256, TpmAlgAsym.RSA)
-      case COSEAlgorithmIdentifier.RS1 => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.RS384 =>
+        (TpmAlgHash.SHA384, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.RS512 =>
+        (TpmAlgHash.SHA512, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.RS1   => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.EdDSA => ???
     }
     val hashFunc = hashId match {
       case TpmAlgHash.SHA256 => Crypto.sha256(_: ByteArray)
@@ -925,13 +922,10 @@ object TestAuthenticator {
       case TpmAlgHash.SHA512 => Crypto.sha512 _
       case TpmAlgHash.SHA1   => Crypto.sha1 _
     }
-    val extraData = {
-      hashFunc(
-        authDataBytes concat Crypto.sha256(
-          new ByteArray(clientDataJson.getBytes(StandardCharsets.UTF_8))
-        )
-      )
-    }
+    val extraData = hashFunc(
+      authDataBytes concat Crypto.sha256(clientDataJson)
+    )
+
     val (parameters, unique) = WebAuthnTestCodecs.getCoseKty(cosePubkey) match {
       case 3 => { // RSA
         val cose = CBORObject.DecodeFromBytes(cosePubkey.getBytes)
@@ -972,6 +966,12 @@ object TestAuthenticator {
                 case COSEAlgorithmIdentifier.ES256 => 0x0003
                 case COSEAlgorithmIdentifier.ES384 => 0x0004
                 case COSEAlgorithmIdentifier.ES512 => 0x0005
+                case COSEAlgorithmIdentifier.RS1 |
+                    COSEAlgorithmIdentifier.RS256 |
+                    COSEAlgorithmIdentifier.RS384 |
+                    COSEAlgorithmIdentifier.RS512 |
+                    COSEAlgorithmIdentifier.EdDSA =>
+                  ???
               }))
             )
             .concat(
@@ -1032,23 +1032,20 @@ object TestAuthenticator {
 
     val sig = sign(certInfo, cert.key, cert.alg)
 
-    val f = JsonNodeFactory.instance
-    f
-      .objectNode()
-      .setAll[ObjectNode](
-        Map(
-          "ver" -> ver.map(f.textNode).getOrElse(f.nullNode()),
-          "alg" -> f.numberNode(cert.alg.getId),
-          "x5c" -> f
-            .arrayNode()
-            .addAll(
-              cert.certChain.map(_._1.getEncoded).map(f.binaryNode).asJava
-            ),
-          "sig" -> f.binaryNode(sig.getBytes),
-          "certInfo" -> f.binaryNode(certInfo.getBytes),
-          "pubArea" -> f.binaryNode(pubArea.getBytes),
-        ).asJava
+    jsonMap { f =>
+      Map(
+        "ver" -> ver.map(f.textNode).getOrElse(f.nullNode()),
+        "alg" -> f.numberNode(cert.alg.getId),
+        "x5c" -> f
+          .arrayNode()
+          .addAll(
+            cert.certChain.map(_._1.getEncoded).map(f.binaryNode).asJava
+          ),
+        "sig" -> f.binaryNode(sig.getBytes),
+        "certInfo" -> f.binaryNode(certInfo.getBytes),
+        "pubArea" -> f.binaryNode(pubArea.getBytes),
       )
+    }
   }
 
   def makeAuthDataBytes(
@@ -1124,8 +1121,9 @@ object TestAuthenticator {
       case COSEAlgorithmIdentifier.ES256 => generateEcKeypair("secp256r1")
       case COSEAlgorithmIdentifier.ES384 => generateEcKeypair("secp384r1")
       case COSEAlgorithmIdentifier.ES512 => generateEcKeypair("secp521r1")
-      case COSEAlgorithmIdentifier.RS256 => generateRsaKeypair()
-      case COSEAlgorithmIdentifier.RS1   => generateRsaKeypair()
+      case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS384 |
+          COSEAlgorithmIdentifier.RS512 | COSEAlgorithmIdentifier.RS1 =>
+        generateRsaKeypair()
     }
 
   def generateEcKeypair(curve: String = "secp256r1"): KeyPair = {

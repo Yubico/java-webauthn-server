@@ -53,10 +53,7 @@ public class AttestedCredentialData {
    * The credential public key encoded in COSE_Key format, as defined in Section 7 of <a
    * href="https://tools.ietf.org/html/rfc8152">RFC 8152</a>.
    */
-  @NonNull
-  // TODO: verify requirements
-  // https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attested-credential-data
-  private final ByteArray credentialPublicKey;
+  @NonNull private final ByteArray credentialPublicKey;
 
   @JsonCreator
   private AttestedCredentialData(

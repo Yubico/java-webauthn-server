@@ -61,32 +61,20 @@ class JsonIoSpec
     def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
       val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
-        it("can be serialized to JSON.") {
-          forAll { value: A =>
-            val encoded: String = json.writeValueAsString(value)
-
-            encoded should not be empty
-          }
-        }
-
-        it("can be deserialized from JSON.") {
-          forAll { value: A =>
-            val encoded: String = json.writeValueAsString(value)
-            val decoded: A = json.readValue(encoded, tpe)
-
-            decoded should equal(value)
-          }
-        }
-
         it("is identical after multiple serialization round-trips..") {
-          forAll { value: A =>
+          forAll(minSuccessful(10)) { value: A =>
             val encoded: String = json.writeValueAsString(value)
-            val decoded: A = json.readValue(encoded, tpe)
-            val recoded: String = json.writeValueAsString(decoded)
 
+            val decoded: A = json.readValue(encoded, tpe)
             decoded should equal(value)
+
+            val recoded: String = json.writeValueAsString(decoded)
             recoded should equal(encoded)
+
+            val redecoded: A = json.readValue(recoded, tpe)
+            redecoded should equal(value)
           }
+
         }
       }
     }
@@ -372,7 +360,7 @@ class JsonIoSpec
           val encoded = json.writeValueAsString(tree)
           println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
-          decoded.getAuthenticatorAttachment.asScala should be(None)
+          decoded.getAuthenticatorAttachment.toScala should be(None)
         }
 
         forAll(
@@ -388,7 +376,7 @@ class JsonIoSpec
           println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
 
-          decoded.getAuthenticatorAttachment.asScala should equal(
+          decoded.getAuthenticatorAttachment.toScala should equal(
             Some(authenticatorAttachment)
           )
         }
@@ -402,7 +390,7 @@ class JsonIoSpec
           val encoded = json.writeValueAsString(tree)
           val decoded = json.readValue(encoded, tpe)
 
-          decoded.getAuthenticatorAttachment.asScala should be(None)
+          decoded.getAuthenticatorAttachment.toScala should be(None)
         }
       }
 

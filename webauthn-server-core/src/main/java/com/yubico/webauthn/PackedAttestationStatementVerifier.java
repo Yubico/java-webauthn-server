@@ -106,7 +106,7 @@ final class PackedAttestationStatementVerifier
       throw new RuntimeException(e);
     }
 
-    final Long keyAlgId =
+    final long keyAlgId =
         CBORObject.DecodeFromBytes(
                 attestationObject
                     .getAuthenticatorData()
@@ -115,7 +115,8 @@ final class PackedAttestationStatementVerifier
                     .getCredentialPublicKey()
                     .getBytes())
             .get(CBORObject.FromObject(3))
-            .AsInt64();
+            .AsNumber()
+            .ToInt64IfExact();
     final COSEAlgorithmIdentifier keyAlg =
         COSEAlgorithmIdentifier.fromId(keyAlgId)
             .orElseThrow(
@@ -123,7 +124,7 @@ final class PackedAttestationStatementVerifier
                     new IllegalArgumentException(
                         "Unsupported COSE algorithm identifier: " + keyAlgId));
 
-    final Long sigAlgId = attestationObject.getAttestationStatement().get("alg").asLong();
+    final long sigAlgId = attestationObject.getAttestationStatement().get("alg").asLong();
     final COSEAlgorithmIdentifier sigAlg =
         COSEAlgorithmIdentifier.fromId(sigAlgId)
             .orElseThrow(
@@ -188,7 +189,7 @@ final class PackedAttestationStatementVerifier
                   throw new IllegalArgumentException(
                       "Packed attestation statement must have field \"alg\".");
                 }
-                ExceptionUtil.assure(
+                ExceptionUtil.assertTrue(
                     algNode.isIntegralNumber(),
                     "Field \"alg\" in packed attestation statement must be a COSEAlgorithmIdentifier.");
                 final Long sigAlgId = algNode.asLong();
@@ -275,16 +276,16 @@ final class PackedAttestationStatementVerifier
     final Set<String> countries =
         CollectionUtil.immutableSet(new HashSet<>(Arrays.asList(Locale.getISOCountries())));
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         getDnField("C", cert).filter(countries::contains).isPresent(),
         "Invalid attestation certificate country code: %s",
         getDnField("C", cert));
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         getDnField("O", cert).filter(o -> !((String) o).isEmpty()).isPresent(),
         "Organization (O) field of attestation certificate DN must be present.");
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         getDnField("OU", cert).filter(ouValue::equals).isPresent(),
         "Organization Unit (OU) field of attestation certificate DN must be exactly \"%s\", was: %s",
         ouValue,
@@ -293,12 +294,12 @@ final class PackedAttestationStatementVerifier
     CertificateParser.parseFidoAaguidExtension(cert)
         .ifPresent(
             extensionAaguid -> {
-              ExceptionUtil.assure(
+              ExceptionUtil.assertTrue(
                   Arrays.equals(aaguid.getBytes(), extensionAaguid),
                   "X.509 extension \"id-fido-gen-ce-aaguid\" is present but does not match the authenticator AAGUID.");
             });
 
-    ExceptionUtil.assure(
+    ExceptionUtil.assertTrue(
         cert.getBasicConstraints() == -1, "Attestation certificate must not be a CA certificate.");
 
     return true;

@@ -54,7 +54,7 @@ Release candidate versions
     - Note which JDK version was used to build the artifacts.
 
  7. Check that the ["Reproducible binary"
-    workflow](/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
+    workflow](https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
     runs and succeeds.
 
 
@@ -133,5 +133,5 @@ Release versions
     - Note which JDK version was used to build the artifacts.
 
 12. Check that the ["Reproducible binary"
-    workflow](/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
+    workflow](https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
     runs and succeeds.

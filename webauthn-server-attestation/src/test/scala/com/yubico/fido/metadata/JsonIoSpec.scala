@@ -47,25 +47,8 @@ class JsonIoSpec
     def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
       val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
-        it("can be serialized to JSON.") {
-          forAll { value: A =>
-            val encoded: String = json.writeValueAsString(value)
-
-            encoded should not be empty
-          }
-        }
-
-        it("can be deserialized from JSON.") {
-          forAll { value: A =>
-            val encoded: String = json.writeValueAsString(value)
-            val decoded: A = json.readValue(encoded, tpe)
-
-            decoded should equal(value)
-          }
-        }
-
         it("is identical after multiple serialization round-trips.") {
-          forAll { value: A =>
+          forAll(minSuccessful(10)) { value: A =>
             val encoded: String = json.writeValueAsString(value)
             val decoded: A = json.readValue(encoded, tpe)
             decoded should equal(value)

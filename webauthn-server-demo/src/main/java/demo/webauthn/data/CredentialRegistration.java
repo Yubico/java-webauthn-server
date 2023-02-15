@@ -35,11 +35,11 @@ import java.util.Optional;
 import java.util.SortedSet;
 import lombok.Builder;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
 @Value
 @Builder
-@Wither
+@With
 public class CredentialRegistration {
 
   UserIdentity userIdentity;

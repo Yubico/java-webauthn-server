@@ -5,6 +5,7 @@ plugins {
   signing
   id("info.solidsoft.pitest")
   id("io.github.cosmicsilence.scalafix")
+  id("me.champeau.jmh") version "0.6.8"
 }
 
 description = "Yubico internal utilities"
@@ -24,7 +25,6 @@ dependencies {
   implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-  implementation("com.google.guava:guava")
   implementation("com.upokecenter:cbor")
   implementation("org.slf4j:slf4j-api")
 
@@ -36,6 +36,13 @@ dependencies {
   testImplementation("org.scalatest:scalatest_2.13")
   testImplementation("org.scalatestplus:junit-4-13_2.13")
   testImplementation("org.scalatestplus:scalacheck-1-16_2.13")
+
+  jmhImplementation(platform(project(":test-platform")))
+  jmhRuntimeOnly("org.slf4j:slf4j-nop")
+}
+
+configurations.jmhRuntimeClasspath {
+  exclude(module = "slf4j-test")
 }
 
 
