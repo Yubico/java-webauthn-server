@@ -18,6 +18,10 @@ java {
   targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+tasks.compileJava {
+  options.compilerArgs.addAll(listOf("--release", "8"))
+}
+
 sourceSets {
   create("integrationTest") {
     compileClasspath += sourceSets.main.get().output
