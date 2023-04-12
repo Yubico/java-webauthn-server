@@ -221,19 +221,6 @@ subprojects { project ->
 
 }
 
-// Configure cross-links from webauthn-server-attestation JavaDoc to core JavaDoc
-project(':webauthn-server-attestation').tasks.javadoc {
-  var coreProj = project(':webauthn-server-core')
-  var coreJavadoc = coreProj.tasks.javadoc
-  inputs.files coreJavadoc.outputs.files
-
-  // These links won't work locally, but they will work on developers.yubico.com
-  options.linksOffline("../../webauthn-server-core/${coreProj.version}", "${coreJavadoc.destinationDir}")
-
-  // Use this instead for local testing
-  //options.linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
-}
-
 // The root project has no sources, but the dependency platform also needs to be published as an artifact
 // See https://docs.gradle.org/current/userguide/java_platform_plugin.html
 // See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951

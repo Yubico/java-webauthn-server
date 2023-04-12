@@ -88,6 +88,19 @@ tasks.jar {
   }
 }
 
+// Configure cross-links from webauthn-server-attestation JavaDoc to core JavaDoc
+tasks.javadoc.configure {
+  val coreProj = project(":webauthn-server-core")
+  val coreJavadoc = coreProj.tasks.javadoc.get()
+  inputs.files(coreJavadoc.outputs.files)
+
+  // These links won't work locally, but they will work on developers.yubico.com
+  (options as StandardJavadocDocletOptions).linksOffline("../../webauthn-server-core/${coreProj.version}", "${coreJavadoc.destinationDir}")
+
+  // Use this instead for local testing
+  //(options as StandardJavadocDocletOptions).linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
+}
+
 pitest {
   pitestVersion.set("1.9.5")
   timestampedReports.set(false)
