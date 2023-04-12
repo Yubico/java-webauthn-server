@@ -4,8 +4,6 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.13.0'
-    classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
 plugins {
@@ -88,18 +86,6 @@ subprojects {
     mavenLocal()
     mavenCentral()
   }
-
-  if (project !== project(':test-platform')) {
-    apply plugin: 'com.diffplug.spotless'
-    spotless {
-      java {
-        googleJavaFormat()
-      }
-      scala {
-        scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
-      }
-    }
-  }
 }
 
 allprojects {
@@ -122,24 +108,6 @@ task checkJavaVersionBeforeRelease {
 }
 
 subprojects { project ->
-
-  if (project.plugins.hasPlugin('scala')) {
-    project.scalafix {
-      configFile = rootProject.file('scalafix.conf')
-
-      // Work around dependency resolution issues in April 2022
-      semanticdb {
-        autoConfigure = true
-        version = '4.5.5'
-      }
-    }
-    dependencies.scalafix('com.github.liancheng:organize-imports_2.13:0.6.0')
-    project.tasks.spotlessApply.dependsOn(project.tasks.scalafix)
-    project.tasks.spotlessCheck.dependsOn(project.tasks.checkScalafix)
-    project.tasks.scalafix.finalizedBy(project.tasks.spotlessApply)
-    project.tasks.checkScalafix.finalizedBy(project.tasks.spotlessCheck)
-  }
-
   tasks.withType(JavaCompile) {
     options.compilerArgs += '-Xlint:unchecked'
     options.deprecation = true

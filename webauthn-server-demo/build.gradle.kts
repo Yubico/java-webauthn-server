@@ -3,7 +3,7 @@ plugins {
   war
   application
   scala
-  id("io.github.cosmicsilence.scalafix")
+  `project-convention-code-formatting`
 }
 
 description = "WebAuthn demo"

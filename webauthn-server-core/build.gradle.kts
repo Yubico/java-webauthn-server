@@ -6,8 +6,8 @@ plugins {
   `maven-publish`
   signing
   id("info.solidsoft.pitest")
-  id("io.github.cosmicsilence.scalafix")
   id("me.champeau.jmh") version "0.6.8"
+  `project-convention-code-formatting`
 }
 
 description = "Yubico WebAuthn server core API"

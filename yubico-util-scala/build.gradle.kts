@@ -1,6 +1,6 @@
 plugins {
   scala
-  id("io.github.cosmicsilence.scalafix")
+  `project-convention-code-formatting`
 }
 
 description = "Yubico internal Scala utilities"
