@@ -1,6 +1,5 @@
 plugins {
   `java-library`
-  id("info.solidsoft.pitest")
   id("me.champeau.jmh") version "0.6.8"
   `project-convention-java`
   `project-convention-scala`
@@ -8,6 +7,7 @@ plugins {
   `project-convention-code-formatting`
   `project-convention-archives`
   `project-convention-publish`
+  `project-convention-pitest`
 }
 
 description = "Yubico internal utilities"
@@ -47,19 +47,4 @@ tasks.jar {
       "Implementation-Title" to project.description,
     ))
   }
-}
-
-pitest {
-  pitestVersion.set("1.9.5")
-  timestampedReports.set(false)
-
-  outputFormats.set(listOf("XML", "HTML"))
-
-  avoidCallsTo.set(listOf(
-    "java.util.logging",
-    "org.apache.log4j",
-    "org.slf4j",
-    "org.apache.commons.logging",
-    "com.google.common.io.Closeables",
-  ))
 }

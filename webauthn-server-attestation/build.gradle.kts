@@ -1,12 +1,12 @@
 plugins {
   `java-library`
-  id("info.solidsoft.pitest")
   `project-convention-java`
   `project-convention-scala`
   `project-convention-lombok`
   `project-convention-code-formatting`
   `project-convention-archives`
   `project-convention-publish`
+  `project-convention-pitest`
 }
 
 description = "Yubico WebAuthn attestation subsystem"
@@ -89,19 +89,4 @@ tasks.javadoc.configure {
 
   // Use this instead for local testing
   //(options as StandardJavadocDocletOptions).linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
-}
-
-pitest {
-  pitestVersion.set("1.9.5")
-  timestampedReports.set(false)
-
-  outputFormats.set(listOf("XML", "HTML"))
-
-  avoidCallsTo.set(listOf(
-    "java.util.logging",
-    "org.apache.log4j",
-    "org.slf4j",
-    "org.apache.commons.logging",
-    "com.google.common.io.Closeables",
-  ))
 }
