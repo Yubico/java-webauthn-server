@@ -15,10 +15,8 @@ class which provides the REST API on top of it.
 
 == Quick start
 
-```
-$ ./gradlew run
-$ $BROWSER https://localhost:8443/
-```
+  $ ./gradlew run
+  $ $BROWSER https://localhost:8443/
 
 
 == Architecture
