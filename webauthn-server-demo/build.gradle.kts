@@ -3,6 +3,7 @@ plugins {
   war
   application
   scala
+  `project-convention-lombok`
   `project-convention-code-formatting`
 }
 

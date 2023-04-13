@@ -6,6 +6,7 @@ plugins {
   `maven-publish`
   signing
   id("info.solidsoft.pitest")
+  `project-convention-lombok`
   `project-convention-code-formatting`
 }
 

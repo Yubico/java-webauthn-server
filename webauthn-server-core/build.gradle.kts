@@ -7,6 +7,7 @@ plugins {
   signing
   id("info.solidsoft.pitest")
   id("me.champeau.jmh") version "0.6.8"
+  `project-convention-lombok`
   `project-convention-code-formatting`
 }
 
