@@ -65,13 +65,6 @@ allprojects {
   evaluationDependsOnChildren()
 }
 
-task assembleJavadoc(type: Sync) {
-  from("docs/index.html") {
-    expand project.properties
-  }
-  destinationDir = file("${rootProject.buildDir}/javadoc")
-}
-
 subprojects { project ->
   tasks.withType(JavaCompile) {
     options.compilerArgs += '-Xlint:unchecked'

@@ -55,8 +55,8 @@ jobs:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
         path: "*/build/test-results/**/*.xml"
 
-    - name: Build JavaDoc
-      run: ./gradlew assembleJavadoc
+    - name: Build archives
+      run: ./gradlew assemble
 
   publish-test-results:
     name: Publish test results
