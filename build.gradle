@@ -52,20 +52,12 @@ allprojects {
     downloadJavadoc = true
     downloadSources = true
   }
-}
 
-subprojects {
   repositories {
     mavenLocal()
     mavenCentral()
   }
-}
 
-allprojects {
-  evaluationDependsOnChildren()
-}
-
-subprojects { project ->
   tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild
