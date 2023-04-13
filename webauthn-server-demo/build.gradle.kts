@@ -1,8 +1,8 @@
 plugins {
-  java
   war
   application
-  scala
+  `project-convention-java`
+  `project-convention-scala`
   `project-convention-lombok`
   `project-convention-code-formatting`
 }

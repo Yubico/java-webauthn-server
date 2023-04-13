@@ -1,13 +1,10 @@
 plugins {
-  scala
+  `project-convention-java`
+  `project-convention-scala`
   `project-convention-code-formatting`
 }
 
 description = "Yubico internal Scala utilities"
-
-java {
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
 
 dependencies {
   implementation(platform(rootProject))

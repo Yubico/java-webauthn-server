@@ -66,15 +66,6 @@ allprojects {
 }
 
 subprojects { project ->
-  tasks.withType(JavaCompile) {
-    options.compilerArgs += '-Xlint:unchecked'
-    options.deprecation = true
-    options.encoding = 'UTF-8'
-  }
-  tasks.withType(ScalaCompile) {
-    scalaCompileOptions.additionalParameters = ['-Wunused']
-  }
-
   tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild

@@ -1,7 +1,8 @@
 plugins {
   `java-library`
-  scala
   id("info.solidsoft.pitest")
+  `project-convention-java`
+  `project-convention-scala`
   `project-convention-lombok`
   `project-convention-code-formatting`
   `project-convention-archives`
@@ -9,11 +10,6 @@ plugins {
 }
 
 description = "Yubico WebAuthn attestation subsystem"
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
 
 sourceSets {
   create("integrationTest") {

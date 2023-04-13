@@ -1,8 +1,9 @@
 plugins {
   `java-library`
-  scala
   id("info.solidsoft.pitest")
   id("me.champeau.jmh") version "0.6.8"
+  `project-convention-java`
+  `project-convention-scala`
   `project-convention-lombok`
   `project-convention-code-formatting`
   `project-convention-archives`
@@ -10,11 +11,6 @@ plugins {
 }
 
 description = "Yubico internal utilities"
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
 
 dependencies {
   api(platform(rootProject))
