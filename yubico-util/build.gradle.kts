@@ -1,17 +1,15 @@
 plugins {
   `java-library`
   scala
-  `maven-publish`
-  signing
   id("info.solidsoft.pitest")
   id("me.champeau.jmh") version "0.6.8"
   `project-convention-lombok`
   `project-convention-code-formatting`
+  `project-convention-archives`
+  `project-convention-publish`
 }
 
 description = "Yubico internal utilities"
-
-val publishMe by extra(true)
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -46,14 +44,11 @@ configurations.jmhRuntimeClasspath {
   exclude(module = "slf4j-test")
 }
 
-
 tasks.jar {
   manifest {
     attributes(mapOf(
       "Implementation-Id" to "yubico-util",
       "Implementation-Title" to project.description,
-      "Implementation-Version" to project.version,
-      "Implementation-Vendor" to "Yubico",
     ))
   }
 }

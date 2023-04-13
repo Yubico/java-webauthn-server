@@ -8,9 +8,12 @@ buildscript {
 }
 plugins {
   id 'java-platform'
-  id 'maven-publish'
-  id 'signing'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+
+  // The root project has no sources, but the dependency platform also needs to be published as an artifact
+  // See https://docs.gradle.org/current/userguide/java_platform_plugin.html
+  // See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
+  id 'project-convention-publish'
 }
 
 import com.yubico.gradle.GitUtils
@@ -22,19 +25,6 @@ project.ext.isCiBuild = System.env.CI == 'true'
 project.ext.publishEnabled = !isCiBuild &&
   project.hasProperty('yubicoPublish') && project.yubicoPublish &&
   project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
-
-if (publishEnabled) {
-  nexusPublishing {
-    repositories {
-      sonatype {
-        stagingProfileId = '6c61426e6529d'
-
-        username = ossrhUsername
-        password = ossrhPassword
-      }
-    }
-  }
-}
 
 wrapper {
   gradleVersion = '7.5.1'
@@ -57,8 +47,6 @@ allprojects {
 
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'idea'
-
-  group = 'com.yubico'
 
   idea.module {
     downloadJavadoc = true
@@ -84,14 +72,6 @@ task assembleJavadoc(type: Sync) {
   destinationDir = file("${rootProject.buildDir}/javadoc")
 }
 
-task checkJavaVersionBeforeRelease {
-  doFirst {
-    if (JavaVersion.current() != JavaVersion.VERSION_17) {
-      throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
-    }
-  }
-}
-
 subprojects { project ->
   tasks.withType(JavaCompile) {
     options.compilerArgs += '-Xlint:unchecked'
@@ -102,136 +82,47 @@ subprojects { project ->
     scalaCompileOptions.additionalParameters = ['-Wunused']
   }
 
-  tasks.withType(AbstractArchiveTask) {
-    from(rootProject.file('COPYING'))
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
-  }
-
   tasks.withType(AbstractTestTask) {
     testLogging {
       showStandardStreams = isCiBuild
     }
   }
-
-  tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
-  tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
-  tasks.withType(Sign) {
-    it.dependsOn check
-    dependsOn checkJavaVersionBeforeRelease
-  }
-
-  if (project.hasProperty('publishMe') && project.publishMe) {
-    if (GitUtils.getGitCommit(projectDir) == null) {
-      throw new RuntimeException("Failed to get git commit ID")
-    }
-
-    task sourcesJar(type: Jar) {
-      archiveClassifier = 'sources'
-      from sourceSets.main.allSource
-    }
-
-    javadoc {
-      options.encoding = 'UTF-8'
-      options.addStringOption('charset', 'UTF-8')
-    }
-
-    task javadocJar(type: Jar) {
-      archiveClassifier = 'javadoc'
-      from javadoc
-    }
-
-    publishing {
-      publications {
-        jars(MavenPublication) {
-          from components.java
-          artifact javadocJar
-          artifact sourcesJar
-
-          pom {
-            name = project.name
-            description = project.description
-            url = 'https://developers.yubico.com/java-webauthn-server/'
-
-            developers {
-              developer {
-                id = 'emil'
-                name = 'Emil Lundberg'
-                email = 'emil@yubico.com'
-              }
-            }
-
-            licenses {
-              license {
-                name = 'BSD-license'
-                comments = 'Revised 2-clause BSD license'
-              }
-            }
-
-            scm {
-              url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-              tag = 'HEAD'
-            }
-          }
-        }
-      }
-    }
-
-    if (publishEnabled) {
-      signing {
-        useGpgCmd()
-        sign publishing.publications.jars
-      }
-    }
-  }
-
-}
-
-// The root project has no sources, but the dependency platform also needs to be published as an artifact
-// See https://docs.gradle.org/current/userguide/java_platform_plugin.html
-// See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
-publishing {
-  publications {
-    jars(MavenPublication) {
-      from components.javaPlatform
-
-      pom {
-        name = project.name
-        description = project.description
-        url = 'https://developers.yubico.com/java-webauthn-server/'
-
-        developers {
-          developer {
-            id = 'emil'
-            name = 'Emil Lundberg'
-            email = 'emil@yubico.com'
-          }
-        }
-
-        licenses {
-          license {
-            name = 'BSD-license'
-            comments = 'Revised 2-clause BSD license'
-          }
-        }
-
-        scm {
-          url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-          connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-          developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-          tag = 'HEAD'
-        }
-      }
-    }
-  }
 }
 
 if (publishEnabled) {
-  signing {
-    useGpgCmd()
-    sign publishing.publications.jars
+  nexusPublishing {
+    repositories {
+      sonatype {
+        stagingProfileId = '6c61426e6529d'
+
+        username = ossrhUsername
+        password = ossrhPassword
+      }
+    }
+  }
+
+  task checkJavaVersionBeforeRelease {
+    doFirst {
+      if (JavaVersion.current() != JavaVersion.VERSION_17) {
+        throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
+      }
+    }
+  }
+
+  allprojects {
+    tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
+    tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
+    tasks.withType(Sign) {
+      dependsOn checkJavaVersionBeforeRelease
+    }
+
+    tasks.withType(Jar) {
+      doFirst {
+        if (GitUtils.getGitCommit(projectDir) == null) {
+          throw new RuntimeException("Failed to get git commit ID")
+        }
+      }
+    }
   }
 }
 

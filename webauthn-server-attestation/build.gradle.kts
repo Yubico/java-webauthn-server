@@ -1,18 +1,14 @@
-import com.yubico.gradle.GitUtils
-
 plugins {
   `java-library`
   scala
-  `maven-publish`
-  signing
   id("info.solidsoft.pitest")
   `project-convention-lombok`
   `project-convention-code-formatting`
+  `project-convention-archives`
+  `project-convention-publish`
 }
 
 description = "Yubico WebAuthn attestation subsystem"
-
-val publishMe by extra(true)
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -82,9 +78,6 @@ tasks.jar {
     attributes(mapOf(
       "Implementation-Id" to "java-webauthn-server-attestation",
       "Implementation-Title" to project.description,
-      "Implementation-Version" to project.version,
-      "Implementation-Vendor" to "Yubico",
-      "Git-Commit" to GitUtils.getGitCommitOrUnknown(projectDir),
     ))
   }
 }
