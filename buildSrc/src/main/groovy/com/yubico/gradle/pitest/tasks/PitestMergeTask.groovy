@@ -18,8 +18,10 @@ class PitestMergeTask extends DefaultTask {
 
   PitestMergeTask() {
     project.subprojects.each { subproject ->
-      subproject.tasks.withType(PitestTask).each { pitestTask ->
-        inputs.files pitestTask.outputs.files
+      subproject.afterEvaluate {
+        subproject.tasks.withType(PitestTask).each { pitestTask ->
+          this.inputs.files pitestTask.outputs.files
+        }
       }
     }
   }
