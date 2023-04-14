@@ -67,6 +67,13 @@ jobs:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
         path: "*/build/test-results/**/*.xml"
 
+    - name: Check binary reproducibility
+      run: |
+        ./gradlew clean jar
+        find . -name '*.jar' | xargs sha256sum | tee checksums.sha256sum
+        ./gradlew clean jar && sha256sum -c checksums.sha256sum
+        ./gradlew clean jar && sha256sum -c checksums.sha256sum
+
   publish-test-results:
     name: Publish test results
     needs: test
