@@ -9,45 +9,48 @@ project.tasks.withType(Sign.class) {
     it.dependsOn(check)
 }
 
-publishing {
-    publications {
-        jars(MavenPublication.class) {
-            project.components.forEach {
-                from(it)
-            }
-
-            pom {
-                name = project.name
-                description = project.description
-                url = "https://developers.yubico.com/java-webauthn-server/"
-
-                developers {
-                    developer {
-                        id = "emil"
-                        name = "Emil Lundberg"
-                        email = "emil@yubico.com"
-                    }
+// afterEvaluate needed for project.description to be set when this evaluates
+project.afterEvaluate {
+    publishing {
+        publications {
+            jars(MavenPublication.class) {
+                project.components.forEach {
+                    from(it)
                 }
 
-                licenses {
-                    license {
-                        name = "BSD-license"
-                        comments = "Revised 2-clause BSD license"
-                    }
-                }
+                pom {
+                    name = project.name
+                    description = project.description
+                    url = "https://developers.yubico.com/java-webauthn-server/"
 
-                scm {
-                    url = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
-                    connection = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
-                    developerConnection = "scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git"
-                    tag = "HEAD"
+                    developers {
+                        developer {
+                            id = "emil"
+                            name = "Emil Lundberg"
+                            email = "emil@yubico.com"
+                        }
+                    }
+
+                    licenses {
+                        license {
+                            name = "BSD-license"
+                            comments = "Revised 2-clause BSD license"
+                        }
+                    }
+
+                    scm {
+                        url = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
+                        connection = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
+                        developerConnection = "scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git"
+                        tag = "HEAD"
+                    }
                 }
             }
         }
     }
-}
 
-signing {
-    useGpgCmd()
-    sign(publishing.publications.jars)
+    signing {
+        useGpgCmd()
+        sign(publishing.publications.jars)
+    }
 }
