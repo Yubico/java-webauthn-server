@@ -1,0 +1,29 @@
+import com.yubico.gradle.GitUtils
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+javadoc {
+    options.encoding = "UTF-8"
+    options.addStringOption("charset", "UTF-8")
+}
+
+project.tasks.withType(Jar.class) {
+    manifest {
+        attributes([
+            "Implementation-Id": "java-webauthn-server",
+            "Implementation-Version": project.version,
+            "Implementation-Vendor": "Yubico",
+            "Implementation-Source-Url": "https://github.com/Yubico/java-webauthn-server",
+            "Git-Commit": GitUtils.getGitCommitOrUnknown(projectDir),
+        ])
+    }
+}
+
+project.tasks.withType(AbstractArchiveTask.class) {
+    from(project.rootProject.file("COPYING"))
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}

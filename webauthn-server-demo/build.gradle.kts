@@ -1,9 +1,10 @@
 plugins {
-  java
   war
   application
-  scala
-  id("io.github.cosmicsilence.scalafix")
+  `project-convention-java`
+  `project-convention-scala`
+  `project-convention-lombok`
+  `project-convention-code-formatting`
 }
 
 description = "WebAuthn demo"

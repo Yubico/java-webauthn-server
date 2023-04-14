@@ -4,20 +4,18 @@ buildscript {
   }
   dependencies {
     classpath 'com.cinnober.gradle:semver-git:2.5.0'
-    classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.13.0'
-    classpath 'io.github.cosmicsilence:gradle-scalafix:0.1.13'
   }
 }
 plugins {
   id 'java-platform'
-  id 'maven-publish'
-  id 'signing'
   id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
-  id 'io.franzbecker.gradle-lombok' version '5.0.0'
+
+  // The root project has no sources, but the dependency platform also needs to be published as an artifact
+  // See https://docs.gradle.org/current/userguide/java_platform_plugin.html
+  // See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
+  id 'project-convention-publish'
 }
 
-import io.franzbecker.gradle.lombok.LombokPlugin
-import io.franzbecker.gradle.lombok.task.DelombokTask
 import com.yubico.gradle.GitUtils
 
 rootProject.description = "Metadata root for the com.yubico:webauthn-server-* module family"
@@ -27,19 +25,6 @@ project.ext.isCiBuild = System.env.CI == 'true'
 project.ext.publishEnabled = !isCiBuild &&
   project.hasProperty('yubicoPublish') && project.yubicoPublish &&
   project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
-
-if (publishEnabled) {
-  nexusPublishing {
-    repositories {
-      sonatype {
-        stagingProfileId = '6c61426e6529d'
-
-        username = ossrhUsername
-        password = ossrhPassword
-      }
-    }
-  }
-}
 
 wrapper {
   gradleVersion = '7.5.1'
@@ -63,96 +48,13 @@ allprojects {
   apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'idea'
 
-  group = 'com.yubico'
-
   idea.module {
     downloadJavadoc = true
     downloadSources = true
   }
-}
-
-subprojects {
-  apply plugin: LombokPlugin
-
-  lombok {
-    version '1.18.24'
-    sha256 = 'd3584bc2db03f059f984fb0a9c119aac1fa0da578a448e69fc3f68b36584c749'
-  }
-  tasks.withType(AbstractCompile) {
-    if (tasks.findByName('verifyLombok')) {
-      dependsOn tasks.verifyLombok
-    }
-  }
 
   repositories {
-    mavenLocal()
     mavenCentral()
-  }
-
-  if (project !== project(':test-platform')) {
-    apply plugin: 'com.diffplug.spotless'
-    spotless {
-      java {
-        googleJavaFormat()
-      }
-      scala {
-        scalafmt('2.6.3').configFile(rootProject.file('scalafmt.conf'))
-      }
-    }
-  }
-}
-
-allprojects {
-  evaluationDependsOnChildren()
-}
-
-task assembleJavadoc(type: Sync) {
-  from("docs/index.html") {
-    expand project.properties
-  }
-  destinationDir = file("${rootProject.buildDir}/javadoc")
-}
-
-task checkJavaVersionBeforeRelease {
-  doFirst {
-    if (JavaVersion.current() != JavaVersion.VERSION_17) {
-      throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
-    }
-  }
-}
-
-subprojects { project ->
-
-  if (project.plugins.hasPlugin('scala')) {
-    project.scalafix {
-      configFile = rootProject.file('scalafix.conf')
-
-      // Work around dependency resolution issues in April 2022
-      semanticdb {
-        autoConfigure = true
-        version = '4.5.5'
-      }
-    }
-    dependencies.scalafix('com.github.liancheng:organize-imports_2.13:0.6.0')
-    project.tasks.spotlessApply.dependsOn(project.tasks.scalafix)
-    project.tasks.spotlessCheck.dependsOn(project.tasks.checkScalafix)
-    project.tasks.scalafix.finalizedBy(project.tasks.spotlessApply)
-    project.tasks.checkScalafix.finalizedBy(project.tasks.spotlessCheck)
-  }
-
-  tasks.withType(JavaCompile) {
-    options.compilerArgs += '-Xlint:unchecked'
-    options.deprecation = true
-    options.encoding = 'UTF-8'
-  }
-  tasks.withType(ScalaCompile) {
-    scalaCompileOptions.additionalParameters = ['-Wunused']
-  }
-
-  tasks.withType(AbstractArchiveTask) {
-    from(rootProject.file('COPYING'))
-    preserveFileTimestamps = false
-    reproducibleFileOrder = true
   }
 
   tasks.withType(AbstractTestTask) {
@@ -160,158 +62,42 @@ subprojects { project ->
       showStandardStreams = isCiBuild
     }
   }
-
-  tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
-  tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
-  tasks.withType(Sign) {
-    it.dependsOn check
-    dependsOn checkJavaVersionBeforeRelease
-  }
-
-  if (project.hasProperty('publishMe') && project.publishMe) {
-    task sourcesJar(type: Jar) {
-      archiveClassifier = 'sources'
-      from sourceSets.main.allSource
-    }
-
-    task delombok(type: DelombokTask, dependsOn: classes) {
-      ext.outputDir = file("${buildDir}/delombok")
-      outputs.dir outputDir
-      sourceSets.main.java.srcDirs.each {
-        if (!it.exists()) {
-          it.mkdirs()
-        }
-        inputs.dir it
-        args(it, '-d', outputDir)
-      }
-      doFirst {
-        outputDir.deleteDir()
-      }
-    }
-
-    javadoc {
-      dependsOn delombok
-      source = delombok.outputDir
-      options.encoding = 'UTF-8'
-      options.addStringOption('charset', 'UTF-8')
-    }
-
-    task javadocJar(type: Jar) {
-      archiveClassifier = 'javadoc'
-      from javadoc
-    }
-  }
-
-  if (project.hasProperty('publishMe') && project.publishMe) {
-
-    if (GitUtils.getGitCommit(projectDir) == null) {
-      throw new RuntimeException("Failed to get git commit ID")
-    }
-
-    publishing {
-      publications {
-        jars(MavenPublication) {
-          from components.java
-          artifact javadocJar
-          artifact sourcesJar
-
-          pom {
-            name = project.name
-            description = project.description
-            url = 'https://developers.yubico.com/java-webauthn-server/'
-
-            developers {
-              developer {
-                id = 'emil'
-                name = 'Emil Lundberg'
-                email = 'emil@yubico.com'
-              }
-            }
-
-            licenses {
-              license {
-                name = 'BSD-license'
-                comments = 'Revised 2-clause BSD license'
-              }
-            }
-
-            scm {
-              url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-              developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-              tag = 'HEAD'
-            }
-          }
-        }
-      }
-    }
-
-    if (publishEnabled) {
-      signing {
-        useGpgCmd()
-        sign publishing.publications.jars
-      }
-    }
-  }
-
-}
-
-// Configure cross-links from webauthn-server-attestation JavaDoc to core JavaDoc
-project(':webauthn-server-attestation').tasks.javadoc {
-  var coreProj = project(':webauthn-server-core')
-  var coreJavadoc = coreProj.tasks.javadoc
-  inputs.files coreJavadoc.outputs.files
-
-  // These links won't work locally, but they will work on developers.yubico.com
-  options.linksOffline("../../webauthn-server-core/${coreProj.version}", "${coreJavadoc.destinationDir}")
-
-  // Use this instead for local testing
-  //options.linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
-}
-
-// The root project has no sources, but the dependency platform also needs to be published as an artifact
-// See https://docs.gradle.org/current/userguide/java_platform_plugin.html
-// See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
-publishing {
-  publications {
-    jars(MavenPublication) {
-      from components.javaPlatform
-
-      pom {
-        name = project.name
-        description = project.description
-        url = 'https://developers.yubico.com/java-webauthn-server/'
-
-        developers {
-          developer {
-            id = 'emil'
-            name = 'Emil Lundberg'
-            email = 'emil@yubico.com'
-          }
-        }
-
-        licenses {
-          license {
-            name = 'BSD-license'
-            comments = 'Revised 2-clause BSD license'
-          }
-        }
-
-        scm {
-          url = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-          connection = 'scm:git:git://github.com/Yubico/java-webauthn-server.git'
-          developerConnection = 'scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git'
-          tag = 'HEAD'
-        }
-      }
-    }
-  }
 }
 
 if (publishEnabled) {
-  signing {
-    useGpgCmd()
-    sign publishing.publications.jars
+  nexusPublishing {
+    repositories {
+      sonatype {
+        stagingProfileId = '6c61426e6529d'
+
+        username = ossrhUsername
+        password = ossrhPassword
+      }
+    }
+  }
+
+  task checkJavaVersionBeforeRelease {
+    doFirst {
+      if (JavaVersion.current() != JavaVersion.VERSION_17) {
+        throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
+      }
+    }
+  }
+
+  allprojects {
+    tasks.withType(AbstractCompile) { shouldRunAfter checkJavaVersionBeforeRelease }
+    tasks.withType(AbstractTestTask) { shouldRunAfter checkJavaVersionBeforeRelease }
+    tasks.withType(Sign) {
+      dependsOn checkJavaVersionBeforeRelease
+    }
+
+    tasks.withType(Jar) {
+      doFirst {
+        if (GitUtils.getGitCommit(projectDir) == null) {
+          throw new RuntimeException("Failed to get git commit ID")
+        }
+      }
+    }
   }
 }
 
