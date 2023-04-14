@@ -1,8 +1,11 @@
 == Version 2.4.1 (unreleased) ==
 
+Fixes:
+
 * Removed version constraints on non-core Jackson modules; Jackson ships its own
   BOM constraints to align module versions.
 * Fixed incompatibility with Jackson version 2.15.0-rc1 and later.
+* Fixed linking issue when running in Java 8
 
 
 == Version 2.4.0 ==
