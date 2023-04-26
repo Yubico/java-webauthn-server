@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 17, 20]
+        java: [8, 11, 17, 18]
         distribution: [temurin]
         include:
           - java: 17
@@ -72,10 +72,10 @@ jobs:
 
     - name: Check binary reproducibility
       run: |
-        ./gradlew clean jar
+        ./gradlew clean primaryPublishJar
         find . -name '*.jar' | xargs sha256sum | tee checksums.sha256sum
-        ./gradlew clean jar && sha256sum -c checksums.sha256sum
-        ./gradlew clean jar && sha256sum -c checksums.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c checksums.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c checksums.sha256sum
 
   publish-test-results:
     name: Publish test results

@@ -10,6 +10,10 @@ javadoc {
     options.addStringOption("charset", "UTF-8")
 }
 
+project.tasks.create("primaryPublishJar") {
+    dependsOn(project.tasks.jar)
+}
+
 project.tasks.withType(Jar.class) {
     manifest {
         attributes([

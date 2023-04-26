@@ -27,7 +27,7 @@ project.ext.publishEnabled = !isCiBuild &&
   project.hasProperty('ossrhUsername') && project.hasProperty('ossrhPassword')
 
 wrapper {
-  gradleVersion = '7.5.1'
+  gradleVersion = '8.1.1'
 }
 
 dependencies {

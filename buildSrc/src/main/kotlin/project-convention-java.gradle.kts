@@ -5,7 +5,7 @@ plugins {
 java {
     toolchain {
         // Java 8 binaries are not reproducible
-        languageVersion.set(JavaLanguageVersion.of(10))
+        languageVersion.set(JavaLanguageVersion.of(11))
     }
 }
 
