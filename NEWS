@@ -2,8 +2,9 @@
 
 Fixes:
 
-* Removed version constraints on non-core Jackson modules; Jackson ships its own
-  BOM constraints to align module versions.
+* Added explicit `dependencyManagement` dependencies on `jackson-bom`, and
+  replaced version constraints on other Jackson modules with version constraint
+  on `jackson-bom`.
 * Fixed incompatibility with Jackson version 2.15.0-rc1 and later.
 * Fixed linking issue when running in Java 8.
 
