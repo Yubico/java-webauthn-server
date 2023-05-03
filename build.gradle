@@ -32,9 +32,10 @@ wrapper {
 
 dependencies {
   constraints {
+    api(constraintLibs.bundles.jackson)
+    api(constraintLibs.cbor)
     api(constraintLibs.cose)
     api(constraintLibs.guava)
-    api(constraintLibs.cbor)
     api(constraintLibs.httpclient5)
     api(constraintLibs.slf4j)
   }

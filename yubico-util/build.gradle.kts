@@ -16,7 +16,6 @@ dependencies {
   api(platform(rootProject))
 
   api("com.fasterxml.jackson.core:jackson-databind")
-  api(platform(constraintLibs.jackson.bom))
 
   implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-cbor")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")

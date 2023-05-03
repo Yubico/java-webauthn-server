@@ -15,7 +15,6 @@ description = "Yubico WebAuthn server core API"
 dependencies {
   api(platform(rootProject))
 
-  implementation(platform(constraintLibs.jackson.bom))
   implementation(project(":yubico-util"))
   implementation("com.augustcellars.cose:cose-java")
   implementation("com.fasterxml.jackson.core:jackson-databind")

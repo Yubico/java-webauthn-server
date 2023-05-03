@@ -30,7 +30,6 @@ dependencies {
 
   api(project(":webauthn-server-core"))
 
-  implementation(platform(constraintLibs.jackson.bom))
   implementation(project(":yubico-util"))
   implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("org.slf4j:slf4j-api")
