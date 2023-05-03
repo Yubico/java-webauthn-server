@@ -32,11 +32,11 @@ wrapper {
 
 dependencies {
   constraints {
-    api('com.augustcellars.cose:cose-java:[1.0.0,2)')
-    api('com.google.guava:guava:[24.1.1,32)')
-    api('com.upokecenter:cbor:[4.5.1,5)')
-    api('org.apache.httpcomponents.client5:httpclient5:[5.0.0,6)')
-    api('org.slf4j:slf4j-api:[1.7.25,3)')
+    api(constraintLibs.cose)
+    api(constraintLibs.guava)
+    api(constraintLibs.cbor)
+    api(constraintLibs.httpclient5)
+    api(constraintLibs.slf4j)
   }
 }
 
