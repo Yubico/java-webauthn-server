@@ -1,10 +1,11 @@
 == Version 2.4.1 (unreleased) ==
 
+Changes:
+
+* Added explicit version constraint on `jackson-bom`.
+
 Fixes:
 
-* Added explicit `dependencyManagement` dependencies on `jackson-bom`, and
-  replaced version constraints on other Jackson modules with version constraint
-  on `jackson-bom`.
 * Fixed incompatibility with Jackson version 2.15.0-rc1 and later.
 * Fixed linking issue when running in Java 8.
 
