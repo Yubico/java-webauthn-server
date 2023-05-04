@@ -102,7 +102,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-attestation:2.4.1'
+implementation("com.yubico:webauthn-server-attestation:2.4.1")
 ----------
 
 

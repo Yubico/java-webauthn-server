@@ -72,7 +72,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-core:2.4.1'
+implementation("com.yubico:webauthn-server-core:2.4.1")
 ----------
 
 NOTE: You may need additional dependencies with JCA providers to support some signature algorithms.
