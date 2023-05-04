@@ -3,8 +3,10 @@ package com.yubico.internal.util;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -19,13 +21,15 @@ public class JacksonCodecs {
   }
 
   public static ObjectMapper json() {
-    return new ObjectMapper()
+    return JsonMapper.builder()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .setSerializationInclusion(Include.NON_ABSENT)
-        .setBase64Variant(Base64Variants.MODIFIED_FOR_URL)
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule());
+        .configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true)
+        .serializationInclusion(Include.NON_ABSENT)
+        .defaultBase64Variant(Base64Variants.MODIFIED_FOR_URL)
+        .addModule(new Jdk8Module())
+        .addModule(new JavaTimeModule())
+        .build();
   }
 
   public static CBORObject deepCopy(CBORObject a) {

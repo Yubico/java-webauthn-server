@@ -59,6 +59,14 @@ jobs:
         java --version
         ./gradlew jar
 
+    - name: Print checksums
+      run: |
+        for sumprog in md5sum sha1sum sha256sum; do
+          echo $sumprog
+          $sumprog webauthn-server-attestation/build/libs/webauthn-server-attestation-${{ github.ref_name }}.jar
+          $sumprog webauthn-server-core/build/libs/webauthn-server-core-${{ github.ref_name }}.jar
+        done
+
     - name: Retrieve keyring and signatures
       uses: actions/download-artifact@v3
       with:

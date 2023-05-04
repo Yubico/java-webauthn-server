@@ -1,23 +1,16 @@
-import com.yubico.gradle.GitUtils
-
 plugins {
   `java-library`
-  scala
-  `maven-publish`
-  signing
-  id("info.solidsoft.pitest")
-  id("io.github.cosmicsilence.scalafix")
   id("me.champeau.jmh") version "0.6.8"
+  `project-convention-java`
+  `project-convention-scala`
+  `project-convention-lombok`
+  `project-convention-code-formatting`
+  `project-convention-archives`
+  `project-convention-publish`
+  `project-convention-pitest`
 }
 
 description = "Yubico WebAuthn server core API"
-
-val publishMe by extra(true)
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
 
 dependencies {
   api(platform(rootProject))
@@ -59,39 +52,18 @@ configurations.jmhRuntimeClasspath {
   exclude(module = "slf4j-test")
 }
 
-tasks.jar {
+tasks.withType(Jar::class) {
   manifest {
     attributes(mapOf(
+      "Implementation-Title" to "Yubico Web Authentication server library",
+
       "Specification-Title" to "Web Authentication: An API for accessing Public Key Credentials",
       "Specification-Version" to "Level 2 Proposed Recommendation 2021-04-08",
       "Specification-Vendor" to "World Wide Web Consortium",
-
       "Specification-Url" to "https://www.w3.org/TR/2021/REC-webauthn-2-20210408/",
       "Specification-Url-Latest" to "https://www.w3.org/TR/webauthn-2/",
       "Specification-W3c-Status" to "recommendation",
       "Specification-Release-Date" to "2021-04-08",
-
-      "Implementation-Id" to "java-webauthn-server",
-      "Implementation-Title" to "Yubico Web Authentication server library",
-      "Implementation-Version" to project.version,
-      "Implementation-Vendor" to "Yubico",
-      "Implementation-Source-Url" to "https://github.com/Yubico/java-webauthn-server",
-      "Git-Commit" to GitUtils.getGitCommitOrUnknown(projectDir),
     ))
   }
-}
-
-pitest {
-  pitestVersion.set("1.9.5")
-  timestampedReports.set(false)
-
-  outputFormats.set(listOf("XML", "HTML"))
-
-  avoidCallsTo.set(listOf(
-    "java.util.logging",
-    "org.apache.log4j",
-    "org.slf4j",
-    "org.apache.commons.logging",
-    "com.google.common.io.Closeables",
-  ))
 }

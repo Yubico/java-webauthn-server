@@ -21,7 +21,7 @@ This module does four things:
 - Re-download the metadata BLOB when out of date or invalid.
 - Provide utilities for selecting trusted metadata entries and authenticators.
 - Integrate with the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
   class in the base library, to provide trust root certificates
   for verifying attestation statements during credential registrations.
 
@@ -30,18 +30,18 @@ Notable *non-features* include:
 - *Scheduled BLOB downloads.*
 +
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
 class will attempt to download a new BLOB only when its
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
 or
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
 method is executed.
 As the names suggest,
 `loadCachedBlob()` downloads a new BLOB only if the cache is empty
 or the cached BLOB is invalid or out of date,
 while `refreshBlob()` always downloads a new BLOB and falls back
 to the cached BLOB only when the new BLOB is invalid in some way.
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
 will never re-download a new BLOB once instantiated.
 +
 You should use some external scheduling mechanism to re-run `loadCachedBlob()`
@@ -54,12 +54,12 @@ classes keep no internal mutable state.
 +
 The FIDO Metadata Service may from time to time report security issues with particular authenticator models.
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
 class can be configured with a filter for which authenticators to trust,
 and untrusted authenticators can be rejected during registration by setting
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`]
 on
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`],
 but this will not affect any credentials already registered.
 
 
@@ -94,7 +94,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-attestation</artifactId>
-  <version>2.4.0</version>
+  <version>2.4.1</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -102,7 +102,7 @@ Maven:
 Gradle:
 
 ----------
-compile 'com.yubico:webauthn-server-attestation:2.4.0'
+compile 'com.yubico:webauthn-server-attestation:2.4.1'
 ----------
 
 
@@ -111,7 +111,7 @@ compile 'com.yubico:webauthn-server-attestation:2.4.0'
 This library uses link:https://semver.org/[semantic versioning].
 The public API consists of all public classes, methods and fields in the `com.yubico.fido.metadata` package and its subpackages,
 i.e., everything covered by the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/package-summary.html[Javadoc].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/package-summary.html[Javadoc].
 
 Package-private classes and methods are NOT part of the public API.
 The `com.yubico:yubico-util` module is NOT part of the public API.
@@ -120,26 +120,26 @@ Breaking changes to these will NOT be reflected in version numbers.
 
 == Getting started
 
-Using this module consists of 4 major steps:
+Using this module consists of 5 major steps:
 
  1. Create a
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
     instance to download and cache metadata BLOBs,
     and a
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
     instance to make use of the downloaded BLOB.
     See the JavaDoc for these classes for details on how to construct them.
 +
 [WARNING]
 =====
 Unlike other classes in this module and the core library,
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
 is NOT THREAD SAFE since its
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
 methods read and write caches.
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`],
 on the other hand, is thread safe,
 and `FidoMetadataDownloader` instances can be reused
 for subsequent `loadCachedBlob()` and `refreshBlob()` calls
@@ -162,18 +162,18 @@ FidoMetadataService mds = FidoMetadataService.builder()
 ----------
 
  2. Set the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
     as the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
     on your
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
     instance,
     and set
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationConveyancePreference(com.yubico.webauthn.data.AttestationConveyancePreference)[`attestationConveyancePreference(AttestationConveyancePreference.DIRECT)`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationConveyancePreference(com.yubico.webauthn.data.AttestationConveyancePreference)[`attestationConveyancePreference(AttestationConveyancePreference.DIRECT)`]
     on `RelyingParty`
     to request an attestation statement for new registrations.
     Optionally also set
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`]
     on `RelyingParty` to require trusted attestation for new registrations.
 +
 [source,java]
@@ -188,9 +188,9 @@ RelyingParty rp = RelyingParty.builder()
 ----------
 
  3. After performing registrations, inspect the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RegistrationResult.html#isAttestationTrusted()[`isAttestationTrusted()`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html#isAttestationTrusted()[`isAttestationTrusted()`]
     result in
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
     to determine whether the authenticator presented an attestation statement that could be verified
     by any of the trusted attestation certificates in the FIDO Metadata Service.
 +
@@ -207,7 +207,7 @@ if (result.isAttestationTrusted()) {
 ----------
 
  4. If needed, use the `findEntries` methods of
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
     to retrieve additional authenticator metadata for new registrations.
 +
 [source,java]
@@ -218,31 +218,34 @@ RegistrationResult result = rp.finishRegistration(/* ... */);
 Set<MetadataBLOBPayloadEntry> metadata = mds.findEntries(result);
 ----------
 
-By default,
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
-will probably use the SUN provider for the `PKIX` certificate path validation algorithm.
-This requires the `com.sun.security.enableCRLDP` system property set to `true` in order to verify the BLOB signature.
+ 5. If you use the SUN provider for the `PKIX` certificate path validation algorithm, which many deployments do by default:
+    set the `com.sun.security.enableCRLDP` system property to `true`.
+    This is required for the SUN `PKIX` provider to support the CRL Distribution Points extension,
+    which is needed in order to verify the BLOB signature.
++
 For example, this can be done on the JVM command line using a `-Dcom.sun.security.enableCRLDP=true` option.
-See the https://docs.oracle.com/javase/9/security/java-pki-programmers-guide.htm#JSSEC-GUID-EB250086-0AC1-4D60-AE2A-FC7461374746[Java PKI Programmers Guide]
+See the https://docs.oracle.com/javase/9/security/java-pki-programmers-guide.htm#GUID-EB250086-0AC1-4D60-AE2A-FC7461374746__SECTION-139-623E860E[Java PKI Programmers Guide]
 for details.
++
+This step may not be necessary if you use a different provider for the `PKIX` certificate path validation algorithm.
 
 
 == Selecting trusted authenticators
 
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
 class can be configured with filters for which authenticators to trust.
 When the `FidoMetadataService` is used as the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
 in
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`],
 this will be reflected in the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RegistrationResult.html#isAttestationTrusted()[`.isAttestationTrusted()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html#isAttestationTrusted()[`.isAttestationTrusted()`]
 result in
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`].
 Any authenticators not trusted will also be rejected for new registrations
 if you set
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`]
 on `RelyingParty`.
 
 The filter has two stages: a "prefilter" which selects metadata entries to include in the data source,
@@ -305,17 +308,17 @@ entry,
 and the default registration-time filter excludes any authenticator
 with a matching `ATTESTATION_KEY_COMPROMISE` status report entry.
 To customize the filters, configure the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.FidoMetadataServiceBuilder.html#prefilter(java.util.function.Predicate)[`.prefilter(Predicate)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.FidoMetadataServiceBuilder.html#prefilter(java.util.function.Predicate)[`.prefilter(Predicate)`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.FidoMetadataServiceBuilder.html#filter(java.util.function.Predicate)[`.filter(Predicate)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.FidoMetadataServiceBuilder.html#filter(java.util.function.Predicate)[`.filter(Predicate)`]
 settings in
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`].
 The filters are predicate functions;
 each metadata entry will be included in the data source if and only if the prefilter predicate returns `true` for that entry.
 Similarly during registration or metadata lookup, the authenticator will be matched with each metadata entry
 only if the registration-time filter returns `true` for that pair of authenticator and metadata entry.
 You can also use the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.Filters.html#allOf(java.util.function.Predicate\...)[`FidoMetadataService.Filters.allOf()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.Filters.html#allOf(java.util.function.Predicate\...)[`FidoMetadataService.Filters.allOf()`]
 combinator to merge several predicates into one.
 
 [NOTE]
@@ -325,10 +328,10 @@ This is true for both the prefilter and the registration-time filter.
 If you want to maintain the default filter in addition to the new behaviour,
 you must include the default condition in the new filter.
 For example, you can use
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.Filters.html#allOf(java.util.function.Predicate\...)[`FidoMetadataService.Filters.allOf()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.Filters.html#allOf(java.util.function.Predicate\...)[`FidoMetadataService.Filters.allOf()`]
 to combine a predefined filter with a custom one.
 The default filters are available via static functions in
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.Filters.html[`FidoMetadataService.Filters`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.Filters.html[`FidoMetadataService.Filters`].
 =====
 
 
@@ -349,9 +352,9 @@ This is why any enforceable attestation policy must disallow unknown trust roots
 
 Note that unknown and untrusted attestation is allowed by default,
 but can be disallowed by explicitly configuring
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
 with
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#allowUntrustedAttestation(boolean)[`.allowUntrustedAttestation(false)`].
 
 
 == Alignment with FIDO MDS spec
@@ -361,17 +364,17 @@ link:https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.h
 The library implements these as closely as possible, but with some slight departures from the spec:
 
 * Processing rules steps 1-7 are implemented as specified, by the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
   class.
   All "SHOULD" clauses are also respected, with some caveats:
 
  ** Step 3 states "The `nextUpdate` field of the Metadata BLOB specifies a date when the download SHOULD occur at latest".
     `FidoMetadataDownloader` does not automatically re-download the BLOB.
     Instead, each time the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html#loadCachedBlob()[`loadCachedBlob()`]
     method is executed it checks whether a new BLOB should be downloaded.
     The
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html#refreshBlob()[`refreshBlob()`]
     method always attempts to download a new BLOB when executed,
     but also does not trigger re-downloads automatically.
 +
@@ -383,7 +386,7 @@ until the next execution of `.loadCachedBlob()` or `.refreshBlob()`.
 
 * Metadata entries are not stored or cached individually, instead the BLOB is cached as a whole.
   In processing rules step 8, neither `FidoMetadataDownloader` nor
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
   performs any comparison between versions of a metadata entry.
   Policy for ignoring metadata entries can be configured via the filter settings in `FidoMetadataService`.
   See above for details.
@@ -395,7 +398,7 @@ There are also some other requirements throughout the spec, which may not be obv
   states that "The Relying party MUST reject the Metadata Statement if the `authenticatorVersion` has not increased"
   in an `UPDATE_AVAILABLE` status report.
   Thus,
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
   silently ignores any `MetadataBLOBPayloadEntry`
   whose `metadataStatement.authenticatorVersion` is present and not greater than or equal to
   the `authenticatorVersion` in the respective status report.
@@ -405,16 +408,16 @@ There are also some other requirements throughout the spec, which may not be obv
   link:https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#info-statuses[AuthenticatorStatus section]
   states that "FIDO Servers MUST silently ignore all unknown AuthenticatorStatus values".
   Thus any unknown status values will be parsed as
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/AuthenticatorStatus.html#UNKNOWN[`AuthenticatorStatus.UNKNOWN`],
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/AuthenticatorStatus.html#UNKNOWN[`AuthenticatorStatus.UNKNOWN`],
   and
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/MetadataBLOBPayloadEntry.html[`MetadataBLOBPayloadEntry`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/MetadataBLOBPayloadEntry.html[`MetadataBLOBPayloadEntry`]
   will silently ignore any status report with that status.
 
 
 == Overriding certificate path validation
 
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.0/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataDownloader.html[`FidoMetadataDownloader`]
 class uses `CertPathValidator.getInstance("PKIX")` to retrieve a `CertPathValidator` instance.
 If you need to override any aspect of certificate path validation,
 such as CRL retrieval or OCSP, you may provide a custom `CertPathValidator` provider for the `"PKIX"` algorithm.

@@ -1,22 +1,15 @@
-import com.yubico.gradle.GitUtils
-
 plugins {
   `java-library`
-  scala
-  `maven-publish`
-  signing
-  id("info.solidsoft.pitest")
-  id("io.github.cosmicsilence.scalafix")
+  `project-convention-java`
+  `project-convention-scala`
+  `project-convention-lombok`
+  `project-convention-code-formatting`
+  `project-convention-archives`
+  `project-convention-publish`
+  `project-convention-pitest`
 }
 
 description = "Yubico WebAuthn attestation subsystem"
-
-val publishMe by extra(true)
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
-}
 
 sourceSets {
   create("integrationTest") {
@@ -81,24 +74,19 @@ tasks.jar {
     attributes(mapOf(
       "Implementation-Id" to "java-webauthn-server-attestation",
       "Implementation-Title" to project.description,
-      "Implementation-Version" to project.version,
-      "Implementation-Vendor" to "Yubico",
-      "Git-Commit" to GitUtils.getGitCommitOrUnknown(projectDir),
     ))
   }
 }
 
-pitest {
-  pitestVersion.set("1.9.5")
-  timestampedReports.set(false)
+// Configure cross-links from webauthn-server-attestation JavaDoc to core JavaDoc
+tasks.javadoc.configure {
+  val coreProj = project(":webauthn-server-core")
+  val coreJavadoc = coreProj.tasks.javadoc.get()
+  inputs.files(coreJavadoc.outputs.files)
 
-  outputFormats.set(listOf("XML", "HTML"))
+  // These links won't work locally, but they will work on developers.yubico.com
+  (options as StandardJavadocDocletOptions).linksOffline("../../webauthn-server-core/${coreProj.version}", "${coreJavadoc.destinationDir}")
 
-  avoidCallsTo.set(listOf(
-    "java.util.logging",
-    "org.apache.log4j",
-    "org.slf4j",
-    "org.apache.commons.logging",
-    "com.google.common.io.Closeables",
-  ))
+  // Use this instead for local testing
+  //(options as StandardJavadocDocletOptions).linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
 }

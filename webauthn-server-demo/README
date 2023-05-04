@@ -15,10 +15,8 @@ class which provides the REST API on top of it.
 
 == Quick start
 
-```
-$ ./gradlew run
-$ $BROWSER https://localhost:8443/
-```
+  $ ./gradlew run
+  $ $BROWSER https://localhost:8443/
 
 
 == Architecture
@@ -40,7 +38,7 @@ layer.
 This layer manages the general architecture of the system, and is where most
 business logic and integration code would go. The demo server implements the
 "persistent" storage of users and credential registrations - the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 integration point - as the
 link:src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
 class, which simply keeps them stored in memory for a limited time. The
@@ -54,7 +52,7 @@ would be specific to a particular Relying Party (RP) would go in this layer.
 - The server layer in turn calls the *library layer*, which is where the
   link:../webauthn-server-core/[`webauthn-server-core`]
   library gets involved. The entry point into the library is the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
   class.
 +
 This layer implements the Web Authentication
@@ -65,11 +63,11 @@ and exposes integration points for storage of challenges and credentials. Some
 notable integration points are:
 +
 ** The library user must provide an implementation of the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 interface to use for looking up stored public keys, user handles and signature
 counters.
 ** The library user can optionally provide an instance of the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
 interface to enable identification and validation of authenticator models. This
 instance is then used to look up trusted attestation root certificates. The
 link:../webauthn-server-attestation/[`webauthn-server-attestation`]
