@@ -44,9 +44,6 @@ jobs:
     - name: Compile libraries and tests
       run: ./gradlew clean testClasses
 
-    - name: Build archives
-      run: ./gradlew assemble
-
     - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v3
       with:
@@ -55,6 +52,19 @@ jobs:
 
     - name: Run tests against JDK17-compiled code
       run: ./gradlew test --exclude-task compileJava
+
+    - name: Archive HTML test report on failure
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports-java17-java${{ matrix.java }}-${{ matrix.distribution }}-html
+        path: "*/build/reports/**"
+
+    - name: Build and test with JDK ${{ matrix.java }}
+      run: ./gradlew clean test
+
+    - name: Build archives
+      run: ./gradlew assemble
 
     - name: Archive HTML test report
       if: ${{ always() }}
@@ -71,6 +81,7 @@ jobs:
         path: "*/build/test-results/**/*.xml"
 
     - name: Check binary reproducibility
+      if: ${{ matrix.java != 8 }}  # JDK 8 does not produce reproducible binaries
       run: |
         ./gradlew clean primaryPublishJar
         find . -name '*.jar' | xargs sha256sum | tee checksums.sha256sum
