@@ -2,13 +2,6 @@ plugins {
     java
 }
 
-java {
-    toolchain {
-        // Java 8 binaries are not reproducible
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
 tasks.withType(JavaCompile::class) {
     options.compilerArgs.add("-Xlint:deprecation")
     options.compilerArgs.add("-Xlint:unchecked")
@@ -20,10 +13,4 @@ tasks.withType(JavaCompile::class) {
         targetCompatibility = "1.8"
         sourceCompatibility = "1.8"
     }
-}
-
-tasks.withType(Test::class) {
-    javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    })
 }
