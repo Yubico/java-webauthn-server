@@ -32,9 +32,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.upokecenter.cbor.CBORObject;
-import com.yubico.fido.metadata.FidoMetadataDownloaderException;
-import com.yubico.fido.metadata.UnexpectedLegalHeader;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
@@ -53,36 +50,25 @@ import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.UserIdentity;
-import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
-import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import demo.webauthn.data.AssertionRequestWrapper;
 import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
 import java.io.IOException;
-import java.security.DigestException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.SignatureException;
-import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -112,11 +98,7 @@ public class WebAuthnServer {
 
   private final RelyingParty rp;
 
-  public WebAuthnServer()
-      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
-          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
-          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
-          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+  public WebAuthnServer() {
     this(
         new InMemoryRegistrationStorage(),
         newCache(),
@@ -130,11 +112,7 @@ public class WebAuthnServer {
       Cache<ByteArray, RegistrationRequest> registerRequestStorage,
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
-      Set<String> origins)
-      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
-          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
-          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
-          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+      Set<String> origins) {
     this.userStorage = userStorage;
     this.registerRequestStorage = registerRequestStorage;
     this.assertRequestStorage = assertRequestStorage;
@@ -577,29 +555,6 @@ public class WebAuthnServer {
         credential);
     userStorage.addRegistrationByUsername(userIdentity.getName(), reg);
     return reg;
-  }
-
-  static ByteArray rawEcdaKeyToCose(ByteArray key) {
-    final byte[] keyBytes = key.getBytes();
-
-    if (!(keyBytes.length == 64 || (keyBytes.length == 65 && keyBytes[0] == 0x04))) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Raw key must be 64 bytes long or be 65 bytes long and start with 0x04, was %d bytes starting with %02x",
-              keyBytes.length, keyBytes[0]));
-    }
-
-    final int start = keyBytes.length == 64 ? 0 : 1;
-
-    Map<Long, Object> coseKey = new HashMap<>();
-
-    coseKey.put(1L, 2L); // Key type: EC
-    coseKey.put(3L, COSEAlgorithmIdentifier.ES256.getId());
-    coseKey.put(-1L, 1L); // Curve: P-256
-    coseKey.put(-2L, Arrays.copyOfRange(keyBytes, start, start + 32)); // x
-    coseKey.put(-3L, Arrays.copyOfRange(keyBytes, start + 32, start + 64)); // y
-
-    return new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes());
   }
 
   private static class AuthDataSerializer extends JsonSerializer<AuthenticatorData> {
