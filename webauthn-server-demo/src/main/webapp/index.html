@@ -158,25 +158,48 @@ function showServerResponse(data) {
 function hideDeviceInfo() {
   document.getElementById("device-info").style = "display: none";
 }
-function showDeviceInfo(params) {
-  document.getElementById("device-info").style = undefined;
 
-  if (params.displayName) {
-    document.getElementById("device-name-row").style = undefined;
-    document.getElementById("device-name").textContent = params.displayName;
-  } else {
-     document.getElementById("device-name-row").style = "display: none";
-  }
+function showDeviceInfo(params) {
+  document.getElementById("device-icon").style = "display: none";
+  document.getElementById("device-name-row").style = "display: none";
 
   if (params.nickname) {
     document.getElementById("device-nickname-row").style = undefined;
     document.getElementById("device-nickname").textContent = params.nickname;
   } else {
-     document.getElementById("device-nickname-row").style = "display: none";
+    document.getElementById("device-nickname-row").style = "display: none";
   }
 
-  if (params.imageUrl) {
+  if (params?.metadataStatement) {
+    showDeviceInfoFidoMds(params.metadataStatement);
+  } else {
+    showDeviceInfoYubico(params);
+  }
+
+  document.getElementById("device-info").style = undefined;
+}
+
+function showDeviceInfoYubico(params) {
+  if (params?.displayName) {
+    document.getElementById("device-name-row").style = undefined;
+    document.getElementById("device-name").textContent = params.displayName;
+  }
+
+  if (params?.imageUrl) {
     document.getElementById("device-icon").src = params.imageUrl;
+    document.getElementById("device-icon").style = undefined;
+  }
+}
+
+function showDeviceInfoFidoMds(metadataStatement) {
+  if (metadataStatement?.description) {
+    document.getElementById("device-name-row").style = undefined;
+    document.getElementById("device-name").textContent = metadataStatement?.description;
+  }
+
+  if (metadataStatement?.icon) {
+    document.getElementById("device-icon").src = metadataStatement?.icon;
+    document.getElementById("device-icon").style = undefined;
   }
 }
 
@@ -329,7 +352,7 @@ async function register(event, requireResidentKey) {
 
       if (data.registration && data.registration.attestationMetadata) {
         showDeviceInfo(extend(
-          data.registration.attestationMetadata.deviceProperties,
+          data.registration.attestationMetadata?.deviceProperties || data.registration.attestationMetadata,
           nicknameInfo
         ));
       } else {

@@ -55,6 +55,9 @@ dependencies {
 
 application {
   mainClass.set("demo.webauthn.EmbeddedServer")
+
+  // Required for processing CRL distribution points extension
+  applicationDefaultJvmArgs = listOf("-Dcom.sun.security.enableCRLDP=true")
 }
 
 for (task in listOf(tasks.installDist, tasks.distZip, tasks.distTar)) {

@@ -18,6 +18,12 @@ class which provides the REST API on top of it.
   $ ./gradlew run
   $ $BROWSER https://localhost:8443/
 
+Or to run with the https://fidoalliance.org/metadata/[FIDO Metadata Service] as
+a source of attestation metadata:
+
+  $ YUBICO_WEBAUTHN_USE_FIDO_MDS=true ./gradlew run
+  $ $BROWSER https://localhost:8443/
+
 
 == Architecture
 
@@ -150,3 +156,11 @@ correct environment.
     https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP name]
     the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
     Authentication demo'`
+
+  - `YUBICO_WEBAUTHN_USE_FIDO_MDS`: If set to `true` (case-insensitive), use
+    https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.4.1/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+    from the link:../webauthn-server-attestation[`webauthn-server-attestation`]
+    module as a source of attestation data in addition to the static JSON file
+    bundled with the demo. This will write cache files to the
+    `webauthn-server-demo` project root directory; see the patterns in the
+    `.gitignore` file.

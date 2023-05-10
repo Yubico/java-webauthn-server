@@ -32,6 +32,10 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.yubico.fido.metadata.FidoMetadataDownloader;
+import com.yubico.fido.metadata.FidoMetadataDownloaderException;
+import com.yubico.fido.metadata.FidoMetadataService;
+import com.yubico.fido.metadata.UnexpectedLegalHeader;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
@@ -43,7 +47,6 @@ import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
-import com.yubico.webauthn.attestation.Attestation;
 import com.yubico.webauthn.attestation.YubicoJsonMetadataService;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorData;
@@ -53,6 +56,7 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.UserIdentity;
+import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.exception.AssertionFailedException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 import demo.webauthn.data.AssertionRequestWrapper;
@@ -60,8 +64,15 @@ import demo.webauthn.data.AssertionResponse;
 import demo.webauthn.data.CredentialRegistration;
 import demo.webauthn.data.RegistrationRequest;
 import demo.webauthn.data.RegistrationResponse;
+import java.io.File;
 import java.io.IOException;
+import java.security.DigestException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.SignatureException;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
@@ -91,14 +102,48 @@ public class WebAuthnServer {
   private final InMemoryRegistrationStorage userStorage;
   private final SessionManager sessions = new SessionManager();
 
-  private final YubicoJsonMetadataService metadataService = new YubicoJsonMetadataService();
+  private final MetadataService metadataService = getMetadataService();
+
+  private static MetadataService getMetadataService()
+      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
+          DigestException, FidoMetadataDownloaderException, CertificateException,
+          UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+          InvalidKeyException {
+    if (Config.useFidoMds()) {
+      logger.info("Using combination of Yubico JSON file and FIDO MDS for attestation metadata.");
+      return new CompositeMetadataService(
+          new YubicoJsonMetadataService(),
+          new FidoMetadataServiceAdapter(
+              FidoMetadataService.builder()
+                  .useBlob(
+                      FidoMetadataDownloader.builder()
+                          .expectLegalHeader(
+                              "Retrieval and use of this BLOB indicates acceptance of the appropriate agreement located at https://fidoalliance.org/metadata/metadata-legal-terms/")
+                          .useDefaultTrustRoot()
+                          .useTrustRootCacheFile(
+                              new File("webauthn-server-demo-fido-mds-trust-root-cache.bin"))
+                          .useDefaultBlob()
+                          .useBlobCacheFile(
+                              new File("webauthn-server-demo-fido-mds-blob-cache.bin"))
+                          .build()
+                          .loadCachedBlob())
+                  .build()));
+    } else {
+      logger.info("Using only Yubico JSON file for attestation metadata.");
+      return new YubicoJsonMetadataService();
+    }
+  }
 
   private final Clock clock = Clock.systemDefaultZone();
   private final ObjectMapper jsonMapper = JacksonCodecs.json();
 
   private final RelyingParty rp;
 
-  public WebAuthnServer() {
+  public WebAuthnServer()
+      throws CertificateException, CertPathValidatorException, InvalidAlgorithmParameterException,
+          Base64UrlException, DigestException, FidoMetadataDownloaderException,
+          UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+          InvalidKeyException {
     this(
         new InMemoryRegistrationStorage(),
         newCache(),
@@ -112,7 +157,11 @@ public class WebAuthnServer {
       Cache<ByteArray, RegistrationRequest> registerRequestStorage,
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
-      Set<String> origins) {
+      Set<String> origins)
+      throws CertificateException, CertPathValidatorException, InvalidAlgorithmParameterException,
+          Base64UrlException, DigestException, FidoMetadataDownloaderException,
+          UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+          InvalidKeyException {
     this.userStorage = userStorage;
     this.registerRequestStorage = registerRequestStorage;
     this.assertRequestStorage = assertRequestStorage;
@@ -526,10 +575,7 @@ public class WebAuthnServer {
             .signatureCount(result.getSignatureCount())
             .build(),
         result.getKeyId().getTransports().orElseGet(TreeSet::new),
-        result
-            .getAttestationTrustPath()
-            .flatMap(x5c -> x5c.stream().findFirst())
-            .flatMap(metadataService::findMetadata));
+        metadataService.findEntries(result).stream().findAny());
   }
 
   private CredentialRegistration addRegistration(
@@ -537,7 +583,7 @@ public class WebAuthnServer {
       Optional<String> nickname,
       RegisteredCredential credential,
       SortedSet<AuthenticatorTransport> transports,
-      Optional<Attestation> attestationMetadata) {
+      Optional<Object> attestationMetadata) {
     CredentialRegistration reg =
         CredentialRegistration.builder()
             .userIdentity(userIdentity)

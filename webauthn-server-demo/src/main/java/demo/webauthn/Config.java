@@ -78,6 +78,10 @@ public class Config {
     return getInstance().rpIdentity;
   }
 
+  public static boolean useFidoMds() {
+    return "true".equalsIgnoreCase(System.getenv("YUBICO_WEBAUTHN_USE_FIDO_MDS"));
+  }
+
   private static Set<String> computeOrigins() {
     final String origins = System.getenv("YUBICO_WEBAUTHN_ALLOWED_ORIGINS");
 
