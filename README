@@ -44,7 +44,7 @@ toc::[]
 - Optionally integrates with an "attestation trust source" to verify
   https://www.w3.org/TR/webauthn/#sctn-attestation[authenticator attestations]
 - Reproducible builds: release signatures match fresh builds from source. See
-  link:#reproducible-builds[Reproducible builds] below.
+  <<reproducible-builds>> below.
 
 
 === Non-features
@@ -689,6 +689,7 @@ $ ./gradlew pitest
 ----------
 
 
+[#reproducible-builds]
 === Reproducible builds
 Starting in version `1.4.0-RC2`, artifacts are built reproducibly. Fresh builds from
 tagged commits should therefore be verifiable by signatures from Maven Central
