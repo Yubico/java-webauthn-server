@@ -11,8 +11,7 @@ image:https://github.com/Yubico/java-webauthn-server/actions/workflows/release-v
 Server-side https://www.w3.org/TR/webauthn/[Web Authentication] library for
 Java. Provides implementations of the
 https://www.w3.org/TR/webauthn/#sctn-rp-operations[Relying Party operations] required
-for a server to support Web Authentication. This includes registering
-authenticators and authenticating registered authenticators.
+for a server to support Web Authentication, including https://passkeys.dev/[passkey authentication].
 
 
 [WARNING]
@@ -30,6 +29,7 @@ If you are, we urge you to upgrade your Java deployment to a version that is saf
 
 *Table of contents*
 
+:toclevels: 3
 toc::[]
 
 
@@ -133,7 +133,7 @@ The server side involves:
     and
     link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
     methods to perform authentication ceremonies.
- 5. Use the outputs of `finishRegistration` and `finishAssertion` to update your database, initiate sessions, etc.
+ 5. Optionally use additional features: passkeys, passwordless multi-factor authentication, credential backup state.
 
 The client side involves:
 
@@ -275,18 +275,21 @@ Here is an example of things you will likely want to store:
 
 [source,java]
 ----------
-storeCredential(             // Some database access method of your own design
-  "alice",                   // Username or other appropriate user identifier
-  result.getKeyId(),         // Credential ID and transports for allowCredentials
-  result.getPublicKeyCose(), // Public key for verifying authentication signatures
-  result.isDiscoverable(),   // Can this key be used for username-less auth?
-  result.signatureCount(),   // Initial signature counter value
+storeCredential(              // Some database access method of your own design
+  "alice",                    // Username or other appropriate user identifier
+  result.getKeyId(),          // Credential ID and transports for allowCredentials
+  result.getPublicKeyCose(),  // Public key for verifying authentication signatures
+  result.getSignatureCount(), // Initial signature counter value
+  result.isDiscoverable(),    // Is this a passkey?
+  result.isBackupEligible(),  // Can this credential be backed up (synced)?
+  result.isBackedUp(),        // Is this credential currently backed up?
   pkc.getResponse().getAttestationObject(), // Store attestation object for future reference
   pkc.getResponse().getClientDataJSON()     // Store client data for re-verifying signature if needed
 );
 ----------
 
 
+[#getting-started-authentication]
 === 4. Authentication
 
 Like registration ceremonies, an authentication ceremony consists of 5 main steps:
@@ -367,14 +370,15 @@ throw new RuntimeException("Authentication failed");
 
 Finally, if the previous step was successful, update your database using the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
-Most importantly, you should update the signature counter. That might look something like this:
+Most importantly you should update the signature counter, and the backup state flag if you use it. That might look something like this:
 
 [source,java]
 ----------
 updateCredential(              // Some database access method of your own design
   "alice",                     // Query by username or other appropriate user identifier
   result.getCredentialId(),    // Query by credential ID of the credential used
-  result.signatureCount(),     // Set new signature counter value
+  result.getSignatureCount(),  // Set new signature counter value
+  result.isBackedUp(),         // Set new backup state flag
   Clock.systemUTC().instant()  // Set time of last use (now)
 );
 ----------
@@ -382,16 +386,40 @@ updateCredential(              // Some database access method of your own design
 Then do whatever else you need - for example, initiate a user session.
 
 
-=== 5. Passwordless, username-less authentication
+=== 5. Optional features: passkeys, multi-factor, backup state
 
-WebAuthn supports passwordless multi-factor authentication via on-authenticator
-https://www.w3.org/TR/webauthn-2/#user-verification[user verification],
-and username-less authentication via
-https://www.w3.org/TR/webauthn-2/#discoverable-credential[discoverable credentials]
-(sometimes the term "passwordless" is used to mean the combination of both, but
-here the two are treated separately).
+WebAuthn supports a number of additional features beyond the basics:
 
-Discoverable credentials must be enabled at registration time by setting the
+- <<passkeys,Passkeys>>: passwordless, username-less authentication.
+  link:https://passkey.org[Try it on passkey.org!]
+- <<user-verification,User verification>>: passwordless, streamlined multi-factor authentication.
+- <<autofill-ui,Autofill UI>>: Unintrusive passkey integration in traditional login forms.
+- <<credential-backup-state,Credential backup state>>: hints on how vulnerable the user is to authenticator loss.
+
+
+[#passkeys]
+==== Passkeys: passwordless, username-less authentication
+
+A https://passkeys.dev/[passkey] is a WebAuthn credential that can simultaneously both _identify_ and _authenticate_ the user.
+This is also called a link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential[discoverable credential].
+By default, credentials are created non-discoverable, which means the server
+must list them in the
+https://www.w3.org/TR/webauthn/#dom-publickeycredentialrequestoptions-allowcredentials[`allowCredentials`]
+parameter before the user can use them to authenticate.
+This is typically because the credential private key is not stored within the authenticator,
+but instead encoded into one of the credential IDs in `allowCredentials`.
+This way even a small hardware authenticator can have an unlimited credential capacity,
+but with the drawback that the user must first identify themself to the server
+so the server can retrieve the correct `allowCredentials` list.
+
+Passkeys are instead stored within the authenticator, and also include the user's
+link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-handle[user handle]
+in addition to the credential ID.
+This way the user can be both identified and authenticated simultaneously.
+Many passkey-capable authenticators also offer a credential sync mechanism
+to allow one passkey to be used on multiple devices.
+
+Passkeys can be created by setting the
 link:https://www.w3.org/TR/webauthn-2/#dom-publickeycredentialcreationoptions-authenticatorselection[`authenticatorSelection`].link:https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-residentkey[`residentKey`]
 option:
 
@@ -413,13 +441,22 @@ The username can then be omitted when starting an authentication ceremony:
 AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder().build());
 ----------
 
-Some authenticators might enable this feature even if not required, and setting
-the `residentKey` option to `ResidentKeyRequirement.PREFERRED` will enable it if the
-authenticator supports it. The
-https://www.w3.org/TR/webauthn-2/#sctn-authenticator-credential-properties-extension[`credProps` extension]
-can be used to determine whether the created credential is discoverable, and is enabled by default.
+Some authenticators might create passkeys even if not required, and setting
+the `residentKey` option to `ResidentKeyRequirement.PREFERRED` will create a passkey
+if the authenticator supports it.
+The
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html#isDiscoverable()[`RegistrationResult.isDiscoverable()`]
+method can be used to determine whether the created credential is a passkey.
+This requires the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/RegistrationExtensionInputs.RegistrationExtensionInputsBuilder.html#credProps()[`credProps` extension],
+to be enabled, which it is by default.
 
-User verification can be enforced independently per authentication ceremony:
+
+[#user-verification]
+==== User verification: passwordless multi-factor authentication
+
+link:https://passkeys.dev/docs/reference/terms/#user-verification-uv[User verification]
+can be enforced independently per authentication ceremony:
 
 [source,java]
 ----------
@@ -447,6 +484,54 @@ PublicKeyCredentialCreationOptions request = rp.startRegistration(
         .build())
     .build());
 ----------
+
+User verification can be used with both discoverable credentials (passkeys) and non-discoverable credentials.
+
+
+[#autofill-ui]
+==== Using passkeys with autofill UI
+
+Passkeys on platform authenticators may also support the WebAuthn
+link:https://passkeys.dev/docs/reference/terms/#autofill-ui[autofill UI], also known as "conditional mediation".
+This can help onboard users who are unfamiliar with a fully username-less login flow,
+allowing a familiar username input field to opportunistically offer a shortcut using a passkey
+if the user has one on their device.
+
+This library is compatible with the autofill UI but provides no server-side options for it,
+because the steps to enable it are taken on the front-end side.
+Using autofill UI does not affect the response verification procedure.
+
+See the link:https://passkeys.dev/docs/use-cases/bootstrapping/[guide on passkeys.dev]
+for complete instructions on how to enable the autofill UI.
+In particular you need to:
+
+- Add the credential request option `mediation: "conditional"`
+alongside the `publicKey` option generated by
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`],
+- Add `autocomplete="username webauthn"` to a username input field on the page, and
+- Call `navigator.credentials.get()` in the background.
+
+If the Promise resolves, handle it like any other assertion response as described in
+<<getting-started-authentication>> above.
+
+Because of technical limitations, autofill UI is as of May 2023 only supported for platform credentials,
+i.e., passkeys stored on the user's computing devices.
+Autofill UI might support passkeys on external security keys in the future.
+
+
+[#credential-backup-state]
+==== Credential backup state
+
+Some authenticators may allow credentials to be backed up and/or synced between devices.
+This capability and its current state is signaled via the
+link:https://w3c.github.io/webauthn/#sctn-credential-backup[Credential Backup State] flags,
+which are available via the `isBackedUp()` and `isBackupEligible()` methods of
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
+These can be used as a hint about how vulnerable a user is to authenticator loss.
+In particular, a user with only one credential which is not backed up
+may risk getting locked out if they lose their authenticator.
 
 
 == Migrating from version `1.x`

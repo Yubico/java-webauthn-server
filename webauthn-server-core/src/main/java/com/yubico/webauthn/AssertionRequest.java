@@ -59,8 +59,10 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUserHandle() userHandle} are empty, this indicates that this is
    * a request for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a>, and identification of the user has been deferred until the response is
-   * received.
+   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * is received.
+   *
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   private final String username;
 
@@ -74,8 +76,10 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUsername() username} are empty, this indicates that this is a
    * request for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a>, and identification of the user has been deferred until the response is
-   * received.
+   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * is received.
+   *
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   private final ByteArray userHandle;
 
@@ -105,8 +109,10 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUserHandle()} are empty, this indicates that this is a request
    * for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a>, and identification of the user has been deferred until the response is
-   * received.
+   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * is received.
+   *
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   public Optional<String> getUsername() {
     return Optional.ofNullable(username);
@@ -121,8 +127,10 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUsername()} are empty, this indicates that this is a request for
    * an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a>, and identification of the user has been deferred until the response is
-   * received.
+   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * is received.
+   *
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   public Optional<ByteArray> getUserHandle() {
     return Optional.ofNullable(userHandle);
@@ -215,8 +223,10 @@ public class AssertionRequest {
      *
      * <p>If this is empty, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a>, and identification of the user has been deferred until the response is
-     * received.
+     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * is received.
+     *
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
      */
     public AssertionRequestBuilder username(@NonNull Optional<String> username) {
       return this.username(username.orElse(null));
@@ -230,8 +240,10 @@ public class AssertionRequest {
      *
      * <p>If this is empty, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a>, and identification of the user has been deferred until the response is
-     * received.
+     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * is received.
+     *
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
      */
     public AssertionRequestBuilder username(String username) {
       this.username = username;
@@ -250,8 +262,10 @@ public class AssertionRequest {
      * <p>If both this and {@link #username(String)} are empty, this indicates that this is a
      * request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a>, and identification of the user has been deferred until the response is
-     * received.
+     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * is received.
+     *
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
      */
     public AssertionRequestBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
       return this.userHandle(userHandle.orElse(null));
@@ -266,8 +280,10 @@ public class AssertionRequest {
      * <p>If both this and {@link #username(String)} are empty, this indicates that this is a
      * request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a>, and identification of the user has been deferred until the response is
-     * received.
+     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * is received.
+     *
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
      */
     public AssertionRequestBuilder userHandle(ByteArray userHandle) {
       if (userHandle != null) {

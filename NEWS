@@ -1,3 +1,9 @@
+== Version 2.4.1 (unreleased) ==
+
+* Updated README and JavaDoc to use the "passkey" term and provide more guidance
+  around passkey use cases.
+
+
 == Version 2.4.1 ==
 
 Changes:

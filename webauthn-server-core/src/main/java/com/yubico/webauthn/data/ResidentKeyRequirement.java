@@ -34,7 +34,8 @@ import lombok.NonNull;
 
 /**
  * This enumeration's values describe the Relying Party's requirements for client-side discoverable
- * credentials (formerly known as resident credentials or resident keys):
+ * credentials, also known as <i>passkeys</i> (formerly known as resident credentials or resident
+ * keys).
  *
  * @see <a
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
@@ -42,13 +43,14 @@ import lombok.NonNull;
  * @see <a
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
  *     discoverable Credential</a>
+ * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
  */
 @AllArgsConstructor
 public enum ResidentKeyRequirement {
 
   /**
    * The client and authenticator will try to create a server-side credential if possible, and a
-   * discoverable credential otherwise.
+   * discoverable credential (passkey) otherwise.
    *
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
@@ -59,12 +61,13 @@ public enum ResidentKeyRequirement {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
    *     Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   DISCOURAGED("discouraged"),
 
   /**
-   * The client and authenticator will try to create a discoverable credential if possible, and a
-   * server-side credential otherwise.
+   * The client and authenticator will try to create a discoverable credential (passkey) if
+   * possible, and a server-side credential otherwise.
    *
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
@@ -75,12 +78,13 @@ public enum ResidentKeyRequirement {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
    *     Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   PREFERRED("preferred"),
 
   /**
-   * The client and authenticator will try to create a discoverable credential, and fail the
-   * registration if that is not possible.
+   * The client and authenticator will try to create a discoverable credential (passkey), and fail
+   * the registration if that is not possible.
    *
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
@@ -91,6 +95,7 @@ public enum ResidentKeyRequirement {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
    *     Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
    */
   REQUIRED("required");
 
