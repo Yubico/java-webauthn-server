@@ -452,7 +452,7 @@ The
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html#isDiscoverable()[`RegistrationResult.isDiscoverable()`]
 method can be used to determine whether the created credential is a passkey.
 This requires the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/RegistrationExtensionInputs.RegistrationExtensionInputsBuilder.html#credProps()[`credProps` extension],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/RegistrationExtensionInputs.RegistrationExtensionInputsBuilder.html#credProps()[`credProps` extension]
 to be enabled, which it is by default.
 
 
