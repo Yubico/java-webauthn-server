@@ -59,7 +59,7 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUserHandle() userHandle} are empty, this indicates that this is
    * a request for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * credential</a> (passkey). Identification of the user is therefore deferred until the response
    * is received.
    *
    * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -77,7 +77,7 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUsername() username} are empty, this indicates that this is a
    * request for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * credential</a> (passkey). Identification of the user is therefore deferred until the response
    * is received.
    *
    * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -111,7 +111,7 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUserHandle()} are empty, this indicates that this is a request
    * for an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * credential</a> (passkey). Identification of the user is therefore deferred until the response
    * is received.
    *
    * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -130,7 +130,7 @@ public class AssertionRequest {
    * <p>If both this and {@link #getUsername()} are empty, this indicates that this is a request for
    * an assertion by a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-   * credential</a> (passkey), and identification of the user has been deferred until the response
+   * credential</a> (passkey). Identification of the user is therefore deferred until the response
    * is received.
    *
    * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -227,7 +227,7 @@ public class AssertionRequest {
      *
      * <p>If this is empty, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * credential</a> (passkey). Identification of the user is therefore deferred until the response
      * is received.
      *
      * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -245,7 +245,7 @@ public class AssertionRequest {
      *
      * <p>If this is empty, this indicates that this is a request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * credential</a> (passkey). Identification of the user is therefore deferred until the response
      * is received.
      *
      * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -268,7 +268,7 @@ public class AssertionRequest {
      * <p>If both this and {@link #username(String)} are empty, this indicates that this is a
      * request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * credential</a> (passkey). Identification of the user is therefore deferred until the response
      * is received.
      *
      * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
@@ -287,7 +287,7 @@ public class AssertionRequest {
      * <p>If both this and {@link #username(String)} are empty, this indicates that this is a
      * request for an assertion by a <a
      * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">client-side-discoverable
-     * credential</a> (passkey), and identification of the user has been deferred until the response
+     * credential</a> (passkey). Identification of the user is therefore deferred until the response
      * is received.
      *
      * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a

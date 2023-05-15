@@ -370,7 +370,7 @@ throw new RuntimeException("Authentication failed");
 
 Finally, if the previous step was successful, update your database using the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
-Most importantly you should update the signature counter, and the backup state flag if you use it. That might look something like this:
+Most importantly, you should update the signature counter. That might look something like this:
 
 [source,java]
 ----------
