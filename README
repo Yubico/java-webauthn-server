@@ -420,8 +420,9 @@ Many passkey-capable authenticators also offer a credential sync mechanism
 to allow one passkey to be used on multiple devices.
 
 Passkeys can be created by setting the
-link:https://www.w3.org/TR/webauthn-2/#dom-publickeycredentialcreationoptions-authenticatorselection[`authenticatorSelection`].link:https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-residentkey[`residentKey`]
-option:
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/StartRegistrationOptions.StartRegistrationOptionsBuilder.html#authenticatorSelection(com.yubico.webauthn.data.AuthenticatorSelectionCriteria)[`authenticatorSelection`].link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
+option to
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/ResidentKeyRequirement.html#REQUIRED[`REQUIRED`]:
 
 [source,java]
 ----------
@@ -442,8 +443,11 @@ AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder().bui
 ----------
 
 Some authenticators might create passkeys even if not required, and setting
-the `residentKey` option to `ResidentKeyRequirement.PREFERRED` will create a passkey
-if the authenticator supports it.
+the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
+option to
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/data/ResidentKeyRequirement.html#PREFERRED[`PREFERRED`]
+will create a passkey if the authenticator supports it.
 The
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RegistrationResult.html#isDiscoverable()[`RegistrationResult.isDiscoverable()`]
 method can be used to determine whether the created credential is a passkey.
