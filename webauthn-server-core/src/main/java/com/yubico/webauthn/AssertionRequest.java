@@ -62,7 +62,8 @@ public class AssertionRequest {
    * credential</a> (passkey), and identification of the user has been deferred until the response
    * is received.
    *
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   private final String username;
 
@@ -79,7 +80,8 @@ public class AssertionRequest {
    * credential</a> (passkey), and identification of the user has been deferred until the response
    * is received.
    *
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   private final ByteArray userHandle;
 
@@ -112,7 +114,8 @@ public class AssertionRequest {
    * credential</a> (passkey), and identification of the user has been deferred until the response
    * is received.
    *
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   public Optional<String> getUsername() {
     return Optional.ofNullable(username);
@@ -130,7 +133,8 @@ public class AssertionRequest {
    * credential</a> (passkey), and identification of the user has been deferred until the response
    * is received.
    *
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   public Optional<ByteArray> getUserHandle() {
     return Optional.ofNullable(userHandle);
@@ -226,7 +230,8 @@ public class AssertionRequest {
      * credential</a> (passkey), and identification of the user has been deferred until the response
      * is received.
      *
-     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public AssertionRequestBuilder username(@NonNull Optional<String> username) {
       return this.username(username.orElse(null));
@@ -243,7 +248,8 @@ public class AssertionRequest {
      * credential</a> (passkey), and identification of the user has been deferred until the response
      * is received.
      *
-     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public AssertionRequestBuilder username(String username) {
       this.username = username;
@@ -265,7 +271,8 @@ public class AssertionRequest {
      * credential</a> (passkey), and identification of the user has been deferred until the response
      * is received.
      *
-     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public AssertionRequestBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
       return this.userHandle(userHandle.orElse(null));
@@ -283,7 +290,8 @@ public class AssertionRequest {
      * credential</a> (passkey), and identification of the user has been deferred until the response
      * is received.
      *
-     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public AssertionRequestBuilder userHandle(ByteArray userHandle) {
       if (userHandle != null) {

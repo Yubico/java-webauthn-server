@@ -43,7 +43,8 @@ import lombok.NonNull;
  * @see <a
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
  *     discoverable Credential</a>
- * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+ * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+ *     href="https://passkeys.dev">passkeys.dev</a> reference
  */
 @AllArgsConstructor
 public enum ResidentKeyRequirement {
@@ -61,7 +62,8 @@ public enum ResidentKeyRequirement {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
    *     Credential</a>
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   DISCOURAGED("discouraged"),
 
@@ -78,7 +80,8 @@ public enum ResidentKeyRequirement {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
    *     Credential</a>
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   PREFERRED("preferred"),
 
@@ -95,7 +98,8 @@ public enum ResidentKeyRequirement {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
    *     Credential</a>
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   REQUIRED("required");
 

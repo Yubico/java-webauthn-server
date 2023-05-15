@@ -73,7 +73,8 @@ public class AuthenticatorSelectionCriteria {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
    *     discoverable Credential</a>
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   private final ResidentKeyRequirement residentKey;
 
@@ -128,7 +129,8 @@ public class AuthenticatorSelectionCriteria {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
    *     discoverable Credential</a>
-   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   public Optional<ResidentKeyRequirement> getResidentKey() {
     return Optional.ofNullable(residentKey);

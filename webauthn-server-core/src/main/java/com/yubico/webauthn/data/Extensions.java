@@ -95,7 +95,8 @@ public class Extensions {
        * @see <a
        *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
        *     Credential</a>
-       * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a>
+       * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+       *     href="https://passkeys.dev">passkeys.dev</a> reference
        */
       public Optional<Boolean> getRk() {
         return Optional.ofNullable(rk);
