@@ -89,15 +89,17 @@ public class StartAssertionOptions {
    * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
    * credentials.
    *
-   * <p>If this and {@link #getUserHandle()} are both absent, that implies a first-factor
-   * authentication operation - meaning identification of the user is deferred until after receiving
-   * the response from the client.
+   * <p>If this and {@link #getUserHandle()} are both absent, that implies authentication with a
+   * discoverable credential (passkey) - meaning identification of the user is deferred until after
+   * receiving the response from the client.
    *
    * <p>The default is empty (absent).
    *
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
    *     credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   public Optional<String> getUsername() {
     return Optional.ofNullable(username);
@@ -113,9 +115,9 @@ public class StartAssertionOptions {
    * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
    * credentials.
    *
-   * <p>If this and {@link #getUsername()} are both absent, that implies a first-factor
-   * authentication operation - meaning identification of the user is deferred until after receiving
-   * the response from the client.
+   * <p>If this and {@link #getUsername()} are both absent, that implies authentication with a
+   * discoverable credential (passkey) - meaning identification of the user is deferred until after
+   * receiving the response from the client.
    *
    * <p>The default is empty (absent).
    *
@@ -124,6 +126,8 @@ public class StartAssertionOptions {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
    *     credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   public Optional<ByteArray> getUserHandle() {
     return Optional.ofNullable(userHandle);
@@ -175,9 +179,9 @@ public class StartAssertionOptions {
      * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
      * credentials.
      *
-     * <p>If this and {@link #getUserHandle()} are both absent, that implies a first-factor
-     * authentication operation - meaning identification of the user is deferred until after
-     * receiving the response from the client.
+     * <p>If this and {@link #getUserHandle()} are both absent, that implies authentication with a
+     * discoverable credential (passkey) - meaning identification of the user is deferred until
+     * after receiving the response from the client.
      *
      * <p>The default is empty (absent).
      *
@@ -187,6 +191,8 @@ public class StartAssertionOptions {
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public StartAssertionOptionsBuilder username(@NonNull Optional<String> username) {
       this.username = username.orElse(null);
@@ -207,9 +213,9 @@ public class StartAssertionOptions {
      * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
      * credentials.
      *
-     * <p>If this and {@link #getUserHandle()} are both absent, that implies a first-factor
-     * authentication operation - meaning identification of the user is deferred until after
-     * receiving the response from the client.
+     * <p>If this and {@link #getUserHandle()} are both absent, that implies authentication with a
+     * discoverable credential (passkey) - meaning identification of the user is deferred until
+     * after receiving the response from the client.
      *
      * <p>The default is empty (absent).
      *
@@ -219,6 +225,8 @@ public class StartAssertionOptions {
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public StartAssertionOptionsBuilder username(String username) {
       return this.username(Optional.ofNullable(username));
@@ -235,9 +243,9 @@ public class StartAssertionOptions {
      * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
      * credentials.
      *
-     * <p>If this and {@link #getUsername()} are both absent, that implies a first-factor
-     * authentication operation - meaning identification of the user is deferred until after
-     * receiving the response from the client.
+     * <p>If this and {@link #getUsername()} are both absent, that implies authentication with a
+     * discoverable credential (passkey) - meaning identification of the user is deferred until
+     * after receiving the response from the client.
      *
      * <p>The default is empty (absent).
      *
@@ -249,6 +257,8 @@ public class StartAssertionOptions {
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public StartAssertionOptionsBuilder userHandle(@NonNull Optional<ByteArray> userHandle) {
       this.userHandle = userHandle.orElse(null);
@@ -269,9 +279,9 @@ public class StartAssertionOptions {
      * PublicKeyCredentialRequestOptions#getAllowCredentials()} to the list of that user's
      * credentials.
      *
-     * <p>If this and {@link #getUsername()} are both absent, that implies a first-factor
-     * authentication operation - meaning identification of the user is deferred until after
-     * receiving the response from the client.
+     * <p>If this and {@link #getUsername()} are both absent, that implies authentication with a
+     * discoverable credential (passkey) - meaning identification of the user is deferred until
+     * after receiving the response from the client.
      *
      * <p>The default is empty (absent).
      *
@@ -281,6 +291,8 @@ public class StartAssertionOptions {
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-public-key-credential-source">Client-side-discoverable
      *     credential</a>
+     * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+     *     href="https://passkeys.dev">passkeys.dev</a> reference
      */
     public StartAssertionOptionsBuilder userHandle(ByteArray userHandle) {
       return this.userHandle(Optional.ofNullable(userHandle));

@@ -76,9 +76,10 @@ public class Extensions {
        * This OPTIONAL property, known abstractly as the <b>resident key credential property</b>
        * (i.e., <b>client-side discoverable credential property</b>), is a Boolean value indicating
        * whether the {@link PublicKeyCredential} returned as a result of a registration ceremony is
-       * a <i>client-side discoverable credential</i>.
+       * a <i>client-side discoverable credential</i> (passkey).
        *
-       * <p>If this is <code>true</code>, the credential is a <i>discoverable credential</i>.
+       * <p>If this is <code>true</code>, the credential is a <i>discoverable credential</i>
+       * (passkey).
        *
        * <p>If this is <code>false</code>, the credential is a <i>server-side credential</i>.
        *
@@ -94,6 +95,8 @@ public class Extensions {
        * @see <a
        *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#server-side-credential">Server-side
        *     Credential</a>
+       * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+       *     href="https://passkeys.dev">passkeys.dev</a> reference
        */
       public Optional<Boolean> getRk() {
         return Optional.ofNullable(rk);

@@ -304,19 +304,22 @@ public class RegistrationResult {
   /**
    * Try to determine whether the created credential is a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">discoverable
-   * credential</a>, using the output from the <a
+   * credential</a>, also called a <i>passkey</i>, using the output from the <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
    * <code>credProps</code></a> extension.
    *
-   * @return A present <code>true</code> if the created credential is discoverable. A present <code>
-   *     false</code> if the created credential is not discoverable. An empty value if it is not
-   *     known whether the created credential is discoverable.
+   * @return A present <code>true</code> if the created credential is a passkey (discoverable). A
+   *     present <code>
+   *     false</code> if the created credential is not a passkey. An empty value if it is not known
+   *     whether the created credential is a passkey.
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-credentialpropertiesoutput-rk">§10.4.
    *     Credential Properties Extension (credProps), "rk" output</a>
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">Discoverable
    *     Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   @JsonIgnore
   public Optional<Boolean> isDiscoverable() {
