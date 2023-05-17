@@ -325,9 +325,16 @@ public final class FidoMetadataService implements AttestationTrustSource {
     }
 
     public FidoMetadataService build()
-        throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
-            DigestException, FidoMetadataDownloaderException, CertificateException,
-            UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+        throws CertPathValidatorException,
+            InvalidAlgorithmParameterException,
+            Base64UrlException,
+            DigestException,
+            FidoMetadataDownloaderException,
+            CertificateException,
+            UnexpectedLegalHeader,
+            IOException,
+            NoSuchAlgorithmException,
+            SignatureException,
             InvalidKeyException {
       return new FidoMetadataService(blob, prefilter, filter, certStore);
     }

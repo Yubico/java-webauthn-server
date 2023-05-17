@@ -677,9 +677,16 @@ public final class FidoMetadataDownloader {
    *     written to cache in this case.
    */
   public MetadataBLOB loadCachedBlob()
-      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
-          CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
-          InvalidKeyException, UnexpectedLegalHeader, DigestException,
+      throws CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          CertificateException,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          InvalidKeyException,
+          UnexpectedLegalHeader,
+          DigestException,
           FidoMetadataDownloaderException {
     final X509Certificate trustRoot = retrieveTrustRootCert();
 
@@ -773,9 +780,16 @@ public final class FidoMetadataDownloader {
    *     written to cache in this case.
    */
   public MetadataBLOB refreshBlob()
-      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
-          CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
-          InvalidKeyException, UnexpectedLegalHeader, DigestException,
+      throws CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          CertificateException,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          InvalidKeyException,
+          UnexpectedLegalHeader,
+          DigestException,
           FidoMetadataDownloaderException {
     final X509Certificate trustRoot = retrieveTrustRootCert();
 
@@ -797,9 +811,16 @@ public final class FidoMetadataDownloader {
 
   private Optional<MetadataBLOB> refreshBlobInternal(
       @NonNull X509Certificate trustRoot, @NonNull Optional<MetadataBLOB> cached)
-      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
-          CertificateException, IOException, NoSuchAlgorithmException, SignatureException,
-          InvalidKeyException, UnexpectedLegalHeader, FidoMetadataDownloaderException {
+      throws CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          CertificateException,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          InvalidKeyException,
+          UnexpectedLegalHeader,
+          FidoMetadataDownloaderException {
 
     try {
       log.debug("Attempting to download new BLOB...");
@@ -928,9 +949,15 @@ public final class FidoMetadataDownloader {
    *     signature.
    */
   private Optional<MetadataBLOB> loadExplicitBlobOnly(X509Certificate trustRootCertificate)
-      throws Base64UrlException, CertPathValidatorException, CertificateException, IOException,
-          InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException,
-          SignatureException, FidoMetadataDownloaderException {
+      throws Base64UrlException,
+          CertPathValidatorException,
+          CertificateException,
+          IOException,
+          InvalidAlgorithmParameterException,
+          InvalidKeyException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          FidoMetadataDownloaderException {
     if (blobJwt != null) {
       return Optional.of(
           parseAndVerifyBlob(
@@ -1008,9 +1035,15 @@ public final class FidoMetadataDownloader {
   }
 
   private MetadataBLOB parseAndVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
-      throws CertPathValidatorException, InvalidAlgorithmParameterException, CertificateException,
-          IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException,
-          Base64UrlException, FidoMetadataDownloaderException {
+      throws CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          CertificateException,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          InvalidKeyException,
+          Base64UrlException,
+          FidoMetadataDownloaderException {
     Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
     final ByteArray header = ByteArray.fromBase64Url(s.next());
     final ByteArray payload = ByteArray.fromBase64Url(s.next());
@@ -1023,8 +1056,13 @@ public final class FidoMetadataDownloader {
       ByteArray jwtPayload,
       ByteArray jwtSignature,
       X509Certificate trustRootCertificate)
-      throws IOException, CertificateException, NoSuchAlgorithmException, InvalidKeyException,
-          SignatureException, CertPathValidatorException, InvalidAlgorithmParameterException,
+      throws IOException,
+          CertificateException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          SignatureException,
+          CertPathValidatorException,
+          InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final ObjectMapper headerJsonMapper =
         com.yubico.internal.util.JacksonCodecs.json()

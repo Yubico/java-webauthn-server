@@ -84,10 +84,18 @@ public class WebAuthnRestResource {
   private final JsonNodeFactory jsonFactory = JsonNodeFactory.instance;
 
   public WebAuthnRestResource()
-      throws InvalidAppIdException, CertificateException, CertPathValidatorException,
-          InvalidAlgorithmParameterException, Base64UrlException, DigestException,
-          FidoMetadataDownloaderException, UnexpectedLegalHeader, IOException,
-          NoSuchAlgorithmException, SignatureException, InvalidKeyException {
+      throws InvalidAppIdException,
+          CertificateException,
+          CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          DigestException,
+          FidoMetadataDownloaderException,
+          UnexpectedLegalHeader,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          InvalidKeyException {
     this(new WebAuthnServer());
   }
 
