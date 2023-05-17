@@ -105,9 +105,16 @@ public class WebAuthnServer {
   private final MetadataService metadataService = getMetadataService();
 
   private static MetadataService getMetadataService()
-      throws CertPathValidatorException, InvalidAlgorithmParameterException, Base64UrlException,
-          DigestException, FidoMetadataDownloaderException, CertificateException,
-          UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+      throws CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          DigestException,
+          FidoMetadataDownloaderException,
+          CertificateException,
+          UnexpectedLegalHeader,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
           InvalidKeyException {
     if (Config.useFidoMds()) {
       logger.info("Using combination of Yubico JSON file and FIDO MDS for attestation metadata.");
@@ -140,9 +147,16 @@ public class WebAuthnServer {
   private final RelyingParty rp;
 
   public WebAuthnServer()
-      throws CertificateException, CertPathValidatorException, InvalidAlgorithmParameterException,
-          Base64UrlException, DigestException, FidoMetadataDownloaderException,
-          UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+      throws CertificateException,
+          CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          DigestException,
+          FidoMetadataDownloaderException,
+          UnexpectedLegalHeader,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
           InvalidKeyException {
     this(
         new InMemoryRegistrationStorage(),
@@ -158,9 +172,16 @@ public class WebAuthnServer {
       Cache<ByteArray, AssertionRequestWrapper> assertRequestStorage,
       RelyingPartyIdentity rpIdentity,
       Set<String> origins)
-      throws CertificateException, CertPathValidatorException, InvalidAlgorithmParameterException,
-          Base64UrlException, DigestException, FidoMetadataDownloaderException,
-          UnexpectedLegalHeader, IOException, NoSuchAlgorithmException, SignatureException,
+      throws CertificateException,
+          CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          Base64UrlException,
+          DigestException,
+          FidoMetadataDownloaderException,
+          UnexpectedLegalHeader,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
           InvalidKeyException {
     this.userStorage = userStorage;
     this.registerRequestStorage = registerRequestStorage;
