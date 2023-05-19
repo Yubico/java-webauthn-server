@@ -4623,6 +4623,37 @@ class RelyingPartyRegistrationSpec
           .pubKeyCredParams(List(PublicKeyCredentialParameters.ES256).asJava)
           .build()
 
+        it("exposes isUserVerified() with the UV flag value in authenticator data.") {
+          val (pkcWithoutUv, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x00.toByte)),
+              challenge = request.getChallenge,
+            )
+          val (pkcWithUv, _, _) =
+            TestAuthenticator.createUnattestedCredential(
+              flags = Some(new AuthenticatorDataFlags(0x04.toByte)),
+              challenge = request.getChallenge,
+            )
+
+          val resultWithoutUv = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithoutUv)
+              .build()
+          )
+          val resultWithUv = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(request)
+              .response(pkcWithUv)
+              .build()
+          )
+
+          resultWithoutUv.isUserVerified should be(false)
+          resultWithUv.isUserVerified should be(true)
+        }
+
         it("exposes isBackupEligible() with the BE flag value in authenticator data.") {
           val (pkcWithoutBackup, _, _) =
             TestAuthenticator.createUnattestedCredential(

@@ -33,7 +33,10 @@ import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttachment;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.AuthenticatorData;
+import com.yubico.webauthn.data.AuthenticatorDataFlags;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
+import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
@@ -123,6 +126,25 @@ public class RegistrationResult {
                           }
                         })
                     .collect(Collectors.toList())));
+  }
+
+  /**
+   * Check whether the <a href="https://www.w3.org/TR/webauthn/#user-verification">user
+   * verification</a> as performed during the registration ceremony.
+   *
+   * <p>This flag is also available via <code>
+   * {@link PublicKeyCredential}.{@link PublicKeyCredential#getResponse() getResponse()}.{@link AuthenticatorResponse#getParsedAuthenticatorData() getParsedAuthenticatorData()}.{@link AuthenticatorData#getFlags() getFlags()}.{@link AuthenticatorDataFlags#UV UV}
+   * </code>.
+   *
+   * @return <code>true</code> if and only if the authenticator claims to have performed user
+   *     verification during the registration ceremony.
+   * @see <a href="https://www.w3.org/TR/webauthn/#user-verification">User Verification</a>
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-uv">UV flag in §6.1. Authenticator
+   *     Data</a>
+   */
+  @JsonIgnore
+  public boolean isUserVerified() {
+    return credential.getResponse().getParsedAuthenticatorData().getFlags().UV;
   }
 
   /**

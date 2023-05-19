@@ -1,5 +1,9 @@
-== Version 2.4.2 (unreleased) ==
+== Version 2.5.0 (unreleased) ==
 
+New features:
+
+* Added method `.isUserVerified()` to `RegistrationResult` and `AssertionResult`
+  as a shortcut for accessing the UV flag in authenticator data.
 * Updated README and JavaDoc to use the "passkey" term and provide more guidance
   around passkey use cases.
 
