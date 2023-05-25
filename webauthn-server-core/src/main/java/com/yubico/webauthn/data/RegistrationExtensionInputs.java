@@ -287,6 +287,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
       this.uvm = true;
       return this;
     }
+
     /** For compatibility with {@link Builder}(toBuilder = true) */
     private RegistrationExtensionInputsBuilder uvm(Boolean uvm) {
       this.uvm = uvm;
