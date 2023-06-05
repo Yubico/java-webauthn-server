@@ -24,8 +24,7 @@
 
 package com.yubico.webauthn;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
@@ -39,6 +38,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 /**
  * An abstraction of a credential registered to a particular user.
@@ -48,6 +48,7 @@ import lombok.Value;
  * assemble them from other components.
  */
 @Value
+@Jacksonized
 @Builder(toBuilder = true)
 public final class RegisteredCredential {
 
@@ -146,22 +147,6 @@ public final class RegisteredCredential {
   @Builder.Default
   private final Boolean backupState = null;
 
-  @JsonCreator
-  private RegisteredCredential(
-      @NonNull @JsonProperty("credentialId") ByteArray credentialId,
-      @NonNull @JsonProperty("userHandle") ByteArray userHandle,
-      @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
-      @JsonProperty("signatureCount") long signatureCount,
-      @JsonProperty("backupEligible") Boolean backupEligible,
-      @JsonProperty("backupState") Boolean backupState) {
-    this.credentialId = credentialId;
-    this.userHandle = userHandle;
-    this.publicKeyCose = publicKeyCose;
-    this.signatureCount = signatureCount;
-    this.backupEligible = backupEligible;
-    this.backupState = backupState;
-  }
-
   /**
    * The state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> when
    * this credential was registered, if known.
@@ -208,6 +193,31 @@ public final class RegisteredCredential {
   @Deprecated
   public Optional<Boolean> isBackedUp() {
     return Optional.ofNullable(backupState);
+  }
+
+  /**
+   * Opaque extra-data object provided by consumer code. The library will not access it in any
+   * way; however, it can be extracted using {@link #getExtraData(Class)}.
+   */
+  @JsonIgnore
+  @Getter(AccessLevel.NONE)
+  @Builder.Default
+  private final Object extraData = null;
+
+  /**
+   * Retrieves any extra data that was provided during building, unmodified.
+   *
+   * @param <T> The type of the stored extra data.
+   * @param assertedType The type of the stored extra data; a ClassCastException results in an
+   *     empty Optional.
+   * @return The opaque extra data stored during building, unmodified.
+   */
+  public <T> Optional<T> getExtraData(Class<T> assertedType) {
+    try {
+      return Optional.ofNullable(extraData).map(assertedType::cast);
+    } catch (ClassCastException ex) {
+      return Optional.empty();
+    }
   }
 
   public static RegisteredCredentialBuilder.MandatoryStages builder() {
