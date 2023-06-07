@@ -34,6 +34,7 @@ import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
+import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.extension.appid.AppId;
@@ -124,57 +125,45 @@ final class FinishAssertionSteps {
   @Value
   class Step6 implements Step<Step7> {
 
-    private final Optional<ByteArray> userHandle =
+    private final Optional<ByteArray> requestedUserHandle =
         OptionalUtil.orElseOptional(
             request.getUserHandle(),
-            () ->
-                OptionalUtil.orElseOptional(
-                    response.getResponse().getUserHandle(),
-                    () ->
-                        request
-                            .getUsername()
-                            .flatMap(credentialRepository::getUserHandleForUsername)));
+            () -> request.getUsername().flatMap(credentialRepository::getUserHandleForUsername));
 
-    private final Optional<String> username =
-        OptionalUtil.orElseOptional(
-            request.getUsername(),
-            () -> userHandle.flatMap(credentialRepository::getUsernameForUserHandle));
+    private final Optional<ByteArray> assertedUserHandle =
+        response.getResponse().getUserHandle();
+    
+    private final Optional<ByteArray> userHandle =
+        OptionalUtil.orElseOptional(assertedUserHandle, () -> requestedUserHandle);
+      
+    private final Optional<String> username = OptionalUtil.orElseOptional(
+        request.getUsername(),
+        () -> assertedUserHandle.flatMap(credentialRepository::getUsernameForUserHandle));
+    
+    private final Optional<UserIdentity> userIdentity = username.flatMap(un -> 
+        assertedUserHandle.map(uh -> UserIdentity.builder().name(un).displayName(un).id(uh).build()));
 
     private final Optional<RegisteredCredential> registration =
-        userHandle.flatMap(uh -> credentialRepository.lookup(response.getId(), uh));
+        assertedUserHandle.flatMap(uh -> credentialRepository.lookup(response.getId(), uh));
 
     @Override
     public Step7 nextStep() {
-      return new Step7(username.get(), userHandle.get(), registration);
+      return new Step7(userIdentity.get(), userHandle.get(), registration);
     }
 
     @Override
     public void validate() {
       assertTrue(
-          request.getUsername().isPresent()
-              || request.getUserHandle().isPresent()
-              || response.getResponse().getUserHandle().isPresent(),
-          "At least one of username and user handle must be given; none was.");
-      if (request.getUserHandle().isPresent()
-          && response.getResponse().getUserHandle().isPresent()) {
+          userHandle.isPresent() && userIdentity.isPresent(),
+          "User could not be identified. (All of user, username, userHandle are unspecified.)");
+
+      if (requestedUserHandle.isPresent() && assertedUserHandle.isPresent()) {
         assertTrue(
-            request.getUserHandle().get().equals(response.getResponse().getUserHandle().get()),
-            "User handle set in request (%s) does not match user handle in response (%s).",
-            request.getUserHandle().get(),
-            response.getResponse().getUserHandle().get());
+            requestedUserHandle.get().equals(assertedUserHandle.get()),
+            "User handle set in request (%s) does not match user handle received in response (%s).",
+            requestedUserHandle.get(),
+            assertedUserHandle.get());
       }
-
-      assertTrue(
-          userHandle.isPresent(),
-          "User handle not found for username: %s",
-          request.getUsername(),
-          response.getResponse().getUserHandle());
-
-      assertTrue(
-          username.isPresent(),
-          "Username not found for userHandle: %s",
-          request.getUsername(),
-          response.getResponse().getUserHandle());
 
       assertTrue(registration.isPresent(), "Unknown credential: %s", response.getId());
 
@@ -183,29 +172,18 @@ final class FinishAssertionSteps {
           "User handle %s does not own credential %s",
           userHandle.get(),
           response.getId());
-
-      final Optional<String> usernameFromRequest = request.getUsername();
-      final Optional<ByteArray> userHandleFromResponse = response.getResponse().getUserHandle();
-      if (usernameFromRequest.isPresent() && userHandleFromResponse.isPresent()) {
-        assertTrue(
-            userHandleFromResponse.equals(
-                credentialRepository.getUserHandleForUsername(usernameFromRequest.get())),
-            "User handle %s in response does not match username %s in request",
-            userHandleFromResponse,
-            usernameFromRequest);
-      }
     }
   }
 
   @Value
   class Step7 implements Step<Step8> {
-    private final String username;
+    private final UserIdentity user;
     private final ByteArray userHandle;
     private final Optional<RegisteredCredential> credential;
 
     @Override
     public Step8 nextStep() {
-      return new Step8(username, credential.get());
+      return new Step8(user, credential.get());
     }
 
     @Override
@@ -221,7 +199,7 @@ final class FinishAssertionSteps {
   @Value
   class Step8 implements Step<Step10> {
 
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -233,7 +211,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step10 nextStep() {
-      return new Step10(username, credential);
+      return new Step10(user, credential);
     }
 
     public ByteArray authenticatorData() {
@@ -253,7 +231,7 @@ final class FinishAssertionSteps {
 
   @Value
   class Step10 implements Step<Step11> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -263,7 +241,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step11 nextStep() {
-      return new Step11(username, credential, clientData());
+      return new Step11(user, credential, clientData());
     }
 
     public CollectedClientData clientData() {
@@ -273,7 +251,7 @@ final class FinishAssertionSteps {
 
   @Value
   class Step11 implements Step<Step12> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
     private final CollectedClientData clientData;
 
@@ -288,13 +266,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step12 nextStep() {
-      return new Step12(username, credential);
+      return new Step12(user, credential);
     }
   }
 
   @Value
   class Step12 implements Step<Step13> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -309,13 +287,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step13 nextStep() {
-      return new Step13(username, credential);
+      return new Step13(user, credential);
     }
   }
 
   @Value
   class Step13 implements Step<Step14> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -328,13 +306,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step14 nextStep() {
-      return new Step14(username, credential);
+      return new Step14(user, credential);
     }
   }
 
   @Value
   class Step14 implements Step<Step15> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -345,13 +323,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step15 nextStep() {
-      return new Step15(username, credential);
+      return new Step15(user, credential);
     }
   }
 
   @Value
   class Step15 implements Step<Step16> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -377,13 +355,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step16 nextStep() {
-      return new Step16(username, credential);
+      return new Step16(user, credential);
     }
   }
 
   @Value
   class Step16 implements Step<Step17> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -395,13 +373,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step17 nextStep() {
-      return new Step17(username, credential);
+      return new Step17(user, credential);
     }
   }
 
   @Value
   class Step17 implements Step<PendingStep16> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -418,7 +396,7 @@ final class FinishAssertionSteps {
 
     @Override
     public PendingStep16 nextStep() {
-      return new PendingStep16(username, credential);
+      return new PendingStep16(user, credential);
     }
   }
 
@@ -426,7 +404,7 @@ final class FinishAssertionSteps {
   // Step 16 in editor's draft as of 2022-11-09 https://w3c.github.io/webauthn/
   // TODO: Finalize this when spec matures
   class PendingStep16 implements Step<Step18> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -443,13 +421,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step18 nextStep() {
-      return new Step18(username, credential);
+      return new Step18(user, credential);
     }
   }
 
   @Value
   class Step18 implements Step<Step19> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -457,13 +435,13 @@ final class FinishAssertionSteps {
 
     @Override
     public Step19 nextStep() {
-      return new Step19(username, credential);
+      return new Step19(user, credential);
     }
   }
 
   @Value
   class Step19 implements Step<Step20> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
 
     @Override
@@ -473,7 +451,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step20 nextStep() {
-      return new Step20(username, credential, clientDataJsonHash());
+      return new Step20(user, credential, clientDataJsonHash());
     }
 
     public ByteArray clientDataJsonHash() {
@@ -483,7 +461,7 @@ final class FinishAssertionSteps {
 
   @Value
   class Step20 implements Step<Step21> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
     private final ByteArray clientDataJsonHash;
 
@@ -518,7 +496,7 @@ final class FinishAssertionSteps {
 
     @Override
     public Step21 nextStep() {
-      return new Step21(username, credential);
+      return new Step21(user, credential);
     }
 
     public ByteArray signedBytes() {
@@ -528,13 +506,13 @@ final class FinishAssertionSteps {
 
   @Value
   class Step21 implements Step<Finished> {
-    private final String username;
+    private final UserIdentity user;
     private final RegisteredCredential credential;
     private final long assertionSignatureCount;
     private final long storedSignatureCountBefore;
 
-    public Step21(String username, RegisteredCredential credential) {
-      this.username = username;
+    public Step21(UserIdentity user, RegisteredCredential credential) {
+      this.user = user;
       this.credential = credential;
       this.assertionSignatureCount =
           response.getResponse().getParsedAuthenticatorData().getSignatureCounter();
@@ -556,14 +534,14 @@ final class FinishAssertionSteps {
 
     @Override
     public Finished nextStep() {
-      return new Finished(credential, username, assertionSignatureCount, signatureCounterValid());
+      return new Finished(credential, user, assertionSignatureCount, signatureCounterValid());
     }
   }
 
   @Value
   class Finished implements Step<Finished> {
     private final RegisteredCredential credential;
-    private final String username;
+    private final UserIdentity user;
     private final long assertionSignatureCount;
     private final boolean signatureCounterValid;
 
@@ -580,7 +558,7 @@ final class FinishAssertionSteps {
     @Override
     public Optional<AssertionResult> result() {
       return Optional.of(
-          new AssertionResult(true, response, credential, username, signatureCounterValid));
+          new AssertionResult(true, response, credential, user, signatureCounterValid));
     }
   }
 }

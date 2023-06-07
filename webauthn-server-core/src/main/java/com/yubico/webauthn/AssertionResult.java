@@ -69,11 +69,16 @@ public class AssertionResult {
   private final RegisteredCredential credential;
 
   /**
+   * The authenticated user.
+   */
+  @NonNull private final UserIdentity user;
+
+  /**
    * The username of the authenticated user.
    *
    * @see #getUserHandle()
    */
-  @NonNull private final String username;
+  private final @NonNull String getUsername() { return this.user.getName(); }
 
   /**
    * <code>true</code> if and only if at least one of the following is true:
@@ -103,12 +108,12 @@ public class AssertionResult {
           PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
               credentialResponse,
       @NonNull @JsonProperty("credential") RegisteredCredential credential,
-      @NonNull @JsonProperty("username") String username,
+      @NonNull @JsonProperty("user") UserIdentity user,
       @JsonProperty("signatureCounterValid") boolean signatureCounterValid) {
     this.success = success;
     this.credentialResponse = credentialResponse;
     this.credential = credential;
-    this.username = username;
+    this.user = user;
     this.signatureCounterValid = signatureCounterValid;
   }
 

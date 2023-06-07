@@ -11,6 +11,9 @@ out/
 *.iws
 .attach_pid*
 
+# VS Code
+.vscode/
+
 # Mac
 .DS_Store
 
