@@ -24,12 +24,14 @@
 
 package com.yubico.webauthn.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Optional;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 
 /**
  * Describes a user account, with which public key credentials can be associated.
@@ -40,6 +42,7 @@ import lombok.Value;
  *     </a>
  */
 @Value
+@Jacksonized
 @Builder(toBuilder = true)
 public class UserIdentity implements PublicKeyCredentialEntity {
 
@@ -101,14 +104,29 @@ public class UserIdentity implements PublicKeyCredentialEntity {
    */
   @NonNull private final ByteArray id;
 
-  @JsonCreator
-  private UserIdentity(
-      @NonNull @JsonProperty("name") String name,
-      @NonNull @JsonProperty("displayName") String displayName,
-      @NonNull @JsonProperty("id") ByteArray id) {
-    this.name = name;
-    this.displayName = displayName;
-    this.id = id;
+  /**
+   * Opaque extra-data object provided by consumer code. The library will not access it in any
+   * way; however, it can be extracted using {@link #getExtraData(Class)}.
+   */
+  @JsonIgnore
+  @Getter(AccessLevel.NONE)
+  @Builder.Default
+  private final Object extraData = null;
+
+  /**
+   * Retrieves any extra data that was provided during building, unmodified.
+   *
+   * @param <T> The type of the stored extra data.
+   * @param assertedType The type of the stored extra data; a ClassCastException results in an
+   *     empty Optional.
+   * @return The opaque extra data stored during building, unmodified.
+   */
+  public <T> Optional<T> getExtraData(Class<T> assertedType) {
+    try {
+      return Optional.ofNullable(extraData).map(assertedType::cast);
+    } catch (ClassCastException ex) {
+      return Optional.empty();
+    }
   }
 
   public static UserIdentityBuilder.MandatoryStages builder() {
