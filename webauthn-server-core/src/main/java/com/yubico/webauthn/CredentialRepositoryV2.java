@@ -24,12 +24,11 @@
 
 package com.yubico.webauthn;
 
-import java.util.Optional;
-import java.util.Set;
-
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * An abstraction of the database lookups needed by this library.
@@ -38,27 +37,30 @@ import com.yubico.webauthn.data.UserIdentity;
  * usernames, user handles and credential IDs.
  */
 public interface CredentialRepositoryV2 {
-    /**
+  /**
    * Get the credential IDs of all credentials registered to the given user.
-   * 
+   *
    * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
    * returns a value suitable for inclusion in this set.
-   * 
-   * <p>This method is invoked from {@link RelyingParty#startRegistration(StartRegistrationOptions)}.
-   * In this case, it is passed the UserIdentity specified in {@link StartRegistrationOptions#getUser()}.
-   * 
-   * <p>Additionally, this method is invoked from {@link RelyingParty#startAssertion(StartAssertionOptions)} if
-   * {@link StartAssertionOptions#getUser()} is present, with that UserIdentity. If {@link StartAssertionOptions#getUsername()}
-   * or {@link StartAssertionOptions#getUserHandle()} are present, it is invoked with the return value of
-   * {@link #findUserByUsername(String)} or {@link #findUserByUserHandle(ByteArray)} respectively, instead.
+   *
+   * <p>This method is invoked from {@link
+   * RelyingParty#startRegistration(StartRegistrationOptions)}. In this case, it is passed the
+   * UserIdentity specified in {@link StartRegistrationOptions#getUser()}.
+   *
+   * <p>Additionally, this method is invoked from {@link
+   * RelyingParty#startAssertion(StartAssertionOptions)} if {@link StartAssertionOptions#getUser()}
+   * is present, with that UserIdentity. If {@link StartAssertionOptions#getUsername()} or {@link
+   * StartAssertionOptions#getUserHandle()} are present, it is invoked with the return value of
+   * {@link #findUserByUsername(String)} or {@link #findUserByUserHandle(ByteArray)} respectively,
+   * instead.
    */
   Set<PublicKeyCredentialDescriptor> getCredentialIdsForUser(UserIdentity user);
 
   /**
    * Builds a UserIdentity corresponding to the given username.
    *
-   * <p>This is only invoked from {@link RelyingParty#startAssertion(StartAssertionOptions)}, and only if
-   * {@link StartAssertionOptions#getUsername()} is present.
+   * <p>This is only invoked from {@link RelyingParty#startAssertion(StartAssertionOptions)}, and
+   * only if {@link StartAssertionOptions#getUsername()} is present.
    */
   Optional<UserIdentity> findUserByUsername(String username);
 
@@ -67,11 +69,11 @@ public interface CredentialRepositoryV2 {
    *
    * <p>This is invoked from {@link RelyingParty#startAssertion(StartAssertionOptions)} only if
    * {@link StartAssertionOptions#getUserHandle()} is present.
-   * 
-   * <p>Additionally, when authenticating using a discoverable credential (passkey), i.e., if none of
-   * {@link StartAssertionOptions#getUser()}, {@link StartAssertionOptions#getUsername()} and
-   * {@link StartAssertionOptions#getUserHandle()} are present, this is invoked from
-   * {@link RelyingParty#finishAssertion(FinishAssertionOptions)}, with the credential's user handle.
+   *
+   * <p>Additionally, when authenticating using a discoverable credential (passkey), i.e., if none
+   * of {@link StartAssertionOptions#getUser()}, {@link StartAssertionOptions#getUsername()} and
+   * {@link StartAssertionOptions#getUserHandle()} are present, this is invoked from {@link
+   * RelyingParty#finishAssertion(FinishAssertionOptions)}, with the credential's user handle.
    */
   Optional<UserIdentity> findUserByUserHandle(ByteArray userHandle);
 

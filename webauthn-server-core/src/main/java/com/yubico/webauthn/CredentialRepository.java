@@ -27,7 +27,6 @@ package com.yubico.webauthn;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
-
 import java.util.Optional;
 import java.util.Set;
 
@@ -36,8 +35,9 @@ import java.util.Set;
  *
  * <p>This is used by {@link RelyingParty} to look up credentials, usernames and user handles from
  * usernames, user handles and credential IDs.
- * 
- * @deprecated this interface is provided for backwards compatibility; use {@link CredentialRepositoryV2} instead
+ *
+ * @deprecated this interface is provided for backwards compatibility; use {@link
+ *     CredentialRepositoryV2} instead
  */
 @Deprecated
 public interface CredentialRepository extends CredentialRepositoryV2 {
@@ -77,8 +77,6 @@ public interface CredentialRepository extends CredentialRepositoryV2 {
    */
   Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
 
-
-
   /// map the methods of the new interface to the methods on the old interface
 
   @Override
@@ -88,12 +86,14 @@ public interface CredentialRepository extends CredentialRepositoryV2 {
 
   @Override
   default Optional<UserIdentity> findUserByUsername(String username) {
-      return getUserHandleForUsername(username).map(uh -> UserIdentity.builder().name(username).displayName(username).id(uh).build());
+    return getUserHandleForUsername(username)
+        .map(uh -> UserIdentity.builder().name(username).displayName(username).id(uh).build());
   }
 
   @Override
   default Optional<UserIdentity> findUserByUserHandle(ByteArray userHandle) {
-      return getUsernameForUserHandle(userHandle).map(un -> UserIdentity.builder().name(un).displayName(un).id(userHandle).build());
+    return getUsernameForUserHandle(userHandle)
+        .map(un -> UserIdentity.builder().name(un).displayName(un).id(userHandle).build());
   }
 
   @Override
