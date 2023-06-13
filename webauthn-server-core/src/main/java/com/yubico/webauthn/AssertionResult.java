@@ -78,7 +78,7 @@ public class AssertionResult {
    *
    * @see #getUserHandle()
    */
-  private final @NonNull String getUsername() { return this.user.getName(); }
+  public final @NonNull String getUsername() { return this.user.getName(); }
 
   /**
    * <code>true</code> if and only if at least one of the following is true:
