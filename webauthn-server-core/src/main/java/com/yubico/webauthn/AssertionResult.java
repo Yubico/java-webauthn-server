@@ -68,9 +68,7 @@ public class AssertionResult {
    */
   private final RegisteredCredential credential;
 
-  /**
-   * The authenticated user.
-   */
+  /** The authenticated user. */
   @NonNull private final UserIdentity user;
 
   /**
@@ -78,7 +76,9 @@ public class AssertionResult {
    *
    * @see #getUserHandle()
    */
-  public final @NonNull String getUsername() { return this.user.getName(); }
+  public final @NonNull String getUsername() {
+    return this.user.getName();
+  }
 
   /**
    * <code>true</code> if and only if at least one of the following is true:

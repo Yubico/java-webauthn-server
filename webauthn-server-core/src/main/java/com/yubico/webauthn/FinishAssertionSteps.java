@@ -130,18 +130,21 @@ final class FinishAssertionSteps {
             request.getUserHandle(),
             () -> request.getUsername().flatMap(credentialRepository::getUserHandleForUsername));
 
-    private final Optional<ByteArray> assertedUserHandle =
-        response.getResponse().getUserHandle();
-    
+    private final Optional<ByteArray> assertedUserHandle = response.getResponse().getUserHandle();
+
     private final Optional<ByteArray> userHandle =
         OptionalUtil.orElseOptional(assertedUserHandle, () -> requestedUserHandle);
-      
-    private final Optional<String> username = OptionalUtil.orElseOptional(
-        request.getUsername(),
-        () -> assertedUserHandle.flatMap(credentialRepository::getUsernameForUserHandle));
-    
-    private final Optional<UserIdentity> userIdentity = username.flatMap(un -> 
-        assertedUserHandle.map(uh -> UserIdentity.builder().name(un).displayName(un).id(uh).build()));
+
+    private final Optional<String> username =
+        OptionalUtil.orElseOptional(
+            request.getUsername(),
+            () -> assertedUserHandle.flatMap(credentialRepository::getUsernameForUserHandle));
+
+    private final Optional<UserIdentity> userIdentity =
+        username.flatMap(
+            un ->
+                assertedUserHandle.map(
+                    uh -> UserIdentity.builder().name(un).displayName(un).id(uh).build()));
 
     private final Optional<RegisteredCredential> registration =
         assertedUserHandle.flatMap(uh -> credentialRepository.lookup(response.getId(), uh));
