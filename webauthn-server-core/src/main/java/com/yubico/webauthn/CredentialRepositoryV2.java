@@ -82,7 +82,7 @@ public interface CredentialRepositoryV2 {
    * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
    * directly from a database or assembled from other components.
    */
-  Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
+  Optional<RegisteredCredential> lookup(ByteArray credentialId, UserIdentity user);
 
   /**
    * Look up all credentials with the given credential ID, regardless of what user they're
