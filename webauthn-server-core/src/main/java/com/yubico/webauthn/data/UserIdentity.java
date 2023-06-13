@@ -105,8 +105,8 @@ public class UserIdentity implements PublicKeyCredentialEntity {
   @NonNull private final ByteArray id;
 
   /**
-   * Opaque extra-data object provided by consumer code. The library will not access it in any
-   * way; however, it can be extracted using {@link #getExtraData(Class)}.
+   * Opaque extra-data object provided by consumer code. The library will not access it in any way;
+   * however, it can be extracted using {@link #getExtraData(Class)}.
    */
   @JsonIgnore
   @Getter(AccessLevel.NONE)
@@ -117,8 +117,8 @@ public class UserIdentity implements PublicKeyCredentialEntity {
    * Retrieves any extra data that was provided during building, unmodified.
    *
    * @param <T> The type of the stored extra data.
-   * @param assertedType The type of the stored extra data; a ClassCastException results in an
-   *     empty Optional.
+   * @param assertedType The type of the stored extra data; a ClassCastException results in an empty
+   *     Optional.
    * @return The opaque extra data stored during building, unmodified.
    */
   public <T> Optional<T> getExtraData(Class<T> assertedType) {
