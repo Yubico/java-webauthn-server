@@ -1,11 +1,22 @@
 == Version 2.5.0 (unreleased) ==
 
+`webauthn-server-core`:
+
 New features:
 
 * Added method `.isUserVerified()` to `RegistrationResult` and `AssertionResult`
   as a shortcut for accessing the UV flag in authenticator data.
 * Updated README and JavaDoc to use the "passkey" term and provide more guidance
   around passkey use cases.
+
+`webauthn-server-attestation`:
+
+New features:
+
+* Added option `verifyDownloadsOnly(boolean)` to `FidoMetadataDownloader`. When
+  set to `true`, the BLOB signature will not be verified when loading a BLOB
+  from cache or when explicitly given. Default setting is `false`, which
+  preserves the previous behaviour.
 
 
 == Version 2.4.1 ==
