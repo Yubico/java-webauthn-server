@@ -29,6 +29,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
 import java.util.Optional;
 import java.util.Set;
+import lombok.NonNull;
 
 /**
  * An abstraction of the database lookups needed by this library.
@@ -48,7 +49,8 @@ public interface CredentialRepository extends CredentialRepositoryV2 {
    * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
    * returns a value suitable for inclusion in this set.
    */
-  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
+  @NonNull
+  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(@NonNull String username);
 
   /**
    * Get the user handle corresponding to the given username - the inverse of {@link
@@ -57,7 +59,8 @@ public interface CredentialRepository extends CredentialRepositoryV2 {
    * <p>Used to look up the user handle based on the username, for authentication ceremonies where
    * the username is already given.
    */
-  Optional<ByteArray> getUserHandleForUsername(String username);
+  @NonNull
+  Optional<ByteArray> getUserHandleForUsername(@NonNull String username);
 
   /**
    * Get the username corresponding to the given user handle - the inverse of {@link
@@ -66,7 +69,8 @@ public interface CredentialRepository extends CredentialRepositoryV2 {
    * <p>Used to look up the username based on the user handle, for username-less authentication
    * ceremonies.
    */
-  Optional<String> getUsernameForUserHandle(ByteArray userHandle);
+  @NonNull
+  Optional<String> getUsernameForUserHandle(@NonNull ByteArray userHandle);
 
   /**
    * Look up the public key and stored signature count for the given credential registered to the
@@ -75,29 +79,36 @@ public interface CredentialRepository extends CredentialRepositoryV2 {
    * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
    * directly from a database or assembled from other components.
    */
-  Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
+  @NonNull
+  Optional<RegisteredCredential> lookup(
+      @NonNull ByteArray credentialId, @NonNull ByteArray userHandle);
 
   /// map the methods of the new interface to the methods on the old interface
 
   @Override
-  default Set<PublicKeyCredentialDescriptor> getCredentialIdsForUser(UserIdentity user) {
+  @NonNull
+  default Set<PublicKeyCredentialDescriptor> getCredentialIdsForUser(@NonNull UserIdentity user) {
     return getCredentialIdsForUsername(user.getName());
   }
 
   @Override
-  default Optional<UserIdentity> findUserByUsername(String username) {
+  @NonNull
+  default Optional<UserIdentity> findUserByUsername(@NonNull String username) {
     return getUserHandleForUsername(username)
         .map(uh -> UserIdentity.builder().name(username).displayName(username).id(uh).build());
   }
 
   @Override
-  default Optional<UserIdentity> findUserByUserHandle(ByteArray userHandle) {
+  @NonNull
+  default Optional<UserIdentity> findUserByUserHandle(@NonNull ByteArray userHandle) {
     return getUsernameForUserHandle(userHandle)
         .map(un -> UserIdentity.builder().name(un).displayName(un).id(userHandle).build());
   }
 
   @Override
-  default Optional<RegisteredCredential> lookup(ByteArray credentialId, UserIdentity identity) {
+  @NonNull
+  default Optional<RegisteredCredential> lookup(
+      @NonNull ByteArray credentialId, @NonNull UserIdentity identity) {
     return lookup(credentialId, identity.getId());
   }
 }

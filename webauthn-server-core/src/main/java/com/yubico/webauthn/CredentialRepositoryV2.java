@@ -29,6 +29,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
 import java.util.Optional;
 import java.util.Set;
+import lombok.NonNull;
 
 /**
  * An abstraction of the database lookups needed by this library.
@@ -54,7 +55,8 @@ public interface CredentialRepositoryV2 {
    * {@link #findUserByUsername(String)} or {@link #findUserByUserHandle(ByteArray)} respectively,
    * instead.
    */
-  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUser(UserIdentity user);
+  @NonNull
+  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUser(@NonNull UserIdentity user);
 
   /**
    * Builds a UserIdentity corresponding to the given username.
@@ -62,7 +64,8 @@ public interface CredentialRepositoryV2 {
    * <p>This is only invoked from {@link RelyingParty#startAssertion(StartAssertionOptions)}, and
    * only if {@link StartAssertionOptions#getUsername()} is present.
    */
-  Optional<UserIdentity> findUserByUsername(String username);
+  @NonNull
+  Optional<UserIdentity> findUserByUsername(@NonNull String username);
 
   /**
    * Builds a UserIdentity corresponding to the given user handle.
@@ -75,7 +78,8 @@ public interface CredentialRepositoryV2 {
    * {@link StartAssertionOptions#getUserHandle()} are present, this is invoked from {@link
    * RelyingParty#finishAssertion(FinishAssertionOptions)}, with the credential's user handle.
    */
-  Optional<UserIdentity> findUserByUserHandle(ByteArray userHandle);
+  @NonNull
+  Optional<UserIdentity> findUserByUserHandle(@NonNull ByteArray userHandle);
 
   /**
    * Look up the public key and stored signature count for the given credential registered to the
@@ -84,7 +88,9 @@ public interface CredentialRepositoryV2 {
    * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
    * directly from a database or assembled from other components.
    */
-  Optional<RegisteredCredential> lookup(ByteArray credentialId, UserIdentity user);
+  @NonNull
+  Optional<RegisteredCredential> lookup(
+      @NonNull ByteArray credentialId, @NonNull UserIdentity user);
 
   /**
    * Look up all credentials with the given credential ID, regardless of what user they're
@@ -94,5 +100,6 @@ public interface CredentialRepositoryV2 {
    * circumstances this method should only return zero or one credential (this is an expected
    * consequence, not an interface requirement).
    */
-  Set<RegisteredCredential> lookupAll(ByteArray credentialId);
+  @NonNull
+  Set<RegisteredCredential> lookupAll(@NonNull ByteArray credentialId);
 }
