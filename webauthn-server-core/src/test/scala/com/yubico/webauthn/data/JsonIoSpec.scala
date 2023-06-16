@@ -27,6 +27,7 @@ package com.yubico.webauthn.data
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException
+import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.yubico.internal.util.JacksonCodecs
@@ -529,6 +530,25 @@ class JsonIoSpec
           redecoded should equal(req)
           encoded should equal(reencoded)
         }
+      }
+    }
+  }
+
+  describe("The class RegisteredCredential") {
+    it("""does not have a "backedUp" property when newly serialized.""") {
+      forAll { cred: RegisteredCredential =>
+        val tree = json.valueToTree(cred).asInstanceOf[ObjectNode]
+        tree.has("backedUp") should be(false)
+      }
+    }
+
+    it("""can be parsed with the previous "backedUp" property name.""") {
+      forAll { cred: RegisteredCredential =>
+        val tree = json.valueToTree(cred).asInstanceOf[ObjectNode]
+        tree.set[ObjectNode]("backedUp", BooleanNode.TRUE)
+        tree.remove("backupState")
+        val cred2 = json.treeToValue(tree, classOf[RegisteredCredential])
+        cred2.isBackedUp.toScala should equal(Some(true))
       }
     }
   }

@@ -1,5 +1,12 @@
 == Version 2.5.0 (unreleased) ==
 
+Breaking changes to experimental features:
+
+* Added Jackson annotation `@JsonProperty` to method
+  `RegisteredCredential.isBackedUp()`, changing the property name from
+  `backedUp` to `backupState`. `backedUp` is still accepted during
+  deserialization but will no longer be emitted during serialization.
+
 New features:
 
 * Added method `.isUserVerified()` to `RegistrationResult` and `AssertionResult`
