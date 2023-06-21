@@ -82,7 +82,10 @@ public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
   private final SortedSet<AuthenticatorTransport> transports;
 
   /** The {@link #attestationObject} parsed as a domain object. */
-  @NonNull @JsonIgnore private final transient AttestationObject attestation;
+  @NonNull
+  @JsonIgnore
+  @Getter(onMethod = @__({@JsonIgnore}))
+  private final transient AttestationObject attestation;
 
   @NonNull
   @JsonIgnore
