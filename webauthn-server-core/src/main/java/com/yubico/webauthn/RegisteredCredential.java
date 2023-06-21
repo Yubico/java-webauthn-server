@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import COSE.CoseException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AttestedCredentialData;
@@ -33,6 +34,10 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.UserIdentity;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -82,6 +87,18 @@ public final class RegisteredCredential {
    * @see RegistrationResult#getPublicKeyCose()
    */
   @NonNull private final ByteArray publicKeyCose;
+
+  /**
+   * The credential public key, as a {@link java.security.PublicKey} object.
+   *
+   * <p>Provided for convenience.
+   */
+  @NonNull
+  @JsonIgnore
+  public PublicKey getPublicKeyAsPublicKey()
+      throws InvalidKeySpecException, NoSuchAlgorithmException, CoseException, IOException {
+    return WebAuthnCodecs.importCosePublicKey(getPublicKeyCose());
+  }
 
   /**
    * The stored <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#signcount">signature
