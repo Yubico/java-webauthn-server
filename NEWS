@@ -2,6 +2,13 @@
 
 `webauthn-server-core`:
 
+Breaking changes to experimental features:
+
+* Added Jackson annotation `@JsonProperty` to method
+  `RegisteredCredential.isBackedUp()`, changing the property name from
+  `backedUp` to `backupState`. `backedUp` is still accepted during
+  deserialization but will no longer be emitted during serialization.
+
 New features:
 
 * Added method `.isUserVerified()` to `RegistrationResult` and `AssertionResult`
@@ -17,6 +24,11 @@ New features:
   set to `true`, the BLOB signature will not be verified when loading a BLOB
   from cache or when explicitly given. Default setting is `false`, which
   preserves the previous behaviour.
+
+Fixes:
+
+* Made Jackson setting `PROPAGATE_TRANSIENT_MARKER` unnecessary for JSON
+  serialization with Jackson version 2.15.0-rc1 and later.
 
 
 == Version 2.4.1 ==

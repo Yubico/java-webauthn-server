@@ -3,9 +3,7 @@ package com.yubico.internal.util;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.Base64Variants;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
@@ -23,8 +21,6 @@ public class JacksonCodecs {
   public static ObjectMapper json() {
     return JsonMapper.builder()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-        .configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true)
         .serializationInclusion(Include.NON_ABSENT)
         .defaultBase64Variant(Base64Variants.MODIFIED_FOR_URL)
         .addModule(new Jdk8Module())
