@@ -15,6 +15,7 @@ New features:
   as a shortcut for accessing the UV flag in authenticator data.
 * Updated README and JavaDoc to use the "passkey" term and provide more guidance
   around passkey use cases.
+* Added `Automatic-Module-Name` to jar manifest.
 
 `webauthn-server-attestation`:
 
@@ -24,6 +25,7 @@ New features:
   set to `true`, the BLOB signature will not be verified when loading a BLOB
   from cache or when explicitly given. Default setting is `false`, which
   preserves the previous behaviour.
+* Added `Automatic-Module-Name` to jar manifest.
 
 Fixes:
 
