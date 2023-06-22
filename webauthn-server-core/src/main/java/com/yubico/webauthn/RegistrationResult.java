@@ -270,6 +270,7 @@ public class RegistrationResult {
 
   /**
    * The public key of the created credential, as a {@link java.security.PublicKey} object.
+   *
    * <p>Provided for convenience.
    */
   @NonNull
