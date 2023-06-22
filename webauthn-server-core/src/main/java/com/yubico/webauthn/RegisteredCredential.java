@@ -90,13 +90,14 @@ public final class RegisteredCredential {
   @NonNull private final ByteArray publicKeyCose;
 
   /**
-   * The credential public key, as a {@link java.security.PublicKey} object.
+   * The public key of the credential, parsed as a {@link PublicKey} object.
    *
-   * <p>Provided for convenience.
+   * @see #getPublicKeyCose()
+   * @see RegistrationResult#getParsedPublicKey()
    */
   @NonNull
   @JsonIgnore
-  public PublicKey getPublicKeyAsPublicKey()
+  public PublicKey getParsedPublicKey()
       throws InvalidKeySpecException, NoSuchAlgorithmException, CoseException, IOException {
     return WebAuthnCodecs.importCosePublicKey(getPublicKeyCose());
   }
