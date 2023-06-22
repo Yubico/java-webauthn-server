@@ -102,11 +102,11 @@ function updateSessionBox() {
 
 function updateRegisterButtons() {
   if (session.sessionToken) {
-     document.getElementById('registerButton').textContent = 'Add credential';
-     document.getElementById('registerRkButton').textContent = 'Add resident credential';
+     document.getElementById('registerButton').textContent = 'Add non-discoverable credential';
+     document.getElementById('registerRkButton').textContent = 'Add passkey';
   } else {
-     document.getElementById('registerButton').textContent = 'Register new account';
-     document.getElementById('registerRkButton').textContent = 'Register new account with resident credential';
+     document.getElementById('registerButton').textContent = 'Create account with non-discoverable credential';
+     document.getElementById('registerRkButton').textContent = 'Create account with passkey';
   }
 }
 
@@ -535,12 +535,12 @@ window.onload = init;
         <div><input type="text" id="credentialNickname"/></div>
         <div>
           <button type="button" id="registerButton">
-            Register new account
+            Create account with non-discoverable credential
           </button>
         </div>
         <div>
           <button type="button" id="registerRkButton">
-            Register new account with resident credential
+            Create account with passkey
           </button>
         </div>
       </div>
@@ -550,12 +550,12 @@ window.onload = init;
         <div></div>
         <div>
           <button type="button" id="authenticateWithUsernameButton">
-            Authenticate
+            Authenticate with username
           </button>
         </div>
         <div>
           <button type="button" id="authenticateButton">
-            Authenticate without username
+            Authenticate with passkey
           </button>
         </div>
       </div>
