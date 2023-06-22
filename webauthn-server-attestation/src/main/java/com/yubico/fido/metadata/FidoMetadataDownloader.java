@@ -87,6 +87,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -119,6 +120,7 @@ public final class FidoMetadataDownloader {
   private final CertStore certStore;
   @NonNull private final Clock clock;
   private final KeyStore httpsTrustStore;
+  private final boolean verifyDownloadsOnly;
 
   /**
    * Begin configuring a {@link FidoMetadataDownloader} instance. See the {@link
@@ -148,6 +150,7 @@ public final class FidoMetadataDownloader {
     private CertStore certStore = null;
     @NonNull private Clock clock = Clock.systemUTC();
     private KeyStore httpsTrustStore = null;
+    private boolean verifyDownloadsOnly = false;
 
     public FidoMetadataDownloader build() {
       return new FidoMetadataDownloader(
@@ -165,7 +168,8 @@ public final class FidoMetadataDownloader {
           blobCacheConsumer,
           certStore,
           clock,
-          httpsTrustStore);
+          httpsTrustStore,
+          verifyDownloadsOnly);
     }
 
     /**
@@ -611,6 +615,26 @@ public final class FidoMetadataDownloader {
 
       return this;
     }
+
+    /**
+     * If set to <code>true</code>, the BLOB signature will not be verified when loading the BLOB
+     * from cache or when explicitly set via {@link Step4#useBlob(String)}. This means that if a
+     * BLOB was successfully verified once and written to cache, that cached value will be
+     * implicitly trusted when loaded in the future.
+     *
+     * <p>If set to <code>false</code>, the BLOB signature will always be verified no matter where
+     * the BLOB came from. This means that a cached BLOB may become invalid if the BLOB certificate
+     * expires, even if the BLOB was successfully verified at the time it was downloaded.
+     *
+     * <p>The default setting is <code>false</code>.
+     *
+     * @param verifyDownloadsOnly <code>true</code> if the BLOB signature should be ignored when
+     *     loading the BLOB from cache or when explicitly set via {@link Step4#useBlob(String)}.
+     */
+    public FidoMetadataDownloaderBuilder verifyDownloadsOnly(final boolean verifyDownloadsOnly) {
+      this.verifyDownloadsOnly = verifyDownloadsOnly;
+      return this;
+    }
   }
 
   /**
@@ -960,7 +984,7 @@ public final class FidoMetadataDownloader {
           FidoMetadataDownloaderException {
     if (blobJwt != null) {
       return Optional.of(
-          parseAndVerifyBlob(
+          parseAndMaybeVerifyBlob(
               new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate));
 
     } else {
@@ -987,7 +1011,7 @@ public final class FidoMetadataDownloader {
     return cachedContents.map(
         cached -> {
           try {
-            return parseAndVerifyBlob(cached, trustRootCertificate);
+            return parseAndMaybeVerifyBlob(cached, trustRootCertificate);
           } catch (Exception e) {
             log.warn("Failed to read or parse cached BLOB.", e);
             return null;
@@ -1044,18 +1068,27 @@ public final class FidoMetadataDownloader {
           InvalidKeyException,
           Base64UrlException,
           FidoMetadataDownloaderException {
-    Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
-    final ByteArray header = ByteArray.fromBase64Url(s.next());
-    final ByteArray payload = ByteArray.fromBase64Url(s.next());
-    final ByteArray signature = ByteArray.fromBase64Url(s.next());
-    return verifyBlob(header, payload, signature, trustRootCertificate);
+    return verifyBlob(parseBlob(jwt), trustRootCertificate);
   }
 
-  private MetadataBLOB verifyBlob(
-      ByteArray jwtHeader,
-      ByteArray jwtPayload,
-      ByteArray jwtSignature,
-      X509Certificate trustRootCertificate)
+  private MetadataBLOB parseAndMaybeVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
+      throws CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          CertificateException,
+          IOException,
+          NoSuchAlgorithmException,
+          SignatureException,
+          InvalidKeyException,
+          Base64UrlException,
+          FidoMetadataDownloaderException {
+    if (verifyDownloadsOnly) {
+      return parseBlob(jwt).blob;
+    } else {
+      return verifyBlob(parseBlob(jwt), trustRootCertificate);
+    }
+  }
+
+  private MetadataBLOB verifyBlob(ParseResult parseResult, X509Certificate trustRootCertificate)
       throws IOException,
           CertificateException,
           NoSuchAlgorithmException,
@@ -1064,12 +1097,7 @@ public final class FidoMetadataDownloader {
           CertPathValidatorException,
           InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
-    final ObjectMapper headerJsonMapper =
-        com.yubico.internal.util.JacksonCodecs.json()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-            .setBase64Variant(Base64Variants.MIME_NO_LINEFEEDS);
-    final MetadataBLOBHeader header =
-        headerJsonMapper.readValue(jwtHeader.getBytes(), MetadataBLOBHeader.class);
+    final MetadataBLOBHeader header = parseResult.blob.getHeader();
 
     final List<X509Certificate> certChain;
     if (header.getX5u().isPresent()) {
@@ -1117,9 +1145,9 @@ public final class FidoMetadataDownloader {
 
     signature.initVerify(leafCert.getPublicKey());
     signature.update(
-        (jwtHeader.getBase64Url() + "." + jwtPayload.getBase64Url())
+        (parseResult.jwtHeader.getBase64Url() + "." + parseResult.jwtPayload.getBase64Url())
             .getBytes(StandardCharsets.UTF_8));
-    if (!signature.verify(jwtSignature.getBytes())) {
+    if (!signature.verify(parseResult.jwtSignature.getBytes())) {
       throw new FidoMetadataDownloaderException(Reason.BAD_SIGNATURE);
     }
 
@@ -1134,10 +1162,28 @@ public final class FidoMetadataDownloader {
     pathParams.setDate(Date.from(clock.instant()));
     cpv.validate(blobCertPath, pathParams);
 
-    return new MetadataBLOB(
-        header,
-        JacksonCodecs.jsonWithDefaultEnums()
-            .readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class));
+    return parseResult.blob;
+  }
+
+  private static ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
+    Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
+    final ByteArray jwtHeader = ByteArray.fromBase64Url(s.next());
+    final ByteArray jwtPayload = ByteArray.fromBase64Url(s.next());
+    final ByteArray jwtSignature = ByteArray.fromBase64Url(s.next());
+
+    final ObjectMapper headerJsonMapper =
+        com.yubico.internal.util.JacksonCodecs.json()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+            .setBase64Variant(Base64Variants.MIME_NO_LINEFEEDS);
+
+    return new ParseResult(
+        new MetadataBLOB(
+            headerJsonMapper.readValue(jwtHeader.getBytes(), MetadataBLOBHeader.class),
+            JacksonCodecs.jsonWithDefaultEnums()
+                .readValue(jwtPayload.getBytes(), MetadataBLOBPayload.class)),
+        jwtHeader,
+        jwtPayload,
+        jwtSignature);
   }
 
   private static ByteArray readAll(InputStream is) throws IOException {
@@ -1157,5 +1203,13 @@ public final class FidoMetadataDownloader {
     } else {
       return null;
     }
+  }
+
+  @Value
+  private static class ParseResult {
+    private MetadataBLOB blob;
+    private ByteArray jwtHeader;
+    private ByteArray jwtPayload;
+    private ByteArray jwtSignature;
   }
 }
