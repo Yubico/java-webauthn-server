@@ -31,13 +31,11 @@ import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -125,27 +123,15 @@ final class WebAuthnCodecs {
     final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
     switch (kty) {
       case 1:
+        // COSE-JAVA is hardcoded to ed25519-java provider ("EdDSA") which would require an
+        // additional dependency to parse EdDSA keys via the OneKey constructor
         return importCoseEdDsaPublicKey(cose);
-      case 2:
-        return importCoseP256PublicKey(cose);
+      case 2: // Fall through
       case 3:
-        return importCoseRsaPublicKey(cose);
+        return new OneKey(cose).AsPublicKey();
       default:
         throw new IllegalArgumentException("Unsupported key type: " + kty);
     }
-  }
-
-  private static PublicKey importCoseRsaPublicKey(CBORObject cose)
-      throws NoSuchAlgorithmException, InvalidKeySpecException {
-    RSAPublicKeySpec spec =
-        new RSAPublicKeySpec(
-            new BigInteger(1, cose.get(CBORObject.FromObject(-1)).GetByteString()),
-            new BigInteger(1, cose.get(CBORObject.FromObject(-2)).GetByteString()));
-    return KeyFactory.getInstance("RSA").generatePublic(spec);
-  }
-
-  private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
-    return (ECPublicKey) new OneKey(cose).AsPublicKey();
   }
 
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
