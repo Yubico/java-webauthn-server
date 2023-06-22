@@ -56,6 +56,7 @@ configurations.jmhRuntimeClasspath {
 tasks.withType(Jar::class) {
   manifest {
     attributes(mapOf(
+      "Automatic-Module-Name" to "com.yubico.webauthn",
       "Implementation-Title" to "Yubico Web Authentication server library",
 
       "Specification-Title" to "Web Authentication: An API for accessing Public Key Credentials",
