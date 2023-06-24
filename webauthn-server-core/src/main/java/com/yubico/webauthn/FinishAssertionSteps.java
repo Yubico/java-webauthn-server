@@ -111,17 +111,18 @@ final class FinishAssertionSteps {
       request
           .getPublicKeyCredentialRequestOptions()
           .getAllowCredentials()
+          .filter(allowedCredentials -> !allowedCredentials.isEmpty())
           .ifPresent(
-              allowed -> {
+              allowed ->
                 assertTrue(
                     allowed.stream().anyMatch(allow -> allow.getId().equals(response.getId())),
                     "Unrequested credential ID: %s",
-                    response.getId());
-              });
+                    response.getId())
+              );
     }
   }
 
-  @Value
+  @Value""
   class Step6 implements Step<Step7> {
 
     private final Optional<ByteArray> userHandle =

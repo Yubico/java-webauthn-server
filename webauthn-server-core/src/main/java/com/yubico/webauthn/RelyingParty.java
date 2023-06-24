@@ -39,6 +39,7 @@ import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCredentialCreationOptionsBuilder;
+import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions.PublicKeyCredentialRequestOptionsBuilder;
@@ -536,20 +537,17 @@ public class RelyingParty {
   }
 
   public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
+    List<PublicKeyCredentialDescriptor> allowCredentials = OptionalUtil.orElseOptional(
+                    startAssertionOptions.getUsername(),
+                    () -> startAssertionOptions.getUserHandle().flatMap(credentialRepository::getUsernameForUserHandle))
+            .map(un -> new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un)))
+            .orElseGet(ArrayList::new);
+
     PublicKeyCredentialRequestOptionsBuilder pkcro =
         PublicKeyCredentialRequestOptions.builder()
             .challenge(generateChallenge())
             .rpId(identity.getId())
-            .allowCredentials(
-                OptionalUtil.orElseOptional(
-                        startAssertionOptions.getUsername(),
-                        () ->
-                            startAssertionOptions
-                                .getUserHandle()
-                                .flatMap(credentialRepository::getUsernameForUserHandle))
-                    .map(
-                        un ->
-                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un))))
+            .allowCredentials(allowCredentials)
             .extensions(
                 startAssertionOptions
                     .getExtensions()
