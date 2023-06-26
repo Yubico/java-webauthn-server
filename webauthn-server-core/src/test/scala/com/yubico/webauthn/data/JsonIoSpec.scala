@@ -133,52 +133,6 @@ class JsonIoSpec
   }
 
   describe("The class PublicKeyCredential") {
-    it(
-      "has an alternative parseRegistrationResponseJson function as an alias."
-    ) {
-      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
-        forAll { value: A =>
-          val encoded: String = json.writeValueAsString(value)
-          val decoded: A = json.readValue(encoded, tpe)
-          val altDecoded =
-            PublicKeyCredential.parseRegistrationResponseJson(encoded)
-          val altRecoded: String = json.writeValueAsString(altDecoded)
-
-          altDecoded should equal(decoded)
-          altRecoded should equal(encoded)
-        }
-      }
-      test(
-        new TypeReference[PublicKeyCredential[
-          AuthenticatorAttestationResponse,
-          ClientRegistrationExtensionOutputs,
-        ]]() {}
-      )
-    }
-
-    it(
-      "has an alternative parseAuthenticationResponseJson function as an alias."
-    ) {
-      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
-        forAll { value: A =>
-          val encoded: String = json.writeValueAsString(value)
-          val decoded: A = json.readValue(encoded, tpe)
-          val altDecoded =
-            PublicKeyCredential.parseAssertionResponseJson(encoded)
-          val altRecoded: String = json.writeValueAsString(altDecoded)
-
-          altDecoded should equal(decoded)
-          altRecoded should equal(encoded)
-        }
-      }
-      test(
-        new TypeReference[PublicKeyCredential[
-          AuthenticatorAssertionResponse,
-          ClientAssertionExtensionOutputs,
-        ]]() {}
-      )
-    }
-
     it("allows rawId to be present without id.") {
       def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
           a: Arbitrary[P]
@@ -411,6 +365,54 @@ class JsonIoSpec
         new TypeReference[PublicKeyCredential[
           AuthenticatorAttestationResponse,
           ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
+    }
+  }
+
+  describe("The function PublicKeyCredential.parseRegistrationResponseJson") {
+    it("can parse registration responses.") {
+      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+        forAll { value: A =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded: A = json.readValue(encoded, tpe)
+          val altDecoded =
+            PublicKeyCredential.parseRegistrationResponseJson(encoded)
+          val altRecoded: String = json.writeValueAsString(altDecoded)
+
+          altDecoded should equal(decoded)
+          altRecoded should equal(encoded)
+        }
+      }
+
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
+    }
+  }
+
+  describe("The function PublicKeyCredential.parseAssertionResponseJson") {
+    it("can parse assertion responses.") {
+      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+        forAll { value: A =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded: A = json.readValue(encoded, tpe)
+          val altDecoded =
+            PublicKeyCredential.parseAssertionResponseJson(encoded)
+          val altRecoded: String = json.writeValueAsString(altDecoded)
+
+          altDecoded should equal(decoded)
+          altRecoded should equal(encoded)
+        }
+      }
+
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
         ]]() {}
       )
     }
