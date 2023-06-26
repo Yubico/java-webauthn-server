@@ -26,6 +26,7 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.webauthn.data.exception.Base64UrlException;
@@ -49,6 +50,7 @@ import lombok.Value;
  *     Information About Public Key Credential (interface AuthenticatorAttestationResponse) </a>
  */
 @Value
+@JsonIgnoreProperties({"publicKey", "publicKeyAlgorithm"})
 public class AuthenticatorAttestationResponse implements AuthenticatorResponse {
 
   /**

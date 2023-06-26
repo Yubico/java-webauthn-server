@@ -17,6 +17,14 @@ New features:
   around passkey use cases.
 * Added `Automatic-Module-Name` to jar manifest.
 
+Fixes:
+
+* `AuthenticatorAttestationResponse` now tolerates and ignores properties
+  `"publicKey"` and `"publicKeyAlgorithm"` during JSON deserialization. These
+  properties are emitted by the `PublicKeyCredential.toJSON()` method added in
+  WebAuthn Level 3.
+
+
 `webauthn-server-attestation`:
 
 New features:
