@@ -25,10 +25,12 @@
 package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.databind.node.BooleanNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
@@ -44,6 +46,7 @@ import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
@@ -62,6 +65,7 @@ class JsonIoSpec
       .builder()
       .addModule(new Jdk8Module())
       .build()
+  val jf: JsonNodeFactory = JsonNodeFactory.instance
 
   describe("The class") {
 
@@ -390,6 +394,44 @@ class JsonIoSpec
           AuthenticatorAttestationResponse,
           ClientRegistrationExtensionOutputs,
         ]]() {}
+      )
+    }
+
+    describe("""tolerates and ignores the "response" sub-attribute:""") {
+      def test[T <: JsonNode](attrName: String, genAttrValue: Gen[T]): Unit = {
+        type P = PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]
+        it(s"${attrName}.") {
+          forAll(
+            arbitrary[P],
+            genAttrValue,
+          ) { (value: P, attrValue: T) =>
+            val tree: ObjectNode = json.valueToTree(value)
+            tree
+              .get("response")
+              .asInstanceOf[ObjectNode]
+              .set(attrName, attrValue)
+            val encoded = json.writeValueAsString(tree)
+            val decoded =
+              PublicKeyCredential.parseRegistrationResponseJson(encoded)
+            val recoded: ObjectNode = json.valueToTree[ObjectNode](decoded)
+            recoded.has(attrName) should be(false)
+          }
+        }
+      }
+
+      test(
+        "publicKeyAlgorithm",
+        arbitraryCOSEAlgorithmIdentifier.arbitrary.map(i =>
+          jf.numberNode(i.getId)
+        ),
+      )
+
+      test(
+        "publicKey",
+        arbitrary[String].map(new TextNode(_)),
       )
     }
   }
