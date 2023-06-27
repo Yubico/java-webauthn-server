@@ -23,6 +23,7 @@ Fixes:
   `"publicKey"` and `"publicKeyAlgorithm"` during JSON deserialization. These
   properties are emitted by the `PublicKeyCredential.toJSON()` method added in
   WebAuthn Level 3.
+* Relaxed Guava dependency version constraint to include major version 32.
 
 
 `webauthn-server-attestation`:
