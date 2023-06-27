@@ -39,11 +39,13 @@ import java.security.SecureRandom
 import java.security.cert.CRL
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertPathValidatorException.BasicReason
+import java.security.cert.CertificateExpiredException
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.Optional
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -157,16 +159,19 @@ class FidoMetadataDownloaderSpec
     certs
   }
 
+  private def formatJwtTbs(header: String, body: String): String =
+    new ByteArray(
+      header.getBytes(StandardCharsets.UTF_8)
+    ).getBase64Url + "." + new ByteArray(
+      body.getBytes(StandardCharsets.UTF_8)
+    ).getBase64Url
+
   private def makeBlob(
       blobKeypair: KeyPair,
       header: String,
       body: String,
   ): String = {
-    val blobTbs = new ByteArray(
-      header.getBytes(StandardCharsets.UTF_8)
-    ).getBase64Url + "." + new ByteArray(
-      body.getBytes(StandardCharsets.UTF_8)
-    ).getBase64Url
+    val blobTbs = formatJwtTbs(header, body)
     val blobSignature = TestAuthenticator.sign(
       new ByteArray(blobTbs.getBytes(StandardCharsets.UTF_8)),
       blobKeypair.getPrivate,
@@ -193,6 +198,22 @@ class FidoMetadataDownloaderSpec
       "entries": []
     }"""
     makeBlob(blobKeypair, blobHeader, blobBody)
+  }
+
+  private def makeUnsignedBlob(
+      nextUpdate: LocalDate,
+      legalHeader: String = "Kom ihåg att du aldrig får snyta dig i mattan!",
+      no: Int = 1,
+  ): String = {
+    val blobHeader =
+      s"""{"alg":"None"}"""
+    val blobBody = s"""{
+      "legalHeader": "${legalHeader}",
+      "no": ${no},
+      "nextUpdate": "${nextUpdate}",
+      "entries": []
+    }"""
+    formatJwtTbs(blobHeader, blobBody) + ".AAAA"
   }
 
   private def makeHttpServer(
@@ -1847,6 +1868,158 @@ class FidoMetadataDownloaderSpec
           ).getPayload
           blob should not be null
           blob.getNo should equal(oldBlobNo)
+        }
+
+        it("If verifyDownloadsOnly is not set, a cached BLOB may expire.") {
+          val oldBlobNo = 1
+          val newBlobNo = 2
+
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+          val oldBlobJwt =
+            makeBlob(
+              List(blobCert),
+              blobKeypair,
+              CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
+              no = oldBlobNo,
+            )
+          val newBlobJwt =
+            makeBlob(
+              List(blobCert),
+              blobKeypair,
+              CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
+              no = newBlobNo,
+            )
+          val crls = List[CRL](
+            TestAuthenticator.buildCrl(
+              caName,
+              caKeypair.getPrivate,
+              "SHA256withECDSA",
+              CertValidFrom,
+              CertValidTo,
+            )
+          )
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/blob.jwt", newBlobJwt)
+          startServer(server)
+
+          val thrown = the[CertPathValidatorException] thrownBy {
+            load(
+              FidoMetadataDownloader
+                .builder()
+                .expectLegalHeader(
+                  "Kom ihåg att du aldrig får snyta dig i mattan!"
+                )
+                .useTrustRoot(trustRootCert)
+                .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+                .useBlobCache(
+                  () =>
+                    Optional.of(
+                      new ByteArray(oldBlobJwt.getBytes(StandardCharsets.UTF_8))
+                    ),
+                  _ => {},
+                )
+                .clock(
+                  Clock
+                    .fixed(CertValidTo.plus(1, ChronoUnit.DAYS), ZoneOffset.UTC)
+                )
+                .useCrls(crls.asJava)
+                .trustHttpsCerts(httpsCert)
+                .build()
+            ).getPayload
+          }
+          thrown.getCause shouldBe a[CertificateExpiredException]
+        }
+
+        it("If verifyDownloadsOnly is set, the signature is ignored when loading from cache.") {
+          val oldBlobNo = 1
+          val newBlobNo = 2
+
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val (blobCert, blobKeypair, _) = makeCert(caKeypair, caName)
+          val oldBlobJwt =
+            makeUnsignedBlob(
+              CertValidFrom.atOffset(ZoneOffset.UTC).toLocalDate,
+              no = oldBlobNo,
+            )
+          val newBlobJwt =
+            makeBlob(
+              List(blobCert),
+              blobKeypair,
+              CertValidTo.atOffset(ZoneOffset.UTC).toLocalDate,
+              no = newBlobNo,
+            )
+          val crls = List[CRL](
+            TestAuthenticator.buildCrl(
+              caName,
+              caKeypair.getPrivate,
+              "SHA256withECDSA",
+              CertValidFrom,
+              CertValidTo,
+            )
+          )
+
+          val (server, serverUrl, httpsCert) =
+            makeHttpServer("/blob.jwt", newBlobJwt)
+          startServer(server)
+
+          val blob = load(
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .downloadBlob(new URL(s"${serverUrl}/blob.jwt"))
+              .useBlobCache(
+                () =>
+                  Optional.of(
+                    new ByteArray(oldBlobJwt.getBytes(StandardCharsets.UTF_8))
+                  ),
+                _ => {},
+              )
+              .clock(
+                Clock.fixed(
+                  CertValidTo.plus(1, ChronoUnit.DAYS),
+                  ZoneOffset.UTC,
+                )
+              )
+              .useCrls(crls.asJava)
+              .trustHttpsCerts(httpsCert)
+              .verifyDownloadsOnly(true)
+              .build()
+          ).getPayload
+          blob should not be null
+          blob.getNo should equal(oldBlobNo)
+        }
+
+        it("If verifyDownloadsOnly is set, the signature is ignored when loading an explicitly given BLOB.") {
+          val blobNo = 1
+          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val blobJwt =
+            makeUnsignedBlob(
+              CertValidFrom.atOffset(ZoneOffset.UTC).toLocalDate,
+              no = blobNo,
+            )
+
+          val blob = load(
+            FidoMetadataDownloader
+              .builder()
+              .expectLegalHeader(
+                "Kom ihåg att du aldrig får snyta dig i mattan!"
+              )
+              .useTrustRoot(trustRootCert)
+              .useBlob(blobJwt)
+              .clock(
+                Clock
+                  .fixed(CertValidTo.plus(1, ChronoUnit.DAYS), ZoneOffset.UTC)
+              )
+              .verifyDownloadsOnly(true)
+              .build()
+          ).getPayload
+          blob should not be null
+          blob.getNo should equal(blobNo)
         }
       }
 

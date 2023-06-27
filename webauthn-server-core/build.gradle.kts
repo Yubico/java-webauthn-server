@@ -26,6 +26,7 @@ dependencies {
   testImplementation(platform(project(":test-platform")))
   testImplementation(project(":yubico-util-scala"))
   testImplementation("com.fasterxml.jackson.core:jackson-databind")
+  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
   testImplementation("com.upokecenter:cbor")
   testImplementation("junit:junit")
   testImplementation("org.bouncycastle:bcpkix-jdk18on")
@@ -55,6 +56,7 @@ configurations.jmhRuntimeClasspath {
 tasks.withType(Jar::class) {
   manifest {
     attributes(mapOf(
+      "Automatic-Module-Name" to "com.yubico.webauthn",
       "Implementation-Title" to "Yubico Web Authentication server library",
 
       "Specification-Title" to "Web Authentication: An API for accessing Public Key Credentials",

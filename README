@@ -489,6 +489,50 @@ PublicKeyCredentialCreationOptions request = rp.startRegistration(
     .build());
 ----------
 
+You can also request that user verification be used if possible, but is not required:
+
+[source,java]
+----------
+PublicKeyCredentialCreationOptions request = rp.startRegistration(
+  StartRegistrationOptions.builder()
+    .user(/* ... */)
+    .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
+        .userVerification(UserVerificationRequirement.PREFERRED)
+        .build())
+    .build());
+
+AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
+    .username("alice")
+    .userVerification(UserVerificationRequirement.PREFERRED)
+    .build());
+----------
+
+In this case
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.4.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
+will NOT enforce user verification,
+but instead the `isUserVerified()` method of
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+and
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionResult.html[`AssertionResult`]
+will tell whether user verification was used.
+
+For example, you could prompt for a password as the second factor if `isUserVerified()` returns `false`:
+
+[source,java]
+----------
+AssertionResult result = rp.finishAssertion(/* ... */);
+
+if (result.isSuccess()) {
+    if (result.isUserVerified()) {
+        return successfulLogin(result.getUsername());
+    } else {
+        return passwordRequired(result.getUsername());
+    }
+}
+----------
+
 User verification can be used with both discoverable credentials (passkeys) and non-discoverable credentials.
 
 

@@ -25,10 +25,15 @@
 package com.yubico.webauthn.data
 
 import com.fasterxml.jackson.core.`type`.TypeReference
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.databind.node.BooleanNode
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.AssertionResult
@@ -41,6 +46,7 @@ import com.yubico.webauthn.extension.appid.Generators._
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
@@ -54,7 +60,12 @@ class JsonIoSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
-  def json: ObjectMapper = JacksonCodecs.json()
+  val json: ObjectMapper =
+    JsonMapper
+      .builder()
+      .addModule(new Jdk8Module())
+      .build()
+  val jf: JsonNodeFactory = JsonNodeFactory.instance
 
   describe("The class") {
 
@@ -126,52 +137,6 @@ class JsonIoSpec
   }
 
   describe("The class PublicKeyCredential") {
-    it(
-      "has an alternative parseRegistrationResponseJson function as an alias."
-    ) {
-      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
-        forAll { value: A =>
-          val encoded: String = json.writeValueAsString(value)
-          val decoded: A = json.readValue(encoded, tpe)
-          val altDecoded =
-            PublicKeyCredential.parseRegistrationResponseJson(encoded)
-          val altRecoded: String = json.writeValueAsString(altDecoded)
-
-          altDecoded should equal(decoded)
-          altRecoded should equal(encoded)
-        }
-      }
-      test(
-        new TypeReference[PublicKeyCredential[
-          AuthenticatorAttestationResponse,
-          ClientRegistrationExtensionOutputs,
-        ]]() {}
-      )
-    }
-
-    it(
-      "has an alternative parseAuthenticationResponseJson function as an alias."
-    ) {
-      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
-        forAll { value: A =>
-          val encoded: String = json.writeValueAsString(value)
-          val decoded: A = json.readValue(encoded, tpe)
-          val altDecoded =
-            PublicKeyCredential.parseAssertionResponseJson(encoded)
-          val altRecoded: String = json.writeValueAsString(altDecoded)
-
-          altDecoded should equal(decoded)
-          altRecoded should equal(encoded)
-        }
-      }
-      test(
-        new TypeReference[PublicKeyCredential[
-          AuthenticatorAssertionResponse,
-          ClientAssertionExtensionOutputs,
-        ]]() {}
-      )
-    }
-
     it("allows rawId to be present without id.") {
       def test[P <: PublicKeyCredential[_, _]](tpe: TypeReference[P])(implicit
           a: Arbitrary[P]
@@ -409,6 +374,92 @@ class JsonIoSpec
     }
   }
 
+  describe("The function PublicKeyCredential.parseRegistrationResponseJson") {
+    it("can parse registration responses.") {
+      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+        forAll { value: A =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded: A = json.readValue(encoded, tpe)
+          val altDecoded =
+            PublicKeyCredential.parseRegistrationResponseJson(encoded)
+          val altRecoded: String = json.writeValueAsString(altDecoded)
+
+          altDecoded should equal(decoded)
+          altRecoded should equal(encoded)
+        }
+      }
+
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]]() {}
+      )
+    }
+
+    describe("""tolerates and ignores the "response" sub-attribute:""") {
+      def test[T <: JsonNode](attrName: String, genAttrValue: Gen[T]): Unit = {
+        type P = PublicKeyCredential[
+          AuthenticatorAttestationResponse,
+          ClientRegistrationExtensionOutputs,
+        ]
+        it(s"${attrName}.") {
+          forAll(
+            arbitrary[P],
+            genAttrValue,
+          ) { (value: P, attrValue: T) =>
+            val tree: ObjectNode = json.valueToTree(value)
+            tree
+              .get("response")
+              .asInstanceOf[ObjectNode]
+              .set(attrName, attrValue)
+            val encoded = json.writeValueAsString(tree)
+            val decoded =
+              PublicKeyCredential.parseRegistrationResponseJson(encoded)
+            val recoded: ObjectNode = json.valueToTree[ObjectNode](decoded)
+            recoded.has(attrName) should be(false)
+          }
+        }
+      }
+
+      test(
+        "publicKeyAlgorithm",
+        arbitraryCOSEAlgorithmIdentifier.arbitrary.map(i =>
+          jf.numberNode(i.getId)
+        ),
+      )
+
+      test(
+        "publicKey",
+        arbitrary[String].map(new TextNode(_)),
+      )
+    }
+  }
+
+  describe("The function PublicKeyCredential.parseAssertionResponseJson") {
+    it("can parse assertion responses.") {
+      def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
+        forAll { value: A =>
+          val encoded: String = json.writeValueAsString(value)
+          val decoded: A = json.readValue(encoded, tpe)
+          val altDecoded =
+            PublicKeyCredential.parseAssertionResponseJson(encoded)
+          val altRecoded: String = json.writeValueAsString(altDecoded)
+
+          altDecoded should equal(decoded)
+          altRecoded should equal(encoded)
+        }
+      }
+
+      test(
+        new TypeReference[PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ]]() {}
+      )
+    }
+  }
+
   describe("The class PublicKeyCredentialCreationOptions") {
     it("""has a toCredentialsCreateJson() method which returns a JSON object with the PublicKeyCredentialCreationOptions set as a top-level "publicKey" property.""") {
       forAll { pkcco: PublicKeyCredentialCreationOptions =>
@@ -529,6 +580,25 @@ class JsonIoSpec
           redecoded should equal(req)
           encoded should equal(reencoded)
         }
+      }
+    }
+  }
+
+  describe("The class RegisteredCredential") {
+    it("""does not have a "backedUp" property when newly serialized.""") {
+      forAll { cred: RegisteredCredential =>
+        val tree = json.valueToTree(cred).asInstanceOf[ObjectNode]
+        tree.has("backedUp") should be(false)
+      }
+    }
+
+    it("""can be parsed with the previous "backedUp" property name.""") {
+      forAll { cred: RegisteredCredential =>
+        val tree = json.valueToTree(cred).asInstanceOf[ObjectNode]
+        tree.set[ObjectNode]("backedUp", BooleanNode.TRUE)
+        tree.remove("backupState")
+        val cred2 = json.treeToValue(tree, classOf[RegisteredCredential])
+        cred2.isBackedUp.toScala should equal(Some(true))
       }
     }
   }

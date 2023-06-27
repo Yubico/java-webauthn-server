@@ -154,6 +154,8 @@ FidoMetadataDownloader downloader = FidoMetadataDownloader.builder()
   .useTrustRootCacheFile(new File("/var/cache/webauthn-server/fido-mds-trust-root.bin"))
   .useDefaultBlob()
   .useBlobCacheFile(new File("/var/cache/webauthn-server/fido-mds-blob.bin"))
+  .verifyDownloadsOnly(true)  // Recommended, otherwise cache may expire if BLOB certificate expires
+                              // See: https://github.com/Yubico/java-webauthn-server/issues/294
   .build();
 
 FidoMetadataService mds = FidoMetadataService.builder()
