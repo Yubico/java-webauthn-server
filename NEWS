@@ -1,3 +1,11 @@
+== Version 2.6.0 (unreleased) ==
+
+* Added method `getParsedPublicKey(): java.security.PublicKey` to
+  `RegistrationResult` and `RegisteredCredential`.
+ ** Thanks to Jakob Heher (A-SIT) for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/299
+
+
 == Version 2.5.0 (unreleased) ==
 
 `webauthn-server-core`:
