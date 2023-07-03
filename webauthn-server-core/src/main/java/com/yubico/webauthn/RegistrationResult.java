@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import COSE.CoseException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,9 +42,13 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -283,6 +288,19 @@ public class RegistrationResult {
         .getAttestedCredentialData()
         .get()
         .getCredentialPublicKey();
+  }
+
+  /**
+   * The public key of the created credential, parsed as a {@link PublicKey} object.
+   *
+   * @see #getPublicKeyCose()
+   * @see RegisteredCredential#getParsedPublicKey()
+   */
+  @NonNull
+  @JsonIgnore
+  public PublicKey getParsedPublicKey()
+      throws InvalidKeySpecException, NoSuchAlgorithmException, CoseException, IOException {
+    return WebAuthnCodecs.importCosePublicKey(getPublicKeyCose());
   }
 
   /**
