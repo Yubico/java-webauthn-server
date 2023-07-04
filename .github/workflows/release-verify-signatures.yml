@@ -39,7 +39,7 @@ jobs:
 
     strategy:
       matrix:
-        java: [17]
+        java: ["17.0.7"]
         distribution: [temurin, zulu, microsoft]
 
     steps:
