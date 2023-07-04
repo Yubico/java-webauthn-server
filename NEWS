@@ -24,6 +24,9 @@ Fixes:
   properties are emitted by the `PublicKeyCredential.toJSON()` method added in
   WebAuthn Level 3.
 * Relaxed Guava dependency version constraint to include major version 32.
+* `RelyingParty.finishAssertion` now behaves the same if
+  `StartAssertionOptions.allowCredentials` is explicitly set to a present, empty
+  list as when absent.
 
 
 `webauthn-server-attestation`:
