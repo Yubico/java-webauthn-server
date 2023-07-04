@@ -1,7 +1,15 @@
 == Version 2.4.2 (unreleased) ==
 
+Changes:
+
 * Updated README and JavaDoc to use the "passkey" term and provide more guidance
   around passkey use cases.
+
+Fixes:
+
+* `RelyingParty.finishAssertion` now behaves the same if
+  `StartAssertionOptions.allowCredentials` is explicitly set to a present, empty
+  list as when absent.
 
 
 == Version 2.4.1 ==

@@ -594,14 +594,21 @@ class RelyingPartyAssertionSpec
           }
 
           it("Succeeds if no credential IDs were requested.") {
-            val steps = finishAssertion(
-              allowCredentials = None,
-              credentialId = new ByteArray(Array(0, 1, 2, 3)),
-            )
-            val step: FinishAssertionSteps#Step5 = steps.begin
+            for {
+              allowCredentials <- List(
+                None,
+                Some(List.empty[PublicKeyCredentialDescriptor].asJava),
+              )
+            } {
+              val steps = finishAssertion(
+                allowCredentials = allowCredentials,
+                credentialId = new ByteArray(Array(0, 1, 2, 3)),
+              )
+              val step: FinishAssertionSteps#Step5 = steps.begin
 
-            step.validations shouldBe a[Success[_]]
-            step.tryNext shouldBe a[Success[_]]
+              step.validations shouldBe a[Success[_]]
+              step.tryNext shouldBe a[Success[_]]
+            }
           }
         }
 
