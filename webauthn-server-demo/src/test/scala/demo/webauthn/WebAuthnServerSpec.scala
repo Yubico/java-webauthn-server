@@ -38,6 +38,7 @@ import com.yubico.webauthn.data.Generators.arbitraryAuthenticatorTransport
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.ResidentKeyRequirement
+import com.yubico.webauthn.test.RealExamples
 import demo.webauthn.data.AssertionRequestWrapper
 import demo.webauthn.data.CredentialRegistration
 import demo.webauthn.data.RegistrationRequest
@@ -91,23 +92,27 @@ class WebAuthnServerSpec
       }
 
       it("has a finish method which accepts and outputs JSON.") {
-        val requestId = ByteArray.fromBase64Url("request1")
+        for {
+          testData <- List(
+            RegistrationTestData.FidoU2f.BasicAttestation, // This test case for no particular reason
+            RealExamples.LargeBlobWrite.asRegistrationTestData, // This test case because it has authenticator extensions
+          )
+        } {
+          val requestId = ByteArray.fromBase64Url("request1")
+          val server = newServerWithRegistrationRequest(testData)
 
-        val server = newServerWithRegistrationRequest(
-          RegistrationTestData.FidoU2f.BasicAttestation
-        )
+          val authenticationAttestationResponseJson =
+            s"""{"attestationObject":"${testData.attestationObject.getBase64Url}","clientDataJSON":"${testData.clientDataJsonBytes.getBase64Url}"}"""
+          val publicKeyCredentialJson =
+            s"""{"id":"${testData.response.getId.getBase64Url}","response":${authenticationAttestationResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
+          val responseJson =
+            s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
 
-        val authenticationAttestationResponseJson =
-          """{"attestationObject":"v2hhdXRoRGF0YVikSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NBAAAFOQABAgMEBQYHCAkKCwwNDg8AIIjjhj6nH3qL2QF3tkUogilFykuaXjJTw35O4m-0NSX0pSJYIA5Nt8eYkLco-NQfKPXaA6dD9UfX_SHaYo-L-YQb78HsAyYBAiFYIOuzRl1o1Hem2jVRYhjkbSeIydhqLln9iltAgsDYjXRTIAFjZm10aGZpZG8tdTJmZ2F0dFN0bXS_Y3g1Y59ZAekwggHlMIIBjKADAgECAgIFOTAKBggqhkjOPQQDAjBqMSYwJAYDVQQDDB1ZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0cyBDQTEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTAeFw0xODA5MDYxNzQyMDBaFw0xODA5MDYxNzQyMDBaMGcxIzAhBgNVBAMMGll1YmljbyBXZWJBdXRobiB1bml0IHRlc3RzMQ8wDQYDVQQKDAZZdWJpY28xIjAgBgNVBAsMGUF1dGhlbnRpY2F0b3IgQXR0ZXN0YXRpb24xCzAJBgNVBAYTAlNFMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEJ-8bFED9TnFhaArujgB0foNaV4gQIulP1mC5DO1wvSByw4eOyXujpPHkTw9y5e5J2J3N9coSReZJgBRpvFzYD6MlMCMwIQYLKwYBBAGC5RwBAQQEEgQQAAECAwQFBgcICQoLDA0ODzAKBggqhkjOPQQDAgNHADBEAiB4bL25EH06vPBOVnReObXrS910ARVOLJPPnKNoZbe64gIgX1Rg5oydH45zEMEVDjNPStwv6Z3nE_isMeY-szlQhv3_Y3NpZ1hHMEUCIQDBs1nbSuuKQ6yoHMQoRp8eCT_HZvR45F_aVP6qFX_wKgIgMCL58bv-crkLwTwiEL9ibCV4nDYM-DZuW5_BFCJbcxn__w","clientDataJSON":"eyJjaGFsbGVuZ2UiOiJBQUVCQWdNRkNBMFZJamRaRUdsNVlscyIsIm9yaWdpbiI6ImxvY2FsaG9zdCIsInR5cGUiOiJ3ZWJhdXRobi5jcmVhdGUiLCJ0b2tlbkJpbmRpbmciOnsic3RhdHVzIjoic3VwcG9ydGVkIn19"}"""
-        val publicKeyCredentialJson =
-          s"""{"id":"iOOGPqcfeovZAXe2RSiCKUXKS5peMlPDfk7ib7Q1JfQ","response":${authenticationAttestationResponseJson},"clientExtensionResults":{},"type":"public-key"}"""
-        val responseJson =
-          s"""{"requestId":"${requestId.getBase64Url}","credential":${publicKeyCredentialJson}}"""
+          val response = server.finishRegistration(responseJson)
+          val json = jsonMapper.writeValueAsString(response.right.get)
 
-        val response = server.finishRegistration(responseJson)
-        val json = jsonMapper.writeValueAsString(response.right.get)
-
-        json should not be null
+          json should not be null
+        }
       }
 
     }
@@ -393,8 +398,8 @@ class WebAuthnServerSpec
       new InMemoryRegistrationStorage,
       registrationRequests,
       newCache(),
-      rpId,
-      origins,
+      testData.rpId,
+      Set(testData.response.getResponse.getClientData.getOrigin).asJava,
     )
   }
 

@@ -647,7 +647,17 @@ public class WebAuthnServer {
                   throw new RuntimeException(e);
                 }
               });
-      gen.writeObjectField("extensions", value.getExtensions());
+      value
+          .getExtensions()
+          .ifPresent(
+              extensions -> {
+                try {
+                  gen.writeObjectField(
+                      "extensions", JacksonCodecs.cbor().readTree(extensions.EncodeToBytes()));
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              });
       gen.writeEndObject();
     }
   }
