@@ -63,7 +63,6 @@ final class FinishAssertionSteps {
 
   @Builder.Default private final boolean allowOriginPort = false;
   @Builder.Default private final boolean allowOriginSubdomain = false;
-  @Builder.Default private final boolean allowUnrequestedExtensions = false;
   @Builder.Default private final boolean validateSignatureCounter = true;
 
   public Step5 begin() {

@@ -90,7 +90,6 @@ final class FinishRegistrationSteps {
 
   @Builder.Default private final boolean allowOriginPort = false;
   @Builder.Default private final boolean allowOriginSubdomain = false;
-  @Builder.Default private final boolean allowUnrequestedExtensions = false;
 
   public Step6 begin() {
     return new Step6();
