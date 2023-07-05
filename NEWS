@@ -1,9 +1,15 @@
 == Version 2.6.0 (unreleased) ==
 
+New features:
+
 * Added method `getParsedPublicKey(): java.security.PublicKey` to
   `RegistrationResult` and `RegisteredCredential`.
  ** Thanks to Jakob Heher (A-SIT) for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/299
+* (Experimental) Added option `isSecurePaymentConfirmation(boolean)` to
+  `FinishAssertionOptions`. When set, `RelyingParty.finishAssertion()` will
+  adapt the validation logic for a Secure Payment Confirmation (SPC) response
+  instead of an ordinary WebAuthn response. See the JavaDoc for details.
 
 
 == Version 2.5.0 ==

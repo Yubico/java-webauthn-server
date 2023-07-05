@@ -27,6 +27,7 @@ package com.yubico.webauthn
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.upokecenter.cbor.CBORObject
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.AssertionExtensionInputs
@@ -179,6 +180,7 @@ class RelyingPartyAssertionSpec
       credentialId: ByteArray = Defaults.credentialId,
       credentialKey: KeyPair = Defaults.credentialKey,
       credentialRepository: Option[CredentialRepository] = None,
+      isSecurePaymentConfirmation: Option[Boolean] = None,
       origins: Option[Set[String]] = None,
       requestedExtensions: AssertionExtensionInputs =
         Defaults.requestedExtensions,
@@ -282,6 +284,10 @@ class RelyingPartyAssertionSpec
       .request(request)
       .response(response)
       .callerTokenBindingId(callerTokenBindingId.toJava)
+
+    isSecurePaymentConfirmation foreach { isSpc =>
+      fao.isSecurePaymentConfirmation(isSpc)
+    }
 
     builder
       .build()
@@ -941,14 +947,18 @@ class RelyingPartyAssertionSpec
             step.validations shouldBe a[Success[_]]
           }
 
-          def assertFails(typeString: String): Unit = {
+          def assertFails(
+              typeString: String,
+              isSecurePaymentConfirmation: Option[Boolean] = None,
+          ): Unit = {
             val steps = finishAssertion(
               clientDataJson = JacksonCodecs.json.writeValueAsString(
                 JacksonCodecs.json
                   .readTree(Defaults.clientDataJson)
                   .asInstanceOf[ObjectNode]
                   .set("type", jsonFactory.textNode(typeString))
-              )
+              ),
+              isSecurePaymentConfirmation = isSecurePaymentConfirmation,
             )
             val step: FinishAssertionSteps#Step11 =
               steps.begin.next.next.next.next.next
@@ -972,6 +982,72 @@ class RelyingPartyAssertionSpec
 
           it("""The string "webauthn.create" fails.""") {
             assertFails("webauthn.create")
+          }
+
+          it("""The string "payment.get" fails.""") {
+            assertFails("payment.get")
+          }
+
+          describe("If the isSecurePaymentConfirmation option is set,") {
+            it("the default test case fails.") {
+              val steps =
+                finishAssertion(isSecurePaymentConfirmation = Some(true))
+              val step: FinishAssertionSteps#Step11 =
+                steps.begin.next.next.next.next.next
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+            }
+
+            it("""the default test case succeeds if type is overwritten with the value "payment.get".""") {
+              val json = JacksonCodecs.json()
+              val steps = finishAssertion(
+                isSecurePaymentConfirmation = Some(true),
+                clientDataJson = json.writeValueAsString(
+                  json
+                    .readTree(Defaults.clientDataJson)
+                    .asInstanceOf[ObjectNode]
+                    .set[ObjectNode]("type", new TextNode("payment.get"))
+                ),
+              )
+              val step: FinishAssertionSteps#Step11 =
+                steps.begin.next.next.next.next.next
+
+              step.validations shouldBe a[Success[_]]
+            }
+
+            it("""any value other than "payment.get" fails.""") {
+              forAll { (typeString: String) =>
+                whenever(typeString != "payment.get") {
+                  assertFails(
+                    typeString,
+                    isSecurePaymentConfirmation = Some(true),
+                  )
+                }
+              }
+              forAll(Gen.alphaNumStr) { (typeString: String) =>
+                whenever(typeString != "payment.get") {
+                  assertFails(
+                    typeString,
+                    isSecurePaymentConfirmation = Some(true),
+                  )
+                }
+              }
+            }
+
+            it("""the string "webauthn.create" fails.""") {
+              assertFails(
+                "webauthn.create",
+                isSecurePaymentConfirmation = Some(true),
+              )
+            }
+
+            it("""the string "webauthn.get" fails.""") {
+              assertFails(
+                "webauthn.get",
+                isSecurePaymentConfirmation = Some(true),
+              )
+            }
           }
         }
 

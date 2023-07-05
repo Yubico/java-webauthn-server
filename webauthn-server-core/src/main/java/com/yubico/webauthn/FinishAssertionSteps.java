@@ -50,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 final class FinishAssertionSteps {
 
   private static final String CLIENT_DATA_TYPE = "webauthn.get";
+  private static final String SPC_CLIENT_DATA_TYPE = "payment.get";
 
   private final AssertionRequest request;
   private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
@@ -61,6 +62,7 @@ final class FinishAssertionSteps {
   private final boolean allowOriginPort;
   private final boolean allowOriginSubdomain;
   private final boolean validateSignatureCounter;
+  private final boolean isSecurePaymentConfirmation;
 
   FinishAssertionSteps(RelyingParty rp, FinishAssertionOptions options) {
     this.request = options.getRequest();
@@ -72,6 +74,7 @@ final class FinishAssertionSteps {
     this.allowOriginPort = rp.isAllowOriginPort();
     this.allowOriginSubdomain = rp.isAllowOriginSubdomain();
     this.validateSignatureCounter = rp.isValidateSignatureCounter();
+    this.isSecurePaymentConfirmation = options.isSecurePaymentConfirmation();
   }
 
   public Step5 begin() {
@@ -288,10 +291,12 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
+      final String expectedType =
+          isSecurePaymentConfirmation ? SPC_CLIENT_DATA_TYPE : CLIENT_DATA_TYPE;
       assertTrue(
-          CLIENT_DATA_TYPE.equals(clientData.getType()),
+          expectedType.equals(clientData.getType()),
           "The \"type\" in the client data must be exactly \"%s\", was: %s",
-          CLIENT_DATA_TYPE,
+          expectedType,
           clientData.getType());
     }
 
