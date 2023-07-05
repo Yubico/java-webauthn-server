@@ -175,17 +175,22 @@ class RelyingPartyRegistrationSpec
 
     origins.map(_.asJava).foreach(builder.origins _)
 
-    builder
-      .build()
-      ._finishRegistration(
+    val fro = FinishRegistrationOptions
+      .builder()
+      .request(
         pubkeyCredParams
           .map(pkcp =>
             testData.request.toBuilder.pubKeyCredParams(pkcp.asJava).build()
           )
-          .getOrElse(testData.request),
-        testData.response,
-        callerTokenBindingId.toJava,
+          .getOrElse(testData.request)
       )
+      .response(testData.response)
+      .callerTokenBindingId(callerTokenBindingId.toJava)
+      .build()
+
+    builder
+      .build()
+      ._finishRegistration(fro)
   }
 
   val emptyTrustSource = new AttestationTrustSource {

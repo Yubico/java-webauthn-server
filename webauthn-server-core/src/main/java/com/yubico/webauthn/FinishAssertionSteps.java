@@ -43,11 +43,9 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Optional;
 import java.util.Set;
-import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-@Builder
 @Slf4j
 final class FinishAssertionSteps {
 
@@ -60,10 +58,21 @@ final class FinishAssertionSteps {
   private final Set<String> origins;
   private final String rpId;
   private final CredentialRepository credentialRepository;
+  private final boolean allowOriginPort;
+  private final boolean allowOriginSubdomain;
+  private final boolean validateSignatureCounter;
 
-  @Builder.Default private final boolean allowOriginPort = false;
-  @Builder.Default private final boolean allowOriginSubdomain = false;
-  @Builder.Default private final boolean validateSignatureCounter = true;
+  FinishAssertionSteps(RelyingParty rp, FinishAssertionOptions options) {
+    this.request = options.getRequest();
+    this.response = options.getResponse();
+    this.callerTokenBindingId = options.getCallerTokenBindingId();
+    this.origins = rp.getOrigins();
+    this.rpId = rp.getIdentity().getId();
+    this.credentialRepository = rp.getCredentialRepository();
+    this.allowOriginPort = rp.isAllowOriginPort();
+    this.allowOriginSubdomain = rp.isAllowOriginSubdomain();
+    this.validateSignatureCounter = rp.isValidateSignatureCounter();
+  }
 
   public Step5 begin() {
     return new Step5();

@@ -64,11 +64,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.Builder;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-@Builder
 @Slf4j
 final class FinishRegistrationSteps {
 
@@ -87,9 +85,22 @@ final class FinishRegistrationSteps {
   private final Optional<AttestationTrustSource> attestationTrustSource;
   private final CredentialRepository credentialRepository;
   private final Clock clock;
+  private final boolean allowOriginPort;
+  private final boolean allowOriginSubdomain;
 
-  @Builder.Default private final boolean allowOriginPort = false;
-  @Builder.Default private final boolean allowOriginSubdomain = false;
+  FinishRegistrationSteps(RelyingParty rp, FinishRegistrationOptions options) {
+    this.request = options.getRequest();
+    this.response = options.getResponse();
+    this.callerTokenBindingId = options.getCallerTokenBindingId();
+    this.origins = rp.getOrigins();
+    this.rpId = rp.getIdentity().getId();
+    this.allowUntrustedAttestation = rp.isAllowUntrustedAttestation();
+    this.attestationTrustSource = rp.getAttestationTrustSource();
+    this.credentialRepository = rp.getCredentialRepository();
+    this.clock = rp.getClock();
+    this.allowOriginPort = rp.isAllowOriginPort();
+    this.allowOriginSubdomain = rp.isAllowOriginSubdomain();
+  }
 
   public Step6 begin() {
     return new Step6();

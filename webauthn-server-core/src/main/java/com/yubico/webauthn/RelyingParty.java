@@ -29,14 +29,9 @@ import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
-import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
-import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
-import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
-import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions.PublicKeyCredentialCreationOptionsBuilder;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -498,11 +493,7 @@ public class RelyingParty {
   public RegistrationResult finishRegistration(FinishRegistrationOptions finishRegistrationOptions)
       throws RegistrationFailedException {
     try {
-      return _finishRegistration(
-              finishRegistrationOptions.getRequest(),
-              finishRegistrationOptions.getResponse(),
-              finishRegistrationOptions.getCallerTokenBindingId())
-          .run();
+      return _finishRegistration(finishRegistrationOptions).run();
     } catch (IllegalArgumentException e) {
       throw new RegistrationFailedException(e);
     }
@@ -515,24 +506,8 @@ public class RelyingParty {
    * It is a separate method to facilitate testing; users should call {@link
    * #finishRegistration(FinishRegistrationOptions)} instead of this method.
    */
-  FinishRegistrationSteps _finishRegistration(
-      PublicKeyCredentialCreationOptions request,
-      PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
-          response,
-      Optional<ByteArray> callerTokenBindingId) {
-    return FinishRegistrationSteps.builder()
-        .request(request)
-        .response(response)
-        .callerTokenBindingId(callerTokenBindingId)
-        .credentialRepository(credentialRepository)
-        .origins(origins)
-        .rpId(identity.getId())
-        .allowOriginPort(allowOriginPort)
-        .allowOriginSubdomain(allowOriginSubdomain)
-        .allowUntrustedAttestation(allowUntrustedAttestation)
-        .attestationTrustSource(attestationTrustSource)
-        .clock(clock)
-        .build();
+  FinishRegistrationSteps _finishRegistration(FinishRegistrationOptions options) {
+    return new FinishRegistrationSteps(this, options);
   }
 
   public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
@@ -576,11 +551,7 @@ public class RelyingParty {
   public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions)
       throws AssertionFailedException {
     try {
-      return _finishAssertion(
-              finishAssertionOptions.getRequest(),
-              finishAssertionOptions.getResponse(),
-              finishAssertionOptions.getCallerTokenBindingId())
-          .run();
+      return _finishAssertion(finishAssertionOptions).run();
     } catch (IllegalArgumentException e) {
       throw new AssertionFailedException(e);
     }
@@ -593,22 +564,8 @@ public class RelyingParty {
    * a separate method to facilitate testing; users should call {@link
    * #finishAssertion(FinishAssertionOptions)} instead of this method.
    */
-  FinishAssertionSteps _finishAssertion(
-      AssertionRequest request,
-      PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> response,
-      Optional<ByteArray> callerTokenBindingId // = None.asJava
-      ) {
-    return FinishAssertionSteps.builder()
-        .request(request)
-        .response(response)
-        .callerTokenBindingId(callerTokenBindingId)
-        .origins(origins)
-        .rpId(identity.getId())
-        .credentialRepository(credentialRepository)
-        .allowOriginPort(allowOriginPort)
-        .allowOriginSubdomain(allowOriginSubdomain)
-        .validateSignatureCounter(validateSignatureCounter)
-        .build();
+  FinishAssertionSteps _finishAssertion(FinishAssertionOptions options) {
+    return new FinishAssertionSteps(this, options);
   }
 
   public static RelyingPartyBuilder.MandatoryStages builder() {

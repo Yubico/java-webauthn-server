@@ -277,9 +277,15 @@ class RelyingPartyAssertionSpec
 
     origins.map(_.asJava).foreach(builder.origins _)
 
+    val fao = FinishAssertionOptions
+      .builder()
+      .request(request)
+      .response(response)
+      .callerTokenBindingId(callerTokenBindingId.toJava)
+
     builder
       .build()
-      ._finishAssertion(request, response, callerTokenBindingId.toJava)
+      ._finishAssertion(fao.build())
   }
 
   testWithEachProvider { it =>
