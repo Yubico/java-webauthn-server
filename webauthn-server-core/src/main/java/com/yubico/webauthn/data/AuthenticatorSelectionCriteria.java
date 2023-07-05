@@ -51,10 +51,20 @@ public class AuthenticatorSelectionCriteria {
 
   /**
    * Specifies the extent to which the Relying Party desires to create a client-side discoverable
-   * credential. For historical reasons the naming retains the deprecated “resident” terminology.
+   * credential (passkey). For historical reasons the naming retains the deprecated “resident”
+   * terminology.
    *
-   * <p>By default, this is not set. When not set, the default in the browser is {@link
-   * ResidentKeyRequirement#DISCOURAGED}.
+   * <p>When this is set, {@link PublicKeyCredentialCreationOptions#toCredentialsCreateJson()} will
+   * also emit a <a
+   * href="https://www.w3.org/TR/webauthn-2/#dom-authenticatorselectioncriteria-requireresidentkey">
+   * <code>requireResidentKey</code></a> member for backwards compatibility with WebAuthn Level 1.
+   * It will be set to <code>true</code> if this is set to {@link ResidentKeyRequirement#REQUIRED
+   * REQUIRED} and <code>false</code> if this is set to anything else. When this is not set, a
+   * <code>requireResidentKey</code> member will not be emitted.
+   *
+   * <p>When not set, the default in the browser is {@link ResidentKeyRequirement#DISCOURAGED}.
+   *
+   * <p>By default, this is not set.
    *
    * @see ResidentKeyRequirement
    * @see <a
@@ -63,6 +73,8 @@ public class AuthenticatorSelectionCriteria {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
    *     discoverable Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   private final ResidentKeyRequirement residentKey;
 
@@ -95,10 +107,8 @@ public class AuthenticatorSelectionCriteria {
 
   /**
    * Specifies the extent to which the Relying Party desires to create a client-side discoverable
-   * credential. For historical reasons the naming retains the deprecated “resident” terminology.
-   *
-   * <p>By default, this is not set. When not set, the default in the browser is {@link
-   * ResidentKeyRequirement#DISCOURAGED}.
+   * credential (passkey). For historical reasons the naming retains the deprecated “resident”
+   * terminology.
    *
    * <p>When this is set, {@link PublicKeyCredentialCreationOptions#toCredentialsCreateJson()} will
    * also emit a <a
@@ -108,6 +118,10 @@ public class AuthenticatorSelectionCriteria {
    * REQUIRED} and <code>false</code> if this is set to anything else. When this is not set, a
    * <code>requireResidentKey</code> member will not be emitted.
    *
+   * <p>When not set, the default in the browser is {@link ResidentKeyRequirement#DISCOURAGED}.
+   *
+   * <p>By default, this is not set.
+   *
    * @see ResidentKeyRequirement
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
@@ -115,6 +129,8 @@ public class AuthenticatorSelectionCriteria {
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#client-side-discoverable-credential">Client-side
    *     discoverable Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   public Optional<ResidentKeyRequirement> getResidentKey() {
     return Optional.ofNullable(residentKey);

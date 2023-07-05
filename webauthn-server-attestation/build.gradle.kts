@@ -72,6 +72,7 @@ tasks["check"].dependsOn(integrationTest)
 tasks.jar {
   manifest {
     attributes(mapOf(
+      "Automatic-Module-Name" to "com.yubico.webauthn.attestation",
       "Implementation-Id" to "java-webauthn-server-attestation",
       "Implementation-Title" to project.description,
     ))

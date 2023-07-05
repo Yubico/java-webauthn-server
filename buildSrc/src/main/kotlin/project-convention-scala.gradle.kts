@@ -8,7 +8,4 @@ tasks.withType(ScalaCompile::class) {
     // See: https://github.com/gradle/gradle/pull/23198
     // See: https://github.com/gradle/gradle/pull/23751
     scalaCompileOptions.additionalParameters = mutableListOf("-Wunused")
-    javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    })
 }

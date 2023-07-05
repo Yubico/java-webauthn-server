@@ -273,13 +273,16 @@ object Generators {
       )
     )
 
+  val arbitraryBackupFlags: Arbitrary[(Boolean, Boolean)] = Arbitrary(
+    arbitrary[(Boolean, Boolean)].map({ case (be, bs) => (be, be && bs) })
+  )
+
   def authenticatorDataBytes(
       extensionsGen: Gen[Option[CBORObject]],
       rpIdHashGen: Gen[ByteArray] = byteArray(32),
       upFlagGen: Gen[Boolean] = Gen.const(true),
       uvFlagGen: Gen[Boolean] = arbitrary[Boolean],
-      backupFlagsGen: Gen[(Boolean, Boolean)] =
-        arbitrary[(Boolean, Boolean)].map({ case (be, bs) => (be, be && bs) }),
+      backupFlagsGen: Gen[(Boolean, Boolean)] = arbitraryBackupFlags.arbitrary,
       signatureCountGen: Gen[ByteArray] = byteArray(4),
   ): Gen[ByteArray] =
     halfsized(

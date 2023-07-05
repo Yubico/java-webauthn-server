@@ -49,8 +49,10 @@ project.afterEvaluate {
         }
     }
 
-    signing {
-        useGpgCmd()
-        sign(publishing.publications.jars)
+    if (project.findProperty("yubicoPublish") == "true") {
+        signing {
+            useGpgCmd()
+            sign(publishing.publications.jars)
+        }
     }
 }

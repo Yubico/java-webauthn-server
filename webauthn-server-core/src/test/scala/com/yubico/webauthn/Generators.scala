@@ -73,13 +73,21 @@ object Generators {
           userHandle <- arbitrary[ByteArray]
           publicKeyCose <- arbitrary[ByteArray]
           signatureCount <- arbitrary[Int]
-        } yield RegisteredCredential
-          .builder()
-          .credentialId(credentialId)
-          .userHandle(userHandle)
-          .publicKeyCose(publicKeyCose)
-          .signatureCount(signatureCount)
-          .build()
+          backupFlags <- Gen.option(arbitraryBackupFlags.arbitrary)
+        } yield {
+          val b = RegisteredCredential
+            .builder()
+            .credentialId(credentialId)
+            .userHandle(userHandle)
+            .publicKeyCose(publicKeyCose)
+            .signatureCount(signatureCount)
+          backupFlags.foreach({
+            case ((be, bs)) =>
+              b.backupEligible(be)
+              b.backupState(bs)
+          })
+          b.build()
+        }
       )
     )
 

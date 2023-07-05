@@ -102,11 +102,11 @@ function updateSessionBox() {
 
 function updateRegisterButtons() {
   if (session.sessionToken) {
-     document.getElementById('registerButton').textContent = 'Add credential';
-     document.getElementById('registerRkButton').textContent = 'Add resident credential';
+     document.getElementById('registerButton').textContent = 'Add non-discoverable credential';
+     document.getElementById('registerRkButton').textContent = 'Add passkey';
   } else {
-     document.getElementById('registerButton').textContent = 'Register new account';
-     document.getElementById('registerRkButton').textContent = 'Register new account with resident credential';
+     document.getElementById('registerButton').textContent = 'Create account with non-discoverable credential';
+     document.getElementById('registerRkButton').textContent = 'Create account with passkey';
   }
 }
 
@@ -158,25 +158,48 @@ function showServerResponse(data) {
 function hideDeviceInfo() {
   document.getElementById("device-info").style = "display: none";
 }
-function showDeviceInfo(params) {
-  document.getElementById("device-info").style = undefined;
 
-  if (params.displayName) {
-    document.getElementById("device-name-row").style = undefined;
-    document.getElementById("device-name").textContent = params.displayName;
-  } else {
-     document.getElementById("device-name-row").style = "display: none";
-  }
+function showDeviceInfo(params) {
+  document.getElementById("device-icon").style = "display: none";
+  document.getElementById("device-name-row").style = "display: none";
 
   if (params.nickname) {
     document.getElementById("device-nickname-row").style = undefined;
     document.getElementById("device-nickname").textContent = params.nickname;
   } else {
-     document.getElementById("device-nickname-row").style = "display: none";
+    document.getElementById("device-nickname-row").style = "display: none";
   }
 
-  if (params.imageUrl) {
+  if (params?.metadataStatement) {
+    showDeviceInfoFidoMds(params.metadataStatement);
+  } else {
+    showDeviceInfoYubico(params);
+  }
+
+  document.getElementById("device-info").style = undefined;
+}
+
+function showDeviceInfoYubico(params) {
+  if (params?.displayName) {
+    document.getElementById("device-name-row").style = undefined;
+    document.getElementById("device-name").textContent = params.displayName;
+  }
+
+  if (params?.imageUrl) {
     document.getElementById("device-icon").src = params.imageUrl;
+    document.getElementById("device-icon").style = undefined;
+  }
+}
+
+function showDeviceInfoFidoMds(metadataStatement) {
+  if (metadataStatement?.description) {
+    document.getElementById("device-name-row").style = undefined;
+    document.getElementById("device-name").textContent = metadataStatement?.description;
+  }
+
+  if (metadataStatement?.icon) {
+    document.getElementById("device-icon").src = metadataStatement?.icon;
+    document.getElementById("device-icon").style = undefined;
   }
 }
 
@@ -329,7 +352,7 @@ async function register(event, requireResidentKey) {
 
       if (data.registration && data.registration.attestationMetadata) {
         showDeviceInfo(extend(
-          data.registration.attestationMetadata.deviceProperties,
+          data.registration.attestationMetadata?.deviceProperties || data.registration.attestationMetadata,
           nicknameInfo
         ));
       } else {
@@ -489,13 +512,7 @@ window.onload = init;
 <div class="base">
   <div class="content">
 
-    <div class="header-logo visible-desktop">
-      <a href="https://www.yubico.com/" title="Yubico">
-        <img src="img/yubico-logo.png"/>
-      </a>
-    </div>
-
-    <h1> Test your WebAuthn device </h1>
+    <h1> java-webauthn-server demo </h1>
 
     <form class="horizontal">
       <div class="row">
@@ -512,12 +529,12 @@ window.onload = init;
         <div><input type="text" id="credentialNickname"/></div>
         <div>
           <button type="button" id="registerButton">
-            Register new account
+            Create account with non-discoverable credential
           </button>
         </div>
         <div>
           <button type="button" id="registerRkButton">
-            Register new account with resident credential
+            Create account with passkey
           </button>
         </div>
       </div>
@@ -527,12 +544,12 @@ window.onload = init;
         <div></div>
         <div>
           <button type="button" id="authenticateWithUsernameButton">
-            Authenticate
+            Authenticate with username
           </button>
         </div>
         <div>
           <button type="button" id="authenticateButton">
-            Authenticate without username
+            Authenticate with passkey
           </button>
         </div>
       </div>

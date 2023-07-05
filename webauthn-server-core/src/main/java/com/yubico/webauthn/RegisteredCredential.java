@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AttestedCredentialData;
@@ -153,7 +154,7 @@ public final class RegisteredCredential {
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
       @JsonProperty("signatureCount") long signatureCount,
       @JsonProperty("backupEligible") Boolean backupEligible,
-      @JsonProperty("backupState") Boolean backupState) {
+      @JsonProperty("backupState") @JsonAlias("backedUp") Boolean backupState) {
     this.credentialId = credentialId;
     this.userHandle = userHandle;
     this.publicKeyCose = publicKeyCose;
@@ -183,6 +184,7 @@ public final class RegisteredCredential {
    *     the standard matures.
    */
   @Deprecated
+  @JsonProperty("backupEligible")
   public Optional<Boolean> isBackupEligible() {
     return Optional.ofNullable(backupEligible);
   }
@@ -206,6 +208,7 @@ public final class RegisteredCredential {
    *     the standard matures.
    */
   @Deprecated
+  @JsonProperty("backupState")
   public Optional<Boolean> isBackedUp() {
     return Optional.ofNullable(backupState);
   }

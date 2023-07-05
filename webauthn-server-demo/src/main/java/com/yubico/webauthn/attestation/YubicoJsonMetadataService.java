@@ -31,8 +31,10 @@ import com.google.common.collect.Maps;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.OptionalUtil;
+import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.attestation.matcher.ExtensionMatcher;
 import com.yubico.webauthn.data.ByteArray;
+import demo.webauthn.MetadataService;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -48,7 +50,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class YubicoJsonMetadataService implements AttestationTrustSource {
+public final class YubicoJsonMetadataService implements AttestationTrustSource, MetadataService {
 
   private static final String SELECTORS = "selectors";
   private static final String SELECTOR_TYPE = "type";
@@ -90,43 +92,53 @@ public final class YubicoJsonMetadataService implements AttestationTrustSource {
         DEFAULT_DEVICE_MATCHERS);
   }
 
-  public Optional<Attestation> findMetadata(X509Certificate attestationCertificate) {
-    return metadataObjects.stream()
+  @Override
+  public Set<Object> findEntries(@NonNull RegistrationResult registrationResult) {
+    return registrationResult
+        .getAttestationTrustPath()
         .map(
-            metadata -> {
-              Map<String, String> vendorProperties;
-              Map<String, String> deviceProperties = null;
-              String identifier;
-
-              identifier = metadata.getIdentifier();
-              vendorProperties = Maps.filterValues(metadata.getVendorInfo(), Objects::nonNull);
-              for (JsonNode device : metadata.getDevices()) {
-                if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
-                  ImmutableMap.Builder<String, String> devicePropertiesBuilder =
-                      ImmutableMap.builder();
-                  for (Map.Entry<String, JsonNode> deviceEntry :
-                      Lists.newArrayList(device.fields())) {
-                    JsonNode value = deviceEntry.getValue();
-                    if (value.isTextual()) {
-                      devicePropertiesBuilder.put(deviceEntry.getKey(), value.asText());
-                    }
-                  }
-                  deviceProperties = devicePropertiesBuilder.build();
-                  break;
-                }
-              }
-
-              return Optional.ofNullable(deviceProperties)
+            certs -> {
+              X509Certificate attestationCertificate = certs.get(0);
+              return metadataObjects.stream()
                   .map(
-                      deviceProps ->
-                          Attestation.builder()
-                              .metadataIdentifier(Optional.ofNullable(identifier))
-                              .vendorProperties(Optional.of(vendorProperties))
-                              .deviceProperties(deviceProps)
-                              .build());
+                      metadata -> {
+                        Map<String, String> vendorProperties;
+                        Map<String, String> deviceProperties = null;
+                        String identifier;
+
+                        identifier = metadata.getIdentifier();
+                        vendorProperties =
+                            Maps.filterValues(metadata.getVendorInfo(), Objects::nonNull);
+                        for (JsonNode device : metadata.getDevices()) {
+                          if (deviceMatches(device.get(SELECTORS), attestationCertificate)) {
+                            ImmutableMap.Builder<String, String> devicePropertiesBuilder =
+                                ImmutableMap.builder();
+                            for (Map.Entry<String, JsonNode> deviceEntry :
+                                Lists.newArrayList(device.fields())) {
+                              JsonNode value = deviceEntry.getValue();
+                              if (value.isTextual()) {
+                                devicePropertiesBuilder.put(deviceEntry.getKey(), value.asText());
+                              }
+                            }
+                            deviceProperties = devicePropertiesBuilder.build();
+                            break;
+                          }
+                        }
+
+                        return Optional.ofNullable(deviceProperties)
+                            .map(
+                                deviceProps ->
+                                    Attestation.builder()
+                                        .metadataIdentifier(Optional.ofNullable(identifier))
+                                        .vendorProperties(Optional.of(vendorProperties))
+                                        .deviceProperties(deviceProps)
+                                        .build());
+                      })
+                  .flatMap(OptionalUtil::stream)
+                  .map(attestation -> (Object) attestation)
+                  .collect(Collectors.toSet());
             })
-        .flatMap(OptionalUtil::stream)
-        .findAny();
+        .orElseGet(Collections::emptySet);
   }
 
   private boolean deviceMatches(

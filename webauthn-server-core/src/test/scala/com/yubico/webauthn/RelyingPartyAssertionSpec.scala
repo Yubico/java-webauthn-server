@@ -594,14 +594,21 @@ class RelyingPartyAssertionSpec
           }
 
           it("Succeeds if no credential IDs were requested.") {
-            val steps = finishAssertion(
-              allowCredentials = None,
-              credentialId = new ByteArray(Array(0, 1, 2, 3)),
-            )
-            val step: FinishAssertionSteps#Step5 = steps.begin
+            for {
+              allowCredentials <- List(
+                None,
+                Some(List.empty[PublicKeyCredentialDescriptor].asJava),
+              )
+            } {
+              val steps = finishAssertion(
+                allowCredentials = allowCredentials,
+                credentialId = new ByteArray(Array(0, 1, 2, 3)),
+              )
+              val step: FinishAssertionSteps#Step5 = steps.begin
 
-            step.validations shouldBe a[Success[_]]
-            step.tryNext shouldBe a[Success[_]]
+              step.validations shouldBe a[Success[_]]
+              step.tryNext shouldBe a[Success[_]]
+            }
           }
         }
 
@@ -2574,6 +2581,43 @@ class RelyingPartyAssertionSpec
             )
             .username(user.getName)
             .build()
+
+          it("exposes isUserVerified() with the UV flag value in authenticator data.") {
+            val pkcWithoutUv =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x00.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+            val pkcWithUv =
+              TestAuthenticator.createAssertion(
+                flags = Some(new AuthenticatorDataFlags(0x04.toByte)),
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+
+            val resultWithoutUv = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithoutUv)
+                .build()
+            )
+            val resultWithUv = rp.finishAssertion(
+              FinishAssertionOptions
+                .builder()
+                .request(request)
+                .response(pkcWithUv)
+                .build()
+            )
+
+            resultWithoutUv.isUserVerified should be(false)
+            resultWithUv.isUserVerified should be(true)
+          }
 
           it("exposes isBackupEligible() with the BE flag value in authenticator data.") {
             val pkcWithoutBackup =

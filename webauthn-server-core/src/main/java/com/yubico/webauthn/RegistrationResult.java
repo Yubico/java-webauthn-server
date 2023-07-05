@@ -33,7 +33,10 @@ import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationType;
 import com.yubico.webauthn.data.AuthenticatorAttachment;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.AuthenticatorData;
+import com.yubico.webauthn.data.AuthenticatorDataFlags;
 import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
+import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.PublicKeyCredential;
@@ -123,6 +126,25 @@ public class RegistrationResult {
                           }
                         })
                     .collect(Collectors.toList())));
+  }
+
+  /**
+   * Check whether the <a href="https://www.w3.org/TR/webauthn/#user-verification">user
+   * verification</a> as performed during the registration ceremony.
+   *
+   * <p>This flag is also available via <code>
+   * {@link PublicKeyCredential}.{@link PublicKeyCredential#getResponse() getResponse()}.{@link AuthenticatorResponse#getParsedAuthenticatorData() getParsedAuthenticatorData()}.{@link AuthenticatorData#getFlags() getFlags()}.{@link AuthenticatorDataFlags#UV UV}
+   * </code>.
+   *
+   * @return <code>true</code> if and only if the authenticator claims to have performed user
+   *     verification during the registration ceremony.
+   * @see <a href="https://www.w3.org/TR/webauthn/#user-verification">User Verification</a>
+   * @see <a href="https://w3c.github.io/webauthn/#authdata-flags-uv">UV flag in §6.1. Authenticator
+   *     Data</a>
+   */
+  @JsonIgnore
+  public boolean isUserVerified() {
+    return credential.getResponse().getParsedAuthenticatorData().getFlags().UV;
   }
 
   /**
@@ -304,19 +326,22 @@ public class RegistrationResult {
   /**
    * Try to determine whether the created credential is a <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">discoverable
-   * credential</a>, using the output from the <a
+   * credential</a>, also called a <i>passkey</i>, using the output from the <a
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
    * <code>credProps</code></a> extension.
    *
-   * @return A present <code>true</code> if the created credential is discoverable. A present <code>
-   *     false</code> if the created credential is not discoverable. An empty value if it is not
-   *     known whether the created credential is discoverable.
+   * @return A present <code>true</code> if the created credential is a passkey (discoverable). A
+   *     present <code>
+   *     false</code> if the created credential is not a passkey. An empty value if it is not known
+   *     whether the created credential is a passkey.
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-credentialpropertiesoutput-rk">§10.4.
    *     Credential Properties Extension (credProps), "rk" output</a>
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#discoverable-credential">Discoverable
    *     Credential</a>
+   * @see <a href="https://passkeys.dev/docs/reference/terms/#passkey">Passkey</a> in <a
+   *     href="https://passkeys.dev">passkeys.dev</a> reference
    */
   @JsonIgnore
   public Optional<Boolean> isDiscoverable() {

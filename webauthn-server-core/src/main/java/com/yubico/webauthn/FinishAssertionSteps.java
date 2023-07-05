@@ -111,6 +111,7 @@ final class FinishAssertionSteps {
       request
           .getPublicKeyCredentialRequestOptions()
           .getAllowCredentials()
+          .filter(allowCredentials -> !allowCredentials.isEmpty())
           .ifPresent(
               allowed -> {
                 assertTrue(

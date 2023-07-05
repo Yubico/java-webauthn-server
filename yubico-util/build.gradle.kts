@@ -43,6 +43,7 @@ configurations.jmhRuntimeClasspath {
 tasks.jar {
   manifest {
     attributes(mapOf(
+      "Automatic-Module-Name" to "com.yubico.internal.util",
       "Implementation-Id" to "yubico-util",
       "Implementation-Title" to project.description,
     ))
