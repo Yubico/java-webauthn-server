@@ -26,10 +26,9 @@ package demo.webauthn;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.yubico.internal.util.CollectionUtil;
-import com.yubico.webauthn.AssertionResult;
-import com.yubico.webauthn.CredentialRepository;
-import com.yubico.webauthn.RegisteredCredential;
+import com.yubico.webauthn.AssertionResultV2;
+import com.yubico.webauthn.CredentialRepositoryV2;
+import com.yubico.webauthn.UsernameRepository;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import demo.webauthn.data.CredentialRegistration;
@@ -44,7 +43,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class InMemoryRegistrationStorage implements CredentialRepository {
+public class InMemoryRegistrationStorage
+    implements CredentialRepositoryV2<CredentialRegistration>, UsernameRepository {
 
   private final Cache<String, Set<CredentialRegistration>> storage =
       CacheBuilder.newBuilder().maximumSize(1000).expireAfterAccess(1, TimeUnit.DAYS).build();
@@ -52,12 +52,12 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
   private static final Logger logger = LoggerFactory.getLogger(InMemoryRegistrationStorage.class);
 
   ////////////////////////////////////////////////////////////////////////////////
-  // The following methods are required by the CredentialRepository interface.
+  // The following methods are required by the CredentialRepositoryV2 interface.
   ////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
-    return getRegistrationsByUsername(username).stream()
+  public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUserHandle(ByteArray userHandle) {
+    return getRegistrationsByUserHandle(userHandle).stream()
         .map(
             registration ->
                 PublicKeyCredentialDescriptor.builder()
@@ -68,11 +68,35 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
   }
 
   @Override
-  public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
-    return getRegistrationsByUserHandle(userHandle).stream()
-        .findAny()
-        .map(CredentialRegistration::getUsername);
+  public Optional<CredentialRegistration> lookup(ByteArray credentialId, ByteArray userHandle) {
+    Optional<CredentialRegistration> registrationMaybe =
+        storage.asMap().values().stream()
+            .flatMap(Collection::stream)
+            .filter(
+                credReg ->
+                    credentialId.equals(credReg.getCredential().getCredentialId())
+                        && userHandle.equals(credReg.getUserHandle()))
+            .findAny();
+
+    logger.debug(
+        "lookup credential ID: {}, user handle: {}; result: {}",
+        credentialId,
+        userHandle,
+        registrationMaybe);
+
+    return registrationMaybe;
   }
+
+  @Override
+  public boolean credentialIdExists(ByteArray credentialId) {
+    return storage.asMap().values().stream()
+        .flatMap(Collection::stream)
+        .anyMatch(reg -> reg.getCredential().getCredentialId().equals(credentialId));
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // The following methods are required by the UsernameRepository interface.
+  ////////////////////////////////////////////////////////////////////////////////
 
   @Override
   public Optional<ByteArray> getUserHandleForUsername(String username) {
@@ -81,49 +105,15 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
         .map(reg -> reg.getUserIdentity().getId());
   }
 
-  @Override
-  public Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle) {
-    Optional<CredentialRegistration> registrationMaybe =
-        storage.asMap().values().stream()
-            .flatMap(Collection::stream)
-            .filter(credReg -> credentialId.equals(credReg.getCredential().getCredentialId()))
-            .findAny();
-
-    logger.debug(
-        "lookup credential ID: {}, user handle: {}; result: {}",
-        credentialId,
-        userHandle,
-        registrationMaybe);
-    return registrationMaybe.map(
-        registration ->
-            RegisteredCredential.builder()
-                .credentialId(registration.getCredential().getCredentialId())
-                .userHandle(registration.getUserIdentity().getId())
-                .publicKeyCose(registration.getCredential().getPublicKeyCose())
-                .signatureCount(registration.getCredential().getSignatureCount())
-                .build());
-  }
-
-  @Override
-  public Set<RegisteredCredential> lookupAll(ByteArray credentialId) {
-    return CollectionUtil.immutableSet(
-        storage.asMap().values().stream()
-            .flatMap(Collection::stream)
-            .filter(reg -> reg.getCredential().getCredentialId().equals(credentialId))
-            .map(
-                reg ->
-                    RegisteredCredential.builder()
-                        .credentialId(reg.getCredential().getCredentialId())
-                        .userHandle(reg.getUserIdentity().getId())
-                        .publicKeyCose(reg.getCredential().getPublicKeyCose())
-                        .signatureCount(reg.getCredential().getSignatureCount())
-                        .build())
-            .collect(Collectors.toSet()));
-  }
-
   ////////////////////////////////////////////////////////////////////////////////
   // The following methods are specific to this demo application.
   ////////////////////////////////////////////////////////////////////////////////
+
+  public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
+    return getRegistrationsByUserHandle(userHandle).stream()
+        .findAny()
+        .map(CredentialRegistration::getUsername);
+  }
 
   public boolean addRegistrationByUsername(String username, CredentialRegistration reg) {
     try {
@@ -152,18 +142,19 @@ public class InMemoryRegistrationStorage implements CredentialRepository {
         .collect(Collectors.toList());
   }
 
-  public void updateSignatureCount(AssertionResult result) {
+  public void updateSignatureCount(AssertionResultV2<CredentialRegistration> result) {
     CredentialRegistration registration =
         getRegistrationByUsernameAndCredentialId(
-                result.getUsername(), result.getCredential().getCredentialId())
+                result.getCredential().getUsername(), result.getCredential().getCredentialId())
             .orElseThrow(
                 () ->
                     new NoSuchElementException(
                         String.format(
                             "Credential \"%s\" is not registered to user \"%s\"",
-                            result.getCredential().getCredentialId(), result.getUsername())));
+                            result.getCredential().getCredentialId(),
+                            result.getCredential().getUsername())));
 
-    Set<CredentialRegistration> regs = storage.getIfPresent(result.getUsername());
+    Set<CredentialRegistration> regs = storage.getIfPresent(result.getCredential().getUsername());
     regs.remove(registration);
     regs.add(
         registration.withCredential(
