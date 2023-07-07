@@ -12,6 +12,18 @@ import lombok.experimental.UtilityClass;
 public class OptionalUtil {
 
   /**
+   * If <code>primary</code> is present, return it unchanged. Otherwise return <code>
+   * secondary</code>.
+   */
+  public static <T> Optional<T> orOptional(Optional<T> primary, Optional<T> secondary) {
+    if (primary.isPresent()) {
+      return primary;
+    } else {
+      return secondary;
+    }
+  }
+
+  /**
    * If <code>primary</code> is present, return it unchanged. Otherwise return the result of <code>
    * recover</code>.
    */

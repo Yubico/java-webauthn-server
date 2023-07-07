@@ -56,7 +56,7 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-public final class RegisteredCredential {
+public final class RegisteredCredential implements CredentialRecord {
 
   /**
    * The <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#credential-id">credential

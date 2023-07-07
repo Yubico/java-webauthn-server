@@ -30,55 +30,48 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * An abstraction of the primary database lookups needed by this library.
+ * An abstraction of database lookups needed by this library.
  *
- * <p>This is used by {@link RelyingParty} to look up credentials, usernames and user handles from
- * usernames, user handles and credential IDs.
+ * <p>This is used by {@link RelyingParty} to look up credentials and credential IDs.
+ *
+ * <p>Unlike {@link CredentialRepository}, this interface does not require support for usernames.
  */
-public interface CredentialRepository {
+public interface CredentialRepositoryV2<C extends CredentialRecord> {
 
   /**
-   * Get the credential IDs of all credentials registered to the user with the given username.
+   * Get the credential IDs of all credentials registered to the user with the given user handle.
    *
    * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
    * returns a value suitable for inclusion in this set.
-   */
-  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
-
-  /**
-   * Get the user handle corresponding to the given username - the inverse of {@link
-   * #getUsernameForUserHandle(ByteArray)}.
    *
-   * <p>Used to look up the user handle based on the username, for authentication ceremonies where
-   * the username is already given.
+   * @return a {@link Set} containing one {@link PublicKeyCredentialDescriptor} for each credential
+   *     registered to the given user. The set MUST NOT be null, but MAY be empty if the user does
+   *     not exist or has no credentials.
    */
-  Optional<ByteArray> getUserHandleForUsername(String username);
+  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUserHandle(ByteArray userHandle);
 
   /**
-   * Get the username corresponding to the given user handle - the inverse of {@link
-   * #getUserHandleForUsername(String)}.
-   *
-   * <p>Used to look up the username based on the user handle, for username-less authentication
-   * ceremonies.
-   */
-  Optional<String> getUsernameForUserHandle(ByteArray userHandle);
-
-  /**
-   * Look up the public key and stored signature count for the given credential registered to the
-   * given user.
+   * Look up the public key, backup flags and current signature count for the given credential
+   * registered to the given user.
    *
    * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
    * directly from a database or assembled from other components.
+   *
+   * @return a {@link RegisteredCredential} describing the current state of the registered
+   *     credential with credential ID <code>credentialId</code>, if any. If the credential does not
+   *     exist or is registered to a different user handle than <code>userHandle</code>, return
+   *     {@link Optional#empty()}.
    */
-  Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
+  Optional<C> lookup(ByteArray credentialId, ByteArray userHandle);
 
   /**
-   * Look up all credentials with the given credential ID, regardless of what user they're
+   * Check whether any credential exists with the given credential ID, regardless of what user it is
    * registered to.
    *
-   * <p>This is used to refuse registration of duplicate credential IDs. Therefore, under normal
-   * circumstances this method should only return zero or one credential (this is an expected
-   * consequence, not an interface requirement).
+   * <p>This is used to refuse registration of duplicate credential IDs.
+   *
+   * @return <code>true</code> if and only if the credential database contains at least one
+   *     credential with the given credential ID.
    */
-  Set<RegisteredCredential> lookupAll(ByteArray credentialId);
+  boolean credentialIdExists(ByteArray credentialId);
 }

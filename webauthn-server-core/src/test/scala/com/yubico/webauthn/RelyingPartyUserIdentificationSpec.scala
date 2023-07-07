@@ -234,17 +234,14 @@ class RelyingPartyUserIdentificationSpec extends AnyFunSpec with Matchers {
         userHandle = Some(Defaults.userHandle)
       )
 
-      val result = Try(
-        rp.finishAssertion(
-          FinishAssertionOptions
-            .builder()
-            .request(deterministicRequest)
-            .response(response)
-            .build()
-        )
+      val result = rp.finishAssertion(
+        FinishAssertionOptions
+          .builder()
+          .request(deterministicRequest)
+          .response(response)
+          .build()
       )
-
-      result shouldBe a[Success[_]]
+      result.isSuccess should be(true)
     }
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
