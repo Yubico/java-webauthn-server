@@ -72,6 +72,9 @@ notable integration points are:
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 interface to use for looking up stored public keys, user handles and signature
 counters.
+The example app does this via the
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
+class.
 ** The library user can optionally provide an instance of the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
 interface to enable identification and validation of authenticator models. This
@@ -79,6 +82,14 @@ instance is then used to look up trusted attestation root certificates. The
 link:../webauthn-server-attestation/[`webauthn-server-attestation`]
 sibling library provides an implementation of this interface that integrates
 with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
++
+For this the example app uses the
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/com/yubico/webauthn/attestation/YubicoJsonMetadataService.java[`YubicoJsonMetadataService`]
+class, which reads attestation data from a bundled JSON file. If enabled by
+configuration, this is also combined with the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.5.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+implementation from the
+link:../webauthn-server-attestation/[`webauthn-server-attestation`] module.
 
 
 == Usage
