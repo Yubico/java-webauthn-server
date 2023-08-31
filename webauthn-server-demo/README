@@ -7,9 +7,9 @@ one can perform auxiliary actions such as adding an additional authenticator or
 deregistering a credential.
 
 The central part is the
-link:src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`]
 class, and the
-link:src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`]
 class which provides the REST API on top of it.
 
 
@@ -32,21 +32,21 @@ link:../webauthn-server-core/[`webauthn-server-core`]
 library:
 
 - The front end interacts with the server via a *REST API*, implemented in
-  link:src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`].
+  link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`].
 +
 This layer manages translation between JSON request/response payloads and domain
 objects, and most methods simply call into analogous methods in the server
 layer.
 
 - The REST API then delegates to the *server layer*, implemented in
-  link:src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`].
+  link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`].
 +
 This layer manages the general architecture of the system, and is where most
 business logic and integration code would go. The demo server implements the
 "persistent" storage of users and credential registrations - the
 link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 integration point - as the
-link:src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
 class, which simply keeps them stored in memory for a limited time. The
 transient storage of pending challenges is also kept in memory, but for a
 shorter duration.
@@ -103,7 +103,7 @@ To build it, run
 === Standalone Java executable
 
 The standalone Java executable has the main class
-link:src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
 This server also serves the REST API at `/api/v1/`, and static resources for the
 GUI under `/`.
 
