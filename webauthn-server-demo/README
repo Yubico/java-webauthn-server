@@ -152,9 +152,9 @@ correct environment.
 
   - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
     `YUBICO_WEBAUTHN_PORT=8081`
-
-    This is ignored when running as a `.war` artifact, since the port is
-    controlled by the parent web server.
++
+This is ignored when running as a `.war` artifact, since the port is
+controlled by the parent web server.
 
   - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
     server will accept requests for. Example:
