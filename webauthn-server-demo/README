@@ -77,8 +77,8 @@ link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-
 interface to enable identification and validation of authenticator models. This
 instance is then used to look up trusted attestation root certificates. The
 link:../webauthn-server-attestation/[`webauthn-server-attestation`]
-sibling library provides implementations of this interface that are pre-seeded
-with Yubico device metadata.
+sibling library provides an implementation of this interface that integrates
+with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
 
 
 == Usage
