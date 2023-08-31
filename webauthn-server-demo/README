@@ -157,7 +157,7 @@ This is ignored when running as a `.war` artifact, since the port is
 controlled by the parent web server.
 
   - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
-    server will accept requests for. Example:
+    server will accept requests from. Example:
     `YUBICO_WEBAUTHN_ALLOWED_ORIGINS=http://demo.yubico.com:8080`
 
   - `YUBICO_WEBAUTHN_RP_ID`: The https://www.w3.org/TR/webauthn/#rp-id[RP ID]
