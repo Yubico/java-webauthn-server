@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -52,7 +52,7 @@ jobs:
         output-file: build/gh-pages/coverage-badge.json
 
     - name: Check out GitHub Pages branch
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: gh-pages
         clean: false
