@@ -12,7 +12,7 @@ class OriginMatcher {
 
   static boolean isAllowed(
       String origin, Set<String> allowedOrigins, boolean allowPort, boolean allowSubdomain) {
-    log.trace("isAllowed({}, {}, {}, {})", origin, allowedOrigins, allowPort, allowSubdomain);
+    log.debug("isAllowed({}, {}, {}, {})", origin, allowedOrigins, allowPort, allowSubdomain);
 
     URL tmpOriginUrl;
     try {
