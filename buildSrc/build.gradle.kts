@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-  implementation("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.9.11")
+  implementation("info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.15.0")
   implementation("io.franzbecker:gradle-lombok:5.0.0")
 
   // Spotless dropped Java 8 support in version 2.33.0
