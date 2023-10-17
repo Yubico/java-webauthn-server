@@ -42,6 +42,8 @@ public interface CredentialRepository {
    *
    * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
    * returns a value suitable for inclusion in this set.
+   *
+   * <p>Implementations of this method MUST NOT return null.
    */
   Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
 
@@ -51,6 +53,8 @@ public interface CredentialRepository {
    *
    * <p>Used to look up the user handle based on the username, for authentication ceremonies where
    * the username is already given.
+   *
+   * <p>Implementations of this method MUST NOT return null.
    */
   Optional<ByteArray> getUserHandleForUsername(String username);
 
@@ -60,6 +64,8 @@ public interface CredentialRepository {
    *
    * <p>Used to look up the username based on the user handle, for username-less authentication
    * ceremonies.
+   *
+   * <p>Implementations of this method MUST NOT return null.
    */
   Optional<String> getUsernameForUserHandle(ByteArray userHandle);
 
@@ -69,6 +75,8 @@ public interface CredentialRepository {
    *
    * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
    * directly from a database or assembled from other components.
+   *
+   * <p>Implementations of this method MUST NOT return null.
    */
   Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
 
@@ -79,6 +87,8 @@ public interface CredentialRepository {
    * <p>This is used to refuse registration of duplicate credential IDs. Therefore, under normal
    * circumstances this method should only return zero or one credential (this is an expected
    * consequence, not an interface requirement).
+   *
+   * <p>Implementations of this method MUST NOT return null.
    */
   Set<RegisteredCredential> lookupAll(ByteArray credentialId);
 }
