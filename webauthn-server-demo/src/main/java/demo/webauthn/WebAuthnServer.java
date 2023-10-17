@@ -191,7 +191,7 @@ public class WebAuthnServer {
     rp =
         RelyingParty.builder()
             .identity(rpIdentity)
-            .credentialRepository(this.userStorage)
+            .credentialRepositoryV2(this.userStorage)
             .usernameRepository(this.userStorage)
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))

@@ -598,7 +598,7 @@ public class RelyingParty {
          * credentialRepository} is a required parameter.
          *
          * @see RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * @see #credentialRepository(CredentialRepositoryV2)
+         * @see #credentialRepositoryV2(CredentialRepositoryV2)
          */
         public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
           return builder.credentialRepository(credentialRepository);
@@ -611,7 +611,7 @@ public class RelyingParty {
          * @see #credentialRepository(CredentialRepository)
          */
         public <C extends CredentialRecord>
-            RelyingPartyV2.RelyingPartyV2Builder<C> credentialRepository(
+            RelyingPartyV2.RelyingPartyV2Builder<C> credentialRepositoryV2(
                 CredentialRepositoryV2<C> credentialRepository) {
           return RelyingPartyV2.builder(builder.identity, credentialRepository);
         }

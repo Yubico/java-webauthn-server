@@ -64,11 +64,9 @@ public class RelyingPartyTest {
           }
         };
 
-    CredentialRepository credentialRepository = null;
-
     RelyingParty.builder()
         .identity(null)
-        .credentialRepository(credentialRepository)
+        .credentialRepository(null)
         .origins(Collections.emptySet())
         .appId(new AppId("https://example.com"))
         .appId(Optional.of(new AppId("https://example.com")))
