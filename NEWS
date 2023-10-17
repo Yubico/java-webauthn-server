@@ -6,6 +6,12 @@ New features:
   `RegistrationResult` and `RegisteredCredential`.
  ** Thanks to Jakob Heher (A-SIT) for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/299
+* Added enum parsing functions:
+ ** `AuthenticatorAttachment.fromValue(String): Optional<AuthenticatorAttachment>`
+ ** `PublicKeyCredentialType.fromId(String): Optional<PublicKeyCredentialType>`
+ ** `ResidentKeyRequirement.fromValue(String): Optional<ResidentKeyRequirement>`
+ ** `TokenBindingStatus.fromValue(String): Optional<TokenBindingStatus>`
+ ** `UserVerificationRequirement.fromValue(String): Optional<UserVerificationRequirement>`
 * (Experimental) Added option `isSecurePaymentConfirmation(boolean)` to
   `FinishAssertionOptions`. When set, `RelyingParty.finishAssertion()` will
   adapt the validation logic for a Secure Payment Confirmation (SPC) response

@@ -66,13 +66,24 @@ public enum UserVerificationRequirement {
 
   @JsonValue @Getter @NonNull private final String value;
 
-  private static Optional<UserVerificationRequirement> fromString(@NonNull String value) {
+  /**
+   * Attempt to parse a string as a {@link UserVerificationRequirement}.
+   *
+   * @param value a {@link String} equal to the {@link #getValue() value} of a constant in {@link
+   *     UserVerificationRequirement}
+   * @return The {@link UserVerificationRequirement} instance whose {@link #getValue() value} equals
+   *     <code>value</code>, if any.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-userverificationrequirement">§5.10.6.
+   *     User Verification Requirement Enumeration (enum UserVerificationRequirement)</a>
+   */
+  public static Optional<UserVerificationRequirement> fromValue(@NonNull String value) {
     return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
   }
 
   @JsonCreator
   private static UserVerificationRequirement fromJsonString(@NonNull String value) {
-    return fromString(value)
+    return fromValue(value)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
