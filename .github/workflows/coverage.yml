@@ -3,7 +3,9 @@ name: Test coverage
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - dependabot/gradle/info.solidsoft.gradle.pitest-gradle-pitest-plugin-*
 
 jobs:
   test:
@@ -44,13 +46,6 @@ jobs:
         done
         sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage/index.html.template > build/gh-pages/index.html
 
-    - name: Create coverage badge
-      # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
-      # which we can then include in the project README.
-      uses: ./.github/actions/pit-results-badge
-      with:
-        output-file: build/gh-pages/coverage-badge.json
-
     - name: Check out GitHub Pages branch
       uses: actions/checkout@v4
       with:
@@ -68,7 +63,16 @@ jobs:
         prev-commit: ${{ env.PREV_COMMIT }}
         prev-mutations-file: prev-mutations.xml
 
+    - name: Create coverage badge
+      # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
+      # which we can then include in the project README.
+      uses: ./.github/actions/pit-results-badge
+      if: github.ref_name == 'main'
+      with:
+        output-file: build/gh-pages/coverage-badge.json
+
     - name: Push to GitHub Pages
+      if: github.ref_name == 'main'
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com

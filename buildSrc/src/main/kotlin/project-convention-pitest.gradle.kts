@@ -4,7 +4,7 @@ plugins {
 }
 
 pitest {
-    pitestVersion.set("1.9.5")
+    pitestVersion.set("1.15.0")
     timestampedReports.set(false)
 
     outputFormats.set(listOf("XML", "HTML"))
