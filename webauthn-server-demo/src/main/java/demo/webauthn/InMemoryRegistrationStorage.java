@@ -105,15 +105,16 @@ public class InMemoryRegistrationStorage
         .map(reg -> reg.getUserIdentity().getId());
   }
 
-  ////////////////////////////////////////////////////////////////////////////////
-  // The following methods are specific to this demo application.
-  ////////////////////////////////////////////////////////////////////////////////
-
+  @Override
   public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
     return getRegistrationsByUserHandle(userHandle).stream()
         .findAny()
         .map(CredentialRegistration::getUsername);
   }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // The following methods are specific to this demo application.
+  ////////////////////////////////////////////////////////////////////////////////
 
   public boolean addRegistrationByUsername(String username, CredentialRegistration reg) {
     try {

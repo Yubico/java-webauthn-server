@@ -35,4 +35,9 @@ class CredentialRepositoryV1ToV2Adapter
   public Optional<ByteArray> getUserHandleForUsername(String username) {
     return inner.getUserHandleForUsername(username);
   }
+
+  @Override
+  public Optional<String> getUsernameForUserHandle(ByteArray userHandle) {
+    return inner.getUsernameForUserHandle(userHandle);
+  }
 }

@@ -60,7 +60,6 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   private final Optional<ByteArray> callerTokenBindingId;
   private final Set<String> origins;
   private final String rpId;
-  private final Optional<CredentialRepository> credentialRepository;
   private final CredentialRepositoryV2<C> credentialRepositoryV2;
   private final Optional<UsernameRepository> usernameRepository;
   private final boolean allowOriginPort;
@@ -79,7 +78,6 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
         options.getCallerTokenBindingId(),
         rp.getOrigins(),
         rp.getIdentity().getId(),
-        Optional.of(credRepo),
         credRepoV2,
         Optional.of(credRepoV2),
         rp.isAllowOriginPort(),
@@ -95,7 +93,6 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
         options.getCallerTokenBindingId(),
         rp.getOrigins(),
         rp.getIdentity().getId(),
-        Optional.empty(),
         rp.getCredentialRepository(),
         Optional.ofNullable(rp.getUsernameRepository()),
         rp.isAllowOriginPort(),
@@ -105,7 +102,7 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   private Optional<String> getUsernameForUserHandle(final ByteArray userHandle) {
-    return credentialRepository.flatMap(credRepo -> credRepo.getUsernameForUserHandle(userHandle));
+    return usernameRepository.flatMap(unameRepo -> unameRepo.getUsernameForUserHandle(userHandle));
   }
 
   public Step5 begin() {
@@ -262,7 +259,7 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
           finalUserHandle.get(),
           response.getId());
 
-      if (credentialRepository.isPresent()) {
+      if (usernameRepository.isPresent()) {
         assertTrue(
             finalUsername.isPresent(),
             "Unknown username for user handle: %s",
