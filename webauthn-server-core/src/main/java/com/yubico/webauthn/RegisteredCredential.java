@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
+import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
@@ -41,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Optional;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -118,6 +120,8 @@ public final class RegisteredCredential implements CredentialRecord {
    */
   @Builder.Default private final long signatureCount = 0;
 
+  @Builder.Default private final Set<AuthenticatorTransport> transports = null;
+
   /**
    * The state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> when
    * this credential was registered, if known.
@@ -172,14 +176,21 @@ public final class RegisteredCredential implements CredentialRecord {
       @NonNull @JsonProperty("userHandle") ByteArray userHandle,
       @NonNull @JsonProperty("publicKeyCose") ByteArray publicKeyCose,
       @JsonProperty("signatureCount") long signatureCount,
+      @JsonProperty("transports") Set<AuthenticatorTransport> transports,
       @JsonProperty("backupEligible") Boolean backupEligible,
       @JsonProperty("backupState") @JsonAlias("backedUp") Boolean backupState) {
     this.credentialId = credentialId;
     this.userHandle = userHandle;
     this.publicKeyCose = publicKeyCose;
     this.signatureCount = signatureCount;
+    this.transports = transports;
     this.backupEligible = backupEligible;
     this.backupState = backupState;
+  }
+
+  @Override
+  public Optional<Set<AuthenticatorTransport>> getTransports() {
+    return Optional.ofNullable(transports);
   }
 
   /**

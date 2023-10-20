@@ -231,6 +231,10 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
     @Override
     public void validate() {
       assertTrue(
+          !(request.getUsername().isPresent() && !usernameRepository.isPresent()),
+          "Cannot set request username when usernameRepository is not configured.");
+
+      assertTrue(
           finalUserHandle.isPresent(),
           "Could not identify user to authenticate: none of requested username, requested user handle or response user handle are set.");
 

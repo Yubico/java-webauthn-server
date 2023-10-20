@@ -463,6 +463,11 @@ public class RelyingPartyV2<C extends CredentialRecord> {
   }
 
   public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
+    if (startAssertionOptions.getUsername().isPresent() && usernameRepository == null) {
+      throw new IllegalArgumentException(
+          "StartAssertionOptions.username must not be set when usernameRepository is not configured.");
+    }
+
     PublicKeyCredentialRequestOptionsBuilder pkcro =
         PublicKeyCredentialRequestOptions.builder()
             .challenge(generateChallenge())

@@ -33,6 +33,7 @@ import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.UserIdentity;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import lombok.Builder;
 import lombok.NonNull;
@@ -80,6 +81,11 @@ public class CredentialRegistration implements CredentialRecord {
   @Override
   public long getSignatureCount() {
     return credential.getSignatureCount();
+  }
+
+  @Override
+  public Optional<Set<AuthenticatorTransport>> getTransports() {
+    return Optional.ofNullable(transports);
   }
 
   @Override

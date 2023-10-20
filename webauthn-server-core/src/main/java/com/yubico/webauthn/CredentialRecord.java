@@ -1,7 +1,9 @@
 package com.yubico.webauthn;
 
+import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import java.util.Optional;
+import java.util.Set;
 import lombok.NonNull;
 
 /**
@@ -20,8 +22,10 @@ public interface CredentialRecord {
 
   long getSignatureCount();
 
-  // @NonNull
-  // Set<AuthenticatorTransport> getTransports();
+  @NonNull
+  default Optional<Set<AuthenticatorTransport>> getTransports() {
+    return Optional.empty();
+  }
 
   // boolean isUvInitialized();
 
