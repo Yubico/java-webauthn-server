@@ -8,7 +8,7 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class CredentialRepositoryV1ToV2Adapter
+class CredentialRepositoryV1ToV2Adapter
     implements CredentialRepositoryV2<RegisteredCredential>, UsernameRepository {
 
   private final CredentialRepository inner;
