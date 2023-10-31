@@ -42,7 +42,13 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Value;
 
-/** The result of a call to {@link RelyingPartyV2#finishAssertion(FinishAssertionOptions)}. */
+/**
+ * The result of a call to {@link RelyingPartyV2#finishAssertion(FinishAssertionOptions)}.
+ *
+ * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+ *     before reaching a mature release.
+ */
+@Deprecated
 @Value
 public class AssertionResultV2<C extends CredentialRecord> {
 
@@ -65,8 +71,11 @@ public class AssertionResultV2<C extends CredentialRecord> {
    * <i>before</i> the assertion operation, not the new state. When updating your database state,
    * use the signature counter and backup state from {@link #getSignatureCount()}, {@link
    * #isBackupEligible()} and {@link #isBackedUp()} instead.
+   *
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
-  private final C credential;
+  @Deprecated private final C credential;
 
   /**
    * <code>true</code> if and only if at least one of the following is true:

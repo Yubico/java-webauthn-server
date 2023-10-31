@@ -30,8 +30,12 @@ import java.util.Optional;
 /**
  * An abstraction of optional database lookups needed by this library.
  *
- * <p>This is used by {@link RelyingParty} to look up usernames and user handles.
+ * <p>This is used by {@link RelyingPartyV2} to look up usernames and user handles.
+ *
+ * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+ *     before reaching a mature release.
  */
+@Deprecated
 public interface UsernameRepository {
 
   /**
@@ -40,7 +44,11 @@ public interface UsernameRepository {
    *
    * <p>Used to look up the user handle based on the username, for authentication ceremonies where
    * the username is already given.
+   *
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   Optional<ByteArray> getUserHandleForUsername(String username);
 
   /**
@@ -49,6 +57,10 @@ public interface UsernameRepository {
    *
    * <p>Used to look up the username based on the user handle, for username-less authentication
    * ceremonies.
+   *
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   Optional<String> getUsernameForUserHandle(ByteArray userHandle);
 }

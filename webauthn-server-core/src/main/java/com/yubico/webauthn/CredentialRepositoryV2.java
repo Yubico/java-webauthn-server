@@ -35,7 +35,11 @@ import java.util.Set;
  * <p>This is used by {@link RelyingParty} to look up credentials and credential IDs.
  *
  * <p>Unlike {@link CredentialRepository}, this interface does not require support for usernames.
+ *
+ * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+ *     before reaching a mature release.
  */
+@Deprecated
 public interface CredentialRepositoryV2<C extends CredentialRecord> {
 
   /**
@@ -47,7 +51,10 @@ public interface CredentialRepositoryV2<C extends CredentialRecord> {
    * @return a {@link Set} containing one {@link PublicKeyCredentialDescriptor} for each credential
    *     registered to the given user. The set MUST NOT be null, but MAY be empty if the user does
    *     not exist or has no credentials.
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   Set<PublicKeyCredentialDescriptor> getCredentialIdsForUserHandle(ByteArray userHandle);
 
   /**
@@ -61,7 +68,10 @@ public interface CredentialRepositoryV2<C extends CredentialRecord> {
    *     credential with credential ID <code>credentialId</code>, if any. If the credential does not
    *     exist or is registered to a different user handle than <code>userHandle</code>, return
    *     {@link Optional#empty()}.
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   Optional<C> lookup(ByteArray credentialId, ByteArray userHandle);
 
   /**
@@ -72,6 +82,9 @@ public interface CredentialRepositoryV2<C extends CredentialRecord> {
    *
    * @return <code>true</code> if and only if the credential database contains at least one
    *     credential with the given credential ID.
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   boolean credentialIdExists(ByteArray credentialId);
 }

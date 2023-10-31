@@ -609,7 +609,10 @@ public class RelyingParty {
          * credentialRepository} is a required parameter.
          *
          * @see #credentialRepository(CredentialRepository)
+         * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be
+         *     deleted before reaching a mature release.
          */
+        @Deprecated
         public <C extends CredentialRecord>
             RelyingPartyV2.RelyingPartyV2Builder<C> credentialRepositoryV2(
                 CredentialRepositoryV2<C> credentialRepository) {

@@ -139,8 +139,13 @@ public class RelyingPartyV2<C extends CredentialRecord> {
    */
   @NonNull private final CredentialRepositoryV2<C> credentialRepository;
 
-  /** TODO */
-  private final UsernameRepository usernameRepository;
+  /**
+   * TODO
+   *
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
+   */
+  @Deprecated private final UsernameRepository usernameRepository;
 
   /**
    * The extension input to set for the <code>appid</code> and <code>appidExclude</code> extensions.
