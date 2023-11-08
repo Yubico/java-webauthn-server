@@ -1,7 +1,6 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -14,7 +13,7 @@ class CredentialRepositoryV1ToV2Adapter
   private final CredentialRepository inner;
 
   @Override
-  public Set<PublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(
+  public Set<? extends ToPublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(
       ByteArray userHandle) {
     return inner
         .getUsernameForUserHandle(userHandle)

@@ -30,7 +30,6 @@ import com.yubico.webauthn.AssertionResultV2;
 import com.yubico.webauthn.CredentialRepositoryV2;
 import com.yubico.webauthn.UsernameRepository;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import demo.webauthn.data.CredentialRegistration;
 import java.util.Collection;
 import java.util.HashSet;
@@ -56,16 +55,8 @@ public class InMemoryRegistrationStorage
   ////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public Set<PublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(
-      ByteArray userHandle) {
-    return getRegistrationsByUserHandle(userHandle).stream()
-        .map(
-            registration ->
-                PublicKeyCredentialDescriptor.builder()
-                    .id(registration.getCredential().getCredentialId())
-                    .transports(registration.getTransports())
-                    .build())
-        .collect(Collectors.toSet());
+  public Set<CredentialRegistration> getCredentialDescriptorsForUserHandle(ByteArray userHandle) {
+    return getRegistrationsByUserHandle(userHandle);
   }
 
   @Override
@@ -135,13 +126,13 @@ public class InMemoryRegistrationStorage
     }
   }
 
-  public Collection<CredentialRegistration> getRegistrationsByUserHandle(ByteArray userHandle) {
+  public Set<CredentialRegistration> getRegistrationsByUserHandle(ByteArray userHandle) {
     return storage.asMap().values().stream()
         .flatMap(Collection::stream)
         .filter(
             credentialRegistration ->
                 userHandle.equals(credentialRegistration.getUserIdentity().getId()))
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 
   public void updateSignatureCount(AssertionResultV2<CredentialRegistration> result) {

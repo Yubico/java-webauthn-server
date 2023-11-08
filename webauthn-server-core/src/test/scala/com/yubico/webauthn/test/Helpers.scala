@@ -6,6 +6,7 @@ import com.yubico.webauthn.CredentialRepositoryV2
 import com.yubico.webauthn.RegisteredCredential
 import com.yubico.webauthn.RegistrationResult
 import com.yubico.webauthn.RegistrationTestData
+import com.yubico.webauthn.ToPublicKeyCredentialDescriptor
 import com.yubico.webauthn.UsernameRepository
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
@@ -141,7 +142,7 @@ object Helpers {
 
       override def getCredentialDescriptorsForUserHandle(
           userHandle: ByteArray
-      ): java.util.Set[PublicKeyCredentialDescriptor] = {
+      ): java.util.Set[_ <: ToPublicKeyCredentialDescriptor] = {
         getCredentialIdsCount += 1
         inner.getCredentialDescriptorsForUserHandle(userHandle)
       }
@@ -166,19 +167,14 @@ object Helpers {
       new CredentialRepositoryV2[C] {
         override def getCredentialDescriptorsForUserHandle(
             userHandle: ByteArray
-        ): java.util.Set[PublicKeyCredentialDescriptor] =
+        ): java.util.Set[_ <: ToPublicKeyCredentialDescriptor] =
           users
             .filter({
               case (u, c) =>
                 u.getId == userHandle && c.getUserHandle == userHandle
             })
             .map({
-              case (_, credential) =>
-                PublicKeyCredentialDescriptor
-                  .builder()
-                  .id(credential.getCredentialId)
-                  .transports(credential.getTransports)
-                  .build()
+              case (_, credential) => credential
             })
             .toSet
             .asJava
@@ -305,6 +301,10 @@ object Helpers {
       override def getPublicKeyCose: ByteArray =
         testData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
       override def getSignatureCount: Long = signatureCount
+
+      override def getTransports
+          : Optional[java.util.Set[AuthenticatorTransport]] =
+        Optional.of(testData.response.getResponse.getTransports)
       override def isBackupEligible: Optional[java.lang.Boolean] = toJava(be)
       override def isBackedUp: Optional[java.lang.Boolean] = toJava(bs)
     }

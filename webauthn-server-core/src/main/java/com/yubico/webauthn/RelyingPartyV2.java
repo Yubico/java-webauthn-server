@@ -49,12 +49,12 @@ import java.security.KeyFactory;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -431,8 +431,12 @@ public class RelyingPartyV2<C extends CredentialRecord> {
             .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
-                credentialRepository.getCredentialDescriptorsForUserHandle(
-                    startRegistrationOptions.getUser().getId()))
+                credentialRepository
+                    .getCredentialDescriptorsForUserHandle(
+                        startRegistrationOptions.getUser().getId())
+                    .stream()
+                    .map(ToPublicKeyCredentialDescriptor::toPublicKeyCredentialDescriptor)
+                    .collect(Collectors.toSet()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(
                 startRegistrationOptions
@@ -488,7 +492,13 @@ public class RelyingPartyV2<C extends CredentialRecord> {
                                             .getUsername()
                                             .flatMap(unr::getUserHandleForUsername)))
                     .map(credentialRepository::getCredentialDescriptorsForUserHandle)
-                    .map(ArrayList::new))
+                    .map(
+                        descriptors ->
+                            descriptors.stream()
+                                .map(
+                                    ToPublicKeyCredentialDescriptor
+                                        ::toPublicKeyCredentialDescriptor)
+                                .collect(Collectors.toList())))
             .extensions(
                 startAssertionOptions
                     .getExtensions()

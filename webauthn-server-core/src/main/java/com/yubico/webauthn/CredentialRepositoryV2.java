@@ -48,14 +48,24 @@ public interface CredentialRepositoryV2<C extends CredentialRecord> {
    * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
    * returns a value suitable for inclusion in this set.
    *
-   * @return a {@link Set} containing one {@link PublicKeyCredentialDescriptor} for each credential
-   *     registered to the given user. The set MUST NOT be null, but MAY be empty if the user does
-   *     not exist or has no credentials.
+   * <p>Note that the {@link CredentialRecord} interface extends from the expected {@link
+   * ToPublicKeyCredentialDescriptor} return type, so this method MAY return a {@link Set} of the
+   * same item type as the value returned by the {@link #lookup(ByteArray, ByteArray)} method.
+   *
+   * <p>Implementations MUST NOT return null. The returned {@link Set} MUST NOT contain null.
+   *
+   * @return a {@link Set} containing one {@link PublicKeyCredentialDescriptor} (or value that
+   *     implements {@link ToPublicKeyCredentialDescriptor}, for example {@link CredentialRecord})
+   *     for each credential registered to the given user. The set MUST NOT be null, but MAY be
+   *     empty if the user does not exist or has no credentials.
+   * @see ToPublicKeyCredentialDescriptor
+   * @see CredentialRecord
    * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
    *     before reaching a mature release.
    */
   @Deprecated
-  Set<PublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(ByteArray userHandle);
+  Set<? extends ToPublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(
+      ByteArray userHandle);
 
   /**
    * Look up the public key, backup flags and current signature count for the given credential
