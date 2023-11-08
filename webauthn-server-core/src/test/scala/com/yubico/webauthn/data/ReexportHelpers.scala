@@ -1,7 +1,6 @@
 package com.yubico.webauthn.data
 
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
-import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 
 /** Public re-exports of things in the com.yubico.webauthn.data package, so that
   * tests can access them but dependent projects cannot (unless they do this
@@ -9,9 +8,6 @@ import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
   */
 object ReexportHelpers {
 
-  def newLargeBlobRegistrationOutput(
-      supported: Boolean
-  ): LargeBlobRegistrationOutput = new LargeBlobRegistrationOutput(supported)
   def newLargeBlobAuthenticationOutput(
       blob: Option[ByteArray],
       written: Option[Boolean],

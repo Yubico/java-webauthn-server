@@ -327,7 +327,7 @@ class ExtensionsSpec
         Set("largeBlob")
       )
       registrationCred.getClientExtensionResults.getLargeBlob.toScala should equal(
-        Some(new LargeBlobRegistrationOutput(true))
+        Some(LargeBlobRegistrationOutput.supported(true))
       )
 
       assertionCred.getClientExtensionResults.getExtensionIds.asScala should equal(
@@ -347,7 +347,7 @@ class ExtensionsSpec
         Set("largeBlob")
       )
       registrationCred.getClientExtensionResults.getLargeBlob.toScala should equal(
-        Some(new LargeBlobRegistrationOutput(true))
+        Some(LargeBlobRegistrationOutput.supported(true))
       )
 
       assertionCred.getClientExtensionResults.getExtensionIds.asScala should equal(

@@ -54,12 +54,12 @@ import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.ReexportHelpers
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
@@ -4302,7 +4302,7 @@ class RelyingPartyRegistrationSpec
                     ClientRegistrationExtensionOutputs
                       .builder()
                       .largeBlob(
-                        ReexportHelpers.newLargeBlobRegistrationOutput(true)
+                        LargeBlobRegistrationOutput.supported(true)
                       )
                       .build()
                   )

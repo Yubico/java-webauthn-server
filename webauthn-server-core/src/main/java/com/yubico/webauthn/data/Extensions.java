@@ -216,6 +216,9 @@ public class Extensions {
      * Extension inputs for the Large blob storage extension (<code>largeBlob</code>) in
      * authentication ceremonies.
      *
+     * <p>Use the {@link #read()} and {@link #write(ByteArray)} factory functions to construct this
+     * type.
+     *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
@@ -311,6 +314,8 @@ public class Extensions {
      * Extension outputs for the Large blob storage extension (<code>largeBlob</code>) in
      * registration ceremonies.
      *
+     * <p>Use the {@link #supported(boolean)} factory function to construct this type.
+     *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
@@ -328,8 +333,20 @@ public class Extensions {
       @JsonProperty private final boolean supported;
 
       @JsonCreator
-      LargeBlobRegistrationOutput(@JsonProperty("supported") boolean supported) {
+      private LargeBlobRegistrationOutput(@JsonProperty("supported") boolean supported) {
         this.supported = supported;
+      }
+
+      /**
+       * Create a Large blob storage extension output with the <code>supported</code> output set to
+       * the given value.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticationextensionslargebloboutputs">
+       *     dictionary AuthenticationExtensionsLargeBlobOutputs</a>
+       */
+      public static LargeBlobRegistrationOutput supported(boolean supported) {
+        return new LargeBlobRegistrationOutput(supported);
       }
     }
 

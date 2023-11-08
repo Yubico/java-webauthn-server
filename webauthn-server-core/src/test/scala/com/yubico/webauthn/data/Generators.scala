@@ -883,7 +883,7 @@ object Generators {
       def largeBlobRegistrationOutput: Gen[LargeBlobRegistrationOutput] =
         for {
           supported <- arbitrary[Boolean]
-        } yield new LargeBlobRegistrationOutput(supported)
+        } yield LargeBlobRegistrationOutput.supported(supported)
 
       def largeBlobAuthenticationInput: Gen[LargeBlobAuthenticationInput] =
         halfsized(
