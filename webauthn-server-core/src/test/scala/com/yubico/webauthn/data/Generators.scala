@@ -898,8 +898,8 @@ object Generators {
           blob <- arbitrary[ByteArray]
           written <- arbitrary[Boolean]
           result <- Gen.oneOf(
-            new LargeBlobAuthenticationOutput(blob, null),
-            new LargeBlobAuthenticationOutput(null, written),
+            LargeBlobAuthenticationOutput.read(blob),
+            LargeBlobAuthenticationOutput.write(written),
           )
         } yield result)
     }

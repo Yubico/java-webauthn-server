@@ -364,10 +364,41 @@ public class Extensions {
       @JsonProperty private final Boolean written;
 
       @JsonCreator
-      LargeBlobAuthenticationOutput(
+      private LargeBlobAuthenticationOutput(
           @JsonProperty("blob") ByteArray blob, @JsonProperty("written") Boolean written) {
         this.blob = blob;
         this.written = written;
+      }
+
+      /**
+       * Create a Large blob storage extension output with the <code>blob</code> output set to the
+       * given value.
+       *
+       * <p>This corresponds to the extension input {@link LargeBlobAuthenticationInput#read()
+       * LargeBlobAuthenticationInput.read()}.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticationextensionslargebloboutputs">
+       *     dictionary AuthenticationExtensionsLargeBlobOutputs</a>
+       */
+      public static LargeBlobAuthenticationOutput read(final ByteArray blob) {
+        return new LargeBlobAuthenticationOutput(blob, null);
+      }
+
+      /**
+       * Create a Large blob storage extension output with the <code>written</code> output set to
+       * the given value.
+       *
+       * <p>This corresponds to the extension input {@link
+       * LargeBlobAuthenticationInput#write(ByteArray)
+       * LargeBlobAuthenticationInput.write(ByteArray)}.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticationextensionslargebloboutputs">
+       *     dictionary AuthenticationExtensionsLargeBlobOutputs</a>
+       */
+      public static LargeBlobAuthenticationOutput write(final boolean write) {
+        return new LargeBlobAuthenticationOutput(null, write);
       }
 
       /**

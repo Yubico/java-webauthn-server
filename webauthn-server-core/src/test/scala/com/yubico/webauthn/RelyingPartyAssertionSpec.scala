@@ -39,6 +39,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -46,7 +47,6 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.ReexportHelpers
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
@@ -2517,8 +2517,7 @@ class RelyingPartyAssertionSpec
                     ClientAssertionExtensionOutputs
                       .builder()
                       .largeBlob(
-                        ReexportHelpers
-                          .newLargeBlobAuthenticationOutput(None, Some(true))
+                        LargeBlobAuthenticationOutput.write(true)
                       )
                       .build()
                   )
@@ -2559,10 +2558,8 @@ class RelyingPartyAssertionSpec
                     ClientAssertionExtensionOutputs
                       .builder()
                       .largeBlob(
-                        ReexportHelpers.newLargeBlobAuthenticationOutput(
-                          Some(ByteArray.fromHex("00010203")),
-                          None,
-                        )
+                        LargeBlobAuthenticationOutput
+                          .read(ByteArray.fromHex("00010203"))
                       )
                       .build()
                   )

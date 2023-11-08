@@ -9,6 +9,7 @@ New features:
 * Added public builder to `CredentialPropertiesOutput`.
 * Added public factory function
   `LargeBlobRegistrationOutput.supported(boolean)`.
+* Added public factory functions to `LargeBlobAuthenticationOutput`.
 * (Experimental) Added option `isSecurePaymentConfirmation(boolean)` to
   `FinishAssertionOptions`. When set, `RelyingParty.finishAssertion()` will
   adapt the validation logic for a Secure Payment Confirmation (SPC) response
