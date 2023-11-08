@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.UtilityClass;
@@ -63,12 +64,13 @@ public class Extensions {
      *     Credential Properties Extension (credProps)</a>
      */
     @Value
+    @Builder
     public static class CredentialPropertiesOutput {
       @JsonProperty("rk")
       private final Boolean rk;
 
       @JsonCreator
-      CredentialPropertiesOutput(@JsonProperty("rk") Boolean rk) {
+      private CredentialPropertiesOutput(@JsonProperty("rk") Boolean rk) {
         this.rk = rk;
       }
 

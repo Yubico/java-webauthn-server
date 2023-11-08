@@ -868,7 +868,7 @@ object Generators {
       def credentialPropertiesOutput: Gen[CredentialPropertiesOutput] =
         for {
           rk <- arbitrary[Boolean]
-        } yield new CredentialPropertiesOutput(rk)
+        } yield CredentialPropertiesOutput.builder().rk(rk).build()
     }
 
     object LargeBlob {

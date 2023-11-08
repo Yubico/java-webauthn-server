@@ -1,6 +1,5 @@
 package com.yubico.webauthn.data
 
-import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 
@@ -9,9 +8,6 @@ import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
   * same workaround hack).
   */
 object ReexportHelpers {
-
-  def newCredentialPropertiesOutput(rk: Boolean): CredentialPropertiesOutput =
-    new CredentialPropertiesOutput(rk)
 
   def newLargeBlobRegistrationOutput(
       supported: Boolean

@@ -6,6 +6,7 @@ New features:
   `RegistrationResult` and `RegisteredCredential`.
  ** Thanks to Jakob Heher (A-SIT) for the contribution, see
     https://github.com/Yubico/java-webauthn-server/pull/299
+* Added public builder to `CredentialPropertiesOutput`.
 * (Experimental) Added option `isSecurePaymentConfirmation(boolean)` to
   `FinishAssertionOptions`. When set, `RelyingParty.finishAssertion()` will
   adapt the validation logic for a Secure Payment Confirmation (SPC) response

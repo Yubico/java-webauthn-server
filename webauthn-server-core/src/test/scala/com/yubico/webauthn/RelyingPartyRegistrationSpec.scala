@@ -52,6 +52,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators._
@@ -59,7 +60,6 @@ import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.ReexportHelpers
-import com.yubico.webauthn.data.ReexportHelpers.newCredentialPropertiesOutput
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
@@ -4232,7 +4232,7 @@ class RelyingPartyRegistrationSpec
                     ClientRegistrationExtensionOutputs
                       .builder()
                       .credProps(
-                        newCredentialPropertiesOutput(true)
+                        CredentialPropertiesOutput.builder().rk(true).build()
                       )
                       .build()
                   )
@@ -4255,7 +4255,7 @@ class RelyingPartyRegistrationSpec
                     ClientRegistrationExtensionOutputs
                       .builder()
                       .credProps(
-                        newCredentialPropertiesOutput(false)
+                        CredentialPropertiesOutput.builder().rk(false).build()
                       )
                       .build()
                   )
