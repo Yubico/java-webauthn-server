@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * An abstraction of the primary database lookups needed by this library.
+ * An abstraction of database lookups needed by this library.
  *
  * <p>This is used by {@link RelyingParty} to look up credentials, usernames and user handles from
  * usernames, user handles and credential IDs.
