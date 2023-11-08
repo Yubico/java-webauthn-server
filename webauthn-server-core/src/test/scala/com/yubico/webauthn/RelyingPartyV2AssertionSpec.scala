@@ -2525,7 +2525,8 @@ class RelyingPartyV2AssertionSpec
             Helpers.CredentialRepositoryV2.withUser(
               testData.userId,
               credentialId = testData.assertion.get.response.getId,
-              publicKeyCose = WebAuthnCodecs.rawEcKeyToCose(u2fPubkey),
+              publicKeyCose =
+                CredentialRecord.cosePublicKeyFromEs256Raw(u2fPubkey),
             )
           )
           .usernameRepository(

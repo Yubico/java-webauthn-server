@@ -197,4 +197,29 @@ public interface CredentialRecord extends ToPublicKeyCredentialDescriptor {
         .transports(getTransports())
         .build();
   }
+
+  /**
+   * Convert a credential public key from U2F format to COSE_Key format.
+   *
+   * <p>The U2F JavaScript API encoded credential public keys in <code>ALG_KEY_ECC_X962_RAW</code>
+   * format as specified in <a
+   * href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+   * Registry §3.6.2 Public Key Representation Formats</a>. If your database has credential public
+   * keys stored in this format, those public keys need to be converted to COSE_Key format before
+   * they can be used by a {@link CredentialRecord} instance. This function performs the conversion.
+   *
+   * <p>If your application has only used the <code>navigator.credentials.create()</code> API to
+   * register credentials, you likely do not need this function.
+   *
+   * @param es256RawKey a credential public key in <code>ALG_KEY_ECC_X962_RAW</code> format as
+   *     specified in <a
+   *     href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats">FIDO
+   *     Registry §3.6.2 Public Key Representation Formats</a>.
+   * @return a credential public key in COSE_Key format, suitable to be returned by {@link
+   *     CredentialRecord#getPublicKeyCose()}.
+   * @see RegisteredCredential.RegisteredCredentialBuilder#publicKeyEs256Raw(ByteArray)
+   */
+  static ByteArray cosePublicKeyFromEs256Raw(final ByteArray es256RawKey) {
+    return WebAuthnCodecs.rawEcKeyToCose(es256RawKey);
+  }
 }
