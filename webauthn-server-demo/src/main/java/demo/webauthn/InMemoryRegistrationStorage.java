@@ -56,7 +56,8 @@ public class InMemoryRegistrationStorage
   ////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUserHandle(ByteArray userHandle) {
+  public Set<PublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(
+      ByteArray userHandle) {
     return getRegistrationsByUserHandle(userHandle).stream()
         .map(
             registration ->

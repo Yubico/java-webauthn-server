@@ -55,7 +55,7 @@ public interface CredentialRepositoryV2<C extends CredentialRecord> {
    *     before reaching a mature release.
    */
   @Deprecated
-  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUserHandle(ByteArray userHandle);
+  Set<PublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(ByteArray userHandle);
 
   /**
    * Look up the public key, backup flags and current signature count for the given credential

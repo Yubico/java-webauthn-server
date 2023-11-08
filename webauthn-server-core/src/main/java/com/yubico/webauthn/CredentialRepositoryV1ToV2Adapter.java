@@ -14,7 +14,8 @@ class CredentialRepositoryV1ToV2Adapter
   private final CredentialRepository inner;
 
   @Override
-  public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUserHandle(ByteArray userHandle) {
+  public Set<PublicKeyCredentialDescriptor> getCredentialDescriptorsForUserHandle(
+      ByteArray userHandle) {
     return inner
         .getUsernameForUserHandle(userHandle)
         .map(inner::getCredentialIdsForUsername)

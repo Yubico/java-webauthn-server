@@ -108,7 +108,7 @@ object Helpers {
   object CredentialRepositoryV2 {
     def empty[C <: CredentialRecord] =
       new CredentialRepositoryV2[C] {
-        override def getCredentialIdsForUserHandle(
+        override def getCredentialDescriptorsForUserHandle(
             userHandle: ByteArray
         ): java.util.Set[PublicKeyCredentialDescriptor] = Set.empty.asJava
         override def lookup(
@@ -121,7 +121,7 @@ object Helpers {
       }
     def unimplemented[C <: CredentialRecord] =
       new CredentialRepositoryV2[C] {
-        override def getCredentialIdsForUserHandle(
+        override def getCredentialDescriptorsForUserHandle(
             userHandle: ByteArray
         ): java.util.Set[PublicKeyCredentialDescriptor] = ???
         override def lookup(
@@ -139,11 +139,11 @@ object Helpers {
       var lookupCount = 0
       var credentialIdExistsCount = 0
 
-      override def getCredentialIdsForUserHandle(
+      override def getCredentialDescriptorsForUserHandle(
           userHandle: ByteArray
       ): java.util.Set[PublicKeyCredentialDescriptor] = {
         getCredentialIdsCount += 1
-        inner.getCredentialIdsForUserHandle(userHandle)
+        inner.getCredentialDescriptorsForUserHandle(userHandle)
       }
 
       override def lookup(
@@ -164,7 +164,7 @@ object Helpers {
         users: (UserIdentity, C)*
     ): CredentialRepositoryV2[C] = {
       new CredentialRepositoryV2[C] {
-        override def getCredentialIdsForUserHandle(
+        override def getCredentialDescriptorsForUserHandle(
             userHandle: ByteArray
         ): java.util.Set[PublicKeyCredentialDescriptor] =
           users

@@ -431,7 +431,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
             .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
-                credentialRepository.getCredentialIdsForUserHandle(
+                credentialRepository.getCredentialDescriptorsForUserHandle(
                     startRegistrationOptions.getUser().getId()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(
@@ -487,7 +487,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
                                         startAssertionOptions
                                             .getUsername()
                                             .flatMap(unr::getUserHandleForUsername)))
-                    .map(credentialRepository::getCredentialIdsForUserHandle)
+                    .map(credentialRepository::getCredentialDescriptorsForUserHandle)
                     .map(ArrayList::new))
             .extensions(
                 startAssertionOptions

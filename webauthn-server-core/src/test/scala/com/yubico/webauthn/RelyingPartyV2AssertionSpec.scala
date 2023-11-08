@@ -357,7 +357,7 @@ class RelyingPartyV2AssertionSpec
                   cred3: PublicKeyCredentialDescriptor,
               ) =>
                 val credRepo = new CredentialRepositoryV2[CredentialRecord] {
-                  override def getCredentialIdsForUserHandle(
+                  override def getCredentialDescriptorsForUserHandle(
                       userHandle: ByteArray
                   ): java.util.Set[PublicKeyCredentialDescriptor] =
                     Set(
