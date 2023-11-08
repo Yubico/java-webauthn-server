@@ -31,11 +31,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.data.AttestedCredentialData;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
+import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
 import com.yubico.webauthn.data.AuthenticatorData;
 import com.yubico.webauthn.data.AuthenticatorTransport;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
+import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserIdentity;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -120,6 +123,33 @@ public final class RegisteredCredential implements CredentialRecord {
    */
   @Builder.Default private final long signatureCount = 0;
 
+  /**
+   * Transport hints as to how the client might communicate with the authenticator this credential
+   * is bound to.
+   *
+   * <p>This SHOULD be set to the value returned by {@link
+   * AuthenticatorAttestationResponse#getTransports()} when the credential was created. That value
+   * SHOULD NOT be modified.
+   *
+   * <p>This is only used if the {@link RelyingParty} is configured with a {@link
+   * CredentialRepositoryV2}, in which case this is used to set {@link
+   * PublicKeyCredentialDescriptor#getTransports()} in {@link
+   * PublicKeyCredentialCreationOptions#getExcludeCredentials() excludeCredentials} in {@link
+   * RelyingParty#startRegistration(StartRegistrationOptions)} and {@link
+   * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials} in {@link
+   * RelyingParty#startAssertion(StartAssertionOptions)}. This is not used if the {@link
+   * RelyingParty} is configured with a {@link CredentialRepository}.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatorattestationresponse-gettransports">getTransports()
+   *     in 5.2.1. Information About Public Key Credential (interface
+   *     AuthenticatorAttestationResponse)</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports
+   *     in 5.8.3. Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
+   * @see AuthenticatorAttestationResponse#getTransports()
+   * @see PublicKeyCredentialDescriptor#getTransports()
+   */
   @Builder.Default private final Set<AuthenticatorTransport> transports = null;
 
   /**
@@ -188,6 +218,33 @@ public final class RegisteredCredential implements CredentialRecord {
     this.backupState = backupState;
   }
 
+  /**
+   * Transport hints as to how the client might communicate with the authenticator this credential
+   * is bound to.
+   *
+   * <p>This SHOULD be set to the value returned by {@link
+   * AuthenticatorAttestationResponse#getTransports()} when the credential was created. That value
+   * SHOULD NOT be modified.
+   *
+   * <p>This is only used if the {@link RelyingParty} is configured with a {@link
+   * CredentialRepositoryV2}, in which case this is used to set {@link
+   * PublicKeyCredentialDescriptor#getTransports()} in {@link
+   * PublicKeyCredentialCreationOptions#getExcludeCredentials() excludeCredentials} in {@link
+   * RelyingParty#startRegistration(StartRegistrationOptions)} and {@link
+   * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials} in {@link
+   * RelyingParty#startAssertion(StartAssertionOptions)}. This is not used if the {@link
+   * RelyingParty} is configured with a {@link CredentialRepository}.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticatorattestationresponse-gettransports">getTransports()
+   *     in 5.2.1. Information About Public Key Credential (interface
+   *     AuthenticatorAttestationResponse)</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-publickeycredentialdescriptor-transports">transports
+   *     in 5.8.3. Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
+   * @see AuthenticatorAttestationResponse#getTransports()
+   * @see PublicKeyCredentialDescriptor#getTransports()
+   */
   @Override
   public Optional<Set<AuthenticatorTransport>> getTransports() {
     return Optional.ofNullable(transports);
