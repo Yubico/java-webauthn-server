@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * An abstraction of database lookups needed by this library.
  *
- * <p>This is used by {@link RelyingParty} to look up credentials and credential IDs.
+ * <p>This is used by {@link RelyingPartyV2} to look up credentials and credential IDs.
  *
  * <p>Unlike {@link CredentialRepository}, this interface does not require support for usernames.
  *
@@ -61,13 +61,13 @@ public interface CredentialRepositoryV2<C extends CredentialRecord> {
    * Look up the public key, backup flags and current signature count for the given credential
    * registered to the given user.
    *
-   * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
+   * <p>The returned {@link CredentialRecord} is not expected to be long-lived. It may be read
    * directly from a database or assembled from other components.
    *
-   * @return a {@link RegisteredCredential} describing the current state of the registered
-   *     credential with credential ID <code>credentialId</code>, if any. If the credential does not
-   *     exist or is registered to a different user handle than <code>userHandle</code>, return
-   *     {@link Optional#empty()}.
+   * @return a {@link CredentialRecord} describing the current state of the registered credential
+   *     with credential ID <code>credentialId</code>, if any. If the credential does not exist or
+   *     is registered to a different user handle than <code>userHandle</code>, return {@link
+   *     Optional#empty()}.
    * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
    *     before reaching a mature release.
    */
