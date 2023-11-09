@@ -165,7 +165,7 @@ controlled by the parent web server.
 
   - `YUBICO_WEBAUTHN_RP_NAME`: The human-readable
     https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP name]
-    the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web Authentication demo'`
+    the server will report. Example: `YUBICO_WEBAUTHN_RP_NAME='Yubico Web Authentication demo'`
 
   - `YUBICO_WEBAUTHN_USE_FIDO_MDS`: If set to `true` (case-insensitive), use
     https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.5.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
