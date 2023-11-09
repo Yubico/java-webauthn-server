@@ -72,7 +72,7 @@ class JsonIoSpec
     def test[A](tpe: TypeReference[A])(implicit a: Arbitrary[A]): Unit = {
       val cn = tpe.getType.getTypeName
       describe(s"${cn}") {
-        it("is identical after multiple serialization round-trips..") {
+        it("is identical after multiple serialization round-trips.") {
           forAll(minSuccessful(10)) { value: A =>
             val encoded: String = json.writeValueAsString(value)
 

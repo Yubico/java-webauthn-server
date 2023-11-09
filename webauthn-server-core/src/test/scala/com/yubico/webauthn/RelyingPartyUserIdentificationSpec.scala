@@ -32,6 +32,8 @@ import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.RelyingPartyIdentity
+import com.yubico.webauthn.data.UserIdentity
+import com.yubico.webauthn.test.Helpers
 import org.junit.runner.RunWith
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -130,7 +132,7 @@ class RelyingPartyUserIdentificationSpec extends AnyFunSpec with Matchers {
         .build()
   }
 
-  describe("The assertion ceremony") {
+  describe("The assertion ceremony with RelyingParty") {
 
     val rp = RelyingParty
       .builder()
@@ -234,17 +236,14 @@ class RelyingPartyUserIdentificationSpec extends AnyFunSpec with Matchers {
         userHandle = Some(Defaults.userHandle)
       )
 
-      val result = Try(
-        rp.finishAssertion(
-          FinishAssertionOptions
-            .builder()
-            .request(deterministicRequest)
-            .response(response)
-            .build()
-        )
+      val result = rp.finishAssertion(
+        FinishAssertionOptions
+          .builder()
+          .request(deterministicRequest)
+          .response(response)
+          .build()
       )
-
-      result shouldBe a[Success[_]]
+      result.isSuccess should be(true)
     }
 
     it("fails for the default test case if no username was given and no userHandle returned.") {
@@ -269,6 +268,256 @@ class RelyingPartyUserIdentificationSpec extends AnyFunSpec with Matchers {
       )
 
       result shouldBe a[Failure[_]]
+    }
+
+  }
+
+  describe("The assertion ceremony with RelyingPartyV2") {
+
+    describe("with usernameRepository set") {
+      val user = UserIdentity
+        .builder()
+        .name(Defaults.username)
+        .displayName("")
+        .id(Defaults.userHandle)
+        .build()
+      val rp = RelyingParty
+        .builder()
+        .identity(Defaults.rpId)
+        .credentialRepositoryV2(
+          Helpers.CredentialRepositoryV2.withUser(
+            user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = WebAuthnTestCodecs.ecPublicKeyToCose(
+              Defaults.credentialKey.getPublic.asInstanceOf[ECPublicKey]
+            ),
+            signatureCount = 0,
+          )
+        )
+        .usernameRepository(Helpers.UsernameRepository.withUsers(user))
+        .preferredPubkeyParams(Nil.asJava)
+        .origins(Set(Defaults.rpId.getId).asJava)
+        .allowUntrustedAttestation(false)
+        .validateSignatureCounter(true)
+        .build()
+
+      it("succeeds for the default test case if a username was given.") {
+        val request = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .username(Defaults.username)
+            .build()
+        )
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val result = Try(
+          rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(deterministicRequest)
+              .response(Defaults.publicKeyCredential)
+              .build()
+          )
+        )
+
+        result shouldBe a[Success[_]]
+      }
+
+      it("succeeds for the default test case if a user handle was given.") {
+        val request = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .userHandle(Defaults.userHandle)
+            .build()
+        )
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val result = Try(
+          rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(deterministicRequest)
+              .response(Defaults.publicKeyCredential)
+              .build()
+          )
+        )
+
+        result shouldBe a[Success[_]]
+      }
+
+      it("succeeds if username or user handle was not given but userHandle was returned.") {
+        val request = rp.startAssertion(StartAssertionOptions.builder().build())
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val response: PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ] = Defaults.defaultPublicKeyCredential(
+          userHandle = Some(Defaults.userHandle)
+        )
+
+        val result = rp.finishAssertion(
+          FinishAssertionOptions
+            .builder()
+            .request(deterministicRequest)
+            .response(response)
+            .build()
+        )
+        result.isSuccess should be(true)
+      }
+
+      it("fails for the default test case if no username or user handle was given and no userHandle returned.") {
+        val request = rp.startAssertion(StartAssertionOptions.builder().build())
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val result = Try(
+          rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(deterministicRequest)
+              .response(Defaults.publicKeyCredential)
+              .build()
+          )
+        )
+
+        result shouldBe a[Failure[_]]
+      }
+    }
+
+    describe("with no usernameRepository set") {
+      val user = UserIdentity
+        .builder()
+        .name(Defaults.username)
+        .displayName("")
+        .id(Defaults.userHandle)
+        .build()
+      val rp = RelyingParty
+        .builder()
+        .identity(Defaults.rpId)
+        .credentialRepositoryV2(
+          Helpers.CredentialRepositoryV2.withUser(
+            user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = WebAuthnTestCodecs.ecPublicKeyToCose(
+              Defaults.credentialKey.getPublic.asInstanceOf[ECPublicKey]
+            ),
+            signatureCount = 0,
+          )
+        )
+        .preferredPubkeyParams(Nil.asJava)
+        .origins(Set(Defaults.rpId.getId).asJava)
+        .allowUntrustedAttestation(false)
+        .validateSignatureCounter(true)
+        .build()
+
+      it("succeeds for the default test case if a userhandle was given.") {
+        val request = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .userHandle(Defaults.userHandle)
+            .build()
+        )
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val result = Try(
+          rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(deterministicRequest)
+              .response(Defaults.publicKeyCredential)
+              .build()
+          )
+        )
+
+        result shouldBe a[Success[_]]
+      }
+
+      it("succeeds if user handle was not given but userHandle was returned.") {
+        val request = rp.startAssertion(StartAssertionOptions.builder().build())
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val response: PublicKeyCredential[
+          AuthenticatorAssertionResponse,
+          ClientAssertionExtensionOutputs,
+        ] = Defaults.defaultPublicKeyCredential(
+          userHandle = Some(Defaults.userHandle)
+        )
+
+        val result = rp.finishAssertion(
+          FinishAssertionOptions
+            .builder()
+            .request(deterministicRequest)
+            .response(response)
+            .build()
+        )
+        result.isSuccess should be(true)
+      }
+
+      it("fails for the default test case if no user handle was given and no userHandle returned.") {
+        val request = rp.startAssertion(StartAssertionOptions.builder().build())
+        val deterministicRequest =
+          request.toBuilder
+            .publicKeyCredentialRequestOptions(
+              request.getPublicKeyCredentialRequestOptions.toBuilder
+                .challenge(Defaults.challenge)
+                .build()
+            )
+            .build()
+
+        val result = Try(
+          rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(deterministicRequest)
+              .response(Defaults.publicKeyCredential)
+              .build()
+          )
+        )
+
+        result shouldBe a[Failure[_]]
+      }
     }
 
   }

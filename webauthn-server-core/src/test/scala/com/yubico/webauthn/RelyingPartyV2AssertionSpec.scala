@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Yubico AB
+// Copyright (c) 2023, Yubico AB
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,6 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.security.KeyPair
 import java.security.MessageDigest
-import java.security.interfaces.ECPublicKey
 import java.util.Optional
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters.RichOption
@@ -80,7 +79,7 @@ import scala.util.Success
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyAssertionSpec
+class RelyingPartyV2AssertionSpec
     extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
@@ -125,6 +124,8 @@ class RelyingPartyAssertionSpec
       .build()
 
     // These values are defined by the attestationObject and clientDataJson above
+    val credentialPublicKeyCose: ByteArray =
+      WebAuthnTestCodecs.publicKeyToCose(credentialKey.getPublic)
     val clientDataJsonBytes: ByteArray = new ByteArray(
       clientDataJson.getBytes("UTF-8")
     )
@@ -136,30 +137,8 @@ class RelyingPartyAssertionSpec
 
   }
 
-  private def getUserHandleIfDefaultUsername(
-      username: String,
-      userHandle: ByteArray,
-  ): Optional[ByteArray] =
-    if (username == Defaults.username)
-      Some(userHandle).toJava
-    else
-      ???
-
-  private def getUsernameIfDefaultUserHandle(
-      userHandle: ByteArray,
-      username: String,
-  ): Optional[String] =
-    if (userHandle == Defaults.userHandle)
-      Some(username).toJava
-    else
-      ???
-
-  private def getPublicKeyBytes(credentialKey: KeyPair): ByteArray =
-    WebAuthnTestCodecs.ecPublicKeyToCose(
-      credentialKey.getPublic.asInstanceOf[ECPublicKey]
-    )
-
-  def finishAssertion(
+  def finishAssertion[C <: CredentialRecord](
+      credentialRepository: CredentialRepositoryV2[C],
       allowCredentials: Option[java.util.List[PublicKeyCredentialDescriptor]] =
         Some(
           List(
@@ -178,8 +157,6 @@ class RelyingPartyAssertionSpec
       clientExtensionResults: ClientAssertionExtensionOutputs =
         Defaults.clientExtensionResults,
       credentialId: ByteArray = Defaults.credentialId,
-      credentialKey: KeyPair = Defaults.credentialKey,
-      credentialRepository: Option[CredentialRepository] = None,
       isSecurePaymentConfirmation: Option[Boolean] = None,
       origins: Option[Set[String]] = None,
       requestedExtensions: AssertionExtensionInputs =
@@ -188,17 +165,15 @@ class RelyingPartyAssertionSpec
       signature: ByteArray = Defaults.signature,
       userHandleForResponse: Option[ByteArray] = Some(Defaults.userHandle),
       userHandleForRequest: Option[ByteArray] = None,
-      userHandleForUser: ByteArray = Defaults.userHandle,
-      usernameForRequest: Option[String] = Some(Defaults.username),
-      usernameForUser: String = Defaults.username,
+      usernameForRequest: Option[String] = None,
+      usernameRepository: Option[UsernameRepository] = None,
       userVerificationRequirement: UserVerificationRequirement =
         UserVerificationRequirement.PREFERRED,
       validateSignatureCounter: Boolean = true,
-  ): FinishAssertionSteps[RegisteredCredential] = {
+  ): FinishAssertionSteps[C] = {
     val clientDataJsonBytes: ByteArray =
       if (clientDataJson == null) null
       else new ByteArray(clientDataJson.getBytes("UTF-8"))
-    val credentialPublicKeyBytes = getPublicKeyBytes(credentialKey)
 
     val request = AssertionRequest
       .builder()
@@ -238,46 +213,15 @@ class RelyingPartyAssertionSpec
     val builder = RelyingParty
       .builder()
       .identity(rpId)
-      .credentialRepository(
-        credentialRepository getOrElse new CredentialRepository {
-          override def lookup(credId: ByteArray, lookupUserHandle: ByteArray) =
-            (
-              if (credId == credentialId)
-                Some(
-                  RegisteredCredential
-                    .builder()
-                    .credentialId(credId)
-                    .userHandle(userHandleForUser)
-                    .publicKeyCose(credentialPublicKeyBytes)
-                    .signatureCount(0)
-                    .build()
-                )
-              else None
-            ).toJava
-          override def lookupAll(credId: ByteArray) =
-            lookup(credId, null).toScala.toSet.asJava
-          override def getCredentialIdsForUsername(username: String) = ???
-          override def getUserHandleForUsername(username: String)
-              : Optional[ByteArray] =
-            getUserHandleIfDefaultUsername(
-              username,
-              userHandle = userHandleForUser,
-            )
-          override def getUsernameForUserHandle(userHandle: ByteArray)
-              : Optional[String] =
-            getUsernameIfDefaultUserHandle(
-              userHandle,
-              username = usernameForUser,
-            )
-        }
-      )
+      .credentialRepositoryV2(credentialRepository)
       .preferredPubkeyParams(Nil.asJava)
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(false)
       .validateSignatureCounter(validateSignatureCounter)
 
-    origins.map(_.asJava).foreach(builder.origins _)
+    usernameRepository.foreach(builder.usernameRepository)
+    origins.map(_.asJava).foreach(builder.origins)
 
     val fao = FinishAssertionOptions
       .builder()
@@ -304,7 +248,7 @@ class RelyingPartyAssertionSpec
           val rp = RelyingParty
             .builder()
             .identity(Defaults.rpId)
-            .credentialRepository(Helpers.CredentialRepository.empty)
+            .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
             .build()
           val request1 =
             rp.startAssertion(StartAssertionOptions.builder().build())
@@ -327,7 +271,7 @@ class RelyingPartyAssertionSpec
           val rp = RelyingParty
             .builder()
             .identity(Defaults.rpId)
-            .credentialRepository(Helpers.CredentialRepository.empty)
+            .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
             .build()
 
           forAll { uv: Option[UserVerificationRequirement] =>
@@ -349,78 +293,28 @@ class RelyingPartyAssertionSpec
 
     describe("RelyingParty.finishAssertion") {
 
-      it("does not make redundant calls to CredentialRepository.lookup().") {
+      it("does not make redundant calls to CredentialRepositoryV2.lookup().") {
         val registrationTestData =
           RegistrationTestData.Packed.BasicAttestationEdDsa
         val testData = registrationTestData.assertion.get
 
-        val credRepo = {
-          val user = registrationTestData.userId
-          val credential = RegisteredCredential
-            .builder()
-            .credentialId(registrationTestData.response.getId)
-            .userHandle(registrationTestData.userId.getId)
-            .publicKeyCose(
-              registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+        val credRepo = new Helpers.CredentialRepositoryV2.CountingCalls(
+          Helpers.CredentialRepositoryV2.withUsers(
+            (
+              registrationTestData.userId,
+              Helpers.toCredentialRecord(registrationTestData),
             )
-            .signatureCount(0)
-            .build()
-
-          new CredentialRepository {
-            var lookupCount = 0
-
-            override def getCredentialIdsForUsername(
-                username: String
-            ): java.util.Set[PublicKeyCredentialDescriptor] =
-              if (username == user.getName)
-                Set(
-                  PublicKeyCredentialDescriptor
-                    .builder()
-                    .id(credential.getCredentialId)
-                    .build()
-                ).asJava
-              else Set.empty.asJava
-
-            override def getUserHandleForUsername(
-                username: String
-            ): Optional[ByteArray] =
-              if (username == user.getName)
-                Some(user.getId).toJava
-              else None.toJava
-
-            override def getUsernameForUserHandle(
-                userHandle: ByteArray
-            ): Optional[String] =
-              if (userHandle == user.getId)
-                Some(user.getName).toJava
-              else None.toJava
-
-            override def lookup(
-                credentialId: ByteArray,
-                userHandle: ByteArray,
-            ): Optional[RegisteredCredential] = {
-              lookupCount += 1
-              if (
-                credentialId == credential.getCredentialId && userHandle == user.getId
-              )
-                Some(credential).toJava
-              else None.toJava
-            }
-
-            override def lookupAll(
-                credentialId: ByteArray
-            ): java.util.Set[RegisteredCredential] =
-              if (credentialId == credential.getCredentialId)
-                Set(credential).asJava
-              else Set.empty.asJava
-          }
-        }
+          )
+        )
+        val usernameRepo =
+          Helpers.UsernameRepository.withUsers(registrationTestData.userId)
         val rp = RelyingParty
           .builder()
           .identity(
             RelyingPartyIdentity.builder().id("localhost").name("Test RP").build()
           )
-          .credentialRepository(credRepo)
+          .credentialRepositoryV2(credRepo)
+          .usernameRepository(usernameRepo)
           .build()
 
         val result = rp.finishAssertion(
@@ -462,66 +356,109 @@ class RelyingPartyAssertionSpec
                   cred2: PublicKeyCredentialDescriptor,
                   cred3: PublicKeyCredentialDescriptor,
               ) =>
-                val rp = RelyingParty
-                  .builder()
-                  .identity(Defaults.rpId)
-                  .credentialRepository(new CredentialRepository {
-                    override def getCredentialIdsForUsername(
-                        username: String
-                    ): java.util.Set[PublicKeyCredentialDescriptor] =
-                      Set(
-                        cred1.toBuilder
-                          .transports(cred1Transports.asJava)
-                          .build(),
-                        cred2.toBuilder
-                          .transports(
-                            Optional.of(
-                              Set.empty[AuthenticatorTransport].asJava
-                            )
+                val credRepo = new CredentialRepositoryV2[CredentialRecord] {
+                  override def getCredentialDescriptorsForUserHandle(
+                      userHandle: ByteArray
+                  ): java.util.Set[PublicKeyCredentialDescriptor] =
+                    Set(
+                      cred1.toBuilder
+                        .transports(cred1Transports.asJava)
+                        .build(),
+                      cred2.toBuilder
+                        .transports(
+                          Optional.of(
+                            Set.empty[AuthenticatorTransport].asJava
                           )
-                          .build(),
-                        cred3.toBuilder
-                          .transports(
-                            Optional
-                              .empty[java.util.Set[AuthenticatorTransport]]
-                          )
-                          .build(),
-                      ).asJava
-                    override def getUserHandleForUsername(
-                        username: String
-                    ): Optional[ByteArray] = ???
-                    override def getUsernameForUserHandle(
-                        userHandleBase64: ByteArray
-                    ): Optional[String] = ???
-                    override def lookup(
-                        credentialId: ByteArray,
-                        userHandle: ByteArray,
-                    ): Optional[RegisteredCredential] = ???
-                    override def lookupAll(
-                        credentialId: ByteArray
-                    ): java.util.Set[RegisteredCredential] = ???
-                  })
-                  .preferredPubkeyParams(
-                    List(PublicKeyCredentialParameters.ES256).asJava
-                  )
-                  .build()
+                        )
+                        .build(),
+                      cred3.toBuilder
+                        .transports(
+                          Optional
+                            .empty[java.util.Set[AuthenticatorTransport]]
+                        )
+                        .build(),
+                    ).asJava
 
-                val result = rp.startAssertion(
-                  StartAssertionOptions
+                  override def lookup(
+                      credentialId: ByteArray,
+                      userHandle: ByteArray,
+                  ): Optional[CredentialRecord] = ???
+
+                  override def credentialIdExists(
+                      credentialId: ByteArray
+                  ): Boolean = ???
+                }
+
+                {
+                  val rp = RelyingParty
                     .builder()
-                    .username(Defaults.username)
+                    .identity(Defaults.rpId)
+                    .credentialRepositoryV2(
+                      credRepo
+                    )
+                    .preferredPubkeyParams(
+                      List(PublicKeyCredentialParameters.ES256).asJava
+                    )
                     .build()
-                )
 
-                val requestCreds =
-                  result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
-                requestCreds.head.getTransports.toScala should equal(
-                  Some(cred1Transports.asJava)
-                )
-                requestCreds(1).getTransports.toScala should equal(
-                  Some(Set.empty.asJava)
-                )
-                requestCreds(2).getTransports.toScala should equal(None)
+                  val result = rp.startAssertion(
+                    StartAssertionOptions
+                      .builder()
+                      .userHandle(Defaults.userHandle)
+                      .build()
+                  )
+
+                  val requestCreds =
+                    result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
+                  requestCreds.head.getTransports.toScala should equal(
+                    Some(cred1Transports.asJava)
+                  )
+                  requestCreds(1).getTransports.toScala should equal(
+                    Some(Set.empty.asJava)
+                  )
+                  requestCreds(2).getTransports.toScala should equal(None)
+
+                }
+
+                {
+                  val usernameRepo = Helpers.UsernameRepository.withUsers(
+                    UserIdentity
+                      .builder()
+                      .name(Defaults.username)
+                      .displayName(Defaults.username)
+                      .id(Defaults.userHandle)
+                      .build()
+                  )
+                  val rp = RelyingParty
+                    .builder()
+                    .identity(Defaults.rpId)
+                    .credentialRepositoryV2(
+                      credRepo
+                    )
+                    .usernameRepository(usernameRepo)
+                    .preferredPubkeyParams(
+                      List(PublicKeyCredentialParameters.ES256).asJava
+                    )
+                    .build()
+
+                  val result = rp.startAssertion(
+                    StartAssertionOptions
+                      .builder()
+                      .username(Defaults.username)
+                      .build()
+                  )
+
+                  val requestCreds =
+                    result.getPublicKeyCredentialRequestOptions.getAllowCredentials.get.asScala
+                  requestCreds.head.getTransports.toScala should equal(
+                    Some(cred1Transports.asJava)
+                  )
+                  requestCreds(1).getTransports.toScala should equal(
+                    Some(Set.empty.asJava)
+                  )
+                  requestCreds(2).getTransports.toScala should equal(None)
+
+                }
             }
           }
         }
@@ -565,7 +502,9 @@ class RelyingPartyAssertionSpec
 
         describe("5. If options.allowCredentials is not empty, verify that credential.id identifies one of the public key credentials listed in options.allowCredentials.") {
           it("Fails if returned credential ID is not a requested one.") {
-            val steps = finishAssertion(
+            val steps = finishAssertion[CredentialRecord](
+              credentialRepository =
+                Helpers.CredentialRepositoryV2.unimplemented[CredentialRecord],
               allowCredentials = Some(
                 List(
                   PublicKeyCredentialDescriptor
@@ -576,7 +515,7 @@ class RelyingPartyAssertionSpec
               ),
               credentialId = new ByteArray(Array(0, 1, 2, 3)),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step5 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step5 =
               steps.begin
 
             step.validations shouldBe a[Failure[_]]
@@ -586,6 +525,8 @@ class RelyingPartyAssertionSpec
 
           it("Succeeds if returned credential ID is a requested one.") {
             val steps = finishAssertion(
+              credentialRepository =
+                Helpers.CredentialRepositoryV2.unimplemented[CredentialRecord],
               allowCredentials = Some(
                 List(
                   PublicKeyCredentialDescriptor
@@ -600,11 +541,10 @@ class RelyingPartyAssertionSpec
               ),
               credentialId = new ByteArray(Array(4, 5, 6, 7)),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step5 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step5 =
               steps.begin
 
             step.validations shouldBe a[Success[_]]
-            step.tryNext shouldBe a[Success[_]]
           }
 
           it("Succeeds if no credential IDs were requested.") {
@@ -615,219 +555,270 @@ class RelyingPartyAssertionSpec
               )
             } {
               val steps = finishAssertion(
+                credentialRepository = Helpers.CredentialRepositoryV2
+                  .unimplemented[CredentialRecord],
                 allowCredentials = allowCredentials,
                 credentialId = new ByteArray(Array(0, 1, 2, 3)),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step5 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step5 =
                 steps.begin
 
               step.validations shouldBe a[Success[_]]
-              step.tryNext shouldBe a[Success[_]]
             }
           }
         }
 
         describe("6. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id:") {
-          object owner {
-            val username = "owner"
-            val userHandle = new ByteArray(Array(4, 5, 6, 7))
-          }
-          object nonOwner {
-            val username = "non-owner"
-            val userHandle = new ByteArray(Array(8, 9, 10, 11))
-          }
+          val owner = UserIdentity
+            .builder()
+            .name("owner")
+            .displayName("")
+            .id(new ByteArray(Array(4, 5, 6, 7)))
+            .build()
+          val nonOwner = UserIdentity
+            .builder()
+            .name("non-owner")
+            .displayName("")
+            .id(new ByteArray(Array(8, 9, 10, 11)))
+            .build()
 
-          val credentialRepository = Some(new CredentialRepository {
-            override def lookup(id: ByteArray, uh: ByteArray) =
-              Some(
-                RegisteredCredential
-                  .builder()
-                  .credentialId(new ByteArray(Array(0, 1, 2, 3)))
-                  .userHandle(owner.userHandle)
-                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(0)
-                  .build()
-              ).toJava
-            override def lookupAll(id: ByteArray) = ???
-            override def getCredentialIdsForUsername(username: String) = ???
-            override def getUserHandleForUsername(
-                username: String
-            ): Optional[ByteArray] =
-              Some(
-                if (username == owner.username) owner.userHandle
-                else nonOwner.userHandle
-              ).toJava
-            override def getUsernameForUserHandle(
-                userHandle: ByteArray
-            ): Optional[String] =
-              Some(
-                if (userHandle == owner.userHandle) owner.username
-                else nonOwner.username
-              ).toJava
-          })
+          val credentialOwnedByOwner = Helpers.CredentialRepositoryV2.withUsers(
+            (
+              owner,
+              Helpers.credentialRecord(
+                credentialId = Defaults.credentialId,
+                userHandle = owner.getId,
+                publicKeyCose = null,
+              ),
+            )
+          )
+
+          val credentialOwnedByNonOwner =
+            Helpers.CredentialRepositoryV2.withUsers(
+              (
+                nonOwner,
+                Helpers.credentialRecord(
+                  credentialId = new ByteArray(Array(12, 13, 14, 15)),
+                  userHandle = nonOwner.getId,
+                  publicKeyCose = null,
+                ),
+              )
+            )
 
           describe("If the user was identified before the authentication ceremony was initiated, e.g., via a username or cookie, verify that the identified user is the owner of credentialSource. If response.userHandle is present, let userHandle be its value. Verify that userHandle also maps to the same user.") {
-            it(
-              "Fails if credential ID is not owned by the given user handle."
-            ) {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForResponse = Some(nonOwner.userHandle),
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = Some(owner.username),
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
+            def checks(usernameRepository: Option[UsernameRepository]) = {
+              it(
+                "Fails if credential ID is not owned by the requested user handle."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByNonOwner,
+                  usernameRepository = usernameRepository,
+                  userHandleForRequest = Some(owner.getId),
+                  userHandleForResponse = None,
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
 
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it(
+                "Fails if response.userHandle does not identify the same user as request.userHandle."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  userHandleForRequest = Some(nonOwner.getId),
+                  userHandleForResponse = Some(owner.getId),
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it("Succeeds if credential ID is owned by the requested user handle.") {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  userHandleForRequest = Some(owner.getId),
+                  userHandleForResponse = None,
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+              }
+
+              it("Succeeds if credential ID is owned by the requested and returned user handle.") {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  userHandleForRequest = Some(owner.getId),
+                  userHandleForResponse = Some(owner.getId),
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+              }
             }
 
-            it(
-              "Fails if response.userHandle does not identify the same user as request.username."
-            ) {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                usernameForRequest = Some(nonOwner.username),
-                userHandleForUser = owner.userHandle,
-                userHandleForResponse = Some(owner.userHandle),
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
+            describe("When a UsernameRepository is set:") {
+              val usernameRepository =
+                Some(Helpers.UsernameRepository.withUsers(owner, nonOwner))
+              checks(usernameRepository)
 
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
+              it(
+                "Fails if credential ID is not owned by the requested username."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByNonOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = Some(owner.getName),
+                  userHandleForResponse = None,
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it(
+                "Fails if response.userHandle does not identify the same user as request.username."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = Some(nonOwner.getName),
+                  userHandleForResponse = Some(owner.getId),
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it(
+                "Succeeds if credential ID is owned by the requested username."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = Some(owner.getName),
+                  userHandleForResponse = None,
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+              }
+
+              it("Succeeds if credential ID is owned by the requested username and returned user handle.") {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = Some(owner.getName),
+                  userHandleForResponse = Some(owner.getId),
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+              }
             }
 
-            it("Succeeds if credential ID is owned by the given user handle.") {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForResponse = Some(owner.userHandle),
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = Some(owner.username),
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Success[_]]
-              step.tryNext shouldBe a[Success[_]]
+            describe("When a UsernameRepository is not set:") {
+              checks(None)
             }
           }
 
           describe("If the user was not identified before the authentication ceremony was initiated, verify that response.userHandle is present, and that the user identified by this value is the owner of credentialSource.") {
-            it(
-              "Fails if response.userHandle is not present."
-            ) {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                usernameForRequest = None,
-                userHandleForUser = owner.userHandle,
-                userHandleForResponse = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
+            def checks(usernameRepository: Option[UsernameRepository]) = {
+              it(
+                "Fails if response.userHandle is not present."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = None,
+                  userHandleForRequest = None,
+                  userHandleForResponse = None,
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
 
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it(
+                "Fails if credential ID is not owned by the user handle in the response."
+              ) {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByNonOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = None,
+                  userHandleForRequest = None,
+                  userHandleForResponse = Some(owner.getId),
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Failure[_]]
+                step.validations.failed.get shouldBe an[
+                  IllegalArgumentException
+                ]
+                step.tryNext shouldBe a[Failure[_]]
+              }
+
+              it("Succeeds if credential ID is owned by the user handle in the response.") {
+                val steps = finishAssertion(
+                  credentialRepository = credentialOwnedByOwner,
+                  usernameRepository = usernameRepository,
+                  usernameForRequest = None,
+                  userHandleForRequest = None,
+                  userHandleForResponse = Some(owner.getId),
+                )
+                val step: FinishAssertionSteps[CredentialRecord]#Step6 =
+                  steps.begin.next
+
+                step.validations shouldBe a[Success[_]]
+                step.tryNext shouldBe a[Success[_]]
+              }
             }
 
-            it(
-              "Fails if credential ID is not owned by the user handle in the response."
-            ) {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForResponse = Some(nonOwner.userHandle),
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
+            val usernameRepository =
+              Helpers.UsernameRepository.withUsers(owner, nonOwner)
+            describe("When a UsernameRepository is set:") {
+              checks(Some(usernameRepository))
             }
 
-            it(
-              "Fails if credential ID is not owned by the user handle in the request."
-            ) {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForRequest = Some(nonOwner.userHandle),
-                userHandleForResponse = None,
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
-            }
-
-            it("Fails if neither username nor user handle is given.") {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForRequest = None,
-                userHandleForResponse = None,
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
-            }
-
-            it("Fails if user handle in request does not agree with user handle in response.") {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForRequest = Some(owner.userHandle),
-                userHandleForResponse = Some(nonOwner.userHandle),
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Failure[_]]
-              step.validations.failed.get shouldBe an[IllegalArgumentException]
-              step.tryNext shouldBe a[Failure[_]]
-            }
-
-            it("Succeeds if credential ID is owned by the user handle in the response.") {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForResponse = Some(owner.userHandle),
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Success[_]]
-              step.tryNext shouldBe a[Success[_]]
-            }
-
-            it("Succeeds if credential ID is owned by the user handle in the request.") {
-              val steps = finishAssertion(
-                credentialRepository = credentialRepository,
-                userHandleForRequest = Some(owner.userHandle),
-                userHandleForResponse = None,
-                userHandleForUser = owner.userHandle,
-                usernameForRequest = None,
-              )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
-                steps.begin.next
-
-              step.validations shouldBe a[Success[_]]
-              step.tryNext shouldBe a[Success[_]]
+            describe("When a UsernameRepository is not set:") {
+              checks(None)
             }
           }
         }
@@ -835,19 +826,10 @@ class RelyingPartyAssertionSpec
         describe("7. Using credential.id (or credential.rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key and let credentialPublicKey be that credential public key.") {
           it("Fails if the credential ID is unknown.") {
             val steps = finishAssertion(
-              credentialRepository = Some(
-                Helpers.CredentialRepository.withUser(
-                  Defaults.user,
-                  RegisteredCredential
-                    .builder()
-                    .credentialId(
-                      Defaults.credentialId.concat(ByteArray.fromHex("00"))
-                    )
-                    .userHandle(Defaults.userHandle)
-                    .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                    .signatureCount(0)
-                    .build(),
-                )
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
               )
             )
             val step: steps.Step7 = new steps.Step7(
@@ -863,20 +845,13 @@ class RelyingPartyAssertionSpec
 
           it("Succeeds if the credential ID is known.") {
             val steps = finishAssertion(
-              credentialRepository = Some(
-                Helpers.CredentialRepository.withUser(
-                  Defaults.user,
-                  RegisteredCredential
-                    .builder()
-                    .credentialId(Defaults.credentialId)
-                    .userHandle(Defaults.userHandle)
-                    .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                    .signatureCount(0)
-                    .build(),
-                )
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
               )
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step7 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step7 =
               steps.begin.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -886,8 +861,14 @@ class RelyingPartyAssertionSpec
 
         describe("8. Let cData, authData and sig denote the value of response’s clientDataJSON, authenticatorData, and signature respectively.") {
           it("Succeeds if all three are present.") {
-            val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step8 =
+            val steps = finishAssertion(credentialRepository =
+              Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              )
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step8 =
               steps.begin.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -899,19 +880,25 @@ class RelyingPartyAssertionSpec
 
           it("Fails if clientDataJSON is missing.") {
             a[NullPointerException] should be thrownBy finishAssertion(
-              clientDataJson = null
+              credentialRepository =
+                Helpers.CredentialRepositoryV2.unimplemented[CredentialRecord],
+              clientDataJson = null,
             )
           }
 
           it("Fails if authenticatorData is missing.") {
             a[NullPointerException] should be thrownBy finishAssertion(
-              authenticatorData = null
+              credentialRepository =
+                Helpers.CredentialRepositoryV2.unimplemented[CredentialRecord],
+              authenticatorData = null,
             )
           }
 
           it("Fails if signature is missing.") {
             a[NullPointerException] should be thrownBy finishAssertion(
-              signature = null
+              credentialRepository =
+                Helpers.CredentialRepositoryV2.unimplemented[CredentialRecord],
+              signature = null,
             )
           }
         }
@@ -929,20 +916,27 @@ class RelyingPartyAssertionSpec
             an[IOException] should be thrownBy new CollectedClientData(
               new ByteArray("{".getBytes(Charset.forName("UTF-8")))
             )
-            an[IOException] should be thrownBy finishAssertion(clientDataJson =
-              "{"
+            an[IOException] should be thrownBy finishAssertion(
+              credentialRepository =
+                Helpers.CredentialRepositoryV2.unimplemented[CredentialRecord],
+              clientDataJson = "{",
             )
           }
 
           it("Succeeds if cData is valid JSON.") {
             val steps = finishAssertion(
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              ),
               clientDataJson = """{
                 "challenge": "",
                 "origin": "",
                 "type": ""
-              }"""
+              }""",
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step10 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step10 =
               steps.begin.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -955,8 +949,14 @@ class RelyingPartyAssertionSpec
           "11. Verify that the value of C.type is the string webauthn.get."
         ) {
           it("The default test case succeeds.") {
-            val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+            val steps = finishAssertion(
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              )
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step11 =
               steps.begin.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -967,6 +967,11 @@ class RelyingPartyAssertionSpec
               isSecurePaymentConfirmation: Option[Boolean] = None,
           ): Unit = {
             val steps = finishAssertion(
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              ),
               clientDataJson = JacksonCodecs.json.writeValueAsString(
                 JacksonCodecs.json
                   .readTree(Defaults.clientDataJson)
@@ -975,7 +980,7 @@ class RelyingPartyAssertionSpec
               ),
               isSecurePaymentConfirmation = isSecurePaymentConfirmation,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step11 =
               steps.begin.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1006,8 +1011,16 @@ class RelyingPartyAssertionSpec
           describe("If the isSecurePaymentConfirmation option is set,") {
             it("the default test case fails.") {
               val steps =
-                finishAssertion(isSecurePaymentConfirmation = Some(true))
-              val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+                finishAssertion(
+                  credentialRepository =
+                    Helpers.CredentialRepositoryV2.withUser(
+                      Defaults.user,
+                      credentialId = Defaults.credentialId,
+                      publicKeyCose = ByteArray.fromHex(""),
+                    ),
+                  isSecurePaymentConfirmation = Some(true),
+                )
+              val step: FinishAssertionSteps[CredentialRecord]#Step11 =
                 steps.begin.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1017,6 +1030,11 @@ class RelyingPartyAssertionSpec
             it("""the default test case succeeds if type is overwritten with the value "payment.get".""") {
               val json = JacksonCodecs.json()
               val steps = finishAssertion(
+                credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                  Defaults.user,
+                  credentialId = Defaults.credentialId,
+                  publicKeyCose = ByteArray.fromHex(""),
+                ),
                 isSecurePaymentConfirmation = Some(true),
                 clientDataJson = json.writeValueAsString(
                   json
@@ -1025,7 +1043,7 @@ class RelyingPartyAssertionSpec
                     .set[ObjectNode]("type", new TextNode("payment.get"))
                 ),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step11 =
                 steps.begin.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1068,8 +1086,15 @@ class RelyingPartyAssertionSpec
 
         it("12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.") {
           val steps =
-            finishAssertion(challenge = new ByteArray(Array.fill(16)(0)))
-          val step: FinishAssertionSteps[RegisteredCredential]#Step12 =
+            finishAssertion(
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              ),
+              challenge = new ByteArray(Array.fill(16)(0)),
+            )
+          val step: FinishAssertionSteps[CredentialRecord]#Step12 =
             steps.begin.next.next.next.next.next.next
 
           step.validations shouldBe a[Failure[_]]
@@ -1089,12 +1114,17 @@ class RelyingPartyAssertionSpec
               "\"" + origin + "\"",
             )
             val steps = finishAssertion(
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              ),
               clientDataJson = clientDataJson,
               origins = origins,
               allowOriginPort = allowOriginPort,
               allowOriginSubdomain = allowOriginSubdomain,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step13 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step13 =
               steps.begin.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1112,12 +1142,17 @@ class RelyingPartyAssertionSpec
               "\"" + origin + "\"",
             )
             val steps = finishAssertion(
+              credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+                Defaults.user,
+                credentialId = Defaults.credentialId,
+                publicKeyCose = ByteArray.fromHex(""),
+              ),
               clientDataJson = clientDataJson,
               origins = origins,
               allowOriginPort = allowOriginPort,
               allowOriginSubdomain = allowOriginSubdomain,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step13 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step13 =
               steps.begin.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1293,9 +1328,17 @@ class RelyingPartyAssertionSpec
         }
 
         describe("14. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.") {
+          val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+            Defaults.user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = ByteArray.fromHex(""),
+          )
+
           it("Verification succeeds if neither side uses token binding ID.") {
-            val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1305,8 +1348,11 @@ class RelyingPartyAssertionSpec
           it("Verification succeeds if client data specifies token binding is unsupported, and RP does not use it.") {
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
-            val steps = finishAssertion(clientDataJson = clientDataJson)
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              clientDataJson = clientDataJson,
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1316,8 +1362,11 @@ class RelyingPartyAssertionSpec
           it("Verification succeeds if client data specifies token binding is supported, and RP does not use it.") {
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"supported"},"type":"webauthn.get"}"""
-            val steps = finishAssertion(clientDataJson = clientDataJson)
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository,
+              clientDataJson = clientDataJson,
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1328,11 +1377,12 @@ class RelyingPartyAssertionSpec
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               callerTokenBindingId =
                 Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
               clientDataJson = clientDataJson,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1344,10 +1394,11 @@ class RelyingPartyAssertionSpec
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               callerTokenBindingId = None,
               clientDataJson = clientDataJson,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1358,10 +1409,11 @@ class RelyingPartyAssertionSpec
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               callerTokenBindingId = None,
               clientDataJson = clientDataJson,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1370,15 +1422,22 @@ class RelyingPartyAssertionSpec
           }
 
           describe("If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.") {
+            val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+              Defaults.user,
+              credentialId = Defaults.credentialId,
+              publicKeyCose = ByteArray.fromHex(""),
+            )
+
             it("Verification succeeds if both sides specify the same token binding ID.") {
               val clientDataJson =
                 """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 callerTokenBindingId =
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1389,11 +1448,12 @@ class RelyingPartyAssertionSpec
               val clientDataJson =
                 """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present"},"type":"webauthn.get"}"""
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 callerTokenBindingId =
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1405,11 +1465,12 @@ class RelyingPartyAssertionSpec
               val clientDataJson =
                 """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 callerTokenBindingId =
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1421,11 +1482,12 @@ class RelyingPartyAssertionSpec
               val clientDataJson =
                 """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"supported"},"type":"webauthn.get"}"""
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 callerTokenBindingId =
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1437,11 +1499,12 @@ class RelyingPartyAssertionSpec
               val clientDataJson =
                 """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"present","id":"YELLOWSUBMARINE"},"type":"webauthn.get"}"""
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 callerTokenBindingId =
                   Some(ByteArray.fromBase64Url("ORANGESUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1452,12 +1515,19 @@ class RelyingPartyAssertionSpec
         }
 
         describe("15. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.") {
+          val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+            Defaults.user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = ByteArray.fromHex(""),
+          )
+
           it("Fails if RP ID is different.") {
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               rpId = Defaults.rpId.toBuilder.id("root.evil").build(),
               origins = Some(Set("https://localhost")),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step15 =
               steps.begin.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1466,8 +1536,10 @@ class RelyingPartyAssertionSpec
           }
 
           it("Succeeds if RP ID is the same.") {
-            val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step15 =
               steps.begin.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1483,13 +1555,14 @@ class RelyingPartyAssertionSpec
 
             it("fails if RP ID is different.") {
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 requestedExtensions = extensions,
                 authenticatorData = new ByteArray(
                   Array.fill[Byte](32)(0) ++ Defaults.authenticatorData.getBytes
                     .drop(32)
                 ),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step15 =
                 steps.begin.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1498,8 +1571,11 @@ class RelyingPartyAssertionSpec
             }
 
             it("succeeds if RP ID is the SHA-256 hash of the standard RP ID.") {
-              val steps = finishAssertion(requestedExtensions = extensions)
-              val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+              val steps = finishAssertion(
+                credentialRepository = credentialRepository,
+                requestedExtensions = extensions,
+              )
+              val step: FinishAssertionSteps[CredentialRecord]#Step15 =
                 steps.begin.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1508,6 +1584,7 @@ class RelyingPartyAssertionSpec
 
             it("succeeds if RP ID is the SHA-256 hash of the appid.") {
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 requestedExtensions = extensions,
                 authenticatorData = new ByteArray(
                   sha256(
@@ -1515,7 +1592,7 @@ class RelyingPartyAssertionSpec
                   ).getBytes ++ Defaults.authenticatorData.getBytes.drop(32)
                 ),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+              val step: FinishAssertionSteps[CredentialRecord]#Step15 =
                 steps.begin.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1525,25 +1602,32 @@ class RelyingPartyAssertionSpec
         }
 
         {
+          val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+            Defaults.user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = ByteArray.fromHex(""),
+          )
+
           def checks[
-              Next <: FinishAssertionSteps.Step[RegisteredCredential, _],
-              Step <: FinishAssertionSteps.Step[RegisteredCredential, Next],
+              Next <: FinishAssertionSteps.Step[CredentialRecord, _],
+              Step <: FinishAssertionSteps.Step[CredentialRecord, Next],
           ](
-              stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+              stepsToStep: FinishAssertionSteps[CredentialRecord] => Step
           ) = {
             def check[Ret](
-                stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+                stepsToStep: FinishAssertionSteps[CredentialRecord] => Step
             )(
                 chk: Step => Ret
             )(uvr: UserVerificationRequirement, authData: ByteArray): Ret = {
               val steps = finishAssertion(
+                credentialRepository = credentialRepository,
                 userVerificationRequirement = uvr,
                 authenticatorData = authData,
               )
               chk(stepsToStep(steps))
             }
             def checkFailsWith(
-                stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+                stepsToStep: FinishAssertionSteps[CredentialRecord] => Step
             ): (UserVerificationRequirement, ByteArray) => Unit =
               check(stepsToStep) { step =>
                 step.validations shouldBe a[Failure[_]]
@@ -1553,7 +1637,7 @@ class RelyingPartyAssertionSpec
                 step.tryNext shouldBe a[Failure[_]]
               }
             def checkSucceedsWith(
-                stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+                stepsToStep: FinishAssertionSteps[CredentialRecord] => Step
             ): (UserVerificationRequirement, ByteArray) => Unit =
               check(stepsToStep) { step =>
                 step.validations shouldBe a[Success[_]]
@@ -1584,8 +1668,8 @@ class RelyingPartyAssertionSpec
             )
             val (checkFails, checkSucceeds) =
               checks[FinishAssertionSteps[
-                RegisteredCredential
-              ]#Step17, FinishAssertionSteps[RegisteredCredential]#Step16](
+                CredentialRecord
+              ]#Step17, FinishAssertionSteps[CredentialRecord]#Step16](
                 _.begin.next.next.next.next.next.next.next.next.next.next
               )
 
@@ -1634,10 +1718,9 @@ class RelyingPartyAssertionSpec
                 .toArray
             )
             val (checkFails, checkSucceeds) =
-              checks[
-                FinishAssertionSteps[RegisteredCredential]#PendingStep16,
-                FinishAssertionSteps[RegisteredCredential]#Step17,
-              ](
+              checks[FinishAssertionSteps[
+                CredentialRecord
+              ]#PendingStep16, FinishAssertionSteps[CredentialRecord]#Step17](
                 _.begin.next.next.next.next.next.next.next.next.next.next.next
               )
 
@@ -1671,6 +1754,13 @@ class RelyingPartyAssertionSpec
           it(
             "Fails if BE=0 in the stored credential and BE=1 in the assertion."
           ) {
+            val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+              Defaults.user,
+              credentialId = Defaults.credentialId,
+              publicKeyCose = ByteArray.fromHex(""),
+              be = Some(false),
+              bs = Some(false),
+            )
             forAll(
               authenticatorDataBytes(
                 Gen.option(Extensions.authenticatorAssertionExtensionOutputs()),
@@ -1678,25 +1768,10 @@ class RelyingPartyAssertionSpec
                 backupFlagsGen = arbitrary[Boolean].map(bs => (true, bs)),
               )
             ) { authData =>
-              val step
-                  : FinishAssertionSteps[RegisteredCredential]#PendingStep16 =
+              val step: FinishAssertionSteps[CredentialRecord]#PendingStep16 =
                 finishAssertion(
+                  credentialRepository = credentialRepository,
                   authenticatorData = authData,
-                  credentialRepository = Some(
-                    Helpers.CredentialRepository.withUser(
-                      Defaults.user,
-                      RegisteredCredential
-                        .builder()
-                        .credentialId(Defaults.credentialId)
-                        .userHandle(Defaults.userHandle)
-                        .publicKeyCose(
-                          getPublicKeyBytes(Defaults.credentialKey)
-                        )
-                        .backupEligible(false)
-                        .backupState(false)
-                        .build(),
-                    )
-                  ),
                 ).begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1710,32 +1785,26 @@ class RelyingPartyAssertionSpec
           ) {
             forAll(
               authenticatorDataBytes(
-                Gen.option(Extensions.authenticatorAssertionExtensionOutputs()),
+                Gen.option(
+                  Extensions.authenticatorAssertionExtensionOutputs()
+                ),
                 rpIdHashGen = Gen.const(sha256(Defaults.rpId.getId)),
                 backupFlagsGen = Gen.const((false, false)),
               ),
               arbitrary[Boolean],
             ) {
               case (authData, storedBs) =>
-                val step
-                    : FinishAssertionSteps[RegisteredCredential]#PendingStep16 =
+                val step: FinishAssertionSteps[CredentialRecord]#PendingStep16 =
                   finishAssertion(
-                    authenticatorData = authData,
-                    credentialRepository = Some(
-                      Helpers.CredentialRepository.withUser(
+                    credentialRepository =
+                      Helpers.CredentialRepositoryV2.withUser(
                         Defaults.user,
-                        RegisteredCredential
-                          .builder()
-                          .credentialId(Defaults.credentialId)
-                          .userHandle(Defaults.userHandle)
-                          .publicKeyCose(
-                            getPublicKeyBytes(Defaults.credentialKey)
-                          )
-                          .backupEligible(true)
-                          .backupState(storedBs)
-                          .build(),
-                      )
-                    ),
+                        credentialId = Defaults.credentialId,
+                        publicKeyCose = ByteArray.fromHex(""),
+                        be = Some(true),
+                        bs = Some(storedBs),
+                      ),
+                    authenticatorData = authData,
                   ).begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
@@ -1748,14 +1817,21 @@ class RelyingPartyAssertionSpec
         }
 
         describe("18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general case, the meaning of \"are as expected\" is specific to the Relying Party and which extensions are in use.") {
+          val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+            Defaults.user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = ByteArray.fromHex(""),
+          )
+
           it("Succeeds if clientExtensionResults is not a subset of the extensions requested by the Relying Party.") {
             forAll(Extensions.unrequestedClientAssertionExtensions) {
               case (extensionInputs, clientExtensionOutputs, _) =>
                 val steps = finishAssertion(
+                  credentialRepository = credentialRepository,
                   requestedExtensions = extensionInputs,
                   clientExtensionResults = clientExtensionOutputs,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps[CredentialRecord]#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1767,10 +1843,11 @@ class RelyingPartyAssertionSpec
             forAll(Extensions.subsetAssertionExtensions) {
               case (extensionInputs, clientExtensionOutputs, _) =>
                 val steps = finishAssertion(
+                  credentialRepository = credentialRepository,
                   requestedExtensions = extensionInputs,
                   clientExtensionResults = clientExtensionOutputs,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps[CredentialRecord]#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1786,6 +1863,7 @@ class RelyingPartyAssertionSpec
                     authenticatorExtensionOutputs: CBORObject,
                   ) =>
                 val steps = finishAssertion(
+                  credentialRepository = credentialRepository,
                   requestedExtensions = extensionInputs,
                   authenticatorData = TestAuthenticator.makeAuthDataBytes(
                     extensionsCborBytes = Some(
@@ -1795,7 +1873,7 @@ class RelyingPartyAssertionSpec
                     )
                   ),
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps[CredentialRecord]#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1811,6 +1889,7 @@ class RelyingPartyAssertionSpec
                     authenticatorExtensionOutputs: CBORObject,
                   ) =>
                 val steps = finishAssertion(
+                  credentialRepository = credentialRepository,
                   requestedExtensions = extensionInputs,
                   authenticatorData = TestAuthenticator.makeAuthDataBytes(
                     extensionsCborBytes = Some(
@@ -1820,7 +1899,7 @@ class RelyingPartyAssertionSpec
                     )
                   ),
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps[CredentialRecord]#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1830,8 +1909,14 @@ class RelyingPartyAssertionSpec
         }
 
         it("19. Let hash be the result of computing a hash over the cData using SHA-256.") {
-          val steps = finishAssertion()
-          val step: FinishAssertionSteps[RegisteredCredential]#Step19 =
+          val steps = finishAssertion(
+            credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+              Defaults.user,
+              credentialId = Defaults.credentialId,
+              publicKeyCose = ByteArray.fromHex(""),
+            )
+          )
+          val step: FinishAssertionSteps[CredentialRecord]#Step19 =
             steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
@@ -1846,9 +1931,17 @@ class RelyingPartyAssertionSpec
         }
 
         describe("20. Using credentialPublicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.") {
+          val credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+            Defaults.user,
+            credentialId = Defaults.credentialId,
+            publicKeyCose = Defaults.credentialPublicKeyCose,
+          )
+
           it("The default test case succeeds.") {
-            val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val steps = finishAssertion(
+              credentialRepository = credentialRepository
+            )
+            val step: FinishAssertionSteps[CredentialRecord]#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1858,14 +1951,15 @@ class RelyingPartyAssertionSpec
 
           it("A mutated clientDataJSON fails verification.") {
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               clientDataJson = JacksonCodecs.json.writeValueAsString(
                 JacksonCodecs.json
                   .readTree(Defaults.clientDataJson)
                   .asInstanceOf[ObjectNode]
                   .set("foo", jsonFactory.textNode("bar"))
-              )
+              ),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1877,6 +1971,7 @@ class RelyingPartyAssertionSpec
             val rpId = "ARGHABLARGHLER"
             val rpIdHash: ByteArray = Crypto.sha256(rpId)
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               authenticatorData = new ByteArray(
                 (rpIdHash.getBytes.toVector ++ Defaults.authenticatorData.getBytes.toVector
                   .drop(32)).toArray
@@ -1884,7 +1979,7 @@ class RelyingPartyAssertionSpec
               rpId = Defaults.rpId.toBuilder.id(rpId).build(),
               origins = Some(Set("https://localhost")),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1894,6 +1989,7 @@ class RelyingPartyAssertionSpec
 
           it("A test case with a different signed flags field fails.") {
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               authenticatorData = new ByteArray(
                 Defaults.authenticatorData.getBytes.toVector
                   .updated(
@@ -1902,9 +1998,9 @@ class RelyingPartyAssertionSpec
                       .toVector(32) | 0x02).toByte,
                   )
                   .toArray
-              )
+              ),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1914,13 +2010,14 @@ class RelyingPartyAssertionSpec
 
           it("A test case with a different signed signature counter fails.") {
             val steps = finishAssertion(
+              credentialRepository = credentialRepository,
               authenticatorData = new ByteArray(
                 Defaults.authenticatorData.getBytes.toVector
                   .updated(33, 42.toByte)
                   .toArray
-              )
+              ),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps[CredentialRecord]#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1932,15 +2029,11 @@ class RelyingPartyAssertionSpec
         describe("21. Let storedSignCount be the stored signature counter value associated with credential.id. If authData.signCount is nonzero or storedSignCount is nonzero, then run the following sub-step:") {
           describe("If authData.signCount is") {
             def credentialRepository(signatureCount: Long) =
-              Helpers.CredentialRepository.withUser(
+              Helpers.CredentialRepositoryV2.withUser(
                 Defaults.user,
-                RegisteredCredential
-                  .builder()
-                  .credentialId(Defaults.credentialId)
-                  .userHandle(Defaults.userHandle)
-                  .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
-                  .signatureCount(signatureCount)
-                  .build(),
+                credentialId = Defaults.credentialId,
+                publicKeyCose = Defaults.credentialPublicKeyCose,
+                signatureCount = signatureCount,
               )
 
             describe(
@@ -1962,29 +2055,29 @@ class RelyingPartyAssertionSpec
               it("Succeeds if the stored signature counter value is zero.") {
                 val cr = credentialRepository(0)
                 val steps = finishAssertion(
+                  credentialRepository = cr,
                   authenticatorData = authenticatorData,
                   signature = signature,
-                  credentialRepository = Some(cr),
                   validateSignatureCounter = true,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                val step: FinishAssertionSteps[CredentialRecord]#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
-                step.next.result.get.isSignatureCounterValid should be(true)
-                step.next.result.get.getSignatureCount should be(0)
+                step.next.resultV2.get.isSignatureCounterValid should be(true)
+                step.next.resultV2.get.getSignatureCount should be(0)
               }
 
               it("Fails if the stored signature counter value is nonzero.") {
                 val cr = credentialRepository(1)
                 val steps = finishAssertion(
+                  credentialRepository = cr,
                   authenticatorData = authenticatorData,
                   signature = signature,
-                  credentialRepository = Some(cr),
                   validateSignatureCounter = true,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                val step: FinishAssertionSteps[CredentialRecord]#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
@@ -2003,16 +2096,16 @@ class RelyingPartyAssertionSpec
               ) {
                 it("An increasing signature counter always succeeds.") {
                   val steps = finishAssertion(
-                    credentialRepository = Some(cr),
+                    credentialRepository = cr,
                     validateSignatureCounter = true,
                   )
-                  val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                  val step: FinishAssertionSteps[CredentialRecord]#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
-                  step.next.result.get.isSignatureCounterValid should be(true)
-                  step.next.result.get.getSignatureCount should be(1337)
+                  step.next.resultV2.get.isSignatureCounterValid should be(true)
+                  step.next.resultV2.get.getSignatureCount should be(1337)
                 }
               }
             }
@@ -2023,24 +2116,26 @@ class RelyingPartyAssertionSpec
               describe("This is a signal that the authenticator may be cloned, i.e. at least two copies of the credential private key may exist and are being used in parallel. Relying Parties should incorporate this information into their risk scoring. Whether the Relying Party updates storedSignCount in this case, or not, or fails the authentication ceremony or not, is Relying Party-specific.") {
                 it("If signature counter validation is disabled, a nonincreasing signature counter succeeds.") {
                   val steps = finishAssertion(
-                    credentialRepository = Some(cr),
+                    credentialRepository = cr,
                     validateSignatureCounter = false,
                   )
-                  val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                  val step: FinishAssertionSteps[CredentialRecord]#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
                   step.tryNext shouldBe a[Success[_]]
-                  step.next.result.get.isSignatureCounterValid should be(false)
-                  step.next.result.get.getSignatureCount should be(1337)
+                  step.next.resultV2.get.isSignatureCounterValid should be(
+                    false
+                  )
+                  step.next.resultV2.get.getSignatureCount should be(1337)
                 }
 
                 it("If signature counter validation is enabled, a nonincreasing signature counter fails.") {
                   val steps = finishAssertion(
-                    credentialRepository = Some(cr),
+                    credentialRepository = cr,
                     validateSignatureCounter = true,
                   )
-                  val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                  val step: FinishAssertionSteps[CredentialRecord]#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
                   val result = Try(step.run())
 
@@ -2068,27 +2163,33 @@ class RelyingPartyAssertionSpec
         }
 
         it("22. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
-          val steps = finishAssertion()
-          val step: FinishAssertionSteps[RegisteredCredential]#Finished =
+          val steps = finishAssertion(
+            credentialRepository = Helpers.CredentialRepositoryV2.withUser(
+              Defaults.user,
+              credentialId = Defaults.credentialId,
+              publicKeyCose = Defaults.credentialPublicKeyCose,
+            )
+          )
+          val step: FinishAssertionSteps[CredentialRecord]#Finished =
             steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
-          Try(steps.run) shouldBe a[Success[_]]
+          Try(steps.runV2) shouldBe a[Success[_]]
 
-          step.result.get.isSuccess should be(true)
-          step.result.get.getCredential.getCredentialId should equal(
+          step.resultV2.get.isSuccess should be(true)
+          step.resultV2.get.getCredential.getCredentialId should equal(
             Defaults.credentialId
           )
-          step.result.get.getCredential.getUserHandle should equal(
+          step.resultV2.get.getCredential.getUserHandle should equal(
             Defaults.userHandle
           )
-          step.result.get.getCredential.getCredentialId should equal(
-            step.result.get.getCredentialId
+          step.resultV2.get.getCredential.getCredentialId should equal(
+            step.resultV2.get.getCredential.getCredentialId
           )
-          step.result.get.getCredential.getUserHandle should equal(
-            step.result.get.getUserHandle
+          step.resultV2.get.getCredential.getUserHandle should equal(
+            step.resultV2.get.getCredential.getUserHandle
           )
-          step.result.get.getCredential.getPublicKeyCose should not be null
+          step.resultV2.get.getCredential.getPublicKeyCose should not be null
         }
       }
     }
@@ -2143,15 +2244,12 @@ class RelyingPartyAssertionSpec
           ]]() {},
         )
 
-        val credRepo = Helpers.CredentialRepository.withUser(
+        val credRepo = Helpers.CredentialRepositoryV2.withUser(
           testData.userId,
-          RegisteredCredential
-            .builder()
-            .credentialId(testData.response.getId)
-            .userHandle(testData.userId.getId)
-            .publicKeyCose(publicKeyBytes)
-            .build(),
+          credentialId = testData.response.getId,
+          publicKeyCose = publicKeyBytes,
         )
+        val usernameRepo = Helpers.UsernameRepository.withUsers(testData.userId)
 
         val rp = RelyingParty
           .builder()
@@ -2162,7 +2260,8 @@ class RelyingPartyAssertionSpec
               .name("Yubico WebAuthn demo")
               .build()
           )
-          .credentialRepository(credRepo)
+          .credentialRepositoryV2(credRepo)
+          .usernameRepository(usernameRepo)
           .origins(Set("https://demo3.yubico.test:8443").asJava)
           .build()
 
@@ -2184,66 +2283,66 @@ class RelyingPartyAssertionSpec
           .json()
           .readValue(
             """
-            |{
-            |  "rp": {
-            |    "name": "Yubico WebAuthn demo",
-            |    "id": "demo3.yubico.test"
-            |  },
-            |  "user": {
-            |    "name": "foo",
-            |    "displayName": "Foo Bar",
-            |    "id": "a2jHKZU9PDuGzwGaRQ5fVc8b_B3cfIOMZEiesm0Z-g0"
-            |  },
-            |  "challenge": "FFDZDypegliApKZXF8XCHCn2SlMy4BVupeOFXDSr1uE",
-            |  "pubKeyCredParams": [
-            |    {
-            |      "alg": -8,
-            |      "type": "public-key"
-            |    }
-            |  ],
-            |  "excludeCredentials": [],
-            |  "authenticatorSelection": {
-            |    "requireResidentKey": false,
-            |    "userVerification": "preferred"
-            |  },
-            |  "attestation": "direct",
-            |  "extensions": {}
-            |}
+              |{
+              |  "rp": {
+              |    "name": "Yubico WebAuthn demo",
+              |    "id": "demo3.yubico.test"
+              |  },
+              |  "user": {
+              |    "name": "foo",
+              |    "displayName": "Foo Bar",
+              |    "id": "a2jHKZU9PDuGzwGaRQ5fVc8b_B3cfIOMZEiesm0Z-g0"
+              |  },
+              |  "challenge": "FFDZDypegliApKZXF8XCHCn2SlMy4BVupeOFXDSr1uE",
+              |  "pubKeyCredParams": [
+              |    {
+              |      "alg": -8,
+              |      "type": "public-key"
+              |    }
+              |  ],
+              |  "excludeCredentials": [],
+              |  "authenticatorSelection": {
+              |    "requireResidentKey": false,
+              |    "userVerification": "preferred"
+              |  },
+              |  "attestation": "direct",
+              |  "extensions": {}
+              |}
           """.stripMargin,
             classOf[PublicKeyCredentialCreationOptions],
           )
         val registrationResponse =
           PublicKeyCredential.parseRegistrationResponseJson("""
-            |{
-            |  "type": "public-key",
-            |  "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM",
-            |  "response": {
-            |    "attestationObject": "o2NmbXRmcGFja2VkaGF1dGhEYXRhWOEBTgCL_3WEuaR_abGPGP9ImsDepMg6Ovq3DWuW6pKn_kUAAAAC-KAR84wKTRWABhcRH57cfQCAPMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCOkAQEDJyAGIVggSRLgxGS7m40dHlC9RGF4pzIj4V03KEVLj1iZ8-4zpgFnYXR0U3RtdKNjYWxnJmNzaWdYRzBFAiA6fyJf8gJc5N0fUJtpKckvc6jg0SJitLYVbzA3bl5uBgIhAI11DQDK7c0nhJGh5ElJzhTOcvvTovCAd31CZ_6ZsdrJY3g1Y4FZAmgwggJkMIIBTKADAgECAgQHL7bPMA0GCSqGSIb3DQEBCwUAMA8xDTALBgNVBAMMBHRlc3QwHhcNMTkwNDI0MTExMDAyWhcNMjAwNDIzMTExMDAyWjBuMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMScwJQYDVQQDDB5ZdWJpY28gVTJGIEVFIFNlcmlhbCAxMjA1Njc1MDMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATFcdVF_m2S3VTnMBABD0ZO8b4dvbqdr7a9zxLi9VBkR5YPakd2coJoFiuEcEuRhNJwSXlJlDX8q3Y-dY_Qp1XYozQwMjAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuMjAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBm6U8jEfxKn5WqNe1r7LNlq80RVYQraj1V90Z-a1BFKEEDtRzmoNEGlaUVbmYrdv5u4lWd1abiSq7hWc4H7uTklC8wUt9F1qnSjDWkK45cYjwMpTtRavAQtX00R-8g1orIdSMAVsJ1RG-gqlvJhQWvlWQk8fHRBQ74MzVgUhutu74CgL8_-QjH1_2yEkAndj6slsTyNOCv2n60jJNzT9dk6oYE9HyvOuhYTc0IBAR5XsWQj1XXOof9CnARaC7C0P2Tn1yW0wjeP5St4i2aKuoL5tsaaSVk11hZ6XF2kjKjjqjow9uTyVIrn1NH-kwHf0cZSkPExkHLIl1JDtpMCE5R",
-            |    "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5jcmVhdGUiLA0KCSJjaGFsbGVuZ2UiIDogIkZGRFpEeXBlZ2xpQXBLWlhGOFhDSENuMlNsTXk0QlZ1cGVPRlhEU3IxdUUiLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9"
-            |  },
-            |  "clientExtensionResults": {}
-            |}
-            |
+                                                              |{
+                                                              |  "type": "public-key",
+                                                              |  "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM",
+                                                              |  "response": {
+                                                              |    "attestationObject": "o2NmbXRmcGFja2VkaGF1dGhEYXRhWOEBTgCL_3WEuaR_abGPGP9ImsDepMg6Ovq3DWuW6pKn_kUAAAAC-KAR84wKTRWABhcRH57cfQCAPMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCOkAQEDJyAGIVggSRLgxGS7m40dHlC9RGF4pzIj4V03KEVLj1iZ8-4zpgFnYXR0U3RtdKNjYWxnJmNzaWdYRzBFAiA6fyJf8gJc5N0fUJtpKckvc6jg0SJitLYVbzA3bl5uBgIhAI11DQDK7c0nhJGh5ElJzhTOcvvTovCAd31CZ_6ZsdrJY3g1Y4FZAmgwggJkMIIBTKADAgECAgQHL7bPMA0GCSqGSIb3DQEBCwUAMA8xDTALBgNVBAMMBHRlc3QwHhcNMTkwNDI0MTExMDAyWhcNMjAwNDIzMTExMDAyWjBuMQswCQYDVQQGEwJTRTESMBAGA1UECgwJWXViaWNvIEFCMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMScwJQYDVQQDDB5ZdWJpY28gVTJGIEVFIFNlcmlhbCAxMjA1Njc1MDMwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATFcdVF_m2S3VTnMBABD0ZO8b4dvbqdr7a9zxLi9VBkR5YPakd2coJoFiuEcEuRhNJwSXlJlDX8q3Y-dY_Qp1XYozQwMjAiBgkrBgEEAYLECgIEFTEuMy42LjEuNC4xLjQxNDgyLjEuMjAMBgNVHRMBAf8EAjAAMA0GCSqGSIb3DQEBCwUAA4IBAQBm6U8jEfxKn5WqNe1r7LNlq80RVYQraj1V90Z-a1BFKEEDtRzmoNEGlaUVbmYrdv5u4lWd1abiSq7hWc4H7uTklC8wUt9F1qnSjDWkK45cYjwMpTtRavAQtX00R-8g1orIdSMAVsJ1RG-gqlvJhQWvlWQk8fHRBQ74MzVgUhutu74CgL8_-QjH1_2yEkAndj6slsTyNOCv2n60jJNzT9dk6oYE9HyvOuhYTc0IBAR5XsWQj1XXOof9CnARaC7C0P2Tn1yW0wjeP5St4i2aKuoL5tsaaSVk11hZ6XF2kjKjjqjow9uTyVIrn1NH-kwHf0cZSkPExkHLIl1JDtpMCE5R",
+                                                              |    "clientDataJSON": "ew0KCSJ0eXBlIiA6ICJ3ZWJhdXRobi5jcmVhdGUiLA0KCSJjaGFsbGVuZ2UiIDogIkZGRFpEeXBlZ2xpQXBLWlhGOFhDSENuMlNsTXk0QlZ1cGVPRlhEU3IxdUUiLA0KCSJvcmlnaW4iIDogImh0dHBzOi8vZGVtbzMueXViaWNvLnRlc3Q6ODQ0MyIsDQoJInRva2VuQmluZGluZyIgOiANCgl7DQoJCSJzdGF0dXMiIDogInN1cHBvcnRlZCINCgl9DQp9"
+                                                              |  },
+                                                              |  "clientExtensionResults": {}
+                                                              |}
+                                                              |
           """.stripMargin)
 
         val assertionRequest = JacksonCodecs
           .json()
           .readValue(
             """{
-            |  "challenge": "YK17iD3fpOQKPSU6bxIU-TFBj1HNVSrX5bX5Pzj-SHQ",
-            |  "rpId": "demo3.yubico.test",
-            |  "allowCredentials": [
-            |    {
-            |      "type": "public-key",
-            |      "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM"
-            |    }
-            |  ],
-            |  "userVerification": "preferred",
-            |  "extensions": {
-            |    "appid": "https://demo3.yubico.test:8443"
-            |  }
-            |}
-            |""".stripMargin,
+              |  "challenge": "YK17iD3fpOQKPSU6bxIU-TFBj1HNVSrX5bX5Pzj-SHQ",
+              |  "rpId": "demo3.yubico.test",
+              |  "allowCredentials": [
+              |    {
+              |      "type": "public-key",
+              |      "id": "PMEuc5FHylmDzH9BgG0lf_YqsOKKspino-b5ybq8CD0mpwU3Q4S4oUMQd_CgQsJOR3qyv3HirclQM2lNIiyi3dytZ6p-zbfBxDCH637qWTTZTZfKPxKBsdEOVPMBPopU_9uNXKh9dTxqe4mpSuznjxV-cEMF3BU3CSnJDU1BOCM"
+              |    }
+              |  ],
+              |  "userVerification": "preferred",
+              |  "extensions": {
+              |    "appid": "https://demo3.yubico.test:8443"
+              |  }
+              |}
+              |""".stripMargin,
             classOf[PublicKeyCredentialRequestOptions],
           )
         val assertionResponse = PublicKeyCredential.parseAssertionResponseJson(
@@ -2269,15 +2368,13 @@ class RelyingPartyAssertionSpec
         val credId: ByteArray = credData.getCredentialId
         val publicKeyBytes: ByteArray = credData.getCredentialPublicKey
 
-        val credRepo = Helpers.CredentialRepository.withUser(
+        val credRepo = Helpers.CredentialRepositoryV2.withUser(
           registrationRequest.getUser,
-          RegisteredCredential
-            .builder()
-            .credentialId(registrationResponse.getId)
-            .userHandle(registrationRequest.getUser.getId)
-            .publicKeyCose(publicKeyBytes)
-            .build(),
+          credentialId = registrationResponse.getId,
+          publicKeyCose = publicKeyBytes,
         )
+        val usernameRepo =
+          Helpers.UsernameRepository.withUsers(registrationRequest.getUser)
 
         val rp = RelyingParty
           .builder()
@@ -2288,7 +2385,8 @@ class RelyingPartyAssertionSpec
               .name("Yubico WebAuthn demo")
               .build()
           )
-          .credentialRepository(credRepo)
+          .credentialRepositoryV2(credRepo)
+          .usernameRepository(usernameRepo)
           .origins(Set("https://demo3.yubico.test:8443").asJava)
           .build()
 
@@ -2323,19 +2421,16 @@ class RelyingPartyAssertionSpec
           .identity(
             RelyingPartyIdentity.builder().id("localhost").name("Test RP").build()
           )
-          .credentialRepository(
-            Helpers.CredentialRepository.withUser(
+          .credentialRepositoryV2(
+            Helpers.CredentialRepositoryV2.withUser(
               registrationTestData.userId,
-              RegisteredCredential
-                .builder()
-                .credentialId(registrationTestData.response.getId)
-                .userHandle(registrationTestData.userId.getId)
-                .publicKeyCose(
-                  registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
-                )
-                .signatureCount(0)
-                .build(),
+              credentialId = registrationTestData.response.getId,
+              publicKeyCose =
+                registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey,
             )
+          )
+          .usernameRepository(
+            Helpers.UsernameRepository.withUsers(registrationTestData.userId)
           )
           .build()
 
@@ -2372,19 +2467,16 @@ class RelyingPartyAssertionSpec
                 .name("Test RP")
                 .build()
             )
-            .credentialRepository(
-              Helpers.CredentialRepository.withUser(
+            .credentialRepositoryV2(
+              Helpers.CredentialRepositoryV2.withUser(
                 registrationTestData.userId,
-                RegisteredCredential
-                  .builder()
-                  .credentialId(registrationTestData.response.getId)
-                  .userHandle(registrationTestData.userId.getId)
-                  .publicKeyCose(
-                    registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
-                  )
-                  .signatureCount(0)
-                  .build(),
+                credentialId = registrationTestData.response.getId,
+                publicKeyCose =
+                  registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey,
               )
+            )
+            .usernameRepository(
+              Helpers.UsernameRepository.withUsers(registrationTestData.userId)
             )
             .build()
 
@@ -2426,46 +2518,35 @@ class RelyingPartyAssertionSpec
         )
         val u2fPubkey = ByteArray.fromHex("04").concat(x).concat(y)
 
-        val cred1 = RegisteredCredential
+        val rp = RelyingParty
           .builder()
-          .credentialId(testData.assertion.get.response.getId)
-          .userHandle(testData.userId.getId)
-          .publicKeyEs256Raw(u2fPubkey)
-          .signatureCount(0)
-          .build()
-
-        val cred2 = RegisteredCredential
-          .builder()
-          .credentialId(testData.assertion.get.response.getId)
-          .userHandle(testData.userId.getId)
-          .publicKeyCose(u2fPubkey)
-          .signatureCount(0)
-          .publicKeyEs256Raw(u2fPubkey)
-          .build()
-
-        for { cred <- List(cred1, cred2) } {
-          val rp = RelyingParty
-            .builder()
-            .identity(testData.rpId)
-            .credentialRepository(
-              Helpers.CredentialRepository.withUser(testData.userId, cred)
+          .identity(testData.rpId)
+          .credentialRepositoryV2(
+            Helpers.CredentialRepositoryV2.withUser(
+              testData.userId,
+              credentialId = testData.assertion.get.response.getId,
+              publicKeyCose =
+                CredentialRecord.cosePublicKeyFromEs256Raw(u2fPubkey),
             )
+          )
+          .usernameRepository(
+            Helpers.UsernameRepository.withUsers(testData.userId)
+          )
+          .build()
+
+        val result = rp.finishAssertion(
+          FinishAssertionOptions
+            .builder()
+            .request(testData.assertion.get.request)
+            .response(testData.assertion.get.response)
             .build()
+        )
 
-          val result = rp.finishAssertion(
-            FinishAssertionOptions
-              .builder()
-              .request(testData.assertion.get.request)
-              .response(testData.assertion.get.response)
-              .build()
-          )
-
-          result.isSuccess should be(true)
-          result.getCredential.getUserHandle should equal(testData.userId.getId)
-          result.getCredential.getCredentialId should equal(
-            testData.response.getId
-          )
-        }
+        result.isSuccess should be(true)
+        result.getCredential.getUserHandle should equal(testData.userId.getId)
+        result.getCredential.getCredentialId should equal(
+          testData.response.getId
+        )
       }
     }
 
@@ -2474,17 +2555,12 @@ class RelyingPartyAssertionSpec
       val rp = RelyingParty
         .builder()
         .identity(testDataBase.rpId)
-        .credentialRepository(
-          Helpers.CredentialRepository.withUser(
+        .credentialRepositoryV2(
+          Helpers.CredentialRepositoryV2.withUser(
             testDataBase.userId,
-            RegisteredCredential
-              .builder()
-              .credentialId(testDataBase.response.getId)
-              .userHandle(testDataBase.userId.getId)
-              .publicKeyCose(
-                testDataBase.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
-              )
-              .build(),
+            credentialId = testDataBase.response.getId,
+            publicKeyCose =
+              testDataBase.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey,
           )
         )
         .build()
@@ -2509,6 +2585,7 @@ class RelyingPartyAssertionSpec
                       )
                       .build()
                   )
+                  .userHandle(testDataBase.userId.getId)
                   .build()
               )
               .response(
@@ -2550,6 +2627,7 @@ class RelyingPartyAssertionSpec
                       )
                       .build()
                   )
+                  .userHandle(testDataBase.userId.getId)
                   .build()
               )
               .response(
@@ -2617,6 +2695,7 @@ class RelyingPartyAssertionSpec
                       )
                       .build()
                   )
+                  .userHandle(testDataBase.userId.getId)
                   .build()
               )
               .response(cred)
@@ -2660,19 +2739,15 @@ class RelyingPartyAssertionSpec
                 .name("Example RP")
                 .build()
             )
-            .credentialRepository(
-              Helpers.CredentialRepository.withUser(
+            .credentialRepositoryV2(
+              Helpers.CredentialRepositoryV2.withUser(
                 user,
-                RegisteredCredential
-                  .builder()
-                  .credentialId(credential.getId)
-                  .userHandle(user.getId)
-                  .publicKeyCose(
-                    credential.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
-                  )
-                  .build(),
+                credentialId = credential.getId,
+                publicKeyCose =
+                  credential.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey,
               )
             )
+            .usernameRepository(Helpers.UsernameRepository.withUsers(user))
             .build()
 
           val request = AssertionRequest

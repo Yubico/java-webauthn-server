@@ -327,14 +327,14 @@ class ExtensionsSpec
         Set("largeBlob")
       )
       registrationCred.getClientExtensionResults.getLargeBlob.toScala should equal(
-        Some(new LargeBlobRegistrationOutput(true))
+        Some(LargeBlobRegistrationOutput.supported(true))
       )
 
       assertionCred.getClientExtensionResults.getExtensionIds.asScala should equal(
         Set("appid", "largeBlob")
       )
       assertionCred.getClientExtensionResults.getLargeBlob.toScala should equal(
-        Some(new LargeBlobAuthenticationOutput(null, true))
+        Some(LargeBlobAuthenticationOutput.write(true))
       )
     }
 
@@ -347,7 +347,7 @@ class ExtensionsSpec
         Set("largeBlob")
       )
       registrationCred.getClientExtensionResults.getLargeBlob.toScala should equal(
-        Some(new LargeBlobRegistrationOutput(true))
+        Some(LargeBlobRegistrationOutput.supported(true))
       )
 
       assertionCred.getClientExtensionResults.getExtensionIds.asScala should equal(
@@ -355,9 +355,8 @@ class ExtensionsSpec
       )
       assertionCred.getClientExtensionResults.getLargeBlob.toScala should equal(
         Some(
-          new LargeBlobAuthenticationOutput(
-            new ByteArray("Hello, World!".getBytes(StandardCharsets.UTF_8)),
-            null,
+          LargeBlobAuthenticationOutput.read(
+            new ByteArray("Hello, World!".getBytes(StandardCharsets.UTF_8))
           )
         )
       )

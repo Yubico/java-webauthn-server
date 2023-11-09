@@ -868,7 +868,7 @@ object Generators {
       def credentialPropertiesOutput: Gen[CredentialPropertiesOutput] =
         for {
           rk <- arbitrary[Boolean]
-        } yield new CredentialPropertiesOutput(rk)
+        } yield CredentialPropertiesOutput.builder().rk(rk).build()
     }
 
     object LargeBlob {
@@ -883,7 +883,7 @@ object Generators {
       def largeBlobRegistrationOutput: Gen[LargeBlobRegistrationOutput] =
         for {
           supported <- arbitrary[Boolean]
-        } yield new LargeBlobRegistrationOutput(supported)
+        } yield LargeBlobRegistrationOutput.supported(supported)
 
       def largeBlobAuthenticationInput: Gen[LargeBlobAuthenticationInput] =
         halfsized(
@@ -898,8 +898,8 @@ object Generators {
           blob <- arbitrary[ByteArray]
           written <- arbitrary[Boolean]
           result <- Gen.oneOf(
-            new LargeBlobAuthenticationOutput(blob, null),
-            new LargeBlobAuthenticationOutput(null, written),
+            LargeBlobAuthenticationOutput.read(blob),
+            LargeBlobAuthenticationOutput.write(written),
           )
         } yield result)
     }

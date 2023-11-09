@@ -64,10 +64,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@AllArgsConstructor
 final class FinishRegistrationSteps {
 
   private static final String CLIENT_DATA_TYPE = "webauthn.create";
@@ -83,23 +85,39 @@ final class FinishRegistrationSteps {
   private final String rpId;
   private final boolean allowUntrustedAttestation;
   private final Optional<AttestationTrustSource> attestationTrustSource;
-  private final CredentialRepository credentialRepository;
+  private final CredentialRepositoryV2<?> credentialRepositoryV2;
   private final Clock clock;
   private final boolean allowOriginPort;
   private final boolean allowOriginSubdomain;
 
-  FinishRegistrationSteps(RelyingParty rp, FinishRegistrationOptions options) {
-    this.request = options.getRequest();
-    this.response = options.getResponse();
-    this.callerTokenBindingId = options.getCallerTokenBindingId();
-    this.origins = rp.getOrigins();
-    this.rpId = rp.getIdentity().getId();
-    this.allowUntrustedAttestation = rp.isAllowUntrustedAttestation();
-    this.attestationTrustSource = rp.getAttestationTrustSource();
-    this.credentialRepository = rp.getCredentialRepository();
-    this.clock = rp.getClock();
-    this.allowOriginPort = rp.isAllowOriginPort();
-    this.allowOriginSubdomain = rp.isAllowOriginSubdomain();
+  static FinishRegistrationSteps fromV1(RelyingParty rp, FinishRegistrationOptions options) {
+    return new FinishRegistrationSteps(
+        options.getRequest(),
+        options.getResponse(),
+        options.getCallerTokenBindingId(),
+        rp.getOrigins(),
+        rp.getIdentity().getId(),
+        rp.isAllowUntrustedAttestation(),
+        rp.getAttestationTrustSource(),
+        new CredentialRepositoryV1ToV2Adapter(rp.getCredentialRepository()),
+        rp.getClock(),
+        rp.isAllowOriginPort(),
+        rp.isAllowOriginSubdomain());
+  }
+
+  FinishRegistrationSteps(RelyingPartyV2<?> rp, FinishRegistrationOptions options) {
+    this(
+        options.getRequest(),
+        options.getResponse(),
+        options.getCallerTokenBindingId(),
+        rp.getOrigins(),
+        rp.getIdentity().getId(),
+        rp.isAllowUntrustedAttestation(),
+        rp.getAttestationTrustSource(),
+        rp.getCredentialRepository(),
+        rp.getClock(),
+        rp.isAllowOriginPort(),
+        rp.isAllowOriginSubdomain());
   }
 
   public Step6 begin() {
@@ -627,7 +645,7 @@ final class FinishRegistrationSteps {
     @Override
     public void validate() {
       assertTrue(
-          credentialRepository.lookupAll(response.getId()).isEmpty(),
+          !credentialRepositoryV2.credentialIdExists(response.getId()),
           "Credential ID is already registered: %s",
           response.getId());
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, Yubico AB
+// Copyright (c) 2023, Yubico AB
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -126,7 +126,7 @@ import scala.util.Success
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
-class RelyingPartyRegistrationSpec
+class RelyingPartyV2RegistrationSpec
     extends AnyFunSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks
@@ -147,13 +147,13 @@ class RelyingPartyRegistrationSpec
       bytes.getBytes.updated(index, updater(bytes.getBytes()(index)))
     )
 
-  private def finishRegistration(
+  private def finishRegistration[C <: CredentialRecord](
       allowOriginPort: Boolean = false,
       allowOriginSubdomain: Boolean = false,
       allowUntrustedAttestation: Boolean = false,
       callerTokenBindingId: Option[ByteArray] = None,
-      credentialRepository: CredentialRepository =
-        Helpers.CredentialRepository.unimplemented,
+      credentialRepository: CredentialRepositoryV2[C] =
+        Helpers.CredentialRepositoryV2.unimplemented,
       attestationTrustSource: Option[AttestationTrustSource] = None,
       origins: Option[Set[String]] = None,
       pubkeyCredParams: Option[List[PublicKeyCredentialParameters]] = None,
@@ -163,7 +163,7 @@ class RelyingPartyRegistrationSpec
     var builder = RelyingParty
       .builder()
       .identity(testData.rpId)
-      .credentialRepository(credentialRepository)
+      .credentialRepositoryV2(credentialRepository)
       .allowOriginPort(allowOriginPort)
       .allowOriginSubdomain(allowOriginSubdomain)
       .allowUntrustedAttestation(allowUntrustedAttestation)
@@ -972,7 +972,7 @@ class RelyingPartyRegistrationSpec
             val testData = RegistrationTestData.FidoU2f.BasicAttestation
             val result = finishRegistration(
               testData = testData,
-              credentialRepository = Helpers.CredentialRepository.empty,
+              credentialRepository = Helpers.CredentialRepositoryV2.empty,
               allowUntrustedAttestation = true,
             ).run
 
@@ -996,7 +996,7 @@ class RelyingPartyRegistrationSpec
                       .build()
                   )
                 ),
-                credentialRepository = Helpers.CredentialRepository.empty,
+                credentialRepository = Helpers.CredentialRepositoryV2.empty,
                 allowUntrustedAttestation = true,
               ).run
             )
@@ -2092,7 +2092,7 @@ class RelyingPartyRegistrationSpec
                   testData = testData,
                   origins =
                     Some(Set("https://dev.d2urpypvrhb05x.amplifyapp.com")),
-                  credentialRepository = Helpers.CredentialRepository.empty,
+                  credentialRepository = Helpers.CredentialRepositoryV2.empty,
                   attestationTrustSource = Some(
                     trustSourceWith(
                       testData.attestationRootCertificate.get,
@@ -2214,7 +2214,7 @@ class RelyingPartyRegistrationSpec
               ): FinishRegistrationSteps#Step19 = {
                 val steps =
                   finishRegistration(
-                    credentialRepository = Helpers.CredentialRepository.empty,
+                    credentialRepository = Helpers.CredentialRepositoryV2.empty,
                     testData = testData,
                     attestationTrustSource = Some(
                       trustSourceWith(
@@ -2235,7 +2235,7 @@ class RelyingPartyRegistrationSpec
                 val steps =
                   finishRegistration(
                     testData = testData,
-                    credentialRepository = Helpers.CredentialRepository.empty,
+                    credentialRepository = Helpers.CredentialRepositoryV2.empty,
                     attestationTrustSource = Some(
                       trustSourceWith(
                         testData.attestationRootCertificate.getOrElse(
@@ -3701,17 +3701,12 @@ class RelyingPartyRegistrationSpec
 
           it("Registration is aborted if the given credential ID is already registered.") {
             val credentialRepository =
-              com.yubico.webauthn.test.Helpers.CredentialRepository.withUser(
+              Helpers.CredentialRepositoryV2.withUser(
                 testData.userId,
-                RegisteredCredential
-                  .builder()
-                  .credentialId(testData.response.getId)
-                  .userHandle(testData.userId.getId)
-                  .publicKeyCose(
-                    testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
-                  )
-                  .signatureCount(1337)
-                  .build(),
+                credentialId = testData.response.getId,
+                publicKeyCose =
+                  testData.response.getResponse.getAttestation.getAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey,
+                signatureCount = 1337,
               )
 
             val steps = finishRegistration(
@@ -3731,7 +3726,7 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(
               allowUntrustedAttestation = true,
               testData = testData,
-              credentialRepository = Helpers.CredentialRepository.empty,
+              credentialRepository = Helpers.CredentialRepositoryV2.empty,
             )
             val step: FinishRegistrationSteps#Step22 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
@@ -3764,7 +3759,7 @@ class RelyingPartyRegistrationSpec
                 ),
               )
             ),
-            credentialRepository = Helpers.CredentialRepository.empty,
+            credentialRepository = Helpers.CredentialRepositoryV2.empty,
             clock = Clock.fixed(
               TestAuthenticator.Defaults.certValidFrom,
               ZoneOffset.UTC,
@@ -3803,7 +3798,7 @@ class RelyingPartyRegistrationSpec
             val steps = finishRegistration(
               testData = testData,
               allowUntrustedAttestation = true,
-              credentialRepository = Helpers.CredentialRepository.empty,
+              credentialRepository = Helpers.CredentialRepositoryV2.empty,
               attestationTrustSource = Some(emptyTrustSource),
             )
             steps.run.getKeyId.getId should be(testData.response.getId)
@@ -3818,7 +3813,7 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(
                 testData = testData,
                 allowUntrustedAttestation = true,
-                credentialRepository = Helpers.CredentialRepository.empty,
+                credentialRepository = Helpers.CredentialRepositoryV2.empty,
               )
               val result = Try(steps.run)
               result shouldBe a[Success[_]]
@@ -3830,7 +3825,7 @@ class RelyingPartyRegistrationSpec
               val steps = finishRegistration(
                 testData = testData,
                 allowUntrustedAttestation = false,
-                credentialRepository = Helpers.CredentialRepository.empty,
+                credentialRepository = Helpers.CredentialRepositoryV2.empty,
               )
               val result = Try(steps.run)
               result shouldBe a[Failure[_]]
@@ -3847,7 +3842,7 @@ class RelyingPartyRegistrationSpec
                 testData = testData,
                 attestationTrustSource = None,
                 allowUntrustedAttestation = true,
-                credentialRepository = Helpers.CredentialRepository.empty,
+                credentialRepository = Helpers.CredentialRepositoryV2.empty,
               )
               steps.run.getKeyId.getId should be(testData.response.getId)
               steps.run.isAttestationTrusted should be(false)
@@ -3874,7 +3869,7 @@ class RelyingPartyRegistrationSpec
             .name("Test party")
             .build()
         )
-        .credentialRepository(Helpers.CredentialRepository.empty)
+        .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
         .build()
 
       val request = rp
@@ -4058,8 +4053,8 @@ class RelyingPartyRegistrationSpec
                 val rp = RelyingParty
                   .builder()
                   .identity(testData.rpId)
-                  .credentialRepository(
-                    Helpers.CredentialRepository.empty
+                  .credentialRepositoryV2(
+                    Helpers.CredentialRepositoryV2.empty
                   )
                   .origins(Set(testData.clientData.getOrigin).asJava)
                   .build()
@@ -4144,7 +4139,7 @@ class RelyingPartyRegistrationSpec
                   .name("Test party")
                   .build()
               )
-              .credentialRepository(Helpers.CredentialRepository.empty)
+              .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
               .build()
 
             val pkcco = rp.startRegistration(
@@ -4410,7 +4405,7 @@ class RelyingPartyRegistrationSpec
               .name("Yubico WebAuthn demo")
               .build()
           )
-          .credentialRepository(Helpers.CredentialRepository.empty)
+          .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
           .origins(Set("https://demo3.yubico.test:8443").asJava)
           .build()
 
@@ -4440,7 +4435,7 @@ class RelyingPartyRegistrationSpec
               .name("Example RP")
               .build()
           )
-          .credentialRepository(Helpers.CredentialRepository.empty)
+          .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
           .build()
         val user = UserIdentity.builder
           .name("foo")
@@ -4553,7 +4548,7 @@ class RelyingPartyRegistrationSpec
                 ),
               )
             ),
-            credentialRepository = Helpers.CredentialRepository.empty,
+            credentialRepository = Helpers.CredentialRepositoryV2.empty,
             clock = Clock.fixed(
               TestAuthenticator.Defaults.certValidFrom,
               ZoneOffset.UTC,
@@ -4578,7 +4573,7 @@ class RelyingPartyRegistrationSpec
                 policyTreeValidator = Some(_ => true),
               )
             ),
-            credentialRepository = Helpers.CredentialRepository.empty,
+            credentialRepository = Helpers.CredentialRepositoryV2.empty,
             clock = Clock.fixed(
               Instant.parse("2022-05-11T12:34:50Z"),
               ZoneOffset.UTC,
@@ -4593,7 +4588,7 @@ class RelyingPartyRegistrationSpec
         val testData = RegistrationTestData.Packed.BasicAttestation
         val steps = finishRegistration(
           testData = testData,
-          credentialRepository = Helpers.CredentialRepository.empty,
+          credentialRepository = Helpers.CredentialRepositoryV2.empty,
           allowUntrustedAttestation = true,
         )
         val result = steps.run()
@@ -4612,7 +4607,7 @@ class RelyingPartyRegistrationSpec
               .name("Example RP")
               .build()
           )
-          .credentialRepository(Helpers.CredentialRepository.empty)
+          .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
           .build()
         val user = UserIdentity.builder
           .name("foo")
@@ -4778,7 +4773,7 @@ class RelyingPartyRegistrationSpec
             .name("Test party")
             .build()
         )
-        .credentialRepository(Helpers.CredentialRepository.empty)
+        .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
         .build()
 
       val pkcco = rp.startRegistration(
@@ -4828,7 +4823,7 @@ class RelyingPartyRegistrationSpec
             .name("Test party")
             .build()
         )
-        .credentialRepository(Helpers.CredentialRepository.empty)
+        .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
         .build()
 
       val pkcco = rp.startRegistration(

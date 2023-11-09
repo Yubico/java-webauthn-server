@@ -25,27 +25,18 @@
 package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.util.Optional;
-import java.util.Set;
 
 /**
- * An abstraction of database lookups needed by this library.
+ * An abstraction of optional database lookups needed by this library.
  *
- * <p>This is used by {@link RelyingParty} to look up credentials, usernames and user handles from
- * usernames, user handles and credential IDs.
+ * <p>This is used by {@link RelyingPartyV2} to look up usernames and user handles.
+ *
+ * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+ *     before reaching a mature release.
  */
-public interface CredentialRepository {
-
-  /**
-   * Get the credential IDs of all credentials registered to the user with the given username.
-   *
-   * <p>After a successful registration ceremony, the {@link RegistrationResult#getKeyId()} method
-   * returns a value suitable for inclusion in this set.
-   *
-   * <p>Implementations of this method MUST NOT return null.
-   */
-  Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username);
+@Deprecated
+public interface UsernameRepository {
 
   /**
    * Get the user handle corresponding to the given username - the inverse of {@link
@@ -54,8 +45,10 @@ public interface CredentialRepository {
    * <p>Used to look up the user handle based on the username, for authentication ceremonies where
    * the username is already given.
    *
-   * <p>Implementations of this method MUST NOT return null.
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   Optional<ByteArray> getUserHandleForUsername(String username);
 
   /**
@@ -65,30 +58,9 @@ public interface CredentialRepository {
    * <p>Used to look up the username based on the user handle, for username-less authentication
    * ceremonies.
    *
-   * <p>Implementations of this method MUST NOT return null.
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   Optional<String> getUsernameForUserHandle(ByteArray userHandle);
-
-  /**
-   * Look up the public key and stored signature count for the given credential registered to the
-   * given user.
-   *
-   * <p>The returned {@link RegisteredCredential} is not expected to be long-lived. It may be read
-   * directly from a database or assembled from other components.
-   *
-   * <p>Implementations of this method MUST NOT return null.
-   */
-  Optional<RegisteredCredential> lookup(ByteArray credentialId, ByteArray userHandle);
-
-  /**
-   * Look up all credentials with the given credential ID, regardless of what user they're
-   * registered to.
-   *
-   * <p>This is used to refuse registration of duplicate credential IDs. Therefore, under normal
-   * circumstances this method should only return zero or one credential (this is an expected
-   * consequence, not an interface requirement).
-   *
-   * <p>Implementations of this method MUST NOT return null.
-   */
-  Set<RegisteredCredential> lookupAll(ByteArray credentialId);
 }
