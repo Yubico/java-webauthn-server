@@ -32,7 +32,8 @@ Release candidate versions
         java: ["17.0.7"]
     ```
 
-    Commit this change, if any.
+    Check that this version is available in GitHub Actions. Commit this change,
+    if any.
 
  4. Tag the head commit with an `X.Y.Z-RCN` tag:
 
@@ -133,6 +134,8 @@ Release versions
       matrix:
         java: ["17.0.7"]
     ```
+
+    Check that this version is available in GitHub Actions.
 
  7. Amend these changes into the merge commit:
 
