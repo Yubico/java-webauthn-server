@@ -42,6 +42,9 @@ New features:
     `CredentialRepositoryV2` implementation.
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
+* (Experimental) Added property `RegisteredCredential.transports`.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
 
 
 == Version 2.5.0 ==

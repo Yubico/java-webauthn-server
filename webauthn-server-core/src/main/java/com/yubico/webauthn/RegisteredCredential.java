@@ -149,8 +149,10 @@ public final class RegisteredCredential implements CredentialRecord {
    *     in 5.8.3. Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
    * @see AuthenticatorAttestationResponse#getTransports()
    * @see PublicKeyCredentialDescriptor#getTransports()
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
-  @Builder.Default private final Set<AuthenticatorTransport> transports = null;
+  @Deprecated @Builder.Default private final Set<AuthenticatorTransport> transports = null;
 
   /**
    * The state of the <a href="https://w3c.github.io/webauthn/#authdata-flags-be">BE flag</a> when
@@ -244,7 +246,10 @@ public final class RegisteredCredential implements CredentialRecord {
    *     in 5.8.3. Credential Descriptor (dictionary PublicKeyCredentialDescriptor)</a>
    * @see AuthenticatorAttestationResponse#getTransports()
    * @see PublicKeyCredentialDescriptor#getTransports()
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
    */
+  @Deprecated
   @Override
   public Optional<Set<AuthenticatorTransport>> getTransports() {
     return Optional.ofNullable(transports);
