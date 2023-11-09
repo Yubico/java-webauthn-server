@@ -606,7 +606,12 @@ public class RelyingParty {
 
         /**
          * {@link RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * credentialRepository} is a required parameter.
+         * credentialRepository} is a required parameter. This setter differs from {@link
+         * #credentialRepository(CredentialRepository)} in that it takes an instance of {@link
+         * CredentialRepositoryV2} and converts the builder's return type to {@link RelyingPartyV2}.
+         * {@link CredentialRepositoryV2} does not require the application to support usernames,
+         * unless {@link RelyingPartyV2.RelyingPartyV2Builder#usernameRepository(UsernameRepository)
+         * usernameRepository} is also set in a subsequent builder step.
          *
          * @see #credentialRepository(CredentialRepository)
          * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be

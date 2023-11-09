@@ -140,7 +140,13 @@ public class RelyingPartyV2<C extends CredentialRecord> {
   @NonNull private final CredentialRepositoryV2<C> credentialRepository;
 
   /**
-   * TODO
+   * Enable support for identifying users by username.
+   *
+   * <p>If set, then {@link #startAssertion(StartAssertionOptions)} allows setting the {@link
+   * StartAssertionOptions.StartAssertionOptionsBuilder#username(String) username} parameter when
+   * starting an assertion.
+   *
+   * <p>By default, this is not set.
    *
    * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
    *     before reaching a mature release.
