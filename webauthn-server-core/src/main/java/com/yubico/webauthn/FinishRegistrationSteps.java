@@ -215,7 +215,8 @@ final class FinishRegistrationSteps {
       final String responseOrigin = clientData.getOrigin();
       assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
-          "Incorrect origin: " + responseOrigin);
+          "Incorrect origin, please see the RelyingParty.origins setting: %s",
+          responseOrigin);
     }
 
     @Override
