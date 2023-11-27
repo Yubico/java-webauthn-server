@@ -281,6 +281,11 @@ public class RelyingParty {
    * If <code>true</code>, the origin matching rule is relaxed to allow any subdomain, of any depth,
    * of the values of {@link RelyingPartyBuilder#origins(Set) origins}.
    *
+   * <p>Please see <a
+   * href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#sctn-code-injection">Security
+   * Considerations: Code injection attacks</a> for discussion of the risks in setting this to
+   * <code>true</code>.
+   *
    * <p>The default is <code>false</code>.
    *
    * <p>Examples with <code>origins: ["https://example.org", "https://acme.com:8443"]</code>
@@ -315,6 +320,9 @@ public class RelyingParty {
    *         <li><code>https://acme.com</code>
    *       </ul>
    * </ul>
+   *
+   * @see <a href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#sctn-code-injection">§13.4.8.
+   *     Code injection attacks</a>
    */
   @Builder.Default private final boolean allowOriginSubdomain = false;
 
