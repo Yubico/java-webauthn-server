@@ -400,7 +400,8 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
       final String responseOrigin = response.getResponse().getClientData().getOrigin();
       assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
-          "Incorrect origin: " + responseOrigin);
+          "Incorrect origin, please see the RelyingParty.origins setting: %s",
+          responseOrigin);
     }
 
     @Override
