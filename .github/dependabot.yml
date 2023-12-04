@@ -11,6 +11,8 @@ updates:
       # Spotless patch updates are too noisy
       - dependency-name: "spotless-plugin-gradle"
         update-types: ["version-update:semver-patch"]
+      - dependency-name: "com.diffplug.spotless:spotless-plugin-gradle"
+        update-types: ["version-update:semver-patch"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
