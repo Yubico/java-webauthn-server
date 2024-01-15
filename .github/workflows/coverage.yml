@@ -30,7 +30,7 @@ jobs:
       run: ./gradlew pitestMerge
 
     - name: Archive test reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pitest-reports-${{ github.sha }}
         path: "*/build/reports/pitest/**"
