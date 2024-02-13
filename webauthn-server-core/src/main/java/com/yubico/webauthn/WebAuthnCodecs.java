@@ -42,6 +42,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 final class WebAuthnCodecs {
 
@@ -151,6 +152,33 @@ final class WebAuthnCodecs {
     return (ECPublicKey) new OneKey(cose).AsPublicKey();
   }
 
+  private static ByteArray encodeDerLength(final int length) {
+    if (length <= 127) {
+      return new ByteArray(new byte[] {(byte) length});
+    } else if (length <= 0xffff) {
+      if (length <= 255) {
+        return new ByteArray(new byte[] {-127, (byte) length});
+      } else {
+        return new ByteArray(new byte[] {-126, (byte) (length >> 8), (byte) (length & 0x00ff)});
+      }
+    } else {
+      throw new UnsupportedOperationException("Too long: " + length);
+    }
+  }
+
+  private static ByteArray encodeDerBitStringWithZeroUnused(final ByteArray content) {
+    return new ByteArray(new byte[] {0x03})
+        .concat(encodeDerLength(1 + content.size()))
+        .concat(new ByteArray(new byte[] {0}))
+        .concat(content);
+  }
+
+  private static ByteArray encodeDerSequence(final ByteArray... items) {
+    final ByteArray content =
+        Stream.of(items).reduce(ByteArray::concat).orElseGet(() -> new ByteArray(new byte[0]));
+    return new ByteArray(new byte[] {0x30}).concat(encodeDerLength(content.size())).concat(content);
+  }
+
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
@@ -166,10 +194,7 @@ final class WebAuthnCodecs {
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
     final ByteArray x509Key =
-        new ByteArray(new byte[] {0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size())})
-            .concat(ED25519_CURVE_OID)
-            .concat(new ByteArray(new byte[] {0x03, (byte) (rawKey.size() + 1), 0}))
-            .concat(rawKey);
+        encodeDerSequence(ED25519_CURVE_OID, encodeDerBitStringWithZeroUnused(rawKey));
 
     KeyFactory kFact = KeyFactory.getInstance("EdDSA");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
