@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import COSE.CoseException;
 import com.google.common.primitives.Bytes;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
@@ -145,7 +144,7 @@ final class WebAuthnCodecs {
   }
 
   static PublicKey importCosePublicKey(ByteArray key)
-      throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+      throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
     CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
     final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
     switch (kty) {

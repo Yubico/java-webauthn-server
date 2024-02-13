@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CertificateParser;
@@ -95,7 +94,7 @@ final class PackedAttestationStatementVerifier
                   .getAttestedCredentialData()
                   .get()
                   .getCredentialPublicKey());
-    } catch (IOException | CoseException | InvalidKeySpecException e) {
+    } catch (IOException | InvalidKeySpecException e) {
       throw ExceptionUtil.wrapAndLog(
           log,
           String.format(

@@ -26,7 +26,6 @@ package com.yubico.webauthn;
 
 import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 
-import COSE.CoseException;
 import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
@@ -495,7 +494,7 @@ final class FinishAssertionSteps {
 
       try {
         key = WebAuthnCodecs.importCosePublicKey(cose);
-      } catch (CoseException | IOException | InvalidKeySpecException e) {
+      } catch (IOException | InvalidKeySpecException e) {
         throw new IllegalArgumentException(
             String.format(
                 "Failed to decode public key: Credential ID: %s COSE: %s",
