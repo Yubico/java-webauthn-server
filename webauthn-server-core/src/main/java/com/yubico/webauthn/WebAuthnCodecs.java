@@ -58,8 +58,20 @@ final class WebAuthnCodecs {
   private static final ByteArray P512_CURVE_OID =
       new ByteArray(new byte[] {0x2B, -127, 0x04, 0, 35}); // OID 1.3.132.0.35
 
-  private static final ByteArray ED25519_CURVE_OID =
-      new ByteArray(new byte[] {0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
+  private static final ByteArray ED25519_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (5 bytes)
+            0x30,
+            0x05,
+            // OID (3 bytes)
+            0x06,
+            0x03,
+            // OID 1.3.101.112
+            0x2B,
+            0x65,
+            0x70
+          });
 
   static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
 
@@ -245,7 +257,7 @@ final class WebAuthnCodecs {
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
     final ByteArray x509Key =
-        encodeDerSequence(ED25519_CURVE_OID, encodeDerBitStringWithZeroUnused(rawKey));
+        encodeDerSequence(ED25519_ALG_ID, encodeDerBitStringWithZeroUnused(rawKey));
 
     KeyFactory kFact = KeyFactory.getInstance("EdDSA");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
