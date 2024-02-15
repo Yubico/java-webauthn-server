@@ -151,13 +151,10 @@ final class WebAuthnCodecs {
     final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
     switch (kty) {
       case 1:
-        // COSE-JAVA is hardcoded to ed25519-java provider ("EdDSA") which would require an
-        // additional dependency to parse EdDSA keys via the OneKey constructor
         return importCoseEdDsaPublicKey(cose);
       case 2:
         return importCoseEcdsaPublicKey(cose);
       case 3:
-        // COSE-JAVA supports RSA in v1.1.0 but not in v1.0.0
         return importCoseRsaPublicKey(cose);
       default:
         throw new IllegalArgumentException("Unsupported key type: " + kty);
