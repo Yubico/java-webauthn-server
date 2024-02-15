@@ -47,15 +47,17 @@ final class WebAuthnCodecs {
   private static final ByteArray EC_PUBLIC_KEY_OID =
       new ByteArray(
           new byte[] {
-            0x2A, -122, 0x48, -50, 0x3D, 2, 1
+            0x2A, (byte) 0x86, 0x48, (byte) 0xCE, 0x3D, 2, 1
           }); // OID 1.2.840.10045.2.1 ecPublicKey (ANSI X9.62 public key type)
   private static final ByteArray P256_CURVE_OID =
       new ByteArray(
-          new byte[] {0x2A, -122, 0x48, -50, 0x3D, 3, 1, 7}); // OID 1.2.840.10045.3.1.7
+          new byte[] {
+            0x2A, (byte) 0x86, 0x48, (byte) 0xCE, 0x3D, 3, 1, 7 // OID 1.2.840.10045.3.1.7
+          });
   private static final ByteArray P384_CURVE_OID =
-      new ByteArray(new byte[] {0x2B, -127, 0x04, 0, 34}); // OID 1.3.132.0.34
+      new ByteArray(new byte[] {0x2B, (byte) 0x81, 0x04, 0, 34}); // OID 1.3.132.0.34
   private static final ByteArray P512_CURVE_OID =
-      new ByteArray(new byte[] {0x2B, -127, 0x04, 0, 35}); // OID 1.3.132.0.35
+      new ByteArray(new byte[] {0x2B, (byte) 0x81, 0x04, 0, 35}); // OID 1.3.132.0.35
 
   private static final ByteArray ED25519_ALG_ID =
       new ByteArray(
