@@ -1,3 +1,10 @@
+== Version 2.5.1 (unreleased) ==
+
+Changes:
+
+* Dropped dependency on COSE-Java.
+
+
 == Version 2.5.0 ==
 
 `webauthn-server-core`:

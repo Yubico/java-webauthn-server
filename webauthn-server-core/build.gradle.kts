@@ -16,7 +16,6 @@ dependencies {
   api(platform(rootProject))
 
   implementation(project(":yubico-util"))
-  implementation("com.augustcellars.cose:cose-java")
   implementation("com.fasterxml.jackson.core:jackson-databind")
   implementation("com.google.guava:guava")
   implementation("com.upokecenter:cbor")

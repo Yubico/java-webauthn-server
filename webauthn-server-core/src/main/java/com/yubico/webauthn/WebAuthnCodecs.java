@@ -24,8 +24,6 @@
 
 package com.yubico.webauthn;
 
-import COSE.CoseException;
-import COSE.OneKey;
 import com.google.common.primitives.Bytes;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.webauthn.data.ByteArray;
@@ -42,11 +40,37 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 final class WebAuthnCodecs {
 
-  private static final ByteArray ED25519_CURVE_OID =
-      new ByteArray(new byte[] {0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70});
+  private static final ByteArray EC_PUBLIC_KEY_OID =
+      new ByteArray(
+          new byte[] {
+            0x2A, -122, 0x48, -50, 0x3D, 0x02, 0x01
+          }); // OID 1.2.840.10045.2.1 ecPublicKey (ANSI X9.62 public key type)
+  private static final ByteArray P256_CURVE_OID =
+      new ByteArray(
+          new byte[] {0x2A, -122, 0x48, -50, 0x3D, 0x03, 0x01, 7}); // OID 1.2.840.10045.3.1.7
+  private static final ByteArray P384_CURVE_OID =
+      new ByteArray(new byte[] {0x2B, -127, 0x04, 0, 34}); // OID 1.3.132.0.34
+  private static final ByteArray P512_CURVE_OID =
+      new ByteArray(new byte[] {0x2B, -127, 0x04, 0, 35}); // OID 1.3.132.0.35
+
+  private static final ByteArray ED25519_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (5 bytes)
+            0x30,
+            0x05,
+            // OID (3 bytes)
+            0x06,
+            0x03,
+            // OID 1.3.101.112
+            0x2B,
+            0x65,
+            0x70
+          });
 
   static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
 
@@ -120,7 +144,7 @@ final class WebAuthnCodecs {
   }
 
   static PublicKey importCosePublicKey(ByteArray key)
-      throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+      throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
     CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
     final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
     switch (kty) {
@@ -129,7 +153,7 @@ final class WebAuthnCodecs {
         // additional dependency to parse EdDSA keys via the OneKey constructor
         return importCoseEdDsaPublicKey(cose);
       case 2:
-        return importCoseP256PublicKey(cose);
+        return importCoseEcdsaPublicKey(cose);
       case 3:
         // COSE-JAVA supports RSA in v1.1.0 but not in v1.0.0
         return importCoseRsaPublicKey(cose);
@@ -147,8 +171,74 @@ final class WebAuthnCodecs {
     return KeyFactory.getInstance("RSA").generatePublic(spec);
   }
 
-  private static ECPublicKey importCoseP256PublicKey(CBORObject cose) throws CoseException {
-    return (ECPublicKey) new OneKey(cose).AsPublicKey();
+  private static PublicKey importCoseEcdsaPublicKey(CBORObject cose)
+      throws NoSuchAlgorithmException, InvalidKeySpecException {
+    final int crv = cose.get(CBORObject.FromObject(-1)).AsInt32Value();
+    final ByteArray x = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
+    final ByteArray y = new ByteArray(cose.get(CBORObject.FromObject(-3)).GetByteString());
+
+    final ByteArray curveOid;
+    switch (crv) {
+      case 1:
+        curveOid = P256_CURVE_OID;
+        break;
+
+      case 2:
+        curveOid = P384_CURVE_OID;
+        break;
+
+      case 3:
+        curveOid = P512_CURVE_OID;
+        break;
+
+      default:
+        throw new IllegalArgumentException("Unknown COSE EC2 curve: " + crv);
+    }
+
+    final ByteArray algId =
+        encodeDerSequence(encodeDerObjectId(EC_PUBLIC_KEY_OID), encodeDerObjectId(curveOid));
+
+    final ByteArray rawKey =
+        encodeDerBitStringWithZeroUnused(
+            new ByteArray(new byte[] {0x04}) // Raw EC public key with x and y
+                .concat(x)
+                .concat(y));
+
+    final ByteArray x509Key = encodeDerSequence(algId, rawKey);
+
+    KeyFactory kFact = KeyFactory.getInstance("EC");
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
+  }
+
+  private static ByteArray encodeDerLength(final int length) {
+    if (length <= 127) {
+      return new ByteArray(new byte[] {(byte) length});
+    } else if (length <= 0xffff) {
+      if (length <= 255) {
+        return new ByteArray(new byte[] {-127, (byte) length});
+      } else {
+        return new ByteArray(new byte[] {-126, (byte) (length >> 8), (byte) (length & 0x00ff)});
+      }
+    } else {
+      throw new UnsupportedOperationException("Too long: " + length);
+    }
+  }
+
+  private static ByteArray encodeDerObjectId(final ByteArray oid) {
+    return new ByteArray(new byte[] {0x06, (byte) oid.size()}).concat(oid);
+  }
+
+  private static ByteArray encodeDerBitStringWithZeroUnused(final ByteArray content) {
+    return new ByteArray(new byte[] {0x03})
+        .concat(encodeDerLength(1 + content.size()))
+        .concat(new ByteArray(new byte[] {0}))
+        .concat(content);
+  }
+
+  private static ByteArray encodeDerSequence(final ByteArray... items) {
+    final ByteArray content =
+        Stream.of(items).reduce(ByteArray::concat).orElseGet(() -> new ByteArray(new byte[0]));
+    return new ByteArray(new byte[] {0x30}).concat(encodeDerLength(content.size())).concat(content);
   }
 
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
@@ -166,10 +256,7 @@ final class WebAuthnCodecs {
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
     final ByteArray x509Key =
-        new ByteArray(new byte[] {0x30, (byte) (ED25519_CURVE_OID.size() + 3 + rawKey.size())})
-            .concat(ED25519_CURVE_OID)
-            .concat(new ByteArray(new byte[] {0x03, (byte) (rawKey.size() + 1), 0}))
-            .concat(rawKey);
+        encodeDerSequence(ED25519_ALG_ID, encodeDerBitStringWithZeroUnused(rawKey));
 
     KeyFactory kFact = KeyFactory.getInstance("EdDSA");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
