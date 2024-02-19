@@ -3,7 +3,9 @@ name: Test coverage
 
 on:
   push:
-    branches: [main]
+    branches:
+    - main
+    - 'release-*'
 
 jobs:
   test:
@@ -45,6 +47,7 @@ jobs:
         sed "s/{shortcommit}/${GITHUB_SHA:0:8}/g;s/{commit}/${GITHUB_SHA}/g;s#{repo}#${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}#g" .github/workflows/coverage/index.html.template > build/gh-pages/index.html
 
     - name: Create coverage badge
+      if: ${{ github.ref == 'refs/heads/main' }}
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
       # which we can then include in the project README.
       uses: ./.github/actions/pit-results-badge
@@ -69,6 +72,7 @@ jobs:
         prev-mutations-file: prev-mutations.xml
 
     - name: Push to GitHub Pages
+      if: ${{ github.ref == 'refs/heads/main' }}
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
