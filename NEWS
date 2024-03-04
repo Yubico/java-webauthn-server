@@ -3,6 +3,8 @@
 Changes:
 
 * Dropped dependency on COSE-Java.
+* Excluded Jackson version 2.17.0-rc1 from dependency resolution due to an
+  incompatible regression.
 
 
 == Version 2.5.0 ==

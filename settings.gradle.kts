@@ -19,7 +19,10 @@ dependencyResolutionManagement {
             library("httpclient5", "org.apache.httpcomponents.client5:httpclient5:[5.0.0,6)")
             library("slf4j", "org.slf4j:slf4j-api:[1.7.25,3)")
 
-            val jacksonVer = version("jackson", "[2.13.2.1,3)")
+            val jacksonVer = version("jackson") {
+                require("[2.13.2.1,3)")
+                reject("2.17.0-rc1") // Regression: https://github.com/FasterXML/jackson-databind/issues/4413
+            }
             library("jackson-bom", "com.fasterxml.jackson", "jackson-bom").versionRef(jacksonVer)
             library("jackson-databind", "com.fasterxml.jackson.core", "jackson-databind").versionRef(jacksonVer)
             library("jackson-dataformat-cbor", "com.fasterxml.jackson.dataformat", "jackson-dataformat-cbor").versionRef(jacksonVer)
