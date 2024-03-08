@@ -27,7 +27,6 @@ package com.yubico.webauthn;
 import static com.yubico.internal.util.ExceptionUtil.assertTrue;
 import static com.yubico.internal.util.ExceptionUtil.wrapAndLog;
 
-import COSE.CoseException;
 import com.upokecenter.cbor.CBORObject;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.OptionalUtil;
@@ -335,7 +334,7 @@ final class FinishRegistrationSteps {
               .collect(Collectors.toList()));
       try {
         WebAuthnCodecs.importCosePublicKey(publicKeyCose);
-      } catch (CoseException | IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+      } catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
         throw wrapAndLog(log, "Failed to parse credential public key", e);
       }
     }
@@ -421,7 +420,7 @@ final class FinishRegistrationSteps {
               return AttestationType.UNKNOWN;
           }
         }
-      } catch (IOException | CoseException | CertificateException e) {
+      } catch (IOException | CertificateException e) {
         throw new IllegalArgumentException("Failed to resolve attestation type.", e);
       }
     }
