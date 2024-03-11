@@ -2,7 +2,6 @@ package com.yubico.webauthn;
 
 import static org.junit.Assert.assertEquals;
 
-import COSE.CoseException;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import java.io.IOException;
@@ -45,7 +44,7 @@ public class CryptoAlgorithmsTest {
 
   @Test
   public void importRsa()
-      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     PublicKey key =
         WebAuthnCodecs.importCosePublicKey(
             new AttestationObject(
@@ -59,7 +58,7 @@ public class CryptoAlgorithmsTest {
 
   @Test
   public void importEcdsa()
-      throws IOException, CoseException, NoSuchAlgorithmException, InvalidKeySpecException {
+      throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
     PublicKey key =
         WebAuthnCodecs.importCosePublicKey(
             new AttestationObject(

@@ -64,7 +64,7 @@ Maven:
 <dependency>
   <groupId>com.yubico</groupId>
   <artifactId>webauthn-server-core</artifactId>
-  <version>2.5.0</version>
+  <version>2.5.1</version>
   <scope>compile</scope>
 </dependency>
 ----------
@@ -72,7 +72,7 @@ Maven:
 Gradle:
 
 ----------
-implementation("com.yubico:webauthn-server-core:2.5.0")
+implementation("com.yubico:webauthn-server-core:2.5.1")
 ----------
 
 NOTE: You may need additional dependencies with JCA providers to support some signature algorithms.
@@ -85,7 +85,7 @@ The library will log warnings if you try to configure it for algorithms with no 
 This library uses link:https://semver.org/[semantic versioning].
 The public API consists of all public classes, methods and fields in the `com.yubico.webauthn` package and its subpackages,
 i.e., everything covered by the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/package-summary.html[Javadoc],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/package-summary.html[Javadoc],
 *with the exception* of features annotated with a `@Deprecated` annotation and a
 `@deprecated EXPERIMENTAL:` tag in JavaDoc.
 Such features are considered unstable and may receive breaking changes without a
@@ -108,7 +108,7 @@ In addition to the main `webauthn-server-core` module, there is also:
 == Documentation
 
 See the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/package-summary.html[Javadoc]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/package-summary.html[Javadoc]
 for in-depth API documentation.
 
 
@@ -118,20 +118,20 @@ Using this library comes in two parts: the server side and the client side.
 The server side involves:
 
  1. Implement the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
     interface with your database access logic.
  2. Instantiate the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
     class.
  3. Use the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#startRegistration(com.yubico.webauthn.StartRegistrationOptions)[`RelyingParty.startRegistration(...)`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#startRegistration(com.yubico.webauthn.StartRegistrationOptions)[`RelyingParty.startRegistration(...)`]
     and
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
     methods to perform registration ceremonies.
  4. Use the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`]
     and
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
     methods to perform authentication ceremonies.
  5. Optionally use additional features: passkeys, passwordless multi-factor authentication, credential backup state.
 
@@ -151,7 +151,7 @@ link:webauthn-server-demo[`webauthn-server-demo`] for a complete demo server.
 === 1. Implement a `CredentialRepository`
 
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 interface abstracts your database in a database-agnostic way.
 The concrete implementation will be different for every project, but you can use
 link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
@@ -160,11 +160,11 @@ as a simple example.
 === 2. Instantiate a `RelyingParty`
 
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
 class is the main entry point to the library.
 You can instantiate it using its builder methods,
 passing in your
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 implementation (called `MyCredentialRepository` here) as an argument:
 
 [source,java]
@@ -186,7 +186,7 @@ RelyingParty rp = RelyingParty.builder()
 A registration ceremony consists of 5 main steps:
 
  1. Generate registration parameters using
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#startRegistration(com.yubico.webauthn.StartRegistrationOptions)[`RelyingParty.startRegistration(...)`].
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#startRegistration(com.yubico.webauthn.StartRegistrationOptions)[`RelyingParty.startRegistration(...)`].
  2. Send registration parameters to the client and call
     https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create[`navigator.credentials.create()`].
  3. With `cred` as the result of the successfully resolved promise,
@@ -194,7 +194,7 @@ A registration ceremony consists of 5 main steps:
     and https://www.w3.org/TR/webauthn-2/#ref-for-dom-authenticatorattestationresponse-gettransports[`cred.response.getTransports()`]
     and return their results along with `cred` to the server.
  4. Validate the response using
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`].
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`].
  5. Update your database using the `finishRegistration` output.
 
 This example uses GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library to do both (2) and (3) in one function call.
@@ -226,15 +226,15 @@ return credentialCreateJson;  // Send to client
 ----------
 
 You will need to keep this
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html[`PublicKeyCredentialCreationOptions`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html[`PublicKeyCredentialCreationOptions`]
 object in temporary storage
 so you can also pass it into
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
 later.
 If needed, you can use the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#toJson()[`toJson()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#toJson()[`toJson()`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#fromJson(java.lang.String)[`fromJson(String)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/PublicKeyCredentialCreationOptions.html#fromJson(java.lang.String)[`fromJson(String)`]
 methods to serialize and deserialize the value for storage.
 
 Now call the WebAuthn API on the client side:
@@ -295,7 +295,7 @@ storeCredential(              // Some database access method of your own design
 Like registration ceremonies, an authentication ceremony consists of 5 main steps:
 
  1. Generate authentication parameters using
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`].
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`].
  2. Send authentication parameters to the client, call
     https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/get[`navigator.credentials.get()`]
     and return the response.
@@ -303,7 +303,7 @@ Like registration ceremonies, an authentication ceremony consists of 5 main step
     https://www.w3.org/TR/webauthn-2/#ref-for-dom-publickeycredential-getclientextensionresults[`cred.getClientExtensionResults()`]
     and return the result along with `cred` to the server.
  4. Validate the response using
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`].
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`].
  5. Update your database using the `finishAssertion` output, and act upon the result (for example, grant login access).
 
 This example uses GitHub's link:https://github.com/github/webauthn-json[webauthn-json] library to do both (2) and (3) in one function call.
@@ -320,15 +320,15 @@ return credentialGetJson;  // Send to client
 ----------
 
 Again, you will need to keep this
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionRequest.html[`AssertionRequest`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/AssertionRequest.html[`AssertionRequest`]
 object in temporary storage
 so you can also pass it into
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
 later.
 If needed, you can use the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionRequest.html#toJson()[`toJson()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/AssertionRequest.html#toJson()[`toJson()`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionRequest.html#fromJson(java.lang.String)[`fromJson(String)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/AssertionRequest.html#fromJson(java.lang.String)[`fromJson(String)`]
 methods to serialize and deserialize the value for storage.
 
 Now call the WebAuthn API on the client side:
@@ -369,7 +369,7 @@ throw new RuntimeException("Authentication failed");
 ----------
 
 Finally, if the previous step was successful, update your database using the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
 Most importantly, you should update the signature counter. That might look something like this:
 
 [source,java]
@@ -420,9 +420,9 @@ Many passkey-capable authenticators also offer a credential sync mechanism
 to allow one passkey to be used on multiple devices.
 
 Passkeys can be created by setting the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/StartRegistrationOptions.StartRegistrationOptionsBuilder.html#authenticatorSelection(com.yubico.webauthn.data.AuthenticatorSelectionCriteria)[`authenticatorSelection`].link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/StartRegistrationOptions.StartRegistrationOptionsBuilder.html#authenticatorSelection(com.yubico.webauthn.data.AuthenticatorSelectionCriteria)[`authenticatorSelection`].link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
 option to
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/ResidentKeyRequirement.html#REQUIRED[`REQUIRED`]:
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/ResidentKeyRequirement.html#REQUIRED[`REQUIRED`]:
 
 [source,java]
 ----------
@@ -444,15 +444,15 @@ AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder().bui
 
 Some authenticators might create passkeys even if not required, and setting
 the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder.html#residentKey(com.yubico.webauthn.data.ResidentKeyRequirement)[`residentKey`]
 option to
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/ResidentKeyRequirement.html#PREFERRED[`PREFERRED`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/ResidentKeyRequirement.html#PREFERRED[`PREFERRED`]
 will create a passkey if the authenticator supports it.
 The
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegistrationResult.html#isDiscoverable()[`RegistrationResult.isDiscoverable()`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegistrationResult.html#isDiscoverable()[`RegistrationResult.isDiscoverable()`]
 method can be used to determine whether the created credential is a passkey.
 This requires the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/RegistrationExtensionInputs.RegistrationExtensionInputsBuilder.html#credProps()[`credProps` extension]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/RegistrationExtensionInputs.RegistrationExtensionInputsBuilder.html#credProps()[`credProps` extension]
 to be enabled, which it is by default.
 
 
@@ -471,7 +471,7 @@ AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
 ----------
 
 Then
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
 will enforce that user verification was performed.
 However, there is no guarantee that the user's authenticator will support this
 unless the user has some credential created with the
@@ -508,14 +508,14 @@ AssertionRequest request = rp.startAssertion(StartAssertionOptions.builder()
 ----------
 
 In this case
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishRegistration(com.yubico.webauthn.FinishRegistrationOptions)[`RelyingParty.finishRegistration(...)`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#finishAssertion(com.yubico.webauthn.FinishAssertionOptions)[`RelyingParty.finishAssertion(...)`]
 will NOT enforce user verification,
 but instead the `isUserVerified()` method of
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionResult.html[`AssertionResult`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/AssertionResult.html[`AssertionResult`]
 will tell whether user verification was used.
 
 For example, you could prompt for a password as the second factor if `isUserVerified()` returns `false`:
@@ -555,7 +555,7 @@ In particular you need to:
 
 - Add the credential request option `mediation: "conditional"`
 alongside the `publicKey` option generated by
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`],
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html#startAssertion(com.yubico.webauthn.StartAssertionOptions)[`RelyingParty.startAssertion(...)`],
 - Add `autocomplete="username webauthn"` to a username input field on the page, and
 - Call `navigator.credentials.get()` in the background.
 
@@ -574,9 +574,9 @@ Some authenticators may allow credentials to be backed up and/or synced between 
 This capability and its current state is signaled via the
 link:https://w3c.github.io/webauthn/#sctn-credential-backup[Credential Backup State] flags,
 which are available via the `isBackedUp()` and `isBackupEligible()` methods of
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegistrationResult.html[`RegistrationResult`]
 and
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/AssertionResult.html[`AssertionResult`].
 These can be used as a hint about how vulnerable a user is to authenticator loss.
 In particular, a user with only one credential which is not backed up
 may risk getting locked out if they lose their authenticator.
@@ -600,14 +600,14 @@ To migrate to using the WebAuthn API, you need to do the following:
 
  1. Follow the link:#getting-started[Getting started] guide above to set up WebAuthn support in general.
 +
-Note that unlike a U2F AppID, the WebAuthn link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/RelyingPartyIdentity.RelyingPartyIdentityBuilder.html#id(java.lang.String)[RP ID]
+Note that unlike a U2F AppID, the WebAuthn link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/RelyingPartyIdentity.RelyingPartyIdentityBuilder.html#id(java.lang.String)[RP ID]
 consists of only the domain name of the AppID.
 WebAuthn does not support link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-appid-and-facets-v1.2-ps-20170411.html[U2F Trusted Facet Lists].
 
  2. Set the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#appId(com.yubico.webauthn.extension.appid.AppId)[`appId()`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#appId(com.yubico.webauthn.extension.appid.AppId)[`appId()`]
   setting on your
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
   instance.
   The argument to the `appid()` setting should be the same as you used for the `appId` argument to the
   link:https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html#high-level-javascript-api[U2F `register` and `sign` functions].
@@ -625,22 +625,22 @@ extensions and configure the `RelyingParty` to accept the given AppId when verif
     privacy consideration.
 
  4. When your
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
     creates a
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegisteredCredential.html[`RegisteredCredential`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegisteredCredential.html[`RegisteredCredential`]
     for a U2F credential,
     use the U2F key handle as the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#credentialId(com.yubico.webauthn.data.ByteArray)[credential ID].
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#credentialId(com.yubico.webauthn.data.ByteArray)[credential ID].
     If you store key handles base64 encoded, you should decode them using
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/ByteArray.html#fromBase64(java.lang.String)[`ByteArray.fromBase64`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/ByteArray.html#fromBase64(java.lang.String)[`ByteArray.fromBase64`]
     or
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/data/ByteArray.html#fromBase64Url(java.lang.String)[`ByteArray.fromBase64Url`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/data/ByteArray.html#fromBase64Url(java.lang.String)[`ByteArray.fromBase64Url`]
     as appropriate before passing them to the `RegisteredCredential`.
 
  5. When your `CredentialRepository` creates a `RegisteredCredential` for a U2F credential,
     use the
-    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyEs256Raw(com.yubico.webauthn.data.ByteArray)[`publicKeyEs256Raw()`]
-    method instead of link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyCose(com.yubico.webauthn.data.ByteArray)[`publicKeyCose()`]
+    link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyEs256Raw(com.yubico.webauthn.data.ByteArray)[`publicKeyEs256Raw()`]
+    method instead of link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RegisteredCredential.RegisteredCredentialBuilder.html#publicKeyCose(com.yubico.webauthn.data.ByteArray)[`publicKeyCose()`]
     to set the credential public key.
 
  6. Replace calls to the U2F
@@ -774,17 +774,17 @@ provides optional additional features for working with attestation.
 See the module documentation for more details.
 
 Alternatively, you can use the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
 interface to implement your own source of attestation root certificates
 and set it as the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.RelyingPartyBuilder.html#attestationTrustSource(com.yubico.webauthn.attestation.AttestationTrustSource)[`attestationTrustSource`]
 for your
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
 instance.
 Note that depending on your JCA provider configuration, you may need to set the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#enableRevocationChecking(boolean)[`enableRevocationChecking`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#enableRevocationChecking(boolean)[`enableRevocationChecking`]
 and/or
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.0/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#policyTreeValidator(java.util.function.Predicate)[`policyTreeValidator`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.1/com/yubico/webauthn/attestation/AttestationTrustSource.TrustRootsResult.TrustRootsResultBuilder.html#policyTreeValidator(java.util.function.Predicate)[`policyTreeValidator`]
 settings for compatibility with some authenticators' attestation certificates.
 See the JavaDoc for these settings for more information.
 

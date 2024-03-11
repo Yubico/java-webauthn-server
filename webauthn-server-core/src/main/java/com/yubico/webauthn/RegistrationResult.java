@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import COSE.CoseException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -299,7 +298,7 @@ public class RegistrationResult {
   @NonNull
   @JsonIgnore
   public PublicKey getParsedPublicKey()
-      throws InvalidKeySpecException, NoSuchAlgorithmException, CoseException, IOException {
+      throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
     return WebAuthnCodecs.importCosePublicKey(getPublicKeyCose());
   }
 

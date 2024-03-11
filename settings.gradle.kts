@@ -15,7 +15,6 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("constraintLibs") {
             library("cbor", "com.upokecenter:cbor:[4.5.1,5)")
-            library("cose", "com.augustcellars.cose:cose-java:[1.0.0,2)")
             library("guava", "com.google.guava:guava:[24.1.1,33)")
             library("httpclient5", "org.apache.httpcomponents.client5:httpclient5:[5.0.0,6)")
             library("slf4j", "org.slf4j:slf4j-api:[1.7.25,3)")

@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import COSE.CoseException;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -104,7 +103,7 @@ public final class RegisteredCredential implements CredentialRecord {
   @NonNull
   @JsonIgnore
   public PublicKey getParsedPublicKey()
-      throws InvalidKeySpecException, NoSuchAlgorithmException, CoseException, IOException {
+      throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
     return WebAuthnCodecs.importCosePublicKey(getPublicKeyCose());
   }
 

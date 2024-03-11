@@ -1,5 +1,6 @@
 package com.yubico.fido.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.net.URL;
@@ -86,6 +87,9 @@ public class MetadataBLOBHeader {
    * @see <a href="https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.6">RFC 7515 §4.1.6.
    *     "x5c" (X.509 Certificate Chain) Header Parameter</a>
    */
+  // @JsonIgnore needed because of:
+  // https://github.com/FasterXML/jackson-databind/issues/4413#issuecomment-1977989776
+  @JsonIgnore
   public Optional<List<X509Certificate>> getX5c() {
     return Optional.ofNullable(x5c);
   }

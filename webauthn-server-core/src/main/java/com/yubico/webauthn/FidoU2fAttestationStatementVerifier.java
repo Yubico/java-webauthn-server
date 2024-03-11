@@ -26,7 +26,6 @@ package com.yubico.webauthn;
 
 import static com.yubico.webauthn.Crypto.isP256;
 
-import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.data.AttestationObject;
@@ -76,7 +75,7 @@ final class FidoU2fAttestationStatementVerifier
   }
 
   private static ByteArray getRawUserPublicKey(AttestationObject attestationObject)
-      throws IOException, CoseException {
+      throws IOException {
     final ByteArray pubkeyCose =
         attestationObject
             .getAuthenticatorData()
@@ -102,7 +101,7 @@ final class FidoU2fAttestationStatementVerifier
 
   @Override
   public AttestationType getAttestationType(AttestationObject attestationObject)
-      throws CoseException, IOException, CertificateException {
+      throws IOException, CertificateException {
     X509Certificate attestationCertificate = getAttestationCertificate(attestationObject);
 
     if (attestationCertificate.getPublicKey() instanceof ECPublicKey
@@ -153,7 +152,7 @@ final class FidoU2fAttestationStatementVerifier
 
                 try {
                   userPublicKey = getRawUserPublicKey(attestationObject);
-                } catch (IOException | CoseException e) {
+                } catch (IOException e) {
                   RuntimeException err =
                       new RuntimeException(
                           String.format(

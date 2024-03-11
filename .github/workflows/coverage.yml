@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - dependabot/gradle/info.solidsoft.gradle.pitest-gradle-pitest-plugin-*
+      - 'release-*'
 
 jobs:
   test:
@@ -64,15 +65,15 @@ jobs:
         prev-mutations-file: prev-mutations.xml
 
     - name: Create coverage badge
+      if: ${{ github.ref == 'refs/heads/main' }}
       # This creates a file that defines a [Shields.io endpoint badge](https://shields.io/endpoint)
       # which we can then include in the project README.
       uses: ./.github/actions/pit-results-badge
-      if: github.ref_name == 'main'
       with:
         output-file: build/gh-pages/coverage-badge.json
 
     - name: Push to GitHub Pages
-      if: github.ref_name == 'main'
+      if: ${{ github.ref == 'refs/heads/main' }}
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com

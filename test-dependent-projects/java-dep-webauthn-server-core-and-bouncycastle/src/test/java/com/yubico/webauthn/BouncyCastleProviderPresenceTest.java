@@ -2,7 +2,6 @@ package com.yubico.webauthn;
 
 import static org.junit.Assert.assertTrue;
 
-import COSE.CoseException;
 import com.yubico.webauthn.data.AttestationObject;
 import com.yubico.webauthn.data.RelyingPartyIdentity;
 import java.io.IOException;
@@ -72,7 +71,7 @@ public class BouncyCastleProviderPresenceTest {
 
   @Test
   public void bouncyCastleProviderIsNotLoadedAfterAttemptingToLoadEddsaKey()
-      throws IOException, CoseException, InvalidKeySpecException {
+      throws IOException, InvalidKeySpecException {
     try {
       WebAuthnCodecs.importCosePublicKey(
           new AttestationObject(
@@ -92,7 +91,7 @@ public class BouncyCastleProviderPresenceTest {
 
   @Test(expected = NoSuchAlgorithmException.class)
   public void doesNotFallBackToBouncyCastleAutomatically()
-      throws IOException, CoseException, InvalidKeySpecException, NoSuchAlgorithmException {
+      throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
     for (Provider prov : Security.getProviders()) {
       Security.removeProvider(prov.getName());
     }

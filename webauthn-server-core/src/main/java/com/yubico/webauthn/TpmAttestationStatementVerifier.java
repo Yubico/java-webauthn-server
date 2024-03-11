@@ -24,7 +24,6 @@
 
 package com.yubico.webauthn;
 
-import COSE.CoseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.upokecenter.cbor.CBORObject;
@@ -178,7 +177,7 @@ final class TpmAttestationStatementVerifier
     // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData.
     try {
       verifyPublicKeysMatch(attestationObject, pubArea);
-    } catch (CoseException | IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+    } catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
       throw new RuntimeException(
           "Failed to verify that public key in TPM attestation matches public key in authData.", e);
     }
@@ -267,7 +266,7 @@ final class TpmAttestationStatementVerifier
   }
 
   private void verifyPublicKeysMatch(AttestationObject attestationObject, TpmtPublic pubArea)
-      throws CoseException, IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+      throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
     final PublicKey credentialPubKey =
         WebAuthnCodecs.importCosePublicKey(
             attestationObject

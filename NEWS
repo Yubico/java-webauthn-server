@@ -53,6 +53,14 @@ New features:
     version increase.
 
 
+== Version 2.5.1 ==
+
+Changes:
+
+* Dropped dependency on COSE-Java.
+* Fixed incompatibility with Jackson version 2.17.0-rc1.
+
+
 == Version 2.5.0 ==
 
 `webauthn-server-core`:
