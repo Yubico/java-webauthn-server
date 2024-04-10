@@ -261,6 +261,7 @@ class RelyingPartyRegistrationSpec
                   "org.example.foo": "bar",
                   "credProps": {
                     "rk": false,
+                    "authenticatorDisplayName": "My passkey",
                     "unknownProperty": ["unknown-value"]
                   }
                 }
