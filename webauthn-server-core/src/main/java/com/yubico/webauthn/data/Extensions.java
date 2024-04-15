@@ -1,6 +1,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
@@ -65,6 +66,7 @@ public class Extensions {
      */
     @Value
     @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CredentialPropertiesOutput {
       @JsonProperty("rk")
       private final Boolean rk;

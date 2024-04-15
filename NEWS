@@ -53,6 +53,13 @@ New features:
     version increase.
 
 
+== Version 2.5.2 (unreleased) ==
+
+Fixes:
+
+* Allow unknown properties in `credProps` client extension output.
+
+
 == Version 2.5.1 ==
 
 Changes:
