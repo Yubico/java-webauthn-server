@@ -258,12 +258,21 @@ class RelyingPartyRegistrationSpec
                 },
                 "clientExtensionResults": {
                   "appidExclude": true,
-                  "org.example.foo": "bar"
+                  "org.example.foo": "bar",
+                  "credProps": {
+                    "rk": false,
+                    "authenticatorDisplayName": "My passkey",
+                    "unknownProperty": ["unknown-value"]
+                  }
                 }
               }""")
             pkc.getClientExtensionResults.getExtensionIds should contain(
               "appidExclude"
             )
+            pkc.getClientExtensionResults.getExtensionIds should contain(
+              "credProps"
+            )
+            pkc.getClientExtensionResults.getExtensionIds should not contain ("org.example.foo")
           }
         }
 
