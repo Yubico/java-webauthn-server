@@ -12,10 +12,6 @@ spotless {
 
 scalafix {
     configFile.set(project.rootProject.file("scalafix.conf"))
-
-    // Work around dependency resolution issues in April 2022
-    semanticdb.autoConfigure.set(true)
-    semanticdb.version.set("4.5.5")
 }
 
 project.dependencies.scalafix("com.github.liancheng:organize-imports_2.13:0.6.0")

@@ -71,3 +71,7 @@ for (task in listOf(tasks.installDist, tasks.distZip, tasks.distTar)) {
     }
   }
 }
+
+scalafix {
+  ignoreSourceSets.add("main")
+}
