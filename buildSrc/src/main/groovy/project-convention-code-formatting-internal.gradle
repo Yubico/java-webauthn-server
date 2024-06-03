@@ -12,6 +12,10 @@ spotless {
 
 scalafix {
     configFile.set(project.rootProject.file("scalafix.conf"))
+
+    if (project.name != "yubico-util-scala") {
+        ignoreSourceSets.add("main")
+    }
 }
 
 project.dependencies.scalafix("com.github.liancheng:organize-imports_2.13:0.6.0")
