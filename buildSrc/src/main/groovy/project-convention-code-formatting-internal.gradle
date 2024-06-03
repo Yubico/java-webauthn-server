@@ -14,6 +14,7 @@ scalafix {
     configFile.set(project.rootProject.file("scalafix.conf"))
 
     if (project.name != "yubico-util-scala") {
+        // yubico-util-scala is the only subproject with Scala sources in the "main" source set
         ignoreSourceSets.add("main")
     }
 }
