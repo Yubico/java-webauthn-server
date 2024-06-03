@@ -86,3 +86,7 @@ tasks.javadoc.configure {
   // Use this instead for local testing
   //(options as StandardJavadocDocletOptions).linksOffline("file://${coreJavadoc.destinationDir}", "${coreJavadoc.destinationDir}")
 }
+
+scalafix {
+  ignoreSourceSets.add("main")
+}

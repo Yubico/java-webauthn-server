@@ -16,6 +16,6 @@ dependencies {
   // Spotless dropped Java 8 support in version 2.33.0
   if (JavaVersion.current().isJava11Compatible) {
     implementation("com.diffplug.spotless:spotless-plugin-gradle:6.25.0")
-    implementation("io.github.cosmicsilence:gradle-scalafix:0.1.15")
+    implementation("io.github.cosmicsilence:gradle-scalafix:0.2.2")
   }
 }
