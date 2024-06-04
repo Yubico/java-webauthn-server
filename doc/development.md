@@ -23,6 +23,14 @@ and ideally also the latest non-LTS JDK version if Gradle and other build depend
 A list of JDK versions and maintenance status can be found [here](https://en.wikipedia.org/wiki/Java_version_history).
 
 
+Code formatting
+---
+
+Use `./gradlew spotlessApply` to run the automatic code formatter.
+You can also run it in continuous mode as `./gradlew --continuous spotlessApply`
+to reformat whenever a file changes.
+
+
 Setup for publishing
 ---
 
@@ -35,11 +43,3 @@ yubicoPublish=true
 ossrhUsername=8pnmjKQP
 ossrhPassword=bmjuyWSIik8P3Nq/ZM2G0Xs0sHEKBg+4q4zTZ8JDDRCr
 ```
-
-
-Code formatting
----
-
-Use `./gradlew spotlessApply` to run the automatic code formatter.
-You can also run it in continuous mode as `./gradlew --continuous spotlessApply`
-to reformat whenever a file changes.
