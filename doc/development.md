@@ -43,3 +43,9 @@ yubicoPublish=true
 ossrhUsername=8pnmjKQP
 ossrhPassword=bmjuyWSIik8P3Nq/ZM2G0Xs0sHEKBg+4q4zTZ8JDDRCr
 ```
+
+
+Publishing a release
+---
+
+See the [release checklist](./releasing.md).
