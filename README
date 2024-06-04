@@ -849,3 +849,9 @@ built artifacts.
 Official Yubico software signing keys are listed on the
 https://developers.yubico.com/Software_Projects/Software_Signing.html[Yubico
 Developers site].
+
+
+[#development]
+=== Development
+
+See the link:https://github.com/Yubico/java-webauthn-server/blob/main/doc/development.md[developer docs].
