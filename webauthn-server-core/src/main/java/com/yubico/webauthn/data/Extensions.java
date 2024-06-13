@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
+import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
@@ -71,9 +72,15 @@ public class Extensions {
       @JsonProperty("rk")
       private final Boolean rk;
 
+      @JsonProperty("authenticatorDisplayName")
+      private final String authenticatorDisplayName;
+
       @JsonCreator
-      private CredentialPropertiesOutput(@JsonProperty("rk") Boolean rk) {
+      private CredentialPropertiesOutput(
+          @JsonProperty("rk") Boolean rk,
+          @JsonProperty("authenticatorDisplayName") String authenticatorDisplayName) {
         this.rk = rk;
+        this.authenticatorDisplayName = authenticatorDisplayName;
       }
 
       /**
@@ -104,6 +111,24 @@ public class Extensions {
        */
       public Optional<Boolean> getRk() {
         return Optional.ofNullable(rk);
+      }
+
+      /**
+       * This OPTIONAL property is a human-palatable description of the credential's managing
+       * authenticator, chosen by the user.
+       *
+       * <p>If the RP includes an <code>[$credential record/authenticatorDisplayName$]</code>
+       * [=struct/item=] in [=credential records=], the [=[RP]=] MAY offer this value, if present,
+       * as a default value for the <code>[$credential record/authenticatorDisplayName$]</code> of
+       * the new [=credential record=].
+       *
+       * @see RegistrationResult#getAuthenticatorDisplayName()
+       * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change
+       *     as the standard matures.
+       */
+      @Deprecated
+      public Optional<String> getAuthenticatorDisplayName() {
+        return Optional.ofNullable(authenticatorDisplayName);
       }
     }
   }
