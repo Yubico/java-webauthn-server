@@ -30,17 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
-import com.yubico.webauthn.data.AttestationType;
-import com.yubico.webauthn.data.AuthenticatorAttachment;
-import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
-import com.yubico.webauthn.data.AuthenticatorData;
-import com.yubico.webauthn.data.AuthenticatorDataFlags;
-import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
-import com.yubico.webauthn.data.AuthenticatorResponse;
-import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
-import com.yubico.webauthn.data.PublicKeyCredential;
-import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.*;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -365,6 +355,30 @@ public class RegistrationResult {
     return getClientExtensionOutputs()
         .flatMap(outputs -> outputs.getCredProps())
         .flatMap(credProps -> credProps.getRk());
+  }
+
+  /**
+   * Retrieve a suitable nickname for this credential, if one is available.
+   *
+   * <p>This returns the <code>authenticatorDisplayName</code> output from the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
+   * <code>credProps</code></a> extension.
+   *
+   * @return A user-chosen or vendor-default display name for the credential, if available.
+   *     Otherwise empty.
+   * @see <a
+   *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">§10.1.3.
+   *     Credential Properties Extension (credProps), "authenticatorDisplayName" output</a>
+   * @see Extensions.CredentialProperties.CredentialPropertiesOutput#getAuthenticatorDisplayName()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @JsonIgnore
+  @Deprecated
+  public Optional<String> getAuthenticatorDisplayName() {
+    return getClientExtensionOutputs()
+        .flatMap(outputs -> outputs.getCredProps())
+        .flatMap(credProps -> credProps.getAuthenticatorDisplayName());
   }
 
   /**
