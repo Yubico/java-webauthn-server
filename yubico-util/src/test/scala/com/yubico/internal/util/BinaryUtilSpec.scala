@@ -25,6 +25,7 @@
 package com.yubico.internal.util
 
 import org.junit.runner.RunWith
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -145,6 +146,107 @@ class BinaryUtilSpec
         an[IllegalArgumentException] shouldBe thrownBy(
           BinaryUtil.encodeUint16(i)
         )
+      }
+    }
+  }
+
+  describe("DER parsing and encoding:") {
+    it("encodeDerLength and parseDerLength are each other's inverse.") {
+      forAll(
+        Gen.chooseNum(0, Int.MaxValue),
+        Arbitrary.arbitrary[Array[Byte]],
+      ) { (len: Int, prefix: Array[Byte]) =>
+        val encoded = BinaryUtil.encodeDerLength(len)
+        val decoded = BinaryUtil.parseDerLength(encoded, 0)
+        val decodedWithPrefix = BinaryUtil.parseDerLength(
+          BinaryUtil.concat(prefix, encoded),
+          prefix.length,
+        )
+
+        decoded.result should equal(len)
+        decoded.nextOffset should equal(encoded.length)
+        decodedWithPrefix.result should equal(len)
+        decodedWithPrefix.nextOffset should equal(
+          prefix.length + encoded.length
+        )
+
+        val recoded = BinaryUtil.encodeDerLength(decoded.result)
+        recoded should equal(encoded)
+      }
+    }
+
+    it("parseDerLength tolerates unnecessarily long encodings.") {
+      BinaryUtil
+        .parseDerLength(Array(0x81, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x82, 0, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x83, 0, 0, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x84, 0, 0, 0, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x81, 7).map(_.toByte), 0)
+        .result should equal(7)
+      BinaryUtil
+        .parseDerLength(Array(0x82, 0, 7).map(_.toByte), 0)
+        .result should equal(7)
+      BinaryUtil
+        .parseDerLength(Array(0x83, 0, 0, 7).map(_.toByte), 0)
+        .result should equal(7)
+      BinaryUtil
+        .parseDerLength(Array(0x84, 0, 0, 4, 2).map(_.toByte), 0)
+        .result should equal(1026)
+      BinaryUtil
+        .parseDerLength(Array(0x84, 0, 1, 33, 7).map(_.toByte), 0)
+        .result should equal(73991)
+    }
+
+    it("encodeDerSequence and parseDerSequenceEnd are (almost) each other's inverse.") {
+      forAll { (data: Array[Array[Byte]], prefix: Array[Byte]) =>
+        val encoded = BinaryUtil.encodeDerSequence(data: _*)
+        val decoded = BinaryUtil.parseDerSequence(encoded, 0)
+        val encodedWithPrefix = BinaryUtil.concat(prefix, encoded)
+        val decodedWithPrefix = BinaryUtil.parseDerSequence(
+          encodedWithPrefix,
+          prefix.length,
+        )
+
+        val expectedContent: Array[Byte] = BinaryUtil.concat(data: _*)
+        decoded.result should equal(expectedContent)
+        decodedWithPrefix.result should equal(expectedContent)
+        decoded.nextOffset should equal(encoded.length)
+        decodedWithPrefix.nextOffset should equal(
+          prefix.length + encoded.length
+        )
+      }
+    }
+
+    it("parseDerSequence fails if the first byte is not 0x30.") {
+      forAll { (tag: Byte, data: Array[Array[Byte]]) =>
+        whenever(tag != 0x30) {
+          val encoded = BinaryUtil.encodeDerSequence(data: _*)
+          an[IllegalArgumentException] shouldBe thrownBy {
+            BinaryUtil.parseDerSequence(
+              encoded.updated(0, tag),
+              0,
+            )
+          }
+        }
+      }
+    }
+
+    it("parseDerSequence fails on empty input.") {
+      an[IllegalArgumentException] shouldBe thrownBy {
+        BinaryUtil.parseDerSequence(Array.empty, 0)
+      }
+      forAll { data: Array[Byte] =>
+        an[IllegalArgumentException] shouldBe thrownBy {
+          BinaryUtil.parseDerSequence(data, data.length)
+        }
       }
     }
   }

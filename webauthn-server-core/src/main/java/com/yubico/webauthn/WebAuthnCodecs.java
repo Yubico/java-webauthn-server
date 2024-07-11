@@ -41,8 +41,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
 
 final class WebAuthnCodecs {
 
@@ -197,166 +195,21 @@ final class WebAuthnCodecs {
     }
 
     final byte[] algId =
-        encodeDerSequence(
-            encodeDerObjectId(EC_PUBLIC_KEY_OID.getBytes()), encodeDerObjectId(curveOid));
+        BinaryUtil.encodeDerSequence(
+            BinaryUtil.encodeDerObjectId(EC_PUBLIC_KEY_OID.getBytes()),
+            BinaryUtil.encodeDerObjectId(curveOid));
 
     final byte[] rawKey =
-        encodeDerBitStringWithZeroUnused(
+        BinaryUtil.encodeDerBitStringWithZeroUnused(
             BinaryUtil.concat(
                 new byte[] {0x04}, // Raw EC public key with x and y
                 x,
                 y));
 
-    final byte[] x509Key = encodeDerSequence(algId, rawKey);
+    final byte[] x509Key = BinaryUtil.encodeDerSequence(algId, rawKey);
 
     KeyFactory kFact = KeyFactory.getInstance("EC");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
-  }
-
-  static byte[] encodeDerLength(final int length) {
-    if (length < 0) {
-      throw new IllegalArgumentException("Length is negative: " + length);
-    } else if (length <= 0x7f) {
-      return new byte[] {(byte) (length & 0xff)};
-    } else if (length <= 0xff) {
-      return new byte[] {(byte) (0x80 | 0x01), (byte) (length & 0xff)};
-    } else if (length <= 0xffff) {
-      return new byte[] {
-        (byte) (0x80 | 0x02), (byte) ((length >> 8) & 0xff), (byte) (length & 0xff)
-      };
-    } else if (length <= 0xffffff) {
-      return new byte[] {
-        (byte) (0x80 | 0x03),
-        (byte) ((length >> 16) & 0xff),
-        (byte) ((length >> 8) & 0xff),
-        (byte) (length & 0xff)
-      };
-    } else {
-      return new byte[] {
-        (byte) (0x80 | 0x04),
-        (byte) ((length >> 24) & 0xff),
-        (byte) ((length >> 16) & 0xff),
-        (byte) ((length >> 8) & 0xff),
-        (byte) (length & 0xff)
-      };
-    }
-  }
-
-  @AllArgsConstructor
-  static class ParseDerResult<T> {
-    final T result;
-    final int nextOffset;
-  }
-
-  static ParseDerResult<Integer> parseDerLength(@NonNull byte[] der, int offset) {
-    final int len = der.length - offset;
-    if (len == 0) {
-      throw new IllegalArgumentException("Empty input");
-    } else if ((der[offset] & 0x80) == 0) {
-      return new ParseDerResult<>(der[offset] & 0xff, offset + 1);
-    } else {
-      final int longLen = der[offset] & 0x7f;
-      if (len >= longLen) {
-        switch (longLen) {
-          case 0:
-            throw new IllegalArgumentException(
-                String.format(
-                    "Empty length encoding at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
-          case 1:
-            return new ParseDerResult<>(der[offset + 1] & 0xff, offset + 2);
-          case 2:
-            return new ParseDerResult<>(
-                ((der[offset + 1] & 0xff) << 8) | (der[offset + 2] & 0xff), offset + 3);
-          case 3:
-            return new ParseDerResult<>(
-                ((der[offset + 1] & 0xff) << 16)
-                    | ((der[offset + 2] & 0xff) << 8)
-                    | (der[offset + 3] & 0xff),
-                offset + 4);
-          case 4:
-            if ((der[offset + 1] & 0x80) == 0) {
-              return new ParseDerResult<>(
-                  ((der[offset + 1] & 0xff) << 24)
-                      | ((der[offset + 2] & 0xff) << 16)
-                      | ((der[offset + 3] & 0xff) << 8)
-                      | (der[offset + 4] & 0xff),
-                  offset + 5);
-            } else {
-              throw new UnsupportedOperationException(
-                  String.format(
-                      "Length out of range of int: 0x%02x%02x%02x%02x",
-                      der[offset + 1], der[offset + 2], der[offset + 3], der[offset + 4]));
-            }
-          default:
-            throw new UnsupportedOperationException(
-                String.format("Length is too long for int: %d octets", longLen));
-        }
-      } else {
-        throw new IllegalArgumentException(
-            String.format(
-                "Length encoding needs %d octets but only %s remain at index %d: 0x%s",
-                longLen, len - (offset + 1), offset + 1, BinaryUtil.toHex(der)));
-      }
-    }
-  }
-
-  private static ParseDerResult<byte[]> parseDerTagged(
-      @NonNull byte[] der, int offset, byte expectTag) {
-    final int len = der.length - offset;
-    if (len == 0) {
-      throw new IllegalArgumentException(
-          String.format("Empty input at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
-    } else {
-      final byte tag = der[offset];
-      if (tag == expectTag) {
-        final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
-        final int contentEnd = contentLen.nextOffset + contentLen.result;
-        return new ParseDerResult<>(
-            Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd), contentEnd);
-      } else {
-        throw new IllegalArgumentException(
-            String.format(
-                "Incorrect tag: 0x%02x (expected 0x%02x) at offset %d: 0x%s",
-                tag, expectTag, offset, BinaryUtil.toHex(der)));
-      }
-    }
-  }
-
-  /** Parse a SEQUENCE and return a copy of the content octets. */
-  static ParseDerResult<byte[]> parseDerSequence(@NonNull byte[] der, int offset) {
-    return parseDerTagged(der, offset, (byte) 0x30);
-  }
-
-  /**
-   * Parse an explicitly tagged value of class "context-specific" (bits 8-7 are 0b10), in
-   * "constructed" encoding (bit 6 is 1), with a prescribed tag value, and return a copy of the
-   * content octets.
-   */
-  static ParseDerResult<byte[]> parseDerExplicitlyTaggedContextSpecificConstructed(
-      @NonNull byte[] der, int offset, byte tagNumber) {
-    if (tagNumber <= 30 && tagNumber >= 0) {
-      return parseDerTagged(der, offset, (byte) ((tagNumber & 0x1f) | 0xa0));
-    } else {
-      throw new UnsupportedOperationException(
-          String.format("Tag number out of range: %d (expected 0 to 30, inclusive)", tagNumber));
-    }
-  }
-
-  private static byte[] encodeDerObjectId(@NonNull byte[] oid) {
-    byte[] result = new byte[2 + oid.length];
-    result[0] = 0x06;
-    result[1] = (byte) oid.length;
-    return BinaryUtil.copyInto(oid, result, 2);
-  }
-
-  private static byte[] encodeDerBitStringWithZeroUnused(@NonNull byte[] content) {
-    return BinaryUtil.concat(
-        new byte[] {0x03}, encodeDerLength(1 + content.length), new byte[] {0}, content);
-  }
-
-  static byte[] encodeDerSequence(final byte[]... items) {
-    byte[] content = BinaryUtil.concat(items);
-    return BinaryUtil.concat(new byte[] {0x30}, encodeDerLength(content.length), content);
   }
 
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
@@ -374,7 +227,8 @@ final class WebAuthnCodecs {
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
     final byte[] x509Key =
-        encodeDerSequence(ED25519_ALG_ID.getBytes(), encodeDerBitStringWithZeroUnused(rawKey));
+        BinaryUtil.encodeDerSequence(
+            ED25519_ALG_ID.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
 
     KeyFactory kFact = KeyFactory.getInstance("EdDSA");
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key));

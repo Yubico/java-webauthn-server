@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 public class BinaryUtil {
 
@@ -196,5 +198,151 @@ public class BinaryUtil {
         }
       }
     }
+  }
+
+  public static byte[] encodeDerLength(final int length) {
+    if (length < 0) {
+      throw new IllegalArgumentException("Length is negative: " + length);
+    } else if (length <= 0x7f) {
+      return new byte[] {(byte) (length & 0xff)};
+    } else if (length <= 0xff) {
+      return new byte[] {(byte) (0x80 | 0x01), (byte) (length & 0xff)};
+    } else if (length <= 0xffff) {
+      return new byte[] {
+        (byte) (0x80 | 0x02), (byte) ((length >> 8) & 0xff), (byte) (length & 0xff)
+      };
+    } else if (length <= 0xffffff) {
+      return new byte[] {
+        (byte) (0x80 | 0x03),
+        (byte) ((length >> 16) & 0xff),
+        (byte) ((length >> 8) & 0xff),
+        (byte) (length & 0xff)
+      };
+    } else {
+      return new byte[] {
+        (byte) (0x80 | 0x04),
+        (byte) ((length >> 24) & 0xff),
+        (byte) ((length >> 16) & 0xff),
+        (byte) ((length >> 8) & 0xff),
+        (byte) (length & 0xff)
+      };
+    }
+  }
+
+  @AllArgsConstructor
+  public static class ParseDerResult<T> {
+    public final T result;
+    public final int nextOffset;
+  }
+
+  public static ParseDerResult<Integer> parseDerLength(@NonNull byte[] der, int offset) {
+    final int len = der.length - offset;
+    if (len == 0) {
+      throw new IllegalArgumentException("Empty input");
+    } else if ((der[offset] & 0x80) == 0) {
+      return new ParseDerResult<>(der[offset] & 0xff, offset + 1);
+    } else {
+      final int longLen = der[offset] & 0x7f;
+      if (len >= longLen) {
+        switch (longLen) {
+          case 0:
+            throw new IllegalArgumentException(
+                String.format(
+                    "Empty length encoding at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
+          case 1:
+            return new ParseDerResult<>(der[offset + 1] & 0xff, offset + 2);
+          case 2:
+            return new ParseDerResult<>(
+                ((der[offset + 1] & 0xff) << 8) | (der[offset + 2] & 0xff), offset + 3);
+          case 3:
+            return new ParseDerResult<>(
+                ((der[offset + 1] & 0xff) << 16)
+                    | ((der[offset + 2] & 0xff) << 8)
+                    | (der[offset + 3] & 0xff),
+                offset + 4);
+          case 4:
+            if ((der[offset + 1] & 0x80) == 0) {
+              return new ParseDerResult<>(
+                  ((der[offset + 1] & 0xff) << 24)
+                      | ((der[offset + 2] & 0xff) << 16)
+                      | ((der[offset + 3] & 0xff) << 8)
+                      | (der[offset + 4] & 0xff),
+                  offset + 5);
+            } else {
+              throw new UnsupportedOperationException(
+                  String.format(
+                      "Length out of range of int: 0x%02x%02x%02x%02x",
+                      der[offset + 1], der[offset + 2], der[offset + 3], der[offset + 4]));
+            }
+          default:
+            throw new UnsupportedOperationException(
+                String.format("Length is too long for int: %d octets", longLen));
+        }
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Length encoding needs %d octets but only %s remain at index %d: 0x%s",
+                longLen, len - (offset + 1), offset + 1, BinaryUtil.toHex(der)));
+      }
+    }
+  }
+
+  private static ParseDerResult<byte[]> parseDerTagged(
+      @NonNull byte[] der, int offset, byte expectTag) {
+    final int len = der.length - offset;
+    if (len == 0) {
+      throw new IllegalArgumentException(
+          String.format("Empty input at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
+    } else {
+      final byte tag = der[offset];
+      if (tag == expectTag) {
+        final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
+        final int contentEnd = contentLen.nextOffset + contentLen.result;
+        return new ParseDerResult<>(
+            Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd), contentEnd);
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Incorrect tag: 0x%02x (expected 0x%02x) at offset %d: 0x%s",
+                tag, expectTag, offset, BinaryUtil.toHex(der)));
+      }
+    }
+  }
+
+  /** Parse a SEQUENCE and return a copy of the content octets. */
+  public static ParseDerResult<byte[]> parseDerSequence(@NonNull byte[] der, int offset) {
+    return parseDerTagged(der, offset, (byte) 0x30);
+  }
+
+  /**
+   * Parse an explicitly tagged value of class "context-specific" (bits 8-7 are 0b10), in
+   * "constructed" encoding (bit 6 is 1), with a prescribed tag value, and return a copy of the
+   * content octets.
+   */
+  public static ParseDerResult<byte[]> parseDerExplicitlyTaggedContextSpecificConstructed(
+      @NonNull byte[] der, int offset, byte tagNumber) {
+    if (tagNumber <= 30 && tagNumber >= 0) {
+      return parseDerTagged(der, offset, (byte) ((tagNumber & 0x1f) | 0xa0));
+    } else {
+      throw new UnsupportedOperationException(
+          String.format("Tag number out of range: %d (expected 0 to 30, inclusive)", tagNumber));
+    }
+  }
+
+  public static byte[] encodeDerObjectId(@NonNull byte[] oid) {
+    byte[] result = new byte[2 + oid.length];
+    result[0] = 0x06;
+    result[1] = (byte) oid.length;
+    return BinaryUtil.copyInto(oid, result, 2);
+  }
+
+  public static byte[] encodeDerBitStringWithZeroUnused(@NonNull byte[] content) {
+    return BinaryUtil.concat(
+        new byte[] {0x03}, encodeDerLength(1 + content.length), new byte[] {0}, content);
+  }
+
+  public static byte[] encodeDerSequence(final byte[]... items) {
+    byte[] content = BinaryUtil.concat(items);
+    return BinaryUtil.concat(new byte[] {0x30}, encodeDerLength(content.length), content);
   }
 }
