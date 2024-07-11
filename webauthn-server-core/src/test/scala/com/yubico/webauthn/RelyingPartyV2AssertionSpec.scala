@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.upokecenter.cbor.CBORObject
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -2511,13 +2512,14 @@ class RelyingPartyV2AssertionSpec
 
       it("a U2F-formatted public key.") {
         val testData = RealExamples.YubiKeyNeo.asRegistrationTestData
-        val x = ByteArray.fromHex(
+        val x = BinaryUtil.fromHex(
           "39C94FBBDDC694A925E6F8657C66916CFE84CD0222EDFCF281B21F5CDC347923"
         )
-        val y = ByteArray.fromHex(
+        val y = BinaryUtil.fromHex(
           "D6B0D2021CFE1724A6FE81E3568C4FFAE339298216A30AFC18C0B975F2E2A891"
         )
-        val u2fPubkey = ByteArray.fromHex("04").concat(x).concat(y)
+        val u2fPubkey =
+          new ByteArray(BinaryUtil.concat(BinaryUtil.fromHex("04"), x, y))
 
         val rp = RelyingParty
           .builder()

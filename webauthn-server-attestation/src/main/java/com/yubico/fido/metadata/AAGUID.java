@@ -2,9 +2,9 @@ package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.ExceptionUtil;
 import com.yubico.webauthn.data.ByteArray;
-import com.yubico.webauthn.data.exception.HexException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.AccessLevel;
@@ -105,12 +105,14 @@ public class AAGUID {
     Matcher matcher = AAGUID_PATTERN.matcher(value);
     if (matcher.find()) {
       try {
-        return ByteArray.fromHex(matcher.group(1))
-            .concat(ByteArray.fromHex(matcher.group(2)))
-            .concat(ByteArray.fromHex(matcher.group(3)))
-            .concat(ByteArray.fromHex(matcher.group(4)))
-            .concat(ByteArray.fromHex(matcher.group(5)));
-      } catch (HexException e) {
+        return new ByteArray(
+            BinaryUtil.concat(
+                BinaryUtil.fromHex(matcher.group(1)),
+                BinaryUtil.fromHex(matcher.group(2)),
+                BinaryUtil.fromHex(matcher.group(3)),
+                BinaryUtil.fromHex(matcher.group(4)),
+                BinaryUtil.fromHex(matcher.group(5))));
+      } catch (Exception e) {
         throw new RuntimeException(
             "This exception should be impossible, please file a bug report.", e);
       }
