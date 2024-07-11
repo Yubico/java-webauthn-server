@@ -372,14 +372,15 @@ public class RegistrationResult {
    * Retrieve a suitable nickname for this credential, if one is available.
    *
    * <p>This returns the <code>authenticatorDisplayName</code> output from the <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">
+   * href="https://w3c.github.io/webauthn/#sctn-authenticator-credential-properties-extension">
    * <code>credProps</code></a> extension.
    *
    * @return A user-chosen or vendor-default display name for the credential, if available.
    *     Otherwise empty.
    * @see <a
-   *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">§10.1.3.
-   *     Credential Properties Extension (credProps), "authenticatorDisplayName" output</a>
+   *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">
+   *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
+   *     (credProps)</a>
    * @see Extensions.CredentialProperties.CredentialPropertiesOutput#getAuthenticatorDisplayName()
    * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
    *     the standard matures.

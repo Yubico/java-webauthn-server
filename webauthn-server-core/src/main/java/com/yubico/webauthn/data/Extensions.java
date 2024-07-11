@@ -117,11 +117,19 @@ public class Extensions {
        * This OPTIONAL property is a human-palatable description of the credential's managing
        * authenticator, chosen by the user.
        *
-       * <p>If the RP includes an <code>[$credential record/authenticatorDisplayName$]</code>
-       * [=struct/item=] in [=credential records=], the [=[RP]=] MAY offer this value, if present,
-       * as a default value for the <code>[$credential record/authenticatorDisplayName$]</code> of
-       * the new [=credential record=].
+       * <p>If the application supports setting "nicknames" for registered credentials, then this
+       * value may be a suitable default value for such a nickname.
        *
+       * <p>In an authentication ceremony, if this value is different from the stored nickname, then
+       * the application may want to offer the user to update the stored nickname to match this
+       * value.
+       *
+       * @return A user-chosen or vendor-default display name for the credential, if available.
+       *     Otherwise empty.
+       * @see <a
+       *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">
+       *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
+       *     (credProps)</a>
        * @see RegistrationResult#getAuthenticatorDisplayName()
        * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change
        *     as the standard matures.
