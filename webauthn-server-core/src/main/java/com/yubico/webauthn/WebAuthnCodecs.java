@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 final class WebAuthnCodecs {
 
@@ -209,17 +211,91 @@ final class WebAuthnCodecs {
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
   }
 
-  private static ByteArray encodeDerLength(final int length) {
-    if (length <= 127) {
-      return new ByteArray(new byte[] {(byte) length});
+  static ByteArray encodeDerLength(final int length) {
+    if (length < 0) {
+      throw new IllegalArgumentException("Length is negative: " + length);
+    } else if (length <= 0x7f) {
+      return new ByteArray(new byte[] {(byte) (length & 0xff)});
+    } else if (length <= 0xff) {
+      return new ByteArray(new byte[] {(byte) (0x80 | 0x01), (byte) (length & 0xff)});
     } else if (length <= 0xffff) {
-      if (length <= 255) {
-        return new ByteArray(new byte[] {-127, (byte) length});
-      } else {
-        return new ByteArray(new byte[] {-126, (byte) (length >> 8), (byte) (length & 0x00ff)});
-      }
+      return new ByteArray(
+          new byte[] {(byte) (0x80 | 0x02), (byte) ((length >> 8) & 0xff), (byte) (length & 0xff)});
+    } else if (length <= 0xffffff) {
+      return new ByteArray(
+          new byte[] {
+            (byte) (0x80 | 0x03),
+            (byte) ((length >> 16) & 0xff),
+            (byte) ((length >> 8) & 0xff),
+            (byte) (length & 0xff)
+          });
     } else {
-      throw new UnsupportedOperationException("Too long: " + length);
+      return new ByteArray(
+          new byte[] {
+            (byte) (0x80 | 0x04),
+            (byte) ((length >> 24) & 0xff),
+            (byte) ((length >> 16) & 0xff),
+            (byte) ((length >> 8) & 0xff),
+            (byte) (length & 0xff)
+          });
+    }
+  }
+
+  @AllArgsConstructor
+  static class ParseDerResult<T> {
+    final T result;
+    final int nextOffset;
+  }
+
+  static ParseDerResult<Integer> parseDerLength(@NonNull byte[] der, int offset) {
+    final int len = der.length - offset;
+    if (len == 0) {
+      throw new IllegalArgumentException("Empty input");
+    } else if ((der[offset] & 0x80) == 0) {
+      return new ParseDerResult<>(der[offset] & 0xff, offset + 1);
+    } else {
+      final int longLen = der[offset] & 0x7f;
+      if (len >= longLen) {
+        switch (longLen) {
+          case 0:
+            throw new IllegalArgumentException(
+                String.format(
+                    "Empty length encoding at offset %d: %s", offset, new ByteArray(der)));
+          case 1:
+            return new ParseDerResult<>(der[offset + 1] & 0xff, offset + 2);
+          case 2:
+            return new ParseDerResult<>(
+                ((der[offset + 1] & 0xff) << 8) | (der[offset + 2] & 0xff), offset + 3);
+          case 3:
+            return new ParseDerResult<>(
+                ((der[offset + 1] & 0xff) << 16)
+                    | ((der[offset + 2] & 0xff) << 8)
+                    | (der[offset + 3] & 0xff),
+                offset + 4);
+          case 4:
+            if ((der[offset + 1] & 0x80) == 0) {
+              return new ParseDerResult<>(
+                  ((der[offset + 1] & 0xff) << 24)
+                      | ((der[offset + 2] & 0xff) << 16)
+                      | ((der[offset + 3] & 0xff) << 8)
+                      | (der[offset + 4] & 0xff),
+                  offset + 5);
+            } else {
+              throw new UnsupportedOperationException(
+                  String.format(
+                      "Length out of range of int: 0x%02x%02x%02x%02x",
+                      der[offset + 1], der[offset + 2], der[offset + 3], der[offset + 4]));
+            }
+          default:
+            throw new UnsupportedOperationException(
+                String.format("Length is too long for int: %d octets", longLen));
+        }
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Length encoding needs %d octets but only %s remain at index %d: %s",
+                longLen, len - (offset + 1), offset + 1, new ByteArray(der)));
+      }
     }
   }
 

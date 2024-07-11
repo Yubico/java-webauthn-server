@@ -25,6 +25,7 @@
 package com.yubico.webauthn
 
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.Generators.arbitraryByteArray
 import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -125,6 +126,59 @@ class WebAuthnCodecsSpec
       }
 
     }
-  }
 
+    describe("DER parsing and encoding:") {
+      it("encodeDerLength and parseDerLength are each other's inverse.") {
+        forAll(Gen.chooseNum(0, Int.MaxValue), arbitraryByteArray.arbitrary) {
+          (len: Int, prefix: ByteArray) =>
+            val encoded = WebAuthnCodecs.encodeDerLength(len)
+            val decoded = WebAuthnCodecs.parseDerLength(encoded.getBytes, 0)
+            val decodedWithPrefix = WebAuthnCodecs.parseDerLength(
+              prefix.concat(encoded).getBytes,
+              prefix.size,
+            )
+
+            decoded.result should equal(len)
+            decoded.nextOffset should equal(encoded.size)
+            decodedWithPrefix.result should equal(len)
+            decodedWithPrefix.nextOffset should equal(
+              prefix.size + encoded.size
+            )
+
+            val recoded = WebAuthnCodecs.encodeDerLength(decoded.result)
+            recoded should equal(encoded)
+        }
+      }
+
+      it("parseDerLength tolerates unnecessarily long encodings.") {
+        WebAuthnCodecs
+          .parseDerLength(Array(0x81, 0).map(_.toByte), 0)
+          .result should equal(0)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x82, 0, 0).map(_.toByte), 0)
+          .result should equal(0)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x83, 0, 0, 0).map(_.toByte), 0)
+          .result should equal(0)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x84, 0, 0, 0, 0).map(_.toByte), 0)
+          .result should equal(0)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x81, 7).map(_.toByte), 0)
+          .result should equal(7)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x82, 0, 7).map(_.toByte), 0)
+          .result should equal(7)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x83, 0, 0, 7).map(_.toByte), 0)
+          .result should equal(7)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x84, 0, 0, 4, 2).map(_.toByte), 0)
+          .result should equal(1026)
+        WebAuthnCodecs
+          .parseDerLength(Array(0x84, 0, 1, 33, 7).map(_.toByte), 0)
+          .result should equal(73991)
+      }
+    }
+  }
 }
