@@ -64,13 +64,18 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    */
   private final Boolean appid;
 
+  private final Extensions.CredentialProperties.CredentialPropertiesOutput credProps;
+
   private final Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob;
 
   @JsonCreator
   private ClientAssertionExtensionOutputs(
       @JsonProperty("appid") Boolean appid,
+      @JsonProperty("credProps")
+          Extensions.CredentialProperties.CredentialPropertiesOutput credProps,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob) {
     this.appid = appid;
+    this.credProps = credProps;
     this.largeBlob = largeBlob;
   }
 
@@ -80,6 +85,9 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     HashSet<String> ids = new HashSet<>();
     if (appid != null) {
       ids.add(Extensions.Appid.EXTENSION_ID);
+    }
+    if (credProps != null) {
+      ids.add(Extensions.CredentialProperties.EXTENSION_ID);
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
@@ -98,6 +106,24 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    */
   public Optional<Boolean> getAppid() {
     return Optional.ofNullable(appid);
+  }
+
+  /**
+   * The extension output for the Credential Properties Extension (<code>credProps</code>), if any.
+   *
+   * <p>This value MAY be present but have all members empty if the extension was successfully
+   * processed but no credential properties could be determined.
+   *
+   * @see com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
+   *     Credential Properties Extension (credProps)</a>
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @Deprecated
+  public Optional<Extensions.CredentialProperties.CredentialPropertiesOutput> getCredProps() {
+    return Optional.ofNullable(credProps);
   }
 
   /**

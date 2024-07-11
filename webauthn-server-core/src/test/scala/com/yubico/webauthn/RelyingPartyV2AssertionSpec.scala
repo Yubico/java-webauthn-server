@@ -38,6 +38,7 @@ import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
@@ -2918,6 +2919,55 @@ class RelyingPartyV2AssertionSpec
               result.getAuthenticatorAttachment should equal(
                 pkc.getAuthenticatorAttachment
               )
+            }
+          }
+
+          describe("exposes the credProps.authenticatorDisplayName extension output as getAuthenticatorDisplayName()") {
+            val pkcTemplate =
+              TestAuthenticator.createAssertion(
+                challenge =
+                  request.getPublicKeyCredentialRequestOptions.getChallenge,
+                credentialKey = credentialKeypair,
+                credentialId = credential.getId,
+              )
+
+            it("""when set to "hej".""") {
+              val pkc = pkcTemplate.toBuilder
+                .clientExtensionResults(
+                  pkcTemplate.getClientExtensionResults.toBuilder
+                    .credProps(
+                      CredentialPropertiesOutput
+                        .builder()
+                        .authenticatorDisplayName("hej")
+                        .build()
+                    )
+                    .build()
+                )
+                .build()
+              val result = rp.finishAssertion(
+                FinishAssertionOptions
+                  .builder()
+                  .request(request)
+                  .response(pkc)
+                  .build()
+              )
+
+              result.getAuthenticatorDisplayName.toScala should equal(
+                Some("hej")
+              )
+            }
+
+            it("when not available.") {
+              val pkc = pkcTemplate
+              val result = rp.finishAssertion(
+                FinishAssertionOptions
+                  .builder()
+                  .request(request)
+                  .response(pkc)
+                  .build()
+              )
+
+              result.getAuthenticatorDisplayName.toScala should equal(None)
             }
           }
         }

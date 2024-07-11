@@ -35,6 +35,7 @@ import com.yubico.webauthn.data.AuthenticatorDataFlags;
 import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.Extensions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserIdentity;
@@ -280,5 +281,34 @@ public class AssertionResult {
   public Optional<AuthenticatorAssertionExtensionOutputs> getAuthenticatorExtensionOutputs() {
     return AuthenticatorAssertionExtensionOutputs.fromAuthenticatorData(
         credentialResponse.getResponse().getParsedAuthenticatorData());
+  }
+
+  /**
+   * Retrieve a suitable nickname for this credential, if one is available. This MAY differ from
+   * {@link RegistrationResult#getAuthenticatorDisplayName() the value returned during
+   * registration}, if any. In that case the application may want to offer the user to update the
+   * previously stored value, if any.
+   *
+   * <p>This returns the <code>authenticatorDisplayName</code> output from the <a
+   * href="https://w3c.github.io/webauthn/#sctn-authenticator-credential-properties-extension">
+   * <code>credProps</code></a> extension.
+   *
+   * @return A user-chosen or vendor-default display name for the credential, if available.
+   *     Otherwise empty.
+   * @see <a
+   *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">
+   *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
+   *     (credProps)</a>
+   * @see RegistrationResult#getAuthenticatorDisplayName()
+   * @see Extensions.CredentialProperties.CredentialPropertiesOutput#getAuthenticatorDisplayName()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @JsonIgnore
+  @Deprecated
+  public Optional<String> getAuthenticatorDisplayName() {
+    return getClientExtensionOutputs()
+        .flatMap(outputs -> outputs.getCredProps())
+        .flatMap(credProps -> credProps.getAuthenticatorDisplayName());
   }
 }

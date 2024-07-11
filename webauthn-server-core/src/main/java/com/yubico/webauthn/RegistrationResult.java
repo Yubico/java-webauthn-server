@@ -381,6 +381,8 @@ public class RegistrationResult {
    *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">
    *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
    *     (credProps)</a>
+   * @see AssertionResult#getAuthenticatorDisplayName()
+   * @see AssertionResultV2#getAuthenticatorDisplayName()
    * @see Extensions.CredentialProperties.CredentialPropertiesOutput#getAuthenticatorDisplayName()
    * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
    *     the standard matures.

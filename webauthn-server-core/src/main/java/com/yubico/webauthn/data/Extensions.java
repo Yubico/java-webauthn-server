@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
+import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.AssertionResultV2;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.extension.uvm.KeyProtectionType;
@@ -131,6 +133,8 @@ public class Extensions {
        *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
        *     (credProps)</a>
        * @see RegistrationResult#getAuthenticatorDisplayName()
+       * @see AssertionResult#getAuthenticatorDisplayName()
+       * @see AssertionResultV2#getAuthenticatorDisplayName()
        * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change
        *     as the standard matures.
        */
