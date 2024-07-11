@@ -37,6 +37,37 @@ public class BinaryUtil {
   }
 
   /**
+   * Copy <code>src</code> into <code>dest</code> beginning at the offset <code>destFrom</code>,
+   * then return the modified <code>dest</code>.
+   */
+  public static byte[] copyInto(byte[] src, byte[] dest, int destFrom) {
+    if (dest.length - destFrom < src.length) {
+      throw new IllegalArgumentException("Source array will not fit in destination array");
+    }
+    if (destFrom < 0) {
+      throw new IllegalArgumentException("Invalid destination range");
+    }
+
+    for (int i = 0; i < src.length; ++i) {
+      dest[destFrom + i] = src[i];
+    }
+
+    return dest;
+  }
+
+  /** Return a new array containing the concatenation of the argument <code>arrays</code>. */
+  public static byte[] concat(byte[]... arrays) {
+    final int len = Arrays.stream(arrays).map(a -> a.length).reduce(0, Integer::sum);
+    byte[] result = new byte[len];
+    int i = 0;
+    for (byte[] src : arrays) {
+      copyInto(src, result, i);
+      i += src.length;
+    }
+    return result;
+  }
+
+  /**
    * @param bytes Bytes to encode
    */
   public static String toHex(final byte[] bytes) {
