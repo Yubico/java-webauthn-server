@@ -30,6 +30,16 @@ Use `./gradlew spotlessApply` to run the automatic code formatter.
 You can also run it in continuous mode as `./gradlew --continuous spotlessApply`
 to reformat whenever a file changes.
 
+We mean to follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html),
+but do not enforce it comprehensively (apart from what the automatic formatter does).
+Take particular note of the rules:
+
+- [3.3.1 No wildcard imports](https://google.github.io/styleguide/javaguide.html#s3.3.1-wildcard-imports)
+- [5.3 Camel case: defined](https://google.github.io/styleguide/javaguide.html#s5.3-camel-case)
+  (`XmlHttpRequest` and `requestId`, not `XMLHTTPRequest` and `requestID`)
+
+In case of disagreement on code style, defer to the style guide.
+
 
 Setup for publishing
 ---
