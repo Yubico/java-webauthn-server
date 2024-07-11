@@ -179,6 +179,50 @@ class WebAuthnCodecsSpec
           .parseDerLength(Array(0x84, 0, 1, 33, 7).map(_.toByte), 0)
           .result should equal(73991)
       }
+
+      it("encodeDerSequence and parseDerSequenceEnd are (almost) each other's inverse.") {
+        forAll { (data: Array[ByteArray], prefix: ByteArray) =>
+          val encoded = WebAuthnCodecs.encodeDerSequence(data: _*)
+          val decoded = WebAuthnCodecs.parseDerSequence(encoded.getBytes, 0)
+          val encodedWithPrefix = prefix.concat(encoded)
+          val decodedWithPrefix = WebAuthnCodecs.parseDerSequence(
+            encodedWithPrefix.getBytes,
+            prefix.size,
+          )
+
+          val expectedContent: ByteArray =
+            data.fold(new ByteArray(Array.empty))((a, b) => a.concat(b))
+          decoded.result should equal(expectedContent)
+          decodedWithPrefix.result should equal(expectedContent)
+          decoded.nextOffset should equal(encoded.size)
+          decodedWithPrefix.nextOffset should equal(prefix.size + encoded.size)
+        }
+      }
+
+      it("parseDerSequence fails if the first byte is not 0x30.") {
+        forAll { (tag: Byte, data: Array[ByteArray]) =>
+          whenever(tag != 0x30) {
+            val encoded = WebAuthnCodecs.encodeDerSequence(data: _*)
+            an[IllegalArgumentException] shouldBe thrownBy {
+              WebAuthnCodecs.parseDerSequence(
+                encoded.getBytes.updated(0, tag),
+                0,
+              )
+            }
+          }
+        }
+      }
+
+      it("parseDerSequence fails on empty input.") {
+        an[IllegalArgumentException] shouldBe thrownBy {
+          WebAuthnCodecs.parseDerSequence(Array.empty, 0)
+        }
+        forAll { data: Array[Byte] =>
+          an[IllegalArgumentException] shouldBe thrownBy {
+            WebAuthnCodecs.parseDerSequence(data, data.length)
+          }
+        }
+      }
     }
   }
 }

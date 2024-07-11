@@ -299,6 +299,23 @@ final class WebAuthnCodecs {
     }
   }
 
+  /** Parse a SEQUENCE and return a copy of the content octets. */
+  static ParseDerResult<ByteArray> parseDerSequence(@NonNull byte[] der, int offset) {
+    final int len = der.length - offset;
+    if (len == 0) {
+      throw new IllegalArgumentException(
+          String.format("Empty input at offset %d: %s", offset, new ByteArray(der)));
+    } else if ((der[offset] & 0xff) == 0x30) {
+      final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
+      final int contentEnd = contentLen.nextOffset + contentLen.result;
+      return new ParseDerResult<>(
+          new ByteArray(Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd)), contentEnd);
+    } else {
+      throw new IllegalArgumentException(
+          String.format("Not a SEQUENCE tag (0x30) at offset %d: %s", offset, new ByteArray(der)));
+    }
+  }
+
   private static ByteArray encodeDerObjectId(final ByteArray oid) {
     return new ByteArray(new byte[] {0x06, (byte) oid.size()}).concat(oid);
   }
@@ -310,7 +327,7 @@ final class WebAuthnCodecs {
         .concat(content);
   }
 
-  private static ByteArray encodeDerSequence(final ByteArray... items) {
+  static ByteArray encodeDerSequence(final ByteArray... items) {
     final ByteArray content =
         Stream.of(items).reduce(ByteArray::concat).orElseGet(() -> new ByteArray(new byte[0]));
     return new ByteArray(new byte[] {0x30}).concat(encodeDerLength(content.size())).concat(content);
