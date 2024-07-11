@@ -24,8 +24,8 @@
 
 package com.yubico.webauthn
 
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.webauthn.data.ByteArray
-import com.yubico.webauthn.data.Generators.arbitraryByteArray
 import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -129,24 +129,26 @@ class WebAuthnCodecsSpec
 
     describe("DER parsing and encoding:") {
       it("encodeDerLength and parseDerLength are each other's inverse.") {
-        forAll(Gen.chooseNum(0, Int.MaxValue), arbitraryByteArray.arbitrary) {
-          (len: Int, prefix: ByteArray) =>
-            val encoded = WebAuthnCodecs.encodeDerLength(len)
-            val decoded = WebAuthnCodecs.parseDerLength(encoded.getBytes, 0)
-            val decodedWithPrefix = WebAuthnCodecs.parseDerLength(
-              prefix.concat(encoded).getBytes,
-              prefix.size,
-            )
+        forAll(
+          Gen.chooseNum(0, Int.MaxValue),
+          Arbitrary.arbitrary[Array[Byte]],
+        ) { (len: Int, prefix: Array[Byte]) =>
+          val encoded = WebAuthnCodecs.encodeDerLength(len)
+          val decoded = WebAuthnCodecs.parseDerLength(encoded, 0)
+          val decodedWithPrefix = WebAuthnCodecs.parseDerLength(
+            BinaryUtil.concat(prefix, encoded),
+            prefix.length,
+          )
 
-            decoded.result should equal(len)
-            decoded.nextOffset should equal(encoded.size)
-            decodedWithPrefix.result should equal(len)
-            decodedWithPrefix.nextOffset should equal(
-              prefix.size + encoded.size
-            )
+          decoded.result should equal(len)
+          decoded.nextOffset should equal(encoded.length)
+          decodedWithPrefix.result should equal(len)
+          decodedWithPrefix.nextOffset should equal(
+            prefix.length + encoded.length
+          )
 
-            val recoded = WebAuthnCodecs.encodeDerLength(decoded.result)
-            recoded should equal(encoded)
+          val recoded = WebAuthnCodecs.encodeDerLength(decoded.result)
+          recoded should equal(encoded)
         }
       }
 
@@ -181,31 +183,32 @@ class WebAuthnCodecsSpec
       }
 
       it("encodeDerSequence and parseDerSequenceEnd are (almost) each other's inverse.") {
-        forAll { (data: Array[ByteArray], prefix: ByteArray) =>
+        forAll { (data: Array[Array[Byte]], prefix: Array[Byte]) =>
           val encoded = WebAuthnCodecs.encodeDerSequence(data: _*)
-          val decoded = WebAuthnCodecs.parseDerSequence(encoded.getBytes, 0)
-          val encodedWithPrefix = prefix.concat(encoded)
+          val decoded = WebAuthnCodecs.parseDerSequence(encoded, 0)
+          val encodedWithPrefix = BinaryUtil.concat(prefix, encoded)
           val decodedWithPrefix = WebAuthnCodecs.parseDerSequence(
-            encodedWithPrefix.getBytes,
-            prefix.size,
+            encodedWithPrefix,
+            prefix.length,
           )
 
-          val expectedContent: ByteArray =
-            data.fold(new ByteArray(Array.empty))((a, b) => a.concat(b))
+          val expectedContent: Array[Byte] = BinaryUtil.concat(data: _*)
           decoded.result should equal(expectedContent)
           decodedWithPrefix.result should equal(expectedContent)
-          decoded.nextOffset should equal(encoded.size)
-          decodedWithPrefix.nextOffset should equal(prefix.size + encoded.size)
+          decoded.nextOffset should equal(encoded.length)
+          decodedWithPrefix.nextOffset should equal(
+            prefix.length + encoded.length
+          )
         }
       }
 
       it("parseDerSequence fails if the first byte is not 0x30.") {
-        forAll { (tag: Byte, data: Array[ByteArray]) =>
+        forAll { (tag: Byte, data: Array[Array[Byte]]) =>
           whenever(tag != 0x30) {
             val encoded = WebAuthnCodecs.encodeDerSequence(data: _*)
             an[IllegalArgumentException] shouldBe thrownBy {
               WebAuthnCodecs.parseDerSequence(
-                encoded.getBytes.updated(0, tag),
+                encoded.updated(0, tag),
                 0,
               )
             }

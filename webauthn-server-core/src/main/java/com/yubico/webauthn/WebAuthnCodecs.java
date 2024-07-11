@@ -26,6 +26,7 @@ package com.yubico.webauthn;
 
 import com.google.common.primitives.Bytes;
 import com.upokecenter.cbor.CBORObject;
+import com.yubico.internal.util.BinaryUtil;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import java.io.IOException;
@@ -40,7 +41,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
@@ -175,69 +175,70 @@ final class WebAuthnCodecs {
   private static PublicKey importCoseEcdsaPublicKey(CBORObject cose)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
     final int crv = cose.get(CBORObject.FromObject(-1)).AsInt32Value();
-    final ByteArray x = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
-    final ByteArray y = new ByteArray(cose.get(CBORObject.FromObject(-3)).GetByteString());
+    final byte[] x = cose.get(CBORObject.FromObject(-2)).GetByteString();
+    final byte[] y = cose.get(CBORObject.FromObject(-3)).GetByteString();
 
-    final ByteArray curveOid;
+    final byte[] curveOid;
     switch (crv) {
       case 1:
-        curveOid = P256_CURVE_OID;
+        curveOid = P256_CURVE_OID.getBytes();
         break;
 
       case 2:
-        curveOid = P384_CURVE_OID;
+        curveOid = P384_CURVE_OID.getBytes();
         break;
 
       case 3:
-        curveOid = P512_CURVE_OID;
+        curveOid = P512_CURVE_OID.getBytes();
         break;
 
       default:
         throw new IllegalArgumentException("Unknown COSE EC2 curve: " + crv);
     }
 
-    final ByteArray algId =
-        encodeDerSequence(encodeDerObjectId(EC_PUBLIC_KEY_OID), encodeDerObjectId(curveOid));
+    final byte[] algId =
+        encodeDerSequence(
+            encodeDerObjectId(EC_PUBLIC_KEY_OID.getBytes()), encodeDerObjectId(curveOid));
 
-    final ByteArray rawKey =
+    final byte[] rawKey =
         encodeDerBitStringWithZeroUnused(
-            new ByteArray(new byte[] {0x04}) // Raw EC public key with x and y
-                .concat(x)
-                .concat(y));
+            BinaryUtil.concat(
+                new byte[] {0x04}, // Raw EC public key with x and y
+                x,
+                y));
 
-    final ByteArray x509Key = encodeDerSequence(algId, rawKey);
+    final byte[] x509Key = encodeDerSequence(algId, rawKey);
 
     KeyFactory kFact = KeyFactory.getInstance("EC");
-    return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
   }
 
-  static ByteArray encodeDerLength(final int length) {
+  static byte[] encodeDerLength(final int length) {
     if (length < 0) {
       throw new IllegalArgumentException("Length is negative: " + length);
     } else if (length <= 0x7f) {
-      return new ByteArray(new byte[] {(byte) (length & 0xff)});
+      return new byte[] {(byte) (length & 0xff)};
     } else if (length <= 0xff) {
-      return new ByteArray(new byte[] {(byte) (0x80 | 0x01), (byte) (length & 0xff)});
+      return new byte[] {(byte) (0x80 | 0x01), (byte) (length & 0xff)};
     } else if (length <= 0xffff) {
-      return new ByteArray(
-          new byte[] {(byte) (0x80 | 0x02), (byte) ((length >> 8) & 0xff), (byte) (length & 0xff)});
+      return new byte[] {
+        (byte) (0x80 | 0x02), (byte) ((length >> 8) & 0xff), (byte) (length & 0xff)
+      };
     } else if (length <= 0xffffff) {
-      return new ByteArray(
-          new byte[] {
-            (byte) (0x80 | 0x03),
-            (byte) ((length >> 16) & 0xff),
-            (byte) ((length >> 8) & 0xff),
-            (byte) (length & 0xff)
-          });
+      return new byte[] {
+        (byte) (0x80 | 0x03),
+        (byte) ((length >> 16) & 0xff),
+        (byte) ((length >> 8) & 0xff),
+        (byte) (length & 0xff)
+      };
     } else {
-      return new ByteArray(
-          new byte[] {
-            (byte) (0x80 | 0x04),
-            (byte) ((length >> 24) & 0xff),
-            (byte) ((length >> 16) & 0xff),
-            (byte) ((length >> 8) & 0xff),
-            (byte) (length & 0xff)
-          });
+      return new byte[] {
+        (byte) (0x80 | 0x04),
+        (byte) ((length >> 24) & 0xff),
+        (byte) ((length >> 16) & 0xff),
+        (byte) ((length >> 8) & 0xff),
+        (byte) (length & 0xff)
+      };
     }
   }
 
@@ -260,7 +261,7 @@ final class WebAuthnCodecs {
           case 0:
             throw new IllegalArgumentException(
                 String.format(
-                    "Empty length encoding at offset %d: %s", offset, new ByteArray(der)));
+                    "Empty length encoding at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
           case 1:
             return new ParseDerResult<>(der[offset + 1] & 0xff, offset + 2);
           case 2:
@@ -293,36 +294,36 @@ final class WebAuthnCodecs {
       } else {
         throw new IllegalArgumentException(
             String.format(
-                "Length encoding needs %d octets but only %s remain at index %d: %s",
-                longLen, len - (offset + 1), offset + 1, new ByteArray(der)));
+                "Length encoding needs %d octets but only %s remain at index %d: 0x%s",
+                longLen, len - (offset + 1), offset + 1, BinaryUtil.toHex(der)));
       }
     }
   }
 
-  private static ParseDerResult<ByteArray> parseDerTagged(
+  private static ParseDerResult<byte[]> parseDerTagged(
       @NonNull byte[] der, int offset, byte expectTag) {
     final int len = der.length - offset;
     if (len == 0) {
       throw new IllegalArgumentException(
-          String.format("Empty input at offset %d: %s", offset, new ByteArray(der)));
+          String.format("Empty input at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
     } else {
       final byte tag = der[offset];
       if (tag == expectTag) {
         final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
         final int contentEnd = contentLen.nextOffset + contentLen.result;
         return new ParseDerResult<>(
-            new ByteArray(Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd)), contentEnd);
+            Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd), contentEnd);
       } else {
         throw new IllegalArgumentException(
             String.format(
-                "Incorrect tag: 0x%02x (expected 0x%02x) at offset %d: %s",
-                tag, expectTag, offset, new ByteArray(der)));
+                "Incorrect tag: 0x%02x (expected 0x%02x) at offset %d: 0x%s",
+                tag, expectTag, offset, BinaryUtil.toHex(der)));
       }
     }
   }
 
   /** Parse a SEQUENCE and return a copy of the content octets. */
-  static ParseDerResult<ByteArray> parseDerSequence(@NonNull byte[] der, int offset) {
+  static ParseDerResult<byte[]> parseDerSequence(@NonNull byte[] der, int offset) {
     return parseDerTagged(der, offset, (byte) 0x30);
   }
 
@@ -331,7 +332,7 @@ final class WebAuthnCodecs {
    * "constructed" encoding (bit 6 is 1), with a prescribed tag value, and return a copy of the
    * content octets.
    */
-  static ParseDerResult<ByteArray> parseDerExplicitlyTaggedContextSpecificConstructed(
+  static ParseDerResult<byte[]> parseDerExplicitlyTaggedContextSpecificConstructed(
       @NonNull byte[] der, int offset, byte tagNumber) {
     if (tagNumber <= 30 && tagNumber >= 0) {
       return parseDerTagged(der, offset, (byte) ((tagNumber & 0x1f) | 0xa0));
@@ -341,21 +342,21 @@ final class WebAuthnCodecs {
     }
   }
 
-  private static ByteArray encodeDerObjectId(final ByteArray oid) {
-    return new ByteArray(new byte[] {0x06, (byte) oid.size()}).concat(oid);
+  private static byte[] encodeDerObjectId(@NonNull byte[] oid) {
+    byte[] result = new byte[2 + oid.length];
+    result[0] = 0x06;
+    result[1] = (byte) oid.length;
+    return BinaryUtil.copyInto(oid, result, 2);
   }
 
-  private static ByteArray encodeDerBitStringWithZeroUnused(final ByteArray content) {
-    return new ByteArray(new byte[] {0x03})
-        .concat(encodeDerLength(1 + content.size()))
-        .concat(new ByteArray(new byte[] {0}))
-        .concat(content);
+  private static byte[] encodeDerBitStringWithZeroUnused(@NonNull byte[] content) {
+    return BinaryUtil.concat(
+        new byte[] {0x03}, encodeDerLength(1 + content.length), new byte[] {0}, content);
   }
 
-  static ByteArray encodeDerSequence(final ByteArray... items) {
-    final ByteArray content =
-        Stream.of(items).reduce(ByteArray::concat).orElseGet(() -> new ByteArray(new byte[0]));
-    return new ByteArray(new byte[] {0x30}).concat(encodeDerLength(content.size())).concat(content);
+  static byte[] encodeDerSequence(final byte[]... items) {
+    byte[] content = BinaryUtil.concat(items);
+    return BinaryUtil.concat(new byte[] {0x30}, encodeDerLength(content.length), content);
   }
 
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
@@ -371,12 +372,12 @@ final class WebAuthnCodecs {
 
   private static PublicKey importCoseEd25519PublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
-    final ByteArray rawKey = new ByteArray(cose.get(CBORObject.FromObject(-2)).GetByteString());
-    final ByteArray x509Key =
-        encodeDerSequence(ED25519_ALG_ID, encodeDerBitStringWithZeroUnused(rawKey));
+    final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
+    final byte[] x509Key =
+        encodeDerSequence(ED25519_ALG_ID.getBytes(), encodeDerBitStringWithZeroUnused(rawKey));
 
     KeyFactory kFact = KeyFactory.getInstance("EdDSA");
-    return kFact.generatePublic(new X509EncodedKeySpec(x509Key.getBytes()));
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
   }
 
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
