@@ -44,8 +44,9 @@ In case of disagreement on code style, defer to the style guide.
 Setup for publishing
 ---
 
-To enable publishing to Maven Central via Sonatype Nexus, set
-`yubicoPublish=true` in `$HOME/.gradle/gradle.properties` and add your Sonatype
+To enable publishing to Maven Central via Sonatype Nexus,
+[generate a user token](https://central.sonatype.org/publish/generate-token/).
+Set `yubicoPublish=true` in `$HOME/.gradle/gradle.properties` and add your token
 username and password. Example:
 
 ```properties
