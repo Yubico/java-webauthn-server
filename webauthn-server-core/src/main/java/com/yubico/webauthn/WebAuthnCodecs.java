@@ -299,20 +299,45 @@ final class WebAuthnCodecs {
     }
   }
 
-  /** Parse a SEQUENCE and return a copy of the content octets. */
-  static ParseDerResult<ByteArray> parseDerSequence(@NonNull byte[] der, int offset) {
+  private static ParseDerResult<ByteArray> parseDerTagged(
+      @NonNull byte[] der, int offset, byte expectTag) {
     final int len = der.length - offset;
     if (len == 0) {
       throw new IllegalArgumentException(
           String.format("Empty input at offset %d: %s", offset, new ByteArray(der)));
-    } else if ((der[offset] & 0xff) == 0x30) {
-      final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
-      final int contentEnd = contentLen.nextOffset + contentLen.result;
-      return new ParseDerResult<>(
-          new ByteArray(Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd)), contentEnd);
     } else {
-      throw new IllegalArgumentException(
-          String.format("Not a SEQUENCE tag (0x30) at offset %d: %s", offset, new ByteArray(der)));
+      final byte tag = der[offset];
+      if (tag == expectTag) {
+        final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
+        final int contentEnd = contentLen.nextOffset + contentLen.result;
+        return new ParseDerResult<>(
+            new ByteArray(Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd)), contentEnd);
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Incorrect tag: 0x%02x (expected 0x%02x) at offset %d: %s",
+                tag, expectTag, offset, new ByteArray(der)));
+      }
+    }
+  }
+
+  /** Parse a SEQUENCE and return a copy of the content octets. */
+  static ParseDerResult<ByteArray> parseDerSequence(@NonNull byte[] der, int offset) {
+    return parseDerTagged(der, offset, (byte) 0x30);
+  }
+
+  /**
+   * Parse an explicitly tagged value of class "context-specific" (bits 8-7 are 0b10), in
+   * "constructed" encoding (bit 6 is 1), with a prescribed tag value, and return a copy of the
+   * content octets.
+   */
+  static ParseDerResult<ByteArray> parseDerExplicitlyTaggedContextSpecificConstructed(
+      @NonNull byte[] der, int offset, byte tagNumber) {
+    if (tagNumber <= 30 && tagNumber >= 0) {
+      return parseDerTagged(der, offset, (byte) ((tagNumber & 0x1f) | 0xa0));
+    } else {
+      throw new UnsupportedOperationException(
+          String.format("Tag number out of range: %d (expected 0 to 30, inclusive)", tagNumber));
     }
   }
 
