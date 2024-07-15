@@ -319,7 +319,7 @@ public class BinaryUtil {
    * "constructed" encoding (bit 6 is 1), with a prescribed tag value, and return a copy of the
    * content octets.
    */
-  public static ParseDerResult<byte[]> parseDerExplicitlyTaggedContextSpecificConstructed(
+  private static ParseDerResult<byte[]> parseDerExplicitlyTaggedContextSpecificConstructed(
       @NonNull byte[] der, int offset, byte tagNumber) {
     if (tagNumber <= 30 && tagNumber >= 0) {
       return parseDerTagged(der, offset, (byte) ((tagNumber & 0x1f) | 0xa0));
