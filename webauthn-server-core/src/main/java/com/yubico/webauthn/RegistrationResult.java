@@ -39,6 +39,7 @@ import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
+import com.yubico.webauthn.data.Extensions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import java.io.IOException;
@@ -365,6 +366,33 @@ public class RegistrationResult {
     return getClientExtensionOutputs()
         .flatMap(outputs -> outputs.getCredProps())
         .flatMap(credProps -> credProps.getRk());
+  }
+
+  /**
+   * Retrieve a suitable nickname for this credential, if one is available.
+   *
+   * <p>This returns the <code>authenticatorDisplayName</code> output from the <a
+   * href="https://w3c.github.io/webauthn/#sctn-authenticator-credential-properties-extension">
+   * <code>credProps</code></a> extension.
+   *
+   * @return A user-chosen or vendor-default display name for the credential, if available.
+   *     Otherwise empty.
+   * @see <a
+   *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">
+   *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
+   *     (credProps)</a>
+   * @see AssertionResult#getAuthenticatorDisplayName()
+   * @see AssertionResultV2#getAuthenticatorDisplayName()
+   * @see Extensions.CredentialProperties.CredentialPropertiesOutput#getAuthenticatorDisplayName()
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   */
+  @JsonIgnore
+  @Deprecated
+  public Optional<String> getAuthenticatorDisplayName() {
+    return getClientExtensionOutputs()
+        .flatMap(outputs -> outputs.getCredProps())
+        .flatMap(credProps -> credProps.getAuthenticatorDisplayName());
   }
 
   /**

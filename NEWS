@@ -51,6 +51,10 @@ New features:
 * (Experimental) Added property `RegisteredCredential.transports`.
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
+* (Experimental) Added property `credProps.authenticatorDisplayName`.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+* (Experimental) Added `credProps` extension to assertion extension outputs.
 
 
 == Version 2.5.2 ==

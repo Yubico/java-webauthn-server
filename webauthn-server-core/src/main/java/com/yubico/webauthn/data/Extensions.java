@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
+import com.yubico.webauthn.AssertionResult;
+import com.yubico.webauthn.AssertionResultV2;
+import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
@@ -71,9 +74,15 @@ public class Extensions {
       @JsonProperty("rk")
       private final Boolean rk;
 
+      @JsonProperty("authenticatorDisplayName")
+      private final String authenticatorDisplayName;
+
       @JsonCreator
-      private CredentialPropertiesOutput(@JsonProperty("rk") Boolean rk) {
+      private CredentialPropertiesOutput(
+          @JsonProperty("rk") Boolean rk,
+          @JsonProperty("authenticatorDisplayName") String authenticatorDisplayName) {
         this.rk = rk;
+        this.authenticatorDisplayName = authenticatorDisplayName;
       }
 
       /**
@@ -104,6 +113,34 @@ public class Extensions {
        */
       public Optional<Boolean> getRk() {
         return Optional.ofNullable(rk);
+      }
+
+      /**
+       * This OPTIONAL property is a human-palatable description of the credential's managing
+       * authenticator, chosen by the user.
+       *
+       * <p>If the application supports setting "nicknames" for registered credentials, then this
+       * value may be a suitable default value for such a nickname.
+       *
+       * <p>In an authentication ceremony, if this value is different from the stored nickname, then
+       * the application may want to offer the user to update the stored nickname to match this
+       * value.
+       *
+       * @return A user-chosen or vendor-default display name for the credential, if available.
+       *     Otherwise empty.
+       * @see <a
+       *     href="https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname">
+       *     <code>authenticatorDisplayName</code> in §10.1.3. Credential Properties Extension
+       *     (credProps)</a>
+       * @see RegistrationResult#getAuthenticatorDisplayName()
+       * @see AssertionResult#getAuthenticatorDisplayName()
+       * @see AssertionResultV2#getAuthenticatorDisplayName()
+       * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change
+       *     as the standard matures.
+       */
+      @Deprecated
+      public Optional<String> getAuthenticatorDisplayName() {
+        return Optional.ofNullable(authenticatorDisplayName);
       }
     }
   }
