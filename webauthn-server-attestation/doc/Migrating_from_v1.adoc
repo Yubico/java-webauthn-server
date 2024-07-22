@@ -1,4 +1,6 @@
 = v1.x to v2.1 migration guide
+:idprefix:
+:idseparator: -
 
 The `2.0` release of the `webauthn-server-attestation` module
 makes lots of breaking changes compared to the `1.x` versions.

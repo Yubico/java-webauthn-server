@@ -1,4 +1,6 @@
 = Web Authentication server library
+:idprefix:
+:idseparator: -
 
 Implementation of a Web Authentication Relying Party (RP).
 

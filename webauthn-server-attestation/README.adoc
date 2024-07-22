@@ -2,6 +2,8 @@
 :toc:
 :toc-placement: macro
 :toc-title:
+:idprefix:
+:idseparator: -
 
 An optional module which extends link:../[`webauthn-server-core`]
 with a trust root source for verifying
