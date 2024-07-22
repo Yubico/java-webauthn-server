@@ -3,6 +3,8 @@ java-webauthn-server
 :toc:
 :toc-placement: macro
 :toc-title:
+:idprefix:
+:idseparator: -
 
 image:https://github.com/Yubico/java-webauthn-server/workflows/build/badge.svg["Build Status", link="https://github.com/Yubico/java-webauthn-server/actions"]
 image:https://img.shields.io/endpoint?url=https%3A%2F%2FYubico.github.io%2Fjava-webauthn-server%2Fcoverage-badge.json["Mutation test coverage", link="https://Yubico.github.io/java-webauthn-server/"]

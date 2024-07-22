@@ -1,4 +1,6 @@
 = webauthn-server-demo
+:idprefix:
+:idseparator: -
 
 A simple self-contained demo server supporting multiple authenticators per user.
 It illustrates how to use the required integration points, the most important of

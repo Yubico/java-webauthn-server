@@ -1,4 +1,6 @@
 = v1.x to v2.0 migration guide
+:idprefix:
+:idseparator: -
 
 The `2.0` release of the `webauthn-server-core` module
 removes some deprecated features
