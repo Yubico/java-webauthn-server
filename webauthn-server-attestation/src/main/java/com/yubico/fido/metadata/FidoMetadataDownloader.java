@@ -25,7 +25,6 @@
 package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.core.Base64Variants;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason;
 import com.yubico.internal.util.BinaryUtil;
@@ -1172,9 +1171,7 @@ public final class FidoMetadataDownloader {
     final ByteArray jwtSignature = ByteArray.fromBase64Url(s.next());
 
     final ObjectMapper headerJsonMapper =
-        com.yubico.internal.util.JacksonCodecs.json()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
-            .setBase64Variant(Base64Variants.MIME_NO_LINEFEEDS);
+        JacksonCodecs.json().setBase64Variant(Base64Variants.MIME_NO_LINEFEEDS);
 
     return new ParseResult(
         new MetadataBLOB(
