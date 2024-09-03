@@ -2,9 +2,6 @@
 name: integration-test
 
 on:
-  pull_request:
-    branches-ignore:
-      - 'tmp**'
   schedule:
     # Run once a week to check compatibility with new FIDO MDS blob contents
     - cron: '0 0 * * 1'
