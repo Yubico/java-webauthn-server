@@ -68,7 +68,3 @@ tasks.withType(Jar::class) {
     ))
   }
 }
-
-scalafix {
-  ignoreSourceSets.add("main")
-}

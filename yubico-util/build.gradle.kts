@@ -49,7 +49,3 @@ tasks.jar {
     ))
   }
 }
-
-scalafix {
-  ignoreSourceSets.add("main")
-}
