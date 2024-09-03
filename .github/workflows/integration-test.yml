@@ -2,6 +2,10 @@
 name: integration-test
 
 on:
+  push:
+    branches:
+    - main
+    - 'release-*'
   schedule:
     # Run once a week to check compatibility with new FIDO MDS blob contents
     - cron: '0 0 * * 1'
