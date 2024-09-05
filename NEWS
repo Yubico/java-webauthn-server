@@ -1,3 +1,13 @@
+== Version 2.5.3 ==
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* `FidoMetadataDownloader` no longer rejects FIDO MDS metadata BLOBs with
+  unknown properties.
+
+
 == Version 2.5.2 ==
 
 Fixes:

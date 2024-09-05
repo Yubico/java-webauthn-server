@@ -1,0 +1,52 @@
+# This name is shown in the status badge in the README
+name: integration-test
+
+on:
+  push:
+    branches:
+    - main
+    - 'release-*'
+  schedule:
+    # Run once a week to check compatibility with new FIDO MDS blob contents
+    - cron: '0 0 * * 1'
+
+jobs:
+  test:
+    name: JDK ${{ matrix.java }} ${{ matrix.distribution }}
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [17]
+        distribution: [temurin]
+
+    outputs:
+        report-java: 17
+        report-dist: temurin
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK ${{ matrix.java }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java }}
+        distribution: ${{ matrix.distribution }}
+
+    - name: Run integration tests
+      run: ./gradlew integrationTest
+
+    - name: Archive HTML test report
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-html
+        path: "*/build/reports/**"
+
+    - name: Archive JUnit test report
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
+        path: "*/build/test-results/**/*.xml"
