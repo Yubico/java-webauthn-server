@@ -1088,12 +1088,8 @@ object Generators {
           .timeout(timeout)
 
         hints.foreach {
-          case Left(h) => {
-            b.hints(h.asJava)
-          }
-          case Right(h) => {
-            b.hints(h: _*)
-          }
+          case Left(h)  => b.hints(h.asJava)
+          case Right(h) => b.hints(h: _*)
         }
 
         b.build()
