@@ -982,37 +982,41 @@ class RelyingPartyStartOperationSpec
         }
       }
 
-      it("allows setting the hints to a value not in the spec.") {
-        val pkcco = relyingParty(userId = userId).startRegistration(
-          StartRegistrationOptions
-            .builder()
-            .user(userId)
-            .hints("hej")
-            .build()
-        )
-        pkcco.getHints.asScala should equal(List("hej"))
-      }
+      describe("allows setting the hints") {
+        val rp = relyingParty(userId = userId)
 
-      it("allows setting the hints to a value in the spec.") {
-        val pkcco = relyingParty(userId = userId).startRegistration(
-          StartRegistrationOptions
-            .builder()
-            .user(userId)
-            .hints(PublicKeyCredentialHint.SECURITY_KEY)
-            .build()
-        )
-        pkcco.getHints.asScala should equal(List("security-key"))
-      }
+        it("to a value not in the spec.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints("hej")
+              .build()
+          )
+          pkcco.getHints.asScala should equal(List("hej"))
+        }
 
-      it("allows setting the hints to empty") {
-        val pkcco = relyingParty(userId = userId).startRegistration(
-          StartRegistrationOptions
-            .builder()
-            .user(userId)
-            .hints("")
-            .build()
-        )
-        pkcco.getHints.asScala should equal(List(""))
+        it("to a value in the spec.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints(PublicKeyCredentialHint.SECURITY_KEY)
+              .build()
+          )
+          pkcco.getHints.asScala should equal(List("security-key"))
+        }
+
+        it("to empty") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints("")
+              .build()
+          )
+          pkcco.getHints.asScala should equal(List(""))
+        }
       }
 
       it("allows setting the timeout to empty.") {
