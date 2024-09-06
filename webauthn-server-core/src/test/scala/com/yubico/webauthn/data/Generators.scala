@@ -1117,7 +1117,7 @@ object Generators {
       : Arbitrary[PublicKeyCredentialHint] = Arbitrary(
     Gen.oneOf(
       Gen.oneOf(PublicKeyCredentialHint.values()),
-      Gen.alphaNumStr.map(PublicKeyCredentialHint.of),
+      arbitrary[String].map(PublicKeyCredentialHint.of),
     )
   )
 
