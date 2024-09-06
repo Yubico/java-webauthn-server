@@ -985,26 +985,48 @@ class RelyingPartyStartOperationSpec
       describe("allows setting the hints") {
         val rp = relyingParty(userId = userId)
 
-        it("to a value not in the spec.") {
+        it("to string values in the spec or not.") {
           val pkcco = rp.startRegistration(
             StartRegistrationOptions
               .builder()
               .user(userId)
-              .hints("hej")
+              .hints("hej", "security-key", "hoj", "client-device", "hybrid")
               .build()
           )
-          pkcco.getHints.asScala should equal(List("hej"))
+          pkcco.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+              PublicKeyCredentialHint.HYBRID.getValue,
+            )
+          )
         }
 
-        it("to a value in the spec.") {
+        it("to PublicKeyCredentialHint values in the spec or not.") {
           val pkcco = rp.startRegistration(
             StartRegistrationOptions
               .builder()
               .user(userId)
-              .hints(PublicKeyCredentialHint.SECURITY_KEY)
+              .hints(
+                PublicKeyCredentialHint.of("hej"),
+                PublicKeyCredentialHint.HYBRID,
+                PublicKeyCredentialHint.SECURITY_KEY,
+                PublicKeyCredentialHint.of("hoj"),
+                PublicKeyCredentialHint.CLIENT_DEVICE,
+              )
               .build()
           )
-          pkcco.getHints.asScala should equal(List("security-key"))
+          pkcco.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.HYBRID.getValue,
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+            )
+          )
         }
 
         it("or not, defaulting to the empty list.") {
