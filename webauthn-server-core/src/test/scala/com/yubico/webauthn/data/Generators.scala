@@ -1145,18 +1145,26 @@ object Generators {
         extensions <- arbitrary[AssertionExtensionInputs]
         rpId <- arbitrary[Optional[String]]
         timeout <- arbitrary[Optional[java.lang.Long]]
-        hints <- arbitrary[Option[List[String]]]
+        hints <-
+          arbitrary[Option[Either[List[String], List[PublicKeyCredentialHint]]]]
         userVerification <- arbitrary[UserVerificationRequirement]
-      } yield PublicKeyCredentialRequestOptions
-        .builder()
-        .challenge(challenge)
-        .allowCredentials(allowCredentials)
-        .extensions(extensions)
-        .rpId(rpId)
-        .timeout(timeout)
-        .hints(hints.map(_.asJava).orNull)
-        .userVerification(userVerification)
-        .build()
+      } yield {
+        val b = PublicKeyCredentialRequestOptions
+          .builder()
+          .challenge(challenge)
+          .allowCredentials(allowCredentials)
+          .extensions(extensions)
+          .rpId(rpId)
+          .timeout(timeout)
+          .userVerification(userVerification)
+
+        hints.foreach {
+          case Left(h)  => b.hints(h.asJava)
+          case Right(h) => b.hints(h: _*)
+        }
+
+        b.build()
+      }
     )
   )
 
