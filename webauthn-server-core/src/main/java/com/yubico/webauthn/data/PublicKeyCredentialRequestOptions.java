@@ -230,7 +230,7 @@ public class PublicKeyCredentialRequestOptions {
           Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
     }
 
-    public PublicKeyCredentialRequestOptionsBuilder hints(List<String> hints) {
+    public PublicKeyCredentialRequestOptionsBuilder hints(@NonNull List<String> hints) {
       this.hints = hints;
       return this;
     }

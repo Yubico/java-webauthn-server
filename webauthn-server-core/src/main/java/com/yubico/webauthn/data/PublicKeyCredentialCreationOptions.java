@@ -333,7 +333,7 @@ public class PublicKeyCredentialCreationOptions {
           Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
     }
 
-    public PublicKeyCredentialCreationOptionsBuilder hints(List<String> hints) {
+    public PublicKeyCredentialCreationOptionsBuilder hints(@NonNull List<String> hints) {
       this.hints = hints;
       return this;
     }
